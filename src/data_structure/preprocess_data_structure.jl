@@ -499,75 +499,11 @@ function generate_variable_indexing_support()
         unique((node=n, temporal_block=tb)
         for n in node(has_state=true) for tb in node__temporal_block(node=n)),
     )
-    start_up_unit__node__direction__temporal_block = RelationshipClass(
-        :start_up_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_startup_ramp)
-            for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
-        :nonspin_ramp_up_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_res_startup_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    ramp_up_unit__node__direction__temporal_block = RelationshipClass(
-        :ramp_up_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(ramp_up_limit) for n in members(ng) for tb in node__temporal_block(node=n)
-            for (u, n, d, tb) in unit__node__direction__temporal_block(
-                unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
-            )
-            if !is_non_spinning(node=n)
-        ),
-    )
-    shut_down_unit__node__direction__temporal_block = RelationshipClass(
-        :shut_down_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_shutdown_ramp)
-            for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    nonspin_ramp_down_unit__node__direction__temporal_block = RelationshipClass(
-        :nonspin_ramp_down_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_res_shutdown_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    ramp_down_unit__node__direction__temporal_block = RelationshipClass(
-        :ramp_down_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(ramp_down_limit) for n in members(ng) for tb in node__temporal_block(node=n)
-            for (u, n, d, tb) in unit__node__direction__temporal_block(
-                unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
-            )
-            if !is_non_spinning(node=n)
-        ),
-    )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
-        start_up_unit__node__direction__temporal_block = $start_up_unit__node__direction__temporal_block
-        nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
-        ramp_up_unit__node__direction__temporal_block = $ramp_up_unit__node__direction__temporal_block
-        shut_down_unit__node__direction__temporal_block = $shut_down_unit__node__direction__temporal_block
-        nonspin_ramp_down_unit__node__direction__temporal_block = $nonspin_ramp_down_unit__node__direction__temporal_block
-        ramp_down_unit__node__direction__temporal_block = $ramp_down_unit__node__direction__temporal_block
     end
 end
 

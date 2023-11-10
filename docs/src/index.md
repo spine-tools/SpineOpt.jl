@@ -58,7 +58,7 @@ The [Temporal Framework](@ref) section explains how defining *time* works in *Sp
 for different purposes. The [Stochastic Framework](@ref) section details how different stochastic structures can be
 defined, how they interact with each other, and how this impacts writing [Constraints](@ref) in *SpineOpt.jl*.
 The [Unit commitment](@ref) section explains how clustered unit-commitment is defined,
-while the [Ramping and Reserves](@ref) section explains how to enable these operational details in your model.
+while the [Ramping](@ref) and [Reserves](@ref) sections explain how to enable these operational details in your model.
 The [Investment Optimization](@ref) section explains how to include investment variables in your models,
 while the [User Constraints](@ref) section details how to include generic data-driven custom constraints.
 

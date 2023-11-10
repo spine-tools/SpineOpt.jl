@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 @testset "find_version" begin
 	url = "sqlite://"
     # With no data
@@ -54,6 +55,7 @@
 	@test_throws ArgumentError SpineOpt.find_version(url)
     SpineInterface.close_connection(url)
 end
+
 @testset "run_migrations" begin
 	file_path, io = mktemp()
 	url = "sqlite:///$file_path"
@@ -71,9 +73,13 @@ end
 	add_objects!(Y.settings, [dummy])
 	@test Y.version(settings=dummy) == SpineOpt.current_version()
 end
-@testset "migration scripts" begin
+
+function _test_rename_unit_constraint_to_user_constraint()
 	@testset "rename_unit_constraint_to_user_constraint" begin
 	end
+end
+
+function _test_move_connection_flow_cost()
 	@testset "move_connection_flow_cost" begin
 		data = Dict(
 			:object_classes => ["connection", "node"],
@@ -117,6 +123,9 @@ end
 			@test_throws Exception SpineOpt.move_connection_flow_cost(url, 0)
 		end
 	end
+end
+
+function _test_rename_model_types()
 	@testset "rename_model_types" begin
 		url = "sqlite://"
 		data = Dict(
@@ -141,4 +150,47 @@ end
 		@test Y.model_type(model=Y.model(:op)) == :spineopt_standard
 		@test Y.model_type(model=Y.model(:benders)) == :spineopt_benders_master
 	end
+end
+
+function _test_translate_ramp_parameters()
+	@testset "translate_ramp_parameters" begin
+		url = "sqlite://"
+		to_rm_pnames = (
+			"min_startup_ramp",
+			"min_shutdown_ramp",
+			"min_res_startup_ramp",
+			"min_res_shutdown_ramp",
+			"max_res_startup_ramp",
+			"max_res_shutdown_ramp",
+		)
+		data = Dict(
+			:object_classes => ["unit", "node"],
+			:relationship_classes => [["unit__to_node", ["unit", "node"]]],
+			:relationship_parameters => [
+				[["unit__to_node", x] for x in to_rm_pnames];
+				[["unit__to_node", "max_startup_ramp"], ["unit__to_node", "max_shutdown_ramp"]]
+			],
+			:objects => [["unit", "unit_a"], ["node", "node_b"]],
+			:relationships => [["unit__to_node", ["unit_a", "node_b"]]],
+			:relationship_parameter_values => [
+				["unit__to_node", ["unit_a", "node_b"], "max_startup_ramp", 0.5],
+				["unit__to_node", ["unit_a", "node_b"], "max_shutdown_ramp", 0.8],
+			],
+		)
+		_load_test_data_without_template(url, data)
+		@test SpineOpt.translate_ramp_parameters(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "translate_ramp_parameters"))
+		Y = Module()
+		using_spinedb(url, Y)
+		@test isempty(intersect([x.name for x in parameters(Y)], to_rm_pnames))
+		@test Y.start_up_limit(unit=Y.unit(:unit_a), node=Y.node(:node_b)) == 0.5
+		@test Y.shut_down_limit(unit=Y.unit(:unit_a), node=Y.node(:node_b)) == 0.8
+	end
+end
+
+@testset "migration scripts" begin
+	_test_rename_unit_constraint_to_user_constraint()
+	_test_move_connection_flow_cost()
+	_test_rename_model_types()
+	_test_translate_ramp_parameters()
 end

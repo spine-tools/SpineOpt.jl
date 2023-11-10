@@ -17,65 +17,145 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
+@doc raw"""
     add_constraint_ramp_down!(m::Model)
 
-Limit the maximum ramp of `ramp_down_unit_flow` of a `unit` or `unit_group` if the parameters
-`ramp_down_limit`, `unit_capacity`, `unit_conv_cap_to_unit_flow` exist.
+    #description
+    Limit the decrease of `unit_flow` over a time period of one `duration_unit` according
+    to the `shut_down_limit` and `ramp_down_limit` parameter values.
+    #end description
+
+    #formulation
+    ```math
+    \begin{aligned}
+    & \sum_{
+        \substack{
+            (u,n,d,s,t) \in unit\_flow\_indices \\
+            n \in ng, \, s \in s_{path}, \, t = t_{before} \\
+            !p_{is\_reserve}(n)
+        }
+    }
+    v_{unit\_flow}(u,n,d,s,t) \\
+    & - \sum_{
+        \substack{
+            (u,n,d,s,t) \in unit\_flow\_indices \\
+            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
+            !p_{is\_reserve}(n)
+        }
+    }
+    v_{unit\_flow}(u,n,d,s,t) \\
+    & + \sum_{
+        \substack{
+            (u,n,d,s,t) \in unit\_flow\_indices \\
+            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
+            p_{is\_reserve}(n), \, p_{downward\_reserve}(n)
+        }
+    }
+    v_{unit\_flow}(u,n,d,s,t) \\
+    & <= ( \\
+    & \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
+        }
+    }
+    (p_{shut\_down\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_shut\_down}(u,s,t) \\
+    & + \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{before}
+        }
+    }
+    (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t) \\
+    & - \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
+        }
+    }
+    p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t) \\
+    & ) \cdot p_{unit\_capacity}(u,ng,d,s,t_{after}) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t_{after}) \cdot \Delta t_{after} \\
+    & \forall (u,ng,d) \in ind(p_{ramp\_down\_limit}) \cup ind(p_{shut\_down\_limit}), \\
+    & \forall (ng,t_{before},t_{after}) \in node\_dynamic\_time\_indices(ng), \\
+    & \forall s_{path} \in stochastic\_paths(t_{before},t_{after})
+    \end{aligned}
+    ```
+    #end formulation
 """
 function add_constraint_ramp_down!(m::Model)
-    @fetch units_on, units_started_up, units_shut_down, ramp_down_unit_flow, nonspin_units_shut_down = m.ext[:spineopt].variables
+    @fetch units_on, units_shut_down, unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:ramp_down] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
-            + sum(
-                ramp_down_unit_flow[u, n, d, s, t] * duration(t)
-                for (u, n, d, s, t) in ramp_down_unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, t=t_in_t(m; t_long=t), stochastic_scenario=s
+            + expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_before
                 )
+                if !is_reserve_node(node=n);
+                init=0,
+            )
+            - expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
+                )
+                if !is_reserve_node(node=n);
+                init=0,
+            )
+            + expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
+                )
+                if is_reserve_node(node=n) && downward_reserve(node=n);
+                init=0,
             )
             <=
-            + sum(
-                (
-                    (
-                        + units_on[u, s, t1] - units_started_up[u, s, t1]
-                        - expr_sum(
-                            + nonspin_units_shut_down[u, n, s, t1]
-                            for (u, n, s, t1) in nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t1)
-                            if is_reserve_node(node=n) && downward_reserve(node=n);
-                            init=0,
-                        )
-                    )
-                    * ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            + (
+                + expr_sum(
                     + (
-                        isnothing(
-                            max_shutdown_ramp(
-                                unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t1
-                            )
-                        ) ? units_shut_down[u, s, t1] : 0
+                        + _shut_down_limit(u, ng, d, s, t0, t_after)
+                        - _minimum_operating_point(u, ng, d, s, t0, t_after)
+                        - _ramp_down_limit(u, ng, d, s, t0, t_after)
                     )
-                    # A functional term to take care of the shut down ramps 
-                    # for the case where max_shutdown_ramp is not defined (constraint_max_shut_down_ramp not in use).
-                    # Cautions must be kept that it simulates constraint_max_shut_down_ramp with max_shutdown_ramp=1.
+                    * units_shut_down[u, s, t]
+                    - _minimum_operating_point(u, ng, d, s, t0, t_after)
+                    * units_on[u, s, t]
+                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after));
+                    init=0
                 )
-                * min(duration(t), duration(t1))
-                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
+                + expr_sum(
+                    + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_down_limit(u, ng, d, s, t0, t_after))
+                    * units_on[u, s, t]
+                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                    init=0
+                )
             )
-            * duration(t) ## [ramp_down_limit]=MW/h
+            * _unit_flow_capacity(u, ng, d, s, t0, t_after)
+            * duration(t_after)
         )
-        for (u, ng, d, s, t) in constraint_ramp_down_indices(m)
+        for (u, ng, d, s, t_before, t_after) in constraint_ramp_down_indices(m)
     )
+end
+
+function _shut_down_limit(u, ng, d, s, t0, t)
+    shut_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
+end
+
+function _ramp_down_limit(u, ng, d, s, t0, t)
+    ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
 end
 
 function constraint_ramp_down_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(ramp_down_limit)
-        for (t, path) in t_lowest_resolution_path(
-            m, vcat(units_on_indices(m; unit=u), ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d))
+        (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, ng, d) in Iterators.flatten((indices(ramp_down_limit), indices(shut_down_limit)))
+        for (ng, t_before, t_after) in node_dynamic_time_indices(m; node=ng)
+        for path in active_stochastic_paths(
+            m,
+            [
+                unit_flow_indices(m; unit=u, node=ng, direction=d, t=[t_before, t_after]);
+                units_on_indices(m; unit=u, t=[t_before, t_after])
+            ]
         )
     )
 end
@@ -94,8 +174,20 @@ function constraint_ramp_down_indices_filtered(
     node=anything,
     direction=anything,
     stochastic_path=anything,
-    t=anything,
+    t_before=anything,
+    t_after=anything,
 )
-    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    function f(ind)
+        _index_in(
+            ind;
+            unit=unit,
+            node=node,
+            direction=direction,
+            stochastic_path=stochastic_path,
+            t_before=t_before,
+            t_after=t_after,
+        )
+    end
+
     filter(f, constraint_ramp_down_indices(m))
 end

@@ -1,1 +1,0 @@
-The `fix_ramp_up_unit_flow` parameter simply fixes the value of the [ramp\_up\_unit\_flow](@ref) variable to the provided value. It is possible to provide an incomplete timeseries of values, which can be used for example to impose initial conditions by providing a value only for the first timestep included in the model.
