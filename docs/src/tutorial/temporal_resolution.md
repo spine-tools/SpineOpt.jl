@@ -1,0 +1,173 @@
+# Temporal Resolution Tutorial
+
+Welcome to Spine Toolbox's Temporal Resolution tutorial.
+
+This tutorial provides a step-by-step guide to include uniform and/or flexible temporal resolution in your model.
+
+For more information on how time works in SpineOpt, see the [Temporal Framework](https://spine-tools.github.io/SpineOpt.jl/latest/advanced_concepts/temporal_framework/) documentation.
+
+## Introduction
+
+### Installation and upgrades
+
+If you haven't yet installed the tools yet, please follow the installation guides: 
+- For Spine Toolbox: [Spine Toolbox installation guide](https://github.com/spine-tools/SpineOpt.jl#installation)
+- For SpineOpt: [SpineOpt installation guide](https://github.com/spine-tools/Spine-Toolbox#installation)
+
+If you are not sure whether you have the latest version, please upgrade to ensure compatibility with this guide.
+
+- For Spine Toolbox:
+    - If installed with pipx, then use `python -m pipx upgrade spinetoolbox`
+    - If installed from sources using git, then `git pull`, `python -m pip install -U -r requirements.txt`
+
+- For SpineOpt: [SpineOpt upgrade guide](https://github.com/spine-tools/SpineOpt.jl#upgrading)
+
+### Model assumptions 
+
+- This tutorial builds upon the Simple System tutorial. Please follow [that tutorial](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/) first, or download the [finished system](**NEEDS LINK**).
+- The scenario runs for 5 hours and the default temporal resolution is 1 hour.
+- The fuel_node has a temporal resolution of [1, 1, 1, 2] hours.
+
+## Tutorial
+
+### Adjustments to Simple System
+
+Before demonstrating flexible temporal resolution, we need to adjust the Simple System tutorial so the results are more interesting to examine.
+
+!!! note If you are ever missing a window in the Spine DB Editor, go to the *Hamburger menu* (top right) > under View: Docks > Choose the missing window - then drag and resize the window to your preference
+
+#### Adding variable electricity demand
+
+In SpineToolbox, double click on the *InputData*  block.
+
+In the *Object tree* window:
+- Expand "node"
+- Select the electricity node
+- In the *Object parameter value* window, find the value for the electricity node's demand (should be 150 from the Simple System) - right click > Edit\
+	`Parameter type: Time Series fixed resolution`\
+	Copy and paste (or fill in the table):
+	
+		10
+		20
+		40
+		50
+		20
+
+- Click OK - this sets the electricity demand to the variable profile listed above
+
+![image](figs_temporal_resolution/temporal_resolution_time_series_demand.PNG)
+
+### Uniform temporal resolution
+
+#### Setting model start & end timestamps
+
+In the *Object Tree* window:
+- Expand the model
+- Click on "simple"
+
+In the *Object parameter value* window:
+- Add model_start \
+	`parameter_name:` (Double click) `model_start`\
+	`alternative_name:` `Base`\
+	`value:` (Right click) Edit > `Parameter Type: Date Time` > `1 Jan` (default)
+
+- Add model_end\
+	`parameter_name: model_end`\
+	`alternative_name: Base`\
+	`value:` Edit > `Parameter Type: Date Time` > 5 hours after start
+
+Your *Object parameter value* window show look like this:
+
+![image](figs_temporal_resolution/temporal_resolution_model_start_end.PNG)
+
+!!! Regularly save your changes by selecting the *Hamburger menu* (top right) > Commit > Write a message, such as "Save" > OK
+
+#### Setting 1-hr resolution
+
+In the *Object tree* window:
+- Expand temporal_block
+- Select the existing block (should be called "flat" from the Simple System)
+
+In *Object parameter value* window: 
+- Double click `1D` in the value column
+- Change it to `1h`
+- Click OK - this changes the time resolution from daily to hourly
+
+Now we have a model that runs for 5 hours with hourly resolution.
+
+- Save the changes (Commit) and return to the SpineToolbox window
+
+#### Running the model & viewing results
+
+- Click Execute Project (play arrow) and wait for the model to run
+
+- Double click the *OutputData* block
+
+In the *Relationship Tree* window:
+
+- Select report_unit_node_direction_stochastic_scenario
+
+In the *Frozen table* window, select the most recent "Run ..." entry
+
+!!! If the *Frozen table* window is empty, also add the *Pivot table* window using the *Hamburger menu*.
+
+In the *Pivot table* window:
+- Click and drag over all `Time series` in the `unit_flow` column, right click > Plot
+
+You should see different colored lines, for the *electricity* and *fuel* flows that are *to* and *from* the powerplants (red and green are on top of each other). The blue line shows the electricity demand of [10, 20, 40, 50, 20] - and how the fuel demand from Powerplant A is this same array divided by 0.7 (the conversion ratio).
+
+![image](figs_temporal_resolution/temporal_resolution_uniform_results.PNG)
+
+!!! If `Time series` entries are not visible, select the Hamburger menu > View > Pivot Table: Value
+
+### Flexible temporal resolution
+
+#### Creating a time-varying resolution
+
+- Return to the SpineToolbox window and select the *InputData* block.
+
+In the *Object Tree* window:
+- Expand the temporal_block\
+Notice there's a "flat" temporal block, with the attribute that it's the model_default_temporal_block
+
+- Right click on temporal_block and click "Add objects"\
+`object_name: not_flat` > Click OK
+
+In the *Object Parameter value* window, in a new row, set:\
+	`object_name: not_flat`\
+	`parameter_name: resolution`\
+	`alternative_name: Base`\
+	`value:` Right click > Edit:
+
+	Parameter Type: Array
+	Value type: Duration
+	Value: (Type or copy/paste)
+		1
+		1
+		1
+		2
+
+In the *Object tree* window, expand "not_flat"
+- Right click on model_temporal_block and select "Add relationships"\
+	`model: simple`
+- Click OK - This tells the model that not_flat is a valid temporal block for the simple model.
+
+#### Assigning an entity a unique resolution
+
+In the *Object tree* window:
+- Expand "not_flat"
+
+- Right click on node_temporal_block and select "Add relationships"\
+	`node: fuel_node`
+- Click OK - This sets the fuel node's temporal resolution to "not_flat" instead of the default of "flat"
+
+
+
+- Save the changes (Commit) and return to the SpineToolbox window
+
+#### Running the model & viewing results
+
+- Rerun the model and view the results like before
+
+
+
