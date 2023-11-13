@@ -322,9 +322,10 @@ function test_constraint_unit_flow_capacity()
                 var_u_sd_t_after_coeff = part_name == :one ? (1 - sdl) : max(sul - sdl, 0)
                 var_u_su_t_coeff = part_name == :two ? (1 - sul) : max(sdl - sul, 0)
                 expected_con = @build_constraint(
-                    0.5 * var_u_flow_b + var_u_flow_c
+                    + 0.5 * var_u_flow_b + var_u_flow_c
                     <=
-                    uaf * ucap * (var_u_on_t - var_u_sd_t_after_coeff * var_u_sd_t_after - var_u_su_t_coeff * var_u_su_t)
+                    + uaf * ucap
+                    * (var_u_on_t - var_u_sd_t_after_coeff * var_u_sd_t_after - var_u_su_t_coeff * var_u_su_t)
                 )
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
