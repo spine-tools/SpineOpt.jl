@@ -203,46 +203,37 @@ Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_ou
 ```
 Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_out](@ref), [max\_units\_on\_coefficient\_out\_out](@ref), [min\_units\_on\_coefficient\_out\_out](@ref), respectively.
 
-#### [Bounds on the unit capacity](@id constraint_unit_flow_capacity)
-In a multi-commodity setting, there can be different commodities entering/leaving a certain
-technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
-emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) be specified
-for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship, in order to trigger a constraint on the maximum commodity
-flows to this location in each time step. When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
+##### [Bounds on the unit capacity](@id constraint_unit_flow_capacity)
+
+#instruction
+add_constraint_unit_flow_capacity!
+description
+formulation
+#end instruction
+
+
+##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
+The minimum operating point of a unit can be based on the [unit\_flow](@ref)s of
+input or output nodes/node groups ng:
 
 ```math
 \begin{aligned}
-& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,s,t') \, \in \, (u,ng,d,s,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
-& <= p_{unit\_capacity}(u,ng,d,s,t) \\
-&  \cdot p_{unit\_availability\_factor}(u,s,t) \\
-&  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-&  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
-(u,\Delta t_{units\_on}) \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
-& \cdot \min(t_{units\_on},\Delta t) \\
-& \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
-& \forall t \in time\_slices, \\
+& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}  
+!p_{is\_reserve}(n)} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t'   \\
+& - \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)} p_{is\_reserve}(n) p_{downward\_reserve}(n) } v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& >= p_{minimum\_operating\_point}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \cdot (\sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t))}} v_{units\_on}(u,s,t_{units\_on}) \\
+& - \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
+  v_{nonspin\_units\_shut\_down}(u',n',s',t') )  \\
+& \cdot \min(\Delta t_{units\_on},\Delta t) \\
+& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \\
+& \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))),\\
 & \forall s \in stochastic\_path
 \end{aligned}
 ```
-
-Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
-
-When the unit also provides non-spinning reserves to a reserve node, the corresponding flows are excluded from the capacity constraint and the unit capacity constraint translates to the following inequality:
-
-```math
-\begin{aligned}
-& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,s,t') \, \in \, (u,ng,d,s,t)} \\ n !\in is\_non\_spinning} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
-& <= p_{unit\_capacity}(u,ng,d,s,t) \\
-&  \cdot p_{unit\_availability\_factor}(u,s,t) \\
-&  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-&  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
-(u,\Delta t_{units\_on}) \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
-& \cdot \min(t_{units\_on},\Delta t) \\
-& \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
-& \forall t \in time\_slices, \\
-& \forall s \in stochastic\_path
-\end{aligned}
-```
+Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ``\min(\Delta t_{units\_on},\Delta t)`` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
 
 ### Dynamic constraints
 
@@ -259,7 +250,6 @@ parameters):
 - constraint on `units_on`
 - constraint on `units_available`
 - constraint on the unit state transition
-- constraint on the minimum operating point
 - constraint on minimum down time
 - constraint on minimum up time
 - constraint on ramp rates
@@ -304,28 +294,6 @@ The units on status is constrained by shutting down and starting up actions. Thi
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in units\_on\_indices\\
 \end{aligned}
 ```
-##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
-The minimum operating point of a unit can be based on the [unit\_flow](@ref)s of
-input or output nodes/node groups ng:
-
-```math
-\begin{aligned}
-& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}  
-!p_{is\_reserve}(n)} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t'   \\
-& - \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)} p_{is\_reserve}(n) p_{downward\_reserve}(n) } v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
-& >= p_{minimum\_operating\_point}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-& \cdot (\sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t))}} v_{units\_on}(u,s,t_{units\_on}) \\
-& - \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
-  v_{nonspin\_units\_shut\_down}(u',n',s',t') )  \\
-& \cdot \min(\Delta t_{units\_on},\Delta t) \\
-& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \\
-& \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))),\\
-& \forall s \in stochastic\_path
-\end{aligned}
-```
-Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ``\min(\Delta t_{units\_on},\Delta t)`` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
 
 ##### [Minimum down time (basic version)](@id constraint_min_down_time)
 In order to impose a minimum offline time of a unit, before it can be started up again, the [min\_down\_time](@ref) parameter needs to be defined, which triggers the generation of the following constraint:

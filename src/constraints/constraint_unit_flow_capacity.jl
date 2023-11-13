@@ -17,12 +17,70 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
+@doc raw""""
     add_constraint_unit_flow_capacity!(m::Model)
 
 Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices.
 
-Check if `unit_conv_cap_to_flow` is defined.
+    #description
+    In a multi-commodity setting, there can be different commodities entering/leaving a certain
+    technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
+    emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) must be specified
+    for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship,
+    in order to trigger a constraint on the maximum commodity flows to this location in each time step.
+    When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
+
+    Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
+    in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
+    #end description
+
+    #formulation
+    ```math
+    \begin{aligned}
+    & \sum_{
+        \substack{
+            (u,n,d,s,t_{flow}) \in unit\_flow\_indices: \\
+            n \in ng, \, s \in s_{path}, \, t_{flow} \in t\_overlaps\_t(t) \\
+            !p_{is\_reserve}(n)
+        }
+    } v_{unit\_flow}(u,n,d,s,t_{flow}) \cdot \Delta t / \Delta t_{flow} \\
+    & - \sum_{
+        \substack{
+            (u,n,d,s,t_{flow}) \in unit\_flow\_indices: \\
+            n \in ng, \, s \in s_{path}, \, t_{flow} \in t\_overlaps\_t(t) \\
+            p_{is\_reserve}(n), \, p_{upward\_reserve}(n) \\
+            !p_{is\_non\_spinning}(n)
+        }
+    } v_{unit\_flow}(u,n,d,s,t_{flow}) \cdot \Delta t / \Delta t_{flow} \\
+    & <= p_{unit\_capacity}(u,ng,d,s,t) \\
+    & \cdot p_{unit\_availability\_factor}(u,s,t) \\
+    & \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+    & \cdot ( \\
+    & \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices:\\
+            s \in s_{path}
+        }
+    } v_{units\_on}(u,s,t) \\
+    & + (1 - p_{shut\_down\_limit}(u,ng,d,s,t)) \cdot \sum_{
+        \substack{
+            (u,s,t_{after}) \in units\_on\_indices:\\
+            s \in s_{path}, \, t_{after} \in t\_before\_t(t\_before=t)
+        }
+    } v_{units\_shut\_down}(u,s,t_{after}) \\
+    & - (1 - p_{start\_up\_limit}(u,ng,d,s,t)) \cdot \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices:\\
+            s \in s_{path}
+        }
+    } v_{units\_started\_up}(u,s,t) \\
+    & ) \\
+    & \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
+    & \forall t \in t\_highest\_resolution(u), \\
+    & \forall s_{path} \in stochastic\_paths(t)
+    \end{aligned}
+    ```
+    #end formulation
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_shut_down = m.ext[:spineopt].variables
