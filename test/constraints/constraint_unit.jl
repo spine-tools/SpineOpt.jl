@@ -209,7 +209,6 @@ function test_constraint_unit_flow_capacity()
         uaf = 0.5
         sul = 0.4
         sdl = 0.3
-        object_parameter_values = [["unit", "unit_ab", "unit_availability_factor", uaf]]
         relationships = [
                 ["unit__to_node", ["unit_ab", "node_group_bc"]],
         ]
@@ -221,7 +220,10 @@ function test_constraint_unit_flow_capacity()
         @testset "case_min_up_time_gt_time_step" begin
             url_in = _test_constraint_unit_setup()
             mup = unparse_db_value(Minute(61))
-            push!(object_parameter_values, ["unit", "unit_ab", "min_up_time", mup])
+            object_parameter_values = [
+                ["unit", "unit_ab", "unit_availability_factor", uaf],
+                ["unit", "unit_ab", "min_up_time", mup],
+            ]
             SpineInterface.import_data(
                 url_in; 
                 object_parameter_values=object_parameter_values, 
@@ -264,7 +266,7 @@ function test_constraint_unit_flow_capacity()
                 expected_con = @build_constraint(
                     0.5 * var_u_flow_b + var_u_flow_c
                     <=
-                    ucap * (var_u_on_t - (1 - sdl) * var_u_sd_t_after - (1 - sul) * var_u_su_t)
+                    uaf * ucap * (var_u_on_t - (1 - sdl) * var_u_sd_t_after - (1 - sul) * var_u_su_t)
                 )
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -272,7 +274,10 @@ function test_constraint_unit_flow_capacity()
         end
         @testset "case_min_up_time_le_time_step" begin
             mup = unparse_db_value(Minute(60))
-            push!(object_parameter_values, ["unit", "unit_ab", "min_up_time", mup])
+            object_parameter_values = [
+                ["unit", "unit_ab", "unit_availability_factor", uaf],
+                ["unit", "unit_ab", "min_up_time", mup],
+            ]
             url_in = _test_constraint_unit_setup()
             SpineInterface.import_data(
                 url_in; 
@@ -319,7 +324,7 @@ function test_constraint_unit_flow_capacity()
                 expected_con = @build_constraint(
                     0.5 * var_u_flow_b + var_u_flow_c
                     <=
-                    ucap * (var_u_on_t - var_u_sd_t_after_coeff * var_u_sd_t_after - var_u_su_t_coeff * var_u_su_t)
+                    uaf * ucap * (var_u_on_t - var_u_sd_t_after_coeff * var_u_sd_t_after - var_u_su_t_coeff * var_u_su_t)
                 )
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)

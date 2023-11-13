@@ -42,14 +42,14 @@ function add_constraint_unit_flow_capacity!(m::Model)
             )
             <=
             + expr_sum(
-                _flow_upper_bound(u, ng, d, s, t0, t_on) * units_on[u, s, t_on]
+                _unit_flow_capacity(u, ng, d, s, t0, t_on) * units_on[u, s, t_on]
                 for (u, s, t_on) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_on);
                 init=0
             )
             - (
                 + expr_sum(
                     + _shutdown_margin(u, ng, d, s, t0, t_on, case, part)
-                    * _flow_upper_bound(u, ng, d, s, t0, t_on)
+                    * _unit_flow_capacity(u, ng, d, s, t0, t_on)
                     * units_shut_down[u, s, t_on_after]
                     for (u, s, t_on_after) in units_on_indices(
                         m; unit=u, stochastic_scenario=s, t=t_before_t(m; t_before=t_on)
@@ -58,7 +58,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 )                
                 + expr_sum(
                     + _shutdown_margin(u, ng, d, s, t0, t_on, case, part)
-                    * _flow_upper_bound(u, ng, d, s, t0, t_on)
+                    * _unit_flow_capacity(u, ng, d, s, t0, t_on)
                     * nonspin_units_shut_down[u, n, s, t_ns_sd]
                     for (u, n, s, t_ns_sd) in nonspin_units_shut_down_indices(
                         m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_on)
@@ -68,7 +68,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
             )
             - expr_sum(
                 + _startup_margin(u, ng, d, s, t0, t_on, case, part)
-                * _flow_upper_bound(u, ng, d, s, t0, t_on)
+                * _unit_flow_capacity(u, ng, d, s, t0, t_on)
                 * units_started_up[u, s, t_on]
                 for (u, s, t_on_after) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_on);
                 init=0
@@ -76,23 +76,6 @@ function add_constraint_unit_flow_capacity!(m::Model)
         )
         for (u, ng, d, s, t_on, case, part) in constraint_unit_flow_capacity_indices(m)
     )
-end
-
-function _flow_upper_bound(u, ng, d, s, t0, t_on)
-    (
-        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)]
-        * unit_conv_cap_to_flow[
-            (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)
-        ]
-    )
-end
-
-function _start_up_limit(u, ng, d, s, t0, t_on)
-    start_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=1)]
-end
-
-function _shut_down_limit(u, ng, d, s, t0, t_on)
-    shut_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=1)]
 end
 
 function _shutdown_margin(u, ng, d, s, t0, t_on, case, part)

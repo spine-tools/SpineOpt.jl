@@ -137,10 +137,6 @@ function add_constraint_ramp_up!(m::Model)
     )
 end
 
-function _start_up_limit(u, ng, d, s, t0, t)
-    start_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
-end
-
 function _ramp_up_limit(u, ng, d, s, t0, t)
     ramp_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
 end
