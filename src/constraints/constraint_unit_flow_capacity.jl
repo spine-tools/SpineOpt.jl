@@ -32,6 +32,12 @@ Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices
 
     Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
     in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
+
+    The below formulation is valid for time-slices whose duration is greater than the minimum up time of the unit.
+    This ensures that the unit is not online for exactly one time-slice, which might result in an infeasibility
+    with the below formulation.
+    For time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar
+    formulation, but the details are omitted for brevity.
     #end description
 
     #formulation
