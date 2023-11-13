@@ -137,10 +137,6 @@ function add_constraint_ramp_down!(m::Model)
     )
 end
 
-function _shut_down_limit(u, ng, d, s, t0, t)
-    shut_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
-end
-
 function _ramp_down_limit(u, ng, d, s, t0, t)
     ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
 end
