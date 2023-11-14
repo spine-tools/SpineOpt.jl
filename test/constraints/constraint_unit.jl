@@ -209,13 +209,31 @@ function test_constraint_unit_flow_capacity()
         uaf = 0.5
         sul = 0.4
         sdl = 0.3
+        objects = [["node", "node_group_a"], ["node", "reserves_a"], ["node", "reserves_bc"]]
+        object_groups = [
+            ["node", "node_group_a", "node_a"],
+            ["node", "node_group_a", "reserves_a"],
+            ["node", "node_group_bc", "reserves_bc"],
+        ]
         relationships = [
+            ["unit__from_node", ["unit_ab", "node_group_a"]],
+            ["unit__from_node", ["unit_ab", "reserves_a"]],
             ["unit__to_node", ["unit_ab", "node_group_bc"]],
+            ["unit__to_node", ["unit_ab", "reserves_bc"]],
+            ["node__temporal_block", ["reserves_a", "hourly"]],
+            ["node__stochastic_structure", ["reserves_a", "stochastic"]],
+            ["node__temporal_block", ["reserves_bc", "hourly"]],
+            ["node__stochastic_structure", ["reserves_bc", "deterministic"]],
+        ]
+        object_parameter_values = [
+            ["unit", "unit_ab", "unit_availability_factor", uaf],
+            ["node", "reserves_a", "is_reserve_node", true],
+            ["node", "reserves_bc", "is_reserve_node", true],
         ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", ucap],
-            ["unit__from_node", ["unit_ab", "node_a"], "start_up_limit", sul],
-            ["unit__from_node", ["unit_ab", "node_a"], "shut_down_limit", sdl],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", ucap],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "start_up_limit", sul],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "shut_down_limit", sdl],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "start_up_limit", sul],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "shut_down_limit", sdl],
@@ -223,69 +241,79 @@ function test_constraint_unit_flow_capacity()
         @testset for (case_name, part_names) in (
             :min_up_time_gt_time_step => (:one,), :min_up_time_le_time_step => (:one, :two), 
         )
-            url_in = _test_constraint_unit_setup()
-            mup = unparse_db_value(case_name == :min_up_time_gt_time_step ? Minute(61) : Hour(1))
-            object_parameter_values = [
-                ["unit", "unit_ab", "unit_availability_factor", uaf], ["unit", "unit_ab", "min_up_time", mup],
-            ]
-            SpineInterface.import_data(
-                url_in; 
-                object_parameter_values=object_parameter_values, 
-                relationships=relationships,
-                relationship_parameter_values=relationship_parameter_values
-            )
-            m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
-            var_units_on = m.ext[:spineopt].variables[:units_on]
-            var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-            var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
-            constraint = m.ext[:spineopt].constraints[:unit_flow_capacity]
-            @test length(constraint) == 4 * length(part_names)
-            s_child = stochastic_scenario(:child)
-            s_parent = stochastic_scenario(:parent)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
-            s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
-            case_part = (Object(:min_up_time_gt_time_step, :case), Object(:one, :part))
-            @testset for con_key in keys(constraint)
-                con = constraint[con_key]
-                u, n, d, s, t, case, part = con_key
-                @test u.name == :unit_ab
-                @test (n.name, d.name) in ((:node_a, :from_node), (:node_group_bc, :to_node))
-                @test case.name == case_name
-                @test part.name in part_names
-                @test (n.name, s, t) in (
-                    (:node_a, [s_parent, s_child], t1h1),
-                    (:node_a, [s_child], t1h2),
-                    (:node_group_bc, [s_parent, s_child], t1h1),
-                    (:node_group_bc, [s_parent, s_child], t1h2),
+            @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
+                url_in = _test_constraint_unit_setup()
+                SpineInterface.import_data(
+                    url_in; 
+                    objects=objects,
+                    relationships=relationships,
+                    object_parameter_values=object_parameter_values, 
+                    relationship_parameter_values=relationship_parameter_values,
+                    object_groups=object_groups,
                 )
-                t_after = t == t1h1 ? t1h2 : nothing
-                var_u_on_t = var_units_on[u, s_by_t[t], t]
-                var_u_su_t = var_units_started_up[u, s_by_t[t], t]
-                var_u_sd_t_after = isnothing(t_after) ? 0 : var_units_shut_down[u, s_by_t[t_after], t_after]
-                lhs = if n.name == :node_a
-                    var_unit_flow[u, node(:node_a), d, s_by_t[t], t]
-                elseif n.name == :node_group_bc
-                    var_u_flow_b = var_unit_flow[u, node(:node_b), d, s_parent, t2h]
-                    var_u_flow_c = var_unit_flow[u, node(:node_c), d, s_by_t[t], t]
-                    0.5 * var_u_flow_b + var_u_flow_c
+                mup = unparse_db_value(case_name == :min_up_time_gt_time_step ? Minute(61) : Hour(1))
+                more_object_parameter_values = [
+                    ["unit", "unit_ab", "min_up_time", mup],
+                    ["node", "reserves_a", "downward_reserve", dr],
+                    ["node", "reserves_bc", "upward_reserve", ur],
+                ]
+                SpineInterface.import_data(url_in; object_parameter_values=more_object_parameter_values)
+                m = run_spineopt(url_in; log_level=0, optimize=false)
+                var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+                var_units_on = m.ext[:spineopt].variables[:units_on]
+                var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+                var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
+                constraint = m.ext[:spineopt].constraints[:unit_flow_capacity]
+                @test length(constraint) == 4 * length(part_names)
+                s_child = stochastic_scenario(:child)
+                s_parent = stochastic_scenario(:parent)
+                t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+                t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+                s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
+                case_part = (Object(:min_up_time_gt_time_step, :case), Object(:one, :part))
+                @testset for con_key in keys(constraint)
+                    con = constraint[con_key]
+                    u, n, d, s, t, case, part = con_key
+                    @test u.name == :unit_ab
+                    @test (n.name, d.name) in ((:node_group_a, :from_node), (:node_group_bc, :to_node))
+                    @test case.name == case_name
+                    @test part.name in part_names
+                    @test (n.name, s, t) in (
+                        (:node_group_a, [s_parent, s_child], t1h1),
+                        (:node_group_a, [s_child], t1h2),
+                        (:node_group_bc, [s_parent, s_child], t1h1),
+                        (:node_group_bc, [s_parent, s_child], t1h2),
+                    )
+                    t_after = t == t1h1 ? t1h2 : nothing
+                    var_u_on_t = var_units_on[u, s_by_t[t], t]
+                    var_u_su_t = var_units_started_up[u, s_by_t[t], t]
+                    var_u_sd_t_after = isnothing(t_after) ? 0 : var_units_shut_down[u, s_by_t[t_after], t_after]
+                    lhs = if n.name == :node_group_a
+                        var_u_flow_a = var_unit_flow[u, node(:node_a), d, s_by_t[t], t]
+                        var_u_flow_reserves_a = dr ? var_unit_flow[u, node(:reserves_a), d, s_by_t[t], t] : 0
+                        var_u_flow_a + var_u_flow_reserves_a
+                    elseif n.name == :node_group_bc
+                        var_u_flow_b = var_unit_flow[u, node(:node_b), d, s_parent, t2h]
+                        var_u_flow_c = var_unit_flow[u, node(:node_c), d, s_by_t[t], t]
+                        var_u_flow_reserves_bc = ur ? var_unit_flow[u, node(:reserves_bc), d, s_parent, t] : 0
+                        0.5 * var_u_flow_b + var_u_flow_c + var_u_flow_reserves_bc
+                    end
+                    var_u_sd_t_after_coeff, var_u_su_t_coeff = if case_name == :min_up_time_gt_time_step
+                        1 - sdl, 1 - sul
+                    elseif part.name == :one
+                        1 - sdl, max(sdl - sul, 0)
+                    else
+                        max(sul - sdl, 0), 1 - sul
+                    end
+                    expected_con = @build_constraint(
+                        lhs
+                        <=
+                        + uaf * ucap
+                        * (var_u_on_t - var_u_sd_t_after_coeff * var_u_sd_t_after - var_u_su_t_coeff * var_u_su_t)
+                    )
+                    observed_con = constraint_object(con)
+                    @test _is_constraint_equal(observed_con, expected_con)
                 end
-                var_u_sd_t_after_coeff, var_u_su_t_coeff = if case_name == :min_up_time_gt_time_step
-                    1 - sdl, 1 - sul
-                elseif part.name == :one
-                    1 - sdl, max(sdl - sul, 0)
-                else
-                    max(sul - sdl, 0), 1 - sul
-                end
-                expected_con = @build_constraint(
-                    lhs
-                    <=
-                    + uaf * ucap
-                    * (var_u_on_t - var_u_sd_t_after_coeff * var_u_sd_t_after - var_u_su_t_coeff * var_u_su_t)
-                )
-                observed_con = constraint_object(con)
-                @test _is_constraint_equal(observed_con, expected_con)
             end
         end
     end
