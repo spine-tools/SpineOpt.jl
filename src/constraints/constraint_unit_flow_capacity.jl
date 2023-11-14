@@ -50,7 +50,7 @@ Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices
             !p_{is\_reserve}(n)
         }
     } v_{unit\_flow}(u,n,d,s,t_{flow}) \cdot \Delta t / \Delta t_{flow} \\
-    & - \sum_{
+    & + \sum_{
         \substack{
             (u,n,d,s,t_{flow}) \in unit\_flow\_indices: \\
             n \in ng, \, s \in s_{path}, \, t_{flow} \in t\_overlaps\_t(t) \\
@@ -100,7 +100,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_on)
                 ) 
                 if !is_reserve_node(node=n) || (
-                    is_reserve_node(node=n) && upward_reserve(node=n) && !is_non_spinning(node=n)
+                    _is_reserve_node(n, d; to_node=upward_reserve, from_node=downward_reserve)
+                    && !is_non_spinning(node=n)
                 );
                 init=0,
             )

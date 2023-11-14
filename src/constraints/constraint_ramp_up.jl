@@ -106,7 +106,8 @@ function add_constraint_ramp_up!(m::Model)
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
                 )
-                if is_reserve_node(node=n) && upward_reserve(node=n);
+                if _is_reserve_node(n, d; to_node=upward_reserve, from_node=downward_reserve)
+                && !is_non_spinning(node=n);
                 init=0,
             )
             <=

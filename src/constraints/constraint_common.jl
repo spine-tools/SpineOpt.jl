@@ -81,3 +81,25 @@ end
 function _shut_down_limit(u, ng, d, s, t0, t)
     shut_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
 end
+
+"""
+    _is_reserve_node(n, d; from_node, to_node)
+
+Whether the given node is a reserve node for given direction of flow.
+Keyword arguments `from_node` and `to_node` should either be `upward_reserve` or `downward_reserve`,
+indicating which type of reserve is considered relevant for each direction.
+
+# Example
+
+```julia
+
+n = node(:some_node)
+
+@assert upwards_reserve(node=n) && !downwards_reserve(node=n)
+@assert _is_reserve_node(n, direction(:from_node); from_node=upwards_reserve, to_node=downwards_reserve)
+@assert !_is_reserve_node(n, direction(:from_node); from_node=downwards_reserve, to_node=upwards_reserve)
+```
+"""
+function _is_reserve_node(n, d; from_node, to_node)
+    is_reserve_node(node=n) && Dict(direction(:from_node) => from_node, direction(:to_node) => to_node)[d](node=n)
+end
