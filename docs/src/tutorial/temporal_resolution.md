@@ -141,11 +141,11 @@ In the *Object Parameter value* window, in a new row, set:\
 
 	Parameter Type: Array
 	Value type: Duration
-	Value: (Type or copy/paste)
-		1
-		1
-		1
-		2
+	Value: 1, 1, 1, 2
+
+The array should look like this: 
+
+![image](figs_temporal_resolution/temporal_resolution_not_flat_time.PNG)
 
 In the *Object tree* window, expand "not_flat"
 - Right click on model_temporal_block and select "Add relationships"\
@@ -169,5 +169,7 @@ In the *Object tree* window:
 
 - Rerun the model and view the results like before
 
+See how the yellow line (fuel demand of Powerplant A) now ends at a value of 50, which is equal to the last two demand values averaged over the 2hr window (70 + 30) / 2 = 50.
 
+![image](figs_temporal_resolution/temporal_resolution_final_graph.PNG)
 
