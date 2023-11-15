@@ -167,7 +167,7 @@ When we run the model now, we will obtain values for all scenarios.
 ## Different stochastic structures
 
 It is also possible to have different stochastic structures across the model.
-However, there are only variables on which this has an effect.
+However, there are only certain variables on which this has an effect.
 We are going to take the example of *units_on*.
 There are no *units_on* in the simple system,
 so we'll build on the unit commitment tutorial instead.
@@ -177,8 +177,8 @@ Make a new project like before but load tutorial_UC.json instead of the simple s
 There is already a (deterministic) stochastic structure present
 and now we'll add another stochastic structure specifically for power plant b.
 - add stochastic structure *DAG*
-- add scenario *startingpoint1*
-- add scenario *startingpoint2*
+- add scenario *value1*
+- add scenario *value2*
 - connect the scenarios to the stochastic structure and the stochastic structure to the model.
 
 Note that the stochastic structure *Deterministic* remains the default of the model
@@ -187,6 +187,10 @@ The stochastic structure *DAG* will instead be connected to power plant b.
 - add the relationship *units_on__stochastic_structure* between power plant b and DAG.
 
 With the stochastic structure we can now choose different starting conditions.
-In particular we'll consider the initial number of units that are on.
-- Turn the initial units on parameter from 0.0 into a map
-with 0.0 for starting point 1 and 2.0 for starting point 2.
+In particular we'll consider the costs when a unit is on.
+- Turn the cost of units on parameter from 3.0 into a map
+with 1.0 for value 1 and 5.0 for value 2.
+
+!!! note
+    This does not work for all parameters.
+    One example is the number of units that are initially on as this refers to an historic time slice.
