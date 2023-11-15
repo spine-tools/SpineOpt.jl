@@ -40,12 +40,7 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
             + expr_sum(
                 connection_intact_flow[conn, n, d, s, t] * duration(t)
                 for (conn, n, d, s, t) in connection_intact_flow_indices(
-                    m;
-                    connection=conn,
-                    direction=d,
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
+                    m; connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t),
                 );
                 init=0,
             )
@@ -59,12 +54,9 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
             + expr_sum(
                 connection_intact_flow[conn, n, d_reverse, s, t] * duration(t)
                 for (conn, n, d_reverse, s, t) in connection_intact_flow_indices(
-                    m;
-                    connection=conn,
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
-                ) if d_reverse != d && !is_reserve_node(node=n);
+                    m; connection=conn, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                )
+                if d_reverse != d && !is_reserve_node(node=n);
                 init=0,
             )
         )

@@ -147,6 +147,23 @@ function _stochastic_scenarios(m::Model, stoch_struct::Object, t::TimeSlice, sce
 end
 
 """
+    _generate_any_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+
+Generate the `any_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+"""
+function _generate_any_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+    any_stochastic_scenario_weight_values = Dict(
+        scen => Dict(:any_stochastic_scenario_weight => parameter_value(spec.weight))
+        for ss in model__stochastic_structure(model=m.ext[:spineopt].instance)
+        for (scen, spec) in all_stochastic_dags[ss]
+    )
+    add_object_parameter_values!(stochastic_scenario, any_stochastic_scenario_weight_values)
+    m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight] = Parameter(
+        :any_stochastic_scenario_weight, [stochastic_scenario]
+    )
+end
+
+"""
     _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
 
 Generate the `node_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
@@ -165,8 +182,7 @@ function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags
         node_stochastic_scenario_weight_values,
     )
     m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight] = Parameter(
-        :node_stochastic_scenario_weight,
-        [node__stochastic_scenario],
+        :node_stochastic_scenario_weight, [node__stochastic_scenario]
     )
 end
 
@@ -189,8 +205,7 @@ function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags
         unit_stochastic_scenario_weight_values,
     )
     m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight] = Parameter(
-        :unit_stochastic_scenario_weight,
-        [unit__stochastic_scenario],
+        :unit_stochastic_scenario_weight, [unit__stochastic_scenario]
     )
 end
 
@@ -213,8 +228,7 @@ function _generate_connection_stochastic_scenario_weight(m::Model, all_stochasti
         connection_stochastic_scenario_weight_values,
     )
     m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight] = Parameter(
-        :connection_stochastic_scenario_weight,
-        [connection__stochastic_scenario],
+        :connection_stochastic_scenario_weight, [connection__stochastic_scenario]
     )
 end
 
@@ -255,6 +269,7 @@ function generate_stochastic_structure!(m::Model)
     _generate_node_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_unit_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_connection_stochastic_scenario_weight(m, all_stochastic_dags)
+    _generate_any_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_active_stochastic_paths(m)
 end
 
@@ -436,9 +451,15 @@ end
 function node_stochastic_scenario_weight(m; kwargs...)
     m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
 end
+
 function unit_stochastic_scenario_weight(m; kwargs...)
     m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
 end
+
 function connection_stochastic_scenario_weight(m; kwargs...)
     m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
+end
+
+function any_stochastic_scenario_weight(m; kwargs...)
+    m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight][(; kwargs...)]
 end

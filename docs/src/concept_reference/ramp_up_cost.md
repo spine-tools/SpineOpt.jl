@@ -1,1 +1,0 @@
-By defining the [ramp\_up\_cost](@ref) parameter for a specific [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship, a cost term will be added to the objective function whenever the unit ramps up its activity (i.e., when the [ramp\_up\_unit\_flow](@ref) is nonzero) over the course of its operational dispatch during the current optimization window.

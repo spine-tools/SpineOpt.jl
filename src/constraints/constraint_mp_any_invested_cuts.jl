@@ -33,7 +33,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
     ) = m.ext[:spineopt].variables
     merge!(
         get!(m.ext[:spineopt].constraints, :mp_any_invested_cut, Dict()),
-            Dict(
+        Dict(
             (benders_iteration=bi, t=t) => @constraint(
                 m,
                 + sp_objective_upperbound[t]

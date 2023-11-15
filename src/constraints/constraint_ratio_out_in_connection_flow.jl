@@ -96,14 +96,15 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
     unique(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=path, t=t)
         for (conn, ng_out, ng_in) in indices(ratio_out_in)
-        for (t, path_out) in t_lowest_resolution_path(m, 
+        for (t, path_out) in t_lowest_resolution_path(
+            m, 
             connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))
         )
         for path in active_stochastic_paths(
             m, 
             vcat(
                 path_out,
-                [
+                Object[
                     ind.stochastic_scenario
                     for s in path_out
                     for ind in connection_flow_indices(

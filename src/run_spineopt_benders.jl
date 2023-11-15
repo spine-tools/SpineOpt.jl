@@ -101,9 +101,6 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
-        @timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(
-            m_mp; log_level=log_level
-        )
         _unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
@@ -172,17 +169,6 @@ function _add_mp_constraints!(m; log_level=3)
     _update_constraint_names!(m)
 end
 
-function _add_mp_renewing_constraints!(m; log_level=3)
-    for add_constraint! in (
-            add_constraint_mp_min_res_gen_to_demand_ratio!,
-        )
-        name = name_from_fn(add_constraint!)
-        @timelog log_level 3 "- [$name]" add_constraint!(m)
-    end
-    _update_constraint_names!(m)
-end
-
-
 function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
@@ -218,12 +204,14 @@ end
 Add benders cuts to master problem.
 """
 function _add_mp_cuts!(m; log_level=3)
-    @timelog log_level 3 " - [constraint_mp_any_invested_cuts]" add_constraint_mp_any_invested_cuts!(m)
-    # Name constraints
-    cons = m.ext[:spineopt].constraints[:mp_any_invested_cut]
-    for (inds, con) in cons
-        _set_name(con, string(:mp_any_invested_cut, inds))
+    for add_constraint! in (
+            add_constraint_mp_any_invested_cuts!,
+            add_constraint_mp_min_res_gen_to_demand_ratio_cuts!,
+        )
+        name = name_from_fn(add_constraint!)
+        @timelog log_level 3 "- [$name]" add_constraint!(m)
     end
+    _update_constraint_names!(m)
 end
 
 function _unfix_history!(m::Model)

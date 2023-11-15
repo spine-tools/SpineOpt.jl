@@ -74,14 +74,12 @@ end
 
 function constraint_connection_flow_capacity_indices(m::Model)
     (
-        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
-        for (c, ng, d) in indices(connection_capacity)
+        (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
+        for (conn, ng, d) in indices(connection_capacity)
         for (t, path) in t_lowest_resolution_path(
-            m, 
-            vcat(
-                connection_flow_indices(m; connection=c, node=ng, direction=d),
-                connections_invested_available_indices(m; connection=c)
-            )
+            m,
+            connection_flow_indices(m; connection=conn, node=ng, direction=d),
+            connections_invested_available_indices(m; connection=conn),
         )
     )
 end

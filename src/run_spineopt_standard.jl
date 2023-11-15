@@ -110,17 +110,13 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_units_invested!,
             add_variable_units_invested_available!,
             add_variable_units_mothballed!,
-            add_variable_ramp_up_unit_flow!,
-            add_variable_start_up_unit_flow!,
             add_variable_nonspin_units_started_up!,
-            add_variable_nonspin_ramp_up_unit_flow!,
-            add_variable_ramp_down_unit_flow!,
-            add_variable_shut_down_unit_flow!,
             add_variable_nonspin_units_shut_down!,
-            add_variable_nonspin_ramp_down_unit_flow!,
             add_variable_node_pressure!,
             add_variable_node_voltage_angle!,
             add_variable_binary_gas_connection_flow!,
+            add_variable_user_constraint_slack_pos!,
+            add_variable_user_constraint_slack_neg!,
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
@@ -187,17 +183,8 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_min_down_time!,
             add_constraint_min_up_time!,
             add_constraint_unit_state_transition!,
-            add_constraint_split_ramps!,
             add_constraint_ramp_up!,
-            add_constraint_max_start_up_ramp!,
-            add_constraint_min_start_up_ramp!,
-            add_constraint_max_nonspin_ramp_up!,
-            add_constraint_min_nonspin_ramp_up!,
             add_constraint_ramp_down!,
-            add_constraint_max_shut_down_ramp!,
-            add_constraint_min_shut_down_ramp!,
-            add_constraint_max_nonspin_ramp_down!,
-            add_constraint_min_nonspin_ramp_down!,
             add_constraint_res_minimum_node_state!,
             add_constraint_fix_node_pressure_point!,
             add_constraint_connection_unitary_gas_flow!,
@@ -270,7 +257,7 @@ function run_spineopt_kernel!(
     k = _resume_run!(m, resume_file_path, log_level, update_names)
     k === nothing && return m
     calculate_duals = any(
-        startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
+        startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
     while optimize
         @log log_level 1 "\nWindow $k: $(current_window(m))"
@@ -381,7 +368,9 @@ Save a model results: first postprocess results, then save variables and objecti
 """
 function _save_model_results!(m; iterations=nothing)
     _save_variable_values!(m)
+    _save_constraint_values!(m)
     _save_objective_values!(m)
+    _save_other_values!(m)
 end
 
 """
@@ -390,6 +379,27 @@ Save the value of all variables in a model.
 function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
         m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
+    end
+end
+
+function _save_other_values!(m::Model)
+    try
+        m.ext[:spineopt].values[:relative_optimality_gap] = Dict(
+            (model=m.ext[:spineopt].instance, t=current_window(m),) => JuMP.MOI.get(m, JuMP.MOI.RelativeGap())
+        )
+    catch err
+        @warn err
+    end
+end
+
+"""
+Save the value of all constraints if the user wants to report it.
+"""
+function _save_constraint_values!(m::Model)
+    for (name, con) in m.ext[:spineopt].constraints
+        name = Symbol(:value_constraint_, name)
+        name in keys(m.ext[:spineopt].outputs) || continue
+        m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(c) for (ind, c) in con)
     end
 end
 
@@ -916,10 +926,21 @@ function update_model!(m; log_level=3, update_names=false)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
 end
 
-function _update_constraint_names!(m)
-    for (key, cons) in m.ext[:spineopt].constraints                        
-        for (ind, con) in cons        
-            constraint_name = _sanitize_constraint_name(string(key, ind))                            
+function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
+    for name in names   
+        var = m.ext[:spineopt].variables[name]
+        # NOTE: only update names for the representative variables
+        # This is achieved by using the indices function from the variable definition
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m)
+            _set_name(var[ind], _base_name(name, ind))
+        end
+    end
+end
+
+function _update_constraint_names!(m, names=keys(m.ext[:spineopt].constraints))
+    for name in names   
+        for (ind, con) in m.ext[:spineopt].constraints[name]        
+            constraint_name = _sanitize_constraint_name(string(name, ind))                            
             _set_name(con, constraint_name)
         end
     end
@@ -929,14 +950,6 @@ function _sanitize_constraint_name(constraint_name)
     pattern = r"[^\x1F-\x7F]+"
     occursin(pattern, constraint_name) && @warn "constraint $constraint_name has an illegal character"
     replace(constraint_name, pattern => "_")
-end
-
-function _update_variable_names!(m)
-    for (name, var) in m.ext[:spineopt].variables
-        for (ind, v) in var
-            _set_name(v, _base_name(name, ind))
-        end
-    end
 end
 
 _set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)
