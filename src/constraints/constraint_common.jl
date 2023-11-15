@@ -103,3 +103,5 @@ n = node(:some_node)
 function _is_reserve_node(n, d; from_node, to_node)
     is_reserve_node(node=n) && Dict(direction(:from_node) => from_node, direction(:to_node) => to_node)[d](node=n)
 end
+
+_overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
