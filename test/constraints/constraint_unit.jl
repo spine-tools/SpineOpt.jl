@@ -1336,9 +1336,9 @@ function test_constraint_ramp_up()
                         + (ur ? 3 * var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
                     )
                 end
-                var_u_on_t_after = var_units_on[u, s_by_t[t_after], t_after]
-                var_u_on_t_before = var_units_on[u, s_by_t[t_before], t_before]
-                var_u_su_t_after = var_units_started_up[u, s_by_t[t_after], t_after]
+                var_u_on_t_after = 3 * var_units_on[u, s_by_t[t_after], t_after]
+                var_u_on_t_before = 3 * var_units_on[u, s_by_t[t_before], t_before]
+                var_u_su_t_after = 3 * var_units_started_up[u, s_by_t[t_after], t_after]
                 expected_con = @build_constraint(
                     + lhs
                     <=
@@ -1442,9 +1442,9 @@ function test_constraint_ramp_down()
                         + (dr ? 3 * var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
                     )
                 end
-                var_u_on_t_after = var_units_on[u, s_by_t[t_after], t_after]
-                var_u_on_t_before = var_units_on[u, s_by_t[t_before], t_before]
-                var_u_sd_t_after = var_units_shut_down[u, s_by_t[t_after], t_after]
+                var_u_on_t_after = 3 * var_units_on[u, s_by_t[t_after], t_after]
+                var_u_on_t_before = 3 * var_units_on[u, s_by_t[t_before], t_before]
+                var_u_sd_t_after = 3 * var_units_shut_down[u, s_by_t[t_after], t_after]
                 expected_con = @build_constraint(
                     + lhs
                     <=

@@ -119,14 +119,17 @@ function add_constraint_ramp_up!(m::Model)
                         - _ramp_up_limit(u, ng, d, s, t0, t_after)
                     )
                     * units_started_up[u, s, t]
+                    * duration(t)
                     + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_up_limit(u, ng, d, s, t0, t_after))
                     * units_on[u, s, t]
+                    * duration(t)
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0
                 )
                 - expr_sum(
                     + _minimum_operating_point(u, ng, d, s, t0, t_after)
                     * units_on[u, s, t]
+                    * duration(t)
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_before);
                     init=0
                 )

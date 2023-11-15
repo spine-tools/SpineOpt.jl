@@ -112,7 +112,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
             )
             <=
             + expr_sum(
-                _unit_flow_capacity(u, ng, d, s, t0, t) * units_on[u, s, t_over]
+                _unit_flow_capacity(u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
                 for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0
             )
@@ -121,6 +121,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     + _shutdown_margin(u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
                     * units_shut_down[u, s, t_after]
+                    * duration(t_after)
                     for (u, s, t_after) in units_on_indices(
                         m; unit=u, stochastic_scenario=s, t=t_before_t(m; t_before=t)
                     );
@@ -130,6 +131,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     + _shutdown_margin(u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
                     * nonspin_units_shut_down[u, n, s, t_over]
+                     * overlap_duration(t_over, t)
                     for (u, n, s, t_over) in nonspin_units_shut_down_indices(
                         m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                     );
