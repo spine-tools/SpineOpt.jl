@@ -94,20 +94,10 @@ function rerun_spineopt_mga!(
             && isempty(indices(storages_invested_big_m_mga))
             && mga_iterations < max_mga_iteration
         )
-            for cons in
-                [:mga_objective_ub,
-                :mga_diff_ub1,]
-                for k in keys(m.ext[:spineopt].constraints[cons])
-                    try m.ext[:spineopt].constraints[cons][k]
-                        delete(m, m.ext[:spineopt].constraints[cons][k])
-                    catch
-                    end
-                end
-            end
-            for vars in  [:mga_aux_diff,]
-                for k in keys(m.ext[:spineopt].variables[vars])
-                    try m.ext[:spineopt].constraints[cons][k]
-                        delete(m, m.ext[:spineopt].variables[vars][k])
+            for name in (:mga_objective_ub, :mga_diff_ub1)
+                for con in values(m.ext[:spineopt].constraints[name])
+                    try
+                        delete(m, con)
                     catch
                     end
                 end

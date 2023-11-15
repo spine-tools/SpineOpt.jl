@@ -48,8 +48,7 @@ function constraint_storage_line_pack_indices(m::Model)
         (connection=conn, node1=n_stor, node2=ng, stochastic_path=path, t=t)
         for (conn, n_stor, ng) in indices(connection_linepack_constant)
         for (t, path) in t_lowest_resolution_path(
-            m, 
-            vcat(node_state_indices(m; node=n_stor), node_pressure_indices(m; node=ng))
+            m, vcat(node_state_indices(m; node=n_stor), node_pressure_indices(m; node=ng))
         )
     )
 end

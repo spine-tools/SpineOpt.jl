@@ -1,31 +1,36 @@
 using Documenter
 using SpineOpt
 
+include("docs_utils.jl")
+
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
 default_translation = Dict(
-    #["tool_features"] => "Tool Features",
+    # ["tool_features"] => "Tool Features",
     ["relationship_classes"] => "Relationship Classes",
     ["parameter_value_lists"] => "Parameter Value Lists",
-    #["features"] => "Features",
-    #["tools"] => "Tools",
+    # ["features"] => "Features",
+    # ["tools"] => "Tools",
     ["object_parameters", "relationship_parameters"] => "Parameters",
     ["object_classes"] => "Object Classes",
 )
-concept_dictionary = SpineOpt.add_cross_references!(
-    SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation),
+concept_dictionary = add_cross_references!(
+    initialize_concept_dictionary(SpineOpt.template(); translation=default_translation),
 )
-SpineOpt.write_concept_reference_files(concept_dictionary, path)
+write_concept_reference_files(concept_dictionary, path)
 
-# Automatically write the 'constraints_automatically_generated_file' file using the 'constraints' file and content from docstrings
+# Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
+# and content from docstrings
 mathpath = joinpath(path, "src", "mathematical_formulation")
-alldocs = SpineOpt.alldocstrings(SpineOpt)
-instructionlist = readlines(joinpath(mathpath, "constraints.md"))
-markdownstring = SpineOpt.docs_from_instructionlist(alldocs, instructionlist)
-open(joinpath(mathpath, "constraints_automatically_generated_file.md"), "w") do file
-    write(file, markdownstring)
+docstrings = all_docstrings(SpineOpt)
+constraints_lines = readlines(joinpath(mathpath, "constraints.md"))
+expand_instructions!(constraints_lines, docstrings)
+open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
+    write(file, join(constraints_lines, "\n"))
 end
+
+write_sets_and_variables(mathpath)
 
 # Generate the documentation pages
 # Replace the Any[...] with just Any[] if you want to collect content automatically via `expand_empty_chapters!`
@@ -41,6 +46,8 @@ pages = [
     "Tutorials" => Any[
         "Webinars" => joinpath("tutorial", "webinars.md"),
         "Simple system" => joinpath("tutorial", "simple_system.md"),
+        "Reserve requirements" => joinpath("tutorial", "reserves.md"),
+        "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
         "Two hydro plants" => joinpath("tutorial", "tutorialTwoHydro.md"),
         "Case Study A5" => joinpath("tutorial", "case_study_a5.md")
     ],
@@ -54,14 +61,15 @@ pages = [
     ],
     "Mathematical Formulation" => Any[
         "Variables" => joinpath("mathematical_formulation", "variables.md"),
-        "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated_file.md"),
+        "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated.md"),
         "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
     ],
     "Advanced Concepts" => Any[
         "Temporal Framework" => joinpath("advanced_concepts", "temporal_framework.md"),
         "Stochastic Framework" => joinpath("advanced_concepts", "stochastic_framework.md"),
         "Unit Commitment" => joinpath("advanced_concepts", "unit_commitment.md"),
-        "Ramping and Reserves" => joinpath("advanced_concepts", "ramping_and_reserves.md"),
+        "Ramping" => joinpath("advanced_concepts", "ramping.md"),
+        "Reserves" => joinpath("advanced_concepts", "reserves.md"),
         "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
         "User Constraints" => joinpath("advanced_concepts", "user_constraints.md"),
         "Decomposition" => joinpath("advanced_concepts", "decomposition.md"),
@@ -77,7 +85,7 @@ pages = [
     "Implementation details" => [],
     "Library" => "library.md",
 ]
-SpineOpt.populate_empty_chapters!(pages, joinpath(path, "src"))
+populate_empty_chapters!(pages, joinpath(path, "src"))
 
 # Create and deploy the documentation
 makedocs(

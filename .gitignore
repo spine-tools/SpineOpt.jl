@@ -28,12 +28,12 @@ model\.so_model
 *.csv
 
 SpineOptApp
-docs/src/concept_reference/object_classes.md
-docs/src/concept_reference/parameter_value_lists.md
-docs/src/concept_reference/parameters.md
-docs/src/concept_reference/relationship_classes.md
 docs/src/concept_reference/Object Classes.md
-docs/src/concept_reference/Parameter Value Lists.md
 docs/src/concept_reference/Relationship Classes.md
+docs/src/concept_reference/Parameters.md
+docs/src/concept_reference/Parameter Value Lists.md
+docs/src/mathematical_formulation/constraints_automatically_generated.md
+docs/src/mathematical_formulation/sets.md
+docs/src/mathematical_formulation/variables.md
 test/Manifest.toml
 Manifest.toml
