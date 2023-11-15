@@ -34,7 +34,7 @@ function add_constraint_non_spinning_reserves_lower_bound!(m::Model)
                 * unit_capacity[
                     (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)
                 ]
-                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t]
+                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_short]
                 for (u, n, s, t_short) in _switch(
                     d; from_node=nonspin_units_shut_down_indices, to_node=nonspin_units_started_up_indices
                 )(m; unit=u, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t));
@@ -42,8 +42,8 @@ function add_constraint_non_spinning_reserves_lower_bound!(m::Model)
             )
             <=
             expr_sum(
-                unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in unit_flow_indices(
+                unit_flow[u, n, d, s, t_short]
+                for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 )
                 if is_reserve_node(node=n) && is_non_spinning(node=n)
@@ -65,8 +65,8 @@ function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Par
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(
-                unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in unit_flow_indices(
+                unit_flow[u, n, d, s, t_short]
+                for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 )
                 if is_reserve_node(node=n) && is_non_spinning(node=n)
@@ -80,7 +80,7 @@ function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Par
                 * unit_capacity[
                     (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)
                 ]
-                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t]
+                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_short]
                 for (u, n, s, t_short) in _switch(
                     d; from_node=nonspin_units_shut_down_indices, to_node=nonspin_units_started_up_indices
                 )(m; unit=u, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t));
@@ -103,9 +103,11 @@ function constraint_non_spinning_reserves_bounds_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
-        if any(is_reserve_node(node=n) && is_non_spinning(node=n) for n in ng)
+        if any(is_reserve_node(node=n) && is_non_spinning(node=n) for n in members(ng))
         for (t, path) in t_lowest_resolution_path(
-            m, unit_flow_indices(m; unit=u, node=ng, direction=d), nonspin_units_started_up_indices(m; unit=u)
+            m,
+            unit_flow_indices(m; unit=u, node=ng, direction=d),
+            _switch(d; from_node=nonspin_units_shut_down_indices, to_node=nonspin_units_started_up_indices)(m; unit=u)
         )
     )
 end

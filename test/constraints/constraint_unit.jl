@@ -406,6 +406,124 @@ function test_constraint_minimum_operating_point()
     end
 end
 
+function test_constraint_non_spinning_reserves_lower_bound()
+    @testset "constraint_non_spinning_reserves_lower_bound" begin
+        url_in = _test_constraint_unit_reserves_setup()
+        uc = 100
+        mop = 0.25
+        object_parameter_values = [
+            ["node", "reserves_a", "is_non_spinning", true], ["node", "reserves_bc", "is_non_spinning", true]
+        ]
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        constraint = m.ext[:spineopt].constraints[:non_spinning_reserves_lower_bound]
+        @test length(constraint) == 3
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        var_nonspin_units_started_up = m.ext[:spineopt].variables[:nonspin_units_started_up]
+        var_nonspin_units_shut_down = m.ext[:spineopt].variables[:nonspin_units_shut_down]
+        s_child = stochastic_scenario(:child)
+        s_parent = stochastic_scenario(:parent)
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
+        @testset for con_key in keys(constraint)
+            u, n, d, s_path, t = con_key
+            @test u.name == :unit_ab
+            @test (n.name, d.name) in ((:node_group_a, :from_node), (:node_group_bc, :to_node))
+            @test (n.name, s_path, t) in (
+                (:node_group_a, [s_parent], t1h1),
+                (:node_group_a, [s_parent, s_child], t1h2),
+                (:node_group_bc, [s_parent, s_child], t2h)
+            )
+            lhs = if n.name == :node_group_a
+                var_nonspin_units_shut_down[u, node(:reserves_a), s_by_t[t], t]
+            elseif n.name == :node_group_bc
+                sum(var_nonspin_units_started_up[u, node(:reserves_bc), s_parent, t] for t in (t1h1, t1h2))
+            end
+            rhs = if n.name == :node_group_a
+                var_unit_flow[u, node(:reserves_a), d, s_by_t[t], t]
+            elseif n.name == :node_group_bc
+                sum(var_unit_flow[u, node(:reserves_bc), d, s_parent, t] for t in (t1h1, t1h2))
+            end
+            expected_con = @build_constraint(mop * uc * lhs <= rhs)
+            observed_con = constraint_object(constraint[con_key])
+            @test _is_constraint_equal(observed_con, expected_con) 
+        end
+    end
+end
+
+function test_constraint_non_spinning_reserves_upper_bounds()
+    @testset "constraint_non_spinning_reserves_upper_bounds" begin
+        @testset for limit_name in ("start_up_limit", "shut_down_limit")
+            constraint_name = Dict(
+                "start_up_limit" => :non_spinning_reserves_start_up_upper_bound,
+                "shut_down_limit" => :non_spinning_reserves_shut_down_upper_bound,
+            )[limit_name]
+            url_in = _test_constraint_unit_reserves_setup()
+            uc = 100
+            l = 0.5
+            object_parameter_values = [
+                ["node", "reserves_a", "is_non_spinning", true], ["node", "reserves_bc", "is_non_spinning", true]
+            ]
+            relationship_parameter_values = [
+                ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
+                ["unit__from_node", ["unit_ab", "node_group_a"], limit_name, l],
+                ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+                ["unit__to_node", ["unit_ab", "node_group_bc"], limit_name, l],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            constraint = m.ext[:spineopt].constraints[constraint_name]
+            @test length(constraint) == 3
+            var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+            var_nonspin_units_started_up = m.ext[:spineopt].variables[:nonspin_units_started_up]
+            var_nonspin_units_shut_down = m.ext[:spineopt].variables[:nonspin_units_shut_down]
+            s_child = stochastic_scenario(:child)
+            s_parent = stochastic_scenario(:parent)
+            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+            s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
+            @testset for con_key in keys(constraint)
+                u, n, d, s_path, t = con_key
+                @test u.name == :unit_ab
+                @test (n.name, d.name) in ((:node_group_a, :from_node), (:node_group_bc, :to_node))
+                @test (n.name, s_path, t) in (
+                    (:node_group_a, [s_parent], t1h1),
+                    (:node_group_a, [s_parent, s_child], t1h2),
+                    (:node_group_bc, [s_parent, s_child], t2h)
+                )
+                lhs = if n.name == :node_group_a
+                    var_unit_flow[u, node(:reserves_a), d, s_by_t[t], t]
+                elseif n.name == :node_group_bc
+                    sum(var_unit_flow[u, node(:reserves_bc), d, s_parent, t] for t in (t1h1, t1h2))
+                end
+                rhs = if n.name == :node_group_a
+                    var_nonspin_units_shut_down[u, node(:reserves_a), s_by_t[t], t]
+                elseif n.name == :node_group_bc
+                    sum(var_nonspin_units_started_up[u, node(:reserves_bc), s_parent, t] for t in (t1h1, t1h2))
+                end
+                expected_con = @build_constraint(lhs <= l * uc * rhs)
+                observed_con = constraint_object(constraint[con_key])
+                @test _is_constraint_equal(observed_con, expected_con) 
+            end
+        end
+    end
+end
+
 function test_constraint_operating_point_bounds()
     @testset "constraint_operating_point_bounds" begin
         url_in = _test_constraint_unit_setup()
@@ -1819,6 +1937,8 @@ end
     test_constraint_unit_lifetime_mp()
     test_constraint_ramp_up()
     test_constraint_ramp_down()
+    test_constraint_non_spinning_reserves_lower_bound()
+    test_constraint_non_spinning_reserves_upper_bounds()
     test_constraint_user_constraint()
     test_constraint_user_constraint_with_unit_operating_segments()
     test_constraint_pw_unit_heat_rate()
