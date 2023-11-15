@@ -105,7 +105,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 ) 
                 if !is_reserve_node(node=n) || (
-                    _is_reserve_node(n, d; to_node=upward_reserve, from_node=downward_reserve)
+                    is_reserve_node(node=n)
+                    && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
                     && !is_non_spinning(node=n)
                 );
                 init=0,

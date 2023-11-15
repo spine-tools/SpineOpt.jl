@@ -24,7 +24,7 @@ Limit the maximum in/out `unit_flow` of a `unit` if the parameters
 `unit_capacity`, `number_of_units`, `unit_conv_cap_to_flow`, and `unit_availability_factor` exist.
 """
 function add_constraint_minimum_operating_point!(m::Model)
-    @fetch unit_flow, units_on, nonspin_units_shut_down = m.ext[:spineopt].variables
+    @fetch unit_flow, units_on, nonspin_units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:minimum_operating_point] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
@@ -42,15 +42,21 @@ function add_constraint_minimum_operating_point!(m::Model)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
                 )
-                if _is_reserve_node(n, d; to_node=downward_reserve, from_node=upward_reserve);
+                if is_reserve_node(node=n) && _switch(d; to_node=downward_reserve, from_node=upward_reserve)(node=n);
                 init=0,
             )
             >=
             + expr_sum(
                 (
                     + units_on[u, s, t_over]
-                    - _nonspin_units(
-                        m, u, ng, d, s, t_over; from_node=:nonspin_units_started_up, to_node=:nonspin_units_shut_down
+                    - expr_sum(
+                        _switch(
+                            d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
+                        )[u, n, s, t]
+                        for (u, n, s, t) in _switch(
+                            d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
+                        )(m; unit=u, node=ng, stochastic_scenario=s, t=t_over);
+                        init=0
                     )
                 )
                 * min(duration(t), duration(t_over))
@@ -63,13 +69,6 @@ function add_constraint_minimum_operating_point!(m::Model)
         )
         for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)
     )
-end
-
-function _nonspin_units(m, u, ng, d, s, t; from_node, to_node)
-    var_name = Dict(:from_node => from_node, :to_node => to_node)[d.name]
-    var = m.ext[:spineopt].variables[var_name]
-    var_indices = m.ext[:spineopt].variables_definition[var_name][:indices]
-    expr_sum(var[u, n, s, t] for (u, n, s, t) in var_indices(m; unit=u, node=ng, stochastic_scenario=s, t=t); init=0)
 end
 
 function constraint_minimum_operating_point_indices(m::Model)

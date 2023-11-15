@@ -63,7 +63,7 @@ function past_units_on_indices(m, u, s, t, min_time)
 end
 
 function _minimum_operating_point(u, ng, d, s, t0, t)
-    minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
+    minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=0)]
 end
 
 function _unit_flow_capacity(u, ng, d, s, t0, t)
@@ -83,25 +83,19 @@ function _shut_down_limit(u, ng, d, s, t0, t)
 end
 
 """
-    _is_reserve_node(n, d; from_node, to_node)
+    _switch(d; from_node, to_node)
 
-Whether the given node is a reserve node for given direction of flow.
-Keyword arguments `from_node` and `to_node` should either be `upward_reserve` or `downward_reserve`,
-indicating which type of reserve is considered relevant for each direction.
+Either `from_node` or `to_node` depending on the given direction `d`.
 
 # Example
 
 ```julia
-
-n = node(:some_node)
-
-@assert upwards_reserve(node=n) && !downwards_reserve(node=n)
-@assert _is_reserve_node(n, direction(:from_node); from_node=upwards_reserve, to_node=downwards_reserve)
-@assert !_is_reserve_node(n, direction(:from_node); from_node=downwards_reserve, to_node=upwards_reserve)
+@assert _switch(direction(:from_node); from_node=3, to_node=-1) == 3
+@assert _switch(direction(:to_node); from_node=3, to_node=-1) == -1
 ```
 """
-function _is_reserve_node(n, d; from_node, to_node)
-    is_reserve_node(node=n) && Dict(direction(:from_node) => from_node, direction(:to_node) => to_node)[d](node=n)
+function _switch(d; from_node, to_node)
+    Dict(:from_node => from_node, :to_node => to_node)[d.name]
 end
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
