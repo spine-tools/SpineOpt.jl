@@ -9,49 +9,8 @@
 The constraint consists of the [node injections](@ref constraint_node_injection) and the net [connection\_flow](@ref)s.
 
 ### [Node injection](@id constraint_node_injection)
-The node injection itself represents all local production and consumption, represented by the sum of all connected unit flows and the nodal demand. The node injection is created for each node in the network (unless the node is only used for parameter aggregation purposes, see [Introduction to groups of objects](@ref)).
 
-```math
-\begin{aligned}
-& v_{node\_injection}(n,s,t) \\
-& == \\
-& + \sum_{\substack{(u,n',d_{in},s,t) \in unit\_flow\_indices: \\ d_{out} == :to\_node}}
- v_{unit\_flow}(u,n',d_{in},s,t)\\
-& - \sum_{\substack{(u,n',d_{out},s,t) \in unit\_flow\_indices: \\ d_{out} == :from\_node}}
- v_{unit\_flow}(u,n',d_{out},s,t)\\
-& - p_{demand}(n,s,t)\\
-& \forall (n,s,t) \in node\_stochastic\_time\_indices
-\end{aligned}
-```
-
-### [Node injection with storage capability](@id constraint_node_injection2)
-
-If a node corresponds to a storage node, the parameter [has\_state](@ref) should be set to [true](@ref boolean_value_list) for this node. In this case the nodal injection will translate to the following constraint:
-
-```math
-\begin{aligned}
-& v_{node\_injection}(n,s,t) \\
-& == \\
-& (v_{node\_state}(n, s, t\_before)\\
-& - v_{node\_state}(n, s, t) \cdot p_{state\_coeff}(n,s,t)) \\
-&   / \Delta t_{after} \\
-&  - v_{node\_state}(n, s, t) \cdot p_{frac\_state\_loss}(n,s,t) \\
-&  + \sum_{\substack{(n2,s,t) \in node\_state\_indices: \\ \exists diff\_coeff(n2,n)}}
-v_{node\_state}(n2,s,t)\\
-& - \sum_{\substack{(n2,s,t) \in node\_state\_indices: \\ \exists diff\_coeff(n,n2)}}
-v_{node\_state}(n2,s,t)\\
-& + \sum_{\substack{(u,n',d_{in},s,t) \in unit\_flow\_indices: \\ d_{out} == :to\_node}}
- v_{unit\_flow}(u,n',d_{in},s,t)\\
-& - \sum_{\substack{(u,n',d_{out},s,t) \in unit\_flow\_indices: \\ d_{out} == :from\_node}}
- v_{unit\_flow}(u,n',d_{out},s,t)\\
-& - demand(n,s,t)\\
-& \forall (n,t) \in node\_time\_indices : p_{has\_state}(n)\\
-& \forall s \in stochastic\_scenario\_path \\
-& t_{before} \in t\_before\_t(t\_after=t)\\
-\end{aligned}
-```
-
-Note that for simplicity, the stochastic path is assumed to be known. In the constraint `constraint_node_injection.jl` the active stochastic paths of all involved variables is retrieved beforehand.
+@@add_constraint_node_injection!
 
 ### [Node state capacity](@id constraint_node_state_capacity)
 

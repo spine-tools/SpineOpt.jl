@@ -34,26 +34,26 @@ The energy balance is enforced by the following constraint:
 
 ```math
 \begin{aligned}
-& v_{node\_injection}(n,s,t) \\
+& node\_injection_{(n,s,t)} \\
 & + \sum_{
-    \substack{
-        conn \\ \in \\ connection\_\_to\_node(n)
-    }
+        conn \in CTN_{(*,n)}
 }
-v_{connection\_flow}(conn,n,to\_node,s,t)\\
+connection\_flow_{(conn,n,to\_node,s,t)}\\
 & - \sum_{
-    \substack{
-        conn \\ \in \\ connection\_\_from\_node(n)
-    }
+        conn \in CFN_{(*,n)}
 }
-v_{connection\_flow}(conn,n,from\_node,s,t)\\
+connection\_flow_{(conn,n,from\_node,s,t)}\\
 & \{\ge,=,\le\} \\
 & 0 \\
 & \forall n \in node: \\
-& p_{balance\_type}(n) \ne balance\_type\_none \\
-& \nexists ng \in groups(n) : p_{balance\_type}(ng) = balance\_type\_group \\
+& BT_{(n)} \ne balance\_type\_none \\
+& \nexists ng \ni n : BT_{(ng)} = balance\_type\_group \\
 \end{aligned}
 ```
+where
+- ``CFN =`` [connection\_\_from\_node](@ref)
+- ``CTN =`` [connection\_\_to\_node](@ref)
+- ``BT =`` [balance\_type](@ref)
 """
 function add_constraint_nodal_balance!(m::Model)
     @fetch connection_flow, node_injection = m.ext[:spineopt].variables

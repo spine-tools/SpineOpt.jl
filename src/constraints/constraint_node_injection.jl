@@ -17,10 +17,47 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_node_injection!(m::Model)
+@doc raw"""
+The node injection itself represents all local production and consumption,
+computed as the sum of all connected unit flows and the nodal demand.
+If a node corresponds to a storage node, the parameter [has\_state](@ref)
+should be set to [true](@ref boolean_value_list) for this node.
+The node injection is created for each node in the network
+(unless the node is only used for parameter aggregation purposes, see [Introduction to groups of objects](@ref)).
 
-Set the node injection equal to the summation of all 'input' flows but connection's.
+```math
+\begin{aligned}
+& node\_injection_{(n,s,t)} \\
+& = \\
+& \left(SC_{(n, s, t-1)} \cdot node\_state_{(n, s, t-1)} - SC_{(n, s, t)} \cdot node\_state_{(n, s, t)}\right)
+/ \Delta t \\
+& - FSL_{(n,s,t)} \cdot node\_state_{(n, s, t)} \\
+& + \sum_{n' \in NN_{(*,n)}} DC_{(n',n,s,t)} \cdot node\_state_{(n', s, t)}
+- \sum_{n' \in NN_{(n,*)}} DC_{(n,n',s,t)} \cdot node\_state_{(n, s, t)} \\
+& + \sum_{
+        u \in UTN_{(*,n)}
+}
+unit\_flow_{(u,n,to\_node,s,t)}
+- \sum_{
+        u \in UFN_{(*,n)}
+}
+unit\_flow_{(u,n,from\_node,s,t)}\\
+& - \left(D_{(n,s,t)} + \sum_{ng \ni n} FD_{(n,s,t)} \cdot D_{(ng,s,t)}\right) \\
+& + node\_slack\_pos_{(n,s,t)} - node\_slack\_neg_{(n,s,t)} \\
+& \forall n \in node: HS_{(n)}\\
+\end{aligned}
+```
+where
+- ``SC =`` [state\_coeff](@ref)
+- ``FSL =`` [frac\_state\_loss](@ref)
+- ``DC =`` [diff\_coeff](@ref)
+- ``NN =`` [node\_\_node](@ref)
+- ``UFN =`` [unit\_\_from\_node](@ref)
+- ``UTN =`` [unit\_\_to\_node](@ref)
+- ``D =`` [demand](@ref)
+- ``FD =`` [fractional\_demand](@ref)
+- ``HS =`` [has\_state](@ref)
+
 """
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
