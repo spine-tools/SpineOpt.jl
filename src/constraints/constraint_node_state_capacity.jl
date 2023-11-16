@@ -17,10 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_node_state_capacity!(m::Model)
+@doc raw"""
+To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
-Limit the maximum value of a `node_state` variable under `node_state_cap`, if it exists.
+```math
+node\_state_{(n, s, t)} <= NSC_{(n, s, t)} \qquad \forall n \in node :  HS_{(n)}
+```
+where
+- ``NSC =`` [node\_state\_cap](@ref)
+- ``HS =`` [has\_state](@ref)
+
+The discharging and charging behavior of storage nodes can be described through unit(s),
+representing the link between the storage node and the supply node.
+Note that the dis-/charging efficiencies and capacities are properties of these units.
+See the [capacity constraint](@ref constraint_unit_flow_capacity) and
+the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
 """
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables

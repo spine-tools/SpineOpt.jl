@@ -17,10 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_units_available!(m::Model)
+@doc raw"""
+The aggregated available units are constrained by the parameter [number\_of\_units](@ref)
+and the variable number of invested units [units\_invested\_available](@ref):
 
-Limit the units_online by the number of available units.
+```math
+units\_available_{(u,s,t)} \leq NOU_{(u,s,t)} + units\_invested\_available_{(u,s,t)} \quad \forall u \in unit
+```
+where
+- ``NOU =`` [number\_of\_units](@ref)
 """
 function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:spineopt].variables

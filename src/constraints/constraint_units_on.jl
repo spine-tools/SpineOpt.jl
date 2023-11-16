@@ -17,10 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_units_on!(m::Model)
+@doc raw"""
+The number of online units needs to be restricted to the aggregated available units:
 
-Limit the units_on by the number of available units.
+```math
+units\_on_{(u,s,t)} \leq units\_available_{(u,s,t)} \quad \forall u \in unit
+```
+
+The investment formulation is described in chapter [Investments](@ref).
 """
 function add_constraint_units_on!(m::Model)
     @fetch units_on, units_available = m.ext[:spineopt].variables

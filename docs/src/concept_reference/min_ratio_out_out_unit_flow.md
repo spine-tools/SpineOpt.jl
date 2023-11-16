@@ -1,5 +1,5 @@
 The definition of the [min\_ratio\_out\_out\_unit\_flow](@ref) parameter triggers the generation of the
-[constraint\_min\_ratio\_out\_out\_unit\_flow](@ref ratio_out_out) and enforces a lower bound on the ratio between outgoing flows of a unit.
+[constraint\_min\_ratio\_out\_out\_unit\_flow](@ref ratio_unit_flow) and enforces a lower bound on the ratio between outgoing flows of a unit.
 The parameter is defined on the relationship class [unit\_\_node\_\_node](@ref),
 where the nodes (or group of nodes) in this relationship represent the `to_node`'s', i.e. outgoing flow from the unit.
 The ratio parameter is interpreted such that it constrains the ratio of `out1` over `out2`,

@@ -16,10 +16,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    add_constraint_cyclic_node_state!(m::Model)
+@doc raw"""
+To ensure that the node state at the end of the optimization is at least the same value as the initial value
+at the beginning of the optimization (or higher),
+the cyclic node state constraint can be used by setting the [cyclic\_condition](@ref) of
+a [node\_\_temporal\_block](@ref) to `true`. This triggers the following constraint:
 
-Enforces cyclic constraint on node state over a temporal block.
+```math
+node\_state_{(n, s, start(tb))} >=  node\_state_{(n, s, end(tb))} \qquad \forall (n,tb) \in indices(CC)
+```
+where
+- ``CC =`` [cyclic\_condition](@ref)
 """
 function add_constraint_cyclic_node_state!(m::Model)
     @fetch node_state = m.ext[:spineopt].variables

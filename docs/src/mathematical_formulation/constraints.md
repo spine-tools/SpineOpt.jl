@@ -14,39 +14,11 @@ The constraint consists of the [node injections](@ref constraint_node_injection)
 
 ### [Node state capacity](@id constraint_node_state_capacity)
 
-To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
-
-```math
-\begin{aligned}
-& v_{node\_state}(n, s, t)\\
-& <= p_{node\_state\_cap}(n, s, t)\\
-& \forall (n,s,t) \in node\_stochastic\_time\_indices : \\
-& p_{has\_state}(n)\\
-\end{aligned}
-```
-The discharging and charging behavior of storage nodes can be described through unit(s), representing the link between the storage node and the supply node.
-Note that the dis-/charging efficiencies and capacities are properties of these units.
-See [the capacity constraint](@ref constraint_unit_flow_capacity) and [the unit flow ratio constraints](@ref constraint_ratio_unit_flow)
+@@add_constraint_node_state_capacity!
 
 ### [Cyclic condition on node state variable](@id constraint_cyclic_node_state)
-To ensure that the node state at the end of the optimization is at least the same value as the initial value at the beginning of the optimization (or higher), the cyclic node state constraint can be used by setting the [cyclic\_condition](@ref) of a [node\_\_temporal\_block](@ref) to `true`. This triggers the following cyclic constraint:
 
-```math
-\begin{aligned}
-& v_{node\_state}(n, s, t)\\
-& >=  v_{node\_state}(n, s, t)\\
-& \forall (n,tb) \in p_{cyclic\_condition}(n,tb) : \\
-& \{p_{cyclic\_condition}(n,tb) == true,\\
-& p_{has\_state}(n) \}\\
-& \forall (n',t_{initial}) \in node\_time\_indices : \\
-& \{n' == n, \\
-& t_{initial} == t\_before\_t(t\_after=first(t \in tb)),\\
-& \forall (n',t_{last}) \in node\_time\_indices : \\
-& n' == n, \\
-& t_{last} == last(t \in tb))\\
-& \forall s \in stochastic\_path\\
-\end{aligned}
-```
+@@add_constraint_cyclic_node_state!
 
 ## Unit operation
 
@@ -60,109 +32,13 @@ The fundamental static constraints for units within SpineOpt relate to the relat
 
 A [unit](@ref) can have different commodity flows associated with it. The most simple relationship between these flows is a linear relationship between input and/or output nodes/node groups. SpineOpt holds constraints for each combination of flows and also for the type of relationship, i.e. whether it is a maximum, minimum or fixed ratio between commodity flows. Note that node groups can be used in order to aggregate flows, i.e. to give a ratio between a combination of units flows.
 
-##### [Ratios between output and input flows of a unit](@id ratio_out_in)
-By defining the parameters [fix\_ratio\_out\_in\_unit\_flow](@ref),
-[max\_ratio\_out\_in\_unit\_flow](@ref) or [min\_ratio\_out\_in\_unit\_flow](@ref), a ratio can be set between **out**going and **in**coming flows from and to a unit.
-Whenever there is only a single input node and a single output node, this relationship relates to the notion of an efficiency.
-Also, the ratio equation can for instance be used to relate emissions to input primary fuel flows.
-In the most general form of the equation, two node groups are defined (an input node group $ng_{in}$ and an output node group $ng_{out}$),
-and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes,
-there remains a degree of freedom regarding the composition of the input node flows within group $ng_{in}$  and the output node flows within group $ng_{out}$.
+##### [Ratios between flows of a unit](@id ratio_unit_flow)
 
-The constraint given below enforces a fixed, maximum or minimum ratio between outgoing and incoming [unit\_flow](@ref). Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_unit\_flow](@ref),
-[max\_ratio\_out\_in\_unit\_flow](@ref) and [min\_ratio\_out\_in\_unit\_flow](@ref) defined on, are getting internally expanded to the members of the node group within the unit\_flow\_indices.
-
-```math
-\begin{aligned}
-& \sum_{\substack{(u,n,d,s,t_{out}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{out}) \, \in \, (u,ng_{out},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out}) \cdot \Delta t_{out} \\
-& \{ \\
-& ==  p_{fix\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},s,t), \\
-& <= p_{max\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},s,t), \\
-& >= p_{min\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},s,t)\\
-& \} \\
-& \cdot \sum_{\substack{(u,n,d,s,t_{in}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{in}) \in (u,ng_{in},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in}) \cdot \Delta t_{in} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_out\_in}(u,ng_{out},ng_{in},s,t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
- (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
-& \cdot \min(\Delta t_{units\_on},\Delta t) \\
-& \forall (u, ng_{out}, ng_{in}) \in ind(p_{\{fix,max,min\}\_ratio\_out\_in\_unit\_flow}), \\
-& \forall t \in time\_slices, \forall s \in stochastic\_path
-\end{aligned}
-```
-Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_in](@ref), [max\_units\_on\_coefficient\_out\_in](@ref), [min\_units\_on\_coefficient\_out\_in](@ref), respectively.
-
-##### [Ratios between input and output flows of a unit](@id ratio_in_out)
-Similarly to the ratio between outgoing and incoming unit flows, a ratio can also be defined in reverse between **in**coming and **out**going flows.
-
-```math
-\begin{aligned}
-& \sum_{\substack{(u,n,d,s,t_{in}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{in}) \, \in \, (u,ng_{in},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in}) \cdot \Delta t_{in} \\
-& \{ \\
-& ==  p_{fix\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},s,t), \\
-& <= p_{max\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},s,t), \\
-& >= p_{min\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},s,t)\\
-& \} \\
-& \cdot \sum_{\substack{(u,n,d,s,t_{out}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{in}) \in (u,ng_{in},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out}) \cdot \Delta t_{out} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_in\_out}(u,ng_{in},ng_{out},s,t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
- (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
-&  \cdot \min(\Delta t_{units\_on},\Delta t) \\
-& \forall (u, ng_{in}, ng_{out}) \in ind(p_{\{fix,max,min\}\_ratio\_in\_out\_unit\_flow}), \\
-& \forall t \in time\_slices, \forall s \in stochastic\_path
-\end{aligned}
-```
-Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_out](@ref), [max\_units\_on\_coefficient\_in\_out](@ref), [min\_units\_on\_coefficient\_in\_out](@ref), respectively.
-
-##### [Ratios between input and input flows of a unit](@id ratio_in_in)
-
-Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_out_in), one can also define a fixed, maximum or minimum ratio between **in**coming flows of a units.
-
-```math
-\begin{aligned}
-& \sum_{\substack{(u,n,d,s,t_{in1}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{in1}) \, \in \, (u,ng_{in1},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in1}) \cdot \Delta t_{in1} \\
-& \{ \\
-& ==  p_{fix\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},s,t), \\
-& <= p_{max\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},s,t), \\
-& >= p_{min\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},s,t)\\
-& \} \\
-& \cdot \sum_{\substack{(u,n,d,s,t_{in2}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{in2}) \in (u,ng_{in2},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in2}) \cdot \Delta t_{in2} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_in\_in}(u,ng_{in1},ng_{in2},s,t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
- (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
-&  \cdot \min(\Delta t_{units\_on},\Delta t) \\
-& \forall (u, ng_{in1}, ng_{in2}) \in ind(p_{\{fix,max,min\}\_ratio\_in\_in\_unit\_flow}), \\
-& \forall t \in time\_slices, \forall s \in stochastic\_path
-\end{aligned}
-```
-Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_in](@ref), [max\_units\_on\_coefficient\_in\_in](@ref), [min\_units\_on\_coefficient\_in\_in](@ref), respectively.
-
-##### [Ratios between output and output flows of a unit](@id ratio_out_out)
-
-Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_out_in), one can also define a fixed, maximum or minimum ratio between **out**going flows of a units.
-
-```math
-\begin{aligned}
-& \sum_{\substack{(u,n,d,s,t_{out1}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{out1}) \, \in \, (u,ng_{out1},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out1}) \cdot \Delta t_{out1} \\
-& \{ \\
-& ==  p_{fix\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},s,t), \\
-& <= p_{max\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},s,t), \\
-& >= p_{min\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},s,t)\\
-& \} \\
-& \cdot \sum_{\substack{(u,n,d,s,t_{out2}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{out2}) \in (u,ng_{out2},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out2}) \cdot \Delta t_{out2} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_out\_out}(u,ng_{out1},ng_{out2},s,t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
- (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
-&  \cdot \min(\Delta t_{units\_on},\Delta t) \\
-& \forall (u, ng_{out1}, ng_{out2}) \in ind(p_{\{fix,max,min\}\_ratio\_out\_out\_unit\_flow}), \\
-& \forall t \in time\_slices, \forall s \in stochastic\_path
-\end{aligned}
-```
-Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_out](@ref), [max\_units\_on\_coefficient\_out\_out](@ref), [min\_units\_on\_coefficient\_out\_out](@ref), respectively.
+@@add_constraint_ratio_unit_flow!
 
 ##### [Bounds on the unit capacity](@id constraint_unit_flow_capacity)
 
 @@add_constraint_unit_flow_capacity!
-
 
 ##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
 
@@ -189,73 +65,24 @@ parameters):
 - constraint on reserve provision
 
 ##### [Bound on available units](@id constraint_units_available)
-The aggregated available units itself is constrained by the parameters [unit\_availability\_factor](@ref) and [number\_of\_units](@ref), and the variable number of invested units [units\_invested\_available](@ref):
 
-```math
-\begin{aligned}
-& v_{units\_available}(u,s,t) \\
-& == p_{unit\_availability\_factor}(u,s,t) \\
-& \cdot (p_{number\_of\_units}(u,s,t) \\
-& + \sum_{(u,s,t) \in units\_invested\_available\_indices} v_{units\_invested\_available}(u,s,t) ) \\
-& \forall (u,s,t) \in units\_on\_indices
-\end{aligned}
-```
+@@add_constraint_units_available!
 
 ##### [Bound on online units](@id constraint_units_on)
-The number of online units needs to be restricted to the aggregated available units with respect to the parameter [unit\_availability\_factor](@ref):
 
-```math
-\begin{aligned}
-& v_{units\_on}(u,s,t) \cdot p_{unit\_availability\_factor}(u,s,t) \\
-& <= v_{units\_available}(u,s,t) \\
-& \forall (u,s,t) \in units\_on\_indices
-\end{aligned}
-```
-
-The investment formulation is described in chapter [Investments](@ref).
+@@add_constraint_units_on!
 
 ##### [Unit state transition](@id constraint_unit_state_transition)
-The units on status is constrained by shutting down and starting up actions. This transition is defined as follows:
 
-```math
-\begin{aligned}
-& v_{units\_on}(u,s,t_{after}) \\
-& - v_{units\_started\_up}(u,s,t_{after}) \\
-& + v_{units\_shut\_down}(u,s,t_{after}) \\
-& == v_{units\_on}(u,s,t_{before}) \\
-& \forall (u,s,t_{after}) \in units\_on\_indices, \\
-& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in units\_on\_indices\\
-\end{aligned}
-```
+@@add_constraint_unit_state_transition!
 
-##### [Minimum down time (basic version)](@id constraint_min_down_time)
-In order to impose a minimum offline time of a unit, before it can be started up again, the [min\_down\_time](@ref) parameter needs to be defined, which triggers the generation of the following constraint:
+##### [Minimum down time](@id constraint_min_down_time)
 
-```math
-\begin{aligned}
-& v_{units\_available}(u,s,t) \\
-& - v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_down\_time}(u,s,t) \quad t' <= t}}
-v_{units\_shut\_down}(u,s,t') \\
-& \forall (u,s,t) \in units\_on\_indices\\
-\end{aligned}
-```
+@@add_constraint_min_down_time!
 
-Note that for the use reserves the generated minimum down time constraint will include [startups for non-spinning reserves](@ref constraint_min_down_time2).
+##### [Minimum up time](@id constraint_min_up_time)
 
-##### [Minimum up time (basic version)](@id constraint_min_up_time)
-Similarly to the [minimum down time constraint](@ref constraint_min_down_time), a minimum time that a unit needs to remain online after a startup can be imposed by defining the [min\_up\_time](@ref) parameter. This will trigger the generation of the following constraint:
-
-```math
-\begin{aligned}
-& v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_up\_time}(u,s,t), \\ t' <= t}}
-v_{units\_started\_up}(u,s,t') \\
-& \forall (u,s,t) \in units\_on\_indices\\
-\end{aligned}
-```
-This constraint can be extended to the use of nonspinning reserves. See [also](@ref constraint_min_up_time2).
-
+@@add_constraint_min_up_time!
 
 #### Ramping constraints
 
