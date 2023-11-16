@@ -21,34 +21,37 @@
 The minimum operating point of a unit is based on the [unit\_flow](@ref)s of
 input or output nodes/node groups.
 
-Note:
-- The below formulation is valid for flows going from a unit to a node (i.e., output flows).
-  For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched
-  (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
-  The details are omitted for brevity.
-
 ```math
 \begin{aligned}
 & \sum_{
-    \substack{
-        n \in members(ng): \\ !p_{is\_reserve}(n)
-    }
+        n \in ng: !IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
-& - \sum_{
-    \substack{
-        n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{downward\_reserve}(n)
-    }
-} v_{unit\_flow}(u,n,d,s,t') \\
-& \ge p_{minimum\_operating\_point}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-& \cdot \big( v_{units\_on}(u,s,t) - \sum_{
-    \substack{n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{is\_non\_spinning}(n)}
-} v_{nonspin\_units\_shut\_down}(u,n,s,t) \big) \\
-& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point})
+unit\_flow_{(u,n,d,s,t)}
+- \sum_{
+        n \in ng: IRN_{(n)} \land DR_{(n)}
+}
+unit\_flow_{(u,n,d,s,t)} \\
+& \ge MOP_{(u,ng,d,s,t)} \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \\
+& \cdot \left( units\_on_{(u,s,t)}
+- \sum_{
+    n \in ng: IRN_{(n)} \land INS_{(n)}
+} nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
+& \forall (u,ng,d) \in indices(MOP)
 \end{aligned}
 ```
+where
+- ``IRN =`` [is\_reserve\_node](@ref)
+- ``DR =`` [downward\_reserve](@ref)
+- ``INS =`` [is\_non\_spinning](@ref)
+- ``MOP =`` [minimum\_operating\_point](@ref)
+- ``UC =`` [unit\_capacity](@ref)
+- ``UCCF =`` [unit\_conv\_cap\_to\_flow](@ref)
+
+!!! note
+    The above formulation is valid for flows going from a unit to a node (i.e., output flows).
+    For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched
+    (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
+    The details are omitted for brevity.
 
 """
 function add_constraint_minimum_operating_point!(m::Model)

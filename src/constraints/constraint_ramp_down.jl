@@ -24,35 +24,33 @@ to the `shut_down_limit` and `ramp_down_limit` parameter values.
 ```math
 \begin{aligned}
 & \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t-1) \\
+unit\_flow_{(u,n,d,s,t-1)} \\
 & - \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 & + \sum_{
-    \substack{
-        n \in members(ng): \\
-        p_{is\_reserve}(n) \\ p_{downward\_reserve}(n)
-    }
+        n \in ng: IRN_{(n)} \land DR_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 & \le ( \\
-& \qquad \big(p_{shut\_down\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_down\_limit}(u,ng,d,s,t)\big) \\
-& \qquad \cdot v_{units\_shut\_down}(u,s,t) \\
-& \qquad + (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t-1) \\
-& \qquad - p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t) \\
-& ) \cdot p_{unit\_capacity}(u,ng,d,s,t) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \cdot \Delta t \\
-& \forall (u,ng,d) \in ind(p_{ramp\_down\_limit}) \cup ind(p_{shut\_down\_limit}), \\
+& \qquad \left(SDL_{(u,ng,d,s,t)} - MOP_{(u,ng,d,s,t)} - RDL_{(u,ng,d,s,t)}\right) \cdot units\_shut\_down_{(u,s,t)} \\
+& \qquad + \left(MOP_{(u,ng,d,s,t)} + RDL_{(u,ng,d,s,t)}\right) \cdot units\_on_{(u,s,t-1)} \\
+& \qquad - MOP_{(u,ng,d,s,t)} \cdot units\_on_{(u,s,t)} \\
+& ) \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \cdot \Delta t \\
+& \forall (u,ng,d) \in indices(RDL) \cup indices(SDL)
 \end{aligned}
 ```
+where
+- ``IRN =`` [is\_reserve\_node](@ref)
+- ``DR =`` [downward\_reserve](@ref)
+- ``UC =`` [unit\_capacity](@ref)
+- ``UCCF =`` [unit\_conv\_cap\_to\_flow](@ref)
+- ``RDL =`` [ramp\_down\_limit](@ref)
+- ``SDL =`` [shut\_down\_limit](@ref)
+- ``MOP =`` [minimum\_operating\_point](@ref)
 """
 function add_constraint_ramp_down!(m::Model)
     @fetch units_on, units_shut_down, unit_flow = m.ext[:spineopt].variables

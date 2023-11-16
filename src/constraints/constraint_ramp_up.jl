@@ -24,35 +24,33 @@ to the `start_up_limit` and `ramp_up_limit` parameter values.
 ```math
 \begin{aligned}
 & \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 & - \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t-1) \\
+unit\_flow_{(u,n,d,s,t-1)} \\
 & + \sum_{
-    \substack{
-        n \in members(ng): \\
-        p_{is\_reserve}(n) \\ p_{upward\_reserve}(n)
-    }
+        n \in ng: IRN_{(n)} \land UR_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 & \le ( \\
-& \qquad \big(p_{start\_up\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_up\_limit}(u,ng,d,s,t)\big) \\
-& \qquad \cdot v_{units\_started\_up}(u,s,t) \\
-& \qquad + (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_up\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t) \\
-& \qquad - p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t-1) \\
-& ) \cdot p_{unit\_capacity}(u,ng,d,s,t) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \cdot \Delta t \\
-& \forall (u,ng,d) \in ind(p_{ramp\_up\_limit}) \cup ind(p_{start\_up\_limit}), \\
+& \qquad \left(SUL_{(u,ng,d,s,t)} - MOP_{(u,ng,d,s,t)} - RUL_{(u,ng,d,s,t)}\right) \cdot units\_started\_up_{(u,s,t)} \\
+& \qquad + \left(MOP_{(u,ng,d,s,t)} + RUL_{(u,ng,d,s,t)}\right) \cdot units\_on_{(u,s,t)} \\
+& \qquad - MOP_{(u,ng,d,s,t)} \cdot units\_on_{(u,s,t-1)} \\
+& ) \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \cdot \Delta t \\
+& \forall (u,ng,d) \in indices(RUL) \cup indices(SUL)
 \end{aligned}
 ```
+where
+- ``IRN =`` [is\_reserve\_node](@ref)
+- ``UR =`` [upward\_reserve](@ref)
+- ``UC =`` [unit\_capacity](@ref)
+- ``UCCF =`` [unit\_conv\_cap\_to\_flow](@ref)
+- ``RUL =`` [ramp\_up\_limit](@ref)
+- ``SUL =`` [start\_up\_limit](@ref)
+- ``MOP =`` [minimum\_operating\_point](@ref)
 """
 function add_constraint_ramp_up!(m::Model)
     @fetch units_on, units_started_up, unit_flow = m.ext[:spineopt].variables

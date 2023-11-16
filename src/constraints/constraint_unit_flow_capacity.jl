@@ -25,48 +25,54 @@ for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relation
 in order to trigger a constraint on the maximum commodity flows to this location in each time step.
 When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
 
-Notes:
-- The conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
-  in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
-- The below formulation is valid for time-slices whose duration is greater than the minimum up time of the unit.
-  This ensures that the unit is not online for exactly one time-slice, which might result in an infeasibility
-  if the below formulation was used.
-  Instead, for time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar
-  formulation, but the details are omitted for brevity.
-- The below formulation is valid for flows going from a unit to a node (i.e., output flows).
-  For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched
-  (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
-  The details are omitted for brevity.
-
 ```math
 \begin{aligned}
 & \sum_{
-    \substack{
-        n \in members(ng): \\ !p_{is\_reserve}(n)
-    }
-} v_{unit\_flow}(u,n,d,s,t) \\
-& + \sum_{
-    \substack{
-        n \in members(ng): \\
-        p_{is\_reserve}(n) \\
-        p_{upward\_reserve}(n) \\
-        !p_{is\_non\_spinning}(n)
-    }
-} v_{unit\_flow}(u,n,d,s,t) \\
-& \le p_{unit\_capacity}(u,ng,d,s,t) \\
-& \cdot p_{unit\_availability\_factor}(u,s,t) \\
-& \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+        n \in ng : \neg IRN_{(n)}
+} {unit\_flow}_{(u,n,d,s,t)} + \sum_{
+        n \in ng : IRN_{(n)} \land UR_{(n)} \land \neg INS_{(n)}
+} unit\_flow_{(u,n,d,s,t)} \\
+& \le \\
+& UC_{(u,ng,d,s,t)} \cdot UAF_{(u,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \\
 & \cdot ( \\
-& \qquad v_{units\_on}(u,s,t) \\
-& \qquad + \big(1 - p_{shut\_down\_limit}(u,ng,d,s,t)\big) \\
-& \qquad \cdot \big( v_{units\_shut\_down}(u,s,t+1) + \sum_{
-    \substack{n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{is\_non\_spinning}(n)}
-} v_{nonspin\_units\_shut\_down}(u,n,s,t) \big) \\
-& \qquad - \big(1 - p_{start\_up\_limit}(u,ng,d,s,t)\big) \cdot v_{units\_started\_up}(u,s,t) \\
+& \qquad units\_on_{(u,s,t)} \\
+& \qquad + \left(1 - SDL_{(u,ng,d,s,t)}\right) \\
+& \qquad \cdot \left( units\_shut\_down_{(u,s,t+1)}
++ \sum_{
+    n \in ng: IRN_{(n)} \land INS_{(n)}
+} nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
+& \qquad - \left(1 - SUL_{(u,ng,d,s,t)}\right) \cdot units\_started\_up_{(u,s,t)} \\
 & ) \\
-& \forall (u,ng,d) \in ind(p_{unit\_capacity})
+& \forall (u,ng,d) \in indices(UC)
 \end{aligned}
 ```
+where
+- ``IRN =`` [is\_reserve\_node](@ref)
+- ``UR =`` [upward\_reserve](@ref)
+- ``INS =`` [is\_non\_spinning](@ref)
+- ``UC =`` [unit\_capacity](@ref)
+- ``UAF =`` [unit\_availability\_factor](@ref)
+- ``UCCF =`` [unit\_conv\_cap\_to\_flow](@ref)
+- ``SUL =`` [start\_up\_limit](@ref)
+- ``SDL =`` [shut\_down\_limit](@ref)
+
+!!! note
+    The conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
+    in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
+
+!!! note
+    The above formulation is valid for time-slices whose duration is greater than the minimum up time of the unit.
+    This ensures that the unit is not online for exactly one time-slice, which might result in an infeasibility
+    if this formulation was used.
+    Instead, for time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar
+    formulation, but the details are omitted for brevity.
+
+!!! note
+    The above formulation is valid for flows going from a unit to a node (i.e., output flows).
+    For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched
+    (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
+    The details are omitted for brevity.
+
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_shut_down = m.ext[:spineopt].variables
