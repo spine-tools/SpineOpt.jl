@@ -17,11 +17,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_minimum_operating_point!(m::Model)
+@doc raw"""
+The minimum operating point of a unit is based on the [unit\_flow](@ref)s of
+input or output nodes/node groups.
 
-Limit the maximum in/out `unit_flow` of a `unit` if the parameters
-`unit_capacity`, `number_of_units`, `unit_conv_cap_to_flow`, and `unit_availability_factor` exist.
+Note:
+- The below formulation is valid for flows going from a unit to a node (i.e., output flows).
+  For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched
+  (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
+  The details are omitted for brevity.
+
+```math
+\begin{aligned}
+& \sum_{
+    \substack{
+        n \in members(ng): \\ !p_{is\_reserve}(n)
+    }
+}
+v_{unit\_flow}(u,n,d,s,t) \\
+& - \sum_{
+    \substack{
+        n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{downward\_reserve}(n)
+    }
+} v_{unit\_flow}(u,n,d,s,t') \\
+& \ge p_{minimum\_operating\_point}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \cdot \big( v_{units\_on}(u,s,t) - \sum_{
+    \substack{n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{is\_non\_spinning}(n)}
+} v_{nonspin\_units\_shut\_down}(u,n,s,t) \big) \\
+& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point})
+\end{aligned}
+```
+
 """
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on, nonspin_units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
