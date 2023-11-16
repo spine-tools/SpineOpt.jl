@@ -120,52 +120,40 @@ v_{node\_state}(n2,s,t)\\
 &amp;  \cdot \min(\Delta t_{units\_on},\Delta t) \\
 &amp; \forall (u, ng_{out1}, ng_{out2}) \in ind(p_{\{fix,max,min\}\_ratio\_out\_out\_unit\_flow}), \\
 &amp; \forall t \in time\_slices, \forall s \in stochastic\_path
-\end{aligned}\]</p><p>Note that a right-hand side constant coefficient associated with the variable <a href="../variables/#units_on">units_on</a> can optionally be included, triggered by the existence of the <a href="../../concept_reference/Parameters/#fix_units_on_coefficient_out_out">fix_units_on_coefficient_out_out</a>, <a href="../../concept_reference/Parameters/#max_units_on_coefficient_out_out">max_units_on_coefficient_out_out</a>, <a href="../../concept_reference/Parameters/#min_units_on_coefficient_out_out">min_units_on_coefficient_out_out</a>, respectively.</p><h5 id="constraint_unit_flow_capacity"><a class="docs-heading-anchor" href="#constraint_unit_flow_capacity">Bounds on the unit capacity</a><a id="constraint_unit_flow_capacity-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_unit_flow_capacity" title="Permalink"></a></h5><p>In a multi-commodity setting, there can be different commodities entering/leaving a certain technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.), emissions, or other commodities (e.g., water, steel). The <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a> must be specified for at least one <a href="../../concept_reference/Relationship Classes/#unit__to_node">unit__to_node</a> or <a href="../../concept_reference/Relationship Classes/#unit__from_node">unit__from_node</a> relationship, in order to trigger a constraint on the maximum commodity flows to this location in each time step. When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).</p><p>Notes:</p><ul><li>The conversion factor <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a> has a default value of <code>1</code>, but can be adjusted in case the unit of measurement for the capacity is different to the unit flows unit of measurement.</li><li>The below formulation is valid for time-slices whose duration is greater than the minimum up time of the unit. This ensures that the unit is not online for exactly one time-slice, which might result in an infeasibility if the below formulation was used. Instead, for time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar formulation, but the details are omitted for brevity.</li><li>The below formulation is valid for flows going from a unit to a node (i.e., output flows). For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up). The details are omitted for brevity.</li></ul><p class="math-container">\[\begin{aligned}
+\end{aligned}\]</p><p>Note that a right-hand side constant coefficient associated with the variable <a href="../variables/#units_on">units_on</a> can optionally be included, triggered by the existence of the <a href="../../concept_reference/Parameters/#fix_units_on_coefficient_out_out">fix_units_on_coefficient_out_out</a>, <a href="../../concept_reference/Parameters/#max_units_on_coefficient_out_out">max_units_on_coefficient_out_out</a>, <a href="../../concept_reference/Parameters/#min_units_on_coefficient_out_out">min_units_on_coefficient_out_out</a>, respectively.</p><h5 id="constraint_unit_flow_capacity"><a class="docs-heading-anchor" href="#constraint_unit_flow_capacity">Bounds on the unit capacity</a><a id="constraint_unit_flow_capacity-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_unit_flow_capacity" title="Permalink"></a></h5><p>In a multi-commodity setting, there can be different commodities entering/leaving a certain technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.), emissions, or other commodities (e.g., water, steel). The <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a> must be specified for at least one <a href="../../concept_reference/Relationship Classes/#unit__to_node">unit__to_node</a> or <a href="../../concept_reference/Relationship Classes/#unit__from_node">unit__from_node</a> relationship, in order to trigger a constraint on the maximum commodity flows to this location in each time step. When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).</p><p class="math-container">\[\begin{aligned}
 &amp; \sum_{
-    \substack{
-        n \in members(ng): \\ !p_{is\_reserve}(n)
-    }
-} v_{unit\_flow}(u,n,d,s,t) \\
-&amp; + \sum_{
-    \substack{
-        n \in members(ng): \\
-        p_{is\_reserve}(n) \\
-        p_{upward\_reserve}(n) \\
-        !p_{is\_non\_spinning}(n)
-    }
-} v_{unit\_flow}(u,n,d,s,t) \\
-&amp; \le p_{unit\_capacity}(u,ng,d,s,t) \\
-&amp; \cdot p_{unit\_availability\_factor}(u,s,t) \\
-&amp; \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+        n \in ng : \neg IRN_{(n)}
+} {unit\_flow}_{(u,n,d,s,t)} + \sum_{
+        n \in ng : IRN_{(n)} \land UR_{(n)} \land \neg INS_{(n)}
+} unit\_flow_{(u,n,d,s,t)} \\
+&amp; \le \\
+&amp; UC_{(u,ng,d,s,t)} \cdot UAF_{(u,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \\
 &amp; \cdot ( \\
-&amp; \qquad v_{units\_on}(u,s,t) \\
-&amp; \qquad + \big(1 - p_{shut\_down\_limit}(u,ng,d,s,t)\big) \\
-&amp; \qquad \cdot \big( v_{units\_shut\_down}(u,s,t+1) + \sum_{
-    \substack{n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{is\_non\_spinning}(n)}
-} v_{nonspin\_units\_shut\_down}(u,n,s,t) \big) \\
-&amp; \qquad - \big(1 - p_{start\_up\_limit}(u,ng,d,s,t)\big) \cdot v_{units\_started\_up}(u,s,t) \\
+&amp; \qquad units\_on_{(u,s,t)} \\
+&amp; \qquad + \left(1 - SDL_{(u,ng,d,s,t)}\right) \\
+&amp; \qquad \cdot \left( units\_shut\_down_{(u,s,t+1)}
++ \sum_{
+    n \in ng: IRN_{(n)} \land INS_{(n)}
+} nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
+&amp; \qquad - \left(1 - SUL_{(u,ng,d,s,t)}\right) \cdot units\_started\_up_{(u,s,t)} \\
 &amp; ) \\
-&amp; \forall (u,ng,d) \in ind(p_{unit\_capacity})
-\end{aligned}\]</p><h5 id="constraint_minimum_operating_point"><a class="docs-heading-anchor" href="#constraint_minimum_operating_point">Constraint on minimum operating point</a><a id="constraint_minimum_operating_point-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_minimum_operating_point" title="Permalink"></a></h5><p>The minimum operating point of a unit is based on the <a href="../variables/#unit_flow">unit_flow</a>s of input or output nodes/node groups.</p><p>Note:</p><ul><li>The below formulation is valid for flows going from a unit to a node (i.e., output flows). For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up). The details are omitted for brevity.</li></ul><p class="math-container">\[\begin{aligned}
+&amp; \forall (u,ng,d) \in indices(UC)
+\end{aligned}\]</p><p>where</p><ul><li><span>$IRN =$</span> <a href="../../concept_reference/Parameters/#is_reserve_node">is_reserve_node</a></li><li><span>$UR =$</span> <a href="../../concept_reference/Parameters/#upward_reserve">upward_reserve</a></li><li><span>$INS =$</span> <a href="../../concept_reference/Parameters/#is_non_spinning">is_non_spinning</a></li><li><span>$UC =$</span> <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a></li><li><span>$UAF =$</span> <a href="../../concept_reference/Parameters/#unit_availability_factor">unit_availability_factor</a></li><li><span>$UCCF =$</span> <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a></li><li><span>$SUL =$</span> <a href="../../concept_reference/Parameters/#start_up_limit">start_up_limit</a></li><li><span>$SDL =$</span> <a href="../../concept_reference/Parameters/#shut_down_limit">shut_down_limit</a></li></ul><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The conversion factor <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a> has a default value of <code>1</code>, but can be adjusted in case the unit of measurement for the capacity is different to the unit flows unit of measurement.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The above formulation is valid for time-slices whose duration is greater than the minimum up time of the unit. This ensures that the unit is not online for exactly one time-slice, which might result in an infeasibility if this formulation was used. Instead, for time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar formulation, but the details are omitted for brevity.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The above formulation is valid for flows going from a unit to a node (i.e., output flows). For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up). The details are omitted for brevity.</p></div></div><h5 id="constraint_minimum_operating_point"><a class="docs-heading-anchor" href="#constraint_minimum_operating_point">Constraint on minimum operating point</a><a id="constraint_minimum_operating_point-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_minimum_operating_point" title="Permalink"></a></h5><p>The minimum operating point of a unit is based on the <a href="../variables/#unit_flow">unit_flow</a>s of input or output nodes/node groups.</p><p class="math-container">\[\begin{aligned}
 &amp; \sum_{
-    \substack{
-        n \in members(ng): \\ !p_{is\_reserve}(n)
-    }
+        n \in ng: !IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
-&amp; - \sum_{
-    \substack{
-        n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{downward\_reserve}(n)
-    }
-} v_{unit\_flow}(u,n,d,s,t&#39;) \\
-&amp; \ge p_{minimum\_operating\_point}(u,ng,d,s,t) \\
-&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
-&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-&amp; \cdot \big( v_{units\_on}(u,s,t) - \sum_{
-    \substack{n \in members(ng): \\ p_{is\_reserve}(n) \\ p_{is\_non\_spinning}(n)}
-} v_{nonspin\_units\_shut\_down}(u,n,s,t) \big) \\
-&amp; \forall (u,ng,d) \in ind(p_{minimum\_operating\_point})
-\end{aligned}\]</p><h3 id="Dynamic-constraints"><a class="docs-heading-anchor" href="#Dynamic-constraints">Dynamic constraints</a><a id="Dynamic-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Dynamic-constraints" title="Permalink"></a></h3><h4 id="Commitment-constraints"><a class="docs-heading-anchor" href="#Commitment-constraints">Commitment constraints</a><a id="Commitment-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Commitment-constraints" title="Permalink"></a></h4><p>For modeling certain technologies/units, it is important to not only have <a href="../variables/#unit_flow">unit_flow</a> variables of different commodities, but also model the online (&quot;commitment&quot;) status of the unit/technology at every time step. Therefore, an additional variable <a href="../variables/#units_on">units_on</a> is introduced. This variable represents the number of online units of that technology (for a normal unit commitment model, this variable might be a binary, for investment planning purposes, this might also be an integer or even a continuous variable). To define the type of a commitment variable, see <a href="../../concept_reference/Parameters/#online_variable_type">online_variable_type</a>. Commitment variables will be introduced by the following constraints (with corresponding parameters):</p><ul><li>constraint on <code>units_on</code></li><li>constraint on <code>units_available</code></li><li>constraint on the unit state transition</li><li>constraint on minimum down time</li><li>constraint on minimum up time</li><li>constraint on ramp rates</li><li>constraint on reserve provision</li></ul><h5 id="constraint_units_available"><a class="docs-heading-anchor" href="#constraint_units_available">Bound on available units</a><a id="constraint_units_available-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_units_available" title="Permalink"></a></h5><p>The aggregated available units itself is constrained by the parameters <a href="../../concept_reference/Parameters/#unit_availability_factor">unit_availability_factor</a> and <a href="../../concept_reference/Parameters/#number_of_units">number_of_units</a>, and the variable number of invested units <a href="../variables/#units_invested_available">units_invested_available</a>:</p><p class="math-container">\[\begin{aligned}
+unit\_flow_{(u,n,d,s,t)}
+- \sum_{
+        n \in ng: IRN_{(n)} \land DR_{(n)}
+}
+unit\_flow_{(u,n,d,s,t)} \\
+&amp; \ge MOP_{(u,ng,d,s,t)} \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \\
+&amp; \cdot \left( units\_on_{(u,s,t)}
+- \sum_{
+    n \in ng: IRN_{(n)} \land INS_{(n)}
+} nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
+&amp; \forall (u,ng,d) \in indices(MOP)
+\end{aligned}\]</p><p>where</p><ul><li><span>$IRN =$</span> <a href="../../concept_reference/Parameters/#is_reserve_node">is_reserve_node</a></li><li><span>$DR =$</span> <a href="../../concept_reference/Parameters/#downward_reserve">downward_reserve</a></li><li><span>$INS =$</span> <a href="../../concept_reference/Parameters/#is_non_spinning">is_non_spinning</a></li><li><span>$MOP =$</span> <a href="../../concept_reference/Parameters/#minimum_operating_point">minimum_operating_point</a></li><li><span>$UC =$</span> <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a></li><li><span>$UCCF =$</span> <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a></li></ul><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The above formulation is valid for flows going from a unit to a node (i.e., output flows). For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up). The details are omitted for brevity.</p></div></div><h3 id="Dynamic-constraints"><a class="docs-heading-anchor" href="#Dynamic-constraints">Dynamic constraints</a><a id="Dynamic-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Dynamic-constraints" title="Permalink"></a></h3><h4 id="Commitment-constraints"><a class="docs-heading-anchor" href="#Commitment-constraints">Commitment constraints</a><a id="Commitment-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Commitment-constraints" title="Permalink"></a></h4><p>For modeling certain technologies/units, it is important to not only have <a href="../variables/#unit_flow">unit_flow</a> variables of different commodities, but also model the online (&quot;commitment&quot;) status of the unit/technology at every time step. Therefore, an additional variable <a href="../variables/#units_on">units_on</a> is introduced. This variable represents the number of online units of that technology (for a normal unit commitment model, this variable might be a binary, for investment planning purposes, this might also be an integer or even a continuous variable). To define the type of a commitment variable, see <a href="../../concept_reference/Parameters/#online_variable_type">online_variable_type</a>. Commitment variables will be introduced by the following constraints (with corresponding parameters):</p><ul><li>constraint on <code>units_on</code></li><li>constraint on <code>units_available</code></li><li>constraint on the unit state transition</li><li>constraint on minimum down time</li><li>constraint on minimum up time</li><li>constraint on ramp rates</li><li>constraint on reserve provision</li></ul><h5 id="constraint_units_available"><a class="docs-heading-anchor" href="#constraint_units_available">Bound on available units</a><a id="constraint_units_available-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_units_available" title="Permalink"></a></h5><p>The aggregated available units itself is constrained by the parameters <a href="../../concept_reference/Parameters/#unit_availability_factor">unit_availability_factor</a> and <a href="../../concept_reference/Parameters/#number_of_units">number_of_units</a>, and the variable number of invested units <a href="../variables/#units_invested_available">units_invested_available</a>:</p><p class="math-container">\[\begin{aligned}
 &amp; v_{units\_available}(u,s,t) \\
 &amp; == p_{unit\_availability\_factor}(u,s,t) \\
 &amp; \cdot (p_{number\_of\_units}(u,s,t) \\
@@ -195,63 +183,43 @@ v_{units\_started\_up}(u,s,t&#39;) \\
 &amp; \forall (u,s,t) \in units\_on\_indices\\
 \end{aligned}\]</p><p>This constraint can be extended to the use of nonspinning reserves. See <a href="@ref constraint_min_up_time2">also</a>.</p><h4 id="Ramping-constraints"><a class="docs-heading-anchor" href="#Ramping-constraints">Ramping constraints</a><a id="Ramping-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Ramping-constraints" title="Permalink"></a></h4><p>To include ramping and reserve constraints, it is a pre requisite that <a href="@ref constraint_minimum_operating_point">minimum operating points</a> and <a href="@ref constraint_unit_flow_capacity">capacity constraints</a> are enforced as described.</p><p>For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see <a href="../../advanced_concepts/ramping/#Ramping">Ramping</a>.</p><h5 id="constraint_ramp_up"><a class="docs-heading-anchor" href="#constraint_ramp_up">Ramp up limit</a><a id="constraint_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_up" title="Permalink"></a></h5><p>Limit the increase of <code>unit_flow</code> over a time period of one <code>duration_unit</code> according to the <code>start_up_limit</code> and <code>ramp_up_limit</code> parameter values.</p><p class="math-container">\[\begin{aligned}
 &amp; \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 &amp; - \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t-1) \\
+unit\_flow_{(u,n,d,s,t-1)} \\
 &amp; + \sum_{
-    \substack{
-        n \in members(ng): \\
-        p_{is\_reserve}(n) \\ p_{upward\_reserve}(n)
-    }
+        n \in ng: IRN_{(n)} \land UR_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 &amp; \le ( \\
-&amp; \qquad \big(p_{start\_up\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_up\_limit}(u,ng,d,s,t)\big) \\
-&amp; \qquad \cdot v_{units\_started\_up}(u,s,t) \\
-&amp; \qquad + (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_up\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t) \\
-&amp; \qquad - p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t-1) \\
-&amp; ) \cdot p_{unit\_capacity}(u,ng,d,s,t) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \cdot \Delta t \\
-&amp; \forall (u,ng,d) \in ind(p_{ramp\_up\_limit}) \cup ind(p_{start\_up\_limit}), \\
-\end{aligned}\]</p><h5 id="constraint_ramp_down"><a class="docs-heading-anchor" href="#constraint_ramp_down">Ramp down limit</a><a id="constraint_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_down" title="Permalink"></a></h5><p>Limit the decrease of <code>unit_flow</code> over a time period of one <code>duration_unit</code> according to the <code>shut_down_limit</code> and <code>ramp_down_limit</code> parameter values.</p><p class="math-container">\[\begin{aligned}
+&amp; \qquad \left(SUL_{(u,ng,d,s,t)} - MOP_{(u,ng,d,s,t)} - RUL_{(u,ng,d,s,t)}\right) \cdot units\_started\_up_{(u,s,t)} \\
+&amp; \qquad + \left(MOP_{(u,ng,d,s,t)} + RUL_{(u,ng,d,s,t)}\right) \cdot units\_on_{(u,s,t)} \\
+&amp; \qquad - MOP_{(u,ng,d,s,t)} \cdot units\_on_{(u,s,t-1)} \\
+&amp; ) \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \cdot \Delta t \\
+&amp; \forall (u,ng,d) \in indices(RUL) \cup indices(SUL)
+\end{aligned}\]</p><p>where</p><ul><li><span>$IRN =$</span> <a href="../../concept_reference/Parameters/#is_reserve_node">is_reserve_node</a></li><li><span>$UR =$</span> <a href="../../concept_reference/Parameters/#upward_reserve">upward_reserve</a></li><li><span>$UC =$</span> <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a></li><li><span>$UCCF =$</span> <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a></li><li><span>$RUL =$</span> <a href="../../concept_reference/Parameters/#ramp_up_limit">ramp_up_limit</a></li><li><span>$SUL =$</span> <a href="../../concept_reference/Parameters/#start_up_limit">start_up_limit</a></li><li><span>$MOP =$</span> <a href="../../concept_reference/Parameters/#minimum_operating_point">minimum_operating_point</a></li></ul><h5 id="constraint_ramp_down"><a class="docs-heading-anchor" href="#constraint_ramp_down">Ramp down limit</a><a id="constraint_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_down" title="Permalink"></a></h5><p>Limit the decrease of <code>unit_flow</code> over a time period of one <code>duration_unit</code> according to the <code>shut_down_limit</code> and <code>ramp_down_limit</code> parameter values.</p><p class="math-container">\[\begin{aligned}
 &amp; \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t-1) \\
+unit\_flow_{(u,n,d,s,t-1)} \\
 &amp; - \sum_{
-    \substack{
-        n \in members(ng): \\
-        !p_{is\_reserve}(n)
-    }
+        n \in ng: \neg IRN_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 &amp; + \sum_{
-    \substack{
-        n \in members(ng): \\
-        p_{is\_reserve}(n) \\ p_{downward\_reserve}(n)
-    }
+        n \in ng: IRN_{(n)} \land DR_{(n)}
 }
-v_{unit\_flow}(u,n,d,s,t) \\
+unit\_flow_{(u,n,d,s,t)} \\
 &amp; \le ( \\
-&amp; \qquad \big(p_{shut\_down\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_down\_limit}(u,ng,d,s,t)\big) \\
-&amp; \qquad \cdot v_{units\_shut\_down}(u,s,t) \\
-&amp; \qquad + (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t-1) \\
-&amp; \qquad - p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t) \\
-&amp; ) \cdot p_{unit\_capacity}(u,ng,d,s,t) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \cdot \Delta t \\
-&amp; \forall (u,ng,d) \in ind(p_{ramp\_down\_limit}) \cup ind(p_{shut\_down\_limit}), \\
-\end{aligned}\]</p><h4 id="Reserve-constraints"><a class="docs-heading-anchor" href="#Reserve-constraints">Reserve constraints</a><a id="Reserve-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Reserve-constraints" title="Permalink"></a></h4><h5 id="constraint_res_minimum_node_state"><a class="docs-heading-anchor" href="#constraint_res_minimum_node_state">Constraint on minimum node state for reserve provision</a><a id="constraint_res_minimum_node_state-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_res_minimum_node_state" title="Permalink"></a></h5><p>Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the storage unit (see above) and by the node state:</p><p class="math-container">\[\begin{aligned}
+&amp; \qquad \left(SDL_{(u,ng,d,s,t)} - MOP_{(u,ng,d,s,t)} - RDL_{(u,ng,d,s,t)}\right) \cdot units\_shut\_down_{(u,s,t)} \\
+&amp; \qquad + \left(MOP_{(u,ng,d,s,t)} + RDL_{(u,ng,d,s,t)}\right) \cdot units\_on_{(u,s,t-1)} \\
+&amp; \qquad - MOP_{(u,ng,d,s,t)} \cdot units\_on_{(u,s,t)} \\
+&amp; ) \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \cdot \Delta t \\
+&amp; \forall (u,ng,d) \in indices(RDL) \cup indices(SDL)
+\end{aligned}\]</p><p>where</p><ul><li><span>$IRN =$</span> <a href="../../concept_reference/Parameters/#is_reserve_node">is_reserve_node</a></li><li><span>$DR =$</span> <a href="../../concept_reference/Parameters/#downward_reserve">downward_reserve</a></li><li><span>$UC =$</span> <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a></li><li><span>$UCCF =$</span> <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a></li><li><span>$RDL =$</span> <a href="../../concept_reference/Parameters/#ramp_down_limit">ramp_down_limit</a></li><li><span>$SDL =$</span> <a href="../../concept_reference/Parameters/#shut_down_limit">shut_down_limit</a></li><li><span>$MOP =$</span> <a href="../../concept_reference/Parameters/#minimum_operating_point">minimum_operating_point</a></li></ul><h4 id="Reserve-constraints"><a class="docs-heading-anchor" href="#Reserve-constraints">Reserve constraints</a><a id="Reserve-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Reserve-constraints" title="Permalink"></a></h4><h5 id="constraint_res_minimum_node_state"><a class="docs-heading-anchor" href="#constraint_res_minimum_node_state">Constraint on minimum node state for reserve provision</a><a id="constraint_res_minimum_node_state-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_res_minimum_node_state" title="Permalink"></a></h5><p>Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the storage unit (see above) and by the node state:</p><p class="math-container">\[\begin{aligned}
 &amp; v_{node\_state}(n_{stor}, s, t)\\
 &amp; &gt;= p_{node\_state\_min}(n_{stor}, s, t) \\
 &amp; + \sum_{\substack{(u,n_{res},d,s,t) \in unit\_flow\_indices: \\ u \in unit\_flow\_indices;n=n_{stor}) \\ p_{is\_reserve\_node}(n_{res}) }} v_{unit\_flow}(u,n_{res},d,s,t)  \\
@@ -603,4 +571,4 @@ Z \ge&amp; + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)
   \end{cases}\\
 &amp;+p_{right\_hand\_side}(uc,t,s)\\
 &amp;\forall uc,t,s \in constraint\_user\_constraint\_indices\\
-\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Thursday 16 November 2023 13:25">Thursday 16 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Thursday 16 November 2023 15:06">Thursday 16 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
