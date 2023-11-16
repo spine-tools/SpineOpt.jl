@@ -18,66 +18,41 @@
 #############################################################################
 
 @doc raw"""
-    add_constraint_ramp_up!(m::Model)
+Limit the increase of `unit_flow` over a time period of one `duration_unit` according
+to the `start_up_limit` and `ramp_up_limit` parameter values.
 
-    #description
-    Limit the increase of `unit_flow` over a time period of one `duration_unit` according
-    to the `start_up_limit` and `ramp_up_limit` parameter values.
-    #end description
-
-    #formulation
-    ```math
-    \begin{aligned}
-    & \sum_{
-        \substack{
-            (u,n,d,s,t) \in unit\_flow\_indices \\
-            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
-            !p_{is\_reserve}(n)
-        }
+```math
+\begin{aligned}
+& \sum_{
+    \substack{
+        n \in members(ng): \\
+        !p_{is\_reserve}(n)
     }
-    v_{unit\_flow}(u,n,d,s,t) \\
-    & - \sum_{
-        \substack{
-            (u,n,d,s,t) \in unit\_flow\_indices \\
-            n \in ng, \, s \in s_{path}, \, t = t_{before} \\
-            !p_{is\_reserve}(n)
-        }
+}
+v_{unit\_flow}(u,n,d,s,t) \\
+& - \sum_{
+    \substack{
+        n \in members(ng): \\
+        !p_{is\_reserve}(n)
     }
-    v_{unit\_flow}(u,n,d,s,t) \\
-    & + \sum_{
-        \substack{
-            (u,n,d,s,t) \in unit\_flow\_indices \\
-            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
-            p_{is\_reserve}(n), \, p_{upward\_reserve}(n)
-        }
+}
+v_{unit\_flow}(u,n,d,s,t-1) \\
+& + \sum_{
+    \substack{
+        n \in members(ng): \\
+        p_{is\_reserve}(n) \\ p_{upward\_reserve}(n)
     }
-    v_{unit\_flow}(u,n,d,s,t) \\
-    & <= ( \\
-    & \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
-        }
-    }
-    (p_{start\_up\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_up\_limit}(u,ng,d,s,t)) \cdot v_{units\_started\_up}(u,s,t) \\
-    & + \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
-        }
-    }
-    (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_up\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t) \\
-    & - \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{before}
-        }
-    }
-    p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t) \\
-    & ) \cdot p_{unit\_capacity}(u,ng,d,s,t_{after}) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t_{after}) \cdot \Delta t_{after} \\
-    & \forall (u,ng,d) \in ind(p_{ramp\_up\_limit}) \cup ind(p_{start\_up\_limit}), \\
-    & \forall (ng,t_{before},t_{after}) \in node\_dynamic\_time\_indices(ng), \\
-    & \forall s_{path} \in stochastic\_paths(t_{before},t_{after})
-    \end{aligned}
-    ```
-    #end formulation
+}
+v_{unit\_flow}(u,n,d,s,t) \\
+& \le ( \\
+& \qquad \big(p_{start\_up\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_up\_limit}(u,ng,d,s,t)\big) \\
+& \qquad \cdot v_{units\_started\_up}(u,s,t) \\
+& \qquad + (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_up\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t) \\
+& \qquad - p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t-1) \\
+& ) \cdot p_{unit\_capacity}(u,ng,d,s,t) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \cdot \Delta t \\
+& \forall (u,ng,d) \in ind(p_{ramp\_up\_limit}) \cup ind(p_{start\_up\_limit}), \\
+\end{aligned}
+```
 """
 function add_constraint_ramp_up!(m::Model)
     @fetch units_on, units_started_up, unit_flow = m.ext[:spineopt].variables

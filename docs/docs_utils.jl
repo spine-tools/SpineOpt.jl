@@ -375,114 +375,38 @@ end
 A Dict mapping function name to its docstring for given Module.
 """
 function all_docstrings(m)
-    alldocs = Dict()
-    for multidoc in values(Base.eval(m, Base.Docs.META))
-        for doc_str in values(multidoc.docs)
-            binding = doc_str.data[:binding]
-            key = split(string(binding), ".")[2]
-            value = Base.Docs.doc(binding)
-            alldocs[key] = value
-        end
-    end
-    alldocs
+    Dict(
+        split(string(binding), ".")[2] => first(values(multidoc.docs)).text
+        for (binding, multidoc) in getproperty(m, Base.Docs.META)
+    )
 end
 
 """
-    _find_fields()
+    expand_tags!(lines, docstrings)
 
-Finds specific fields within a docstring and return them as a single string.
-"""
-function _find_fields(
-    docstring; fields=["formulation", "description"], title="", field_title=false, sep="\n\n", debug_mode=false
-)
-    parts = []
-    if !isempty(title)
-        push!(parts, title)
-    end
-    for field in fields
-        if field_title
-            push!(parts, field)
-        end
-        try
-            sf1 = findfirst("#$field", string(docstring))[end] + 2
-            sf2 = findfirst("#end $field", string(docstring))[1] - 2
-            sf = SubString(string(docstring), sf1, sf2)
-            push!(parts, sf)
-            if debug_mode
-                println(sf)
-            end
-        catch
-            if debug_mode
-                @warn "Cannot find $field"
-                # the error could also be because there is no docstring for constraint but that is a very rare case
-                # as there is often at least a dynamic docstring
-            end
-        end
-    end
-    join(parts, sep)
-end
-
-"""
-    expand_instructions!(lines, docstrings)
-
-Expand `lines` in place by replacing instructions with appropriate content from given `docstrings`,
+Expand `lines` in place by replacing @@{function name} with the corresponding docstring from `docstrings`,
 which must be a `Dict` mapping function names to their docstring.
-
-The lines can either be:
-+ regular strings: these aren't touched
-+ instruction strings: strings within an instruction block, these are replaced by specific content from a docstring.
-
-The instruction block consists of a function name and a list of fields in the docstring of that function.
-If the function name is 'all_functions' then it will search all docstrings for the given fields.
-
-Each instruction is separated by two end of line characters.
 
 '''julia
 docstrings = all_docstrings(SpineOpt)
 lines = [
     "# Constraints",
     "## Auto constraint",
-    "#instruction",
-    "add_constraint_node_state_capacity!",
-    "formulation",
-    "#end instruction"
+    "@@add_constraint_node_state_capacity!",
 )
-expand_instructions!(lines, docstrings)
+expand_tags!(lines, docstrings)
 '''
 """
-function expand_instructions!(lines, docstrings)
-    function interpret_instruction(function_name, function_fields)
-        if function_name == "all_functions"
-            for (doc_key, doc_value) in docstrings
-                title = ""
-                if occursin("add_constraint_", doc_key)
-                    # remove add_constraint_ as well as !
-                    name = split(doc_key, "add_constraint_")[2][end - 1]
-                    title = "### " * replace(uppercasefirst(name), "_" => " ")
-                end
-                md *= _find_fields(doc_value; fields=function_fields, title=title)
-            end
-        else
-            _find_fields(docstrings[function_name]; fields=function_fields)
-        end
-    end
-
+function expand_tags!(lines, docstrings)
     replacement_lines = []
-    instructions = []
     for (k, line) in enumerate(lines)
-        if occursin("#instruction", line)
-            push!(instructions, k)
-        elseif occursin("#end instruction", line)
-            from_ind, function_name, function_fields... = instructions
-            to_ind = k
-            push!(replacement_lines, (from_ind:to_ind, interpret_instruction(function_name, function_fields)))
-            empty!(instructions)
-        elseif !isempty(instructions)
-            push!(instructions, line)
+        if startswith(line, "@@")
+            function_name = line[3:end]
+            new_lines = docstrings[function_name]
+            push!(replacement_lines, (k, new_lines))
         end
     end
-    replacement_lines
-    for (rng, line) in Iterators.reverse(replacement_lines)
-        splice!(lines, rng, [line])
+    for (k, new_lines) in Iterators.reverse(replacement_lines)
+        splice!(lines, k, new_lines)
     end
 end

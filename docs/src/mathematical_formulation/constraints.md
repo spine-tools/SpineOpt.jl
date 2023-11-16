@@ -3,13 +3,10 @@
 ## Balance constraint
 
 ### [Nodal balance](@id constraint_nodal_balance)
-#instruction
-add_constraint_nodal_balance!
-description
-formulation
-#end instruction
 
-The constraint consists of the [node injections](@ref constraint_node_injection), the net [connection\_flow](@ref)s and [node slack variables](@ref Variables).
+@@add_constraint_nodal_balance!
+
+The constraint consists of the [node injections](@ref constraint_node_injection) and the net [connection\_flow](@ref)s.
 
 ### [Node injection](@id constraint_node_injection)
 The node injection itself represents all local production and consumption, represented by the sum of all connected unit flows and the nodal demand. The node injection is created for each node in the network (unless the node is only used for parameter aggregation purposes, see [Introduction to groups of objects](@ref)).
@@ -205,35 +202,12 @@ Note that a right-hand side constant coefficient associated with the variable [u
 
 ##### [Bounds on the unit capacity](@id constraint_unit_flow_capacity)
 
-#instruction
-add_constraint_unit_flow_capacity!
-description
-formulation
-#end instruction
+@@add_constraint_unit_flow_capacity!
 
 
 ##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
-The minimum operating point of a unit can be based on the [unit\_flow](@ref)s of
-input or output nodes/node groups ng:
 
-```math
-\begin{aligned}
-& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}  
-!p_{is\_reserve}(n)} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t'   \\
-& - \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)} p_{is\_reserve}(n) p_{downward\_reserve}(n) } v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
-& >= p_{minimum\_operating\_point}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-& \cdot (\sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t))}} v_{units\_on}(u,s,t_{units\_on}) \\
-& - \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
-  v_{nonspin\_units\_shut\_down}(u',n',s',t') )  \\
-& \cdot \min(\Delta t_{units\_on},\Delta t) \\
-& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \\
-& \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))),\\
-& \forall s \in stochastic\_path
-\end{aligned}
-```
-Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ``\min(\Delta t_{units\_on},\Delta t)`` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
+@@add_constraint_minimum_operating_point!
 
 ### Dynamic constraints
 
@@ -332,19 +306,11 @@ For dispatchable units, additional ramping constraints can be introduced. For se
 
 ##### [Ramp up limit](@id constraint_ramp_up)
 
-#instruction
-add_constraint_ramp_up!
-description
-formulation
-#end instruction
+@@add_constraint_ramp_up!
 
 ##### [Ramp down limit](@id constraint_ramp_down)
 
-#instruction
-add_constraint_ramp_down!
-description
-formulation
-#end instruction
+@@add_constraint_ramp_down!
 
 #### Reserve constraints
 
