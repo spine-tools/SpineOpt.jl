@@ -63,7 +63,7 @@ function past_units_on_indices(m, u, s, t, min_time)
 end
 
 function _minimum_operating_point(u, ng, d, s, t0, t)
-    minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
+    minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=0)]
 end
 
 function _unit_flow_capacity(u, ng, d, s, t0, t)
@@ -81,3 +81,21 @@ end
 function _shut_down_limit(u, ng, d, s, t0, t)
     shut_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
 end
+
+"""
+    _switch(d; from_node, to_node)
+
+Either `from_node` or `to_node` depending on the given direction `d`.
+
+# Example
+
+```julia
+@assert _switch(direction(:from_node); from_node=3, to_node=-1) == 3
+@assert _switch(direction(:to_node); from_node=3, to_node=-1) == -1
+```
+"""
+function _switch(d; from_node, to_node)
+    Dict(:from_node => from_node, :to_node => to_node)[d.name]
+end
+
+_overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]

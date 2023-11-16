@@ -86,27 +86,29 @@ function add_constraint_ramp_up!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
-                + unit_flow[u, n, d, s, t]
+                + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after)
                 )
                 if !is_reserve_node(node=n);
                 init=0,
             )
             - expr_sum(
-                + unit_flow[u, n, d, s, t]
+                + unit_flow[u, n, d, s, t] * overlap_duration(t_before, t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_before
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before)
                 )
                 if !is_reserve_node(node=n);
                 init=0,
             )
             + expr_sum(
-                + unit_flow[u, n, d, s, t]
+                + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after)
                 )
-                if is_reserve_node(node=n) && upward_reserve(node=n);
+                if is_reserve_node(node=n)
+                && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
+                && !is_non_spinning(node=n);
                 init=0,
             )
             <=
@@ -118,15 +120,18 @@ function add_constraint_ramp_up!(m::Model)
                         - _ramp_up_limit(u, ng, d, s, t0, t_after)
                     )
                     * units_started_up[u, s, t]
+                    * duration(t)
                     + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_up_limit(u, ng, d, s, t0, t_after))
                     * units_on[u, s, t]
-                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after));
+                    * duration(t)
+                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0
                 )
                 - expr_sum(
                     + _minimum_operating_point(u, ng, d, s, t0, t_after)
                     * units_on[u, s, t]
-                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                    * duration(t)
+                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_before);
                     init=0
                 )
             )
@@ -145,12 +150,12 @@ function constraint_ramp_up_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, ng, d) in Iterators.flatten((indices(ramp_up_limit), indices(start_up_limit)))
-        for (ng, t_before, t_after) in node_dynamic_time_indices(m; node=ng)
+        for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m,
             [
-                unit_flow_indices(m; unit=u, node=ng, direction=d, t=[t_before, t_after]);
-                units_on_indices(m; unit=u, t=[t_before, t_after])
+                unit_flow_indices(m; unit=u, node=ng, direction=d, t=_overlapping_t(m, t_before, t_after));
+                units_on_indices(m; unit=u, t=[t_before; t_after])
             ]
         )
     )

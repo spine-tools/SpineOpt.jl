@@ -36,7 +36,7 @@ function nonspin_units_started_up_indices(
         for (u, n, d, s, t) in unit_flow_indices(
             m; unit=unit, node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
         )
-        if is_non_spinning(node=n)
+        if is_reserve_node(node=n) && is_non_spinning(node=n)
     )
 end
 
