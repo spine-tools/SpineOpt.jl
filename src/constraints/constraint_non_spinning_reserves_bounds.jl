@@ -29,20 +29,21 @@ function add_constraint_non_spinning_reserves_lower_bound!(m::Model)
             m,
             expr_sum(
                 + minimum_operating_point[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short, _default=0)
+                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=0)
                 ]
                 * unit_capacity[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)
+                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over)
                 ]
-                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_short]
-                for (u, n, s, t_short) in _switch(
+                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_over]
+                * min(duration(t), duration(t_over))
+                for (u, n, s, t_over) in _switch(
                     d; from_node=nonspin_units_shut_down_indices, to_node=nonspin_units_started_up_indices
-                )(m; unit=u, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t));
+                )(m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0
             )
             <=
             expr_sum(
-                unit_flow[u, n, d, s, t_short]
+                unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 )
@@ -65,7 +66,7 @@ function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Par
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(
-                unit_flow[u, n, d, s, t_short]
+                unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 )
@@ -75,15 +76,16 @@ function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Par
             <=
             expr_sum(
                 + limit[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short, _default=1)
+                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=1)
                 ]
                 * unit_capacity[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)
+                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over)
                 ]
-                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_short]
-                for (u, n, s, t_short) in _switch(
+                * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_over]
+                * min(duration(t), duration(t_over))
+                for (u, n, s, t_over) in _switch(
                     d; from_node=nonspin_units_shut_down_indices, to_node=nonspin_units_started_up_indices
-                )(m; unit=u, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t));
+                )(m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t));
                 init=0
             )
         )
