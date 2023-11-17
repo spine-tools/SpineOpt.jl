@@ -17,10 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_min_node_pressure!(m::Model)
+@doc raw"""
+In order to impose a lower limit on the pressure at a node the parameter [min\_node\_pressure](@ref)
+can be specified which triggers the following constraint:
 
-Limit the minimum value of a `node_pressure` variable to be below `min_node_pressure`, if it exists.
+```math
+\sum_{n \in ng} node\_pressure_{(n,s,t)} \geq MinNP(ng,s,t) \quad \forall (ng) \in indices(MinNP), \, \forall (s,t)
+```
+where
+- ``MinNP =`` [min\_node\_pressure](@ref)
+
+As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group,
+in order to impose a lower limit on the aggregated [node\_pressure](@ref) within one node group.
 """
 function add_constraint_min_node_pressure!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables

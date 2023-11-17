@@ -17,10 +17,21 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    add_constraint_connection_unitary_gas_flow!(m::Model)
+@doc raw"""
+The flow through a connection can only be in one direction at at time.
+Whether a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref) variable,
+which takes a value of `1` if the direction of flow is positive.
+To ensure that the [binary\_gas\_connection\_flow](@ref) in the opposite direction then takes the value `0`,
+the following constraint is enforced:
 
-This constraint is needed to force uni-directional flow over gas connections.
+```math
+\begin{aligned}
+& binary\_gas\_connection\_flow_{(conn, n_{orig}, to\_node, s, t)} \\
+& = 1 - binary\_gas\_connection\_flow_{(conn, n_{dest}, to\_node, s, t)} \\
+& \forall (conn, n_{orig}, n_{dest}) \in indices(FPC1) \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_connection_unitary_gas_flow!(m::Model)
     @fetch binary_gas_connection_flow = m.ext[:spineopt].variables

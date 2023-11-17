@@ -17,10 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_max_node_voltage_angle!(m::Model)
+@doc raw"""
+In order to impose an upper limit on the maximum voltage angle at a node
+the parameter [max\_voltage\_angle](@ref) can be specified which triggers the following constraint:
 
-Limit the maximum value of a `node_voltage_angle` variable to be below `max_voltage_angle`, if it exists.
+```math
+\begin{aligned}
+& \sum_{n \in ng} node\_voltage\_angle_{(n,s,t)} \geq MaxVA_{(ng,s,t)} \\
+& \forall ng \in indices(MaxVA) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``MaxVA =`` [max\_voltage\_angle](@ref)
+
+As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also be defined on a node group,
+in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
 """
 function add_constraint_max_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle = m.ext[:spineopt].variables

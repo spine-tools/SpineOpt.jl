@@ -17,13 +17,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# TODO: Calling `max_cum_in_unit_flow_bound[(unit=ug)]` fails´?
+@doc raw"""
+To impose a limit on the cumulative amount of certain commodity flows,
+a cumulative bound can be set by defining one of the following parameters:
+* [max\_total\_cumulated\_unit\_flow\_from\_node](@ref)
+* [min\_total\_cumulated\_unit\_flow\_from\_node](@ref)
+* [max\_total\_cumulated\_unit\_flow\_to\_node](@ref)
+* [min\_total\_cumulated\_unit\_flow\_to\_node](@ref)
 
-"""
-    add_constraint_max_cum_in_unit_flow_bound!(m::Model)
+A maximum cumulated flow restriction can for example be used to limit emissions or consumption of a certain commodity.
 
-Set upperbound `max_cum_in_flow_bound `to the cumulated inflow into a `unit_group ug`
-if `max_cum_in_unit_flow_bound` exists.
+
+```math
+\begin{aligned}
+& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \leq MaxTCUFFN(ug,ng,d) \\
+& \forall (ug,ng,d) \in indices(MaxTCUFFN), \, \forall s \\
+& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \geq MinTCUFFN(ug,ng,d) \\
+& \forall (ug,ng,d) \in indices(MinTCUFFN), \, \forall s \\
+& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \leq MaxTCUFTN(ug,ng,d) \\
+& \forall (ug,ng,d) \in indices(MaxTCUFTN), \, \forall s \\
+& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \geq MinTCUFTN(ug,ng,d) \\
+& \forall (ug,ng,d) \in indices(MinTCUFTN), \, \forall s \\
+\end{aligned}
+```
+where
+- ``MaxTCUFFN =`` [max\_total\_cumulated\_unit\_flow\_from\_node](@ref)
+- ``MinTCUFFN =`` [min\_total\_cumulated\_unit\_flow\_from\_node](@ref)
+- ``MaxTCUFTN =`` [max\_total\_cumulated\_unit\_flow\_to\_node](@ref)
+- ``MinTCUFTN =`` [min\_total\_cumulated\_unit\_flow\_to\_node](@ref)
 """
 function add_constraint_total_cumulated_unit_flow!(m::Model, bound, sense)
     # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
@@ -42,11 +63,11 @@ function add_constraint_total_cumulated_unit_flow!(m::Model, bound, sense)
             + bound(unit=ug, node=ng, direction=d)
             # TODO Should this be time-varying, and stochastical?
         )
-        for (ug,ng,d,s) in constraint_total_cumulated_unit_flow_indices(m,bound)
+        for (ug, ng, d, s) in constraint_total_cumulated_unit_flow_indices(m, bound)
     )
 end
 
-function constraint_total_cumulated_unit_flow_indices(m::Model,bound)
+function constraint_total_cumulated_unit_flow_indices(m::Model, bound)
     unique(
         (unit=ug, node=ng, direction=d, stochastic_path=s)
         for (ug, ng, d) in indices(bound)
@@ -55,17 +76,17 @@ function constraint_total_cumulated_unit_flow_indices(m::Model,bound)
 end
 
 function add_constraint_max_total_cumulated_unit_flow_from_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,max_total_cumulated_unit_flow_from_node,<=)
+    add_constraint_total_cumulated_unit_flow!(m, max_total_cumulated_unit_flow_from_node, <=)
 end
 
 function add_constraint_min_total_cumulated_unit_flow_from_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,min_total_cumulated_unit_flow_from_node,>=)
+    add_constraint_total_cumulated_unit_flow!(m, min_total_cumulated_unit_flow_from_node, >=)
 end
 
 function add_constraint_max_total_cumulated_unit_flow_to_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,max_total_cumulated_unit_flow_to_node,<=)
+    add_constraint_total_cumulated_unit_flow!(m, max_total_cumulated_unit_flow_to_node, <=)
 end
 
 function add_constraint_min_total_cumulated_unit_flow_to_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,min_total_cumulated_unit_flow_to_node,>=)
+    add_constraint_total_cumulated_unit_flow!(m, min_total_cumulated_unit_flow_to_node, >=)
 end

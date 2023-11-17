@@ -17,15 +17,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_ratio_out_in_connection_flow!(m, ratio_out_in, sense)
+@doc raw"""
+By defining the parameters [fix\_ratio\_out\_in\_connection\_flow](@ref),
+[max\_ratio\_out\_in\_connection\_flow](@ref) or [min\_ratio\_out\_in\_connection\_flow](@ref),
+a ratio can be set between **out**going and **in**coming flows from and to a connection.
 
-Ratio of `connection_flow` variables.
+The constraint below is written for [fix\_ratio\_out\_in\_connection\_flow](@ref), but equivalent formulations
+exist for the other two cases.
 
-Note that the `<sense>_ratio_<directions>_connection_flow` parameter uses the stochastic dimensions of the second
-<direction>!
+```math
+\begin{aligned}
+& \sum_{n \in ng_{out}} connection\_flow_{(conn,n,from\_node,s,t)} \\
+& = \\
+& FROICF{(conn, ng_{out}, ng_{in},s,t)}
+\cdot \sum_{n \in ng_{in}} connection\_flow_{(conn,n,to\_node,s,t)} \\
+& \forall (conn, ng_{out}, ng_{in}) \in indices(FROICF) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``FROICF =`` [fix\_ratio\_out\_in\_connection\_flow](@ref)
+
+!!! note
+    If any of the above mentioned ratio parameters is specified for a node group,
+    then the ratio is enforced over the *sum* of flows from or to that group.
+    In this case, there remains a degree of freedom regarding the composition of flows within the group.
+
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
+    # NOTE: the `<sense>_ratio_<directions>_connection_flow` parameter uses the stochastic dimensions
+    # of the second <direction>!
     @fetch connection_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[ratio_out_in.name] = Dict(

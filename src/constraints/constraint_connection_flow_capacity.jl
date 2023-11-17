@@ -17,18 +17,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_flow_capacity!(m::Model)
+@doc raw"""
+In a multi-commodity setting, there can be different commodities entering/leaving a certain connection.
+These can be energy-related commodities (e.g., electricity, natural gas, etc.),
+emissions, or other commodities (e.g., water, steel). The [connection\_capacity](@ref) should be specified
+for at least one [connection\_\_to\_node](@ref) or [connection\_\_from\_node](@ref) relationship,
+in order to trigger a constraint on the maximum commodity flows to this location in each time step.
+When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
 
-Limit the maximum in/out `connection_flow` of a `connection` for all `connection_flow_capacity` indices.
+```math
+\begin{aligned}
+& \sum_{
+n \in ng
+} connection\_flow_{(conn,n,d,s,t)} \\
+& - \sum_{
+n \in ng
+} connection\_flow_{(conn,n,reverse(d),s,t)} \\
+& <= CC_{(conn,ng,d,s,t)} \cdot CAF_{(conn,s,t)} \cdot CCCTF_{(conn,ng,d,s,t)} \\
+& \cdot \begin{cases}       
+   connections\_invested\_available_{(conn,s,t)} & \text{if } CandidateC_{(conn,s,t)} \geq 1 \\
+   1 & \text{otherwise} \\
+\end{cases} \\
+& \forall (conn,ng,d) \in indices(CC) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``CC =`` [connection\_capacity](@ref)
+- ``CAF =`` [connection\_availability\_factor](@ref)
+- ``CCCTF =`` [connection\_conv\_cap\_to\_flow](@ref)
+- ``CandidateC =`` [candidate\_connections](@ref)
 
-Check if `connection_conv_cap_to_flow` is defined. The `connection_capacity` parameter is used to constrain the
-"average power" (e.g. MWh/h) instead of "instantaneous power" (e.g. MW) of the `connection`.
-For most applications, there isn't any difference between the two. However, for situations where the same `connection`
-handles `connection_flows` to multiple `nodes` with different temporal resolutions, the constraint is only generated
-for the lowest resolution, and only the average of the higher resolution `connection_flow` is constrained.
-If instantaneous power needs to be constrained as well, defining the `connection_capacity` separately for each
-`connection_flow` can be used to achieve this.
+!!! note
+    For situations where the same [connection](@ref) handles flows to multiple [node](@ref)s
+    with different temporal resolutions, the constraint is only generated for the lowest resolution,
+    and only the average of the higher resolution flow is constrained.
+    In other words, what gets constrained is the "average power" (e.g. MWh/h) rather than the "instantaneous power"
+    (e.g. MW). If instantaneous power needs to be constrained as well, then [connection_capacity](@ref) needs to be
+    specified separately for each [node](@ref) served by the [connection](@ref).
+
+!!! note
+    The conversion factor [connection\_conv\_cap\_to\_flow](@ref) has a default value of `1`,
+    but can be adjusted in case the unit of measurement for the capacity is different to the connection flows
+    unit of measurement.
+
 """
 function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables

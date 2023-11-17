@@ -16,10 +16,24 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    add_constraint_connection_flow_gas_capacity!(m::Model)
 
-This constraint is needed to force uni-directional flow over gas connections.
+@doc raw"""
+To enforce that the averge flow of a connection is only in one direction,
+the flow in the opposite direction is forced to be `0` by the following equation.
+For the connection flow in the direction of flow the parameter [big\_m](@ref) should be chosen large enough
+not to become binding.
+
+```math
+\begin{aligned}
+& \left(connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
+& <= BM \cdot binary\_gas\_connection\_flow_{(conn, n_{dest}, to\_node, s, t)} \\
+& \forall (conn, n_{orig}, n_{dest}) \in indices(FPC1) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``FPC1 =`` [fixed\_pressure\_constant\_1](@ref)
+- ``BM =`` [big\_m](@ref)
 """
 function add_constraint_connection_flow_gas_capacity!(m::Model)
     @fetch connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables

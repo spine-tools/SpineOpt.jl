@@ -16,10 +16,24 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    constraint_compression_ratio(m::Model)
 
-Set a fixed compression ratio between two nodes connected through active pipeline.
+@doc raw"""
+If a compression station is located in between two nodes, the connection is considered to be active
+and a compression ratio between the two nodes can be imposed.
+The parameter [compression\_factor](@ref) needs to be defined on a [connection\_\_node\_\_node](@ref) relationship,
+where the first node corresponds the origin node, before the compression,
+while the second node corresponds to the destination node, after compression.
+The existence of this parameter will trigger the following constraint:
+
+```math
+\begin{aligned}
+& \sum_{n \in ng2} node\_pressure_{(n,s,t)} \leq CF_{(conn,ng1,ng2,s,t)} \cdot \sum_{n \in ng1} node\_pressure_{(n,s,t)} \\
+& \forall (conn,ng1,ng2) \in indices(CF) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``CF =`` [compression\_factor](@ref)
 """
 function add_constraint_compression_ratio!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables

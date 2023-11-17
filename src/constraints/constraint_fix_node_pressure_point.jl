@@ -16,11 +16,85 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    constraint_fix_node_pressure_point(m::Model)
+@doc raw"""
+The Weymouth equation relates the average flows through a connection to the difference between the adjacent
+squared node pressures.
 
-Outer approximation of the non-linear terms.
-#Linear apprioximation around fixed pressure points
+```math
+\begin{aligned}
+& (\\
+& \quad (connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)})/2 \\
+& \quad - (connection\_flow_{(conn, n_{dest},from\_node,s,t)} + connection\_flow_{(conn, n_{orig},to\_node,s,t)})/2 \\
+& )\\
+& \cdot \|(\\
+& \quad (connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)})/2 \\
+& \quad - (connection\_flow_{(conn, n_{dest},from\_node,s,t)} + connection\_flow_{(conn, n_{orig},to\_node,s,t)})/2 \\
+& )\| \\
+&  = K_{(conn)} \cdot (node\_pressure_{(n_{orig},s,t)}^2 - node\_pressure_{(n_{dest},s,t)}^2) \\
+\end{aligned}
+```
+where ``K`` corresponds to the natural gas flow constant.
+
+The above can be rewritten as
+```math
+\begin{aligned}
+& (\\
+& \quad (connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)})/2 \\
+& \quad - (connection\_flow_{(conn, n_{dest},from\_node,s,t)} + connection\_flow_{(conn, n_{orig},to\_node,s,t)})/2 \\
+& )\\
+& = \sqrt{K_{(conn)} \cdot (node\_pressure_{(n_{orig},s,t)}^2 - node\_pressure_{(n_{dest},s,t)}^2)} \\
+& \text{if } (connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)})/2 > 0
+\end{aligned}
+```
+and
+```math
+\begin{aligned}
+& ( \\
+& \quad (connection\_flow_{(conn, n_{dest},from\_node,s,t)} + connection\_flow_{(conn, n_{orig},to\_node,s,t)})/2 \\
+& \quad - (connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)})/2 \\
+& ) \\
+& = \sqrt{K_{(conn)} \cdot (node\_pressure_{(n_{dest},s,t)}^2 - node\_pressure_{(n_{orig},s,t)}^2)} \\
+& \text{if } (connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)})/2 < 0
+\end{aligned}
+```
+
+The cone described by the Weymouth equation can be outer approximated by a number of tangent planes,
+using a set of fixed pressure points, as illustrated in [Schwele - Integration of Electricity, Natural Gas and Heat Systems With Market-based Coordination](https://orbit.dtu.dk/en/publications/integration-of-electricity-natural-gas-and-heat-systems-with-mark).
+The big M method is used to replace the sign function.
+
+The linearized version of the Weymouth equation implemented in SpineOpt is given as follows:
+
+```math
+\begin{aligned}
+& \left(connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
+& \leq FPC1_{(conn,n_{orig},n_{dest},j,s,t)} \cdot node\_pressure_{(n_{orig},s,t)} \\
+& - FPC0_{(conn,n_{orig},n_{dest},j,s,t)} \cdot node\_pressure_{(n_{dest},s,t)} \\
+& + BM \cdot \left(1 - binary\_gas\_connection\_flow_{(conn, n_{dest}, to\_node, s, t)}\right) \\
+& \forall (conn, n_{orig}, n_{dest}) \in indices(FPC1) \\
+& \forall j \in \{1, \ldots, \| FPC1_{(conn, n_{orig}, n_{dest})} \| \}: FPC1_{(conn, n_{orig}, n_{dest}, j)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``FPC1 =`` [fixed\_pressure\_constant\_1](@ref)
+- ``FPC0 =`` [fixed\_pressure\_constant\_0](@ref)
+- ``BM =`` [big\_m](@ref)
+
+The parameters [fixed\_pressure\_constant\_1](@ref) and [fixed\_pressure\_constant\_0](@ref) should be defined.
+For each considered fixed pressure point, they can be calculated as follows:
+```math
+\begin{aligned}
+  & FPC1_{(conn,n_{orig},n_{dest},j)} = K_{(conn)} \cdot FP_{(n_{orig},j)}/ \sqrt{FP_{(n_{orig},j)}^2 - FP_{(n_{dest},j)}^2}\\
+  & FPC0_{(conn,n_{orig},n_{dest},j)} = K_{(conn)} \cdot FP_{(n_{dest},j)}/ \sqrt{FP_{(n_{orig},j)}^2 - FP_{(n_{dest},j)}^2}\\
+\end{aligned}
+```
+where ``FP_{(n,j)}`` is the fix pressure for node ``n`` and point ``j``.
+
+The [big\_m](@ref) parameter combined with the variable [binary\_gas\_connection\_flow](@ref)
+together with the equations [on unitary gas flow](@ref constraint_connection_unitary_gas_flow)
+and on the [maximum gas flow](@ref constraint_connection_flow_gas_capacity) ensure that
+the bound on the average flow through the fixed pressure points becomes active,
+if the flow is in a positive direction for the observed set of connection, node1 and node2.
 """
 function add_constraint_fix_node_pressure_point!(m::Model)
     @fetch node_pressure, connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables

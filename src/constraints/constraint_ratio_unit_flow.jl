@@ -40,23 +40,21 @@ For example, whenever there is only a single input node and a single output node
 Also, [fix\_ratio\_in\_out\_unit\_flow](@ref) can for instance be used to relate emissions to input primary fuel flows.
 
 The constraint below is written for [fix\_ratio\_out\_in\_unit\_flow](@ref), but equivalent formulations
-exist for each of the twelve cases described above.
+exist for the other 11 cases described above.
 
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng_{out} : UTN_{(u,n)} \neq \emptyset} unit\_flow_{(u,n,d,s,t)} \\
+& \sum_{n \in ng_{out}} unit\_flow_{(u,n,from\_node,s,t)} \\
 & = \\
 & FROIUF_{(u, ng_{out}, ng_{in},s,t)}
-\cdot \sum_{n \in ng_{in}: UFN_{(u,n)} \neq \emptyset} unit\_flow_{(u,n,to\_node,s,t)} \\
+\cdot \sum_{n \in ng_{in}} unit\_flow_{(u,n,to\_node,s,t)} \\
 & + FUOCOI(u,ng_{out},ng_{in},s,t) \cdot units\_on_{(u,s,t)}  \\
 & \forall (u, ng_{out}, ng_{in}) \in indices(FROIUF) \\
 & \forall (s,t)
 \end{aligned}
 ```
 where
-- ``UTN =`` [unit\_\_to\_node](@ref)
-- ``UFN =`` [unit\_\_from\_node](@ref)
 - ``FROIUF =`` [fix\_ratio\_out\_in\_unit\_flow](@ref)
 - ``FUOCOI =`` [fix\_units\_on\_coefficient\_out\_in](@ref)
 
