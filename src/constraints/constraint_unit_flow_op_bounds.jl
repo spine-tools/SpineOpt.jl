@@ -40,7 +40,7 @@ besides being bounded by the segment capacity.
     v^{units\_on}_{(u,s,t)} & \text{otherwise}\\
 \end{cases} \\
 & \forall (u,n,d) \in indices(p^{unit\_capacity}) \cup indices(p^{operating\_points}) \\
-& \forall op \in \{ 1, \ldots, \|p^{operating\_points}_{(u,n,d)}\| \} \\
+& \forall op \in \{ 1, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| \} \\
 & \forall (s,t)
 \end{aligned}
 ```

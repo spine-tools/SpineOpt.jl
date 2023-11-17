@@ -24,17 +24,17 @@ input or output nodes/node groups.
 ```math
 \begin{aligned}
 & \sum_{
-        n \in ng: \neg p^{is\_reserve\_node}_{(n)}
+        n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t)}
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[\neg p^{is\_reserve\_node}_{(n)}\right]
 - \sum_{
-        n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{downward\_reserve}_{(n)}
+        n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t)} \\
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{is\_reserve\_node}_{(n)} \land p^{downward\_reserve}_{(n)}\right] \\
 & \ge p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot \left( v^{units\_on}_{(u,s,t)}
 - \sum_{
-    n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{is\_non\_spinning}_{(n)}
+    n \in ng
 } v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
 & \forall (u,ng,d) \in indices(p^{minimum\_operating\_point}) \\
 & \forall (s,t)

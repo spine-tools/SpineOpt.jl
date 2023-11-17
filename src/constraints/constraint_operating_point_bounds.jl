@@ -26,7 +26,7 @@ online units. This constraint is activated only when parameter [ordered\_unit\_f
 \begin{aligned}
 & v^{unit\_flow\_op\_active}_{(u,n,d,op,s,t)} \leq v^{units\_on}_{(u,s,t)} \\
 & \forall (u,n,d) \in indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
-& \forall op \in \{ 1, \ldots, \|p^{operating\_points}_{(u,n,d)}\| \} \\
+& \forall op \in \{ 1, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| \} \\
 & \forall (s,t)
 \end{aligned}
 ```

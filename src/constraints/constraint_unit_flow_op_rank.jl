@@ -32,7 +32,7 @@ The last segment does not need this constraint.
 \end{cases} \right) \\
 & \cdot v^{unit\_flow\_op\_active}_{(u, n, d, op+1, s, t)} \\
 & \forall (u,n,d) \in indices(p^{unit\_capacity}) \cup indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
-& \forall op \in \{ 1, \ldots, \|p^{operating\_points}_{(u,n,d)}\| - 1\} \\
+& \forall op \in \{ 1, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| - 1\} \\
 & \forall (s,t)
 \end{aligned}
 ```

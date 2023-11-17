@@ -25,7 +25,7 @@ if previous operating point `i-1` is also active. The first segment does not nee
 \begin{aligned}
 & v^{unit\_flow\_op\_active}_{(u,n,d,op,s,t)} \leq v^{unit\_flow\_op\_active}_{(u,n,d,op-1,s,t)} \\
 & \forall (u,n,d) \in indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
-& \forall op \in \{ 2, \ldots, \|p^{operating\_points}_{(u,n,d)}\| \} \\
+& \forall op \in \{ 2, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| \} \\
 & \forall (s,t)
 \end{aligned}
 ```

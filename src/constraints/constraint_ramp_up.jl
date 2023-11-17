@@ -24,17 +24,17 @@ to the `start_up_limit` and `ramp_up_limit` parameter values.
 ```math
 \begin{aligned}
 & \sum_{
-        n \in ng: \neg p^{is\_reserve\_node}_{(n)}
+        n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t)} \\
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] \\
 & - \sum_{
-        n \in ng: \neg p^{is\_reserve\_node}_{(n)}
+        n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t-1)} \\
+v^{unit\_flow}_{(u,n,d,s,t-1)} \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] \\
 & + \sum_{
-        n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)}
+        n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t)} \\
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \right] \\
 & \le ( \\
 & \qquad \left(p^{start\_up\_limit}_{(u,ng,d,s,t)} - p^{minimum\_operating\_point}_{(u,ng,d,s,t)}
 - p^{ramp\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\

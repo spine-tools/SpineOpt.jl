@@ -28,24 +28,36 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 ```math
 \begin{aligned}
 & \sum_{
-        n \in ng : \neg p^{is\_reserve\_node}_{(n)}
-} v^{unit\_flow}_{(u,n,d,s,t)} + \sum_{
-        n \in ng : p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)}
-} v^{unit\_flow}_{(u,n,d,s,t)} \\
+        n \in ng
+}
+    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right]\\
+& + \sum_{
+        n \in ng
+}
+    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[
+        p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
+    \right]\\
 & \le \\
 & p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
 & \qquad v^{units\_on}_{(u,s,t)} \\
-& \qquad + \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right) \\
-& \qquad \cdot \left( v^{units\_shut\_down}_{(u,s,t+1)}
+& \qquad + \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right)
+\cdot \left( v^{units\_shut\_down}_{(u,s,t+1)}
 + \sum_{
-    n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{is\_non\_spinning}_{(n)}
+    n \in ng
 } v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
 & \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}{(u,s,t)} \\
 & ) \\
 & \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
+```
+where
+```math
+[T] = \begin{cases}
+1 & \text{if } T \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
 ```
 
 !!! note
