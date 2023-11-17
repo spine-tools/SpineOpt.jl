@@ -43,7 +43,8 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 } nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
 & \qquad - \left(1 - SUL_{(u,ng,d,s,t)}\right) \cdot units\_started\_up_{(u,s,t)} \\
 & ) \\
-& \forall (u,ng,d) \in indices(UC)
+& \forall (u,ng,d) \in indices(UC) \\
+& \forall (s,t)
 \end{aligned}
 ```
 where

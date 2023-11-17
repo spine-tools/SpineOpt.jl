@@ -45,6 +45,7 @@ unit\_flow_{(u,n,from\_node,s,t)}\\
 & - \left(D_{(n,s,t)} + \sum_{ng \ni n} FD_{(n,s,t)} \cdot D_{(ng,s,t)}\right) \\
 & + node\_slack\_pos_{(n,s,t)} - node\_slack\_neg_{(n,s,t)} \\
 & \forall n \in node: HS_{(n)}\\
+& \forall (s, t)
 \end{aligned}
 ```
 where

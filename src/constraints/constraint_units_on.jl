@@ -21,7 +21,7 @@
 The number of online units needs to be restricted to the aggregated available units:
 
 ```math
-units\_on_{(u,s,t)} \leq units\_available_{(u,s,t)} \quad \forall u \in unit
+units\_on_{(u,s,t)} \leq units\_available_{(u,s,t)} \quad \forall u \in unit, \, \forall (s,t)
 ```
 
 The investment formulation is described in chapter [Investments](@ref).

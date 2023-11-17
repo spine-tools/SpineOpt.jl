@@ -40,7 +40,8 @@ unit\_flow_{(u,n,d,s,t)} \\
 & \qquad + \left(MOP_{(u,ng,d,s,t)} + RUL_{(u,ng,d,s,t)}\right) \cdot units\_on_{(u,s,t)} \\
 & \qquad - MOP_{(u,ng,d,s,t)} \cdot units\_on_{(u,s,t-1)} \\
 & ) \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \cdot \Delta t \\
-& \forall (u,ng,d) \in indices(RUL) \cup indices(SUL)
+& \forall (u,ng,d) \in indices(RUL) \cup indices(SUL) \\
+& \forall (s,t)
 \end{aligned}
 ```
 where

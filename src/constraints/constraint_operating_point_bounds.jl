@@ -17,10 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_operating_point_bounds!(m::Model)
+@doc raw"""
 
-Limit the maximum number of each activated segment `unit_flow_op_active` cannot be higher than the number of online units.
+Limit the maximum number of each activated segment `unit_flow_op_active` cannot be higher than the number of
+online units. This constraint is activated only when parameter [ordered\_unit\_flow\_op](@ref) is set `true`.
+
+```math
+\begin{aligned}
+& unit\_flow\_op\_active_{(u,n,d,op,s,t)} \leq units\_on_{(u,s,t)} \\
+& \forall (u,n,d) \in indices(OP): OUFO_{(u,n,d)} \\
+& \forall op \in \{ 1, \ldots, \|OP_{(u,n,d)}\| \} \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``OP =`` [operating\_points](@ref)
+- ``OUFO =`` [ordered\_unit\_flow\_op](@ref)
 """
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
@@ -47,9 +59,8 @@ end
 function constraint_operating_point_bounds_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, i=i, stochastic_path=path, t=t)
-        # Note: a stochastic_path is an array consisting of stochastic scenarios, e.g. [s1, s2]
-        for (u, ng, d, i, _s, _t) in unit_flow_op_indices(m)
-        if ordered_unit_flow_op(unit=u, node=ng, direction=d, _default=false)
+        # NOTE: a stochastic_path is an array consisting of stochastic scenarios, e.g. [s1, s2]
+        for (u, ng, d, i, _s, _t) in unit_flow_op_active_indices(m)
         for (t, path) in t_lowest_resolution_path(
             m, unit_flow_op_indices(m; unit=u, node=ng, direction=d, i=i), units_on_indices(m; unit=u)
         )

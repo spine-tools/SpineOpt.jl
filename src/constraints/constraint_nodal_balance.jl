@@ -45,9 +45,8 @@ connection\_flow_{(conn,n,to\_node,s,t)}\\
 connection\_flow_{(conn,n,from\_node,s,t)}\\
 & \{\ge,=,\le\} \\
 & 0 \\
-& \forall n \in node: \\
-& BT_{(n)} \ne balance\_type\_none \\
-& \nexists ng \ni n : BT_{(ng)} = balance\_type\_group \\
+& \forall n \in node: BT_{(n)} \ne balance\_type\_none \land \nexists ng \ni n : BT_{(ng)} = balance\_type\_group \\
+& \forall (s,t)
 \end{aligned}
 ```
 where

@@ -36,7 +36,8 @@ unit\_flow_{(u,n,d,s,t)} \\
 - \sum_{
     n \in ng: IRN_{(n)} \land INS_{(n)}
 } nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
-& \forall (u,ng,d) \in indices(MOP)
+& \forall (u,ng,d) \in indices(MOP) \\
+& \forall (s,t)
 \end{aligned}
 ```
 where

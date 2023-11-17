@@ -21,7 +21,7 @@
 To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-node\_state_{(n, s, t)} <= NSC_{(n, s, t)} \qquad \forall n \in node :  HS_{(n)}
+node\_state_{(n, s, t)} <= NSC_{(n, s, t)} \quad \forall n \in node : HS_{(n)}, \, \forall (s,t)
 ```
 where
 - ``NSC =`` [node\_state\_cap](@ref)

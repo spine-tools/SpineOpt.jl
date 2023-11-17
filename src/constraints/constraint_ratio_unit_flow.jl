@@ -50,7 +50,8 @@ exist for each of the twelve cases described above.
 & FROIUF_{(u, ng_{out}, ng_{in},s,t)}
 \cdot \sum_{n \in ng_{in}: UFN_{(u,n)} \neq \emptyset} unit\_flow_{(u,n,to\_node,s,t)} \\
 & + FUOCOI(u,ng_{out},ng_{in},s,t) \cdot units\_on_{(u,s,t)}  \\
-& \forall (u, ng_{out}, ng_{in}) \in indices(FROIUF)
+& \forall (u, ng_{out}, ng_{in}) \in indices(FROIUF) \\
+& \forall (s,t)
 \end{aligned}
 ```
 where

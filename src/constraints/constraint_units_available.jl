@@ -22,7 +22,11 @@ The aggregated available units are constrained by the parameter [number\_of\_uni
 and the variable number of invested units [units\_invested\_available](@ref):
 
 ```math
-units\_available_{(u,s,t)} \leq NOU_{(u,s,t)} + units\_invested\_available_{(u,s,t)} \quad \forall u \in unit
+\begin{aligned}
+& units\_available_{(u,s,t)} \leq NOU_{(u,s,t)} + units\_invested\_available_{(u,s,t)} \\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
 ```
 where
 - ``NOU =`` [number\_of\_units](@ref)

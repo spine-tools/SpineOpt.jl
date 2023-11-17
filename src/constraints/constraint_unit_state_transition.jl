@@ -21,8 +21,11 @@
 The units on status is constrained by shutting down and starting up actions. This transition is defined as follows:
 
 ```math
-units\_on_{(u,s,t)} - units\_started\_up_{(u,s,t)} + units\_shut\_down_{(u,s,t)} = units\_on_{(u,s,t-1)}
-\quad \forall u \in unit
+\begin{aligned}
+& units\_on_{(u,s,t)} - units\_started\_up_{(u,s,t)} + units\_shut\_down_{(u,s,t)} = units\_on_{(u,s,t-1)} \\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
 ```
 """
 function add_constraint_unit_state_transition!(m::Model)

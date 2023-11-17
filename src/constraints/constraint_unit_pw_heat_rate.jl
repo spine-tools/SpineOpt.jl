@@ -17,12 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_pw_heat_rate!(m)
+@doc raw"""
+Implements a standard piecewise linear heat-rate function where [unit\_flow](@ref) from a (input fuel consumption) node
+is equal to the sum over operating point segments of [unit\_flow\_op](@ref) to a (output electricity node) node
+times the corresponding [incremental\_heat\_rate](@ref).
 
-Implements a standard piecewise linear heat_rate function where `unit_flow` from `node_from` (input fuel consumption)
-is equal to the sum over operating point segments of `unit_flow_op` to `node_to` (output electricity node) times the
-corresponding incremental_heat_rate
+```math
+\begin{aligned}
+& unit\_flow_{(u, n_{in}, d, s, t)} \\
+& = \sum_{op=1}^{\|OP_{(u,n,d)}\|} UIncrHR_{(u, n_{in}, n_{out}, op, s, t)}
+\cdot unit\_flow\_op_{(u, n_{out}, d, op, s, t)} \\
+& + UIdleHR_{(u, n_{in}, n_{out}, s, t)} \cdot units\_on_{(u, s, t)} \\
+& + USF_{(u, n_{in}, n_{out}, s, t)} \cdot units\_started\_up_{(u, s, t)} \\
+& \forall (u,n_{in},n_{out}) \in indices(UIncrHR) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+- ``UIncrHR =`` [unit\_incremental\_heat\_rate](@ref)
+- ``UIdleHR =`` [unit\_idle\_heat\_rate](@ref)
+- ``USF =`` [unit\_start\_flow](@ref)
 """
 function add_constraint_unit_pw_heat_rate!(m::Model)
     @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:spineopt].variables
