@@ -26,7 +26,7 @@ by defining the [min\_up\_time](@ref) parameter. This will trigger the generatio
 \begin{aligned}
 & units\_on_{(u,s,t)} - \sum_{n} nonspin\_units\_shut\_down{(u,n,s,t)} \\
 & \geq
-\sum_{t' \geq t-MUT_{(u,s,t)} \leq t' \leq t}
+\sum_{t-MUT_{(u,s,t)} \leq t' \leq t}
 units\_started\_up_{(u,s,t')} \\
 & \forall u \in indices(MUT)\\
 \end{aligned}

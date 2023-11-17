@@ -27,7 +27,7 @@ by defining the [min\_down\_time](@ref) parameter. This will trigger the generat
 & NOU_{(u,s,t)} + units\_invested\_available_{(u,s,t)} - units\_on_{(u,s,t)} \\
 & - \sum_{n} nonspin\_units\_started\_up_{(u,n,s,t)} \\
 & \geq
-\sum_{t' \geq t-MDT_{(u,s,t)} \leq t' \leq t}
+\sum_{t-MDT_{(u,s,t)} \leq t' \leq t}
 units\_shut\_down{(u,s,t')} \\
 & \forall u \in indices(MDT)\\
 \end{aligned}
