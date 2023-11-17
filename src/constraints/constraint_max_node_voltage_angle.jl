@@ -23,16 +23,16 @@ the parameter [max\_voltage\_angle](@ref) can be specified which triggers the fo
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng} node\_voltage\_angle_{(n,s,t)} \geq MaxVA_{(ng,s,t)} \\
-& \forall ng \in indices(MaxVA) \\
+& \sum_{n \in ng} v^{node\_voltage\_angle}_{(n,s,t)} \geq p^{max\_voltage\_angle}_{(ng,s,t)} \\
+& \forall ng \in indices(p^{max\_voltage\_angle}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``MaxVA =`` [max\_voltage\_angle](@ref)
-
 As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also be defined on a node group,
 in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
+
+See also [max\_voltage\_angle](@ref).
+
 """
 function add_constraint_max_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle = m.ext[:spineopt].variables

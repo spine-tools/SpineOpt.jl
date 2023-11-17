@@ -29,24 +29,25 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 \begin{aligned}
 & \sum_{
 n \in ng
-} connection\_flow_{(conn,n,d,s,t)} \\
+} v^{connection\_flow}_{(conn,n,d,s,t)} \\
 & - \sum_{
 n \in ng
-} connection\_flow_{(conn,n,reverse(d),s,t)} \\
-& <= CC_{(conn,ng,d,s,t)} \cdot CAF_{(conn,s,t)} \cdot CCCTF_{(conn,ng,d,s,t)} \\
+} v^{connection\_flow}_{(conn,n,reverse(d),s,t)} \\
+& <= p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
 & \cdot \begin{cases}       
-   connections\_invested\_available_{(conn,s,t)} & \text{if } CandidateC_{(conn,s,t)} \geq 1 \\
+   v^{connections\_invested\_available}_{(conn,s,t)} & \text{if } p^{candidate\_connections}_{(conn,s,t)} \geq 1 \\
    1 & \text{otherwise} \\
 \end{cases} \\
-& \forall (conn,ng,d) \in indices(CC) \\
+& \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``CC =`` [connection\_capacity](@ref)
-- ``CAF =`` [connection\_availability\_factor](@ref)
-- ``CCCTF =`` [connection\_conv\_cap\_to\_flow](@ref)
-- ``CandidateC =`` [candidate\_connections](@ref)
+
+See also
+[connection\_capacity](@ref),
+[connection\_availability\_factor](@ref),
+[connection\_conv\_cap\_to\_flow](@ref),
+[candidate\_connections](@ref)
 
 !!! note
     For situations where the same [connection](@ref) handles flows to multiple [node](@ref)s

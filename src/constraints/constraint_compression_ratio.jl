@@ -27,13 +27,13 @@ The existence of this parameter will trigger the following constraint:
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng2} node\_pressure_{(n,s,t)} \leq CF_{(conn,ng1,ng2,s,t)} \cdot \sum_{n \in ng1} node\_pressure_{(n,s,t)} \\
-& \forall (conn,ng1,ng2) \in indices(CF) \\
+& \sum_{n \in ng2} v^{node\_pressure}_{(n,s,t)} \leq p^{compression\_factor}_{(conn,ng1,ng2,s,t)} \cdot \sum_{n \in ng1} v^{node\_pressure}_{(n,s,t)} \\
+& \forall (conn,ng1,ng2) \in indices(p^{compression\_factor}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``CF =`` [compression\_factor](@ref)
+
+See also [compression\_factor](@ref).
 """
 function add_constraint_compression_ratio!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables

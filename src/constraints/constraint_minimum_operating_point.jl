@@ -24,29 +24,22 @@ input or output nodes/node groups.
 ```math
 \begin{aligned}
 & \sum_{
-        n \in ng: \neg IRN_{(n)}
+        n \in ng: \neg p^{is\_reserve\_node}_{(n)}
 }
-unit\_flow_{(u,n,d,s,t)}
+v^{unit\_flow}_{(u,n,d,s,t)}
 - \sum_{
-        n \in ng: IRN_{(n)} \land DR_{(n)}
+        n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{downward\_reserve}_{(n)}
 }
-unit\_flow_{(u,n,d,s,t)} \\
-& \ge MOP_{(u,ng,d,s,t)} \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \\
-& \cdot \left( units\_on_{(u,s,t)}
+v^{unit\_flow}_{(u,n,d,s,t)} \\
+& \ge p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& \cdot \left( v^{units\_on}_{(u,s,t)}
 - \sum_{
-    n \in ng: IRN_{(n)} \land INS_{(n)}
-} nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
-& \forall (u,ng,d) \in indices(MOP) \\
+    n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{is\_non\_spinning}_{(n)}
+} v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
+& \forall (u,ng,d) \in indices(p^{minimum\_operating\_point}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``IRN =`` [is\_reserve\_node](@ref)
-- ``DR =`` [downward\_reserve](@ref)
-- ``INS =`` [is\_non\_spinning](@ref)
-- ``MOP =`` [minimum\_operating\_point](@ref)
-- ``UC =`` [unit\_capacity](@ref)
-- ``UCCF =`` [unit\_conv\_cap\_to\_flow](@ref)
 
 !!! note
     The above formulation is valid for flows going from a unit to a node (i.e., output flows).
@@ -54,6 +47,13 @@ where
     (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
     The details are omitted for brevity.
 
+See also
+[is\_reserve\_node](@ref),
+[downward\_reserve](@ref),
+[is\_non\_spinning](@ref),
+[minimum\_operating\_point](@ref),
+[unit\_capacity](@ref),
+[unit\_conv\_cap\_to\_flow](@ref)
 """
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on, nonspin_units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables

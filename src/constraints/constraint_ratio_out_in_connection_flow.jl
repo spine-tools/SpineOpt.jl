@@ -27,22 +27,21 @@ exist for the other two cases.
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng_{out}} connection\_flow_{(conn,n,from\_node,s,t)} \\
+& \sum_{n \in ng_{out}} v^{connection\_flow}_{(conn,n,from\_node,s,t)} \\
 & = \\
-& FROICF{(conn, ng_{out}, ng_{in},s,t)}
-\cdot \sum_{n \in ng_{in}} connection\_flow_{(conn,n,to\_node,s,t)} \\
-& \forall (conn, ng_{out}, ng_{in}) \in indices(FROICF) \\
+& p^{fix\_ratio\_out\_in\_connection\_flow}_{(conn, ng_{out}, ng_{in},s,t)}
+\cdot \sum_{n \in ng_{in}} v^{connection\_flow}_{(conn,n,to\_node,s,t)} \\
+& \forall (conn, ng_{out}, ng_{in}) \in indices(p^{fix\_ratio\_out\_in\_connection\_flow}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``FROICF =`` [fix\_ratio\_out\_in\_connection\_flow](@ref)
 
 !!! note
     If any of the above mentioned ratio parameters is specified for a node group,
     then the ratio is enforced over the *sum* of flows from or to that group.
     In this case, there remains a degree of freedom regarding the composition of flows within the group.
-
+    
+See also [fix\_ratio\_out\_in\_connection\_flow](@ref).
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     # NOTE: the `<sense>_ratio_<directions>_connection_flow` parameter uses the stochastic dimensions

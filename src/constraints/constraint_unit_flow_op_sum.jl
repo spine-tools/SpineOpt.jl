@@ -18,17 +18,17 @@
 #############################################################################
 
 @doc raw"""
-`unit_flow` is constrained to be the sum of all operating segment variables, `unit_flow_op`
+[unit\_flow](@ref) is constrained to be the sum of all operating segment variables, [unit\_flow\_op](@ref)
 
 ```math
 \begin{aligned}
-& unit\_flow_{(u, n, d, s, t)} = \sum_{op=1}^{\|OP_{(u,n,d)}\|}  unit\_flow\_op_{(u, n, d, op, s, t)} \\
+& v^{unit\_flow}_{(u, n, d, s, t)} = \sum_{op=1}^{\|OP_{(u,n,d)}\|}  v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
 & \forall (u,n,d) \in indices(OP) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``OP =`` [operating\_points](@ref)
+
+See also [operating\_points](@ref).
 """
 function add_constraint_unit_flow_op_sum!(m::Model)
     @fetch unit_flow_op, unit_flow = m.ext[:spineopt].variables

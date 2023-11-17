@@ -25,19 +25,20 @@ for a [connection\_\_node\_\_node](@ref) relationship involving that [connection
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng_{from}} connection\_flow_{(conn,n,from\_node,s,t)}
-- \sum_{n \in ng_{to}} connection\_flow_{(conn,n,from\_node,s,t)}\\
+& \sum_{n \in ng_{from}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}
+- \sum_{n \in ng_{to}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}\\
 & = \\
-& \left(CReactB_{(conn,s,t)}/CReact_{(conn,s,t)}\right) \\
-& \cdot \left(\sum_{n \in ng_{from}} node\_voltage\_angle_{(n,s,t)} - \sum_{n \in ng_{to}} node\_voltage\_angle_{(n,s,t)} \right)\\
-& \forall (conn, ng_{to}, ng_{from}) \in indices(FROICF)\\
+& \left(p^{connection\_reactance\_base}_{(conn,s,t)}/p^{connection\_reactance}_{(conn,s,t)}\right) \\
+& \cdot \left(\sum_{n \in ng_{from}} v^{node\_voltage\_angle}_{(n,s,t)} - \sum_{n \in ng_{to}} v^{node\_voltage\_angle}_{(n,s,t)} \right)\\
+& \forall (conn, ng_{to}, ng_{from}) \in indices(p^{fix\_ratio\_out\_in\_connection\_flow})\\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``CReact =`` [connection\_reactance](@ref)
-- ``CReactB =`` [connection\_reactance\_base](@ref)
-- ``FROICF =`` [fix\_ratio\_out\_in\_connection\_flow](@ref)
+
+See also
+[connection\_reactance](@ref),
+[connection\_reactance\_base](@ref),
+[fix\_ratio\_out\_in\_connection\_flow](@ref).
 """
 function add_constraint_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle, connection_flow = m.ext[:spineopt].variables

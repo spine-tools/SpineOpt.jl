@@ -45,23 +45,22 @@ exist for the other 11 cases described above.
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng_{out}} unit\_flow_{(u,n,from\_node,s,t)} \\
+& \sum_{n \in ng_{out}} v^{unit\_flow}_{(u,n,from\_node,s,t)} \\
 & = \\
-& FROIUF_{(u, ng_{out}, ng_{in},s,t)}
-\cdot \sum_{n \in ng_{in}} unit\_flow_{(u,n,to\_node,s,t)} \\
-& + FUOCOI(u,ng_{out},ng_{in},s,t) \cdot units\_on_{(u,s,t)}  \\
-& \forall (u, ng_{out}, ng_{in}) \in indices(FROIUF) \\
+& p^{fix\_ratio\_out\_in\_unit\_flow}_{(u, ng_{out}, ng_{in},s,t)}
+\cdot \sum_{n \in ng_{in}} v^{unit\_flow}_{(u,n,to\_node,s,t)} \\
+& + p^{fix\_units\_on\_coefficient\_out\_in}_{(u,ng_{out},ng_{in},s,t)} \cdot v^{units\_on}_{(u,s,t)}  \\
+& \forall (u, ng_{out}, ng_{in}) \in indices(p^{fix\_ratio\_out\_in\_unit\_flow}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``FROIUF =`` [fix\_ratio\_out\_in\_unit\_flow](@ref)
-- ``FUOCOI =`` [fix\_units\_on\_coefficient\_out\_in](@ref)
 
 !!! note
     If any of the above mentioned ratio parameters is specified for a node group,
     then the ratio is enforced over the *sum* of flows from or to that group.
     In this case, there remains a degree of freedom regarding the composition of flows within the group.
+
+See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_out\_in](@ref).
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
     # NOTE: that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second

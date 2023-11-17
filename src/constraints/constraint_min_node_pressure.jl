@@ -22,13 +22,14 @@ In order to impose a lower limit on the pressure at a node the parameter [min\_n
 can be specified which triggers the following constraint:
 
 ```math
-\sum_{n \in ng} node\_pressure_{(n,s,t)} \geq MinNP(ng,s,t) \quad \forall (ng) \in indices(MinNP), \, \forall (s,t)
+\sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \geq p^{min\_node\_pressure}_{(ng,s,t)}
+\quad \forall (ng) \in indices(p^{min\_node\_pressure}), \, \forall (s,t)
 ```
-where
-- ``MinNP =`` [min\_node\_pressure](@ref)
 
 As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group,
 in order to impose a lower limit on the aggregated [node\_pressure](@ref) within one node group.
+
+See also [min\_node\_pressure](@ref).
 """
 function add_constraint_min_node_pressure!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables

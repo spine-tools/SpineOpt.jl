@@ -24,18 +24,20 @@ triggered by the parameter [connection\_linepack\_constant](@ref):
 
 ```math
 \begin{aligned}
-& node\_state_{(n_{stor},s,t)} = \left(CLPC_{(conn,n_{stor},ng)} /2 \right) \cdot \sum_{n \in ng} node\_pressure_{(n,s,t)} \\
-& \forall (conn, n_{stor}, ng) \in indices(CLPC) \\
+& v^{node\_state}_{(n_{stor},s,t)} = \left(
+    p^{connection\_linepack\_constant}_{(conn,n_{stor},ng)} \middle/ 2
+\right) \cdot \sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \\
+& \forall (conn, n_{stor}, ng) \in indices(p^{connection\_linepack\_constant}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``CLPC =`` [connection\_linepack\_constant](@ref)
 
 !!! note
     The parameter [connection\_linepack\_constant](@ref) should be defined
     on a [connection\_\_node\_\_node](@ref)relationship, where the first node corresponds to the linepack storage node,
     whereas the second node corresponds to the node group of both start and end nodes of the pipeline.
+
+See also [connection\_linepack\_constant](@ref)
 """
 function add_constraint_storage_line_pack!(m::Model)
     @fetch node_state, node_pressure = m.ext[:spineopt].variables

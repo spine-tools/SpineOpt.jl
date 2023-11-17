@@ -22,13 +22,14 @@ In order to impose an upper limit on the maximum pressure at a node
 the parameter [max\_node\_pressure](@ref) can be specified which triggers the following constraint:
 
 ```math
-\sum_{n \in ng} node\_pressure_{(n,s,t)} \leq MaxNP(ng,s,t) \quad \forall (ng) \in indices(MaxNP), \, \forall (s,t)
+\sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \leq p^{max\_node\_pressure}_{(ng,s,t)}
+\quad \forall (ng) \in indices(p^{max\_node\_pressure}), \, \forall (s,t)
 ```
-where
-- ``MaxNP =`` [max\_node\_pressure](@ref)
 
 As indicated in the equation, the parameter [max\_node\_pressure](@ref) can also be defined on a node group,
 in order to impose an upper limit on the aggregated [node\_pressure](@ref) within one node group.
+
+See also [max\_node\_pressure](@ref).
 """
 function add_constraint_max_node_pressure!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables

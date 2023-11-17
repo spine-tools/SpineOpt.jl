@@ -24,16 +24,16 @@ can be specified which triggers the following constraint:
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng} node\_voltage\_angle_{(n,s,t)} \leq MinVA_{(ng,s,t)} \\
-& \forall ng \in indices(MinVA) \\
+& \sum_{n \in ng} v^{node\_voltage\_angle}_{(n,s,t)} \leq p^{min\_voltage\_angle}_{(ng,s,t)} \\
+& \forall ng \in indices(p^{min\_voltage\_angle}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``MinVA =`` [min\_voltage\_angle](@ref)
 
 As indicated in the equation, the parameter [min\_voltage\_angle](@ref) can also be defined on a node group,
 in order to impose a lower limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
+
+See also [min\_voltage\_angle](@ref).
 """
 function add_constraint_min_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle = m.ext[:spineopt].variables

@@ -10,7 +10,7 @@
 #
 # SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR Pp^{upward\_reserve}POSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
@@ -28,34 +28,25 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 ```math
 \begin{aligned}
 & \sum_{
-        n \in ng : \neg IRN_{(n)}
-} {unit\_flow}_{(u,n,d,s,t)} + \sum_{
-        n \in ng : IRN_{(n)} \land UR_{(n)} \land \neg INS_{(n)}
-} unit\_flow_{(u,n,d,s,t)} \\
+        n \in ng : \neg p^{is\_reserve\_node}_{(n)}
+} v^{unit\_flow}_{(u,n,d,s,t)} + \sum_{
+        n \in ng : p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)}
+} v^{unit\_flow}_{(u,n,d,s,t)} \\
 & \le \\
-& UC_{(u,ng,d,s,t)} \cdot UAF_{(u,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \\
+& p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
-& \qquad units\_on_{(u,s,t)} \\
-& \qquad + \left(1 - SDL_{(u,ng,d,s,t)}\right) \\
-& \qquad \cdot \left( units\_shut\_down_{(u,s,t+1)}
+& \qquad v^{units\_on}_{(u,s,t)} \\
+& \qquad + \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right) \\
+& \qquad \cdot \left( v^{units\_shut\_down}_{(u,s,t+1)}
 + \sum_{
-    n \in ng: IRN_{(n)} \land INS_{(n)}
-} nonspin\_units\_shut\_down_{(u,n,s,t)} \right) \\
-& \qquad - \left(1 - SUL_{(u,ng,d,s,t)}\right) \cdot units\_started\_up_{(u,s,t)} \\
+    n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{is\_non\_spinning}_{(n)}
+} v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
+& \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}{(u,s,t)} \\
 & ) \\
-& \forall (u,ng,d) \in indices(UC) \\
+& \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``IRN =`` [is\_reserve\_node](@ref)
-- ``UR =`` [upward\_reserve](@ref)
-- ``INS =`` [is\_non\_spinning](@ref)
-- ``UC =`` [unit\_capacity](@ref)
-- ``UAF =`` [unit\_availability\_factor](@ref)
-- ``UCCF =`` [unit\_conv\_cap\_to\_flow](@ref)
-- ``SUL =`` [start\_up\_limit](@ref)
-- ``SDL =`` [shut\_down\_limit](@ref)
 
 !!! note
     The conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
@@ -74,6 +65,15 @@ where
     (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
     The details are omitted for brevity.
 
+See also
+[is\_reserve\_node](@ref),
+[upward\_reserve](@ref),
+[is\_non\_spinning](@ref),
+[unit\_capacity](@ref),
+[unit\_availability\_factor](@ref),
+[unit\_conv\_cap\_to\_flow](@ref),
+[start\_up\_limit](@ref),
+[shut\_down\_limit](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_shut_down = m.ext[:spineopt].variables

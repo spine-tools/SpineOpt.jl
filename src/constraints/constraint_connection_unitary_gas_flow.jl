@@ -26,9 +26,9 @@ the following constraint is enforced:
 
 ```math
 \begin{aligned}
-& binary\_gas\_connection\_flow_{(conn, n_{orig}, to\_node, s, t)} \\
-& = 1 - binary\_gas\_connection\_flow_{(conn, n_{dest}, to\_node, s, t)} \\
-& \forall (conn, n_{orig}, n_{dest}) \in indices(FPC1) \\
+& v^{binary\_gas\_connection\_flow}_{(conn, n_{orig}, to\_node, s, t)} \\
+& = 1 - v^{binary\_gas\_connection\_flow}_{(conn, n_{dest}, to\_node, s, t)} \\
+& \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
 & \forall (s,t)
 \end{aligned}
 ```

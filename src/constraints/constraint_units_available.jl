@@ -23,13 +23,13 @@ and the variable number of invested units [units\_invested\_available](@ref):
 
 ```math
 \begin{aligned}
-& units\_available_{(u,s,t)} \leq NOU_{(u,s,t)} + units\_invested\_available_{(u,s,t)} \\
+& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} \\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``NOU =`` [number\_of\_units](@ref)
+
+See also [number\_of\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:spineopt].variables

@@ -25,15 +25,16 @@ not to become binding.
 
 ```math
 \begin{aligned}
-& \left(connection\_flow_{(conn, n_{orig},from\_node,s,t)} + connection\_flow_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
-& <= BM \cdot binary\_gas\_connection\_flow_{(conn, n_{dest}, to\_node, s, t)} \\
-& \forall (conn, n_{orig}, n_{dest}) \in indices(FPC1) \\
+& \left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
+& <= p^{big\_m} \cdot v^{binary\_gas\_connection\_flow}_{(conn, n_{dest}, to\_node, s, t)} \\
+& \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``FPC1 =`` [fixed\_pressure\_constant\_1](@ref)
-- ``BM =`` [big\_m](@ref)
+
+See also
+[p^{fixed\_pressure\_constant\_1}](@ref),
+[big\_m](@ref).
 """
 function add_constraint_connection_flow_gas_capacity!(m::Model)
     @fetch connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables

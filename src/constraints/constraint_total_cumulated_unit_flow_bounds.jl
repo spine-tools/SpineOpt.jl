@@ -30,21 +30,22 @@ A maximum cumulated flow restriction can for example be used to limit emissions 
 
 ```math
 \begin{aligned}
-& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \leq MaxTCUFFN(ug,ng,d) \\
-& \forall (ug,ng,d) \in indices(MaxTCUFFN), \, \forall s \\
-& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \geq MinTCUFFN(ug,ng,d) \\
-& \forall (ug,ng,d) \in indices(MinTCUFFN), \, \forall s \\
-& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \leq MaxTCUFTN(ug,ng,d) \\
-& \forall (ug,ng,d) \in indices(MaxTCUFTN), \, \forall s \\
-& \sum_{u \in ug, n \in ng} unit\_flow_{(u,n,d,s,t)} \geq MinTCUFTN(ug,ng,d) \\
-& \forall (ug,ng,d) \in indices(MinTCUFTN), \, \forall s \\
+& \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{max\_total\_cumulated\_unit\_flow\_from\_node}_{(ug,ng,d)} \\
+& \forall (ug,ng,d) \in indices(p^{max\_total\_cumulated\_unit\_flow\_from\_node}), \, \forall s \\
+& \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \geq p^{min\_total\_cumulated\_unit\_flow\_from\_node}_{(ug,ng,d)} \\
+& \forall (ug,ng,d) \in indices(p^{min\_total\_cumulated\_unit\_flow\_from\_node}), \, \forall s \\
+& \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{max\_total\_cumulated\_unit\_flow\_to\_node}_{(ug,ng,d)} \\
+& \forall (ug,ng,d) \in indices(p^{max\_total\_cumulated\_unit\_flow\_to\_node}), \, \forall s \\
+& \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \geq p^{min\_total\_cumulated\_unit\_flow\_to\_node}_{(ug,ng,d)} \\
+& \forall (ug,ng,d) \in indices(p^{min\_total\_cumulated\_unit\_flow\_to\_node}), \, \forall s \\
 \end{aligned}
 ```
-where
-- ``MaxTCUFFN =`` [max\_total\_cumulated\_unit\_flow\_from\_node](@ref)
-- ``MinTCUFFN =`` [min\_total\_cumulated\_unit\_flow\_from\_node](@ref)
-- ``MaxTCUFTN =`` [max\_total\_cumulated\_unit\_flow\_to\_node](@ref)
-- ``MinTCUFTN =`` [min\_total\_cumulated\_unit\_flow\_to\_node](@ref)
+
+See also
+[max\_total\_cumulated\_unit\_flow\_from\_node](@ref),
+[min\_total\_cumulated\_unit\_flow\_from\_node](@ref),
+[max\_total\_cumulated\_unit\_flow\_to\_node](@ref),
+[min\_total\_cumulated\_unit\_flow\_to\_node](@ref).
 """
 function add_constraint_total_cumulated_unit_flow!(m::Model, bound, sense)
     # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?

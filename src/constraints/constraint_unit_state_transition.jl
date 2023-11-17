@@ -22,7 +22,7 @@ The units on status is constrained by shutting down and starting up actions. Thi
 
 ```math
 \begin{aligned}
-& units\_on_{(u,s,t)} - units\_started\_up_{(u,s,t)} + units\_shut\_down_{(u,s,t)} = units\_on_{(u,s,t-1)} \\
+& v^{units\_on}_{(u,s,t)} - v^{units\_started\_up}_{(u,s,t)} + v^{units\_shut\_down}_{(u,s,t)} = v^{units\_on}_{(u,s,t-1)} \\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}

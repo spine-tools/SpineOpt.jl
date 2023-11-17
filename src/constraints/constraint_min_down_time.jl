@@ -24,18 +24,17 @@ by defining the [min\_down\_time](@ref) parameter. This will trigger the generat
 
 ```math
 \begin{aligned}
-& NOU_{(u,s,t)} + units\_invested\_available_{(u,s,t)} - units\_on_{(u,s,t)} \\
-& - \sum_{n} nonspin\_units\_started\_up_{(u,n,s,t)} \\
+& p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} - v^{units\_on}_{(u,s,t)} \\
+& - \sum_{n} v^{nonspin\_units\_started\_up}_{(u,n,s,t)} \\
 & \geq
-\sum_{t'=t-MDT_{(u,s,t)} + 1}^{t}
-units\_shut\_down{(u,s,t')} \\
-& \forall u \in indices(MDT)\\
+\sum_{t'=t-p^{min\_down\_time}_{(u,s,t)} + 1}^{t}
+v^{units\_shut\_down}_{(u,s,t')} \\
+& \forall u \in indices(p^{min\_down\_time})\\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``NOU =`` [number\_of\_units](@ref)
-- ``MDT =`` [min\_down\_time](@ref)
+
+See also [number\_of\_units](@ref), [min\_down\_time](@ref).
 """
 function add_constraint_min_down_time!(m::Model)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables

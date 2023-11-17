@@ -27,37 +27,38 @@ The node injection is created for each node in the network
 
 ```math
 \begin{aligned}
-& node\_injection_{(n,s,t)} \\
+& v^{node\_injection}_{(n,s,t)} \\
 & = \\
-& \left(SC_{(n, s, t-1)} \cdot node\_state_{(n, s, t-1)} - SC_{(n, s, t)} \cdot node\_state_{(n, s, t)}\right)
+& \left(p^{state\_coeff}_{(n, s, t-1)} \cdot v^{node\_state}_{(n, s, t-1)} - p^{state\_coeff}_{(n, s, t)} \cdot v^{node\_state}_{(n, s, t)}\right)
 / \Delta t \\
-& - FSL_{(n,s,t)} \cdot node\_state_{(n, s, t)} \\
-& + \sum_{n' \in NN_{(*,n)}} DC_{(n',n,s,t)} \cdot node\_state_{(n', s, t)}
-- \sum_{n' \in NN_{(n,*)}} DC_{(n,n',s,t)} \cdot node\_state_{(n, s, t)} \\
+& - p^{frac\_state\_loss}_{(n,s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
+& + \sum_{n'} p^{diff\_coeff}_{(n',n,s,t)} \cdot v^{node\_state}_{(n', s, t)}
+- \sum_{n'} p^{diff\_coeff}_{(n,n',s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
 & + \sum_{
-        u \in UTN_{(*,n)}
+        u
 }
-unit\_flow_{(u,n,to\_node,s,t)}
+v^{unit\_flow}_{(u,n,to\_node,s,t)}
 - \sum_{
-        u \in UFN_{(*,n)}
+        u
 }
-unit\_flow_{(u,n,from\_node,s,t)}\\
-& - \left(D_{(n,s,t)} + \sum_{ng \ni n} FD_{(n,s,t)} \cdot D_{(ng,s,t)}\right) \\
-& + node\_slack\_pos_{(n,s,t)} - node\_slack\_neg_{(n,s,t)} \\
-& \forall n \in node: HS_{(n)}\\
+v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
+& - \left(p^{demand}_{(n,s,t)} + \sum_{ng \ni n} p^{fractional\_demand}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)}\right) \\
+& + v^{node\_slack\_pos}_{(n,s,t)} - v^{node\_slack\_neg}_{(n,s,t)} \\
+& \forall n \in node: p^{has\_state}_{(n)}\\
 & \forall (s, t)
 \end{aligned}
 ```
-where
-- ``SC =`` [state\_coeff](@ref)
-- ``FSL =`` [frac\_state\_loss](@ref)
-- ``DC =`` [diff\_coeff](@ref)
-- ``NN =`` [node\_\_node](@ref)
-- ``UFN =`` [unit\_\_from\_node](@ref)
-- ``UTN =`` [unit\_\_to\_node](@ref)
-- ``D =`` [demand](@ref)
-- ``FD =`` [fractional\_demand](@ref)
-- ``HS =`` [has\_state](@ref)
+
+See also
+[state\_coeff](@ref),
+[frac\_state\_loss](@ref),
+[diff\_coeff](@ref),
+[node\_\_node](@ref),
+[unit\_\_from\_node](@ref),
+[unit\_\_to\_node](@ref),
+[demand](@ref),
+[fractional\_demand](@ref),
+[has\_state](@ref).
 
 """
 function add_constraint_node_injection!(m::Model)

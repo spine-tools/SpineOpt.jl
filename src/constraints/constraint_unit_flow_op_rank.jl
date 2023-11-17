@@ -24,23 +24,24 @@ The last segment does not need this constraint.
 
 ```math
 \begin{aligned}
-& unit\_flow\_op_{(u, n, d, op, s, t)} \\
-& \geq UC_{(u, n, d, s, t)} \cdot UCCTF_{(u, n, d, s, t)} \\
-& \cdot \left(OP_{(u, n, op, s, t)} - \begin{cases}       
-   OP_{(u, n, op-1, s, t)} & \text{if} op > 1 \\
+& v^{unit\_flow\_op}{(u, n, d, op, s, t)} \\
+& \geq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \\
+& \cdot \left(p^{operating\_points}_{(u, n, op, s, t)} - \begin{cases}       
+   p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if} op > 1 \\
    0 & \text{otherwise} \\
 \end{cases} \right) \\
-& \cdot unit\_flow\_op\_active_{(u, n, d, op+1, s, t)} \\
-& \forall (u,n,d) \in indices(UC) \cup indices(OP): OUFO_{(u,n,d)} \\
-& \forall op \in \{ 1, \ldots, \|OP_{(u,n,d)}\| - 1\} \\
+& \cdot v^{unit\_flow\_op\_active}_{(u, n, d, op+1, s, t)} \\
+& \forall (u,n,d) \in indices(p^{unit\_capacity}) \cup indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
+& \forall op \in \{ 1, \ldots, \|p^{operating\_points}_{(u,n,d)}\| - 1\} \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``UC =`` [unit\_capacity](@ref)
-- ``UCCTF =`` [unit\_conv\_cap\_to\_flow](@ref)
-- ``OP =`` [operating\_points](@ref)
-- ``OUFO =`` [ordered\_unit\_flow\_op](@ref)
+
+See also
+[unit\_capacity](@ref),
+[unit\_conv\_cap\_to\_flow](@ref),
+[operating\_points](@ref),
+[ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_unit_flow_op_rank!(m::Model)
     @fetch unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables

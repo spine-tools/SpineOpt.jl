@@ -10,7 +10,7 @@
 #
 # Spine Model is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR Pp^{upward\_reserve}POSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
@@ -24,34 +24,37 @@ to the `start_up_limit` and `ramp_up_limit` parameter values.
 ```math
 \begin{aligned}
 & \sum_{
-        n \in ng: \neg IRN_{(n)}
+        n \in ng: \neg p^{is\_reserve\_node}_{(n)}
 }
-unit\_flow_{(u,n,d,s,t)} \\
+v^{unit\_flow}_{(u,n,d,s,t)} \\
 & - \sum_{
-        n \in ng: \neg IRN_{(n)}
+        n \in ng: \neg p^{is\_reserve\_node}_{(n)}
 }
-unit\_flow_{(u,n,d,s,t-1)} \\
+v^{unit\_flow}_{(u,n,d,s,t-1)} \\
 & + \sum_{
-        n \in ng: IRN_{(n)} \land UR_{(n)}
+        n \in ng: p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)}
 }
-unit\_flow_{(u,n,d,s,t)} \\
+v^{unit\_flow}_{(u,n,d,s,t)} \\
 & \le ( \\
-& \qquad \left(SUL_{(u,ng,d,s,t)} - MOP_{(u,ng,d,s,t)} - RUL_{(u,ng,d,s,t)}\right) \cdot units\_started\_up_{(u,s,t)} \\
-& \qquad + \left(MOP_{(u,ng,d,s,t)} + RUL_{(u,ng,d,s,t)}\right) \cdot units\_on_{(u,s,t)} \\
-& \qquad - MOP_{(u,ng,d,s,t)} \cdot units\_on_{(u,s,t-1)} \\
-& ) \cdot UC_{(u,ng,d,s,t)} \cdot UCCF_{(u,ng,d,s,t)} \cdot \Delta t \\
-& \forall (u,ng,d) \in indices(RUL) \cup indices(SUL) \\
+& \qquad \left(p^{start\_up\_limit}_{(u,ng,d,s,t)} - p^{minimum\_operating\_point}_{(u,ng,d,s,t)}
+- p^{ramp\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
+& \qquad + \left(p^{minimum\_operating\_point}_{(u,ng,d,s,t)} + p^{ramp\_up\_limit}_{(u,ng,d,s,t)}\right)
+\cdot v^{units\_on}_{(u,s,t)} \\
+& \qquad - p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot v^{units\_on}_{(u,s,t-1)} \\
+& ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \cdot \Delta t \\
+& \forall (u,ng,d) \in indices(p^{ramp\_up\_limit}) \cup indices(p^{start\_up\_limit}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``IRN =`` [is\_reserve\_node](@ref)
-- ``UR =`` [upward\_reserve](@ref)
-- ``UC =`` [unit\_capacity](@ref)
-- ``UCCF =`` [unit\_conv\_cap\_to\_flow](@ref)
-- ``RUL =`` [ramp\_up\_limit](@ref)
-- ``SUL =`` [start\_up\_limit](@ref)
-- ``MOP =`` [minimum\_operating\_point](@ref)
+
+See also
+[is\_reserve\_node](@ref),
+[upward\_reserve](@ref),
+[unit\_capacity](@ref),
+[unit\_conv\_cap\_to\_flow](@ref),
+[ramp\_up\_limit](@ref),
+[start\_up\_limit](@ref),
+[minimum\_operating\_point](@ref).
 """
 function add_constraint_ramp_up!(m::Model)
     @fetch units_on, units_started_up, unit_flow = m.ext[:spineopt].variables

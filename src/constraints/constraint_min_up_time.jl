@@ -24,16 +24,17 @@ by defining the [min\_up\_time](@ref) parameter. This will trigger the generatio
 
 ```math
 \begin{aligned}
-& units\_on_{(u,s,t)} - \sum_{n} nonspin\_units\_shut\_down{(u,n,s,t)} \\
+& v^{units\_on}_{(u,s,t)} - \sum_{n} v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \\
 & \geq
-\sum_{t'=t-MUT_{(u,s,t)} +1 }^{t}
-units\_started\_up_{(u,s,t')} \\
-& \forall u \in indices(MUT)\\
+\sum_{t'=t-p^{min\_up\_time}_{(u,s,t)} +1 }^{t}
+v^{units\_started\_up}_{(u,s,t')} \\
+& \forall u \in indices(p^{min\_up\_time})\\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``MUT =`` [min\_up\_time](@ref)
+
+See also
+[min\_up\_time](@ref)
 """
 function add_constraint_min_up_time!(m::Model)
     @fetch units_on, units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables

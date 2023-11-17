@@ -24,15 +24,14 @@ online units. This constraint is activated only when parameter [ordered\_unit\_f
 
 ```math
 \begin{aligned}
-& unit\_flow\_op\_active_{(u,n,d,op,s,t)} \leq units\_on_{(u,s,t)} \\
-& \forall (u,n,d) \in indices(OP): OUFO_{(u,n,d)} \\
-& \forall op \in \{ 1, \ldots, \|OP_{(u,n,d)}\| \} \\
+& v^{unit\_flow\_op\_active}_{(u,n,d,op,s,t)} \leq v^{units\_on}_{(u,s,t)} \\
+& \forall (u,n,d) \in indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
+& \forall op \in \{ 1, \ldots, \|p^{operating\_points}_{(u,n,d)}\| \} \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``OP =`` [operating\_points](@ref)
-- ``OUFO =`` [ordered\_unit\_flow\_op](@ref)
+
+See also [operating\_points](@ref), [ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables

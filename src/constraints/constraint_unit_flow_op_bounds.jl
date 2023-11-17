@@ -28,28 +28,29 @@ besides being bounded by the segment capacity.
 
 ```math
 \begin{aligned}
-& unit\_flow\_op_{(u, n, d, op, s, t)} \\
-& \leq UC_{(u, n, d, s, t)} \cdot UCCTF_{(u, n, d, s, t)} \cdot UAF_{(u, s, t)} \\
-& \cdot \left( OP_{(u, n, d, op, s, t)}
+& v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
+& \leq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \cdot p^{unit\_availability\_factor}_{(u, s, t)} \\
+& \cdot \left( p^{operating\_points}_{(u, n, d, op, s, t)}
 - \begin{cases}       
-   OP_{(u, n, op-1, s, t)} & \text{if } op > 1\\
+   p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if } op > 1\\
    0 & \text{otherwise}\\
 \end{cases} \right) \\
 & \cdot \begin{cases}
-    unit\_flow\_op\_active_{(u,n,d,op,s,t)} & \text{if } OUFO_{(u,s,t)} \\
-    units\_on_{(u,s,t)} & \text{otherwise}\\
+    v^{unit\_flow\_op\_active}_{(u,n,d,op,s,t)} & \text{if } p^{ordered\_unit\_flow\_op}_{(u,s,t)} \\
+    v^{units\_on}_{(u,s,t)} & \text{otherwise}\\
 \end{cases} \\
-& \forall (u,n,d) \in indices(UC) \cup indices(OP) \\
-& \forall op \in \{ 1, \ldots, \|OP_{(u,n,d)}\| \} \\
+& \forall (u,n,d) \in indices(p^{unit\_capacity}) \cup indices(p^{operating\_points}) \\
+& \forall op \in \{ 1, \ldots, \|p^{operating\_points}_{(u,n,d)}\| \} \\
 & \forall (s,t)
 \end{aligned}
 ```
-where
-- ``UC =`` [unit\_capacity](@ref)
-- ``UCCTF =`` [unit\_conv\_cap\_to\_flow](@ref)
-- ``UAF =`` [unit\_availability\_factor](@ref)
-- ``OP =`` [operating\_points](@ref)
-- ``OUFO =`` [ordered\_unit\_flow\_op](@ref)
+
+See also
+[unit\_capacity](@ref),
+[unit\_conv\_cap\_to\_flow](@ref),
+[unit\_availability\_factor](@ref),
+[operating\_points](@ref),
+[ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_unit_flow_op_bounds!(m::Model)
     @fetch units_on, unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables

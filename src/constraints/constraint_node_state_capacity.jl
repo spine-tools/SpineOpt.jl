@@ -21,17 +21,18 @@
 To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-node\_state_{(n, s, t)} <= NSC_{(n, s, t)} \quad \forall n \in node : HS_{(n)}, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \leq p^{node\_state\_cap}_{(n, s, t)} \quad \forall n \in node : p^{has\_state}_{(n)}, \, \forall (s,t)
 ```
-where
-- ``NSC =`` [node\_state\_cap](@ref)
-- ``HS =`` [has\_state](@ref)
 
 The discharging and charging behavior of storage nodes can be described through unit(s),
 representing the link between the storage node and the supply node.
 Note that the dis-/charging efficiencies and capacities are properties of these units.
 See the [capacity constraint](@ref constraint_unit_flow_capacity) and
 the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
+
+See also
+[node\_state\_cap](@ref),
+[has\_state](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables

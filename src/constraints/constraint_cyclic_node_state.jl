@@ -23,10 +23,11 @@ the cyclic node state constraint can be used by setting the [cyclic\_condition](
 a [node\_\_temporal\_block](@ref) to `true`. This triggers the following constraint:
 
 ```math
-node\_state_{(n, s, start(tb))} >=  node\_state_{(n, s, end(tb))} \qquad \forall (n,tb) \in indices(CC)
+v^{node\_state}_{(n, s, start(tb))} \geq  v^{node\_state}_{(n, s, end(tb))}
+\qquad \forall (n,tb) \in indices(p^{cyclic\_condition}): p^{cyclic\_condition}_{(n,tb)}
 ```
-where
-- ``CC =`` [cyclic\_condition](@ref)
+
+See also [cyclic\_condition](@ref).
 """
 function add_constraint_cyclic_node_state!(m::Model)
     @fetch node_state = m.ext[:spineopt].variables
