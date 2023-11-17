@@ -24,7 +24,7 @@ input or output nodes/node groups.
 ```math
 \begin{aligned}
 & \sum_{
-        n \in ng: !IRN_{(n)}
+        n \in ng: \neg IRN_{(n)}
 }
 unit\_flow_{(u,n,d,s,t)}
 - \sum_{

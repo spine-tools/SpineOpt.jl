@@ -359,26 +359,25 @@ end
 function test_constraint_node_voltage_angle()
     @testset "constraint_node_voltage_angle" begin
         url_in = _test_constraint_connection_setup()
-        conn_react = Dict("connection_ca" => 0.17)
-        conn_react_p_u = Dict("connection_ca" => 250)
-        has_volt_ang = Dict("node_c" => true,"node_a" => true,)
-        fix_ratio_out_in = Dict(("connection_ca", "node_a","node_c") => 1)
+        react = 0.17
+        react_p_u = 250
+        has_volt_ang = Dict("node_c" => true, "node_a" => true,)
         relationships = [
             ["connection__node__node", [ "connection_ca", "node_a", "node_c"]],
             ["connection__from_node", [ "connection_ca", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ca", "connection_reactance", conn_react["connection_ca"]],
-            ["connection", "connection_ca", "connection_reactance_base", conn_react_p_u["connection_ca"]],
-            ["node", "node_c", "has_voltage_angle", has_volt_ang["node_c"]],
-            ["node", "node_a", "has_voltage_angle", has_volt_ang["node_a"]],
+            ["connection", "connection_ca", "connection_reactance", react],
+            ["connection", "connection_ca", "connection_reactance_base", react_p_u],
+            ["node", "node_c", "has_voltage_angle", true],
+            ["node", "node_a", "has_voltage_angle", true],
         ]
         relationship_parameter_values = [
             [
                 "connection__node__node",
                 ["connection_ca", "node_a","node_c"],
                 "fix_ratio_out_in_connection_flow",
-                fix_ratio_out_in[("connection_ca", "node_a","node_c")]
+                1
             ]
         ]
         SpineInterface.import_data(
@@ -395,26 +394,24 @@ function test_constraint_node_voltage_angle()
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
-            @testset for ((conn,n_to,n_from), val) in fix_ratio_out_in
-                    react = conn_react[conn]
-                    react_p_u = conn_react_p_u[conn]
-                    conn = connection(Symbol(conn))
-                    n_from = node(Symbol(n_from))
-                    n_to = node(Symbol(n_to))
-                    var_conn_flow_key1 = (conn, n_from, direction(:from_node), s, t)
-                    var_conn_flow_key2 = (conn, n_to, direction(:from_node), s, t)
-                    var_volt_ang_key1  = (n_from , s, t)
-                    var_volt_ang_key2  = (n_to, s, t)
-                    var_conn_flow1 = var_connection_flow[var_conn_flow_key1...]
-                    var_conn_flow2 = var_connection_flow[var_conn_flow_key2...]
-                    var_volt_ang1 = var_voltage_angle[var_volt_ang_key1...]
-                    var_volt_ang2 = var_voltage_angle[var_volt_ang_key2...]
-                    con_key = (conn, n_to, n_from, [s], t)
-                    expected_con = @build_constraint(var_conn_flow1 - var_conn_flow2 == (var_volt_ang1-var_volt_ang2)/react*react_p_u)
-                    con = constraint[con_key...]
-                    observed_con = constraint_object(con)
-                    @test _is_constraint_equal(observed_con, expected_con)
-            end
+            conn = connection(:connection_ca)
+            n_from = node(:node_c)
+            n_to = node(:node_a)
+            var_conn_flow_key1 = (conn, n_from, direction(:from_node), s, t)
+            var_conn_flow_key2 = (conn, n_to, direction(:from_node), s, t)
+            var_volt_ang_key1  = (n_from , s, t)
+            var_volt_ang_key2  = (n_to, s, t)
+            var_conn_flow1 = var_connection_flow[var_conn_flow_key1...]
+            var_conn_flow2 = var_connection_flow[var_conn_flow_key2...]
+            var_volt_ang1 = var_voltage_angle[var_volt_ang_key1...]
+            var_volt_ang2 = var_voltage_angle[var_volt_ang_key2...]
+            con_key = (conn, n_to, n_from, [s], t)
+            expected_con = @build_constraint(
+                var_conn_flow1 - var_conn_flow2 == (var_volt_ang1 - var_volt_ang2) / react * react_p_u
+            )
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
         end
     end
 end

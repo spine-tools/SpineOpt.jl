@@ -28,7 +28,7 @@ for a [connection\_\_node\_\_node](@ref) relationship involving that [connection
 & \sum_{n \in ng_{from}} connection\_flow_{(conn,n,from\_node,s,t)}
 - \sum_{n \in ng_{to}} connection\_flow_{(conn,n,from\_node,s,t)}\\
 & = \\
-& 1/\left(CReact_{(conn,s,t)} \cdot CReactB_{(conn,s,t)}\right) \\
+& \left(CReactB_{(conn,s,t)}/CReact_{(conn,s,t)}\right) \\
 & \cdot \left(\sum_{n \in ng_{from}} node\_voltage\_angle_{(n,s,t)} - \sum_{n \in ng_{to}} node\_voltage\_angle_{(n,s,t)} \right)\\
 & \forall (conn, ng_{to}, ng_{from}) \in indices(FROICF)\\
 & \forall (s,t)
@@ -58,9 +58,9 @@ function add_constraint_node_voltage_angle!(m::Model)
                 )
             )
             ==
-            1 / (
-                + connection_reactance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * connection_reactance_base[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
+            (
+                connection_reactance_base[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
+                / connection_reactance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
             )
             * (
                 sum(
