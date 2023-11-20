@@ -101,16 +101,7 @@ For dispatchable units, additional ramping constraints can be introduced. For se
 #### Reserve constraints
 
 ##### [Constraint on minimum node state for reserve provision](@id constraint_res_minimum_node_state)
-Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the storage unit (see above) and by the node state:
-```math
-\begin{aligned}
-& v_{node\_state}(n_{stor}, s, t)\\
-& >= p_{node\_state\_min}(n_{stor}, s, t) \\
-& + \sum_{\substack{(u,n_{res},d,s,t) \in unit\_flow\_indices: \\ u \in unit\_flow\_indices;n=n_{stor}) \\ p_{is\_reserve\_node}(n_{res}) }} v_{unit\_flow}(u,n_{res},d,s,t)  \\
-& \cdot p_{minimum\_reserve\_activation\_time}(n_{res}) \\
-& \forall (n_{stor},s,t) \in node\_stochastic\_time\_indices : p_{has\_state}(n)\\
-\end{aligned}
-```
+(Comment 2023-11-20: Currently under development)
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
@@ -223,6 +214,7 @@ For further explanation on setting up a database for nodal lossless DC power flo
 ### Investments in units
 #### [Economic lifetime of a unit](@id constraint_unit_lifetime)
 (Comment 2023-05-03: Currently under development)
+
 #### Technical lifetime of a unit
 (Comment 2021-04-29: Currently under development)
 
@@ -299,70 +291,105 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 ## [Benders decomposition](@id benders_decomposition)
 This section describes the high-level formulation of the benders-decomposed problem.
 
-Taking the simple example of minimising capacity and operating cost for a fleet of units with a linear cost coefficient $`operational\_cost_u`$ :
+Taking the simple example of minimising capacity and operating cost for a fleet of units with a linear cost coefficient
+``p^{operational\_cost}``:
 
 ```math
 \begin{aligned}
-minimise:&
+min&
 \\
-&+ \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u)\\
-&+ \sum_{u, n, t} p_{operational\_cost} \cdot v_{unit\_flow}(u, n, t)\\
-subject\ to:&
+& \sum_{u,s,t} \left( p^{unit\_investment\_cost}_{(u,s,t)} \cdot v^{units\_invested}_{(u,s,t)}
++ \sum_{n,d} p^{operational\_cost}_{(u,n,d,s,t)} \cdot v^{unit\_flow}_{(u, n, d, s, t)} \right) \\
+s.t. &
 \\
-&flow_{u,n,t} \le p_{unit\_capacity}(u, n, t) \cdot (v_{units\_available} + v_{units\_invested\_available}(u, n, t))\\
-&\sum_{u,n,t} v_{unit\_flow}(u,t) = p_{demand}(n, t)
+& v^{unit\_flow}_{(u,n,d,s,t)} \le p^{unit\_capacity}_{(u, n, d, s, t)} \cdot \left(
+    v^{units\_available}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)}
+\right) \quad \forall u \in unit, n \in node, s, t
+\\
+& \sum_{u,d} v^{unit\_flow}_{(u,n,d,s,t)} = p^{demand}_{(n, s, t)} \quad \forall n \in node, s,t
 \end{aligned}
 ```
 
-So this is a single problem that can't be decoupled over `t` because the investment variables `units_invested_available` couple the timesteps together. If `units_invested_available` were a constant in the problem, then all `t`'s could be solved individually. This is the basic idea in Benders decomposition. We decompose the problem into a master problem and sub problems with the master problem optimising the coupling investment variables which are treated as constants in the sub problems.
+So this is a single problem that can't be decoupled over ``t`` because the investment variables
+[units\_invested\_available](@ref) couple the timesteps together.
+If [units\_invested\_available](@ref) were a constant in the problem, then all ``t``'s could be solved individually.
+This is the basic idea in Benders decomposition.
+We decompose the problem into a master problem and sub problems with the master problem
+optimising the coupling investment variables which are treated as constants in the sub problems.
 
-The master problem in the initial benders iteration is simply to minimise total investment costs:
+The master problem is built by replacing the operational costs (which will be minimised in the sub problem) by
+a new decision variable, ``v^{sp\_objective}``:
 
 ```math
 \begin{aligned}
-minimise &Z:
-\\
-&Z \ge \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u)\\
+min & \\
+& \sum_{u,s,t} p^{unit\_investment\_cost}_{(u,s,t)} \cdot v^{units\_invested}_{(u,s,t)} + v^{sp\_objective} \\
+s.t. & \\
+& v^{sp\_objective} \geq 0
 \end{aligned}
 
 ```
 
-The solution to this problem yields values for the investment variables which are fixed as $`\overline{units\_invested_u}`$ in the sub problem and will be zero in the first iteration.
+The solution to this problem yields values for the investment variables which are fixed
+as ``p^{units\_invested\_available}`` in the sub problem and will be zero in the first iteration.
 
-The sub problem for benders iteration `b` then becomes :
+The sub problem for benders iteration ``b`` then becomes :
 
 ```math
 \begin{aligned}
-minimise:&
+min&
 \\
-obj_b = &+ \sum_{u,n,t} p_{operational\_cost}(u) \cdot v_{unit\_flow}(u,n,t)\\
-subject\ to:&
+& sp\_obj_b = \sum_{u,n,d,s,t} p^{operational\_cost}_{(u,n,d,s,t)} \cdot v^{unit\_flow}_{(u, n, d, s, t)}\\
+s.t.&
 \\
-&v_{unit_flow}(u,n,t) \le p_{unit\_capacity}(u) \cdot (v_{units\_available}(u,t) + p_{units\_invested\_available}(u, t)) \qquad \mu_{b,u,t} \\
-&\sum_{u,n,t} v_{unit_flow}(u, n, t) = p_{demand}(n, t) \\
+& v^{unit\_flow}_{(u,n,d,s,t)} \le p^{unit\_capacity}_{(u, n, d, s, t)} \cdot \left(
+    v^{units\_available}_{(u,s,t)} + p^{units\_invested\_available}_{(b, u, s, t)}
+\right) \\ 
+& \qquad \forall u \in unit, n \in node, s,t \qquad [\mu_{(b,u,s,t)}]
 \\
+& \sum_{u,d} v^{unit\_flow}_{(u,n,d,s,t)} = p^{demand}_{(n, s, t)} \quad \forall n \in node, s,t
 \end{aligned}
 ```
-This sub problem can be solved individually for each `t`. This is pretty trivial in this small example but if we consider a single t to be a single rolling horizon instead, decoupling the investment variables means that each rolling horizon can be solved individually rather than having to solve the entire model horizon as a single problem.
+This sub problem can be solved individually for each ``t``. This is pretty trivial in this small example
+but if we consider a single t to be a single rolling horizon instead,
+decoupling the investment variables means that each rolling horizon can be solved individually
+rather than having to solve the entire model horizon as a single problem.
 
-$`\mu_{u,t}`$ is the marginal value of the capacity constraint and can be interpreted as the decrease in the objective function at time `t` for an additional MW of flow from unit `u`. This information is used to construct a benders cut which represents the reduction in the sub problem objective function which is possible in this benders iteration by adjusting the variable units_investment. This is effectively the decrease in operating costs possible by adding another unit of type `u` and is expressed as :
+``\mu_{(b,u,s,t)}`` is the marginal value of the capacity constraint for benders iteration ``b``
+and can be interpreted as the decrease in the objective function for an additional MW of flow from unit ``u``
+(in scenario ``s`` at time ``t``).
+Thus, an upper bound on the sub problem objective function is obtained as follows:
 
-$`obj_{b} + \sum_{u,t}p_{unit\_capacity}(u,n,t) \cdot \mu_{b,u,t} \cdot (v_{units\_invested}(u,t) - p_{units\_invested}(u,b,t))`$
+```math
+sp\_obj_{b} + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{unit\_capacity}_{(u,n,d,s,t)} 
+\cdot \left(v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(b,u,s,t)}\right)
+```
 
-In the first benders iteration, the value of the investment variables will have been zero so $`p_{units\_invested}(u,b,t)`$ will have the value of zero and thus the expression represents the total reduction in cost from an addition of a new unit of type `u`. This Benders cut is added to the master problem which then becomes, for each subsequent benders iteration, b:
+The above is added to the master problem for the next iteration as a new constraint, called a Benders cut,
+thus becoming:
 
 ```math
 \begin{aligned}
-minimise &Z:
-\\
-&Z \ge \sum_{u,t} p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
-subject\ to:&
-\\
-Z \ge& + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
-& + \sum_{u,t}p_{unit\_capacity}(u,t) \cdot \mu_{b,u,t} \cdot (v_{units\_invested}(u,t) - p_{units\_invested}(u,b,t)) \qquad \forall b \\
+min & \\
+& \sum_{u,s,t} p^{unit\_investment\_cost}_{(u,s,t)} \cdot v^{units\_invested}_{(u,s,t)}
++ v^{sp\_objective} \\
+
+s.t. & \\
+
+& v^{sp\_objective} \geq sp\_obj_{b} \\
+& \quad + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{unit\_capacity}_{(u,n,d,s,t)}
+\cdot \left(v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(b,u,s,t)}\right) \quad \forall b \\
 \end{aligned}
 ```
-Note the benders cuts are added as inequalities because they represent an upper bound on the value we are going to get from adjusting the master problem variables in that benders iteration. If we consider the example of renewable generation - because it's marginal cost is zero, on the first benders iteration, it could look like there would be a lot of value in increasing the capacity because of the marginal values from the sub problems. However, when the capacity variables are increased accordingly and curtailment occurs in the sub-problems, the marginal values will be zero when curtailment occurs and so, other resources may become optimal in subsequent iterations.
+Note the benders cuts are added as inequalities because they represent an upper bound on the value
+we are going to get for the sub problem objective function by adjusting the master problem variables
+in that benders iteration.
+If we consider the example of renewable generation - because it's marginal cost is zero,
+on the first benders iteration, it could look like there would be a lot of value in increasing the capacity
+because of the marginal values from the sub problems.
+However, when the capacity variables are increased accordingly and curtailment occurs in the sub-problems,
+the marginal values will be zero when curtailment occurs and so,
+other resources may become optimal in subsequent iterations.
 
 This is a simple example but it illustrates the general strategy. The algorithm pseudo code looks something like this:
 
@@ -391,20 +418,33 @@ The benders cuts for the problem including all investments in candidate connecti
 
 ```math
 \begin{aligned}
-&v_{objective\_lower\_bound}(b)\\
-&>=\\
-& + \sum_{u,s,t} p_{units\_invested\_available\_mv}(u,t,b) \cdot \lbrack v_{units\_invested\_available}(u,s,t)-p_{units\_invested\_available\_bi}(u,t,b) \rbrack \\
-& + \sum_{c,s,t} p_{connections\_invested\_available\_mv}(c,t,b) \cdot \lbrack v_{connections\_invested\_available}(c,s,t)-p_{connections\_invested\_available\_bi}(c,t,b) \rbrack \\
-& + \sum_{n,s,t} p_{storages\_invested\_available\_mv}(n,t,b) \cdot \lbrack v_{storages\_invested\_available}(n,s,t)-p_{storages\_invested\_available\_bi}(n,t,b) \rbrack \\
+& v^{sp\_objective} \\
+& \geq \\
+& sp\_obj_{b} + \\
+& \sum_{u,s,t} p^{units\_invested\_available\_mv}_{(b,u,s,t)}
+\cdot \left( v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(u,s,t)} \right) \\
+& + \sum_{c,s,t} p^{connections\_invested\_available\_mv}_{(b,c,s,t)}
+\cdot \left( v^{connections\_invested\_available}_{(c,s,t)} - p^{connections\_invested\_available}_{(c,s,t)} \right) \\
+& + \sum_{n,s,t} p^{storages\_invested\_available\_mv}_{(b,n,s,t)}
+\cdot \left( v^{storages\_invested\_available}_{(n,s,t)} - p^{storages\_invested\_available}_{(n,s,t)} \right) \\
 \end{aligned}
 ```
 
 where
 
-$`p_{units\_invested\_available\_mv}`$ is the reduced cost of the [units\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a [unit](@ref) of this type,  
-$`p_{connections\_invested\_available\_mv}`$ is the reduced cost of the [connections\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a [connection](@ref) of this type,  
-$`p_{storages\_invested\_available\_mv}`$ is the reduced cost of the [storages\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a `storage` of this type,  
-$`p_{units\_invested\_available\_bi}(u,t,b)`$ is the value of the fixed sub problem variable [units\_invested\_available](@ref)(u,t) in benders iteration `b`,  
-$`p_{connections\_invested\_available\_bi}(c,t,b)`$ is the value of the fixed sub problem variable [connections\_invested\_available](@ref)(c,t) in benders iteration `b` and  
-$`p_{storages\_invested\_available\_bi}(n,t,b)`$ is the value of the fixed sub problem variable [storages\_invested\_available](@ref)(n,t) in benders iteration `b`
+- ``p^{units\_invested\_available\_mv}`` is the reduced cost of the [units\_invested\_available](@ref) fixed
+  sub-problem variable, representing the reduction in operating costs possible from an investment in a [unit](@ref)
+  of this type,  
+- ``p^{connections\_invested\_available\_mv}`` is the reduced cost of the [connections\_invested\_available](@ref)
+  fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a
+  [connection](@ref) of this type,  
+- ``p^{storages\_invested\_available\_mv}`` is the reduced cost of the [storages\_invested\_available](@ref) fixed
+  sub-problem variable, representing the reduction in operating costs possible from an investment in a storage
+  [node](@ref) of this type,  
+- ``p^{units\_invested\_available}`` is the value of the fixed sub problem variable
+  [units\_invested\_available](@ref) in benders iteration ``b``,  
+- ``p^{connections\_invested\_available}`` is the value of the fixed sub problem variable
+  [connections\_invested\_available](@ref) in benders iteration ``b`` and  
+- ``p^{storages\_invested\_available}`` is the value of the fixed sub problem variable
+  [storages\_invested\_available](@ref) in benders iteration ``b``
 
