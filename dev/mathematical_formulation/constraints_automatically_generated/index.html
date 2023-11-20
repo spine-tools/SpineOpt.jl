@@ -62,12 +62,12 @@ v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
 + \sum_{
     n \in ng
 } v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
-&amp; \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}{(u,s,t)} \\
+&amp; \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
 &amp; ) \\
 &amp; \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
 &amp; \forall (s,t)
-\end{aligned}\]</p><p>where</p><p class="math-container">\[[T] = \begin{cases}
-1 &amp; \text{if } T \text{ is true;}\\
+\end{aligned}\]</p><p>where</p><p class="math-container">\[[p] = \begin{cases}
+1 &amp; \text{if } p \text{ is true;}\\
 0 &amp; \text{otherwise.}
 \end{cases}\]</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The conversion factor <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a> has a default value of <code>1</code>, but can be adjusted in case the unit of measurement for the capacity is different to the unit flows unit of measurement.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The above formulation is valid for time-slices whose duration is greater than the minimum up time of the unit. This ensures that the unit is not online for exactly one time-slice, which might result in an infeasibility if this formulation was used. Instead, for time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar formulation, but the details are omitted for brevity.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The above formulation is valid for flows going from a unit to a node (i.e., output flows). For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up). The details are omitted for brevity.</p></div></div><p>See also <a href="../../concept_reference/Parameters/#is_reserve_node">is_reserve_node</a>, <a href="../../concept_reference/Parameters/#upward_reserve">upward_reserve</a>, <a href="../../concept_reference/Parameters/#is_non_spinning">is_non_spinning</a>, <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>, <a href="../../concept_reference/Parameters/#unit_availability_factor">unit_availability_factor</a>, <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a>, <a href="../../concept_reference/Parameters/#start_up_limit">start_up_limit</a>, <a href="../../concept_reference/Parameters/#shut_down_limit">shut_down_limit</a>.</p><h5 id="constraint_minimum_operating_point"><a class="docs-heading-anchor" href="#constraint_minimum_operating_point">Constraint on minimum operating point</a><a id="constraint_minimum_operating_point-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_minimum_operating_point" title="Permalink"></a></h5><p>The minimum operating point of a unit is based on the <a href="../variables/#unit_flow">unit_flow</a>s of input or output nodes/node groups.</p><p class="math-container">\[\begin{aligned}
 &amp; \sum_{
@@ -108,7 +108,7 @@ v^{units\_shut\_down}_{(u,s,t&#39;)} \\
 v^{units\_started\_up}_{(u,s,t&#39;)} \\
 &amp; \forall u \in indices(p^{min\_up\_time})\\
 &amp; \forall (s,t)
-\end{aligned}\]</p><p>See also <a href="../../concept_reference/Parameters/#min_up_time">min_up_time</a></p><h4 id="Ramping-constraints"><a class="docs-heading-anchor" href="#Ramping-constraints">Ramping constraints</a><a id="Ramping-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Ramping-constraints" title="Permalink"></a></h4><p>To include ramping and reserve constraints, it is a pre requisite that <a href="@ref constraint_minimum_operating_point">minimum operating points</a> and <a href="@ref constraint_unit_flow_capacity">capacity constraints</a> are enforced as described.</p><p>For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see <a href="../../advanced_concepts/ramping/#Ramping">Ramping</a>.</p><h5 id="constraint_ramp_up"><a class="docs-heading-anchor" href="#constraint_ramp_up">Ramp up limit</a><a id="constraint_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_up" title="Permalink"></a></h5><p>Limit the increase of <code>unit_flow</code> over a time period of one <code>duration_unit</code> according to the <code>start_up_limit</code> and <code>ramp_up_limit</code> parameter values.</p><p class="math-container">\[\begin{aligned}
+\end{aligned}\]</p><p>See also <a href="../../concept_reference/Parameters/#min_up_time">min_up_time</a></p><h4 id="Ramping-constraints"><a class="docs-heading-anchor" href="#Ramping-constraints">Ramping constraints</a><a id="Ramping-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Ramping-constraints" title="Permalink"></a></h4><p>To include ramping and reserve constraints, it is a pre requisite that <a href="@ref constraint_minimum_operating_point">minimum operating points</a> and <a href="@ref constraint_unit_flow_capacity">capacity constraints</a> are enforced as described.</p><p>For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see <a href="../../advanced_concepts/ramping/#Ramping">Ramping</a>.</p><h5 id="constraint_ramp_up"><a class="docs-heading-anchor" href="#constraint_ramp_up">Ramp up limit</a><a id="constraint_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_up" title="Permalink"></a></h5><p>Limit the increase of <a href="../variables/#unit_flow">unit_flow</a> over a time period of one <a href="../../concept_reference/Parameters/#duration_unit">duration_unit</a> according to the <a href="../../concept_reference/Parameters/#start_up_limit">start_up_limit</a> and <a href="../../concept_reference/Parameters/#ramp_up_limit">ramp_up_limit</a> parameter values.</p><p class="math-container">\[\begin{aligned}
 &amp; \sum_{
         n \in ng
 }
@@ -130,7 +130,7 @@ v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ p^{is\_reserve\_node}_{(n)} \land p^{u
 &amp; ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \cdot \Delta t \\
 &amp; \forall (u,ng,d) \in indices(p^{ramp\_up\_limit}) \cup indices(p^{start\_up\_limit}) \\
 &amp; \forall (s,t)
-\end{aligned}\]</p><p>See also <a href="../../concept_reference/Parameters/#is_reserve_node">is_reserve_node</a>, <a href="../../concept_reference/Parameters/#upward_reserve">upward_reserve</a>, <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>, <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a>, <a href="../../concept_reference/Parameters/#ramp_up_limit">ramp_up_limit</a>, <a href="../../concept_reference/Parameters/#start_up_limit">start_up_limit</a>, <a href="../../concept_reference/Parameters/#minimum_operating_point">minimum_operating_point</a>.</p><h5 id="constraint_ramp_down"><a class="docs-heading-anchor" href="#constraint_ramp_down">Ramp down limit</a><a id="constraint_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_down" title="Permalink"></a></h5><p>Limit the decrease of <code>unit_flow</code> over a time period of one <code>duration_unit</code> according to the <code>shut_down_limit</code> and <code>ramp_down_limit</code> parameter values.</p><p class="math-container">\[\begin{aligned}
+\end{aligned}\]</p><p>See also <a href="../../concept_reference/Parameters/#is_reserve_node">is_reserve_node</a>, <a href="../../concept_reference/Parameters/#upward_reserve">upward_reserve</a>, <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>, <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a>, <a href="../../concept_reference/Parameters/#ramp_up_limit">ramp_up_limit</a>, <a href="../../concept_reference/Parameters/#start_up_limit">start_up_limit</a>, <a href="../../concept_reference/Parameters/#minimum_operating_point">minimum_operating_point</a>.</p><h5 id="constraint_ramp_down"><a class="docs-heading-anchor" href="#constraint_ramp_down">Ramp down limit</a><a id="constraint_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_down" title="Permalink"></a></h5><p>Limit the decrease of <a href="../variables/#unit_flow">unit_flow</a> over a time period of one <a href="../../concept_reference/Parameters/#duration_unit">duration_unit</a> according to the <a href="../../concept_reference/Parameters/#shut_down_limit">shut_down_limit</a> and <a href="../../concept_reference/Parameters/#ramp_down_limit">ramp_down_limit</a> parameter values.</p><p class="math-container">\[\begin{aligned}
 &amp; \sum_{
         n \in ng
 }
@@ -185,7 +185,7 @@ v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ p^{is\_reserve\_node}_{(n)} \land p^{d
 &amp; v^{unit\_flow\_op}{(u, n, d, op, s, t)} \\
 &amp; \geq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \\
 &amp; \cdot \left(p^{operating\_points}_{(u, n, op, s, t)} - \begin{cases}       
-   p^{operating\_points}_{(u, n, op-1, s, t)} &amp; \text{if} op &gt; 1 \\
+   p^{operating\_points}_{(u, n, op-1, s, t)} &amp; \text{if } op &gt; 1 \\
    0 &amp; \text{otherwise} \\
 \end{cases} \right) \\
 &amp; \cdot v^{unit\_flow\_op\_active}_{(u, n, d, op+1, s, t)} \\
@@ -193,12 +193,12 @@ v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ p^{is\_reserve\_node}_{(n)} \land p^{d
 &amp; \forall op \in \{ 1, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| - 1\} \\
 &amp; \forall (s,t)
 \end{aligned}\]</p><p>See also <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>, <a href="../../concept_reference/Parameters/#unit_conv_cap_to_flow">unit_conv_cap_to_flow</a>, <a href="../../concept_reference/Parameters/#operating_points">operating_points</a>, <a href="../../concept_reference/Parameters/#ordered_unit_flow_op">ordered_unit_flow_op</a>.</p><h4 id="unit_flow_op_sum"><a class="docs-heading-anchor" href="#unit_flow_op_sum">Bounding unit flows by summing over operating segments</a><a id="unit_flow_op_sum-1"></a><a class="docs-heading-anchor-permalink" href="#unit_flow_op_sum" title="Permalink"></a></h4><p><a href="../variables/#unit_flow">unit_flow</a> is constrained to be the sum of all operating segment variables, <a href="../variables/#unit_flow_op">unit_flow_op</a></p><p class="math-container">\[\begin{aligned}
-&amp; v^{unit\_flow}_{(u, n, d, s, t)} = \sum_{op=1}^{\|OP_{(u,n,d)}\|}  v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
-&amp; \forall (u,n,d) \in indices(OP) \\
+&amp; v^{unit\_flow}_{(u, n, d, s, t)} = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
+&amp; \forall (u,n,d) \in indices(p^{operating\_points}) \\
 &amp; \forall (s,t)
 \end{aligned}\]</p><p>See also <a href="../../concept_reference/Parameters/#operating_points">operating_points</a>.</p><h4 id="constraint_unit_pw_heat_rate"><a class="docs-heading-anchor" href="#constraint_unit_pw_heat_rate">Unit piecewise incremental heat rate</a><a id="constraint_unit_pw_heat_rate-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_unit_pw_heat_rate" title="Permalink"></a></h4><p>Implements a standard piecewise linear heat-rate function where <a href="../variables/#unit_flow">unit_flow</a> from a (input fuel consumption) node is equal to the sum over operating point segments of <a href="../variables/#unit_flow_op">unit_flow_op</a> to a (output electricity node) node times the corresponding <a href="@ref">incremental_heat_rate</a>.</p><p class="math-container">\[\begin{aligned}
 &amp; v^{unit\_flow}_{(u, n_{in}, d, s, t)} \\
-&amp; = \sum_{op=1}^{\|OP_{(u,n,d)}\|} p^{unit\_incremental\_heat\_rate}_{(u, n_{in}, n_{out}, op, s, t)}
+&amp; = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} p^{unit\_incremental\_heat\_rate}_{(u, n_{in}, n_{out}, op, s, t)}
 \cdot v^{unit\_flow\_op}_{(u, n_{out}, d, op, s, t)} \\
 &amp; + p^{unit\_idle\_heat\_rate}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_on}_{(u, s, t)} \\
 &amp; + p^{unit\_start\_flow}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_started\_up}_{(u, s, t)} \\
@@ -298,12 +298,17 @@ n \in ng
     v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}
 \right) &lt; 0
 \end{aligned}\]</p><p>The cone described by the Weymouth equation can be outer approximated by a number of tangent planes, using a set of fixed pressure points, as illustrated in <a href="https://orbit.dtu.dk/en/publications/integration-of-electricity-natural-gas-and-heat-systems-with-mark">Schwele - Integration of Electricity, Natural Gas and Heat Systems With Market-based Coordination</a>. The big M method is used to replace the sign function.</p><p>The linearized version of the Weymouth equation implemented in SpineOpt is given as follows:</p><p class="math-container">\[\begin{aligned}
-&amp; \left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
+&amp; 
+\left.
+\left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)
+\middle/2 
+\right.
+\\
 &amp; \leq p^{fixed\_pressure\_constant\_1}_{(conn,n_{orig},n_{dest},j,s,t)} \cdot v^{node\_pressure}_{(n_{orig},s,t)} \\
 &amp; - p^{fixed\_pressure\_constant\_0}_{(conn,n_{orig},n_{dest},j,s,t)} \cdot v^{node\_pressure}_{(n_{dest},s,t)} \\
 &amp; + p^{big\_m} \cdot \left(1 - v^{binary\_gas\_connection\_flow}_{(conn, n_{dest}, to\_node, s, t)}\right) \\
 &amp; \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
-&amp; \forall j \in \{1, \ldots, \left\| p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest})} \right\| \}:
+&amp; \forall j \in \left\{1, \ldots, \left\| p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest})} \right\| \right\}:
 p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest}, j)} \neq 0 \\
 &amp; \forall (s,t)
 \end{aligned}\]</p><p>The parameters <a href="../../concept_reference/Parameters/#fixed_pressure_constant_1">fixed_pressure_constant_1</a> and <a href="../../concept_reference/Parameters/#fixed_pressure_constant_0">fixed_pressure_constant_0</a> should be defined. For each considered fixed pressure point, they can be calculated as follows:</p><p class="math-container">\[\begin{aligned}
@@ -321,7 +326,12 @@ p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest}, j)} \neq 0 \\
 &amp; \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
 &amp; \forall (s,t)
 \end{aligned}\]</p><h5 id="constraint_connection_flow_gas_capacity"><a class="docs-heading-anchor" href="#constraint_connection_flow_gas_capacity">Gas connection flow capacity</a><a id="constraint_connection_flow_gas_capacity-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_connection_flow_gas_capacity" title="Permalink"></a></h5><p>To enforce that the averge flow of a connection is only in one direction, the flow in the opposite direction is forced to be <code>0</code> by the following equation. For the connection flow in the direction of flow the parameter <a href="../../concept_reference/Parameters/#big_m">big_m</a> should be chosen large enough not to become binding.</p><p class="math-container">\[\begin{aligned}
-&amp; \left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
+&amp; 
+\left.
+\left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)
+\middle/2 
+\right.
+\\
 &amp; &lt;= p^{big\_m} \cdot v^{binary\_gas\_connection\_flow}_{(conn, n_{dest}, to\_node, s, t)} \\
 &amp; \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
 &amp; \forall (s,t)
@@ -343,7 +353,7 @@ p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest}, j)} \neq 0 \\
 &amp; \sum_{n \in ng_{from}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}
 - \sum_{n \in ng_{to}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}\\
 &amp; = \\
-&amp; \left(p^{connection\_reactance\_base}_{(conn,s,t)}/p^{connection\_reactance}_{(conn,s,t)}\right) \\
+&amp; \left(p^{connection\_reactance\_base}_{(conn,s,t)} \middle/ p^{connection\_reactance}_{(conn,s,t)}\right) \\
 &amp; \cdot \left(\sum_{n \in ng_{from}} v^{node\_voltage\_angle}_{(n,s,t)} - \sum_{n \in ng_{to}} v^{node\_voltage\_angle}_{(n,s,t)} \right)\\
 &amp; \forall (conn, ng_{to}, ng_{from}) \in indices(p^{fix\_ratio\_out\_in\_connection\_flow})\\
 &amp; \forall (s,t)
@@ -508,4 +518,4 @@ Z \ge&amp; + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)
   \end{cases}\\
 &amp;+p_{right\_hand\_side}(uc,t,s)\\
 &amp;\forall uc,t,s \in constraint\_user\_constraint\_indices\\
-\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Friday 17 November 2023 16:19">Friday 17 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Monday 20 November 2023 08:09">Monday 20 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
