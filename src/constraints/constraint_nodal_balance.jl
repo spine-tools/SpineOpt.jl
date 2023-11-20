@@ -42,16 +42,20 @@ v^{connection\_flow}_{(conn,n,to\_node,s,t)}
 - \sum_{
         conn
 }
-v^{connection\_flow}_{(conn,n,from\_node,s,t)}
-\{\ge,=,\le\}
-0 \\
+v^{connection\_flow}_{(conn,n,from\_node,s,t)} \\
+& \begin{cases}
+\ge & \text{if } p^{nodal\_balance\_sense} = ">=" \\
+= & \text{if } p^{nodal\_balance\_sense} = "==" \\
+\le & \text{if } p^{nodal\_balance\_sense} = "<=" \\
+\end{cases} \\
+& 0 \\
 & \forall n \in node: p^{balance\_type}_{(n)} \ne balance\_type\_none \land \nexists ng \ni n : p^{balance\_type}_{(ng)} = balance\_type\_group \\
 & \forall (s,t)
 \end{aligned}
 ```
 
 See also
-[balance\_type](@ref).
+[balance\_type](@ref) and [nodal\_balance\_sense](@ref).
 """
 function add_constraint_nodal_balance!(m::Model)
     @fetch connection_flow, node_injection = m.ext[:spineopt].variables

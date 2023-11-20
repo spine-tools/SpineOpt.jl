@@ -6,8 +6,6 @@
 
 @@add_constraint_nodal_balance!
 
-The constraint consists of the [node injections](@ref constraint_node_injection) and the net [connection\_flow](@ref)s.
-
 ### [Node injection](@id constraint_node_injection)
 
 @@add_constraint_node_injection!
