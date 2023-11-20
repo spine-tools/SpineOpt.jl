@@ -46,7 +46,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 + \sum_{
     n \in ng
 } v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
-& \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}{(u,s,t)} \\
+& \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
 & ) \\
 & \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
 & \forall (s,t)
@@ -54,8 +54,8 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 ```
 where
 ```math
-[T] = \begin{cases}
-1 & \text{if } T \text{ is true;}\\
+[p] = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
 0 & \text{otherwise.}
 \end{cases}
 ```

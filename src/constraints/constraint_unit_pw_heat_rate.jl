@@ -25,7 +25,7 @@ times the corresponding [incremental\_heat\_rate](@ref).
 ```math
 \begin{aligned}
 & v^{unit\_flow}_{(u, n_{in}, d, s, t)} \\
-& = \sum_{op=1}^{\|OP_{(u,n,d)}\|} p^{unit\_incremental\_heat\_rate}_{(u, n_{in}, n_{out}, op, s, t)}
+& = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} p^{unit\_incremental\_heat\_rate}_{(u, n_{in}, n_{out}, op, s, t)}
 \cdot v^{unit\_flow\_op}_{(u, n_{out}, d, op, s, t)} \\
 & + p^{unit\_idle\_heat\_rate}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_on}_{(u, s, t)} \\
 & + p^{unit\_start\_flow}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_started\_up}_{(u, s, t)} \\

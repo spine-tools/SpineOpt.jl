@@ -99,12 +99,17 @@ The linearized version of the Weymouth equation implemented in SpineOpt is given
 
 ```math
 \begin{aligned}
-& \left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
+& 
+\left.
+\left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)
+\middle/2 
+\right.
+\\
 & \leq p^{fixed\_pressure\_constant\_1}_{(conn,n_{orig},n_{dest},j,s,t)} \cdot v^{node\_pressure}_{(n_{orig},s,t)} \\
 & - p^{fixed\_pressure\_constant\_0}_{(conn,n_{orig},n_{dest},j,s,t)} \cdot v^{node\_pressure}_{(n_{dest},s,t)} \\
 & + p^{big\_m} \cdot \left(1 - v^{binary\_gas\_connection\_flow}_{(conn, n_{dest}, to\_node, s, t)}\right) \\
 & \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
-& \forall j \in \{1, \ldots, \left\| p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest})} \right\| \}:
+& \forall j \in \left\{1, \ldots, \left\| p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest})} \right\| \right\}:
 p^{fixed\_pressure\_constant\_1}_{(conn, n_{orig}, n_{dest}, j)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}

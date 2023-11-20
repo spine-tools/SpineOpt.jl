@@ -25,7 +25,12 @@ not to become binding.
 
 ```math
 \begin{aligned}
-& \left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)/2 \\
+& 
+\left.
+\left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)
+\middle/2 
+\right.
+\\
 & <= p^{big\_m} \cdot v^{binary\_gas\_connection\_flow}_{(conn, n_{dest}, to\_node, s, t)} \\
 & \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
 & \forall (s,t)

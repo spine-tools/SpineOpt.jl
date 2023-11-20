@@ -22,8 +22,8 @@
 
 ```math
 \begin{aligned}
-& v^{unit\_flow}_{(u, n, d, s, t)} = \sum_{op=1}^{\|OP_{(u,n,d)}\|}  v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
-& \forall (u,n,d) \in indices(OP) \\
+& v^{unit\_flow}_{(u, n, d, s, t)} = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
+& \forall (u,n,d) \in indices(p^{operating\_points}) \\
 & \forall (s,t)
 \end{aligned}
 ```

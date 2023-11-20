@@ -27,7 +27,7 @@ The last segment does not need this constraint.
 & v^{unit\_flow\_op}{(u, n, d, op, s, t)} \\
 & \geq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \\
 & \cdot \left(p^{operating\_points}_{(u, n, op, s, t)} - \begin{cases}       
-   p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if} op > 1 \\
+   p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if } op > 1 \\
    0 & \text{otherwise} \\
 \end{cases} \right) \\
 & \cdot v^{unit\_flow\_op\_active}_{(u, n, d, op+1, s, t)} \\
