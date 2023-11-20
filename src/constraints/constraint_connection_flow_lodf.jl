@@ -17,10 +17,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_flow_lodf!(m::Model)
+@doc raw"""
+The N-1 security constraint for the post-contingency flow on monitored connection, ``c_{mon}``,
+upon the outage of a contingency connection, ``c_{cont}``, is formed using line outage distribution factors (LODF).
+``p^{lodf}_{(c_con, c_mon)}`` represents the fraction of the pre-contingency flow on connection ``c_{cont}`` that will flow
+on ``c_{mon}`` if the former is disconnected.
+If [connection](@ref) ``c_{cont}`` is disconnected, the post-contingency flow on the monitored connection
+[connection](@ref) ``c_{mon}`` is the pre-contingency [connection\_flow](@ref) on ``c_{mon}`` plus the LODF
+times the pre-contingency [connection\_flow](@ref) on ``c_{cont}``.
+This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of ``c_{mon}``.
 
-Limit the post contingency flow on monitored connection mon to conn_emergency_capacity upon outage of connection cont.
+```math
+\begin{aligned}
+& v^{connection\_flow}_{(c_{mon}, n_{mon\_to}, to\_node, s, t)}
+- v^{connection\_flow}_{(c_{mon}, n_{mon\_to}, from\_node, s, t)} \\
+& + p^{lodf}_{(c_{cont}, c_{mon})} \cdot \left(             
+v^{connection\_flow}_{(c_{cont}, n_{cont\_to}, to\_node, s, t)}
+- v^{connection\_flow}_{(c_{cont}, n_{cont\_to}, from\_node, s, t)}
+\right) \\
+& \leq min \left(
+    p^{connection\_emergency\_capacity}_{(c_{mon}, n_{cont\_to}, to\_node, s, t)},
+    p^{connection\_emergency\_capacity}_{(c_{mon}, n_{cont\_to}, from\_node,s ,t)}
+\right) \\
+& \forall (c_{mon}, c_{cont}) \in connection \times connection :
+p^{is\_monitored}_{(c_{mon})} \land p^{is\_contingency}_{(c_{cont})} \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_connection_flow_lodf!(m::Model)
     rpts = join(get(m.ext[:spineopt].reports_by_output, output(:contingency_is_binding), []), ", ", " and ")

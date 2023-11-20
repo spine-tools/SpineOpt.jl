@@ -40,6 +40,14 @@ v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{is\_reserve\_node}_{(n)} \land p^{do
 & \forall (s,t)
 \end{aligned}
 ```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
+
 
 !!! note
     The above formulation is valid for flows going from a unit to a node (i.e., output flows).

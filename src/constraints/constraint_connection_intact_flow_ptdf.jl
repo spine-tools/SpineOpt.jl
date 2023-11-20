@@ -17,10 +17,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_intact_flow_ptdf!(m::Model)
+@doc raw"""
+The power transfer distribution factors are a property of the network reactances.
+``p^{ptdf}_{(c, n)}`` represents the fraction of an injection at [node](@ref) ``n`` that will flow
+on [connection](@ref) ``c``.
+The flow on [connection](@ref) ``c`` is then the sum over all nodes of ``p^{ptdf}_{(c, n)}`` multiplied by the
+net injection at that node.
+[connection\_intact\_flow](@ref) represents the flow on each line of the network with all candidate connections
+with PTDF-based flow present in the network.
 
-For connection networks with monitored and has_ptdf set to true, set the steady state flow based on PTDFs.
+```math
+\begin{aligned}
+& v^{connection\_intact\_flow}_{(c, n_{to}, to\_node, s, t)}
+- v^{connection\_intact\_flow}_{(c, n_{to}, from\_node, s, t)} \\
+& = \sum_{n_{inj}} p^{ptdf}_{(c, n_{inj}, t)} \cdot v^{node\_injection}_{(n_{inj}, s, t)}
+\cdot \left[p^{node\_opf\_type}_{(n_{inj})} \neq node\_opf\_type\_reference \right]
+\\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
+
 """
 function add_constraint_connection_intact_flow_ptdf!(m::Model)
     @fetch connection_intact_flow, node_injection, connection_flow = m.ext[:spineopt].variables

@@ -192,7 +192,7 @@ In addition to the already known variables, such as [connection\_flow](@ref) and
 
 @@add_constraint_storage_line_pack!
 
-#### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
+#### [Node-based lossless DC power flow](@id nodal-lossless-DC)
 
 For the implementation of the nodebased loss DC powerflow model, a new variable [node\_voltage\_angle](@ref) is introduced. See also [has\_voltage\_angle](@ref).
 For further explanation on setting up a database for nodal lossless DC power flow, see the advanced concept chapter on [Lossless nodal DC power flows](@ref).
@@ -212,30 +212,12 @@ For further explanation on setting up a database for nodal lossless DC power flo
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
 #### [Connection intact flow PTDF](@id constraint_connection_intact_flow_ptdf)
-The power transfer distribution factors are a property of the network reactances. `ptdf(n, c)` represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of `ptdf(n, c)*net_injection(c)`. [connection\_intact\_flow](@ref) represents the flow on each line of the network will all candidate connections with PTDF-based flow present in the network.
 
-```math
-\begin{aligned}
-              & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
-              & - v_{connection\_intact\_flow}(c, n_{to}, d_{from}, s, t) \\
-              & == \sum_{n_{inj}} \Big( v_{node\_injection}(n_{inj}, s, t) \cdot p_{ptdf}(c, n_{inj}) \Big) \\              
-              & \forall (c,n_{to},s,t) \in connection\_ptdf\_flow\_indices \\
-\end{aligned}
-```
+@@add_constraint_connection_intact_flow_ptdf!
 
 #### [N-1 post contingency connection flow limits](@id constraint_connection_flow_lodf)
- The N-1 security constraint for the post-contingency flow on monitored connection, `c_mon`, upon the outage of contingency connection, `c_conn`, is formed using line outage distribution factors (lodf). `lodf(c_con, c_mon)` represents the fraction of the pre-contingency flow on connection `c_conn` that will flow on `c_mon` if `c_conn` is disconnected. If [connection](@ref) `c_conn` is disconnected, the post-contingency flow on monitored connection [connection](@ref) `c_mon` is the pre-contingency `connection_flow` on `c_mon` plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on `c_conn`. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of `c_mon`.
-```math
-\begin{aligned}
-              & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
-              & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
-              & + p_{lodf}(c_{conn}, c_{mon}) \cdot \big( \\              
-              & \quad + v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{to}, s, t) \\
-              & \quad - v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{from}, s, t) \big) \\
-              & < min( p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{to}, s, t), p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{from},s ,t)) \\
-              & \forall (c_{mon}, c_{conn}, s, t) \in constraint\_connection\_flow\_lodf\_indices \\
-\end{aligned}
-```
+
+@@add_constraint_connection_flow_lodf!
 
 ## Investments
 ### Investments in units
@@ -245,135 +227,41 @@ The power transfer distribution factors are a property of the network reactances
 (Comment 2021-04-29: Currently under development)
 
 ### [Available Investment Units](@id constraint_units_invested_available)
-The number of available invested-in units at any point in time is less than the number of investment candidate units.
 
-```math
-\begin{aligned}
-& v_{units\_invested\_available}(u,s,t) \\
-& < p_{candidate\_units}(u,s,t) \\
-& \forall u \in candidate\_units\_indices, \\
-& \forall (u,s,t) \in units\_invested\_available\_indices\\
-\end{aligned}
-```
+@@add_constraint_units_invested_available!
 
 #### [Investment transfer](@id constraint_units_invested_transition)
 
-`units_invested` represents the point-in-time decision to invest in a unit or not while `units_invested_available` represents the invested-in units that are available in a specific timeslice. This constraint enforces the relationship between `units_invested`, `units_invested_available` and `units_mothballed` in adjacent timeslices.
+@@add_constraint_units_invested_transition!
 
-```math
-\begin{aligned}
-& v_{units\_invested\_available}(u,s,t_{after}) \\
-& - v_{units\_invested}(u,s,t_{after}) \\
-& + v_{units\_monthballed}(u,s,t_{after}) \\
-& == v_{units\_invested\_available}(u,s,t_{before}) \\
-& \forall (u,s,t_{after}) \in units\_invested\_available\_indices, \\
-& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in units\_invested\_available\_indices\\
-\end{aligned}
-```
 ### Investments in connections
 ### [Available invested-in connections](@id constraint_connections_invested_available)
-The number of available invested-in connections at any point in time is less than the number of investment candidate connections.
 
-```math
-\begin{aligned}
-& v_{connections\_invested\_available}(c,s,t) \\
-& < p_{candidate\_connections}(c,s,t) \\
-& \forall c \in candidate\_connections\_indices, \\
-& \forall (c,s,t) \in connections\_invested\_available\_indices\\
-\end{aligned}
-```
+@@add_constraint_connections_invested_available!
 
 ### [Transfer of previous investments](@id constraint_connections_invested_transition)
 
-`connections_invested` represents the point-in-time decision to invest in a connection or not while `connections_invested_available` represents the invested-in connections that are available in a specific timeslice. This constraint enforces the relationship between `connections_invested`, `connections_invested_available` and `connections_decommissioned` in adjacent timeslices.
+@@add_constraint_connections_invested_transition!
 
-```math
-\begin{aligned}
-& v_{connections\_invested\_available}(c,s,t_{after}) \\
-& - v_{connections\_invested}(c,s,t_{after}) \\
-& + v_{connections\_decommissioned}(c,s,t_{after}) \\
-& == v_{connections\_invested\_available}(c,s,t_{before}) \\
-& \forall (c,s,t_{after}) \in connections\_invested\_available\_indices, \\
-& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in connections\_invested\_available\_indices\\
-\end{aligned}
-```
 #### [Intact network ptdf-based flows on connections](@id constraint_connection_flow_intact_flow)
 
-Enforces the relationship between [connection\_intact\_flow](@ref) (flow with all investments assumed in force) and [connection\_flow](@ref)
-[connection\_intact\_flow](@ref) is the flow on all lines with all investments assumed in place. This constraint ensures that the
-[connection\_flow](@ref) is [connection\_intact\_flow](@ref) plus additional flow contributions from investment connections that are not invested in.
+@@add_constraint_connection_flow_intact_flow!
 
-```math
-\begin{aligned}
-              & + v_{connection\_flow}(c, n_{to}, d_{from}, s, t) \\
-              & - v_{connection\_flow}(c, n_{to}, d_{to}, s, t) \\
-              & - v_{connection\_intact\_flow}(c, n_{to}, d_{from}, s, t) \\
-              & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
-              & ==\\
-              & \sum_{c_{candidate}, n_{to_candidate}} p_{lodf}(c_{candidate}, c) \cdot \Big( \\
-              & \qquad + v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
-              & \qquad - v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t) \\
-              & \qquad - v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
-              & \qquad + v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t)  \Big) \\              
-              & \forall (c,n_{to},s,t) \in connection\_flow\_intact\_flow\_indices \\
-\end{aligned}
-```
+#### [Intact connection flow capacity](@id constraint_connection_intact_flow_capacity)
 
-#### [Intact connection flows capacity](@id constraint_connection_intact_flow_capacity)
-Similarly to [constraint\_connection\_flow_capacity](@ref), limits [connection\_intact\_flow](@ref) according to [connection\_capacity](@ref)
-
-```math
-\begin{aligned}
-& \sum_{\substack{(conn,n,d,s,t') \in connection\_intact\_flow\_indices: \\ (conn,n,d,s,t') \, \in \, (conn,ng,d,s,t)}} v_{connection\_intact\_flow}(conn,n,d,s,t') \cdot \Delta t' \\
-& - \sum_{\substack{(conn,n,d_{reverse},s,t') \in connection\_intact\_flow\_indices: \\ (conn,n,s,t') \, \in \, (conn,ng,s,t) \\ d_{reverse} != d}} v_{connection\_intact\_flow}(conn,n,d_{reverse},s,t') \cdot \Delta t' \\
-& <= p_{connection\_capacity}(conn,ng,d,s,t) \\
-& \cdot p_{connection\_availability\_factor}(conn,s,t) \\
-&  \cdot p_{connection\_conv\_cap\_to\_flow}(conn,ng,d,s,t) \Delta t\\
-& \forall (conn,ng,d) \in ind(p_{connection\_capacity}): \\
-& \forall t \in time\_slices, \\
-& \forall s \in stochastic\_path
-\end{aligned}
-```
+@@add_constraint_connection_intact_flow_capacity!
 
 #### [Fixed ratio between outgoing and incoming intact flows of a connection](@id constraint_ratio_out_in_connection_intact_flow)
 
-For ptdf-based lossless DC power flow, ensures that the output flow to the `to_node` equals the input flow from the `from_node`.
-
-```math
-\begin{aligned}              
-              & + v_{connection\_intact\_flow}(c, n_{out}, d_{to}, s, t) \\
-              & ==\\
-              & + v_{connection\_intact\_flow}(c, n_{in}, d_{from}, s, t) \\              
-              & \forall (c,n_{in},n_{out},s,t) \in connection\_intact\_flow\_indices \\
-\end{aligned}
-```
+@@add_constraint_ratio_out_in_connection_intact_flow!
 
 #### [Lower bound on candidate connection flow](@id constraint_candidate_connection_flow_lb)
 
-For candidate connections with PTDF-based poweflow, together with [constraint\_candidate\_connection\_flow\_ub](@ref), this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in and equals [connection\_intact\_flow](@ref) otherwise.
-
-```math
-\begin{aligned}              
-              & + v_{connection\_flow}(c, n, d, s, t) \\
-              & >=\\
-              & + v_{connection\_intact\_flow}(c, n, d, s, t) \\              
-              & - p_{connection\_capacity}(c, n, d, s, t) \cdot (p_{candidate\_connections}(c, s, t) - v_{connections\_invested\_available}(c, s, t))         \\
-              & \forall (c,n,d,s,t) \in constraint\_candidate\_connection\_flow\_lb\_indices \\
-\end{aligned}
-```
+@@add_constraint_candidate_connection_flow_lb!
 
 #### [Upper bound on candidate connection flow](@id constraint_candidate_connection_flow_ub)
-For candidate connections with PTDF-based poweflow, together with [constraint\_candidate\_connection\_flow\_lb](@ref), this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in and equals [connection\_intact\_flow](@ref) otherwise.
 
-```math
-\begin{aligned}              
-              & + v_{connection\_flow}(c, n, d, s, t) \\
-              & <=\\
-              & + v_{connection\_intact\_flow}(c, n, d, s, t) \\              
-              \\
-              & \forall (c,n,d,s,t) \in constraint\_candidate\_connection\_flow\_ub\_indices \\
-\end{aligned}
-```
+@@add_constraint_candidate_connection_flow_ub!
 
 #### [Economic lifetime of a connection](@id constraint_connection_lifetime)
 (Comment 2023-05-12: Currently under development)
@@ -382,40 +270,32 @@ For candidate connections with PTDF-based poweflow, together with [constraint\_c
 
 ### Investments in storages
 Note: can we actually invest in nodes that are not storages? (e.g. new location)
+
 #### [Available invested storages](@id constraint_storages_invested_available)
-The number of available invested-in storages at node n at any point in time is less than the number of investment candidate storages at that node.
 
-```math
-\begin{aligned}
-& v_{storages\_invested\_available}(n,s,t) \\
-& < p_{candidate\_storages}(n,s,t) \\
-& \forall (n) \in candidate\_storages\_indices, \\
-& \forall (n,s,t) \in storages\_invested\_available\_indices\\
-\end{aligned}
-```
+@@add_constraint_storages_invested_available!
 
-#### [Storage capacity transfer? ](@id constraint_storages_invested_transition)
-`storages_invested` represents the point-in-time decision to invest in storage at a node, n or not while `storages_invested_available` represents the invested-in storages that are available at a node in a specific timeslice. This constraint enforces the relationship between `storages_invested`, `storages_invested_available` and `storages_decommissioned` in adjacent timeslices.
+#### [Storage capacity transfer ](@id constraint_storages_invested_transition)
 
-```math
-\begin{aligned}
-& v_{storages\_invested\_available}(n,s,t_{after}) \\
-& - v_{storages\_invested}(n,s,t_{after}) \\
-& + v_{storages\_decommissioned}(n,s,t_{after}) \\
-& == v_{storages\_invested\_available}(n,s,t_{before}) \\
-& \forall (n,s,t_{after}) \in storages\_invested\_available\_indices, \\
-& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in storages\_invested\_available\_indices\\
-\end{aligned}
-```
+@@add_constraint_storages_invested_transition!
+
 #### [Economic lifetime of a storage](@id constraint_storage_lifetime)
 (Comment 2023-05-12: Currently under development)
 
 #### Technical lifetime of a storage
 (Comment 2021-04-29: Currently under development)
+
 ### Capacity transfer
 (Comment 2021-04-29: Currently under development)
+
 ### Early retirement of capacity
 (Comment 2021-04-29: Currently under development)
+
+## User constraints
+### [User constraint](@id constraint_user_constraint)
+
+@@add_constraint_user_constraint!
+
 ## [Benders decomposition](@id benders_decomposition)
 This section describes the high-level formulation of the benders-decomposed problem.
 
@@ -528,44 +408,3 @@ $`p_{units\_invested\_available\_bi}(u,t,b)`$ is the value of the fixed sub prob
 $`p_{connections\_invested\_available\_bi}(c,t,b)`$ is the value of the fixed sub problem variable [connections\_invested\_available](@ref)(c,t) in benders iteration `b` and  
 $`p_{storages\_invested\_available\_bi}(n,t,b)`$ is the value of the fixed sub problem variable [storages\_invested\_available](@ref)(n,t) in benders iteration `b`
 
-
-## User constraints
-### [User constraint](@id constraint_user_constraint)
-The [user\_constraint](@ref) is a generic data-driven [custom constraint](@ref constraint_user_constraint),
-which allows for defining constraints involving multiple [unit](@ref)s, [node](@ref)s, or [connection](@ref)s.
-The [constraint\_sense](@ref) parameter changes the sense of the [user\_constraint](@ref),
-while the [right\_hand\_side](@ref) parameter allows for defining the constant terms of the constraint.
-
-Coefficients for the different [variables](@ref Variables) appearing in the [user\_constraint](@ref) are defined
-using relationships, like e.g. [unit\_\_from\_node\_\_user\_constraint](@ref) and
-[connection\_\_to\_node\_\_user\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
-or [unit\_\_user\_constraint](@ref) and [node\_\_user\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
-and [node_state](@ref) variables.
-
-For more information, see the dedicated article on [User Constraints](@ref)
-
-```math
-\begin{aligned}
-&+\sum_{\substack{u,n \in unit\_\_node\_\_user\_constraint(uc),t,s}} \\
-& \begin{cases}       
-  \begin{aligned}
-       \sum_{\substack{op}} v_{unit\_flow\_op}(u,n,d,op,s,t) \cdot p_{unit\_flow\_coefficient}(u,n,op,uc,s,t) \qquad  &\text{if } \vert operating\_points(u)\vert > 1\\       
-       v_{unit\_flow}(u,n,d,s,t) \cdot p_{unit\_flow\_coefficient}(u,n,uc,s,t) \qquad &\text{otherwise}\\       
-  \end{aligned}
-  \end{cases}\\
-&+\sum_{\substack{u \in unit\_\_user\_constraint(uc),t,s}} v_{units\_started\_up}(u,s,t) \cdot p_{units\_started\_up\_coefficient}(u,uc,s,t)\\
-&+\sum_{\substack{u \in unit\_\_user\_constraint(uc),t,s}} v_{units\_on}(u,s,t) \cdot p_{units\_on\_coefficient}(u,uc,s,t)\\
-&+\sum_{\substack{c,n \in connection\_\_node\_\_user\_constraint(uc),t,s}} v_{connection\_flow}(c,n,d,s,t) \cdot p_{connection\_flow\_coefficient}(c,n,uc,s,t)\\
-&+\sum_{\substack{n \in node\_\_user\_constraint(uc),t,s}} v_{node\_state}(n,s,t) \cdot p_{node\_state\_coefficient}(n,uc,s,t)\\
-&+\sum_{\substack{n \in node\_\_user\_constraint(uc),t,s}} p_{demand}(n,s,t) \cdot p_{demand\_coefficient}(n,uc,s,t)\\
-& \begin{cases}  
-  \begin{aligned}     
-       == \qquad &\text{if } p_{constraint\_sense}(uc) \text{= "=="}\\
-       >= \qquad &\text{if } p_{constraint\_sense}(uc) \text{= ">="}\\
-       <= \qquad &\text{otherwise}\\
-  \end{aligned}
-  \end{cases}\\
-&+p_{right\_hand\_side}(uc,t,s)\\
-&\forall uc,t,s \in constraint\_user\_constraint\_indices\\
-\end{aligned}
-```

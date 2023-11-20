@@ -54,7 +54,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 ```
 where
 ```math
-[p] = \begin{cases}
+[p] \vcentcolon = \begin{cases}
 1 & \text{if } p \text{ is true;}\\
 0 & \text{otherwise.}
 \end{cases}
