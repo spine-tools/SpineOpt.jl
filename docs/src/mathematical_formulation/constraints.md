@@ -420,7 +420,7 @@ The benders cuts for the problem including all investments in candidate connecti
 \begin{aligned}
 & v^{sp\_objective} \\
 & \geq \\
-& sp\_obj_{b} + \\
+& p^{sp\_obj}_{(b)} + \\
 & \sum_{u,s,t} p^{units\_invested\_available\_mv}_{(b,u,s,t)}
 \cdot \left( v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(u,s,t)} \right) \\
 & + \sum_{c,s,t} p^{connections\_invested\_available\_mv}_{(b,c,s,t)}
@@ -432,6 +432,8 @@ The benders cuts for the problem including all investments in candidate connecti
 
 where
 
+
+- ``p^{sp\_obj}_{(b)}`` is the sub problem objective function value in benders iteration ``b``,
 - ``p^{units\_invested\_available\_mv}`` is the reduced cost of the [units\_invested\_available](@ref) fixed
   sub-problem variable, representing the reduction in operating costs possible from an investment in a [unit](@ref)
   of this type,  
