@@ -88,7 +88,9 @@ See also
 [shut\_down\_limit](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    @fetch unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_shut_down = m.ext[:spineopt].variables
+    @fetch (
+        unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_started_up, nonspin_units_shut_down
+    ) = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t, case=case, part=part) => @constraint(
@@ -125,11 +127,13 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 + expr_sum(
                     + _shutdown_margin(u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
-                    * nonspin_units_shut_down[u, n, s, t_over]
-                     * overlap_duration(t_over, t)
-                    for (u, n, s, t_over) in nonspin_units_shut_down_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
-                    );
+                    * _switch(
+                        d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
+                    )[u, n, s, t_over]
+                    * overlap_duration(t_over, t)
+                    for (u, n, s, t_over) in _switch(
+                        d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
+                    )(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                     init=0
                 )
             )
