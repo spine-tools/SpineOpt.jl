@@ -688,6 +688,99 @@ function test_constraint_connection_flow_lodf()
     end
 end
 
+function test_contraints_ptdf_lodf_duration()
+    @testset "contraints_ptdf_lodf_duration" begin
+        url_in = _test_constraint_connection_setup()
+        conn_r = 0.9
+        conn_x = 0.1
+        conn_emergency_cap_ab = 80
+        conn_emergency_cap_bc = 100
+        conn_emergency_cap_ca = 150
+        m_start = DateTime(2000)  # From setup
+        block_end = Day(3)
+        objects = [["commodity", "electricity"]]
+        relationships = [
+            ["connection__from_node", ["connection_ab", "node_b"]],
+            ["connection__to_node", ["connection_ab", "node_a"]],
+            ["connection__from_node", ["connection_bc", "node_c"]],
+            ["connection__to_node", ["connection_bc", "node_b"]],
+            ["connection__from_node", ["connection_ca", "node_a"]],
+            ["connection__to_node", ["connection_ca", "node_c"]],
+            ["node__commodity", ["node_a", "electricity"]],
+            ["node__commodity", ["node_b", "electricity"]],
+            ["node__commodity", ["node_c", "electricity"]],
+            ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
+            ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
+            ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
+            ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
+            ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
+            ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
+        ]
+        object_parameter_values = [
+            ["connection", "connection_ab", "connection_monitored", true],
+            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "connection_resistance", conn_r],
+            ["connection", "connection_bc", "connection_monitored", true],
+            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "connection_resistance", conn_r],
+            ["connection", "connection_ca", "connection_monitored", true],
+            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "connection_resistance", conn_r],
+            ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
+            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+            ["connection", "connection_ca", "connection_contingency", true],
+            ["temporal_block", "hourly", "block_end", unparse_db_value(block_end)],
+            ["temporal_block", "two_hourly", "block_end", unparse_db_value(block_end)],
+        ]
+        relationship_parameter_values = [
+            ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+            [
+                "connection__from_node",
+                ["connection_ab", "node_a"],
+                "connection_emergency_capacity",
+                conn_emergency_cap_ab,
+            ],
+            [
+                "connection__from_node",
+                ["connection_bc", "node_b"],
+                "connection_emergency_capacity",
+                conn_emergency_cap_bc,
+            ],
+            [
+                "connection__from_node",
+                ["connection_ca", "node_c"],
+                "connection_emergency_capacity",
+                conn_emergency_cap_ca,
+            ],
+        ]
+        @testset for physics_duration in (nothing, Hour(1), Hour(6), Day(1))
+            all_object_parameter_values = [
+                object_parameter_values;
+                [["commodity", "electricity", "commodity_physics_duration", unparse_db_value(physics_duration)]]
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=all_object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            @testset for con_name in (:connection_intact_flow_ptdf, :connection_flow_lodf)
+                constraint = m.ext[:spineopt].constraints[con_name]
+                max_t = maximum(x.t for x in keys(constraint))
+                physics_end = m_start + (isnothing(physics_duration) ? block_end : physics_duration)
+                @test end_(max_t) == physics_end
+            end
+        end
+    end
+end
+
 function test_constraint_ratio_out_in_connection_flow()
     @testset "constraint_ratio_out_in_connection_flow" begin
         flow_ratio = 0.8
@@ -1523,6 +1616,7 @@ end
     test_constraint_connection_flow_capacity_investments()
     test_constraint_connection_intact_flow_ptdf()
     test_constraint_connection_flow_lodf()
+    test_contraints_ptdf_lodf_duration()
     test_constraint_ratio_out_in_connection_flow()
     test_constraint_connections_invested_transition()
     test_constraint_connections_invested_transition_mp()

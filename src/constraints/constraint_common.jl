@@ -99,3 +99,13 @@ function _switch(d; from_node, to_node)
 end
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
+
+function _check_physics_apply(m, t, physics...)
+    comms = [c for c in commodity() if commodity_physics(commodity=c, _default=nothing) in physics]
+    isempty(comms) && return false
+    c = first(comms)
+    physics_duration = commodity_physics_duration(commodity=c, _default=nothing)
+    isnothing(physics_duration) && return true
+    elapsed = end_(t) - start(current_window(m))
+    Dates.toms(physics_duration - elapsed) >= 0
+end
