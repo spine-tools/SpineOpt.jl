@@ -131,7 +131,7 @@ function constraint_connection_flow_lodf_indices(m::Model)
             x
             for conn in (conn_cont, conn_mon)
             for x in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))...)
-            if _check_physics_apply(m, x.t, :commodity_physics_lodf)
+            if _check_ptdf_duration(m, x.t, conn_cont, conn_mon)
         )
     )
 end
