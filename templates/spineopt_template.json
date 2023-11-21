@@ -134,6 +134,7 @@
     "object_parameters": [
         ["commodity", "commodity_lodf_tolerance", 0.1, null, "The minimum absolute value of the line outage distribution factor (LODF) that is considered meaningful."],
         ["commodity", "commodity_physics", "commodity_physics_none", "commodity_physics_list", "Defines if the `commodity` follows lodf or ptdf physics."],
+        ["commodity", "commodity_physics_duration", null, null, "For how long the `commodity_physics` should apply relative to the start of the window."],
         ["commodity", "commodity_ptdf_threshold", 0.001, null, "The minimum absolute value of the power transfer distribution factor (PTDF) that is considered meaningful."],
         ["commodity", "mp_min_res_gen_to_demand_ratio", null, null, "Minimum ratio of renewable generation to demand for this commodity - used in the minimum renewable generation constraint within the Benders master problem"],
         ["commodity", "mp_min_res_gen_to_demand_ratio_slack_penalty", null, null, "Penalty for violating the minimum renewable generation to demand ratio."],
