@@ -69,7 +69,7 @@ The next step is to establish relationships between the newly created connection
 
 The *connection_type* is a parameter that can be used to define the connection relationships. If the connection type is normal, then the connection is assumed to be unidirectional. Thus for a two-way relationship a *connection__to_node* and *connection__from_node* relationship needs to be specified for each direction. If the connection type is selected as lossless bidirectional, two of the relationships will automatically be generated as well as the ratio parameter.
 
-###### Method 1
+###### Connection type: unidirectional
 
 - In the Spine DB editor, locate the *Relationship tree*. Expand the *root* element if not expanded.
 - Right click on the *connection\_\_from_node* class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
@@ -85,7 +85,7 @@ You will also need to add *connection__node__node* relationships between the nod
 
 ![image](figs_capacity_planning/add_connection_node_node.png)
 
-###### Method 2
+###### Connection type: lossless bidirectional
 
 Insert the following relationships in the *connection__from_node* class:
 
@@ -120,7 +120,8 @@ Next, we want to add new reporting options to the output report to gain insight 
 - *units_invested*
 - *units_invested_available*
 
-Note again that storages are not represented by units, but by nodes in SpineOpt, so they have their own separate investment variables.
+!!! note
+  In SpineOpt, storage is not represented by a unit but by a node. Therefore, they have their own separate investment variables.
 
 #### Specify object parameters values:
 
