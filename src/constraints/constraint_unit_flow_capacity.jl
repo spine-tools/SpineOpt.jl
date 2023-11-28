@@ -41,7 +41,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 & p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
 & \qquad v^{units\_on}_{(u,s,t)} \\
-& \qquad + \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right)
+& \qquad - \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right)
 \cdot \left( v^{units\_shut\_down}_{(u,s,t+1)}
 + \sum_{
     n \in ng
