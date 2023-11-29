@@ -17,13 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_ratio_out_in_connection_intact_flow!(m, ratio_out_in, sense)
+@doc raw"""
+For PTDF-based lossless DC power flow, ensures that the output flow to the ``to\_node``
+equals the input flow from the ``from\_node``.
 
-Ratio of `connection_intact_flow` variables.
-
-Note that the `<sense>_ratio_<directions>_connection_intact_flow` parameter uses the stochastic dimensions of the second
-<direction>!
+```math
+\begin{aligned}              
+& v^{connection\_intact\_flow}_{(c, n_{out}, d_{to}, s, t)}
+=
+v^{connection\_intact\_flow}_{(c, n_{in}, d_{from}, s, t)} \\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
     @fetch connection_intact_flow = m.ext[:spineopt].variables

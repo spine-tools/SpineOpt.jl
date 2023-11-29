@@ -17,15 +17,54 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_ratio_unit_flow!(m, ratio, sense, d1, d2)
+@doc raw"""
+By specifying the parameters [fix\_ratio\_out\_in\_unit\_flow](@ref),
+[fix\_ratio\_in\_out\_unit\_flow](@ref), [fix\_ratio\_in\_in\_unit\_flow](@ref),
+and/or [fix\_ratio\_out\_out\_unit\_flow](@ref),
+a **fix** ratio can be set between, respectively,
+**out**going and **in**coming flows from and to a unit,
+**in**coming and **out**going flows to and from a unit,
+two **in**coming flows to a unit,
+and/or two **out**going flows from a unit.
 
-Ratio of `unit_flow` variables.
+Similary, a **minimum** ratio between flows can be set by specifying [min\_ratio\_out\_in\_unit\_flow](@ref),
+[min\_ratio\_in\_out\_unit\_flow](@ref), [min\_ratio\_in\_in\_unit\_flow](@ref),
+and/or [min\_ratio\_out\_out\_unit\_flow](@ref).
 
-Note that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second
-<direction>!
+Finally, a **maximum** ratio can be set by specifying [max\_ratio\_out\_in\_unit\_flow](@ref),
+[max\_ratio\_in\_out\_unit\_flow](@ref), [max\_ratio\_in\_in\_unit\_flow](@ref),
+and/or [max\_ratio\_out\_out\_unit\_flow](@ref).
+
+For example, whenever there is only a single input node and a single output node,
+[fix\_ratio\_out\_in\_unit\_flow](@ref) relates to the notion of efficiency.
+Also, [fix\_ratio\_in\_out\_unit\_flow](@ref) can for instance be used to relate emissions to input primary fuel flows.
+
+The constraint below is written for [fix\_ratio\_out\_in\_unit\_flow](@ref), but equivalent formulations
+exist for the other 11 cases described above.
+
+
+```math
+\begin{aligned}
+& \sum_{n \in ng_{out}} v^{unit\_flow}_{(u,n,from\_node,s,t)} \\
+& = \\
+& p^{fix\_ratio\_out\_in\_unit\_flow}_{(u, ng_{out}, ng_{in},s,t)}
+\cdot \sum_{n \in ng_{in}} v^{unit\_flow}_{(u,n,to\_node,s,t)} \\
+& + p^{fix\_units\_on\_coefficient\_out\_in}_{(u,ng_{out},ng_{in},s,t)} \cdot v^{units\_on}_{(u,s,t)}  \\
+& \forall (u, ng_{out}, ng_{in}) \in indices(p^{fix\_ratio\_out\_in\_unit\_flow}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+!!! note
+    If any of the above mentioned ratio parameters is specified for a node group,
+    then the ratio is enforced over the *sum* of flows from or to that group.
+    In this case, there remains a degree of freedom regarding the composition of flows within the group.
+
+See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_out\_in](@ref).
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
+    # NOTE: that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second
+    # <direction>!
     @fetch unit_flow, units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[ratio.name] = Dict(
@@ -197,12 +236,13 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
         for (t, path) in t_lowest_resolution_path(
-            m, 
+            m,
+            unit_flow_indices(m; unit=u, node=[n1; n2]),
             vcat(
                 unit_flow_indices(m; unit=u, node=n1, direction=d1),
                 unit_flow_indices(m; unit=u, node=n2, direction=d2),
                 units_on_indices(m; unit=u)
-            )
+            ),
         )
     )
 end

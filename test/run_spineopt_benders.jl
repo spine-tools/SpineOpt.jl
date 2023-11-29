@@ -625,8 +625,8 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
     end
 end
 
-function _test_benders_mp_min_res_gen_to_demand_ratio()
-    @testset "benders_mp_min_res_gen_to_demand_ratio" begin
+function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
+    @testset "benders_mp_min_res_gen_to_demand_ratio_cuts" begin
         benders_gap = 1e-6  # needed so that we get the exact master problem solution
         mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
         res = 6
@@ -641,7 +641,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
         u_inv_cost = do_not_inv_cost
         @testset for should_invest in (true, false)
-            mrg2d_ratio = should_invest ? 0.1 : 0.0
+            mrg2d_ratio = should_invest ? 0.8 : 0.0
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
                 ["commodity", "electricity"],
@@ -651,6 +651,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
                 ["output", "units_mothballed"],
                 ["output", "units_invested_available"],
                 ["output", "mp_min_res_gen_to_demand_ratio_slack"],
+                ["output", "value_constraint_mp_min_res_gen_to_demand_ratio_cuts"],
                 ["temporal_block", "investments_hourly"],
             ]
             relationships = [
@@ -666,6 +667,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
                 ["report__output", ["report_x", "units_mothballed"]],
                 ["report__output", ["report_x", "units_invested_available"]],
                 ["report__output", ["report_x", "mp_min_res_gen_to_demand_ratio_slack"]],
+                ["report__output", ["report_x", "value_constraint_mp_min_res_gen_to_demand_ratio_cuts"]],
             ]
             object_parameter_values = [
                 ["commodity", "electricity", "mp_min_res_gen_to_demand_ratio", mrg2d_ratio],
@@ -702,7 +704,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
             rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_problem_model(m)
-            cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio]
+            cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio_cuts]
             invest_vars = m_mp.ext[:spineopt].variables[:units_invested_available]
             slack_vars = m_mp.ext[:spineopt].variables[:mp_min_res_gen_to_demand_ratio_slack]
             @test length(cons) == 1
@@ -741,6 +743,8 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
             end
             t0 = DateTime(2000, 1, 1)
             @test Y.mp_min_res_gen_to_demand_ratio_slack(commodity=Y.commodity(:electricity), t=t0) == 0
+            val_con = Y.value_constraint_mp_min_res_gen_to_demand_ratio_cuts(commodity=Y.commodity(:electricity), t=t0)
+            @test val_con == (should_invest ? 240 : 0)
         end
     end
 end
@@ -852,7 +856,7 @@ end
     _test_benders_storage()
     _test_benders_rolling_representative_periods()
     _test_benders_rolling_representative_periods_yearly_investments_multiple_units()
-    _test_benders_mp_min_res_gen_to_demand_ratio()
+    _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
     _test_benders_starting_units_invested()
     # FIXME: _test_benders_unit_storage()
 end

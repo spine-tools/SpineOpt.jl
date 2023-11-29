@@ -17,10 +17,49 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_node_injection!(m::Model)
+@doc raw"""
+The node injection itself represents all local production and consumption,
+computed as the sum of all connected unit flows and the nodal demand.
+If a node corresponds to a storage node, the parameter [has\_state](@ref)
+should be set to [true](@ref boolean_value_list) for this node.
+The node injection is created for each node in the network
+(unless the node is only used for parameter aggregation purposes, see [Introduction to groups of objects](@ref)).
 
-Set the node injection equal to the summation of all 'input' flows but connection's.
+```math
+\begin{aligned}
+& v^{node\_injection}_{(n,s,t)} \\
+& = \\
+& \left(p^{state\_coeff}_{(n, s, t-1)} \cdot v^{node\_state}_{(n, s, t-1)} - p^{state\_coeff}_{(n, s, t)} \cdot v^{node\_state}_{(n, s, t)}\right)
+/ \Delta t \\
+& - p^{frac\_state\_loss}_{(n,s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
+& + \sum_{n'} p^{diff\_coeff}_{(n',n,s,t)} \cdot v^{node\_state}_{(n', s, t)}
+- \sum_{n'} p^{diff\_coeff}_{(n,n',s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
+& + \sum_{
+        u
+}
+v^{unit\_flow}_{(u,n,to\_node,s,t)}
+- \sum_{
+        u
+}
+v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
+& - \left(p^{demand}_{(n,s,t)} + \sum_{ng \ni n} p^{fractional\_demand}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)}\right) \\
+& + v^{node\_slack\_pos}_{(n,s,t)} - v^{node\_slack\_neg}_{(n,s,t)} \\
+& \forall n \in node: p^{has\_state}_{(n)}\\
+& \forall (s, t)
+\end{aligned}
+```
+
+See also
+[state\_coeff](@ref),
+[frac\_state\_loss](@ref),
+[diff\_coeff](@ref),
+[node\_\_node](@ref),
+[unit\_\_from\_node](@ref),
+[unit\_\_to\_node](@ref),
+[demand](@ref),
+[fractional\_demand](@ref),
+[has\_state](@ref).
+
 """
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
@@ -30,7 +69,8 @@ function add_constraint_node_injection!(m::Model)
         (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
-                + node_injection[n, s, t] + demand[
+                + node_injection[n, s, t]
+                + demand[
                     (node=n, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t))
                 ]
                 # node slack
@@ -41,8 +81,8 @@ function add_constraint_node_injection!(m::Model)
                 init=0,
             )
             + expr_sum(
-                fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+                fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t))]
+                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t))]
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything
                 )

@@ -17,18 +17,51 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_flow_capacity!(m::Model)
+@doc raw"""
+In a multi-commodity setting, there can be different commodities entering/leaving a certain connection.
+These can be energy-related commodities (e.g., electricity, natural gas, etc.),
+emissions, or other commodities (e.g., water, steel). The [connection\_capacity](@ref) should be specified
+for at least one [connection\_\_to\_node](@ref) or [connection\_\_from\_node](@ref) relationship,
+in order to trigger a constraint on the maximum commodity flows to this location in each time step.
+When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
 
-Limit the maximum in/out `connection_flow` of a `connection` for all `connection_flow_capacity` indices.
+```math
+\begin{aligned}
+& \sum_{
+n \in ng
+} v^{connection\_flow}_{(conn,n,d,s,t)}
+- \sum_{
+n \in ng
+} v^{connection\_flow}_{(conn,n,reverse(d),s,t)} \\
+& <= p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& \cdot \begin{cases}       
+   v^{connections\_invested\_available}_{(conn,s,t)} & \text{if } p^{candidate\_connections}_{(conn,s,t)} \geq 1 \\
+   1 & \text{otherwise} \\
+\end{cases} \\
+& \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
+& \forall (s,t)
+\end{aligned}
+```
 
-Check if `connection_conv_cap_to_flow` is defined. The `connection_capacity` parameter is used to constrain the
-"average power" (e.g. MWh/h) instead of "instantaneous power" (e.g. MW) of the `connection`.
-For most applications, there isn't any difference between the two. However, for situations where the same `connection`
-handles `connection_flows` to multiple `nodes` with different temporal resolutions, the constraint is only generated
-for the lowest resolution, and only the average of the higher resolution `connection_flow` is constrained.
-If instantaneous power needs to be constrained as well, defining the `connection_capacity` separately for each
-`connection_flow` can be used to achieve this.
+See also
+[connection\_capacity](@ref),
+[connection\_availability\_factor](@ref),
+[connection\_conv\_cap\_to\_flow](@ref),
+[candidate\_connections](@ref)
+
+!!! note
+    For situations where the same [connection](@ref) handles flows to multiple [node](@ref)s
+    with different temporal resolutions, the constraint is only generated for the lowest resolution,
+    and only the average of the higher resolution flow is constrained.
+    In other words, what gets constrained is the "average power" (e.g. MWh/h) rather than the "instantaneous power"
+    (e.g. MW). If instantaneous power needs to be constrained as well, then [connection_capacity](@ref) needs to be
+    specified separately for each [node](@ref) served by the [connection](@ref).
+
+!!! note
+    The conversion factor [connection\_conv\_cap\_to\_flow](@ref) has a default value of `1`,
+    but can be adjusted in case the unit of measurement for the capacity is different to the connection flows
+    unit of measurement.
+
 """
 function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables
@@ -74,14 +107,12 @@ end
 
 function constraint_connection_flow_capacity_indices(m::Model)
     (
-        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
-        for (c, ng, d) in indices(connection_capacity)
+        (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
+        for (conn, ng, d) in indices(connection_capacity)
         for (t, path) in t_lowest_resolution_path(
-            m, 
-            vcat(
-                connection_flow_indices(m; connection=c, node=ng, direction=d),
-                connections_invested_available_indices(m; connection=c)
-            )
+            m,
+            connection_flow_indices(m; connection=conn, node=ng, direction=d),
+            connections_invested_available_indices(m; connection=conn),
         )
     )
 end

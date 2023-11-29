@@ -17,35 +17,93 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_minimum_operating_point!(m::Model)
+@doc raw"""
+The minimum operating point of a unit is based on the [unit\_flow](@ref)s of
+input or output nodes/node groups.
 
-Limit the maximum in/out `unit_flow` of a `unit` if the parameters `unit_capacity, number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
+```math
+\begin{aligned}
+& \sum_{
+        n \in ng
+}
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[\neg p^{is\_reserve\_node}_{(n)}\right]
+- \sum_{
+        n \in ng
+}
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{is\_reserve\_node}_{(n)} \land p^{downward\_reserve}_{(n)}\right] \\
+& \ge p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& \cdot \left( v^{units\_on}_{(u,s,t)}
+- \sum_{
+    n \in ng
+} v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
+& \forall (u,ng,d) \in indices(p^{minimum\_operating\_point}) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
+
+
+!!! note
+    The above formulation is valid for flows going from a unit to a node (i.e., output flows).
+    For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched
+    (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
+    The details are omitted for brevity.
+
+See also
+[is\_reserve\_node](@ref),
+[downward\_reserve](@ref),
+[is\_non\_spinning](@ref),
+[minimum\_operating\_point](@ref),
+[unit\_capacity](@ref),
+[unit\_conv\_cap\_to\_flow](@ref)
 """
 function add_constraint_minimum_operating_point!(m::Model)
-    @fetch unit_flow, units_on = m.ext[:spineopt].variables
+    @fetch unit_flow, units_on, nonspin_units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:minimum_operating_point] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in unit_flow_indices(
+                + unit_flow[u, n, d, s, t_short] * duration(t_short)
+                for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
-                );
+                )
+                if !is_reserve_node(node=n);
                 init=0,
             )
-            * duration(t)
+            - expr_sum(
+                + unit_flow[u, n, d, s, t_short] * duration(t_short)
+                for (u, n, d, s, t_short) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
+                )
+                if is_reserve_node(node=n) && _switch(d; to_node=downward_reserve, from_node=upward_reserve)(node=n);
+                init=0,
+            )
             >=
             + expr_sum(
-                + units_on[u, s, t1]
-                * min(duration(t), duration(t1))
-                * minimum_operating_point[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
-                ]
+                (
+                    + units_on[u, s, t_over]
+                    - expr_sum(
+                        _switch(
+                            d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
+                        )[u, n, s, t]
+                        for (u, n, s, t) in _switch(
+                            d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
+                        )(m; unit=u, node=ng, stochastic_scenario=s, t=t_over);
+                        init=0
+                    )
+                )
+                * min(duration(t), duration(t_over))
+                * minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )
         )
@@ -58,7 +116,7 @@ function constraint_minimum_operating_point_indices(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(minimum_operating_point)
         for (t, path) in t_lowest_resolution_path(
-            m, vcat(unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u))
+            m, unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u)
         )
     )
 end

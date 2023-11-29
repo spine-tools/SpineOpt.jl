@@ -17,10 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_storages_invested_available!(m::Model)
+@doc raw"""
+The number of available invested-in storages at node ``n`` at any point in time
+is less than the number of investment candidate storages at that node.
 
-Limit the storages_invested_available by the number of investment candidate storages.
+```math
+\begin{aligned}
+& v^{storages\_invested\_available}_{(n,s,t)}
+\leq p^{candidate\_storages}_{(n,s,t)} \\
+& \forall n \in node: p^{candidate\_storages}_{(n)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_storages_invested_available!(m::Model)
     @fetch storages_invested_available = m.ext[:spineopt].variables

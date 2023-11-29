@@ -1,1 +1,0 @@
-By defining the [ramp\_down\_cost](@ref) parameter for a specific [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship, a cost term will be added to the objective function whenever the unit ramps down its activity (i.e., when the [ramp\_down\_unit\_flow](@ref) is nonzero) over the course of its operational dispatch during the current optimization window.

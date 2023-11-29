@@ -1,1 +1,0 @@
-This is a testfile corresponding to the unit test for the drag_and_drop function in docs_utils.jl

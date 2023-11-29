@@ -17,12 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_candidate_connection_flow_lb!(m::Model)
+@doc raw"""
+For candidate connections with PTDF-based poweflow, together with [this](@ref constraint_candidate_connection_flow_ub),
+this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in and
+equals [connection\_intact\_flow](@ref) otherwise.
 
-For connection investments with PTDF flow enabled, this constrains the flow on the candidate_connection
-to be equal to connection_intact_flow if connections_invested_available is equal to 1 and is rendered
-in active, otherwise where contraint connection_flow_capacity will constraint the flow to zero.
+```math
+\begin{aligned}
+& v^{connection\_flow}_{(c, n, d, s, t)} \\
+& \leq \\
+& v^{connection\_intact\_flow}_{(c, n, d, s, t)}
+- p^{connection\_capacity}_{(c, n, d, s, t)} \cdot \left(
+    p^{candidate\_connections}_{(c, s, t)} - v^{connections\_invested\_available}_{(c, s, t)} \right) \\
+& \forall c \in connection : p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
     @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:spineopt].variables
@@ -72,7 +82,7 @@ function constraint_candidate_connection_flow_lb_indices(m::Model)
             m,
             vcat(
                 connection_flow_indices(m; connection=conn, node=n, direction=d),
-                connections_invested_available_indices(m; connection=conn)
+                connections_invested_available_indices(m; connection=conn),
             )
         )
     )

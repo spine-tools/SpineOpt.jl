@@ -199,7 +199,7 @@ end
 """
     generate_node_has_ptdf()
 
-Generate `has_ptdf` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
+Generate `has_ptdf`, `ptdf_duration` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
 """
 function generate_node_has_ptdf()
     function _new_node_pvals(n)
@@ -208,19 +208,24 @@ function generate_node_has_ptdf()
             for c in node__commodity(node=n)
             if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
+        ptdf_durations = [commodity_physics_duration(commodity=c, _default=nothing) for c in ptdf_comms]
+        filter!(!isnothing, ptdf_durations)
+        ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
+        ptdf_threshold = maximum(commodity_ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
         Dict(
             :has_ptdf => parameter_value(!isempty(ptdf_comms)),
-            :node_ptdf_threshold => parameter_value(
-                reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.001),
-            )
+            :ptdf_duration => parameter_value(ptdf_duration),
+            :node_ptdf_threshold => parameter_value(ptdf_threshold),
         )
     end
 
     add_object_parameter_values!(node, Dict(n => _new_node_pvals(n) for n in node()))
     has_ptdf = Parameter(:has_ptdf, [node])
+    ptdf_duration = Parameter(:ptdf_duration, [node])
     node_ptdf_threshold = Parameter(:node_ptdf_threshold, [node])
     @eval begin
         has_ptdf = $has_ptdf
+        ptdf_duration = $ptdf_duration
         node_ptdf_threshold = $node_ptdf_threshold
     end
 end
@@ -228,7 +233,7 @@ end
 """
     generate_connection_has_ptdf()
 
-Generate `has_ptdf` parameter associated to the `connection` `ObjectClass`.
+Generate `has_ptdf` and `ptdf_duration` parameter associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_ptdf()
     function _new_connection_pvals(conn)
@@ -238,13 +243,16 @@ function generate_connection_has_ptdf()
         is_loseless = length(from_nodes) == 2 && fix_ratio_out_in_connection_flow(;
             connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false
         ) == 1
-        Dict(
-            :has_ptdf => parameter_value(is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes))
-        )
+        has_ptdf_ = is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes)
+        ptdf_durations = [ptdf_duration(node=n, _default=nothing) for n in from_nodes]
+        filter!(!isnothing, ptdf_durations)
+        ptdf_duration_ = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
+        Dict(:has_ptdf => parameter_value(has_ptdf_), :ptdf_duration => parameter_value(ptdf_duration_))
     end
 
     add_object_parameter_values!(connection, Dict(conn => _new_connection_pvals(conn) for conn in connection()))
     push!(has_ptdf.classes, connection)
+    push!(ptdf_duration.classes, connection)
 end
 
 """
@@ -382,7 +390,6 @@ function _filter_ptdf_values(ptdf_values)
     )
 end
 
-
 """
     generate_ptdf()
 
@@ -499,75 +506,11 @@ function generate_variable_indexing_support()
         unique((node=n, temporal_block=tb)
         for n in node(has_state=true) for tb in node__temporal_block(node=n)),
     )
-    start_up_unit__node__direction__temporal_block = RelationshipClass(
-        :start_up_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_startup_ramp)
-            for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
-        :nonspin_ramp_up_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_res_startup_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    ramp_up_unit__node__direction__temporal_block = RelationshipClass(
-        :ramp_up_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(ramp_up_limit) for n in members(ng) for tb in node__temporal_block(node=n)
-            for (u, n, d, tb) in unit__node__direction__temporal_block(
-                unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
-            )
-            if !is_non_spinning(node=n)
-        ),
-    )
-    shut_down_unit__node__direction__temporal_block = RelationshipClass(
-        :shut_down_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_shutdown_ramp)
-            for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    nonspin_ramp_down_unit__node__direction__temporal_block = RelationshipClass(
-        :nonspin_ramp_down_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(max_res_shutdown_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
-        ),
-    )
-    ramp_down_unit__node__direction__temporal_block = RelationshipClass(
-        :ramp_down_unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, ng, d) in indices(ramp_down_limit) for n in members(ng) for tb in node__temporal_block(node=n)
-            for (u, n, d, tb) in unit__node__direction__temporal_block(
-                unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
-            )
-            if !is_non_spinning(node=n)
-        ),
-    )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
-        start_up_unit__node__direction__temporal_block = $start_up_unit__node__direction__temporal_block
-        nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
-        ramp_up_unit__node__direction__temporal_block = $ramp_up_unit__node__direction__temporal_block
-        shut_down_unit__node__direction__temporal_block = $shut_down_unit__node__direction__temporal_block
-        nonspin_ramp_down_unit__node__direction__temporal_block = $nonspin_ramp_down_unit__node__direction__temporal_block
-        ramp_down_unit__node__direction__temporal_block = $ramp_down_unit__node__direction__temporal_block
     end
 end
 

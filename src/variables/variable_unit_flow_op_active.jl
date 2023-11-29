@@ -23,7 +23,9 @@
 Add `unit_flow_op_active` variables to model `m`.
 """
 function add_variable_unit_flow_op_active!(m::Model)
-    add_variable!(m, :unit_flow_op_active, unit_flow_op_active_indices; lb=Constant(0), bin=units_on_bin, int=units_on_int)
+    add_variable!(
+        m, :unit_flow_op_active, unit_flow_op_active_indices; lb=Constant(0), bin=units_on_bin, int=units_on_int
+    )
 end
 
 function unit_flow_op_active_indices(

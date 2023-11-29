@@ -17,10 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_units_invested_transition!(m::Model)
+@doc raw"""
+[units\_invested](@ref) represents the point-in-time decision to invest in a unit or not,
+while [units\_invested\_available](@ref) represents the invested-in units that are available at a specific time.
+This constraint enforces the relationship between [units\_invested](@ref), [units\_invested\_available](@ref)
+and [units\_mothballed](@ref) in adjacent timeslices.
 
-Ensure consistency between the variables `units_invested_available`, `units_invested` and `units_mothballed`.
+```math
+\begin{aligned}
+& v^{units\_invested\_available}_{(u,s,t)} - v^{units\_invested}_{(u,s,t)}
++ v^{units\_monthballed}_{(u,s,t)}
+= v^{units\_invested\_available}_{(u,s,t-1)} \\
+& \forall u \in unit: p^{candidate\_units}_{(u)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_units_invested_transition!(m::Model)
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:spineopt].variables
