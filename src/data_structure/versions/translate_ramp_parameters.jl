@@ -52,10 +52,10 @@ function translate_ramp_parameters(db_url, log_level)
 		for old_name in intersect(keys(new_name_by_old_name), keys(pid_by_name))
 	]
 	if !isempty(to_rm_pdef_ids)
-		run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:parameter_definition => to_rm_pdef_ids))
+		run_request(db_url, "call_method", ("remove_items", "parameter_definition", to_rm_pdef_ids...))
 	end
 	if !isempty(to_upd_pdefs)
-		run_request(db_url, "call_method", ("update_parameter_definitions", to_upd_pdefs...))
+		run_request(db_url, "call_method", ("update_items", "parameter_definition", to_upd_pdefs...))
 	end
 	true
 end
