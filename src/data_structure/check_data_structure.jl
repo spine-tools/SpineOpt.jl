@@ -47,9 +47,9 @@ function check_data_structure(; log_level=3)
     check_model_object()
     check_temporal_block_object()
     check_node_object()
-    check_model__node__temporal_block()
-    check_model__node__stochastic_structure()
-    check_model__unit__stochastic_structure()
+    check_node__temporal_block()
+    check_node__stochastic_structure()
+    check_unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
     # check_islands(; log_level=log_level)
     check_branching_before_rolling()
@@ -92,117 +92,64 @@ function check_node_object()
 end
 
 """
-    check_model__node__temporal_block()
+    check_node__temporal_block()
 
-Check that each `node` has at least one `temporal_block` connected to it in each `model`.
+Check that each `node` has at least one `temporal_block` connected to it.
 """
-function check_model__node__temporal_block()
-    errors = [
-        (m, n)
-        for m in model(model_type=:spineopt_standard)
-        for n in node()
-        if n == members(n) && isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
-    ]
+function check_node__temporal_block()
+    errors = [n for n in node() if n == members(n) && isempty(node__temporal_block(node=n))]
     _check(
         isempty(errors),
-        "invalid `node__temporal_block` or `model__temporal_block` definitions ",
-        "for (`model`, `node`) pair(s): $(join(errors, ", ", " and ")) - ",
-        "each `node` must be related to at least one `temporal_block` per `model`",
+        "missing `node__temporal_block` definition ",
+        "for some `node`(s): $(join(errors, ", ", " and ")) - ",
+        "each `node` must be related to at least one `temporal_block`",
     )
-    errors_group = [
-        (m, n)
-        for m in model(model_type=:spineopt_standard)
-        for n in node()
-        if any(isempty, intersect(node__temporal_block(node=members(n)), model__temporal_block(model=m)))
-    ]
-    _check(
-        isempty(errors_group),
-        "some `node` group members don't have a `node__temporal_block` or `model__temporal_block` definitions ",
-        "for `(model, node)` pair(s): $(join(errors_group, ", ", " and ")) - ",
-        "each `node` group member must be related to at least one `temporal_block` per `model`",
-    )
-    warnings = [
-        (m, n)
-        for m in model(model_type=:spineopt_standard)
-        for n in node()
-        if n != members(n) && isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
-    ]
+    warnings = [n for n in node() if n != members(n) && isempty(node__temporal_block(node=n))]
     _check_warn(
         isempty(warnings),
-        "some `node` groups don't have a `node__temporal_block` or `model__temporal_block` definitions ",
-        "for `(model, node)` pair(s): $(join(warnings, ", ", " and ")) - ",
+        "missing `node__temporal_block` definition ",
+        "for some `node` group(s): $(join(warnings, ", ", " and ")) - ",
         "these `node` groups will only be used for aggregation, ",
         "i.e., there will be no variables and balances associated with them",
     )
 end
 
 """
-    check_model__node__stochastic_structure()
+    check_node__stochastic_structure()
 
-Ensure there's exactly one `stochastic_structure` active per `node` per `model`.
-
-This is deduced from the `model__stochastic_structure` and `node__stochastic_structure` relationships.
+Ensure there's exactly one `stochastic_structure` active per `node`.
 """
-function check_model__node__stochastic_structure()
-    errors = [
-        (m, n)
-        for m in model(model_type=:spineopt_standard) for n in node()
-        if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
-        && n == members(n)
-    ]
-    errors_group = [
-        (m, n)
-        for m in model(model_type=:spineopt_standard) for n in node()
-        for n_mem in members(n)
-        if length(intersect(node__stochastic_structure(node=n_mem), model__stochastic_structure(model=m))) != 1
-    ]
-    warnings = [
-        (m, n)
-        for m in model(model_type=:spineopt_standard) for n in node()
-        if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
-        && n != members(n)
-    ]
+function check_node__stochastic_structure()
+    errors = [n for n in node() if n == members(n) && length(node__stochastic_structure(node=n)) != 1]
+    warnings = [n for n in node() if n != members(n) && length(node__stochastic_structure(node=n)) != 1]
     _check(
         isempty(errors),
-        "invalid `node__stochastic_structure` or `model__stochastic_structure` definitions ",
-        "for `(model, node)` pair(s): $(join(errors, ", ", " and ")) - ",
-        "each `node` must be related to one and only one `stochastic_structure` per `model`",
-    )
-    _check(
-        isempty(errors_group),
-        "some `node` group members don't have exactly one `node__stochastic_structure` ",
-        "or `model__stochastic_structure` definitions ",
-        "for `(model, node)` pair(s): $(join(errors_group, ", ", " and ")) - ",
-        "each `node` group member must be related to one and only one `stochastic_structure` per `model`",
+        "missing or invalid `node__stochastic_structure` definition ",
+        "for some `node`(s): $(join(errors, ", ", " and ")) - ",
+        "each `node` must be related to one and only one `stochastic_structure`",
     )
     _check_warn(
         isempty(warnings),
-        "some `node` groups don't have a `node__stochastic_structure` or `model__stochastic_structure` definitions ",
-        "for `(model, node)` pair(s): $(join(warnings, ", ", " and ")) - ",
+        "missing or invalid `node__stochastic_structure` definition ",
+        "for some `node` group(s): $(join(warnings, ", ", " and ")) - ",
         "these `node` groups will only be used for aggregation, ",
         "i.e., there will be no variables and balances associated with them",
     )
 end
 
 """
-    check_model__unit__stochastic_structure()
+    check_unit__stochastic_structure()
 
-Ensure there's exactly one `stochastic_structure` active per `unit` per `model`.
+Ensure there's exactly one `stochastic_structure` active per `unit`.
 
-This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic_structure` relationships.
 """
-function check_model__unit__stochastic_structure()
-    errors = [
-        (m, u)
-        for m in model(model_type=:spineopt_standard) for u in unit()
-        for u_mem in members(u)
-        if length(intersect(units_on__stochastic_structure(unit=u_mem), model__stochastic_structure(model=m))) != 1
-    ]
+function check_unit__stochastic_structure()
+    errors = [u for u in unit() if u == members(u) && length(units_on__stochastic_structure(unit=u)) != 1]
     _check(
         isempty(errors),
-        "invalid `units_on__stochastic_structure` or `model__stochastic_structure` definitions ",
-        "for `(model, unit)` pair(s): $(join(errors, ", ", " and ")) - ",
-        "each `unit` must be related to one and only one `stochastic_structure` per `model`",
+        "missing or invalid `units_on__stochastic_structure` definitions ",
+        "for some `unit`(s): $(join(errors, ", ", " and ")) - ",
+        "each `unit` must be related to one and only one `stochastic_structure`",
     )
 end
 
@@ -291,7 +238,7 @@ function check_branching_before_rolling()
         rf = roll_forward(model=m, i=1, _strict=false)
         isnothing(rf) && continue
         t0 = model_start(model=m)
-        for (ss, scen) in indices(stochastic_scenario_end; stochastic_structure=model__stochastic_structure(model=m))
+        for (ss, scen) in indices(stochastic_scenario_end)
             scen_end = stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen)
             cond = isnothing(scen_end) || (t0 + scen_end >= t0 + rf)
             _check(
