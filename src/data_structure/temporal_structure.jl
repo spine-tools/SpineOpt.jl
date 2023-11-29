@@ -156,7 +156,7 @@ A `Dict` mapping (start, end) tuples to an Array of temporal blocks where found.
 function _blocks_by_time_interval(instance::Object, window_start::DateTime, window_end::DateTime)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
-    model_blocks = members(model__temporal_block(model=instance))
+    model_blocks = members(temporal_block())
     isempty(model_blocks) && error("model $instance doesn't have any temporal_blocks")
     for block in model_blocks
         adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
@@ -402,9 +402,7 @@ Generate a `Dict` mapping all non-representative to representative time-slices
 """
 function _generate_representative_time_slice!(m::Model)
     m.ext[:spineopt].temporal_structure[:representative_time_slice] = d = Dict()
-    model_blocks = Set(
-        member for blk in model__temporal_block(model=m.ext[:spineopt].instance) for member in members(blk)
-    )
+    model_blocks = Set(members(temporal_block()))
     for blk in indices(representative_periods_mapping)
         for (real_t_start, rep_blk_name) in representative_periods_mapping(temporal_block=blk)
             rep_blk = temporal_block(rep_blk_name)
@@ -585,9 +583,7 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     unique(
         (node=n, t=t1)
-        for (m_, tb) in model__temporal_block(
-            model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false
-        )
+        for tb in intersect(SpineOpt.temporal_block(), temporal_block)
         for (n, tb) in node__temporal_block(node=node, temporal_block=tb, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
@@ -621,9 +617,7 @@ function unit_time_indices(
 )
     unique(
         (unit=u, t=t1)
-        for (m_, tb) in model__temporal_block(
-            model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false
-        )
+        for tb in intersect(SpineOpt.temporal_block(), temporal_block)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=tb, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
@@ -662,7 +656,6 @@ function unit_investment_time_indices(m::Model; unit=anything, temporal_block=an
     unique(
         (unit=u, t=t1)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        if tb in model__temporal_block(model=m.ext[:spineopt].instance)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
@@ -678,7 +671,6 @@ function connection_investment_time_indices(m::Model; connection=anything, tempo
         for (conn, tb) in connection__investment_temporal_block(
             connection=connection, temporal_block=temporal_block, _compact=false
         )
-        if tb in model__temporal_block(model=m.ext[:spineopt].instance)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
@@ -692,7 +684,6 @@ function node_investment_time_indices(m::Model; node=anything, temporal_block=an
     unique(
         (node=n, t=t1)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-        if tb in model__temporal_block(model=m.ext[:spineopt].instance)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
