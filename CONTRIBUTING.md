@@ -12,7 +12,7 @@ Thanks for taking the plunge!
 * When developing a new functionality or modifying an existing one, considering the following to work on (possibly in one pull request)
     + Add the new functionality or modifying an existing one
     + Pair the new functionality with tests, and bug fixes with tests that fail pre-fix. Increasing test coverage as you go is always nice
-    + Update the documentation
+    + Update the documentation (seen implementation details in the documentation for some advanced features)
 * Aim for atomic commits, if possible, e.g. `change 'foo' behavior like so` & `'bar' handles such and such corner case`, rather than `update 'foo' and 'bar'` & `fix typo` & `fix 'bar' better`
 * Pull requests will be tested against release and development branches of Julia, so using `Pkg.test("SpineOpt")` as you develop can be helpful
 * The style guidelines outlined below are not the personal style of most contributors, but for consistency throughout the project, we should adopt them
