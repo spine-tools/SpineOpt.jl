@@ -51,15 +51,6 @@ struct TOverlapsT
     overlapping_time_slices::Dict{TimeSlice,Array{TimeSlice,1}}
 end
 
-"""
-    (::TimeSliceSet)(;temporal_block=anything, t=anything)
-
-An `Array` of time slices *in the model*.
-
- # Keyword arguments
-  - `temporal_block`: only return time slices in this block.
-  - `t`: only return time slices in this collection.
-"""
 (h::TimeSliceSet)(; temporal_block=anything, t=anything) = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
@@ -562,15 +553,34 @@ function to_time_slice(m::Model; t::TimeSlice)
 end
 
 current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
+
+"""
+    time_slice(m; temporal_block=anything, t=anything)
+
+An `Array` of `TimeSlice`s in model `m`.
+
+ # Keyword arguments
+  - `temporal_block`: only return time slices in this block or blocks.
+  - `t`: only return time slices from this collection.
+"""
 time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
+
 history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
+
 t_history_t(m::Model; t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
+
 t_before_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
+
 t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
+
 t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
+
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t_excl](t)
+
 representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, t)
+
 function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 end

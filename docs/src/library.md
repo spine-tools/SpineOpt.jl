@@ -21,6 +21,7 @@ Depth = 3
 run_spineopt
 write_report_from_intermediate_results
 generate_forced_availability_factor
+time_slice
 ```
 
 TODO

@@ -22,7 +22,7 @@ using DataFrames
 function write_sets_and_variables(mathpath)
     variables = DataFrame(CSV.File(joinpath(mathpath, "variables.csv")))
     variables.variable_name_latex = replace.(variables.variable_name, r"_" => "\\_")
-    variables.variable_name_latex .= "``v_{" .* variables.variable_name_latex .* "} ``"
+    variables.variable_name_latex .= "``v^{" .* variables.variable_name_latex .* "} ``"
     variables.indices .= replace.(variables.indices, r"_" => "\\_")
     variable_string = "# Variables \n"
     for i in 1:size(variables, 1)
