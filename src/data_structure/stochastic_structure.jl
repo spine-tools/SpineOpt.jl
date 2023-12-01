@@ -257,6 +257,12 @@ function generate_stochastic_structure!(m::Model)
     _generate_active_stochastic_paths(m)
 end
 
+"""
+    active_stochastic_paths(m, indices)
+
+An `Array` of all the stochastic paths, where each path is an `Array` of `stochastic_scenario` `Object`s,
+that match the `stochastic_scenario`s in the given `indices`.
+"""
 function active_stochastic_paths(m, indices::Vector)
     active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
 end
