@@ -258,11 +258,26 @@ function generate_stochastic_structure!(m::Model)
 end
 
 """
-    active_stochastic_paths(m, indices)
+    active_stochastic_paths(m; stochastic_structure, t)
 
-An `Array` of all the stochastic paths, where each path is an `Array` of `stochastic_scenario` `Object`s,
-that match the `stochastic_scenario`s in the given `indices`.
+An `Array` where each element is itself an `Array` of `stochastic_scenario` `Object`s,
+corresponding to a branch (or path) of the stochastic DAG associated to model `m`.
+
+This DAG has one vertex per `stochastic_scenario`, and the edges are given
+by the `parent_stochastic_scenario__child_stochastic_scenario` relationships.
+
+The result is obtained by first taking the subset of the stochastic DAG defined by `stochastic_structure`
+(which can be a single `Object` or an `Array` of `Object`s);
+and then taking the branches of that subset that cover `t`
+(which can be a single `TimeSlice` or an `Array` of `TimeSlice`s)
 """
+function active_stochastic_paths(m; stochastic_structure, t)
+    scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]
+    active_stochastic_paths(
+        m,
+        scen for ss in stochastic_structure for t_ in t for scen in scenario_lookup[ss, t_]
+    )
+end
 function active_stochastic_paths(m, indices::Vector)
     active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
 end

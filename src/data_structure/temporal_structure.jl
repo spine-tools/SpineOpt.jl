@@ -337,7 +337,7 @@ end
 """
     _generate_time_slice_relationships()
 
-E.g. `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
+E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships!(m::Model)
     instance = m.ext[:spineopt].instance
@@ -351,8 +351,8 @@ function _generate_time_slice_relationships!(m::Model)
         # This is needed in case a block ends before the window, or starts after the window.
         # When that's the case, there is a gap on the window boundary
         # that would result in 'transition' constraints not being properly enforced
-        # (and thus, for instance, free units started at the beginning of each window)
-        # Here we bridge that gap by making the last time slice of the previous window
+        # (and thus, for instance, free units started at the beginning of each window).
+        # Here we bridge all gaps by making the last time slice of the previous window
         # be 'before' the fist one of the current window.
         succeeding_time_slices_hist = Dict(
             last(history_time_slices) => [first(time_slice(m; temporal_block=blk))]
@@ -527,7 +527,7 @@ function refresh_temporal_structure!(m::Model)
 end
 
 """
-    to_time_slice(m::Model, t::TimeSlice...)
+    to_time_slice(m::Model; t::TimeSlice)
 
 An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
 """
@@ -560,7 +560,7 @@ current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
 An `Array` of `TimeSlice`s in model `m`.
 
  # Keyword arguments
-  - `temporal_block`: only return time slices in this block or blocks.
+  - `temporal_block`: only return `TimeSlice`s in this block or blocks.
   - `t`: only return time slices from this collection.
 """
 time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
@@ -569,13 +569,38 @@ history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:h
 
 t_history_t(m::Model; t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
 
+"""
+    t_before_t(m; t_before=anything, t_after=anything)
+
+An `Array` where each element is a `Tuple` of two consecutive `TimeSlice`s in model `m`
+(the second starting when the first ends).
+
+ # Keyword arguments
+  - `t_before`: if given, return an `Array` of `TimeSlice`s that start when `t_before` ends.
+  - `t_after`: if given, return an `Array` of `TimeSlice`s that end when `t_after` starts.
+"""
 t_before_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
 
+"""
+    t_in_t(m; t_short=anything, t_long=anything)
+
+An `Array` where each element is a `Tuple` of two `TimeSlice`s in model `m`,
+the second containing the first.
+
+ # Keyword arguments
+  - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short`.
+  - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long`.
+"""
 t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
 
-t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+"""
+    t_overlaps_t(m; t)
 
+An `Array` of `TimeSlice`s in model `m` that overlap the given `t`.
+"""
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
+
+t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
 
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t_excl](t)
 

@@ -1,3 +1,8 @@
+```@raw html
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+```
+
 # Write a constraint for SpineOpt
 
 ## Introduction
@@ -32,7 +37,7 @@ In other words, the [unit\_flow](@ref) between a [unit](@ref) and a [node](@ref)
 - zero, if the [unit](@ref) is offline.
 
 Note that we ignore the [start\_up\_limit](@ref) in this formulation, just for simplicity.
-(And also, it looks like we also assume that a unit cannot start up and shut down in the same period.)
+(And actually, it looks like we also assume that a unit cannot start up and shut down in the same period.)
 
 ## First steps
 
@@ -65,7 +70,7 @@ for which [unit\_capacity](@ref) is specified.
 
 This is a bit harder. Here you need to answer two questions:
 1. how often the constraint needs to be enforced;
-2. for each of those times, how far in time do we need to look.
+2. for each of those moments, how far in time do we need to look in order to enforce the constraint.
 
 To answer the first question, the first step is to understand where the different variables involved
 in your constraint get their temporal resolution from. In our case, we have [unit\_flow](@ref),
@@ -73,16 +78,17 @@ in your constraint get their temporal resolution from. In our case, we have [uni
 via [node\_\_temporal\_block](@ref); whereas the two latter get it from the [unit](@ref),
 via [units\_on\_\_temporal\_block](@ref).
 
-If all [node](@ref)s and [unit](@ref)s had the same temporal resolution, there would be no questions to ask.
-We'd just take that unique resolution and that would give us our 'temporal' indices.
+If all [node](@ref)s and [unit](@ref)s had the same temporal resolution, there would be no questions to be asked.
+We'd just take that unique resolution and enforce the constraint at that rate.
 But since each [unit](@ref) and [node](@ref) is allowed to have their
 own temporal resolutions (that's right, *resolutions* in plural), there are several questions to be asked:
 What happens if, e.g., the [unit](@ref) has higher resolution than the [node](@ref) (or vice versa)?
 What happens if the [unit](@ref) and/or the [node](@ref) have multiple resolutions running in parallel?
 What happens if their resolutions change over time?
 
-Ultimately, the question we need to answer is what is the 'lowest-resolution way' in which we can combine
-the individual resolutions of all our 'spatial' indices so we never violate the constraint.
+Ultimately, the question we need to ask ourselves is what is the 'lowest-resolution way' in which we can combine
+the individual resolutions of all our 'spatial' indices so we never miss a period where we should be enforcing the
+constraint.
 In our case, we need to guarantee that the flow between a [unit](@ref) and a [node](@ref)
 is *never* higher than the [unit\_capacity](@ref). So it looks like we should be taking the *highest* resolution
 of the [unit\_flow](@ref) variable.
@@ -96,24 +102,26 @@ In doubt, something that could work is to take the highest resolution of all the
 involved. That should ensure that we don't miss any time-slice, but at the same time it might not be
 the most efficient...
 
-Now, to answer the second question, we just need to look at our constraint expression.
+Now, to answer the second question, how far in time do we need to look,
+we typically just need to look at our constraint expression.
 In our case, we need to look at the current time-step, but also at the *next* time-step to check if the
 unit is shutting down in that time step.
 So our 'temporal' indices will be tuples of (current time-slice, next time-slice).
 
 #### Collect the 'stochastic' indices
 
-Here you need to answer the question, what are all the possible ways
-of traversing the scenario graph while visiting all the time-slices in my 'temporal' indices
-(determined above)?
+Here the question is, what are all the possible ways
+of traversing the scenario graph associated to all our 'spatial' indices,
+while visiting all the time-slices in our 'temporal' indices
+(determined above).
 Each of these traversals will be a 'stochastic' index for your constraint.
 We call such a traversal a 'stochastic path',
 and it's essentially and array of [stochastic\_scenario](@ref)s. Check the [Stochastic Framework](@ref) section
 for details.
 
-So this is not that hard actually. We have the 'temporal' indices already,
-and SpineOpt provides a convenience function to derive the stochastic paths given a set of time-slices.
-So all we need to do is call this function. Handy, huh?
+So this is not that hard actually.
+The 'stochastic' indices are completely determined by the 'spatial' and 'temporal' indices,
+and SpineOpt provides a convenience function to derive the former given the latter.
 
 
 ### Write the constraint expression
@@ -171,27 +179,30 @@ import_data(
         ("temporal_block", "hourly"),
         ("temporal_block", "2hourly"),
         ("temporal_block", "3hourly"),
-        ("stochastic_scenario", "first"),
-        ("stochastic_scenario", "second"),
+        ("stochastic_scenario", "realisation"),
+        ("stochastic_scenario", "forecast1"),
+        ("stochastic_scenario", "forecast2"),
         ("stochastic_structure", "one_stage"),
         ("stochastic_structure", "two_stage"),
-        ("unit", "power_plant"),
+        ("unit", "pwrplant"),
         ("node", "fuel"),
-        ("node", "electricity"),
+        ("node", "elec"),
     ],
     relationships=[
-        ("parent_stochastic_scenario__child_stochastic_scenario", ("first", "second")),
-        ("stochastic_structure__stochastic_scenario", ("one_stage", "first")),
-        ("stochastic_structure__stochastic_scenario", ("two_stage", "first")),
-        ("stochastic_structure__stochastic_scenario", ("two_stage", "second")),
-        ("unit__from_node", ("power_plant", "fuel")),
-        ("unit__to_node", ("power_plant", "electricity")),
+        ("parent_stochastic_scenario__child_stochastic_scenario", ("realisation", "forecast1")),
+        ("parent_stochastic_scenario__child_stochastic_scenario", ("realisation", "forecast2")),
+        ("stochastic_structure__stochastic_scenario", ("one_stage", "realisation")),
+        ("stochastic_structure__stochastic_scenario", ("two_stage", "realisation")),
+        ("stochastic_structure__stochastic_scenario", ("two_stage", "forecast1")),
+        ("stochastic_structure__stochastic_scenario", ("two_stage", "forecast2")),
+        ("unit__from_node", ("pwrplant", "fuel")),
+        ("unit__to_node", ("pwrplant", "elec")),
         ("node__temporal_block", ("fuel", "3hourly")),
-        ("node__temporal_block", ("electricity", "hourly")),
-        ("units_on__temporal_block", ("power_plant", "2hourly")),
+        ("node__temporal_block", ("elec", "hourly")),
+        ("units_on__temporal_block", ("pwrplant", "2hourly")),
         ("node__stochastic_structure", ("fuel", "one_stage")),
-        ("node__stochastic_structure", ("electricity", "two_stage")),
-        ("units_on__stochastic_structure", ("power_plant", "one_stage")),
+        ("node__stochastic_structure", ("elec", "two_stage")),
+        ("units_on__stochastic_structure", ("pwrplant", "one_stage")),
     ],
     object_parameter_values=[
         ("model", "simple", "model_start", unparse_db_value(DateTime("2023-01-01T00:00"))),
@@ -199,17 +210,18 @@ import_data(
         ("temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))),
         ("temporal_block", "2hourly", "resolution", unparse_db_value(Hour(2))),
         ("temporal_block", "3hourly", "resolution", unparse_db_value(Hour(3))),
+        ("temporal_block", "hourly", "block_end", unparse_db_value(DateTime("2023-01-01T09:00"))),
     ],
     relationship_parameter_values=[
         (
             "stochastic_structure__stochastic_scenario",
-            ("two_stage", "first"),
+            ("two_stage", "realisation"),
             "stochastic_scenario_end",
             unparse_db_value(Hour(6))
         ),
-        ("unit__from_node", ("power_plant", "fuel"), "unit_capacity", 200),
-        ("unit__to_node", ("power_plant", "electricity"), "unit_capacity", 100),
-        ("unit__to_node", ("power_plant", "electricity"), "shut_down_limit", 0.2),
+        ("unit__from_node", ("pwrplant", "fuel"), "unit_capacity", 200),
+        ("unit__to_node", ("pwrplant", "elec"), "unit_capacity", 100),
+        ("unit__to_node", ("pwrplant", "elec"), "shut_down_limit", 0.2),
     ],
 )
 ```
@@ -218,18 +230,21 @@ Whoa, what's all that stuff!?
 
 Basically, what we're doing here is creating a SpineOpt [model](@ref) called `simple`, starting January first 2023
 at 00:00 and ending at 06:00. This `simple` [model](@ref) has three [temporal\_block](@ref)s,
-`1hourly`, `2hourly` and `3hourly`,
-with one-, two-, and three-hour resolution respectively. It also has two [stochastic\_scenario](@ref)s,
-`first` and `second`, where `first` comes before `second`; and two [stochastic\_structure](@ref)s, `one_stage`,
-including only `first`, and `two_stage`, including both `first` and `second` and with `first` ending after 6 hours.
+`1hourly`, `2hourly` and `3hourly`, with one-, two-, and three-hour resolution respectively;
+and with `1hourly` ending at 09:00 (three hours later than the [model](@ref)).
+It also has three [stochastic\_scenario](@ref)s,
+`realisation`, `forecast1` and `forecast2`, where the two latter are children of the former;
+and two [stochastic\_structure](@ref)s, `one_stage`,
+including only `realisation`, and `two_stage`, including all three of them and with `realisation` 6 hours
+after the model start.
 
-The [model](@ref) consists of two [node](@ref)s, `fuel` and `electricity`, with a [unit](@ref) in between,
-`power_plant`. The `fuel` [node](@ref) is modelled at three-hour resolution and one-stage stochastics;
-the `electricity` [node](@ref) is modelled at one-hour resolution and two-stage stochastics;
-and the `power_plant` [unit](@ref) is modelled at two-hour resolution and one-stage stochastics.
-Finally, the [unit\_capacity](@ref) is 200 for flows coming to the `power_plant` from the `fuel` [node](@ref),
-and 300 for flows going from the `power_plant` to the `electricity` [node](@ref);
-the [shut\_down\_limit](@ref) is 0.2 for the `electricity` [node](@ref) flows
+The [model](@ref) consists of two [node](@ref)s, `fuel` and `elec`, with a [unit](@ref) in between,
+`pwrplant`. The `fuel` [node](@ref) is modelled at three-hour resolution and one-stage stochastics;
+the `elec` [node](@ref) is modelled at one-hour resolution and two-stage stochastics;
+and the `pwrplant` [unit](@ref) is modelled at two-hour resolution and one-stage stochastics.
+Finally, the [unit\_capacity](@ref) is 200 for flows coming to the `pwrplant` from the `fuel` [node](@ref),
+and 300 for flows going from the `pwrplant` to the `elec` [node](@ref);
+the [shut\_down\_limit](@ref) is 0.2 for the `elec` [node](@ref) flows
 (and none, thus irrestricted, for the `fuel` [node](@ref) flows).
 
 !!! note
@@ -257,14 +272,14 @@ end
 
 function add_my_unit_flow_capacity_constraint!(m)
     m.ext[:spineopt].constraints[:my_unit_flow_capacity] = Dict(
-        ind => @constraint(m, 0 == 0)
+        ind => @constraint(m, 0 <= 0)
         for ind in my_unit_flow_capacity_constraint_indices(m)
     )
 end
 ```
 
 The `my_unit_flow_capacity_constraint_indices` is at the moment returning no indices.
-Then, for each of those indices (!), `add_my_unit_flow_capacity_constraint` is creating the constraint `0 == 0`
+Then, for each of those indices (!), `add_my_unit_flow_capacity_constraint` is creating the constraint `0 <= 0`
 and adding it to the model. So yeah, not very useful, but probably good enough to get started.
 
 !!! note
@@ -275,7 +290,7 @@ and adding it to the model. So yeah, not very useful, but probably good enough t
     Whit this we can easily access the generated constraints via the model object `m` that gets returned
     by `run_spineopt`.
 
-#### The constraint indices function
+#### The function that yields the constraint indices
 
 ##### Space
 
@@ -346,10 +361,8 @@ So let's see what's happening!
 
 The `run_spineopt` function
 has an optional keyword argument called `add_constraints` that we can use to try out our constraint code.
-Basically this argument takes a function that gets called with the model object
-as part of the process of adding constraints. So if we call `run_spineopt` while passing
-the `add_my_unit_flow_capacity_constraint!` function via the `add_constraints` argument, our constraint will
-be added to the model:
+Basically, if we give this argument a function, the function will be called with the model object
+at the moment of adding constraints. So we can try giving it the `add_my_unit_flow_capacity_constraint!` function:
 
 ```julia
 using SpineOpt
@@ -367,7 +380,7 @@ for k in sort(collect(keys(my_unit_flow_capacity_constraint)))
     println(my_unit_flow_capacity_constraint[k])
 end
 ```
-Note that we are also passing `nothing` as the second argument (the output URL) to `run_spineopt`,
+Note that we are also passing `nothing` as the second argument (the output URL),
 because we don't want to write results.
 In fact, we don't even want to solve (`optimize=false`), we are just interested in inspecting our constraint.
 We also aren't very interested in the log (`log_level=0`).
@@ -376,20 +389,28 @@ And after that, we are just printing all the constraints that got generated orde
 At the moment it should be printing:
 
 ```
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node) : 0 ≤ 0
 ```
 
-which (believe it or not) means it's working.
+which (I hope you agree) means we're good.
 
 ##### Time
 
 Let's add the 'temporal' indices. We know that we need two of such indices: the *current* time-slice,
-and the *next* time-slice. Let's start with the current one.
+and the *next* time-slice. The *current* time-slice we will use to access both
+[unit\_flow](@ref) and [units\_on](@ref), and the *next* to access [units\_shut\_down](@ref).
 
-We know we need to combine the time-slices of all our 'spatial' indices in a way, so we don't violate the constraint
-at any period in time.
-Let's start simple. Let's begin by taking only the time-slices associated to the [unit](@ref):
+To collect time-slices, we will be using a special function from SpineOpt called `time_slice`.
+This function receives a model object `m` and returns an array with all the time-slices in that model -
+but it also has two optional keyword arguments, `temporal_block` and `t`, to filter the result.
+- If you specify `temporal_block` as a [temporal\_block](@ref) or array of [temporal\_block](@ref)s,
+  you get only time-slices in those blocks.
+- If you specify `t` as a time-slice or array of time-slices, you get only those time-slices (if they also pass
+  the `temporal_block` filter above.)
+
+So let's try and find our *current* time-slice.
+Let's start simple. Let's begin by taking only the time-slices associated to the [unit](@ref).
 
 ```julia
 function my_unit_flow_capacity_constraint_indices(m)
@@ -401,31 +422,32 @@ function my_unit_flow_capacity_constraint_indices(m)
 end
 ```
 
-Note how we call `units_on__temporal_block` while passing our [unit](@ref) index via the `unit` argument.
-This returns an `Array` with the [temporal\_block](@ref)s associated to the [unit](@ref).
-Then we pass that `Array` to the `time_slice` function via the `temporal_block` argument,
-to obtain all the associated time-slices.
+Let's see.
+We first call `units_on__temporal_block` while passing our [unit](@ref) 'spatial' index `u`, via the `unit` argument.
+This returns an `Array` with the [temporal\_block](@ref)s associated to that [unit](@ref), that
+we then pass to the `time_slice` function via the `temporal_block` argument.
+So we end up obtaining all the time-slices in [temporal\_block](@ref)s associated to `u`.
 
 If we rerun [the code that shows the constraints](@ref the_code_that_shows), we see the following:
 
 ```julia
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 ≤ 0
 ```
 
-So we are getting time-slices at two-hour resolution. This makes sense, because the `power_plant` [unit](@ref) is
-associated to the `2hourly` [temporal\_block](@ref), remember? However, does it work?
-Well, we know the `electricity` [node](@ref) is associated to the `1hourly` [temporal\_block](@ref),
+So we are getting time-slices at two-hour resolution. This makes sense, because the `pwrplant` [unit](@ref) is
+(only) associated to the `2hourly` [temporal\_block](@ref), remember? However, does it work?
+Well, we know the `elec` [node](@ref) is associated to the `1hourly` [temporal\_block](@ref),
 and that means we have [unit\_flow](@ref) variables at one-hour resolution -
 because [unit\_flow](@ref) gets its resolution from the [node](@ref), right?
-We can't just enforce the constraint every two hours if the flows are tracked every hour!
+We can't just enforce the constraint every two hours if the flows are tracked every *one* hour!
 
 So taking the time-slices of the [unit](@ref) is clearly insufficient, because we happen to have a [node](@ref)
-at higher resolution.
+at a higher resolution.
 
 Let's try to take the time-slices of the [node](@ref) then:
 ```julia
@@ -441,23 +463,28 @@ end
 After running [the code that shows the constraints](@ref the_code_that_shows), we observe:
 
 ```
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T03:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T03:00~>2023-01-01T06:00) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T06:00~>2023-01-01T07:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T07:00~>2023-01-01T08:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T08:00~>2023-01-01T09:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T03:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T03:00~>2023-01-01T06:00) : 0 ≤ 0
 ```
 
-So now we're getting time-slices at one-hour resolution on the `electricity` side, and three-hour on the `fuel` side.
+So now we're getting time-slices at one-hour resolution on the `elec` side, and three-hour on the `fuel` side.
 This seems enough to enforce that the [unit\_flow](@ref) is never higher than the
 [unit\_capacity](@ref).
 However, we also need to enforce that the [unit\_flow](@ref) is never higher than the [unit\_capacity](@ref) times
 the [shut\_down\_limit](@ref) if the unit is shutting down the next period.
-Since the unit is able to shut-down 'at two-hour resolution', clearly taking the
-three-hour resolution on the `fuel` side is insufficient to capture that situation.
+Since the unit is able to shut-down 'at two-hour resolution' so to say, clearly taking the
+three-hour resolution on the `fuel` side is not enough to check if the [unit](@ref) is shutting down in the next period.
+Worst-case scenario, the [unit](@ref) could be shutting down in the *current* period, because the current period
+lasts three hours and the [unit](@ref) can shut down after two hours!
 
 So it looks like we need to take the time-slices from the [unit](@ref) *and* the [node](@ref).
 We could do it this way:
@@ -473,32 +500,35 @@ function my_unit_flow_capacity_constraint_indices(m)
     ]
 end
 ```
-Here, we are concatenating the result of `node__temporal_block(...)` and `units_on__temporal_block(...)`,
-and using that to call `time_slice`. The result, then, is the time-slices associated with either the [unit](@ref)
-or the [node](@ref).
+Here, we are concatenating the result of `node__temporal_block(...)` and `units_on__temporal_block(...)` using `vcat`,
+and passing the result to `time_slice`. The final result, then, is the time-slices associated with either
+the [unit](@ref) 'spatial' index `u`, the [node](@ref) 'spatial' index `n`, or both.
 
 Let's check by re-running [the code that shows the constraints](@ref the_code_that_shows):
 
 ```julia
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T03:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T03:00~>2023-01-01T06:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T06:00~>2023-01-01T07:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T07:00~>2023-01-01T08:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T08:00~>2023-01-01T09:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T03:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T03:00~>2023-01-01T06:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 ≤ 0
 ```
 
-Now we are getting a lot of time-slices! On the `electricity` side, we get both time-slices at one- and two-hour
+Now we are getting a lot of time-slices! On the `elec` side, we get both time-slices at one- and two-hour
 resolution. On the `fuel` side, we get both at two- and three-. We shouldn't be applying the constraint more
-than once for the same period of time, so for efficiency, we should just take the ones with the *highest*
+than once for the same period of time, for efficiency - so we should just take the ones with the *highest*
 resolution.
 
 Let's try again:
@@ -522,18 +552,222 @@ the ones with the highest resolution.
 Let's see what we get by running [the code that shows the constraints](@ref the_code_that_shows):
 
 ```julia
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = electricity, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 = 0
-my_unit_flow_capacity(unit = power_plant, node = fuel, direction = from_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T06:00~>2023-01-01T07:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T07:00~>2023-01-01T08:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T08:00~>2023-01-01T09:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T04:00~>2023-01-01T06:00) : 0 ≤ 0
 ```
 
-Ah, that looks a lot better! We are getting one-hour on the `electricity` side, and two-hour on the `fuel` side.
-I believe that's exactly what we need!
+Ah, that looks a lot better! We are getting one-hour on the `elec` side, and two-hour on the `fuel` side.
+I'm pretty sure that's exactly what we want!
+
+So we have found the *current* time-slice - now let's find the *next* one.
+
+For this we will use a special function from SpineOpt called `t_before_t`.
+This function is mainly intended to be called while specifying one of its two keyword arguments,
+`t_before` or `t_after`, with some time-slice.
+- If you specify `t_before`, you get all the time-slices that *start* when the given time-slice *ends*.
+- If you specify `t_after`, you get all the time-slices that *end* when the given one *starts*.
+
+!!! note
+    You might be asking yourself, how could there be more than one time-slice starting when another one ends,
+    or ending when another one starts?
+    Well, simply because in SpineOpt we can have multiple [temporal\_block](@ref)s defined over the same period
+    of time, with different resolutions - so time-slices of those blocks will simply overlap.
+    Therefore, there might be multiple time-slices starting at the same time, and also multiple ones ending at
+    the same time.
+
+So let's use `t_before_t` to try and compute the *next* time-slices for our constraint.
+We know that the *next* time-slice should come from the same set as the *current*, that is,
+the highest-resolution time-slices associated to the [unit](@ref) and/or the [node](@ref).
+But the *next* should also come *after* the *current*. So basically we can try something like this:
+
+```julia
+function my_unit_flow_capacity_constraint_indices(m)
+    [
+        (unit=u, node=n, direction=d, t=t, t_next=t_next)
+        for (u, n, d) in indices(unit_capacity)
+        for t in t_highest_resolution(
+            time_slice(
+                m; temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u))
+            )
+        )
+        for t_next in t_highest_resolution(
+            time_slice(
+                m;
+                temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u)),
+                t=t_before_t(m; t_before=t),
+            )
+        )
+    ]
+end
+```
+
+Let's unpack the last call to `time_slice` above (the one that we iterate to obtain `t_next`).
+Basically, we're doing almost exactly the same as we do to obtain the current time-slice, `t` 
+(that is, calling `time_slice` by specifying the `temporal_block` argument so we only get
+time-slices associated to our [unit](@ref) `u` and/or our [node](@ref) `n`).
+Except that on top of that, we are also specifying the `t` argument so we only get time-slices that start
+when our current 'temporal' index `t` ends - as obtained with `t_before_t`.
+
+This should work, right? Well, let's run [the code that shows the constraints](@ref the_code_that_shows) again to see
+what happens:
+
+```julia
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00, t_next = 2023-01-01T01:00~>2023-01-01T02:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00, t_next = 2023-01-01T02:00~>2023-01-01T03:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00, t_next = 2023-01-01T03:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00, t_next = 2023-01-01T04:00~>2023-01-01T05:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00, t_next = 2023-01-01T05:00~>2023-01-01T06:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00, t_next = 2023-01-01T06:00~>2023-01-01T07:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T06:00~>2023-01-01T07:00, t_next = 2023-01-01T07:00~>2023-01-01T08:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T07:00~>2023-01-01T08:00, t_next = 2023-01-01T08:00~>2023-01-01T09:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00, t_next = 2023-01-01T02:00~>2023-01-01T04:00) : 0 ≤ 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00, t_next = 2023-01-01T04:00~>2023-01-01T06:00) : 0 ≤ 0
+```
+Beautiful. It looks like we have found our 'temporal' indices.
+
+!!! note
+    Have we? Well, almost. You may have noticed that after adding the `t_next` component, we end up having fewer
+    indices in total. Indeed, we are now missing the ones where `t` (the *current* time slice) was
+    `2023-01-01T08:00~>2023-01-01T09:00` and `2023-01-01T04:00~>2023-01-01T06:00`. Why is that?
+    Well, simply because at `2023-01-01T09:00` the `1hourly` block ends, and at `2023-01-01T06:00` the model ends -
+    so there are no time-slices after that.
+    In this case, `t_before_t` just returns an empty array and `my_unit_flow_capacity_constraint_indices` 
+    doesn't find any `t_next` to iterate over.
+    We should remediate this, but we won't do it immediately. We will save it for the very last,
+    because it really doesn't stop us from progressing and might be a little bit distracting to do right now.
+    Trust me, we will figure it out.
 
 ##### Stochastics
+
+On to compute our 'stochastic' indices.
+
+Roughly, each of these indices will be an array of [stochastic\_scenario](@ref)s, forming
+a path in one of the [stochastic\_structure](@ref)s associated to our 'spatial' indices
+where the time-slices from our 'temporal' indices exist.
+
+Not convinced?
+
+Primer on SpineOpt's stochastic framework (more details in the [Stochastic Framework](@ref) section).
+In SpineOpt, each [unit](@ref) and [node](@ref) has one (and only one) [stochastic\_structure](@ref) associated via
+[units\_on\_\_stochastic\_structure](@ref) and [node\_\_stochastic\_structure](@ref), respectively,
+which represents their 'stochastic dimension'. In other words, each [unit](@ref) and [node](@ref) is supposed to 'exist'
+within its [stochastic\_structure](@ref).
+Now, consider a directed acyclic graph (DAG) where the vertices are all the [stochastic\_scenario](@ref)s in the model, 
+and the edges are given by the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships.
+Each [stochastic\_structure](@ref) essentially defines a *subset* of this DAG, including only those
+[stochastic\_scenario](@ref)s associated to it via [stochastic\_structure\_\_stochastic\_scenario](@ref),
+and where the point in time where each [stochastic\_scenario](@ref) gives way
+to their children is determined by the [stochastic\_scenario\_end](@ref) parameter.
+For example:
+
+```@raw html
+<div class="mermaid">
+	flowchart LR;
+   	scen1--06:00-->scen2a;
+   	scen1--06:00-->scen2b;
+   	scen1--06:00-->scen2c;
+   	scen2a--15:00-->scen3;
+   	scen2b--15:00-->scen3;
+   	scen2c--12:00-->scen3;
+</div>
+```
+Above we have `scen1` branching into `scen2a`, `scen2b`, and `scen2c`; and then all these converging into `scen3`.
+Note that `scen2c` ends a bit earlier than `scen2a` and `scen2b` - just to make it more
+interesting.
+
+So essentially, in a structure like the above, a given range of time may 'coexist' in many
+scenario branches, or 'paths' - as we like to call them in SpineOpt.
+For example, the interval `[15:00, 18:00]` exists in paths
+`scen2a -> scen3` and `scen2b -> scen3` - but not in `scen2c -> scen3`.
+
+Now, in the context of a SpineOpt constraint, we will have a [stochastic\_structure](@ref) like the above,
+given by the 'spatial' indices, and a range of time determined by the 'temporal' ones.
+So similarly as in the above example, we will find our range of time replicated in multiple paths.
+That means the constraint needs to be enforced in each of those paths, or, in other words,
+each of those paths has to be a different 'stochastic' index for our constraint.
+
+Ok, so how do we find the paths? We will be using a convenience function from SpineOpt called
+`active_stochastic_paths`.
+The method we will use receives a model object `m` and two mandatory keyword arguments, `stochastic_structure` and `t`,
+the former expecting a [stochastic\_structure](@ref) or `Array` of [stochastic\_structure](@ref)s,
+and the latter a time-slice or `Array` of time-slices.
+The method returns all the stochastic paths in the [stochastic\_scenario](@ref) DAG subsets corresponding to the given
+[stochastic\_structure](@ref)s, where the given time slices exist.
+We can use it as follows:
+
+```
+function my_unit_flow_capacity_constraint_indices(m)
+    [
+        (unit=u, node=n, direction=d, t=t, t_next=t_next, s_path=s_path)
+        for (u, n, d) in indices(unit_capacity)
+        for t in t_highest_resolution(
+            time_slice(
+                m; temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u))
+            )
+        )
+        for t_next in t_highest_resolution(
+            time_slice(
+                m;
+                temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u)),
+                t=t_before_t(m; t_before=t),
+            )
+        )
+        for s_path in active_stochastic_paths(
+            m,
+            stochastic_structure=vcat(
+                node__stochastic_structure(node=n), units_on__stochastic_structure(unit=u)
+            ),
+            t=[t, t_next]
+        )
+    ]
+end
+```
+
+
+And if we run [the code that shows the constraints](@ref the_code_that_shows), we get:
+
+```julia
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T00:00~>2023-01-01T01:00, t_next = 2023-01-01T01:00~>2023-01-01T02:00, s_path = Object[realisation]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T01:00~>2023-01-01T02:00, t_next = 2023-01-01T02:00~>2023-01-01T03:00, s_path = Object[realisation]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T02:00~>2023-01-01T03:00, t_next = 2023-01-01T03:00~>2023-01-01T04:00, s_path = Object[realisation]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T03:00~>2023-01-01T04:00, t_next = 2023-01-01T04:00~>2023-01-01T05:00, s_path = Object[realisation]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T04:00~>2023-01-01T05:00, t_next = 2023-01-01T05:00~>2023-01-01T06:00, s_path = Object[realisation]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00, t_next = 2023-01-01T06:00~>2023-01-01T07:00, s_path = Object[realisation, forecast1]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T05:00~>2023-01-01T06:00, t_next = 2023-01-01T06:00~>2023-01-01T07:00, s_path = Object[realisation, forecast2]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T06:00~>2023-01-01T07:00, t_next = 2023-01-01T07:00~>2023-01-01T08:00, s_path = Object[realisation, forecast1]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T06:00~>2023-01-01T07:00, t_next = 2023-01-01T07:00~>2023-01-01T08:00, s_path = Object[realisation, forecast2]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T07:00~>2023-01-01T08:00, t_next = 2023-01-01T08:00~>2023-01-01T09:00, s_path = Object[realisation, forecast1]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = elec, direction = to_node, t = 2023-01-01T07:00~>2023-01-01T08:00, t_next = 2023-01-01T08:00~>2023-01-01T09:00, s_path = Object[realisation, forecast2]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T00:00~>2023-01-01T02:00, t_next = 2023-01-01T02:00~>2023-01-01T04:00, s_path = Object[realisation]) : 0 = 0
+my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2023-01-01T02:00~>2023-01-01T04:00, t_next = 2023-01-01T04:00~>2023-01-01T06:00, s_path = Object[realisation]) : 0 = 0
+
+```
+
+Which looks like we're on to something.
+Indeed, on the `fuel` side, `s_path` is always just `[realisation]`, because both the `fuel` [node](@ref)
+and the `pwrplant` [unit](@ref) have the `one_stage` [stochastic\_structure](@ref).
+But on the `elec` side, at the beginning we have `[realisation]` and then we start getting `[realisation, forecast1]`
+and `[realisation, forecast2]`.
+The turning point is exactly at `2023-01-01T06:00`, where `realisation` ends according to
+the [stochastic\_scenario\_end](@ref) parameter.
+
+So it's all good!
+
+#### The function that generates the constraint
+
+Congratulations, you have made it this far. Now we will finally start writing our constraint expression.
+
+!!! note
+    I will grab a coffee and be right back.
+
+
