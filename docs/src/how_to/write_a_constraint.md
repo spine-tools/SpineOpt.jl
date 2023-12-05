@@ -103,26 +103,50 @@ involved. That should ensure that we don't miss any time-slice, but at the same 
 the most efficient...
 
 Now, to answer the second question, how far in time do we need to look,
-we typically just need to look at our constraint expression.
-In our case, we need to look at the current time-step, but also at the *next* time-step to check if the
-unit is shutting down in that time step.
+we typically just need to check out our constraint expression.
+In our case, we need to look at the current time-slice, but also at the *next* time-slice to check if the
+unit is shutting down in that time-slice.
 So our 'temporal' indices will be tuples of (current time-slice, next time-slice).
 
 #### Collect the 'stochastic' indices
 
-Here the question is, what are all the possible ways
-of traversing the scenario graph associated to all our 'spatial' indices,
-while visiting all the time-slices in our 'temporal' indices
-(determined above).
-Each of these traversals will be a 'stochastic' index for your constraint.
-We call such a traversal a 'stochastic path',
-and it's essentially and array of [stochastic\_scenario](@ref)s. Check the [Stochastic Framework](@ref) section
-for details.
+Primer on SpineOpt's stochastic framework (more details in the [Stochastic Framework](@ref) section).
+In SpineOpt, each [unit](@ref) and [node](@ref) has one (and only one) [stochastic\_structure](@ref) associated via
+[units\_on\_\_stochastic\_structure](@ref) and [node\_\_stochastic\_structure](@ref), respectively,
+which represents their 'stochastic dimension'. In other words, each [unit](@ref) and [node](@ref) is supposed to 'exist'
+within its [stochastic\_structure](@ref).
+Now, consider a directed acyclic graph (DAG) where the vertices are all the [stochastic\_scenario](@ref)s in the model, 
+and the edges are given by the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships.
+Each [stochastic\_structure](@ref) essentially defines a *subset* of this DAG, including only those
+[stochastic\_scenario](@ref)s associated to it via [stochastic\_structure\_\_stochastic\_scenario](@ref),
+and where the point in time where each [stochastic\_scenario](@ref) gives way
+to their children is determined by the [stochastic\_scenario\_end](@ref) parameter.
+For example:
 
-So this is not that hard actually.
-The 'stochastic' indices are completely determined by the 'spatial' and 'temporal' indices,
-and SpineOpt provides a convenience function to derive the former given the latter.
+```mermaid
+    flowchart LR;
+    scen1--06:00-->scen2a;
+    scen1--06:00-->scen2b;
+    scen1--06:00-->scen2c;
+    scen2a--15:00-->scen3;
+    scen2b--15:00-->scen3;
+    scen2c--12:00-->scen3;
+```
 
+Above we have `scen1` branching into `scen2a`, `scen2b`, and `scen2c`; and then all these converging into `scen3`.
+Note that `scen2c` ends a bit earlier than `scen2a` and `scen2b` - just to make it more
+interesting.
+
+So essentially, in a structure like the above, a given range of time may 'coexist' in many
+scenario branches, or 'paths' - as we like to call them in SpineOpt.
+For example, the interval `[15:00, 18:00]` exists in paths
+`scen2a -> scen3` and `scen2b -> scen3` - but not in `scen2c -> scen3`.
+
+Now, in the context of a SpineOpt constraint, we will have a [stochastic\_structure](@ref) like the above,
+given by the 'spatial' indices, and a range of time determined by the 'temporal' ones.
+So similarly as in the above example, we will find our range of time replicated in multiple paths.
+That means the constraint needs to be enforced in each of those paths, or, in other words,
+each of those paths has to be a different 'stochastic' index for our constraint.
 
 ### Write the constraint expression
 
@@ -159,8 +183,8 @@ I said above that I liked to combine a theoretical approach with a more of a pra
 I guess what I meant is I don't want to do too much thinking - I want to see the results of what I'm doing
 as I do it.
 
-So for this I need a test system that triggers the creation of the constraint, is complex enough so I don't miss
-any relevant cases, but not that complex that I'm unable to diagnose it.
+So for this I need to come up with a test system that triggers the creation of the constraint,
+is complex enough so I don't miss any relevant cases, but not that complex that I'm unable to diagnose it.
 In our case, I believe something like the below could work:
 
 ```julia
@@ -231,11 +255,11 @@ Whoa, what's all that stuff!?
 Basically, what we're doing here is creating a SpineOpt [model](@ref) called `simple`, starting January first 2023
 at 00:00 and ending at 06:00. This `simple` [model](@ref) has three [temporal\_block](@ref)s,
 `1hourly`, `2hourly` and `3hourly`, with one-, two-, and three-hour resolution respectively;
-and with `1hourly` ending at 09:00 (three hours later than the [model](@ref)).
+and `1hourly` ends at 09:00 (three hours later than the [model](@ref)).
 It also has three [stochastic\_scenario](@ref)s,
 `realisation`, `forecast1` and `forecast2`, where the two latter are children of the former;
 and two [stochastic\_structure](@ref)s, `one_stage`,
-including only `realisation`, and `two_stage`, including all three of them and with `realisation` 6 hours
+including only `realisation`, and `two_stage`, including all three of them and with `realisation` ending 6 hours
 after the model start.
 
 The [model](@ref) consists of two [node](@ref)s, `fuel` and `elec`, with a [unit](@ref) in between,
@@ -254,7 +278,7 @@ the [shut\_down\_limit](@ref) is 0.2 for the `elec` [node](@ref) flows
 
 ### The actual constraint code
 
-I feel it's about time we finally start writing our constraint.
+I guess it's about time we finally start writing our constraint.
 We will split our code in two functions:
 
 - A function that receives a SpineOpt model object `m` and returns an `Array` containing all the constraint indices.
@@ -651,50 +675,8 @@ Beautiful. It looks like we have found our 'temporal' indices.
 
 On to compute our 'stochastic' indices.
 
-Roughly, each of these indices will be an array of [stochastic\_scenario](@ref)s, forming
-a path in one of the [stochastic\_structure](@ref)s associated to our 'spatial' indices
-where the time-slices from our 'temporal' indices exist.
-
-Not convinced?
-
-Primer on SpineOpt's stochastic framework (more details in the [Stochastic Framework](@ref) section).
-In SpineOpt, each [unit](@ref) and [node](@ref) has one (and only one) [stochastic\_structure](@ref) associated via
-[units\_on\_\_stochastic\_structure](@ref) and [node\_\_stochastic\_structure](@ref), respectively,
-which represents their 'stochastic dimension'. In other words, each [unit](@ref) and [node](@ref) is supposed to 'exist'
-within its [stochastic\_structure](@ref).
-Now, consider a directed acyclic graph (DAG) where the vertices are all the [stochastic\_scenario](@ref)s in the model, 
-and the edges are given by the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships.
-Each [stochastic\_structure](@ref) essentially defines a *subset* of this DAG, including only those
-[stochastic\_scenario](@ref)s associated to it via [stochastic\_structure\_\_stochastic\_scenario](@ref),
-and where the point in time where each [stochastic\_scenario](@ref) gives way
-to their children is determined by the [stochastic\_scenario\_end](@ref) parameter.
-For example:
-
-```@raw html
-<div class="mermaid">
-	flowchart LR;
-   	scen1--06:00-->scen2a;
-   	scen1--06:00-->scen2b;
-   	scen1--06:00-->scen2c;
-   	scen2a--15:00-->scen3;
-   	scen2b--15:00-->scen3;
-   	scen2c--12:00-->scen3;
-</div>
-```
-Above we have `scen1` branching into `scen2a`, `scen2b`, and `scen2c`; and then all these converging into `scen3`.
-Note that `scen2c` ends a bit earlier than `scen2a` and `scen2b` - just to make it more
-interesting.
-
-So essentially, in a structure like the above, a given range of time may 'coexist' in many
-scenario branches, or 'paths' - as we like to call them in SpineOpt.
-For example, the interval `[15:00, 18:00]` exists in paths
-`scen2a -> scen3` and `scen2b -> scen3` - but not in `scen2c -> scen3`.
-
-Now, in the context of a SpineOpt constraint, we will have a [stochastic\_structure](@ref) like the above,
-given by the 'spatial' indices, and a range of time determined by the 'temporal' ones.
-So similarly as in the above example, we will find our range of time replicated in multiple paths.
-That means the constraint needs to be enforced in each of those paths, or, in other words,
-each of those paths has to be a different 'stochastic' index for our constraint.
+We said above that each of these indices will be a path in the stochastic scenario DAG associated
+to our 'spatial' indices, that covers the time-slices from our 'temporal' indices.
 
 Ok, so how do we find the paths? We will be using a convenience function from SpineOpt called
 `active_stochastic_paths`.
@@ -732,7 +714,6 @@ function my_unit_flow_capacity_constraint_indices(m)
     ]
 end
 ```
-
 
 And if we run [the code that shows the constraints](@ref the_code_that_shows), we get:
 
