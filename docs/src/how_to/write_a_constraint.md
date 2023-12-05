@@ -1,6 +1,7 @@
 ```@raw html
-<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({startOnLoad:true});</script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+</script>
 ```
 
 # Write a constraint for SpineOpt
@@ -124,7 +125,7 @@ to their children is determined by the [stochastic\_scenario\_end](@ref) paramet
 For example:
 
 ```@raw html
-<div class="mermaid">
+<pre class="mermaid">
     flowchart LR;
     scen1--06:00-->scen2a;
     scen1--06:00-->scen2b;
@@ -132,7 +133,7 @@ For example:
     scen2a--15:00-->scen3;
     scen2b--15:00-->scen3;
     scen2c--12:00-->scen3;
-</div>
+</pre>
 ```
 
 Above we have `scen1` branching into `scen2a`, `scen2b`, and `scen2c`; and then all these converging into `scen3`.
