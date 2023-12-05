@@ -125,7 +125,7 @@ to their children is determined by the [stochastic\_scenario\_end](@ref) paramet
 For example:
 
 ```@raw html
-<pre class="mermaid">
+<div class="mermaid">
     flowchart LR;
     scen1--06:00-->scen2a;
     scen1--06:00-->scen2b;
@@ -133,7 +133,7 @@ For example:
     scen2a--15:00-->scen3;
     scen2b--15:00-->scen3;
     scen2c--12:00-->scen3;
-</pre>
+</div>
 ```
 
 Above we have `scen1` branching into `scen2a`, `scen2b`, and `scen2c`; and then all these converging into `scen3`.
