@@ -814,7 +814,10 @@ function generate_is_boundary()
         has_boundary_conn = false
         for (conn, _d) in connection__from_node(node=n)
             remote_commodities = unique(
-                c for (remote_n, _d) in connection__to_node(connection=conn) for c in node__commodity(node=remote_n)
+                c 
+                for (remote_n, _d) in connection__to_node(connection=conn)
+                if remote_n != n
+                for c in node__commodity(node=remote_n)
             )
             if !(c in remote_commodities)
                 has_boundary_conn = true
