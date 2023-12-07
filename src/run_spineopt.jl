@@ -92,7 +92,8 @@ function run_spineopt(
     use_direct_model=false,
     filters=Dict("tool" => "object_activity_control"),
     log_file_path=nothing,
-    resume_file_path=nothing
+    resume_file_path=nothing,
+    run_kernel=run_spineopt_kernel!,
 )
     if log_file_path === nothing
         return _run_spineopt(
@@ -110,7 +111,8 @@ function run_spineopt(
             write_as_roll=write_as_roll,
             use_direct_model=use_direct_model,
             filters=filters,
-            resume_file_path=resume_file_path
+            resume_file_path=resume_file_path,
+            run_kernel=run_kernel,
         )
     end
     done = false
@@ -151,7 +153,8 @@ function run_spineopt(
                         write_as_roll=write_as_roll,
                         use_direct_model=use_direct_model,
                         filters=filters,
-                        resume_file_path=resume_file_path
+                        resume_file_path=resume_file_path,
+                        run_kernel=run_kernel,
                     )
                 catch err
                     showerror(log_file, err, stacktrace(catch_backtrace()))
@@ -164,40 +167,11 @@ function run_spineopt(
     end
 end
 
-function _run_spineopt(
-    url_in::String,
-    url_out::Union{String,Nothing}=url_in;
-    upgrade=false,
-    mip_solver=nothing,
-    lp_solver=nothing,
-    add_user_variables=m -> nothing,
-    add_constraints=m -> nothing,
-    log_level=3,
-    optimize=true,
-    update_names=false,
-    alternative="",
-    write_as_roll=0,
-    use_direct_model=false,
-    filters=Dict("tool" => "object_activity_control"),
-    resume_file_path=nothing
-)
+function _run_spineopt(url_in, url_out; upgrade, log_level, filters, kwargs...)
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
     prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
-    m = rerun_spineopt(
-        url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        add_user_variables=add_user_variables,
-        add_constraints=add_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        update_names=update_names,
-        alternative=alternative,
-        write_as_roll=write_as_roll,
-        resume_file_path=resume_file_path,
-        use_direct_model=use_direct_model
-    )
+    m = rerun_spineopt(url_out; log_level=log_level, kwargs...)
     t_end = now()
     elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))    
     @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
@@ -254,7 +228,6 @@ function rerun_spineopt(
     lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    alternative_objective=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -262,6 +235,7 @@ function rerun_spineopt(
     write_as_roll=0,
     resume_file_path=nothing,
     use_direct_model=false,
+    run_kernel=run_spineopt_kernel!,
 )
     @log log_level 0 "Running SpineOpt..."
     m = create_model(mip_solver, lp_solver, use_direct_model)
@@ -283,7 +257,7 @@ function rerun_spineopt(
         alternative=alternative,
         write_as_roll=write_as_roll,
         resume_file_path=resume_file_path,
-        alternative_objective=alternative_objective
+        run_kernel=run_kernel,
     )
 end
 
