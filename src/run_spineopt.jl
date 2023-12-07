@@ -65,6 +65,10 @@ A new Spine database is created at `url_out` if one doesn't exist.
   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
   Also, save resume data to that same file as the model rolls and results are written to the output database.
 
+- `run_kernel`: a function to call with the model object in order to solve the optimisation problem. It defaults to
+  `run_spineopt_kernel` but another function with the same signature can be provided to extend the current algorithm
+  or use a different one. This is intended to develop extensions.
+
 # Example
 
     using SpineOpt
