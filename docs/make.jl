@@ -25,7 +25,7 @@ write_concept_reference_files(concept_dictionary, path)
 mathpath = joinpath(path, "src", "mathematical_formulation")
 docstrings = all_docstrings(SpineOpt)
 constraints_lines = readlines(joinpath(mathpath, "constraints.md"))
-expand_instructions!(constraints_lines, docstrings)
+expand_tags!(constraints_lines, docstrings)
 open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
     write(file, join(constraints_lines, "\n"))
 end

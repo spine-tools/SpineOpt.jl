@@ -46,7 +46,7 @@ import SpineOpt:
     rerun_spineopt!
 
 # Test code uses legacy syntax for `import_data`, so interpret here
-SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")
+SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, "testing"; kwargs...)
 
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)

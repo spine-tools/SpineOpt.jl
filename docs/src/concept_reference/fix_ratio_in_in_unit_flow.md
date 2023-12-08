@@ -1,5 +1,5 @@
 The definition of the [fix\_ratio\_in\_in\_unit\_flow](@ref) parameter triggers the generation of the
-[constraint\_fix\_ratio\_in\_in\_unit\_flow](@ref ratio_in_in) and fixes the ratio between incoming flows of a unit.
+[constraint\_fix\_ratio\_in\_in\_unit\_flow](@ref ratio_unit_flow) and fixes the ratio between incoming flows of a unit.
 The parameter is defined on the relationship class [unit\_\_node\_\_node](@ref),
 where both nodes (or group of nodes) in this relationship represent `from_node`s, i.e. the incoming flows to the unit.
 The ratio parameter is interpreted such that it constrains the ratio of `in1` over `in2`,

@@ -35,6 +35,7 @@ include("versions/add_flow_non_anticipativity_time.jl")
 include("versions/add_mga_weight_factors.jl")
 include("versions/rename_benders_master_to_just_benders.jl")
 include("versions/translate_ramp_parameters.jl")
+include("versions/remove_model_tb_ss.jl")
 
 _upgrade_functions = [
 	rename_unit_constraint_to_user_constraint,
@@ -45,6 +46,7 @@ _upgrade_functions = [
 	add_mga_weight_factors,
 	rename_benders_master_to_just_benders,
 	translate_ramp_parameters,
+	remove_model_tb_ss,
 ]
 
 """

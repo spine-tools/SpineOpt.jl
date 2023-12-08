@@ -17,10 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_units_available!(m::Model)
+@doc raw"""
+The aggregated available units are constrained by the parameter [number\_of\_units](@ref)
+and the variable number of invested units [units\_invested\_available](@ref):
 
-Limit the units_online by the number of available units.
+```math
+\begin{aligned}
+& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} \\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also [number\_of\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:spineopt].variables

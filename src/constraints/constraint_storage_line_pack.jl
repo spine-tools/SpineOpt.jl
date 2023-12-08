@@ -16,10 +16,28 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    add_constraint_storage_line_pack!(m::Model)
 
-Constraint for line storage dependent on line pack.
+@doc raw"""
+In order to account for linepack flexibility, i.e. storage capability of a connection, the linepack storage is linked
+to the average pressure of the adjacent nodes by the following equation,
+triggered by the parameter [connection\_linepack\_constant](@ref):
+
+```math
+\begin{aligned}
+& v^{node\_state}_{(n_{stor},s,t)} = \left(
+    p^{connection\_linepack\_constant}_{(conn,n_{stor},ng)} \middle/ 2
+\right) \cdot \sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \\
+& \forall (conn, n_{stor}, ng) \in indices(p^{connection\_linepack\_constant}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+!!! note
+    The parameter [connection\_linepack\_constant](@ref) should be defined
+    on a [connection\_\_node\_\_node](@ref)relationship, where the first node corresponds to the linepack storage node,
+    whereas the second node corresponds to the node group of both start and end nodes of the pipeline.
+
+See also [connection\_linepack\_constant](@ref)
 """
 function add_constraint_storage_line_pack!(m::Model)
     @fetch node_state, node_pressure = m.ext[:spineopt].variables
@@ -34,7 +52,7 @@ function add_constraint_storage_line_pack!(m::Model)
             ==
             connection_linepack_constant(connection=conn, node1=stor, node2=ng)
             * 0.5
-            * sum( #summing up the partial pressure of each component for both sides
+            * sum( # summing up the partial pressure of each component for both sides
                 node_pressure[ng, s, t] * duration(t)
                 for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t))
             )

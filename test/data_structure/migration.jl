@@ -188,9 +188,31 @@ function _test_translate_ramp_parameters()
 	end
 end
 
+function _test_remove_model_tb_ss()
+	@testset "remove_model_tb_ss" begin
+		url = "sqlite://"
+		to_rm_ec_names = ("model__temporal_block", "model__stochastic_structure")
+		data = Dict(
+			:object_classes => ["model", "temporal_block", "stochastic_structure"],
+			:relationship_classes => [
+				["model__temporal_block", ["model", "temporal_block"]],
+				["model__stochastic_structure", ["model", "stochastic_structure"]],
+			],
+		)
+		_load_test_data_without_template(url, data)
+		@test SpineOpt.remove_model_tb_ss(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "remove_model_tb_ss"))
+		Y = Module()
+		using_spinedb(url, Y)
+		@test isempty(intersect([x.name for x in relationship_classes(Y)], to_rm_ec_names))
+		@test all(cn in [x.name for x in object_classes(Y)] for cn in (:model, :temporal_block, :stochastic_structure))
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
 	_test_rename_model_types()
 	_test_translate_ramp_parameters()
+	_test_remove_model_tb_ss()
 end
