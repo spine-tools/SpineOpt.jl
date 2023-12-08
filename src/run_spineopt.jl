@@ -17,12 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-module _Template
-using SpineInterface
-end
-using ._Template
-
-
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
 
@@ -57,6 +51,9 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 - `filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
   Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
+
+- `templates`: a collection of templates to load on top of the SpineOpt template.
+  Each template must be a `Dict` with the same structure as the one returned by `SpineOpt.template()`.
 
 - `log_file_path::String=nothing`: if not nothing, log all console output to a file at the given path. The file
   is overwritten at each call.
@@ -95,6 +92,7 @@ function run_spineopt(
     write_as_roll=0,
     use_direct_model=false,
     filters=Dict("tool" => "object_activity_control"),
+    templates=(),
     log_file_path=nothing,
     resume_file_path=nothing,
     run_kernel=run_spineopt_kernel!,
@@ -115,6 +113,7 @@ function run_spineopt(
             write_as_roll=write_as_roll,
             use_direct_model=use_direct_model,
             filters=filters,
+            templates=templates,
             resume_file_path=resume_file_path,
             run_kernel=run_kernel,
         )
@@ -157,6 +156,7 @@ function run_spineopt(
                         write_as_roll=write_as_roll,
                         use_direct_model=use_direct_model,
                         filters=filters,
+                        templates=templates,
                         resume_file_path=resume_file_path,
                         run_kernel=run_kernel,
                     )
@@ -171,10 +171,10 @@ function run_spineopt(
     end
 end
 
-function _run_spineopt(url_in, url_out; upgrade, log_level, filters, kwargs...)
+function _run_spineopt(url_in, url_out; upgrade, log_level, filters, templates, kwargs...)
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
-    prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
+    prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters, templates=templates)
     m = rerun_spineopt(url_out; log_level=log_level, kwargs...)
     t_end = now()
     elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))    
@@ -188,7 +188,8 @@ function prepare_spineopt(
     url_in;
     upgrade=false,
     log_level=3,
-    filters=Dict("tool" => "object_activity_control")
+    filters=Dict("tool" => "object_activity_control"),
+    templates=(),
 )
     @log log_level 0 "Preparing SpineOpt for $(run_request(url_in, "get_db_url"))..."
     version = find_version(url_in)
@@ -206,9 +207,14 @@ function prepare_spineopt(
         end
     end
     @timelog log_level 2 "Initializing data structure from db..." begin
-        using_spinedb(SpineOpt.template(), _Template)
-        using_spinedb(url_in, @__MODULE__; upgrade=upgrade, filters=filters)
-        missing_items = difference(_Template, @__MODULE__)
+        template = SpineOpt.template()
+        using_spinedb(template, @__MODULE__; extend=false)
+        for template in templates
+            using_spinedb(template, @__MODULE__; extend=true)
+        end
+        data = export_data(url_in; upgrade=upgrade, filters=filters)
+        using_spinedb(data, @__MODULE__; extend=true)
+        missing_items = difference(template, data)
         if !isempty(missing_items)
             println()
             @warn """
@@ -224,7 +230,7 @@ function prepare_spineopt(
     end
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-end    
+end
 
 function rerun_spineopt(
     url_out::Union{String,Nothing};
