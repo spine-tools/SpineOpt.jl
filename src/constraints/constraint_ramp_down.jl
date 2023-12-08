@@ -18,66 +18,48 @@
 #############################################################################
 
 @doc raw"""
-    add_constraint_ramp_down!(m::Model)
+Limit the decrease of [unit\_flow](@ref) over a time period of one [duration\_unit](@ref) according
+to the [shut\_down\_limit](@ref) and [ramp\_down\_limit](@ref) parameter values.
 
-    #description
-    Limit the decrease of `unit_flow` over a time period of one `duration_unit` according
-    to the `shut_down_limit` and `ramp_down_limit` parameter values.
-    #end description
+```math
+\begin{aligned}
+& \sum_{
+        n \in ng
+}
+v^{unit\_flow}_{(u,n,d,s,t-1)} \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] \\
+& - \sum_{
+        n \in ng
+}
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] \\
+& + \sum_{
+        n \in ng
+}
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ p^{is\_reserve\_node}_{(n)} \land p^{downward\_reserve}_{(n)} \right] \\
+& \le ( \\
+& \qquad \left(p^{shut\_down\_limit}_{(u,ng,d,s,t)} - p^{minimum\_operating\_point}_{(u,ng,d,s,t)} - p^{ramp\_down\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_shut\_down}_{(u,s,t)} \\
+& \qquad + \left(p^{minimum\_operating\_point}_{(u,ng,d,s,t)} + p^{ramp\_down\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_on}_{(u,s,t-1)} \\
+& \qquad - p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
+& ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \cdot \Delta t \\
+& \forall (u,ng,d) \in indices(p^{ramp\_down\_limit}) \cup indices(p^{shut\_down\_limit}) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
 
-    #formulation
-    ```math
-    \begin{aligned}
-    & \sum_{
-        \substack{
-            (u,n,d,s,t) \in unit\_flow\_indices \\
-            n \in ng, \, s \in s_{path}, \, t = t_{before} \\
-            !p_{is\_reserve}(n)
-        }
-    }
-    v_{unit\_flow}(u,n,d,s,t) \\
-    & - \sum_{
-        \substack{
-            (u,n,d,s,t) \in unit\_flow\_indices \\
-            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
-            !p_{is\_reserve}(n)
-        }
-    }
-    v_{unit\_flow}(u,n,d,s,t) \\
-    & + \sum_{
-        \substack{
-            (u,n,d,s,t) \in unit\_flow\_indices \\
-            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
-            p_{is\_reserve}(n), \, p_{downward\_reserve}(n)
-        }
-    }
-    v_{unit\_flow}(u,n,d,s,t) \\
-    & <= ( \\
-    & \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
-        }
-    }
-    (p_{shut\_down\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_shut\_down}(u,s,t) \\
-    & + \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{before}
-        }
-    }
-    (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t) \\
-    & - \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
-        }
-    }
-    p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t) \\
-    & ) \cdot p_{unit\_capacity}(u,ng,d,s,t_{after}) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t_{after}) \cdot \Delta t_{after} \\
-    & \forall (u,ng,d) \in ind(p_{ramp\_down\_limit}) \cup ind(p_{shut\_down\_limit}), \\
-    & \forall (ng,t_{before},t_{after}) \in node\_dynamic\_time\_indices(ng), \\
-    & \forall s_{path} \in stochastic\_paths(t_{before},t_{after})
-    \end{aligned}
-    ```
-    #end formulation
+See also
+[is\_reserve\_node](@ref),
+[downward\_reserve](@ref),
+[unit\_capacity](@ref),
+[unit\_conv\_cap\_to\_flow](@ref),
+[ramp\_down\_limit](@ref),
+[shut\_down\_limit](@ref),
+[minimum\_operating\_point](@ref).
 """
 function add_constraint_ramp_down!(m::Model)
     @fetch units_on, units_shut_down, unit_flow = m.ext[:spineopt].variables

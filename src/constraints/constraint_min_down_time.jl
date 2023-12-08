@@ -17,10 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_min_down_time!(m::Model)
+@doc raw"""
+Similarly to the [minimum up time constraint](@ref constraint_min_up_time),
+a minimum time that a unit needs to remain offline after a shut down can be imposed
+by defining the [min\_down\_time](@ref) parameter. This will trigger the generation of the following constraint:
 
-Constrain start-up by minimum down time.
+```math
+\begin{aligned}
+& p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} - v^{units\_on}_{(u,s,t)} \\
+& - \sum_{n} v^{nonspin\_units\_started\_up}_{(u,n,s,t)} \\
+& \geq
+\sum_{t'=t-p^{min\_down\_time}_{(u,s,t)} + 1}^{t}
+v^{units\_shut\_down}_{(u,s,t')} \\
+& \forall u \in indices(p^{min\_down\_time})\\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also [number\_of\_units](@ref), [min\_down\_time](@ref).
 """
 function add_constraint_min_down_time!(m::Model)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables

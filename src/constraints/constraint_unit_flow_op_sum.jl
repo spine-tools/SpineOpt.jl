@@ -17,10 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_flow_op_sum!(m::Model)
+@doc raw"""
+[unit\_flow](@ref) is constrained to be the sum of all operating segment variables, [unit\_flow\_op](@ref)
 
-Sum up the operating point flow variables `unit_flow_op` to the corresponding variable `unit_flow`.
+```math
+\begin{aligned}
+& v^{unit\_flow}_{(u, n, d, s, t)} = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
+& \forall (u,n,d) \in indices(p^{operating\_points}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also [operating\_points](@ref).
 """
 function add_constraint_unit_flow_op_sum!(m::Model)
     @fetch unit_flow_op, unit_flow = m.ext[:spineopt].variables

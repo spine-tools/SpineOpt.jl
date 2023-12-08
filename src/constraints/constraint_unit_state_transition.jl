@@ -17,10 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_state_transition!(m::Model)
+@doc raw"""
+The units on status is constrained by shutting down and starting up actions. This transition is defined as follows:
 
-Ensure consistency between the variables `units_on`, `units_started_up` and `units_shut_down`.
+```math
+\begin{aligned}
+& v^{units\_on}_{(u,s,t)} - v^{units\_started\_up}_{(u,s,t)} + v^{units\_shut\_down}_{(u,s,t)} = v^{units\_on}_{(u,s,t-1)} \\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_unit_state_transition!(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables

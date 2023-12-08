@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,25 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@doc raw"""
-The number of online units needs to be restricted to the aggregated available units:
-
-```math
-v^{units\_on}_{(u,s,t)} \leq v^{units\_available}_{(u,s,t)} \quad \forall u \in unit, \, \forall (s,t)
-```
-
-The investment formulation is described in chapter [Investments](@ref).
 """
-function add_constraint_units_on!(m::Model)
-    @fetch units_on, units_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:units_on] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(
-            m, 
-            + units_on[u, s, t] 
-            <= 
-            + units_available[u, s, t]
-        )
-        for (u, s, t) in units_on_indices(m)
-    )
+	remove_model_tb_ss(db_url)
+
+Get rid of model__temporal_block and model__stochastic_structure.
+"""
+function remove_model_tb_ss(db_url, log_level)
+	to_rm_ec_names = ("model__temporal_block", "model__stochastic_structure")
+	to_rm_str = join(("`$x`" for x in to_rm_ec_names), " and ")
+	@log log_level 0 "Removing $to_rm_str"
+	ecs = run_request(db_url, "query", ("entity_class_sq",))["entity_class_sq"]
+	ec_id_by_name = Dict(x["name"] => x["id"] for x in ecs)
+	to_rm_ec_ids = unique(ec_id_by_name[name] for name in intersect(to_rm_ec_names, keys(ec_id_by_name)))
+	if !isempty(to_rm_ec_ids)
+		run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:entity_class => to_rm_ec_ids))
+	end
+	true
 end

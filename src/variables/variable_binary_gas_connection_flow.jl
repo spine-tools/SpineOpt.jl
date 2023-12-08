@@ -52,6 +52,7 @@ function binary_gas_connection_flow_indices(
 end
 
 set_bin(x) = true
+
 """
     add_variable_connection_flow!(m::Model)
 

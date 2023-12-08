@@ -25,7 +25,6 @@ using Dates
 using SpineInterface
 using JSON
 using Printf
-using Documenter
 using Requires
 using JuMP
 using HiGHS
@@ -44,6 +43,10 @@ export prepare_spineopt
 export generate_temporal_structure!
 export roll_temporal_structure!
 export time_slice
+export t_before_t
+export t_in_t
+export t_overlaps_t
+export active_stochastic_paths
 export output_value
 export collect_output_values
 export write_report

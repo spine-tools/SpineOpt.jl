@@ -17,10 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_units_invested_available!(m::Model)
+@doc raw"""
+The number of available invested-in units at any point in time is less than the number of investment candidate units.
 
-Limit the units_invested_available by the number of investment candidate units.
+```math
+\begin{aligned}
+& v^{units\_invested\_available}_{(u,s,t)} < p^{candidate\_units}_{(u)} \\
+& \forall u \in unit: p^{candidate\_units}_{(u)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_units_invested_available!(m::Model)
     @fetch units_invested_available = m.ext[:spineopt].variables

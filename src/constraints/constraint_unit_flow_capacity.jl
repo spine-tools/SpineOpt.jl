@@ -10,94 +10,90 @@
 #
 # SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR Pp^{upward\_reserve}POSE. See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@doc raw""""
-    add_constraint_unit_flow_capacity!(m::Model)
+@doc raw"""
+In a multi-commodity setting, there can be different commodities entering/leaving a certain
+technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
+emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) must be specified
+for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship,
+in order to trigger a constraint on the maximum commodity flows to this location in each time step.
+When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
 
-Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices.
+```math
+\begin{aligned}
+& \sum_{
+        n \in ng
+}
+    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right]\\
+& + \sum_{
+        n \in ng
+}
+    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[
+        p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
+    \right]\\
+& \le \\
+& p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& \cdot ( \\
+& \qquad v^{units\_on}_{(u,s,t)} \\
+& \qquad - \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right)
+\cdot \left( v^{units\_shut\_down}_{(u,s,t+1)}
++ \sum_{
+    n \in ng
+} v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
+& \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
+& ) \\
+& \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
 
-    #description
-    In a multi-commodity setting, there can be different commodities entering/leaving a certain
-    technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
-    emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) must be specified
-    for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship,
-    in order to trigger a constraint on the maximum commodity flows to this location in each time step.
-    When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
-
-    Note 1: the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
+!!! note
+    The conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
     in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
 
-    Note 2: The below formulation is valid for time-slices whose duration is greater than the minimum up time of the
-    unit.
+!!! note
+    The above formulation is valid for time-slices whose duration is greater than the minimum up time of the unit.
     This ensures that the unit is not online for exactly one time-slice, which might result in an infeasibility
-    with the below formulation.
-    For time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar
+    if this formulation was used.
+    Instead, for time-slices whose duration is lower or equal than the minimum up time of the unit there is a similar
     formulation, but the details are omitted for brevity.
 
-    Note 3: The below formulation is valid for flows going from a unit to a node (i.e., output flows).
-    For flows going from a node to a unit (i.e., input flows) the second term on the LHS
-    is replaced by the sumation over nodes with *downward* reserve requirements (instead of *upward*).
-    #end description
+!!! note
+    The above formulation is valid for flows going from a unit to a node (i.e., output flows).
+    For flows going from a node to a unit (i.e., input flows) the direction of the reserves is switched
+    (downwards becomes upwards, non-spinning units shut-down becomes non-spinning units started-up).
+    The details are omitted for brevity.
 
-    #formulation
-    ```math
-    \begin{aligned}
-    & \sum_{
-        \substack{
-            (u,n,d,s,t_{flow}) \in unit\_flow\_indices: \\
-            n \in ng, \, s \in s_{path}, \, t_{flow} \in t\_overlaps\_t(t) \\
-            !p_{is\_reserve}(n)
-        }
-    } v_{unit\_flow}(u,n,d,s,t_{flow}) \cdot \Delta t / \Delta t_{flow} \\
-    & + \sum_{
-        \substack{
-            (u,n,d,s,t_{flow}) \in unit\_flow\_indices: \\
-            n \in ng, \, s \in s_{path}, \, t_{flow} \in t\_overlaps\_t(t) \\
-            p_{is\_reserve}(n), \, p_{upward\_reserve}(n) \\
-            !p_{is\_non\_spinning}(n)
-        }
-    } v_{unit\_flow}(u,n,d,s,t_{flow}) \cdot \Delta t / \Delta t_{flow} \\
-    & <= p_{unit\_capacity}(u,ng,d,s,t) \\
-    & \cdot p_{unit\_availability\_factor}(u,s,t) \\
-    & \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-    & \cdot ( \\
-    & \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices:\\
-            s \in s_{path}
-        }
-    } v_{units\_on}(u,s,t) \\
-    & + (1 - p_{shut\_down\_limit}(u,ng,d,s,t)) \cdot \sum_{
-        \substack{
-            (u,s,t_{after}) \in units\_on\_indices:\\
-            s \in s_{path}, \, t_{after} \in t\_before\_t(t\_before=t)
-        }
-    } v_{units\_shut\_down}(u,s,t_{after}) \\
-    & - (1 - p_{start\_up\_limit}(u,ng,d,s,t)) \cdot \sum_{
-        \substack{
-            (u,s,t) \in units\_on\_indices:\\
-            s \in s_{path}
-        }
-    } v_{units\_started\_up}(u,s,t) \\
-    & ) \\
-    & \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
-    & \forall t \in t\_highest\_resolution(u), \\
-    & \forall s_{path} \in stochastic\_paths(t)
-    \end{aligned}
-    ```
-    #end formulation
+See also
+[is\_reserve\_node](@ref),
+[upward\_reserve](@ref),
+[is\_non\_spinning](@ref),
+[unit\_capacity](@ref),
+[unit\_availability\_factor](@ref),
+[unit\_conv\_cap\_to\_flow](@ref),
+[start\_up\_limit](@ref),
+[shut\_down\_limit](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    @fetch unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_shut_down = m.ext[:spineopt].variables
+    @fetch (
+        unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_started_up, nonspin_units_shut_down
+    ) = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s, t=t, case=case, part=part) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t, t_next=t_next, case=case, part=part) => @constraint(
             m,
             expr_sum(
                 unit_flow[u, n, d, s, t_over] * overlap_duration(t_over, t)
@@ -123,19 +119,19 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
                     * units_shut_down[u, s, t_after]
                     * duration(t_after)
-                    for (u, s, t_after) in units_on_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_before_t(m; t_before=t)
-                    );
+                    for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_next);
                     init=0
                 )                
                 + expr_sum(
                     + _shutdown_margin(u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
-                    * nonspin_units_shut_down[u, n, s, t_over]
-                     * overlap_duration(t_over, t)
-                    for (u, n, s, t_over) in nonspin_units_shut_down_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
-                    );
+                    * _switch(
+                        d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
+                    )[u, n, s, t_over]
+                    * overlap_duration(t_over, t)
+                    for (u, n, s, t_over) in _switch(
+                        d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
+                    )(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                     init=0
                 )
             )
@@ -147,7 +143,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 init=0
             )
         )
-        for (u, ng, d, s, t, case, part) in constraint_unit_flow_capacity_indices(m)
+        for (u, ng, d, s, t, t_next, case, part) in constraint_unit_flow_capacity_indices(m)
     )
 end
 
@@ -173,17 +169,18 @@ end
 
 function constraint_unit_flow_capacity_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, case=case, part=part)
+        (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
         for (u, ng, d) in indices(unit_capacity)
         for t in t_highest_resolution(
             Iterators.flatten(
                 ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
             )
         )
+        for t_next in _t_next(m, u, t)
         for path in active_stochastic_paths(
             m,
             [
-                units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_before_t(m; t_before=t)]);
+                units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_next]);
                 unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t));
                 nonspin_units_shut_down_indices(m; unit=u, t=t_overlaps_t(m; t=t))
             ]
@@ -193,6 +190,18 @@ function constraint_unit_flow_capacity_indices(m::Model)
         for part in parts
     )
 end
+
+function _t_next(m, u, t)
+    t_next = unit_time_indices(m; unit=u, t=t_before_t(m; t_before=t))
+    if isempty(t_next)
+        # Nothing next, return a tuple with a dummy TimeSlice so things work,
+        # but essentially it will be as if there is nothing next indeed.
+        (TimeSlice(end_(t), end_(t)),)
+    else
+        (t for (u, t) in t_next)
+    end
+end
+
 
 """
     _unit_capacity_constraint_subpaths(path, u, t)

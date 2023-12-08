@@ -17,11 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connections_invested_transition!(m::Model)
+@doc raw"""
+[connections\_invested](@ref) represents the point-in-time decision to invest in a connection or not while
+[connections\_invested\_available](@ref) represents the invested-in connections that are available at a specific time.
+This constraint enforces the relationship between [connections\_invested](@ref), [connections\_invested\_available](@ref) and
+[connections\_decommissioned](@ref) in adjacent timeslices.
 
-Ensure consistency between the variables `connections_invested_available`, `connections_invested` and
-`connections_decommissioned`.
+```math
+\begin{aligned}
+& v^{connections\_invested\_available}_{(c,s,t)} - v^{connections\_invested}_{(c,s,t)}
++ v^{connections\_decommissioned}_{(c,s,t)} \\
+& = v^{connections\_invested\_available}_{(c,s,t-1)} \\
+& \forall c \in connection: p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_connections_invested_transition!(m::Model)
     @fetch connections_invested_available, connections_invested, connections_decommissioned = m.ext[:spineopt].variables

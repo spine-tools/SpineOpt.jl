@@ -1,5 +1,5 @@
 The [fix\_units\_on\_coefficient\_in\_in](@ref) parameter is an optional coefficient in the
-[unit input-input ratio constraint](@ref ratio_in_in) controlled by the [fix\_ratio\_in\_in\_unit\_flow](@ref) parameter.
+[unit input-input ratio constraint](@ref ratio_unit_flow) controlled by the [fix\_ratio\_in\_in\_unit\_flow](@ref) parameter.
 Essentially, it acts as a coefficient for the [units\_on](@ref) variable in the constraint,
 allowing for fixing the conversion ratio depending on the amount of online capacity.
 

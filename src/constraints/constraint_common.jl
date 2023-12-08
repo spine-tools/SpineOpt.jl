@@ -99,3 +99,12 @@ function _switch(d; from_node, to_node)
 end
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
+
+function _check_ptdf_duration(m, t, conns...)
+    durations = [ptdf_duration(connection=conn, _default=nothing) for conn in conns]
+    filter!(!isnothing, durations)
+    isempty(durations) && return true
+    duration = minimum(durations)
+    elapsed = end_(t) - start(current_window(m))
+    Dates.toms(duration - elapsed) >= 0
+end
