@@ -36,16 +36,21 @@ import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
 import SpineInterface: Parameter, parameter_value
 
+export SpineOptExt
 export run_spineopt
 export rerun_spineopt
 export run_spineopt_kernel!
 export prepare_spineopt
 export generate_temporal_structure!
 export roll_temporal_structure!
+export rewind_temporal_structure!
 export time_slice
 export t_before_t
 export t_in_t
 export t_overlaps_t
+export to_time_slice
+export current_window
+export generate_stochastic_structure!
 export active_stochastic_paths
 export output_value
 export collect_output_values
@@ -53,9 +58,10 @@ export write_report
 export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
-export SpineOptExt
 export master_problem_model
 export @fetch
+export @log
+export @timelog
 
 include("util/misc.jl")
 include("util/write_information_files.jl")
