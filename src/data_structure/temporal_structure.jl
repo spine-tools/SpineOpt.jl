@@ -105,16 +105,20 @@ function _generate_current_window!(m::Model)
     )
 end
 
-function _generate_window_count!(m::Model)
+function _generate_windows_and_window_count!(m::Model)
     instance = m.ext[:spineopt].instance
-    window_start = model_start(model=instance)
+    w_start = model_start(model=instance)
+    w_duration = _model_window_duration(instance)
+    w_end = w_start + w_duration
+    m.ext[:spineopt].temporal_structure[:windows] = windows = []
+    push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
     i = 1
     while true
         rf = roll_forward(model=instance, i=i, _strict=false)
-        if isnothing(rf) || rf == Minute(0) || window_start + rf >= model_end(model=instance)
-            break
-        end
-        window_start += rf
+        (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
+        w_start += rf
+        w_end += rf
+        push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
         i += 1
     end
     m.ext[:spineopt].temporal_structure[:window_count] = i
@@ -417,25 +421,6 @@ function _generate_representative_time_slice!(m::Model)
     end
 end
 
-function _generate_sp_windows!(m::Model)
-    instance = m.ext[:spineopt].instance
-    w_start = model_start(model=instance)
-    w_duration = _model_window_duration(instance)
-    w_end = w_start + w_duration
-    m.ext[:spineopt].temporal_structure[:sp_windows] = windows = []
-    push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
-    i = 1
-    while true
-        rf = roll_forward(model=instance, i=i, _strict=false)
-        rf in (nothing, Minute(0)) && break
-        w_end >= model_end(model=instance) && break
-        w_start += rf
-        w_end += rf
-        push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
-        i += 1
-    end
-end
-
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
 Used by `to_time_slice`.
@@ -474,7 +459,7 @@ Create the temporal structure for SpineOpt from the input database.
 """
 function generate_temporal_structure!(m::Model)
     _generate_current_window!(m)
-    _generate_window_count!(m)
+    _generate_windows_and_window_count!(m)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
@@ -488,7 +473,6 @@ Create the master problem temporal structure for SpineOpt benders.
 """
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window_and_time_slice!(m_mp)
-    _generate_sp_windows!(m_mp)
     _generate_output_time_slices!(m_mp)
     _generate_time_slice_relationships!(m_mp)
 end
@@ -520,10 +504,17 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     true
 end
 
-function refresh_temporal_structure!(m::Model)
+function rewind_temporal_structure!(m::Model)
     temp_struct = m.ext[:spineopt].temporal_structure
-    _refresh_time_slice_set!(temp_struct[:time_slice])
-    _refresh_time_slice_set!(temp_struct[:history_time_slice])
+    sp_roll_count = temp_struct[:window_count] - 1
+    if sp_roll_count > 0
+        roll_temporal_structure!(m, 1:sp_roll_count; rev=true)
+        _update_variable_names!(m)
+        _update_constraint_names!(m)
+    else
+        _refresh_time_slice_set!(temp_struct[:time_slice])
+        _refresh_time_slice_set!(temp_struct[:history_time_slice])
+    end
 end
 
 """

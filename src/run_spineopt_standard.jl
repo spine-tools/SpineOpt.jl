@@ -861,7 +861,7 @@ end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
     TimeSeries(
-        [ts for by_time_stamp in values(by_analysis_time_sorted) for ts in keys(by_time_stamp)],
+        [t for by_time_stamp in values(by_analysis_time_sorted) for t in keys(by_time_stamp)],
         [val for by_time_stamp in values(by_analysis_time_sorted) for val in values(by_time_stamp)],
         false,
         false;

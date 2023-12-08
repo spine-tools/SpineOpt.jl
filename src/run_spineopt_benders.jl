@@ -35,6 +35,7 @@ function rerun_spineopt_benders!(
     @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
+    m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
     sp_roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:sp_roll_count)
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
@@ -53,13 +54,7 @@ function rerun_spineopt_benders!(
         optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) back to the first window..." begin
-            if sp_roll_count > 0
-                roll_temporal_structure!(m, 1:sp_roll_count; rev=true)
-                _update_variable_names!(m)
-                _update_constraint_names!(m)
-            else
-                refresh_temporal_structure!(m)
-            end
+            rewind_temporal_structure!(m)
         end
         run_kernel(
             m;
