@@ -13,7 +13,11 @@ The ramping constraint limit refers to the maximum rate at which a power unit ca
 This tutorial is built on top of the Simple System. The main changes to that system are:
 
 - The demand at *electricity\_node* is a 3-hour time series instead of a unique value
-- The *power\_plant\_a* has ramp limit of 10% for both up and down
+- The *power\_plant\_a* has the following parameters:
+  - Ramp limit of 10% for both up and down
+  - Minimum operating point of 10% of its total capacity
+  - Startup capacity limit of 10% of its total capacity
+  - Shutdown capacity limit of 10% of its total capacity
 
 This tutorial includes a step-by-step guide to include the parameters to help analyze the results in SpineOpt and the ramping constraints concepts.
 
@@ -98,25 +102,24 @@ The image above shows the electricity flow results for both power plants. As exp
 
 ## Step 2 - Include the ramping limit
 
-Let's consider the input data where the *power\_plant\_a* has a ramping limit of *10%* in both directions (i.e., up and down), meaning that the change between two time steps can't be greater than *10MW* (since the plant 'a' has a unit capacity of *100MW*).
+Let's consider the input data where the *power\_plant\_a* has a ramping limit of *10%* in both directions (i.e., up and down), meaning that the change between two time steps can't be greater than *10MW* (since the plant 'a' has a unit capacity of *100MW*). The ramping constraints need the following parameters for their definition: minimum operating point, startup limit, and shutdown limit. For more details, please visit the mathematical formulation in the following [link](https://spine-tools.github.io/SpineOpt.jl/latest/mathematical_formulation/constraints_automatically_generated/#Ramping-constraints)
 
-### Adding the ramping limit
+### Adding the new parameters
 
 - In *Relationship tree*, expand the *unit\_\_to_node* class and select *power\_plant\_a | electricity\_node*.
 
-- In the *Relationship parameter* table, select the *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
+- In the *Relationship parameter* table:
+  - Select the *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
 
-- In the *Relationship parameter* table, select the *ramp\_down\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
+  - Select the *ramp\_down\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping down limit for *power\_plant\_a*.
+
+  - Select the *minimum\_operating\_point* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the minimum operating point for *power\_plant\_a*.
+
+  - Select the *start\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the startup capacity limit for *power\_plant\_a*.
+
+  - Select the *shut\_down\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the shutdown capacity limit for *power\_plant\_a*.
 
 ![image](figs_ramping/ramping_plant_a_ramp_limits.png)
-
-The current version of SpineOpt utilizes two additional parameters to limit the ramps during the start-up and the shutdown of the unit. Therefore, you must configure these parameters as follows:
-
-- In the *Relationship parameter* table, select the *max\_startup\_ramp* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
-
-- In the *Relationship parameter* table, select the *max\_shutdown\_ramp* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
-
-![image](figs_ramping/ramping_plant_a_ramp_limits_startup_shutdown.png)
 
 When you're ready, save/commit all changes to the database.
 
@@ -160,7 +163,7 @@ When you're ready, save/commit all changes to the database.
 
 ### Executing the workflow with ramp limits with initial conditions
 
-You know the drill! :wink:
+You know the drill! ;)
 
 ### Examining the results with ramp limits with initial conditions
 
