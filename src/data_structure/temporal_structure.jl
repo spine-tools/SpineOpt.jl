@@ -117,6 +117,7 @@ function _generate_windows_and_window_count!(m::Model)
         rf = roll_forward(model=instance, i=i, _strict=false)
         (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
         w_start += rf
+        w_start >= model_end(model=instance) && break
         w_end += rf
         push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
         i += 1
@@ -497,7 +498,10 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     rf in (nothing, Minute(0)) && return false
     rf = rev ? -rf : rf
     temp_struct = m.ext[:spineopt].temporal_structure
-    !rev && end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
+    if !rev
+        end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
+        start(temp_struct[:current_window]) + rf >= model_end(model=m.ext[:spineopt].instance) && return false
+    end
     roll!(temp_struct[:current_window], rf; refresh=false)
     _roll_time_slice_set!(temp_struct[:time_slice], rf)
     _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
