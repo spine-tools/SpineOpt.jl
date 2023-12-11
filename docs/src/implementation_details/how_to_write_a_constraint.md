@@ -93,11 +93,12 @@ constraint.
 In our case, we need to guarantee that the flow between a [unit](@ref) and a [node](@ref)
 is *never* higher than the [unit\_capacity](@ref). So it looks like we should be taking the *highest* resolution
 of the [unit\_flow](@ref) variable.
+
 But we also need to guarantee that the flow is lower than the [unit\_capacity](@ref) times the
 [shut\_down\_limit](@ref) if the [unit](@ref) is shutting down in the next period. How does that affect the
 resolution of the constraint? Is it still Ok to use the resolution of [unit\_flow](@ref)?
 What happens if [units\_on](@ref) has higher resolution than [unit\_flow](@ref)?
-Would we violate this part of the constraint in certain cases?
+Would we violate this last part of the constraint eventually?
 
 In doubt, something that could work is to take the highest resolution of all the individual resolutions
 involved. That should ensure that we don't miss any time-slice, but at the same time it might not be
@@ -107,18 +108,21 @@ Now, to answer the second question, how far in time do we need to look,
 we typically just need to check out our constraint expression.
 In our case, we need to look at the current time-slice, but also at the *next* time-slice to check if the
 unit is shutting down in that time-slice.
-So our 'temporal' indices will be tuples of (current time-slice, next time-slice).
+
+So in our case, the 'temporal' indices will be tuples of (current time-slice, next time-slice).
 
 #### Collect the 'stochastic' indices
 
 Primer on SpineOpt's stochastic framework (more details in the [Stochastic Framework](@ref) section).
 In SpineOpt, each [unit](@ref) and [node](@ref) has one (and only one) [stochastic\_structure](@ref) associated via
-[units\_on\_\_stochastic\_structure](@ref) and [node\_\_stochastic\_structure](@ref), respectively,
-which represents their 'stochastic dimension'. In other words, each [unit](@ref) and [node](@ref) is supposed to 'exist'
-within its [stochastic\_structure](@ref).
-Now, consider a directed acyclic graph (DAG) where the vertices are all the [stochastic\_scenario](@ref)s in the model, 
+[units\_on\_\_stochastic\_structure](@ref) and [node\_\_stochastic\_structure](@ref), respectively -
+which represents their 'stochastic dimension'.
+
+But what *is* a [stochastic\_structure](@ref)?
+To answer this question, let's consider a directed acyclic graph (DAG)
+where the vertices are all the [stochastic\_scenario](@ref)s in the model, 
 and the edges are given by the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships.
-Each [stochastic\_structure](@ref) essentially defines a *subset* of this DAG, including only those
+A [stochastic\_structure](@ref) is basically defining a *subset* of this DAG, including only those
 [stochastic\_scenario](@ref)s associated to it via [stochastic\_structure\_\_stochastic\_scenario](@ref),
 and where the point in time where each [stochastic\_scenario](@ref) gives way
 to their children is determined by the [stochastic\_scenario\_end](@ref) parameter.
@@ -141,13 +145,13 @@ Note that `scen2c` ends a bit earlier than `scen2a` and `scen2b` - just to make 
 interesting.
 
 So essentially, in a structure like the above, a given range of time may 'coexist' in many
-scenario branches, or 'paths' - as we like to call them in SpineOpt.
+scenario branches - or 'paths', as we like to call them in SpineOpt.
 For example, the interval `[15:00, 18:00]` exists in paths
 `scen2a -> scen3` and `scen2b -> scen3` - but not in `scen2c -> scen3`.
 
 Now, in the context of a SpineOpt constraint, we will have a [stochastic\_structure](@ref) like the above,
 given by the 'spatial' indices, and a range of time determined by the 'temporal' ones.
-So similarly as in the above example, we will find our range of time replicated in multiple paths.
+So we will find our range of time replicated in multiple paths.
 That means the constraint needs to be enforced in each of those paths, or, in other words,
 each of those paths has to be a different 'stochastic' index for our constraint.
 
@@ -165,7 +169,7 @@ you will need to somehow translate your constraint indices into that variable.
 The good news is for each variable in SpineOpt, we have a corresponding function that returns all the
 indices of that variable. The even better news is the same function also allows you to do some filtering
 on each dimension, so you can easily obtain all the indices matching a condition.
-For example, 'give me all the [unit\_flow](@ref) indices
+For example, you can tell to this function, 'give me all the [unit\_flow](@ref) indices
 where the [unit](@ref) is `u`, the [node](@ref) is a member of the node group `ng`,
 the time-slice is one of those *contained* in `t`, and
 the [stochastic\_scenario](@ref) is one of the stochastic path `s_path`'.
@@ -183,12 +187,12 @@ Hopefully all the above will become clearer with an example - so let's dive into
 ### The test system
 
 I said above that I liked to combine a theoretical approach with a more of a practical approach.
-I guess what I meant is I don't want to do too much thinking - I want to see the results of what I'm doing
-as I do it.
+I guess what I meant is I don't want to do too much thinking - I want to constantly validate my code
+against a meaningful example.
 
-So for this I need to come up with a test system that triggers the creation of the constraint,
-is complex enough so I don't miss any relevant cases, but not that complex that I'm unable to diagnose it.
-In our case, I believe something like the below could work:
+So let's try and define a test system that triggers the creation of our constraint,
+is complex enough so we don't miss any relevant cases, but not that complex that we're unable to diagnose it.
+Maybe something like the below:
 
 ```julia
 using Dates
@@ -258,12 +262,12 @@ Whoa, what's all that stuff!?
 Basically, what we're doing here is creating a SpineOpt [model](@ref) called `simple`, starting January first 2023
 at 00:00 and ending at 06:00. This `simple` [model](@ref) has three [temporal\_block](@ref)s,
 `1hourly`, `2hourly` and `3hourly`, with one-, two-, and three-hour resolution respectively;
-and `1hourly` ends at 09:00 (three hours later than the [model](@ref)).
+and `1hourly` ends at 09:00 (three hours later than the [model](@ref) - so it's like a look-ahead).
 It also has three [stochastic\_scenario](@ref)s,
 `realisation`, `forecast1` and `forecast2`, where the two latter are children of the former;
 and two [stochastic\_structure](@ref)s, `one_stage`,
 including only `realisation`, and `two_stage`, including all three of them and with `realisation` ending 6 hours
-after the model start.
+after the model starts.
 
 The [model](@ref) consists of two [node](@ref)s, `fuel` and `elec`, with a [unit](@ref) in between,
 `pwrplant`. The `fuel` [node](@ref) is modelled at three-hour resolution and one-stage stochastics;
@@ -284,8 +288,8 @@ the [shut\_down\_limit](@ref) is 0.2 for the `elec` [node](@ref) flows
 I guess it's about time we finally start writing our constraint.
 We will split our code in two functions:
 
-- A function that receives a SpineOpt model object `m` and returns an `Array` containing all the constraint indices.
-- A function that receives a SpineOpt model object `m` and adds the constraint to it.
+- A function that receives a JuMP `Model` object `m` and returns an `Array` containing all the constraint indices.
+- A function that receives a JuMP `Model` object `m` and adds the constraint to it.
 
 Let's start with dummy versions of these functions so we can appreciate the infrastructure:
 
@@ -359,16 +363,11 @@ function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
         for (u, n, d) in vcat(unit__from_node(), unit__to_node())
-        if unit_capacity(unit=u, node=n, direction=d) !== nothing
+        if unit_capacity(unit=u, node=n, direction=d) != nothing
     ]
 end
 ```
 That should work.
-
-!!! note
-    We use the `!==` operator to compare 'identity' rather than 'values'.
-    This is a Julia detail - maybe you're not that interested. Anyways, both `!==` and `!=` will work;
-    `!==` is just considered 'more correct'.
 
 So we have a function that returns the 'spatial' indices! We can still do a little better than that though.
 Turns out this kind of computation is so common, that we have a SpineInterface function that can be used as a shortcut,
