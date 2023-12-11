@@ -254,12 +254,13 @@ function run_spineopt_kernel!(
     output_suffix=(;),
     log_prefix="",
     handle_window_solved=(m, k) -> nothing,
+    handle_window_about_to_solve=(m, k) -> nothing,
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
     while true
-        m.ext[:spineopt].temporal_structure[:current_window_number] = k
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
+        handle_window_about_to_solve(m, k)
         optimize_model!(
             m; log_level=log_level, calculate_duals=calculate_duals, output_suffix=output_suffix
         ) || return false

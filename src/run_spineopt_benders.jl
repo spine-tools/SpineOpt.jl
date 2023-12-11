@@ -62,6 +62,7 @@ function rerun_spineopt_benders!(
             update_names=update_names,
             calculate_duals=true,
             log_prefix="Benders iteration $j - ",
+            handle_window_about_to_solve=_set_sp_solution!,
             handle_window_solved=process_subproblem_solution!,
         ) || break
         @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)

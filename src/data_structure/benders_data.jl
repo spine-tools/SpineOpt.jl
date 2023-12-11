@@ -76,47 +76,49 @@ end
 function process_subproblem_solution!(m, k)
     win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
     win_weight = win_weight !== nothing ? win_weight : 1.0
-    _save_sp_marginal_values!(m, win_weight)
-    _save_sp_objective_value!(m, win_weight)
-    _save_sp_unit_flow!(m)
-    _save_sp_solution!(m)
+    _save_sp_marginal_values!(m, k, win_weight)
+    _save_sp_objective_value!(m, k, win_weight)
+    _save_sp_unit_flow!(m, k)
+    _save_sp_solution!(m, k)
 end
 
-function _save_sp_marginal_values!(m, win_weight)
+function _save_sp_marginal_values!(m, k, win_weight)
     _wait_for_dual_solves(m)
-    _save_sp_marginal_values!(m, :bound_units_invested_available, :units_invested_available_mv, unit, win_weight)
+    _save_sp_marginal_values!(m, :bound_units_invested_available, :units_invested_available_mv, unit, k, win_weight)
     _save_sp_marginal_values!(
-        m, :bound_connections_invested_available, :connections_invested_available_mv, connection, win_weight
+        m, :bound_connections_invested_available, :connections_invested_available_mv, connection, k, win_weight
     )
-    _save_sp_marginal_values!(m, :bound_storages_invested_available, :storages_invested_available_mv, node, win_weight)
+    _save_sp_marginal_values!(
+        m, :bound_storages_invested_available, :storages_invested_available_mv, node, k, win_weight
+    )
 end
 
-function _is_last_window(m)
-    m.ext[:spineopt].temporal_structure[:current_window_number] == m.ext[:spineopt].temporal_structure[:window_count]
+function _is_last_window(m, k)
+    k == m.ext[:spineopt].temporal_structure[:window_count]
 end
 
-function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, win_weight)
-    values = Dict(
+function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, k, win_weight)
+    vals = Dict(
         k => win_weight * realize(v)
         for (k, v) in m.ext[:spineopt].values[var_name]
         if iscontained(k.t, current_window(m))
     )
-    if _is_last_window(m)
+    if _is_last_window(m, k)
         merge!(
-            values,
+            vals,
             Dict(
                 k => realize(v) for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= end_(current_window(m))
             )
         )
     end
-    pval_by_ent = _pval_by_entity(values)
+    pval_by_ent = _pval_by_entity(vals)
     pvals = Dict(only(ent) => Dict(param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function _save_sp_objective_value!(m, win_weight)
+function _save_sp_objective_value!(m, k, win_weight)
     increment = win_weight * sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
-    if _is_last_window(m)
+    if _is_last_window(m, k)
         increment += sum(values(m.ext[:spineopt].values[:total_costs_tail]); init=0)
     end
     total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + increment
@@ -125,7 +127,7 @@ function _save_sp_objective_value!(m, win_weight)
     )
 end
 
-function _save_sp_unit_flow!(m, tail=false)
+function _save_sp_unit_flow!(m, k)
     window_values = Dict(
         k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
     )
@@ -140,18 +142,16 @@ function _save_sp_unit_flow!(m, tail=false)
     add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
 
-function _save_sp_solution!(m)
-    cwn = m.ext[:spineopt].temporal_structure[:current_window_number]
-    m.ext[:spineopt].sp_values[cwn] = Dict(
+function _save_sp_solution!(m, k)
+    m.ext[:spineopt].sp_values[k] = Dict(
         name => copy(m.ext[:spineopt].values[name])
         for name in keys(m.ext[:spineopt].variables)
         if !occursin("invested", string(name))
     )
 end
 
-function _set_sp_solution!(m)
-    cwn = m.ext[:spineopt].temporal_structure[:current_window_number]
-    for (name, vals) in m.ext[:spineopt].sp_values[cwn]
+function _set_sp_solution!(m, k)
+    for (name, vals) in get(m.ext[:spineopt].sp_values, k, ())
         var = m.ext[:spineopt].variables[name]
         for (ind, val) in vals
             set_start_value(var[ind], val)
