@@ -52,6 +52,7 @@ function rerun_spineopt_benders!(
             undo_force_starting_investments!()
         end
         optimize_model!(m_mp; log_level=log_level) || break
+        print_model_and_solution(m_mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) back to the first window..." begin
             rewind_temporal_structure!(m)
@@ -151,7 +152,7 @@ end
 function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
-        (t=t,) => @constraint(m, sp_objective_upperbound[t] >= 0) for (t,) in sp_objective_upperbound_indices(m)
+        (window=w,) => @constraint(m, sp_objective_upperbound[w] >= 0) for (w,) in sp_objective_upperbound_indices(m)
     )
 end
 
@@ -167,7 +168,7 @@ function _set_mp_objective!(m::Model)
     @objective(
         m,
         Min,
-        + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
+        + expr_sum(sp_objective_upperbound[w] for (w,) in sp_objective_upperbound_indices(m); init=0)
         + investment_costs
     )
 end

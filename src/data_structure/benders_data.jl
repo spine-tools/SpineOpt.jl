@@ -18,46 +18,29 @@
 #############################################################################
 
 """
-    _pval_by_entity(vals)
+    _map_by_entity(vals)
 
 Take the given Dict, which should be a mapping from variable indices to their value,
-and return another Dict mapping entities to `ParameterValue`s.
+and return another Dict mapping entities to `Map`s.
 
 The keys in the result are the keys of the input, without the stochastic_scenario and the t (i.e., just the entity).
-The values are `ParameterValue{Map}`s mapping the `stochastic_scenario` of the variable key,
+The values are `Map`s mapping the `stochastic_scenario` of the variable key,
 to a `TimeSeries` mapping the `t` of the key, to the 'realized' variable value.
 """
-function _pval_by_entity(vals)
+function _map_by_entity(vals)
     by_ent = Dict()
     for (ind, val) in vals
         ent = _drop_key(ind, :stochastic_scenario, :t)
         by_s = get!(by_ent, ent, Dict())
         by_t = get!(by_s, ind.stochastic_scenario, Dict())
-        by_t[ind.t] = realize(val)
+        by_t[ind.t] = val
     end
     Dict(
-        ent => parameter_value(Map(collect(keys(by_s)), [_window_time_series(by_t) for by_t in values(by_s)]))
+        ent => Map(
+            collect(keys(by_s)), [TimeSeries(start.(keys(by_t)), realize.(values(by_t))) for by_t in values(by_s)]
+        )
         for (ent, by_s) in by_ent
     )
-end
-
-"""
-    _window_time_series(by_t)
-
-A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Float64`, with an explicit NaN at the end.
-The NaN is there because we want to merge marginal values from different windows of the Benders subproblem
-into one `TimeSeries`.
-
-Without the NaN, the last value of one window would apply until the next window, which wouldn't be correct
-if there were gaps between the windows (as in rolling representative periods Benders).
-With the NaN, the gap is correctly skipped in the Benders cuts.
-"""
-function _window_time_series(by_t)
-    time_slices, vals = collect(keys(by_t)), collect(values(by_t))
-    inds = start.(time_slices)
-    push!(inds, maximum(end_.(time_slices)))
-    push!(vals, NaN)
-    TimeSeries(inds, vals)
 end
 
 function process_master_problem_solution!(m_mp)
@@ -68,90 +51,85 @@ end
 
 function _save_mp_values!(m_mp, var_name, obj_cls)
     benders_param_name = Symbol(:internal_fix_, var_name)
-    pval_by_ent = _pval_by_entity(m_mp.ext[:spineopt].values[var_name])
-    pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
+    map_by_ent = _map_by_entity(m_mp.ext[:spineopt].values[var_name])
+    pvals = Dict(only(ent) => Dict(benders_param_name => parameter_value(val)) for (ent, val) in map_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function process_subproblem_solution!(m, k)
-    win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
-    win_weight = win_weight !== nothing ? win_weight : 1.0
-    _save_sp_marginal_values!(m, k, win_weight)
-    _save_sp_objective_value!(m, k, win_weight)
-    _save_sp_unit_flow!(m, k)
-    _save_sp_solution!(m, k)
+function _is_last_window(m, win_nb)
+    win_nb == m.ext[:spineopt].temporal_structure[:window_count]
 end
 
-function _save_sp_marginal_values!(m, k, win_weight)
+function process_subproblem_solution!(m, win_nb)
+    _save_sp_marginal_values!(m, win_nb)
+    _save_sp_objective_value!(m, win_nb)
+    _save_sp_unit_flow!(m)
+    _save_sp_solution!(m, win_nb)
+end
+
+function _save_sp_marginal_values!(m, win_nb)
     _wait_for_dual_solves(m)
-    _save_sp_marginal_values!(m, :bound_units_invested_available, :units_invested_available_mv, unit, k, win_weight)
+    _save_sp_marginal_values!(m, :bound_units_invested_available, :units_invested_available_mv, unit, win_nb)
     _save_sp_marginal_values!(
-        m, :bound_connections_invested_available, :connections_invested_available_mv, connection, k, win_weight
+        m, :bound_connections_invested_available, :connections_invested_available_mv, connection, win_nb
     )
-    _save_sp_marginal_values!(
-        m, :bound_storages_invested_available, :storages_invested_available_mv, node, k, win_weight
-    )
+    _save_sp_marginal_values!(m, :bound_storages_invested_available, :storages_invested_available_mv, node, win_nb)
 end
 
-function _is_last_window(m, k)
-    k == m.ext[:spineopt].temporal_structure[:window_count]
-end
-
-function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, k, win_weight)
+function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, win_nb)
     vals = Dict(
-        k => win_weight * realize(v)
+        k => realize(v)
         for (k, v) in m.ext[:spineopt].values[var_name]
-        if iscontained(k.t, current_window(m))
+        if _is_last_window(m, win_nb) || iscontained(k.t, current_window(m))
     )
-    if _is_last_window(m, k)
-        merge!(
-            vals,
-            Dict(
-                k => realize(v) for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= end_(current_window(m))
-            )
-        )
-    end
-    pval_by_ent = _pval_by_entity(vals)
-    pvals = Dict(only(ent) => Dict(param_name => pval) for (ent, pval) in pval_by_ent)
+    map_by_ent = _map_by_entity(vals)
+    at = start(current_window(m))
+    pvals = Dict(only(ent) => Dict(param_name => parameter_value(Map([at], [val]))) for (ent, val) in map_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function _save_sp_objective_value!(m, k, win_weight)
-    increment = win_weight * sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
-    if _is_last_window(m, k)
-        increment += sum(values(m.ext[:spineopt].values[:total_costs_tail]); init=0)
-    end
-    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + increment
+function _save_sp_objective_value!(m, win_nb)
+    cost_keys = [:total_costs]
+    _is_last_window(m, win_nb) && push!(cost_keys, :total_costs_tail)
+    total_costs = sum(sum(values(m.ext[:spineopt].values[:total_costs]); init=0) for k in cost_keys)
+    at = start(current_window(m))
+    total_sp_obj_val = Map([at], [total_costs])
     add_object_parameter_values!(
-        benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
+        benders_iteration,
+        Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)));
+        merge_values=true
     )
 end
 
-function _save_sp_unit_flow!(m, k)
+function _save_sp_unit_flow!(m)
     window_values = Dict(
         k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
     )
-    pval_by_ent = _pval_by_entity(window_values)
+    map_by_ent = _map_by_entity(window_values)
     pvals_to_node = Dict(
-        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:to_node)
+        ent => Dict(:sp_unit_flow => parameter_value(val))
+        for (ent, val) in map_by_ent
+        if ent.direction == direction(:to_node)
     )
     pvals_from_node = Dict(
-        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:from_node)
+        ent => Dict(:sp_unit_flow => parameter_value(val))
+        for (ent, val) in map_by_ent
+        if ent.direction == direction(:from_node)
     )
     add_relationship_parameter_values!(unit__to_node, pvals_to_node; merge_values=true)
     add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
 
-function _save_sp_solution!(m, k)
-    m.ext[:spineopt].sp_values[k] = Dict(
+function _save_sp_solution!(m, win_nb)
+    m.ext[:spineopt].sp_values[win_nb] = Dict(
         name => copy(m.ext[:spineopt].values[name])
         for name in keys(m.ext[:spineopt].variables)
         if !occursin("invested", string(name))
     )
 end
 
-function _set_sp_solution!(m, k)
-    for (name, vals) in get(m.ext[:spineopt].sp_values, k, ())
+function _set_sp_solution!(m, win_nb)
+    for (name, vals) in get(m.ext[:spineopt].sp_values, win_nb, ())
         var = m.ext[:spineopt].variables[name]
         for (ind, val) in vals
             set_start_value(var[ind], val)
@@ -161,7 +139,7 @@ end
 
 function save_mp_objective_bounds_and_gap!(m_mp)
     obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = objective_value(m_mp)
-    sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
+    sp_obj_val = sum(values(sp_objective_value_bi(benders_iteration=current_bi)); init=0)
     invest_costs = value(realize(total_costs(m_mp, anything; operations=false)))
     obj_ub = m_mp.ext[:spineopt].objective_upper_bound[] = sp_obj_val + invest_costs
     gap = (obj_ub == obj_lb) ? 0 : 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)

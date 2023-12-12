@@ -716,7 +716,7 @@ function generate_benders_structure()
     bi_name = :benders_iteration
     current_bi = Object(:bi_1, bi_name)
     benders_iteration = ObjectClass(
-        bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
+        bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(Map([], []))))
     )
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
     units_invested_available_mv = Parameter(:units_invested_available_mv, [unit])

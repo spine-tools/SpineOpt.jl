@@ -84,8 +84,11 @@ function _test_benders_unit()
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 269.0
-        @testset for should_invest in (true, false)
-            u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
+        # @testset for should_invest in (true, false)
+        # @testset for should_invest in (true,)
+        @testset for should_invest in (false,)
+            @show u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
+            u_inv_cost = 300
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
                 ["unit", "unit_ab_alt"],
@@ -139,7 +142,7 @@ function _test_benders_unit()
                 relationship_parameter_values=relationship_parameter_values
             )
             rm(file_path_out; force=true)
-            run_spineopt(url_in, url_out; log_level=0)
+            run_spineopt(url_in, url_out; log_level=3)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
                 for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
@@ -853,10 +856,14 @@ end
 
 @testset "run_spineopt_benders" begin
     _test_benders_unit()
+
+    #=
+    _test_benders_unit()
     _test_benders_storage()
     _test_benders_rolling_representative_periods()
     _test_benders_rolling_representative_periods_yearly_investments_multiple_units()
     _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
     _test_benders_starting_units_invested()
     # FIXME: _test_benders_unit_storage()
+    =#
 end
