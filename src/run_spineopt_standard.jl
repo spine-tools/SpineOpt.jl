@@ -921,7 +921,7 @@ function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
         var = m.ext[:spineopt].variables[name]
         # NOTE: only update names for the representative variables
         # This is achieved by using the indices function from the variable definition
-        for ind in m.ext[:spineopt].variables_definition[name][:indices](m)
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); history_time_slice(m)])
             _set_name(var[ind], _base_name(name, ind))
         end
     end
