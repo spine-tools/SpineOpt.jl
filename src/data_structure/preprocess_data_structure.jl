@@ -180,15 +180,8 @@ function generate_direction()
         connection__from_node__user_constraint => from_node,
         connection__to_node__user_constraint => to_node,        
     )
-    for cls in keys(directions_by_class)
-        push!(cls.object_class_names, :direction)
-    end
     for (cls, d) in directions_by_class
-        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
-        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
-        for (key, new_key) in key_map
-            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
-        end
+        add_dimension!(cls, :direction, d)
     end
     @eval begin
         direction = $direction

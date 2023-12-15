@@ -40,7 +40,9 @@ function rerun_spineopt_mga!(
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     run_kernel(m; log_level=log_level, update_names=update_names, output_suffix=_add_mga_iteration(mga_iteration_count))
     objective_value_mga = :objective_value_mga
-    model.parameter_values[m.ext[:spineopt].instance][objective_value_mga] = parameter_value(objective_value(m))
+    add_object_parameter_values!(
+        model, Dict(m.ext[:spineopt].instance => Dict(:objective_value_mga => parameter_value(objective_value(m))))
+    )
     @eval $(objective_value_mga) = $(Parameter(objective_value_mga, [model]))
     mga_iteration_count += 1
     add_mga_objective_constraint!(m)
