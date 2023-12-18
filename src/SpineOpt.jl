@@ -59,6 +59,7 @@ export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
 export master_problem_model
+export write_model_file
 export @fetch
 export @log
 export @timelog
