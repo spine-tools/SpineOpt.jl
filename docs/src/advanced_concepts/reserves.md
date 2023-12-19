@@ -39,7 +39,7 @@ The parameters indicate that the unit capacity is 100 (e.g., MW) and the shutdow
 
 Taking into account the constraint and the fact that the unit can provide upward reserve and generate electricity, the simplified version of the resulting constraint is a simplified manner:
 
- ``unit_flow_to_electricity + upwards_reserve \leq 100 \cdot units_on``
+ ``unit\_flow\_to\_electricity + upwards\_reserve \leq 100 \cdot units\_on``
 
 Here, we can see that the flow to the electricity node depends on the unit's capacity and the upward reserve provision of the unit.
 
@@ -49,8 +49,8 @@ We need to consider the following parameters for the [`minimum operating point`]
 
 * `minimum_operating_point`  : **0.25**
 
-This value means that the unit has a *25%* of its capacity as a minimum operating point (i.e., *25MW*). Therefore, the simplified version of the resulting constraint is:
+This value means that the unit has a *25%* of its capacity as a minimum operating point (i.e., 25MW). Therefore, the simplified version of the resulting constraint is:
 
- ``unit_flow_to_electricity - downward_reserve \geq 25 \cdot units_on``
+ ``unit\_flow\_to\_electricity - downward\_reserve \geq 25 \cdot units\_on``
 
 Here, the downward reserve limits the flow to the electricity node to ensure that the minimum operating point of the unit is fulfilled.
