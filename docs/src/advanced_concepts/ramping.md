@@ -75,7 +75,7 @@ Which now restricts the flow of the unit into that node to 15% of its capacity.
 So if you're using node groups for the sole purpose of constraining flow ramps, you should set the balance type of the group to `balance_type_none`.
 
 
-## Ramping with reserves
+## [Ramping with reserves](id ramping-reserves-illustrative-example)
 
 If a unit is set to provide reserves, then it should be able to provide that reserve within one [duration\_unit](@ref).
 For this reason, reserve provision must be accounted for within ramp constraints.
