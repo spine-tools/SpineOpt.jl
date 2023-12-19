@@ -35,7 +35,7 @@ Assuming the following parameters, we are considering a fully flexible unit taki
 * `shut_down_limit`: **1**
 * `start_up_limit` : **1**
 
-The parameters indicate that the unit capacity is 100 (e.g., MW) and the shutdown and startup limits are 1 p.u. This means that the unit can start up or shut down to its maximum capacity, making it a fully flexible unit.
+The parameters indicate that the unit capacity is 100 (e.g., 100 MW) and the shutdown and startup limits are 1 p.u. This means that the unit can start up or shut down to its maximum capacity, making it a fully flexible unit.
 
 Taking into account the constraint and the fact that the unit can provide upward reserve and generate electricity, the simplified version of the resulting constraint is a simplified manner:
 
@@ -49,7 +49,7 @@ We need to consider the following parameters for the [`minimum operating point`]
 
 * `minimum_operating_point`  : **0.25**
 
-This value means that the unit has a *25%* of its capacity as a minimum operating point (i.e., 25MW). Therefore, the simplified version of the resulting constraint is:
+This value means that the unit has a *25%* of its capacity as a minimum operating point (i.e., 25 MW). Therefore, the simplified version of the resulting constraint is:
 
  ``unit\_flow\_to\_electricity - downward\_reserve \geq 25 \cdot units\_on``
 
