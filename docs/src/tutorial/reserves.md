@@ -37,7 +37,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 - Right click on the *node* class, and select *Add object group* from the context menu. The *Add object group* dialog will pop up. In the *Group name* field write *upward\_reserve\_group* to refer to this group. Then, add as a members of the group the nodes *electricity\_node* and *upward\_reserve\_node*, as shown in the image below; then press *Ok*.
 
 !!! note
-In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *upward\_reserve\_group* will help to link the flow variables for electricity production and reserve procurement.
+    In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *upward\_reserve\_group* will help to link the flow variables for electricity production and reserve procurement.
 
 ![image](figs_reserves/reserves_tutorial_reserve_group.png)
 
@@ -80,7 +80,7 @@ In SpineOpt, groups of nodes allow the user to create constraints that involve v
 - In the *Relationship parameter* table (typically at the bottom-center), select the *unit\_capacity* parameter and the *Base* alternative, and enter the value *100* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_a*.
 
 !!! note
-The value is equal to the unit capacity defined for the electricity node. However, the value can be lower if the unit cannot provide reserves with its total capacity.
+    The value is equal to the unit capacity defined for the electricity node. However, the value can be lower if the unit cannot provide reserves with its total capacity.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_a_reserve_capacity.png)
 
