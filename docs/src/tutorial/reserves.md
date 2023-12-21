@@ -1,4 +1,4 @@
-# [Reserve definition tutorial](id reserves-tutorial)
+# [Reserve definition tutorial](@id reserves-tutorial)
 
 This tutorial provides a step-by-step guide to include reserve requirements in a simple energy system with Spine Toolbox for SpineOpt.
 
