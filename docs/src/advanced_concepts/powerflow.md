@@ -4,7 +4,11 @@ There are two main methodologies for directly including DC powerflow in unit com
 Here we discuss the method of using power transfer distribution factors (PTDF) for DC power flow and line outage distribution factors (lodf) for security constrained unit commitment.
 
 !!! warning
-    The calculations for investments using the PTDF method are only correct for one line. If there are more lines and those interact with each other, the results become increasingly more incorrect. On the other hand, investments using the angle based method work for multiple lines but this method is slower and does not take into account the N-1 rule.
+    The calculations for investments using the PTDF method do not consider the mutual effect of multiple simultaneous investments.
+    In other words, the results are (increasingly more) incorrect for (more) lines that interact with each other.
+    Yet, this method remains useful for choosing between multiple simultaneous investments that are assumed non-interacting and/or multiple mutually exclusive investments.
+    
+    On the other hand, investments using the angle based method work for multiple lines but this method is slower and does not take into account the N-1 rule.
 
 ## [Key concepts](@id key-concepts-advanced-ptdf-DC)
 1. **ptdf**: The power transfer distribution factors are a property of the network reactances and their derivation may be found [here](https://www.worldcat.org/title/power-generation-operation-and-control/oclc/886509477). `ptdf(n, c)` represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of `ptdf(n, c)*net_injection(c)`. The advantage of this method is that it introduces no additional variables into the problem and instead, introduces only one constraint for each connection whose flow we are interested in monitoring.
