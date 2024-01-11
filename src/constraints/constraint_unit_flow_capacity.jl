@@ -217,6 +217,9 @@ function _unit_capacity_constraint_subpaths(path, u, t0, t)
     t_flow_duration = end_(t) - start(t)
     for s in path
         mut = min_up_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t, _default=nothing)
+        if mut isa Month || mut isa Year
+            mut = align_variant_duration_unit(mut, t)
+        end
         mut_gt_dur = mut === nothing || mut > t_flow_duration
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
             # Outcome change, store current subpath and start a new one

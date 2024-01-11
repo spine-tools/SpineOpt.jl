@@ -212,3 +212,28 @@ window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
 
 window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
 window_sum(x::Number, window; init=0) = x + init
+
+
+"""
+    align_variant_duration_unit(_duration::Union{Month, Year}, t::TimeSlice)
+
+When a duration value `_duration` is of the unit `Month` or `Year`, 
+this function turns the duration into `Day`s counting from the start DateTime of the given `t`.
+
+# Examples
+    _duration = Month(2)
+    t = TimeSlice(DateTime(2018, 2, 1), DateTime(2018, 3, 31))
+    if _duration isa Month || _duration isa Year
+        new_duration = align_variant_duration_unit(_duration, t)
+    end
+--> new_duration: 59 days == Day(59)
+--> new_duration == Day(59): true
+
+This convertion is needed for comparing a duration of `Month` or `Year` with 
+one of `Day`, `Hour` or finer units, which is not allowed because the former units are variant.
+"""
+function align_variant_duration_unit(_duration::Union{Month, Year}, t::TimeSlice)
+    #TODO: the value of `_duration` is assumed to be an integer. A warning should be given.
+    #TODO: new format to record durations would be benefitial, e.g. 3M2d1h.
+    return Day(start(t) + _duration - start(t))
+end
