@@ -215,25 +215,45 @@ window_sum(x::Number, window; init=0) = x + init
 
 
 """
-    align_variant_duration_unit(_duration::Union{Month, Year}, t::TimeSlice)
+    align_variant_duration_unit(_duration::Union{Month, Year}, dt::DateTime; ahead::Bool=true)
 
-When a duration value `_duration` is of the unit `Month` or `Year`, 
-this function turns the duration into `Day`s counting from the start DateTime of the given `t`.
+This function aligns the unit of a duration value (in `Month` or `Year`) to `Day` counting from a DateTime `dt`.
+
+# Arguments
+- _duration: a give duration value of the unit `Month` or `Year`, e.g. Month(2), Year(3).
+- dt: a DateTime object as the reference point.
+- ahead=true: a boolean value indicating whether the duration counts ahead of or behind the reference point.
+
+# Returns
+- a new positive duration value of the unit `Day` counting from the reference point.
 
 # Examples
-    _duration = Month(2)
-    t = TimeSlice(DateTime(2018, 2, 1), DateTime(2018, 3, 31))
-    if _duration isa Month || _duration isa Year
-        new_duration = align_variant_duration_unit(_duration, t)
-    end
---> new_duration: 59 days == Day(59)
---> new_duration == Day(59): true
+```julia
+    
+_duration1 = Month(1); _duration2 = Day(32)
+dt1 = DateTime(2024, 2, 1); dt2 = DateTime(2024, 4, 1)
+
+new_duration1 = align_variant_duration_unit(_duration1, dt1)
+new_duration2 = align_variant_duration_unit(_duration1, dt2)
+new_duration3 = align_variant_duration_unit(_duration1, dt1; ahead=false)
+new_duration4 = align_variant_duration_unit(_duration2, dt1)
+    
+```
+--> new_duration1: 29 days; new_duration1 == Day(29): true
+--> new_duration2: 30 days
+--> new_duration3: 31 days
+--> new_duration4: 32 days
 
 This convertion is needed for comparing a duration of `Month` or `Year` with 
 one of `Day`, `Hour` or finer units, which is not allowed because the former units are variant.
 """
-function align_variant_duration_unit(_duration::Union{Month, Year}, t::TimeSlice)
+function align_variant_duration_unit(_duration::Period, dt::DateTime; ahead=true)
     #TODO: the value of `_duration` is assumed to be an integer. A warning should be given.
-    #TODO: new format to record durations would be benefitial, e.g. 3M2d1h.
-    return Day(start(t) + _duration - start(t))
+    #TODO: new format to record durations would be benefitial, e.g. 3M2d1h,
+    #      cf. Dates.CompoundPeriod in the periods.jl of Julia standard library.
+    if _duration isa Month || _duration isa Year
+        ahead ? Day((dt + _duration) - dt) : Day(dt - (dt - _duration))
+    else
+        _duration
+    end
 end
