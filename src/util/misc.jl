@@ -215,17 +215,19 @@ window_sum(x::Number, window; init=0) = x + init
 
 
 """
-    align_variant_duration_unit(_duration::Union{Month, Year}, dt::DateTime; ahead::Bool=true)
+    align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead::Bool=true)
 
-This function aligns the unit of a duration value (in `Month` or `Year`) to `Day` counting from a DateTime `dt`.
+Aligns a duration of the type `Month` or `Year` to `Day` counting from a `DateTime` input `dt`.
 
 # Arguments
-- _duration: a give duration value of the unit `Month` or `Year`, e.g. Month(2), Year(3).
-- dt: a DateTime object as the reference point.
+- _duration: an integeral duration of the abstract type `Period` defined in Dates.jl,
+             e.g. `Hour`, `Day`, `Month` that can be obtained by `Dates.Hour(2)` and so forth.
+             It can also catch any duration-like parameter of Spine, including `Nothing`. 
+- dt: a DateTime object as the reference.
 - ahead=true: a boolean value indicating whether the duration counts ahead of or behind the reference point.
 
 # Returns
-- a new positive duration value of the unit `Day` counting from the reference point.
+- a new positive duration of the type `Day` that is comparable with constant duration types such as `Hour`.
 
 # Examples
 ```julia
@@ -233,10 +235,10 @@ This function aligns the unit of a duration value (in `Month` or `Year`) to `Day
 _duration1 = Month(1); _duration2 = Day(32)
 dt1 = DateTime(2024, 2, 1); dt2 = DateTime(2024, 4, 1)
 
-new_duration1 = align_variant_duration_unit(_duration1, dt1)
-new_duration2 = align_variant_duration_unit(_duration1, dt2)
-new_duration3 = align_variant_duration_unit(_duration1, dt1; ahead=false)
-new_duration4 = align_variant_duration_unit(_duration2, dt1)
+new_duration1 = align_variable_duration_unit(_duration1, dt1)
+new_duration2 = align_variable_duration_unit(_duration1, dt2)
+new_duration3 = align_variable_duration_unit(_duration1, dt1; ahead=false)
+new_duration4 = align_variable_duration_unit(_duration2, dt1)
     
 ```
 --> new_duration1: 29 days; new_duration1 == Day(29): true
@@ -244,10 +246,10 @@ new_duration4 = align_variant_duration_unit(_duration2, dt1)
 --> new_duration3: 31 days
 --> new_duration4: 32 days
 
-This convertion is needed for comparing a duration of `Month` or `Year` with 
-one of `Day`, `Hour` or finer units, which is not allowed because the former units are variant.
+This convertion is needed for comparing a duration of the type `Month` or `Year` with 
+one of `Day`, `Hour` or the finer units, which is not allowed because the former are variable duration types.
 """
-function align_variant_duration_unit(_duration::Period, dt::DateTime; ahead=true)
+function align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead=true)
     #TODO: the value of `_duration` is assumed to be an integer. A warning should be given.
     #TODO: new format to record durations would be benefitial, e.g. 3M2d1h,
     #      cf. Dates.CompoundPeriod in the periods.jl of Julia standard library.
