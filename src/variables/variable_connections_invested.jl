@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -61,14 +61,9 @@ function add_variable_connections_invested!(m::Model)
         m,
         :connections_invested,
         connections_invested_available_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_connections_invested(
-            connection=x.connection,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        int=connections_invested_int,
+        lb=Constant(0),
+        fix_value=fix_connections_invested,
+        initial_value=initial_connections_invested,
+        int=connections_invested_available_int,
     )
 end

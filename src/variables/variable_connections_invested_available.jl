@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -31,40 +31,27 @@ function connections_invested_available_indices(
     temporal_block=anything,
 )
     connection = members(connection)
-    unique([
-        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in connection__investment_temporal_block(
-            connection=connection,
+    unique(
+        (connection=conn, stochastic_scenario=s, t=t)
+        for (conn, tb) in connection__investment_temporal_block(
+            connection=intersect(indices(candidate_connections), connection),
             temporal_block=temporal_block,
-            _compact=false,
-        ) for (conn, s, t) in connection_investment_stochastic_time_indices(
-            m;
-            connection=conn,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            _compact=false
         )
-    ])
+        for (conn, s, t) in connection_investment_stochastic_time_indices(
+            m; connection=conn, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        )
+    )
 end
 
 """
-    fix_initial_connections_invested_available()
+    connections_invested_available_int(x)
 
-If fix_connections_invested_available is not defined in the timeslice preceding the first rolling window
-then force it to be zero so that the model doesn't get free investments and the user isn't forced
-to consider this.
+Check if conneciton investment variable type is defined to be an integer.
 """
-function fix_initial_connections_invested_available(m)
-    for conn in connection__investment_temporal_block(temporal_block=anything)
-        t = history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn))
-        if fix_connections_invested_available(connection=conn, t=last(t), _strict=false) === nothing
-            connection.parameter_values[conn][:fix_connections_invested_available] = parameter_value(
-                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
-            )
-            connection.parameter_values[conn][:starting_fix_connections_invested_available] = parameter_value(
-                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
-            )
-        end
-    end
+
+function connections_invested_available_int(x)
+    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
 end
 
 """
@@ -73,20 +60,15 @@ end
 Add `connections_invested_available` variables to model `m`.
 """
 function add_variable_connections_invested_available!(m::Model)
-    # fix connections_invested_available to zero in the timestep before the investment window to prevent "free" investments
-    fix_initial_connections_invested_available(m)
     t0 = _analysis_time(m)
     add_variable!(
         m,
         :connections_invested_available,
         connections_invested_available_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_connections_invested_available(
-            connection=x.connection,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        lb=Constant(0),
+        int=connections_invested_available_int,
+        fix_value=fix_connections_invested_available,
+        internal_fix_value=internal_fix_connections_invested_available,
+        initial_value=initial_connections_invested_available
     )
 end

@@ -6,53 +6,54 @@ SpineOpt offers numerous ways to optimise investment decisions energy system mod
 
 **Investment Decisions**  
 These are the investment decisions that SpineOpt currently supports. At a high level, this means that the activity of the entities in question is controlled by an investment decision variable. The current implementation supports investments in :
-   - **[unit](@ref)**:
+   - **[unit](@ref)**
    - **[connection](@ref)**
    - **Storage** - Note: while the above investment decisions correspond to an object class (i.e.) an investment in a [unit](@ref) or a [connection](@ref), **Storages** are not an object class in themselves and are rather a property of a [node](@ref). As such, a storage investment controls whether a particular node has a state variable or not.  
 
 **Investment Variable Types**  
-In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multuplied by the investment variable which may either be continuous, binary or integer. This is determined, for units, by setting the [unit\_investment\_variable\_type](@ref) parameter accordingly. Similary, for connections and node storages where the [connection\_investment\_variable\_type](@ref) and [storage\_investment\_variable\_type](@ref) are specified.
+In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multiplied by the investment variable which may either be continuous, binary or integer. This is determined, for units, by setting the [unit\_investment\_variable\_type](@ref) parameter accordingly. Similary, for connections and node storages the [connection\_investment\_variable\_type](@ref) and [storage\_investment\_variable\_type](@ref) are specified.
 
 **Identiying Investment Candidate Units, Connections and Storages**  
-The parameter [candidate\_units](@ref) represents the number of units of this type that may be invested-in. [candidate\_units](@ref) determines the upper bound of the investment variable and setting this to a value greater than 0 identifies the unit as an investment candidate unit in the optimisation. If the [unit\_investment\_variable\_type](@ref) is set to `:variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [unit\_investment\_variable\_type](@ref) is `:variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be intpreted as the capacity of the unit rather than the number of units with [candidate\_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [unit\_investment\_variable\_type](@ref) set to `:variable_type_integer` with [candidate\_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
+The parameter [candidate\_units](@ref) represents the number of units of this type that may be invested in. [candidate\_units](@ref) determines the upper bound of the investment variable and setting this to a value greater than 0 identifies the unit as an investment candidate unit in the optimisation. If the [unit\_investment\_variable\_type](@ref) is set to `:variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [unit\_investment\_variable\_type](@ref) is `:variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be interpreted as the capacity of the unit rather than the number of units with [candidate\_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [unit\_investment\_variable\_type](@ref) set to `:variable_type_integer` with [candidate\_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
    - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit\_capacity](@ref) or [connection\_capacity](@ref) for connections or [node\_state\_cap](@ref) for storages.
    - [candidate\_units](@ref) sets the upper bound on the investment variable, [candidate\_connections](@ref) for connections and [candidate\_storages](@ref) for storages
-   - [unit\_investment\_variable\_type](@ref) determines wheter the investment variable is integer, binary or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
+   - [unit\_investment\_variable\_type](@ref) determines whether the investment variable is integer, binary or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
 
 **Investment Costs**  
-Investment costs are specified by setting the appropriate `*_investment\_cost` parameter. The investment cost for [unit](@ref)s are specified by setting the [unit](@ref) [unit\_investment\_cost](@ref) parameter. This is currently interpreted as the full cost over the investment period for the unit. See the section below on **investment temporal structure** for setting the investment period. If the investment period is 1 year, then the corresponding [unit\_investment\_cost](@ref) is the annualised investment cost. For connections and storages, the investment cost parameters are [connection\_investment\_cost](@ref) and [storage\_investment\_cost](@ref), respectively.
+Investment costs are specified by setting the appropriate `*_investment\_cost` parameter. The investment cost for [unit](@ref)s are specified by setting the [unit\_investment\_cost](@ref) parameter. This is currently interpreted as the full cost over the investment period for the unit. See the section below on **investment temporal structure** for setting the investment period. If the investment period is 1 year, then the corresponding [unit\_investment\_cost](@ref) is the annualised investment cost. For connections and storages, the investment cost parameters are [connection\_investment\_cost](@ref) and [storage\_investment\_cost](@ref), respectively.
 
 **Temporal and Stochastic Structure of Investment Decisions**  
-SpineOpt's flexible stochastic and temporal structure extend to investments where individual investment decisions can have their own temporal and stochastic structure indepedent of other investment decisions and other model variables. A global temporal resolution for all investment decisions can be defined by specifying the relationship [model\_\_default\_investment\_temporal\_block](@ref). If a specific temporal resolution is required for specific investment decisions, then one can specify the following relationships:
-    - [unit\_\_investment\_temporal\_block](@ref) for [unit](@ref)
-    - [connection\_\_investment\_temporal\_block](@ref) for [connection](@ref)
-    - [node\_\_investment\_temporal\_block](@ref) for storages.  
+SpineOpt's flexible stochastic and temporal structure extend to investments where individual investment decisions can have their own temporal and stochastic structure independent of other investment decisions and other model variables. A global temporal resolution for all investment decisions can be defined by specifying the relationship [model\_\_default\_investment\_temporal\_block](@ref). If a specific temporal resolution is required for specific investment decisions, then one can specify the following relationships:
+   - [unit\_\_investment\_temporal\_block](@ref) for [unit](@ref)s,
+   - [connection\_\_investment\_temporal\_block](@ref) for [connection](@ref)s, and
+   - [node\_\_investment\_temporal\_block](@ref) for storages.  
+    
 Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_temporal\_block](@ref).
 
 Similarly, a global stochastic structure can be defined for all investment decisions by specifying the relationship [model\_\_default\_investment\_stochastic\_structure](@ref). If a specific stochastic structure is required for specific investment decisions, then one can specifying the following relationships:
-    - [unit\_\_investment\_stochastic\_structure](@ref) for [unit](@ref)
-    - [connection\_\_investment\_stochastic\_structure](@ref) for [connection](@ref)
-    - [node\_\_investment\_stochastic\_structure](@ref) for storages
+   - [unit\_\_investment\_stochastic\_structure](@ref) for [unit](@ref)s,
+   - [connection\_\_investment\_stochastic\_structure](@ref) for [connection](@ref)s, and
+   - [node\_\_investment\_stochastic\_structure](@ref) for storages.
 Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_stochastic\_structure](@ref).
 
 ## Creating an Investment Candidate Unit Example  
 If we have model that is not currently set up for investments and we wish to create an investment candidate unit, we can take the following steps.
  - Create the unit object with all the relationships and parameters necessary to describe its function.
- - Ensure that the [number\_of\_units](@ref) parameter is set to zero so that the unit is unavailable unless invested-in
- - Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested-in by the model.
+ - Ensure that the [number\_of\_units](@ref) parameter is set to zero so that the unit is unavailable unless invested in.
+ - Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
  - Set the [unit\_investment\_variable\_type](@ref) to `unit_investment_variable_type_integer` to specify that this is a discrete [unit](@ref) investment decision.
- - Specify the [unit\_investment\_lifetime](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested-in.
- - Specify the investment period for this [unit](@ref)'s investment decision in one of two ways
+ - Specify the [unit\_investment\_lifetime](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
+ - Specify the investment period for this [unit](@ref)'s investment decision in one of two ways:
    - Define a default investment period for all investment decisions in the model as follows:
      - create a [temporal\_block](@ref) with the appropriate [resolution](@ref) (say 1 year)
-     - link this to your [model]{@ref} object by creating the appropriate [model\_\_temporal\_block](@ref) relationship
+     - link this to your [model](@ref) object by creating the appropriate [model\_\_temporal\_block](@ref) relationship
      - set it as the default investment temporal block by setting [model\_\_default\_investment\_temporal\_block](@ref)
    - Or, define an investment period unique to this investment decision as follows:
      - creating a [temporal\_block](@ref) with the appropriate [resolution](@ref) (say 1 year)
      - link this to your model object by creating the appropriate [model\_\_temporal_block](@ref) relationship
      - specify this as the investment period for your [unit](@ref)'s investment decision by setting the appropriate [unit\_\_investment\_temporal\_block](@ref) relationship
 - Similarly to the above, define the stochastic structure for the [unit](@ref)'s investment decision by specifying either [model\_\_default\_investment\_stochastic\_structure](@ref) or [unit\_\_investment\_stochastic\_structure](@ref)
-- Specifying your [unit](@ref)'s investment cost by setting the [unit\_investment\_cost](@ref) parameter. Since we have defined the investment period above as 1 year, this is therefore the [unit](@ref)'s annualised investment cost.
+- Specify your [unit](@ref)'s investment cost by setting the [unit\_investment\_cost](@ref) parameter. Since we have defined the investment period above as 1 year, this is therefore the [unit](@ref)'s annualised investment cost.
 
 ## Model Reference  
 

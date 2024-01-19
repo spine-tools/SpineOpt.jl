@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,52 +17,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_state_transition!(m::Model)
+@doc raw"""
+The units on status is constrained by shutting down and starting up actions. This transition is defined as follows:
 
-Ensure consistency between the variables `units_on`, `units_started_up` and `units_shut_down`.
+```math
+\begin{aligned}
+& v^{units\_on}_{(u,s,t)} - v^{units\_started\_up}_{(u,s,t)} + v^{units\_shut\_down}_{(u,s,t)} = v^{units\_on}_{(u,s,t-1)} \\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_unit_state_transition!(m::Model)
-    @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
+    @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
     # TODO: add support for units that start_up over multiple timesteps?
     # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
-    m.ext[:constraints][:unit_state_transition] = Dict(
+    m.ext[:spineopt].constraints[:unit_state_transition] = Dict(
         (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
                 + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
                 for (u, s, t_after) in units_on_indices(
-                    m;
-                    unit=u,
-                    stochastic_scenario=s,
-                    t=t_after,
-                    temporal_block=anything,
+                    m; unit=u, stochastic_scenario=s, t=t_after, temporal_block=anything,
                 );
                 init=0,
             )
             ==
             expr_sum(
-                + units_on[u, s, t_before] for (u, s, t_before) in units_on_indices(
-                    m;
-                    unit=u,
-                    stochastic_scenario=s,
-                    t=t_before,
-                    temporal_block=anything,
+                + units_on[u, s, t_before]
+                for (u, s, t_before) in units_on_indices(
+                    m; unit=u, stochastic_scenario=s, t=t_before, temporal_block=anything,
                 );
                 init=0,
             )
-        ) for (u, s, t_before, t_after) in constraint_unit_state_transition_indices(m)
+        )
+        for (u, s, t_before, t_after) in constraint_unit_state_transition_indices(m)
     )
 end
 
 function constraint_unit_state_transition_indices(m::Model)
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=unit()) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
-            ),
+        for (u, t_before, t_after) in unit_dynamic_time_indices(m)
+        for path in active_stochastic_paths(
+            m, units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
         )
     )
 end

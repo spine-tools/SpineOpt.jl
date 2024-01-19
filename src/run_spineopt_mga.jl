@@ -1,174 +1,105 @@
-function rerun_spineopt!(
-    ::Nothing,
-    ::Nothing,
-    m_mga::Model,
-    url_out::Union{String,Nothing};
-    add_user_variables=m_mga -> nothing,
-    add_constraints=m_mga -> nothing,
-    update_constraints=m_mga -> nothing,
-    log_level=3,
-    optimize=true,
-    update_names=false,
-    alternative_objective=m_mga -> nothing,
+#############################################################################
+# Copyright (C) 2017 - 2023  Spine Project
+#
+# This file is part of SpineOpt.
+#
+# SpineOpt is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# SpineOpt is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#############################################################################
+
+function rerun_spineopt_mga!(
+    m,
+    url_out;
+    add_user_variables,
+    add_constraints,
+    log_level,
+    optimize,
+    update_names,
+    alternative,
+    write_as_roll,
+    resume_file_path,
+    run_kernel,
 )
     outputs = Dict()
-    mga_iterations = 0
-    max_mga_iteration = max_mga_iterations(model=m_mga.ext[:instance])
-    name_mga_it = :mga_iteration
-    mga_iteration = SpineOpt.ObjectClass(name_mga_it, [])
-    @eval begin
-        mga_iteration = $mga_iteration
-    end
-    mga_weight_alpha = SpineOpt.ObjectClass(:mga_weight_alpha, [])
-    @eval begin
-        mga_weight_alpha  = $mga_weight_alpha
-    end
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m_mga)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m_mga)
-    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m_mga)
-    init_model!(m_mga; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level,alternative_objective=alternative_objective)
-    init_outputs!(m_mga)
-    mga_alpha, mga_alpha_steps = define_mga_alpha!()
-    k = 1
-    while optimize
-        @log log_level 1 "Window $k: $(current_window(m_mga))"
-        optimize_model!(
-            m_mga;
-            log_level=log_level,
-            iterations=mga_iterations,
-            mga_alpha=mga_alpha,
-        ) || break
-        for k in keys(m_mga.ext[:outputs])
-            try
-                m_mga.ext[:outputs][k] = _drop_key(m_mga.ext[:outputs][k], :mga_weight_alpha)
-            catch
-            end
-        end
-        @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m_mga)
-        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m_mga)
-            @timelog log_level 2 " ... Rolling complete\n" break
-        end
-        update_model!(m_mga; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
-        k += 1
-    end
-    @timelog log_level 2 "Writing report..." write_report(m_mga, url_out)
-    m_mga
-    write_model_file(m_mga, file_name = "first_mga_iteration")
-    name_mga_obj = :objective_value_mga
-    if termination_status(m_mga) == MOI.INFEASIBLE
-        m_mga
-    else
-        model.parameter_values[m_mga.ext[:instance]][name_mga_obj] = parameter_value(objective_value(m_mga))
-        @eval begin
-            $(name_mga_obj) = $(Parameter(name_mga_obj, [model]))
-        end
-        mga_iterations += 1
-        x = all_variables(m_mga)
-        x_solution = value.(x)
-        set_start_value.(x, x_solution)
-        @timelog log_level 2 "Setting mga slack-objective constraint..." add_mga_objective_constraint!(m_mga)
-        @timelog log_level 2 "Setting mga objective..." set_mga_objective!(m_mga)
-        if !isnothing(mga_alpha_steps)
-            for mga_alpha = 0.5:mga_alpha_steps:1
-                    new_mga_alpha = Symbol(string("mga_alpha_", mga_alpha))
-                    if mga_weight_alpha(new_mga_alpha) == nothing
-                        new_mga_alpha_i = Object(new_mga_alpha)
-                        add_object!(mga_weight_alpha,  new_mga_alpha_i)
-                    else
-                        new_mga_alpha_i = mga_weight_alpha(new_mga_alpha)
-                    end
-                    while mga_iterations <= max_mga_iteration
-                        println("mga_alpha $(mga_alpha) and mga_iteration $(mga_iterations) at time $(now())")
-                        mga_it_obj = mga_iteration(Symbol("mga_it_$(mga_iterations-1)"))
-                        @timelog log_level 2 "Adding mga differences of $(mga_it_obj)..." set_objective_mga_iteration!(m_mga;iteration=mga_it_obj, mga_alpha=mga_alpha)
-                        @timelog log_level 2 "Cleaning output dictionary to reduce memory after iteration $(mga_iterations)..." GC.gc()
-                        @timelog log_level 2 "Solving mga iteration $(mga_it_obj)..." optimize_model!(m_mga;
-                                    log_level=log_level,
-                                    iterations=mga_iterations,
-                                    )  || break
-                        @timelog log_level 2 "Saving mga objective of $(mga_it_obj)..." save_mga_objective_values!(m_mga)
-                        write_model_file(m_mga, file_name = "mga_iteration_$(mga_iterations)__mga_alpha_$(mga_alpha)")
-                        ### saving results
-                        for k in keys(m_mga.ext[:outputs])
-                                m_mga.ext[:outputs][k] = _add_key(m_mga.ext[:outputs][k], :mga_weight_alpha, mga_weight_alpha(Symbol("mga_alpha_$(mga_alpha)")))
-                        end
-                        @timelog log_level 2 "Writing mga report of  mga alpha $(mga_alpha)..." write_report(m_mga, url_out)
-                        for k in keys(m_mga.ext[:outputs])
-                            m_mga.ext[:outputs][k] = _drop_key(m_mga.ext[:outputs][k], :mga_weight_alpha)
-                        end
-                        ## for each subsequent run:
-                        mga_iterations += 1
-                    end
-                    ## clean-up for next alpha
-                    for k in keys(m_mga.ext[:outputs])
-                        try
-                            m_mga.ext[:outputs][k] = filter(x -> x[1].mga_iteration == mga_iteration(:mga_it_0),m_mga.ext[:outputs][k])
-                       catch
-                       end
-                    end
-                    GC.gc()
-                    for cons in
-                    [:mga_objective_ub,
-                    :mga_diff_ub1,
-                    :mga_diff_ub2,
-                    :mga_diff_lb1,
-                    :mga_diff_lb2]
-                        for k in keys(m_mga.ext[:constraints][cons])
-                            delete(m_mga,m_mga.ext[:constraints][cons][k])
-                        end
-                    end
-                    for vars in  [:mga_aux_diff,
-                    :mga_aux_binary]
-                        for k in keys(m_mga.ext[:variables][vars])
-                            delete(m_mga,m_mga.ext[:variables][vars][k])
-                        end
-                    end
-                    GC.gc()
-                    mga_iterations = 1
-            end
+    mga_iteration_count = 0
+    max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
+    mga_iteration = ObjectClass(:mga_iteration, [])
+    @eval mga_iteration = $mga_iteration
+    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
+    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
+    run_kernel(m; log_level=log_level, update_names=update_names, output_suffix=_add_mga_iteration(mga_iteration_count))
+    objective_value_mga = :objective_value_mga
+    add_object_parameter_values!(
+        model, Dict(m.ext[:spineopt].instance => Dict(:objective_value_mga => parameter_value(objective_value(m))))
+    )
+    @eval $(objective_value_mga) = $(Parameter(objective_value_mga, [model]))
+    mga_iteration_count += 1
+    add_mga_objective_constraint!(m)
+    set_mga_objective!(m)
+    # TODO: max_mga_iters can be different now
+    if isnothing(max_mga_iters)
+        u_max = if !isempty(indices(units_invested_mga_weight))
+            maximum(length(units_invested_mga_weight(unit=u)) for u in indices(units_invested_mga_weight))
         else
-            while mga_iterations <= max_mga_iteration
-                @timelog log_level 2 "Adding mga differences of $(mga_iteration()[end])..." set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end])
-                #Clear output dicts here; to reduce memory
-                for k in keys(m_mga.ext[:outputs])
-                    m_mga.ext[:outputs][k] = Dict()
-                end
-                @timelog log_level 2 "Cleaning output dictionary to reduce memory after iteration $(mga_iterations)..." GC.gc()
-                @timelog log_level 2 "Solving mga iteration $(mga_iteration()[end])..." optimize_model!(m_mga;
-                            log_level=log_level,
-                            iterations=mga_iterations,
-                            mga_alpha=mga_alpha,)  || break
-                @timelog log_level 2 "Saving mga objective of $(mga_iteration()[end])..." save_mga_objective_values!(m_mga)
-                @timelog log_level 2 "Writing mga report of $(mga_iteration()[end])..." write_report(m_mga, url_out)
-                mga_iterations += 1
-            end
+            0
         end
-        m_mga
+        c_max = if !isempty(indices(connections_invested_mga_weight))
+            maximum(
+                length(connections_invested_mga_weight(connection=c)) for c in indices(connections_invested_mga_weight)
+            )
+        else
+            0
+        end
+        s_max = if !isempty(indices(storages_invested_mga_weight))
+            maximum(length(storages_invested_mga_weight(node=s)) for s in indices(storages_invested_mga_weight))
+        else
+            0
+        end
+        max_mga_iters = maximum([u_max, s_max, c_max])
     end
+    while mga_iteration_count <= max_mga_iters
+        # TODO: set_objective_mga_iteration is different now
+        set_objective_mga_iteration!(m; iteration=last(mga_iteration()), iteration_number=mga_iteration_count)
+        optimize_model!(m; log_level=log_level, output_suffix=_add_mga_iteration(mga_iteration_count)) || break
+        save_mga_objective_values!(m)
+        # TODO: needs to clean outputs?
+        if (
+            isempty(indices(connections_invested_big_m_mga))
+            && isempty(indices(units_invested_big_m_mga))
+            && isempty(indices(storages_invested_big_m_mga))
+            && mga_iteration_count < max_mga_iters
+        )
+            for name in (:mga_objective_ub, :mga_diff_ub1)
+                for con in values(m.ext[:spineopt].constraints[name])
+                    try
+                        delete(m, con)
+                    catch
+                    end
+                end
+            end
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m_mga)
+        end
+        # TODO: needs to clean constraint (or simply clean within function)
+        mga_iteration_count += 1
+    end
+    write_report(m, url_out; alternative=alternative, log_level=log_level)
+    m
 end
 
-function define_mga_alpha!()
-    mga_alpha_steps = nothing
-    mga_alpha = nothing
-    if !isempty(indices(mga_alpha_step_length))
-        if length(collect(indices(mga_alpha_step_length))) >1
-            @warn "There is more than one object or relationship class definind mga_alpha_step_length - only one allowed. \n Processing without alpha"
-        elseif length(vcat(
-            [storages_invested_mga_indices()...,
-            connections_invested_mga_indices()...,
-            units_invested_mga_indices()...,
-            ]
-            )) != 2
-            @warn "Mga alpha steplength can only be used if the mga objective holds exactly two mga differences. \n Processing without alpha"
-        else
-            cls_name = collect(indices(mga_alpha_step_length))[1].class_name
-            id = collect(indices(mga_alpha_step_length))[1]
-            mga_alpha_steps = mga_alpha_step_length(;Dict(cls_name=> id)...)
-            println("Alpha steplength of $(id) has been set to $(mga_alpha_steps)")
-            mga_alpha = 0
-        end
-        mga_alpha, mga_alpha_steps
-    end
+function _add_mga_iteration(k)
+    new_mga_name = Symbol(:mga_it_, k)
+    new_mga_i = Object(new_mga_name, :mga_iteration)
+    add_object!(mga_iteration, new_mga_i)
+    (mga_iteration=mga_iteration(new_mga_name),)
 end

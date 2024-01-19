@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,18 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_ratio_out_in_connection_intact_flow!(m, ratio_out_in, sense)
+@doc raw"""
+For PTDF-based lossless DC power flow, ensures that the output flow to the ``to\_node``
+equals the input flow from the ``from\_node``.
 
-Ratio of `connection_intact_flow` variables.
-
-Note that the `<sense>_ratio_<directions>_connection_intact_flow` parameter uses the stochastic dimensions of the second
-<direction>!
+```math
+\begin{aligned}              
+& v^{connection\_intact\_flow}_{(c, n_{out}, d_{to}, s, t)}
+=
+v^{connection\_intact\_flow}_{(c, n_{in}, d_{from}, s, t)} \\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
-    @fetch connection_intact_flow = m.ext[:variables]
+    @fetch connection_intact_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:ratio_out_in_connection_intact_flow] = Dict(
+    m.ext[:spineopt].constraints[:ratio_out_in_connection_intact_flow] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
@@ -56,7 +62,8 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
                 );
                 init=0,
             )
-        ) for (conn, ng_in, ng_out, s, t) in constraint_ratio_out_in_connection_intact_flow_indices(m)
+        )
+        for (conn, ng_in, ng_out, s, t) in constraint_ratio_out_in_connection_intact_flow_indices(m)
     )
 end
 
@@ -65,17 +72,13 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
-        for (n_in, n_out) in connection__node__node(connection=conn) for t in t_lowest_resolution(
-            x.t for x in connection_flow_indices(
-                m;
-                connection=conn,
-                node=Iterators.flatten((members(n_out), members(n_in))),
+        for (n_in, n_out) in connection__node__node(connection=conn)
+        for (t, path) in t_lowest_resolution_path(
+            m, 
+            vcat(
+                connection_intact_flow_indices(m; connection=conn, node=n_out, direction=direction(:to_node)),
+                connection_intact_flow_indices(m; connection=conn, node=n_in, direction=direction(:from_node))
             )
-        ) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_ratio_out_in_connection_intact_flow_indices(m, conn, n_in, n_out, t0, t)
-            ),
         )
     )
 end
@@ -98,30 +101,4 @@ function constraint_ratio_out_in_connection_intact_flow_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_ratio_out_in_connection_intact_flow_indices(m))
-end
-
-"""
-    _constraint_ratio_out_in_connection_intact_flow_indices(connection, node_out, node_in, t0, t)
-
-Gather the `connection_flow` variiable indices for `add_constraint_ratio_out_in_connection_flow!`.
-"""
-
-function _constraint_ratio_out_in_connection_intact_flow_indices(m, connection, node_in, node_out, t0, t)
-    Iterators.flatten((
-        connection_intact_flow_indices(
-            m;
-            connection=connection,
-            node=node_out,
-            direction=direction(:to_node),
-            t=t_in_t(m; t_long=t),
-        ),
-        (connection=conn, node=n_in, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n_in, d, s, t1) in connection_intact_flow_indices(
-            m;
-            connection=connection,
-            node=node_in,
-            direction=direction(:from_node),
-            t=t_in_t(m; t_long=t),
-        )  # `from_node` `connection_flow`s
-    ))
 end

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -32,16 +32,16 @@ function node_pressure_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
+    unique(
+        (node=n, stochastic_scenario=s, t=t)
+        for (n, s, t) in node_stochastic_time_indices(
             m;
             node=intersect(members(node), SpineOpt.node(has_pressure=true)),
             stochastic_scenario=stochastic_scenario,
             t=t,
             temporal_block=temporal_block,
         )
-    ]
-    unique!(inds)
+    )
 end
 
 """
@@ -55,14 +55,8 @@ function add_variable_node_pressure!(m::Model)
         m,
         :node_pressure,
         node_pressure_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_node_pressure(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        use_long_history=false,
+        lb=Constant(0),
+        fix_value=fix_node_pressure,
+        initial_value=initial_node_pressure
     )
 end

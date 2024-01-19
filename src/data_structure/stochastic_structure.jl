@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -16,36 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-"""
-    StochasticPathFinder
-
-A callable type to retrieve intersections between valid stochastic paths
-and 'active' scenarios.
-"""
-struct StochasticPathFinder
-    full_stochastic_paths::Array{Array{Object,1},1}
-end
-
-struct StochasticScenarioSet
-    scenarios::Dict{Object,Dict{TimeSlice,Array{Object}}}
-end
-
-"""
-    active_stochastic_paths(active_scenarios::Union{Array{Object,1},Object})
-
-Find the unique combinations of `active_scenarios` along valid stochastic paths.
-"""
-function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where {T}
-    # TODO: cache these
-    unique(map(path -> intersect(path, active_scenarios), h.full_stochastic_paths))
-end
-
-function (h::StochasticScenarioSet)(stoch_struct::Object, t::TimeSlice, scenario)
-    # TODO: cache these
-    intersect(h.scenarios[stoch_struct][t], scenario)
-end
-
 """
     _find_children(parent_scenario::Union{Object,Anything})
 
@@ -60,47 +30,10 @@ end
 
 Find the `stochastic_scenario` objects without parents.
 """
-function _find_root_scenarios(m::Model)
-    all_scenarios = stochastic_structure__stochastic_scenario(
-        stochastic_structure=model__stochastic_structure(model=m.ext[:instance]),
-    )
+_find_root_scenarios(m::Model) = _find_root_scenarios(m, anything)
+function _find_root_scenarios(m::Model, stochastic_structure)
+    all_scenarios = stochastic_structure__stochastic_scenario(stochastic_structure=stochastic_structure)
     setdiff(all_scenarios, _find_children(anything))
-end
-function _find_root_scenarios(m::Model, stochastic_structure::Object)
-    all_scenarios = stochastic_structure__stochastic_scenario(
-        stochastic_structure=intersect(model__stochastic_structure(model=m.ext[:instance]), stochastic_structure),
-    )
-    setdiff(all_scenarios, _find_children(anything))
-end
-
-"""
-    _generate_active_stochastic_paths(m::Model)
-
-Find all unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree
-and generate the `active_stochastic_paths` callable.
-"""
-function _generate_active_stochastic_paths(m::Model)
-    paths = [[root] for root in _find_root_scenarios(m)]
-    full_path_indices = []
-    for (i, path) in enumerate(paths)
-        children = _find_children(path[end])
-        valid_children = setdiff(children, path)
-        invalid_children = setdiff(children, valid_children)
-        if !isempty(invalid_children)
-            @warn """
-            ignoring scenarios: $(join(invalid_children, ", ", " and ")),
-            as children of $(path[end]), since they're also its ancestors...
-            """
-        end
-        isempty(valid_children) && push!(full_path_indices, i)
-        append!(paths, [vcat(path, child) for child in valid_children])
-    end
-    # NOTE: `unique!` shouldn't be needed here since relationships are unique in the db.
-    full_stochastic_paths = paths[full_path_indices]
-    active_stochastic_paths = StochasticPathFinder(full_stochastic_paths)
-    @eval begin
-        active_stochastic_paths = $active_stochastic_paths
-    end
 end
 
 """
@@ -116,9 +49,8 @@ function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::D
     scen_start = Dict(scen => window_start for scen in scenarios)
     scen_end = Dict()
     scen_weight = Dict(
-        scen => Float64(
-            weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen),
-        ) for scen in scenarios
+        scen => Float64(weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen))
+        for scen in scenarios
     )
     for scen in scenarios
         scenario_duration = stochastic_scenario_end(
@@ -163,11 +95,8 @@ A `Dict` mapping `stochastic_structure` objects to dags for the given `model`s.
 """
 function _all_stochastic_dags(m::Model)
     window_start = start(current_window(m))
-    window_very_end = maximum(end_.(time_slice(m)))
-    Dict(
-        ss => _stochastic_dag(m, ss, window_start, window_very_end)
-        for ss in model__stochastic_structure(model=m.ext[:instance])
-    )
+    window_very_end = end_(last(time_slice(m)))
+    Dict(ss => _stochastic_dag(m, ss, window_start, window_very_end) for ss in stochastic_structure())
 end
 
 """
@@ -178,8 +107,7 @@ A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenari
 function _time_slice_stochastic_scenarios(m::Model, stochastic_dag::Dict)
     # Window `time_slices`
     scenario_mapping = Dict(
-        t => [scen for (scen, spec) in stochastic_dag if spec.start <= start(t) < spec.end_]
-        for t in time_slice(m)
+        t => [scen for (scen, spec) in stochastic_dag if spec.start <= start(t) < spec.end_] for t in time_slice(m)
     )
     # History `time_slices`
     roots = _find_root_scenarios(m)
@@ -188,18 +116,200 @@ function _time_slice_stochastic_scenarios(m::Model, stochastic_dag::Dict)
 end
 
 """
-    _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
+    _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
 
-Generate the `_generate_stochastic_scenario_set` for all defined `stochastic_structures`.
+Generate a mapping from stochastic structure to time slice to scenarios.
 """
-function _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
-    m.ext[:stochastic_structure][:stochastic_scenario_set] = StochasticScenarioSet(
-        Dict(structure => _time_slice_stochastic_scenarios(m, dag) for (structure, dag) in all_stochastic_dags),
+function _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
+    m.ext[:spineopt].stochastic_structure[:scenario_lookup] = Dict(
+        (structure, t) => scens
+        for (structure, dag) in all_stochastic_dags
+        for (t, scens) in _time_slice_stochastic_scenarios(m, dag)
     )
 end
 
-function _stochastic_scenario_set(m::Model, structure::Object, t::TimeSlice, scenario)
-    m.ext[:stochastic_structure][:stochastic_scenario_set](structure, t, scenario)
+function _stochastic_scenarios(m::Model, stoch_struct::Object, t::TimeSlice, scenarios)
+    scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]
+    intersect(scenario_lookup[stoch_struct, t], scenarios)
+end
+
+"""
+    _generate_any_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+
+Generate the `any_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+"""
+function _generate_any_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+    any_stochastic_scenario_weight_values = Dict(
+        scen => Dict(:any_stochastic_scenario_weight => parameter_value(spec.weight))
+        for ss in stochastic_structure()
+        for (scen, spec) in all_stochastic_dags[ss]
+    )
+    add_object_parameter_values!(stochastic_scenario, any_stochastic_scenario_weight_values)
+    m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight] = Parameter(
+        :any_stochastic_scenario_weight, [stochastic_scenario]
+    )
+end
+
+"""
+    _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+
+Generate the `node_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+"""
+function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+    node_stochastic_scenario_weight_values = Dict(
+        (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(spec.weight))
+        for (node, ss) in Iterators.flatten((node__stochastic_structure(), node__investment_stochastic_structure()))
+        for (scen, spec) in all_stochastic_dags[ss]
+    )
+    node__stochastic_scenario = RelationshipClass(
+        :node__stochastic_scenario,
+        [:node, :stochastic_scenario],
+        keys(node_stochastic_scenario_weight_values),
+        node_stochastic_scenario_weight_values,
+    )
+    m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight] = Parameter(
+        :node_stochastic_scenario_weight, [node__stochastic_scenario]
+    )
+end
+
+"""
+    _generate_unit_stochastic_scenario_weight(all_stochastic_dags::Dict, m...)
+
+Generate the `unit_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+"""
+function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+    unit_stochastic_scenario_weight_values = Dict(
+        (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
+        for (unit, ss) in Iterators.flatten((units_on__stochastic_structure(), unit__investment_stochastic_structure()))
+        for (scen, param_vals) in all_stochastic_dags[ss]
+    )
+    unit__stochastic_scenario = RelationshipClass(
+        :unit__stochastic_scenario,
+        [:unit, :stochastic_scenario],
+        keys(unit_stochastic_scenario_weight_values),
+        unit_stochastic_scenario_weight_values,
+    )
+    m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight] = Parameter(
+        :unit_stochastic_scenario_weight, [unit__stochastic_scenario]
+    )
+end
+
+"""
+    _generate_connection_stochastic_scenario_weight(all_stochastic_dags::Dict, m...)
+
+Generate the `connection_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+"""
+function _generate_connection_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+    connection_stochastic_scenario_weight_values = Dict(
+        (connection, scen) => Dict(:connection_stochastic_scenario_weight => parameter_value(param_vals.weight))
+        for (connection, ss) in connection__investment_stochastic_structure()
+        for (scen, param_vals) in all_stochastic_dags[ss]
+    )
+    connection__stochastic_scenario = RelationshipClass(
+        :connection__stochastic_scenario,
+        [:connection, :stochastic_scenario],
+        keys(connection_stochastic_scenario_weight_values),
+        connection_stochastic_scenario_weight_values,
+    )
+    m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight] = Parameter(
+        :connection_stochastic_scenario_weight, [connection__stochastic_scenario]
+    )
+end
+
+"""
+    _generate_active_stochastic_paths(m::Model)
+
+Find all unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree
+and generate the `active_stochastic_paths` callable.
+"""
+function _generate_active_stochastic_paths(m::Model)
+    paths = [[root] for root in _find_root_scenarios(m)]
+    full_path_indices = []
+    for (i, path) in enumerate(paths)
+        children = _find_children(path[end])
+        valid_children = setdiff(children, path)
+        invalid_children = setdiff(children, valid_children)
+        if !isempty(invalid_children)
+            @warn """
+            ignoring scenarios: $(join(invalid_children, ", ", " and ")), 
+            as children of $(path[end]), since they're also its ancestors...
+            """
+        end
+        isempty(valid_children) && push!(full_path_indices, i)
+        append!(paths, [vcat(path, child) for child in valid_children])
+    end
+    # NOTE: `unique!` shouldn't be needed here since relationships are unique in the db.
+    m.ext[:spineopt].stochastic_structure[:full_stochastic_paths] = paths[full_path_indices]
+end
+
+"""
+    generate_master_stochastic_structure(m::Model)
+
+Generate stochastic structure all models.
+"""
+function generate_stochastic_structure!(m::Model)
+    all_stochastic_dags = _all_stochastic_dags(m)
+    _generate_stochastic_scenarios(m, all_stochastic_dags)
+    _generate_node_stochastic_scenario_weight(m, all_stochastic_dags)
+    _generate_unit_stochastic_scenario_weight(m, all_stochastic_dags)
+    _generate_connection_stochastic_scenario_weight(m, all_stochastic_dags)
+    _generate_any_stochastic_scenario_weight(m, all_stochastic_dags)
+    _generate_active_stochastic_paths(m)
+end
+
+"""
+    active_stochastic_paths(m; stochastic_structure, t)
+
+An `Array` where each element is itself an `Array` of `stochastic_scenario` `Object`s,
+corresponding to a branch (or path) of the stochastic DAG associated to model `m`.
+
+This DAG has one vertex per `stochastic_scenario`, and the edges are given
+by the `parent_stochastic_scenario__child_stochastic_scenario` relationships.
+
+The result is obtained by first taking the subset of the stochastic DAG defined by `stochastic_structure`
+(which can be a single `Object` or an `Array` of `Object`s);
+and then taking the branches of that subset that cover `t`
+(which can be a single `TimeSlice` or an `Array` of `TimeSlice`s)
+"""
+function active_stochastic_paths(m; stochastic_structure, t)
+    scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]
+    active_stochastic_paths(
+        m,
+        scen for ss in stochastic_structure for t_ in t for scen in scenario_lookup[ss, t_]
+    )
+end
+function active_stochastic_paths(m, indices::Vector)
+    active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
+end
+function active_stochastic_paths(m, active_scenarios)
+    active_stochastic_paths(m, collect(Object, active_scenarios))
+end
+function active_stochastic_paths(m, active_scenarios::Vector{Object})
+    _active_stochastic_paths(m, unique!(active_scenarios))
+end
+function active_stochastic_paths(m, active_scenarios::Set{Object})
+    _active_stochastic_paths(m, active_scenarios)
+end
+
+function _active_stochastic_paths(m, unique_active_scenarios)
+    full_stochastic_paths = m.ext[:spineopt].stochastic_structure[:full_stochastic_paths]
+    unique(intersect(path, unique_active_scenarios) for path in full_stochastic_paths)
+end
+
+function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything)
+    unique(
+        (node=n, stochastic_scenario=s)
+        for (n, ss) in node__stochastic_structure(node=node, _compact=false)
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+    )
+end
+
+function unit_stochastic_indices(m::Model; unit=anything, stochastic_scenario=anything)
+    unique(
+        (unit=u, stochastic_scenario=s)
+        for (u, ss) in units_on__stochastic_structure(unit=unit, _compact=false)
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+    )
 end
 
 function stochastic_time_indices(
@@ -210,10 +320,10 @@ function stochastic_time_indices(
 )
     unique(
         (stochastic_scenario=s, t=t)
-        for (m_, tb) in model__temporal_block(model=m.ext[:instance], temporal_block=temporal_block, _compact=false)
-        for (m_, ss) in model__stochastic_structure(model=m.ext[:instance], _compact=false)
+        for ss in stochastic_structure()
+        for tb in intersect(SpineOpt.temporal_block(), temporal_block)
         for t in time_slice(m; temporal_block=members(tb), t=t)
-        for s in _stochastic_scenario_set(m, ss, t, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
 
@@ -223,20 +333,13 @@ end
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
 function node_stochastic_time_indices(
-    m::Model;
-    node=anything,
-    stochastic_scenario=anything,
-    temporal_block=anything,
-    t=anything,
+    m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
 )
     unique(
-        (node=n, stochastic_scenario=s, t=t1)
-        for (n, t1) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:instance],
-            stochastic_structure=node__stochastic_structure(node=n),
-            _compact=false,
-        ) for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        (node=n, stochastic_scenario=s, t=t)
+        for (n, t) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for ss in node__stochastic_structure(node=n)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
 
@@ -253,13 +356,10 @@ function unit_stochastic_time_indices(
     t=anything,
 )
     unique(
-        (unit=u, stochastic_scenario=s, t=t1)
-        for (u, t1) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:instance],
-            stochastic_structure=units_on__stochastic_structure(unit=u),
-            _compact=false,
-        ) for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, t) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for ss in units_on__stochastic_structure(unit=u)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
 
@@ -276,13 +376,10 @@ function unit_investment_stochastic_time_indices(
     t=anything,
 )
     unique(
-        (unit=u, stochastic_scenario=s, t=t1)
-        for (u, t1) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:instance],
-            stochastic_structure=unit__investment_stochastic_structure(unit=u),
-            _compact=false,
-        ) for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, t) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for ss in unit__investment_stochastic_structure(unit=u)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
 
@@ -299,15 +396,12 @@ function connection_investment_stochastic_time_indices(
     t=anything,
 )
     unique(
-        (connection=conn, stochastic_scenario=s, t=t1) for (conn, t1) in connection_investment_time_indices(
-            m;
-            connection=connection,
-            temporal_block=temporal_block,
-            t=t,
+        (connection=conn, stochastic_scenario=s, t=t)
+        for (conn, t) in connection_investment_time_indices(
+            m; connection=connection, temporal_block=temporal_block, t=t,
         )
         for ss in connection__investment_stochastic_structure(connection=conn)
-        if ss in model__stochastic_structure(model=m.ext[:instance])
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
 
@@ -324,113 +418,25 @@ function node_investment_stochastic_time_indices(
     t=anything,
 )
     unique(
-        (node=n, stochastic_scenario=s, t=t1)
-        for (n, t1) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:instance],
-            stochastic_structure=node__investment_stochastic_structure(node=n),
-            _compact=false,
-        )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
-    )
-end
-
-"""
-    _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
-
-Generate the `node_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
-"""
-function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
-    node_stochastic_scenario_weight_values = Dict(
-        (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(spec.weight))
-        for (node, ss) in node__stochastic_structure()
-        if ss in model__stochastic_structure(model=m.ext[:instance])
-        for (scen, spec) in all_stochastic_dags[ss]
-    )
-    node__stochastic_scenario = RelationshipClass(
-        :node__stochastic_scenario,
-        [:node, :stochastic_scenario],
-        keys(node_stochastic_scenario_weight_values),
-        node_stochastic_scenario_weight_values,
-    )
-    m.ext[:stochastic_structure][:node_stochastic_scenario_weight] = Parameter(
-        :node_stochastic_scenario_weight,
-        [node__stochastic_scenario],
-    )
-end
-
-"""
-    _generate_unit_stochastic_scenario_weight(all_stochastic_dags::Dict, m...)
-
-Generate the `unit_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
-"""
-function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
-    unit_stochastic_scenario_weight_values = Dict(
-        (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (unit, ss) in Iterators.flatten((
-            units_on__stochastic_structure(),
-            unit__investment_stochastic_structure(),
-        ))
-        if ss in model__stochastic_structure(model=m.ext[:instance])
-        for (scen, param_vals) in all_stochastic_dags[ss]
-    )
-    unit__stochastic_scenario = RelationshipClass(
-        :unit__stochastic_scenario,
-        [:unit, :stochastic_scenario],
-        keys(unit_stochastic_scenario_weight_values),
-        unit_stochastic_scenario_weight_values,
-    )
-    m.ext[:stochastic_structure][:unit_stochastic_scenario_weight] = Parameter(
-        :unit_stochastic_scenario_weight,
-        [unit__stochastic_scenario],
-    )
-end
-
-"""
-    _generate_connection_stochastic_scenario_weight(all_stochastic_dags::Dict, m...)
-
-Generate the `connection_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
-"""
-function _generate_connection_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
-    connection_stochastic_scenario_weight_values = Dict(
-        (connection, scen) => Dict(:connection_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (connection, ss) in connection__investment_stochastic_structure()
-            if ss in model__stochastic_structure(model=m.ext[:instance])
-        for (scen, param_vals) in all_stochastic_dags[ss]
-    )
-    connection__stochastic_scenario = RelationshipClass(
-        :connection__stochastic_scenario,
-        [:connection, :stochastic_scenario],
-        keys(connection_stochastic_scenario_weight_values),
-        connection_stochastic_scenario_weight_values,
-    )
-    m.ext[:stochastic_structure][:connection_stochastic_scenario_weight] = Parameter(
-        :connection_stochastic_scenario_weight,
-        [connection__stochastic_scenario],
+        (node=n, stochastic_scenario=s, t=t)
+        for (n, t) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for ss in node__investment_stochastic_structure(node=n)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
 
 function node_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:stochastic_structure][:node_stochastic_scenario_weight][(; kwargs...)]
+    m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
 end
+
 function unit_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:stochastic_structure][:unit_stochastic_scenario_weight][(; kwargs...)]
+    m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
 end
+
 function connection_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:stochastic_structure][:connection_stochastic_scenario_weight][(; kwargs...)]
+    m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
 end
 
-"""
-    generate_master_stochastic_structure(m::Model)
-
-Generate stochastic structure all models.
-"""
-function generate_stochastic_structure!(m::Model)
-    m.ext[:stochastic_structure] = Dict()
-    all_stochastic_dags = _all_stochastic_dags(m)
-    _generate_stochastic_scenario_set(m, all_stochastic_dags)
-    _generate_node_stochastic_scenario_weight(m, all_stochastic_dags)
-    _generate_unit_stochastic_scenario_weight(m, all_stochastic_dags)
-    _generate_connection_stochastic_scenario_weight(m, all_stochastic_dags)
-    _generate_active_stochastic_paths(m)
+function any_stochastic_scenario_weight(m; kwargs...)
+    m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight][(; kwargs...)]
 end

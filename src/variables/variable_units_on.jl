@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -30,17 +30,13 @@ function units_on_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unique([
+    unique(
         (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for (u, s, t) in unit_stochastic_time_indices(
-            m;
-            unit=u,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
-    ])
+    )
 end
 
 """
@@ -57,6 +53,23 @@ Check if unit online variable type is defined as an integer.
 """
 units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
+function units_on_replacement_value(ind)
+    if online_variable_type(unit=ind.unit) == :unit_online_variable_type_none
+        number_of_units[(; ind...)]
+    else
+        nothing
+    end
+end
+
+function units_switched_replacement_value(ind)
+    if online_variable_type(unit=ind.unit) == :unit_online_variable_type_none
+        Call(0)
+    else
+        nothing
+    end
+end
+
+
 """
     add_variable_units_on!(m::Model)
 
@@ -68,17 +81,13 @@ function add_variable_units_on!(m::Model)
         m,
         :units_on,
         units_on_indices;
-        lb=x -> 0,
+        lb=Constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=x -> fix_units_on(
-            unit=x.unit,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        use_long_history=false,     
-        non_anticipativity_time=x -> units_on_non_anticipativity_time(unit=x.unit, _strict=false),
+        fix_value=fix_units_on,
+        initial_value=initial_units_on,
+        replacement_value=units_on_replacement_value,
+        non_anticipativity_time=units_on_non_anticipativity_time,
+        non_anticipativity_margin=units_on_non_anticipativity_margin,
     )
 end

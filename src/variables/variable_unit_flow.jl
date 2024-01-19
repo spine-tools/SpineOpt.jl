@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -39,22 +39,34 @@ function unit_flow_indices(
 )
     unit = members(unit)
     node = members(node)
-    unique([
+    unique(
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in unit__node__direction__temporal_block(
-            unit=unit,
-            node=node,
-            direction=direction,
-            temporal_block=temporal_block,
-            _compact=false,
-        ) for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
         )
-    ])
+        for (n, s, t) in node_stochastic_time_indices(
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        )
+    )
+end
+
+function unit_flow_time_indices(
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    unit = members(unit)
+    node = members(node)
+    unique(
+        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+        for (u, n, d, tb) in unit__node__direction__temporal_block(
+            unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
+        )
+        for (n, t) in node_time_indices(m; node=n, temporal_block=tb, t=t)
+    )
 end
 
 """
@@ -68,16 +80,10 @@ function add_variable_unit_flow!(m::Model)
         m,
         :unit_flow,
         unit_flow_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_unit_flow(
-            unit=x.unit,
-            node=x.node,
-            direction=x.direction,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        use_long_history=false,
+        lb=min_unit_flow,
+        fix_value=fix_unit_flow,
+        initial_value=initial_unit_flow,
+        non_anticipativity_time=unit_flow_non_anticipativity_time,
+        non_anticipativity_margin=unit_flow_non_anticipativity_margin,
     )
 end

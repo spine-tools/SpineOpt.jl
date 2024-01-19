@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -45,18 +45,11 @@ function unit_flow_op_indices(
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
         for (u, n, d) in indices(operating_points, unit=unit, node=node, direction=direction)
         for (u, n, d, tb) in unit__node__direction__temporal_block(
-            unit=u,
-            node=n,
-            direction=d,
-            temporal_block=temporal_block,
-            _compact=false,
-        ) for i in intersect(i, 1:length(operating_points(unit=u, node=n, direction=d)))
+            unit=u, node=n, direction=d, temporal_block=temporal_block, _compact=false
+        )
+        for i in intersect(i, 1:length(operating_points(unit=u, node=n, direction=d)))
         for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
@@ -69,20 +62,6 @@ Add `unit_flow_op` variables to model `m`.
 function add_variable_unit_flow_op!(m::Model)
     t0 = _analysis_time(m)
     add_variable!(
-        m,
-        :unit_flow_op,
-        unit_flow_op_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_unit_flow_op(
-            unit=x.unit,
-            node=x.node,
-            direction=x.direction,
-            i=x.i,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        use_long_history=false,
+        m, :unit_flow_op, unit_flow_op_indices; lb=Constant(0), fix_value=fix_unit_flow_op, initial_value=initial_unit_flow_op
     )
 end

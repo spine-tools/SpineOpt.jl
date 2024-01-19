@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,19 +17,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_flow_intact_flow!(m::Model)
+@doc raw"""
+Enforces the relationship between [connection\_intact\_flow](@ref) (flow with all investments assumed in force)
+and [connection\_flow](@ref). This constraint ensures that the
+[connection\_flow](@ref) is [connection\_intact\_flow](@ref) plus additional flow contributions
+from investment connections that are not invested in.
 
-Enforces the relationship between `connection_intact_flow` (flow with all investments assumed in force) and 
-`connection_flow`
-
-`connection_intact_flow` is the flow on all lines with all investments assumed in place. This constraint ensures that the
-`connection_flow` is the `intact_flow` plus additional contributions from all investments not invested in.
+```math
+\begin{aligned}
+& \left(v^{connection\_flow}_{(c, n_{to}, from\_node, s, t)}
+- v^{connection\_flow}_{(c, n_{to}, to\_node, s, t)} \right)
+- \left(v^{connection\_intact\_flow}_{(c, n_{to}, from\_node, s, t)}
+- v^{connection\_intact\_flow}_{(c, n_{to}, to\_node, s, t)} \right) \\
+& =\\
+& \sum_{c_{cand}} p^{lodf}_{(c_{cand}, c)} \cdot \left[p^{candidate\_connections}_{(c_{cand})} \neq 0 \right] \cdot \Big( \\
+& \qquad \left(
+    v^{connection\_flow}_{(c_{cand}, n_{to\_cand}, from\_node, s, t)}
+    - v^{connection\_flow}_{(c_{cand}, n_{to\_cand}, to\_node, s, t)} 
+\right)
+\\
+& \qquad 
+- \left(
+    v^{connection\_intact\_flow}_{(c_{cand}, n_{to\_cand}, from\_node, s, t)}
+    - v^{connection\_intact\_flow}_{(c_{cand}, n_{to\_cand}, to\_node, s, t)}
+\right)
+\\
+& \Big) \\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \land p^{candidate\_connections}_{(c)} = 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
-    @fetch connection_flow, connection_intact_flow = m.ext[:variables]
+    @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:connection_flow_intact_flow] = Dict(
+    m.ext[:spineopt].constraints[:connection_flow_intact_flow] = Dict(
         (connection=conn, node=ng, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
@@ -54,7 +76,8 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                     - connection_intact_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
                     - connection_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
                     + connection_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
-                ) for candidate_conn in _candidate_connections(conn)
+                )
+                for candidate_conn in _candidate_connections(conn)
                 for n in last(connection__from_node(connection=candidate_conn))
                 for (candidate_conn, n, d, s, t) in connection_flow_indices(
                     m;
@@ -66,7 +89,8 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                 );
                 init=0,
             )
-        ) for (conn, ng, s, t) in constraint_connection_flow_intact_flow_indices(m)
+        )
+        for (conn, ng, s, t) in constraint_connection_flow_intact_flow_indices(m)
     )
 end
 
@@ -75,9 +99,11 @@ function constraint_connection_flow_intact_flow_indices(m::Model)
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true, is_candidate=false)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
-        for t in _constraint_connection_flow_intact_flow_lowest_resolution_t(m, conn)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_intact_flow_indices(m, conn, t)),
+        for (t, path) in t_lowest_resolution_path(
+            m, 
+            x
+            for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn)))
+            for x in connection_flow_indices(m; connection=conn_k, last(connection__from_node(connection=conn_k))...)
         )
     )
 end
@@ -109,32 +135,8 @@ An iterator over all candidate connections that can impact the flow on the given
 """
 function _candidate_connections(conn)
     (
-        candidate_conn for candidate_conn in connection(is_candidate=true, has_ptdf=true)
-            if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
-    )
-end
-
-function _constraint_connection_flow_intact_flow_lowest_resolution_t(m, conn)
-    t_lowest_resolution(
-        ind.t
-        for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn)))
-        for ind in connection_flow_indices(m; connection=conn_k, last(connection__from_node(connection=conn_k))...)
-    )
-end
-
-"""
-    _constraint_connection_flow_intact_flow_indices(connection, node, direction1, node2, direction2, t)
-
-Gather the indices of the relevant `connection_flow` variables.
-"""
-function _constraint_connection_flow_intact_flow_indices(m, conn, t)
-    (
-        ind
-        for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn))) for ind in connection_flow_indices(
-            m;
-            connection=conn_k,
-            last(connection__from_node(connection=conn_k))...,
-            t=t_in_t(m; t_long=t),
-        )
+        candidate_conn
+        for candidate_conn in connection(is_candidate=true, has_ptdf=true)
+        if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
     )
 end

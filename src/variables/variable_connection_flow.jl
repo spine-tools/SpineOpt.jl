@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -39,22 +39,13 @@ function connection_flow_indices(
 )
     node = members(node)
     unique(
-        [
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d, tb) in connection__node__direction__temporal_block(
-            connection=connection,
-            node=node,
-            direction=direction,
-            temporal_block=temporal_block,
-            _compact=false,
-        ) for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            connection=connection, node=node, direction=direction, temporal_block=temporal_block, _compact=false,
         )
-        ]
+        for (n, s, t) in node_stochastic_time_indices(
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        )
     )
 end
 
@@ -69,16 +60,10 @@ function add_variable_connection_flow!(m::Model)
         m,
         :connection_flow,
         connection_flow_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_connection_flow(
-            connection=x.connection,
-            node=x.node,
-            direction=x.direction,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        use_long_history=false,
+        lb=Constant(0),
+        fix_value=fix_connection_flow,
+        initial_value=initial_connection_flow,
+        non_anticipativity_time=connection_flow_non_anticipativity_time,
+        non_anticipativity_margin=connection_flow_non_anticipativity_margin,
     )
 end

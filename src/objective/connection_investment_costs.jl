@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -22,8 +22,8 @@
 
 Create and expression for connection investment costs.
 """
-function connection_investment_costs(m::Model, t1)
-    @fetch connections_invested = m.ext[:variables]
+function connection_investment_costs(m::Model, t_range)
+    @fetch connections_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -41,7 +41,9 @@ function connection_investment_costs(m::Model, t1)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
-            for (c, s, t) in connections_invested_available_indices(m; connection=indices(connection_investment_cost)) if end_(t) <= t1;
+            for (c, s, t) in connections_invested_available_indices(
+                m; connection=indices(connection_investment_cost), t=t_range
+            );
             init=0,
         )
     )

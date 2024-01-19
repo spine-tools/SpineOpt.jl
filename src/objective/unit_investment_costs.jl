@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -22,8 +22,8 @@
 
 Create and expression for unit investment costs.
 """
-function unit_investment_costs(m::Model, t1)
-    @fetch units_invested = m.ext[:variables]
+function unit_investment_costs(m::Model, t_range)
+    @fetch units_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -40,8 +40,11 @@ function unit_investment_costs(m::Model, t1)
                 ;init=1
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
+            # This term is activated when there is a representative termporal block in those containing TimeSlice t.
+            # We assume only one representative temporal structure available, of which the termporal blocks represent
+            # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost)) if end_(t) <= t1;
+            for (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost), t=t_range);
             init=0,
         )
     )

@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -23,17 +23,14 @@
 Constrain connections_invested_available by the investment lifetime of a connection.
 """
 function add_constraint_connection_lifetime!(m::Model)
-    @fetch connections_invested_available, connections_invested = m.ext[:variables]
-    t0 = _analysis_time(m)
-    m.ext[:constraints][:connection_lifetime] = Dict(
+    @fetch connections_invested_available, connections_invested = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:connection_lifetime] = Dict(
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + connections_invested_available[conn, s, t] for (conn, s, t) in connections_invested_available_indices(
-                    m;
-                    connection=conn,
-                    stochastic_scenario=s,
-                    t=t,
+            expr_sum(
+                connections_invested_available[conn, s, t]
+                for (conn, s, t) in connections_invested_available_indices(
+                    m; connection=conn, stochastic_scenario=s, t=t
                 );
                 init=0,
             )
@@ -59,17 +56,33 @@ function add_constraint_connection_lifetime!(m::Model)
                     ),
                 )
             )
-        ) for (conn, s, t) in constraint_connection_lifetime_indices(m)
+        )
+        for (conn, s, t) in constraint_connection_lifetime_indices(m)
     )
 end
 
 function constraint_connection_lifetime_indices(m::Model)
-    t0 = _analysis_time(m)
     unique(
         (connection=conn, stochastic_path=path, t=t)
         for conn in indices(connection_investment_tech_lifetime)
         for (conn, s, t) in connections_invested_available_indices(m; connection=conn)
         for path in active_stochastic_paths(_constraint_connection_lifetime_indices(m, conn, s, t0, t))
+    )
+end
+
+function _past_connections_invested_available_indices(m, conn, s, t)
+    t0 = _analysis_time(m)
+    connections_invested_available_indices(
+        m;
+        connection=conn,
+        stochastic_scenario=s,
+        t=to_time_slice(
+            m;
+            t=TimeSlice(
+                end_(t) - connection_investment_lifetime(connection=conn, analysis_time=t0, stochastic_scenario=s, t=t),
+                end_(t)
+            )
+        )
     )
 end
 

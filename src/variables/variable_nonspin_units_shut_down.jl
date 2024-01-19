@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -32,15 +32,11 @@ function nonspin_units_shut_down_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     unique(
-        (unit=u, node=n, stochastic_scenario=s, t=t) for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
-            m;
-            unit=unit,
-            node=node,
-            stochastic_scenario=stochastic_scenario,
-            t=t,
-            temporal_block=temporal_block,
-        ) for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t)
-        # TODO: maybe retrieve s information from node to be more robust
+        (unit=u, node=n, stochastic_scenario=s, t=t)
+        for (u, n, d, s, t) in unit_flow_indices(
+            m; unit=unit, node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
+        )
+        if is_reserve_node(node=n) && is_non_spinning(node=n)
     )
 end
 
@@ -55,17 +51,10 @@ function add_variable_nonspin_units_shut_down!(m::Model)
         m,
         :nonspin_units_shut_down,
         nonspin_units_shut_down_indices;
-        lb=x -> 0,
+        lb=Constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=x -> fix_nonspin_units_shut_down(
-            unit=x.unit,
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        use_long_history=false,
+        fix_value=fix_nonspin_units_shut_down,
+        initial_value=initial_nonspin_units_shut_down
     )
 end

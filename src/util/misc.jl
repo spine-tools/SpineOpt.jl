@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,20 +17,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
-function Base.get(d::Dict{K,VariableRef}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J}}
-    Base.get(d, NamedTuple{J}(key), default)
+"""
+    @log(level, threshold, msg)
+"""
+macro log(level, threshold, msg)
+    quote
+        if $(esc(level)) >= $(esc(threshold))
+            printstyled($(esc(msg)), "\n"; bold=true)
+            yield()
+        end
+    end
 end
 
-function Base.getindex(d::Dict{K,VariableRef}, key::ObjectLike...) where {J,K<:RelationshipLike{J}}
-    Base.getindex(d, NamedTuple{J}(key))
+"""
+    @timelog(level, threshold, msg, expr)
+"""
+macro timelog(level, threshold, msg, expr)
+    quote
+        if $(esc(level)) >= $(esc(threshold))
+            @timemsg $(esc(msg)) $(esc(expr))
+        else
+            $(esc(expr))
+        end
+    end
 end
 
-_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
-_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
-
-function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V<:ConstraintRef}
-    Base.getindex(d, NamedTuple{J}(key))
+"""
+    @timemsg(msg, expr)
+"""
+macro timemsg(msg, expr)
+    quote
+        printstyled($(esc(msg)); bold=true)
+        r = @time $(esc(expr))
+        yield()
+        r
+    end
 end
 
 """
@@ -47,6 +68,22 @@ macro fetch(expr)
         :($dict[$(Expr(:quote, keys))])
     end
     esc(Expr(:(=), keys, values))
+end
+
+# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
+function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
+    Base.get(d, NamedTuple{J}(key), default)
+end
+
+function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
+    Base.getindex(d, NamedTuple{J}(key))
+end
+
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
+function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
+    Base.getindex(d, NamedTuple{J}(key))
 end
 
 """
@@ -82,6 +119,19 @@ function expr_sum(iter; init::Number)
     result
 end
 
+function expr_avg(iter; init::Number)
+    result = AffExpr(init)
+    isempty(iter) && return result
+    result += first(iter)  # NOTE: This is so result has the right type, e.g., `GenericAffExpr{Call,VariableRef}`
+    k = 1
+    for item in Iterators.drop(iter, 1)
+        add_to_expression!(result, item)
+        k += 1
+    end
+    result / k
+end
+
+
 """
     _index_in(ind::NamedTuple; kwargs...)
 
@@ -101,6 +151,11 @@ function _index_in(ind::NamedTuple; kwargs...)
     end
     true
 end
+
+"""
+An iterator over the `TimeSlice` keys in `ind`
+"""
+_time_slice_keys(ind::NamedTuple) = (k for (k, v) in pairs(ind) if v isa TimeSlice)
 
 """
 Drop keys from a `NamedTuple`.
@@ -142,11 +197,46 @@ Fetch the current analysis time for the model `m`.
 """
 _analysis_time(m::Model) = startref(current_window(m))
 
-"""
-    _apply_function_or_nothing(fn, arg)
+function get_module(module_name)
+    for parent_module in (Base.Main, @__MODULE__)
+        try
+            return getproperty(parent_module, module_name)
+        catch
+        end
+    end
+end
 
-Apply given function on given argument and return the result. If the `fn` argument is `nothing`,
-just return `nothing`.
-"""
-_apply_function_or_nothing(fn::Function, arg) = fn(arg)
-_apply_function_or_nothing(::Nothing, ::Any) = nothing
+struct Constant
+    value
+end
+
+Base.getindex(c::Constant, _x) = Call(c.value)
+
+name_from_fn(fn) = split(split(string(fn), "add_")[2], "!")[1]
+
+function print_model_and_solution(m, variable_patterns...)
+    println(m)
+    print_solution(m, variable_patterns...)
+end
+
+function print_solution(m, variable_patterns...)
+    println("Results")
+    println("objective value = ", objective_value(m))
+    for v in all_variables(m)
+        isempty(variable_patterns) || all(occursin(pattern, name(v)) for pattern in variable_patterns) || continue
+        println(v, " = ", value(v))
+    end
+    println()
+end
+
+function window_sum_duration(m, ts::TimeSeries, window; init=0)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    time_slice_value_iter = (
+        (TimeSlice(t1, t2; duration_unit=dur_unit), v) for (t1, t2, v) in zip(ts.indexes, ts.indexes[2:end], ts.values)
+    )
+    sum(v * duration(t) for (t, v) in time_slice_value_iter if iscontained(start(t), window) && !isnan(v); init=init)
+end
+window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
+
+window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
+window_sum(x::Number, window; init=0) = x + init

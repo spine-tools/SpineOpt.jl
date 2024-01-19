@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -27,26 +27,52 @@ using JSON
 using Printf
 using Requires
 using JuMP
-
+using HiGHS
+using Arrow
+import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
-export @fetch
-export rerun_spineopt
+# Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
+import SpineInterface: Parameter, parameter_value
+
+export SpineOptExt
 export run_spineopt
+export rerun_spineopt
+export run_spineopt_kernel!
+export prepare_spineopt
+export generate_temporal_structure!
+export roll_temporal_structure!
+export rewind_temporal_structure!
+export time_slice
+export t_before_t
+export t_in_t
+export t_overlaps_t
+export to_time_slice
+export current_window
+export generate_stochastic_structure!
+export active_stochastic_paths
 export output_value
+export collect_output_values
 export write_report
+export write_report_from_intermediate_results
+export generate_forced_availability_factor
+export forced_availability_factor_time_series
+export master_problem_model
+export write_model_file
+export @fetch
+export @log
+export @timelog
 
+include("util/misc.jl")
+include("util/write_information_files.jl")
+include("util/promise.jl")
 include("run_spineopt.jl")
-include("util/docs_utils.jl")
-include("data_structure/migration.jl")
-
+include("generate_forced_availability_factor.jl")
 include("run_spineopt_standard.jl")
 include("run_spineopt_benders.jl")
 include("run_spineopt_mga.jl")
-include("util/misc.jl")
-include("util/postprocess_results.jl")
-include("util/write_information_files.jl")
+include("data_structure/migration.jl")
 include("data_structure/benders_data.jl")
 include("data_structure/mga_data.jl")
 include("data_structure/temporal_structure.jl")
@@ -54,9 +80,12 @@ include("data_structure/stochastic_structure.jl")
 include("data_structure/preprocess_data_structure.jl")
 include("data_structure/economic_structure.jl")
 include("data_structure/check_data_structure.jl")
+include("data_structure/postprocess_results.jl")
+include("data_structure/diagnose.jl")
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
 include("variables/variable_unit_flow_op.jl")
+include("variables/variable_unit_flow_op_active.jl")
 include("variables/variable_connection_flow.jl")
 include("variables/variable_connection_intact_flow.jl")
 include("variables/variable_connections_invested.jl")
@@ -96,19 +125,13 @@ include("variables/variable_node_slack_pos.jl")
 include("variables/variable_node_slack_neg.jl")
 include("variables/variable_node_injection.jl")
 include("variables/variable_nonspin_units_started_up.jl")
-include("variables/variable_start_up_unit_flow.jl")
-include("variables/variable_ramp_up_unit_flow.jl")
-include("variables/variable_nonspin_ramp_up_unit_flow.jl")
-include("variables/variable_shut_down_unit_flow.jl")
-include("variables/variable_ramp_down_unit_flow.jl")
-include("variables/variable_nonspin_ramp_down_unit_flow.jl")
 include("variables/variable_nonspin_units_shut_down.jl")
 include("variables/variable_node_pressure.jl")
 include("variables/variable_node_voltage_angle.jl")
 include("variables/variable_binary_gas_connection_flow.jl")
-include("variables/variable_mp_objective_lowerbound.jl")
-include("objective/set_objective.jl")
-include("objective/set_mp_objective.jl")
+include("variables/variable_sp_objective_upperbound.jl")
+include("variables/variable_mp_min_res_gen_to_demand_ratio_slack.jl")
+include("variables/variable_user_constraint_slack.jl")
 include("objective/variable_om_costs.jl")
 include("objective/unit_fixed_om_costs.jl")
 include("objective/storage_fixed_om_costs.jl")
@@ -125,19 +148,21 @@ include("objective/total_costs.jl")
 include("objective/renewable_curtailment_costs.jl")
 include("objective/connection_flow_costs.jl")
 include("objective/res_proc_costs.jl")
-include("objective/ramp_costs.jl")
 include("objective/units_on_costs.jl")
 include("objective/unit_decommissioning_costs.jl")
 include("objective/unit_mothballing_costs.jl")
 include("objective/connection_decommissioning_costs.jl")
 include("objective/storage_decommissioning_costs.jl")
 include("objective/storage_mothballing_costs.jl")
+include("objective/mp_objective_penalties.jl")
 include("constraints/constraint_common.jl")
 include("constraints/constraint_total_cumulated_unit_flow_bounds.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
-include("constraints/constraint_unit_flow_capacity_w_ramps.jl")
 include("constraints/constraint_operating_point_bounds.jl")
-include("constraints/constraint_operating_point_sum.jl")
+include("constraints/constraint_operating_point_rank.jl")
+include("constraints/constraint_unit_flow_op_bounds.jl")
+include("constraints/constraint_unit_flow_op_rank.jl")
+include("constraints/constraint_unit_flow_op_sum.jl")
 include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_node_injection.jl")
 include("constraints/constraint_node_state_capacity.jl")
@@ -159,18 +184,12 @@ include("constraints/constraint_min_up_time.jl")
 include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
 include("constraints/constraint_user_constraint.jl")
-include("constraints/constraint_split_ramps.jl")
+include("constraints/constraint_units_invested_available.jl")
+include("constraints/constraint_units_invested_transition.jl")
+include("constraints/constraint_unit_lifetime.jl")
 include("constraints/constraint_unit_pw_heat_rate.jl")
 include("constraints/constraint_ramp_up.jl")
-include("constraints/constraint_max_start_up_ramp.jl")
-include("constraints/constraint_min_start_up_ramp.jl")
-include("constraints/constraint_max_nonspin_ramp_up.jl")
-include("constraints/constraint_min_nonspin_ramp_up.jl")
 include("constraints/constraint_ramp_down.jl")
-include("constraints/constraint_max_shut_down_ramp.jl")
-include("constraints/constraint_min_shut_down_ramp.jl")
-include("constraints/constraint_max_nonspin_ramp_down.jl")
-include("constraints/constraint_min_nonspin_ramp_down.jl")
 include("constraints/constraint_res_minimum_node_state.jl")
 include("constraints/constraint_fix_node_pressure_point.jl")
 include("constraints/constraint_compression_ratio.jl")
@@ -183,6 +202,11 @@ include("constraints/constraint_min_node_voltage_angle.jl")
 include("constraints/constraint_node_voltage_angle.jl")
 include("constraints/constraint_connection_unitary_gas_flow.jl")
 include("constraints/constraint_mp_any_invested_cuts.jl")
+include("constraints/constraint_mp_min_res_gen_to_demand_ratio_cuts.jl")
+include("constraints/constraint_investment_group_equal_investments.jl")
+include("constraints/constraint_investment_group_entities_invested_available.jl")
+include("constraints/constraint_investment_group_capacity_invested_available.jl")
+include("constraints/constraint_non_spinning_reserves_bounds.jl")
 include("constraints/constraint_units_decommissioned_vintage.jl")
 include("constraints/constraint_units_decommissioned.jl")
 include("constraints/constraint_units_invested_available_bound.jl")

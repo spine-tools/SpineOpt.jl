@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,35 +17,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_intact_flow_capacity!(m::Model)
+@doc raw"""
+Similarly to [this](@ref constraint_connection_flow_capacity), limits [connection\_intact\_flow](@ref)
+according to [connection\_capacity](@ref)
 
-Limit the maximum in/out `connection_intact_flow` of a `connection` for all `connection_intact_flow_capacity` indices.
-
-Check if `connection_conv_cap_to_flow` is defined. The `connection_capacity` parameter is used to constrain the
-"average power" (e.g. MWh/h) instead of "instantaneous power" (e.g. MW) of the `connection`.
-For most applications, there isn't any difference between the two. However, for situations where the same `connection`
-handles `connection_intact_flows` to multiple `nodes` with different temporal resolutions, the constraint is only
-generated for the lowest resolution, and only the average of the higher resolution `connection_intact_flow` is
-constrained.
-If instantaneous power needs to be constrained as well, defining the `connection_capacity` separately for each
-`connection_intact_flow` can be used to achieve this.
+```math
+\begin{aligned}
+& \sum_{
+n \in ng
+} v^{connection\_intact\_flow}_{(conn,n,d,s,t)}
+- \sum_{
+n \in ng
+} v^{connection\_intact\_flow}_{(conn,n,reverse(d),s,t)} \\
+& <= p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)}
+\cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_connection_intact_flow_capacity!(m::Model)
-    @fetch connection_intact_flow = m.ext[:variables]
+    @fetch connection_intact_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:connection_intact_flow_capacity] = Dict(
+    m.ext[:spineopt].constraints[:connection_intact_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 connection_intact_flow[conn, n, d, s, t] * duration(t)
                 for (conn, n, d, s, t) in connection_intact_flow_indices(
-                    m;
-                    connection=conn,
-                    direction=d,
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
+                    m; connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t),
                 );
                 init=0,
             )
@@ -59,15 +59,13 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
             + expr_sum(
                 connection_intact_flow[conn, n, d_reverse, s, t] * duration(t)
                 for (conn, n, d_reverse, s, t) in connection_intact_flow_indices(
-                    m;
-                    connection=conn,
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
-                ) if d_reverse != d && !is_reserve_node(node=n);
+                    m; connection=conn, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                )
+                if d_reverse != d && !is_reserve_node(node=n);
                 init=0,
             )
-        ) for (conn, ng, d, s, t) in constraint_connection_intact_flow_capacity_indices(m)
+        )
+        for (conn, ng, d, s, t) in constraint_connection_intact_flow_capacity_indices(m)
     )
 end
 
@@ -75,12 +73,8 @@ function constraint_connection_intact_flow_capacity_indices(m::Model)
     unique(
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity; connection=connection(has_ptdf=true))
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in connection_intact_flow_indices(m; connection=c, node=ng, direction=d, t=t)
-            ),
+        for (t, path) in t_lowest_resolution_path(
+            m, connection_intact_flow_indices(m; connection=c, node=ng, direction=d)
         )
     )
 end

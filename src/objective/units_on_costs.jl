@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -22,8 +22,8 @@
 
 Create an expression for units_on cost.
 """
-function units_on_costs(m::Model, t1)
-    @fetch units_on = m.ext[:variables]
+function units_on_costs(m::Model, t_range)
+    @fetch units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -33,8 +33,11 @@ function units_on_costs(m::Model, t1)
             * duration(t)
             * units_on_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
+            # This term is activated when there is a representative termporal block in those containing TimeSlice t.
+            # We assume only one representative temporal structure available, of which the termporal blocks represent
+            # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_on_indices(m; unit=indices(units_on_cost)) if end_(t) <= t1;
+            for (u, s, t) in units_on_indices(m; unit=indices(units_on_cost), t=t_range);
             init=0,
         )
     )

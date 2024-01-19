@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -31,18 +31,23 @@ function units_invested_available_indices(
     temporal_block=anything,
 )
     unit = members(unit)
-    unique([
+    unique(
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for (u, tb) in unit__investment_temporal_block(
+            unit=intersect(indices(candidate_units), unit), temporal_block=temporal_block, _compact=false)
         for (u, s, t) in unit_investment_stochastic_time_indices(
-            m;
-            unit=u,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
-    ])
+    )
 end
+
+"""
+    units_invested_available_int(x)
+
+Check if unit investment variable type is defined to be an integer.
+"""
+
+units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
 """
     fix_initial_units_invested_available()
@@ -71,20 +76,16 @@ end
 Add `units_invested_available` variables to model `m`.
 """
 function add_variable_units_invested_available!(m::Model)
-    # fix units_invested_available to zero in the timestep before the investment window to prevent "free" investments
-    fix_initial_units_invested_available(m)
     t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_invested_available,
         units_invested_available_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_units_invested_available(
-            unit=x.unit,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        lb=Constant(0),
+        int=units_invested_available_int,
+        replacement_value=units_on_replacement_value,
+        fix_value=fix_units_invested_available,
+        internal_fix_value=internal_fix_units_invested_available,
+        initial_value=initial_units_invested_available
     )
 end

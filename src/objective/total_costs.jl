@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -17,9 +17,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const invest_terms = [
+    :unit_investment_costs, :connection_investment_costs, :storage_investment_costs, :mp_objective_penalties
+]
+const op_terms = [
+    :variable_om_costs,
+    :fixed_om_costs,
+    :taxes,
+    :fuel_costs,
+    :start_up_costs,
+    :shut_down_costs,
+    :objective_penalties,
+    :connection_flow_costs,
+    :renewable_curtailment_costs,
+    :res_proc_costs,
+    :units_on_costs,
+]
+const all_objective_terms = [op_terms; invest_terms]
+
 """
-    total_costs(m::Model, t::DateTime)
+    total_costs(m::Model, t_range::Array{TimeSlice,1})
 
 Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
 """
-total_costs(m, t) = sum(eval(term)(m, t) for term in objective_terms(m))
+function total_costs(m, t_range; investments=true, operations=true)
+    sum(eval(term)(m, t_range) for term in objective_terms(m; investments=investments, operations=operations))
+end
+
+function objective_terms(m; investments=true, operations=true)
+    obj_terms = []
+    investments && append!(obj_terms, invest_terms)
+    operations && append!(obj_terms, op_terms)
+    obj_terms
+end

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,45 +17,102 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_intact_flow_ptdf!(m::Model)
+@doc raw"""
+The power transfer distribution factors are a property of the network reactances.
+``p^{ptdf}_{(c, n)}`` represents the fraction of an injection at [node](@ref) ``n`` that will flow
+on [connection](@ref) ``c``.
+The flow on [connection](@ref) ``c`` is then the sum over all nodes of ``p^{ptdf}_{(c, n)}`` multiplied by the
+net injection at that node.
+[connection\_intact\_flow](@ref) represents the flow on each line of the network with all candidate connections
+with PTDF-based flow present in the network.
 
-For connection networks with monitored and has_ptdf set to true, set the steady state flow based on PTDFs.
+```math
+\begin{aligned}
+& v^{connection\_intact\_flow}_{(c, n_{to}, to\_node, s, t)}
+- v^{connection\_intact\_flow}_{(c, n_{to}, from\_node, s, t)} \\
+& = \sum_{n_{inj}} p^{ptdf}_{(c, n_{inj}, t)} \cdot v^{node\_injection}_{(n_{inj}, s, t)}
+\cdot \left[p^{node\_opf\_type}_{(n_{inj})} \neq node\_opf\_type\_reference \right]
+\\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
+
 """
 function add_constraint_connection_intact_flow_ptdf!(m::Model)
-    @fetch connection_intact_flow, node_injection = m.ext[:variables]
-    m.ext[:constraints][:connection_intact_flow_ptdf] = Dict(
+    @fetch connection_intact_flow, node_injection, connection_flow = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:connection_intact_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 + get(connection_intact_flow, (conn, n_to, direction(:to_node), s, t), 0)
-                - get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0) for s in s;
-                init=0,
+                - get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0)
+                for s in s;
+                init=0
             )
             ==
             + expr_sum(
-                ptdf(connection=conn, node=n) * node_injection[n, s, t]
-                for (conn, n) in indices(ptdf; connection=conn)
-                for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t)
-                    if !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
-                init=0,
+                ptdf[(connection=conn, node=n, t=t)]
+                * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
+                * node_injection[n, s, t]
+                for n in ptdf_connection__node(connection=conn)
+                if node_opf_type(node=n) != :node_opf_type_reference
+                for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t);                                  
+                init=0
             )
-        ) for (conn, n_to, s, t) in constraint_connection_intact_flow_ptdf_indices(m)
+            + expr_sum(
+                ptdf[(connection=conn, node=n, t=t)]
+                * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
+                * connection_flow[conn1, n1, d, s, t]                                
+                for n in node(is_boundary_node=true)
+                if n in ptdf_connection__node(connection=conn)
+                && node_opf_type(node=n) != :node_opf_type_reference
+                for (conn1, n1, d, s, t) in connection_flow_indices(
+                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
+                )
+                if is_boundary_connection(connection=conn1);
+                init=0
+            )
+            - expr_sum(
+                ptdf[(connection=conn, node=n, t=t)]
+                * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
+                * connection_flow[conn1, n1, d, s, t]                                
+                for n in node(is_boundary_node=true)
+                if n in ptdf_connection__node(connection=conn)
+                && node_opf_type(node=n) != :node_opf_type_reference
+                for (conn1, n1, d, s, t) in connection_flow_indices(
+                    m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
+                )
+                if is_boundary_connection(connection=conn1);
+                init=0
+            )
+        )
+        for (conn, n_to, s, t) in constraint_connection_intact_flow_ptdf_indices(m)
     )
 end
 
 # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
 
 function constraint_connection_intact_flow_ptdf_indices(m::Model)
-    unique(
+    (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
-        for (n_to, t) in node_time_indices(m; node=n_to) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_connection_intact_flow_ptdf_indices(m, conn, n_to, d_to, t)
-            ),
+        for (n_to, t) in node_time_indices(m; node=n_to)
+        if _check_ptdf_duration(m, t, conn)
+        for path in active_stochastic_paths(
+            m,
+            vcat(
+                connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
+                node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t)
+            )
         )
     )
 end
@@ -77,21 +134,4 @@ function constraint_connection_intact_flow_ptdf_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, node=node, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_connection_intact_flow_ptdf_indices(m))
-end
-
-"""
-    _constraint_connection_intact_flow_ptdf_indices(connection, node_to, direction_to, t)
-
-Gather the indices of the `connection_intact_flow` and the `node_injection` variables appearing in
-`add_constraint_connection_intact_flow_ptdf!`.
-"""
-function _constraint_connection_intact_flow_ptdf_indices(m, connection, node_to, direction_to, t)
-    Iterators.flatten((
-        connection_intact_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),
-        (
-            ind
-            for (conn, n_inj) in indices(ptdf; connection=connection)
-            for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
-        ),  # `n_inj`
-    ))
 end

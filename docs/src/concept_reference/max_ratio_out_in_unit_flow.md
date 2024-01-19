@@ -1,5 +1,5 @@
 The definition of the [max\_ratio\_out\_in\_unit\_flow](@ref) parameter triggers the generation of the
-[constraint\_max\_ratio\_out\_in\_unit\_flow](@ref ratio_out_in) and enforces an upper bound on the ratio between outgoing and incoming flows of a unit.
+[constraint\_max\_ratio\_out\_in\_unit\_flow](@ref ratio_unit_flow) and enforces an upper bound on the ratio between outgoing and incoming flows of a unit.
 The parameter is defined on the relationship class [unit\_\_node\_\_node](@ref),
 where the first node (or group of nodes) in this relationship represents the `to_node`, i.e. the outgoing flow from the unit,
 and the second node (or group of nodes), represents the `from_node`, i.e. the incoming flows to the unit.

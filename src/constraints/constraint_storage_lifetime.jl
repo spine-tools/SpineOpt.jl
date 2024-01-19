@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -23,13 +23,13 @@
 Constrain storages_invested_available by the investment lifetime of a node.
 """
 function add_constraint_storage_lifetime!(m::Model)
-    @fetch storages_invested_available, storages_invested = m.ext[:variables]
+    @fetch storages_invested_available, storages_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:storage_lifetime] = Dict(
+    m.ext[:spineopt].constraints[:storage_lifetime] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + storages_invested_available[n, s, t]
+            expr_sum(
+                storages_invested_available[n, s, t]
                 for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
                 init=0,
             )
@@ -50,16 +50,31 @@ function add_constraint_storage_lifetime!(m::Model)
                     ),
                 )
             )
-        ) for (n, s, t) in constraint_storage_lifetime_indices(m)
+        )
+        for (n, s, t) in constraint_storage_lifetime_indices(m)
     )
 end
 
 function constraint_storage_lifetime_indices(m::Model)
-    t0 = _analysis_time(m)
     unique(
         (node=n, stochastic_path=path, t=t)
         for n in indices(storage_investment_tech_lifetime) for (n, s, t) in storages_invested_available_indices(m; node=n)
         for path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t))
+    )
+end
+
+function _past_storages_invested_available_indices(m, n, s, t)
+    t0 = _analysis_time(m)
+    storages_invested_available_indices(
+        m;
+        node=n,
+        stochastic_scenario=s,
+        t=to_time_slice(
+            m;
+            t=TimeSlice(
+                end_(t) - storage_investment_lifetime(node=n, analysis_time=t0, stochastic_scenario=s, t=t), end_(t)
+            )
+        )
     )
 end
 

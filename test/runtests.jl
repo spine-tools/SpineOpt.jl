@@ -24,6 +24,9 @@ using Dates
 using JuMP
 using PyCall
 
+# Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
+import SpineInterface: Parameter, parameter_value
+
 import SpineOpt:
     time_slice,
     to_time_slice,
@@ -43,19 +46,25 @@ import SpineOpt:
     rerun_spineopt!
 
 # Test code uses legacy syntax for `import_data`, so interpret here
-SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")
+SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, "testing"; kwargs...)
 
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
-    dbh = SpineInterface._create_db_handler(db_url, false)
-    dbh.close_connection()
-    dbh.open_connection()
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
     merge!(data, test_data)
-    SpineInterface.import_data(db_url; data...)
+    _load_test_data_without_template(db_url, data)
 end
 
-_is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
+function _load_test_data_without_template(db_url, test_data)
+    SpineInterface.close_connection(db_url)
+    SpineInterface.open_connection(db_url)
+    SpineInterface.import_data(db_url; test_data...)
+end
+
+function _is_constraint_equal(x, y)
+    x_terms, y_terms = x.func.terms, y.func.terms
+    x.set == y.set && keys(x_terms) == keys(y_terms) && all(isapprox(x_terms[k], y_terms[k]) for k in keys(x_terms))
+end
 
 """
     _dismember_constraint(constraint)
@@ -85,19 +94,21 @@ function _dismember_function(func)
 end
 
 @testset begin
-    # include("data_structure/migration.jl") # FIXME: we should have this in the future
-    # include("data_structure/check_data_structure.jl")
-    # include("data_structure/preprocess_data_structure.jl")
-    # include("data_structure/temporal_structure.jl")
-    # include("data_structure/stochastic_structure.jl")
-    # include("data_structure/algorithm_mga_structure.jl")
     include("data_structure/check_economic_structure.jl")
-    # include("constraints/constraint_unit.jl")
-    # include("constraints/constraint_node.jl")
-    # include("constraints/constraint_connection.jl")
-    # include("constraints/constraint_user_constraint.jl")
-    # include("objective/objective.jl")
-    # include("util/misc.jl")
-    # include("util/postprocess_results.jl")
-    # include("run_spineopt.jl")
+    include("data_structure/migration.jl")
+    include("data_structure/check_data_structure.jl")
+    include("data_structure/preprocess_data_structure.jl")
+    include("data_structure/temporal_structure.jl")
+    include("data_structure/stochastic_structure.jl")
+    include("data_structure/algorithm_mga_structure.jl")
+    include("data_structure/postprocess_results.jl")
+    include("constraints/constraint_unit.jl")
+    include("constraints/constraint_node.jl")
+    include("constraints/constraint_connection.jl")
+    include("constraints/constraint_user_constraint.jl")
+    include("constraints/constraint_investment_group.jl")
+    include("objective/objective.jl")
+    include("util/misc.jl")
+    include("run_spineopt.jl")
+    include("run_spineopt_benders.jl")
 end

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -17,15 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_units_on!(m::Model)
+@doc raw"""
+The number of online units needs to be restricted to the aggregated available units:
 
-Limit the units_on by the number of available units.
+```math
+v^{units\_on}_{(u,s,t)} \leq v^{units\_available}_{(u,s,t)} \quad \forall u \in unit, \, \forall (s,t)
+```
+
+The investment formulation is described in chapter [Investments](@ref).
 """
 function add_constraint_units_on!(m::Model)
-    @fetch units_on, units_available = m.ext[:variables]
-    m.ext[:constraints][:units_on] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(m, + units_on[u, s, t] <= + units_available[u, s, t])
+    @fetch units_on, units_available = m.ext[:spineopt].variables
+    t0 = _analysis_time(m)
+    m.ext[:spineopt].constraints[:units_on] = Dict(
+        (unit=u, stochastic_scenario=s, t=t) => @constraint(
+            m, 
+            + units_on[u, s, t] 
+            <= 
+            + units_available[u, s, t]
+        )
         for (u, s, t) in units_on_indices(m)
     )
 end

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -30,8 +30,24 @@
 include("versions/rename_unit_constraint_to_user_constraint.jl")
 include("versions/move_connection_flow_cost.jl")
 include("versions/rename_model_types.jl")
+include("versions/add_min_unit_flow.jl")
+include("versions/add_flow_non_anticipativity_time.jl")
+include("versions/add_mga_weight_factors.jl")
+include("versions/rename_benders_master_to_just_benders.jl")
+include("versions/translate_ramp_parameters.jl")
+include("versions/remove_model_tb_ss.jl")
 
-_upgrade_functions = [rename_unit_constraint_to_user_constraint, move_connection_flow_cost,rename_model_types]
+_upgrade_functions = [
+	rename_unit_constraint_to_user_constraint,
+	move_connection_flow_cost,
+	rename_model_types,
+	add_min_unit_flow,
+	add_flow_non_anticipativity_time,
+	add_mga_weight_factors,
+	rename_benders_master_to_just_benders,
+	translate_ramp_parameters,
+	remove_model_tb_ss,
+]
 
 """
 	current_version()
@@ -46,14 +62,10 @@ current_version() = length(_upgrade_functions) + 1
 Run migrations on the given url starting from the given version.
 """
 function run_migrations(url, version, log_level)
-	run_request(url, "open_connection")
-	try
-		while _run_migration(url, version, log_level)
-			version = find_version(url)
-		end
-	finally
-		run_request(url, "close_connection")
+	while _run_migration(url, version, log_level)
+		version = find_version(url)
 	end
+	run_request(url, "import_data",	(SpineOpt.template(), "Import last version of the template"))
 end
 
 function _run_migration(url, version, log_level)
@@ -103,7 +115,8 @@ function find_version(url)
 		)
 		return 1
 	end
-	_parse_version(pdefs[j]["default_value"])
+	version = parse_db_value(pdefs[j]["default_value"], pdefs[j]["default_type"])
+	_parse_version(version)
 end
 
 _parse_version(version::String) = _parse_version(parse(Float64, version))

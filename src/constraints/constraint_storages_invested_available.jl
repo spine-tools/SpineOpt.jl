@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_storages_invested_available!(m::Model)
+@doc raw"""
+The number of available invested-in storages at node ``n`` at any point in time
+is less than the number of investment candidate storages at that node.
 
 Link storages_invested_state to the sum of all storages_invested_state_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """

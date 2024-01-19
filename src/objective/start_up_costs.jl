@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -22,8 +22,8 @@
 
 Create an expression for unit startup costs.
 """
-function start_up_costs(m::Model, t1)
-    @fetch units_started_up = m.ext[:variables]
+function start_up_costs(m::Model, t_range)
+    @fetch units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -33,7 +33,7 @@ function start_up_costs(m::Model, t1)
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_on_indices(m; unit=indices(start_up_cost)) if end_(t) <= t1;
+            for (u, s, t) in units_on_indices(m; unit=indices(start_up_cost), t=t_range);
             init=0,
         )
     )

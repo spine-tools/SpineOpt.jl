@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -16,14 +16,34 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    add_constraint_connection_flow_gas_capacity!(m::Model)
 
-This constraint is needed to force uni-directional flow over gas connections.
+@doc raw"""
+To enforce that the averge flow of a connection is only in one direction,
+the flow in the opposite direction is forced to be `0` by the following equation.
+For the connection flow in the direction of flow the parameter [big\_m](@ref) should be chosen large enough
+not to become binding.
+
+```math
+\begin{aligned}
+& 
+\left.
+\left(v^{connection\_flow}_{(conn, n_{orig},from\_node,s,t)} + v^{connection\_flow}_{(conn, n_{dest},to\_node,s,t)}\right)
+\middle/2 
+\right.
+\\
+& <= p^{big\_m} \cdot v^{binary\_gas\_connection\_flow}_{(conn, n_{dest}, to\_node, s, t)} \\
+& \forall (conn, n_{orig}, n_{dest}) \in indices(p^{fixed\_pressure\_constant\_1}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also
+[p^{fixed\_pressure\_constant\_1}](@ref),
+[big\_m](@ref).
 """
 function add_constraint_connection_flow_gas_capacity!(m::Model)
-    @fetch connection_flow, binary_gas_connection_flow = m.ext[:variables]
-    m.ext[:constraints][:connection_flow_gas_capacity] = Dict(
+    @fetch connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:connection_flow_gas_capacity] = Dict(
         (connection=conn, node1=n_from, node2=n_to, stochastic_scenario=s, t=t) => @constraint(
             m,
             (
@@ -37,11 +57,11 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                         t=t_in_t(m; t_long=t),
                         direction=direction(:from_node),
                     )
-                ) + sum(
+                )
+                + sum(
                     connection_flow[conn, n_to, d, s, t] * duration(t)
                     for (conn, n_to, d, s, t) in connection_flow_indices(
-                        m;
-                        connection=conn,
+                        m; connection=conn,
                         node=n_to,
                         stochastic_scenario=s,
                         t=t_in_t(m; t_long=t),
@@ -51,7 +71,8 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
             )
             / 2
             <=
-            + big_m(model=m.ext[:instance]) * sum(
+            + big_m(model=m.ext[:spineopt].instance)
+            * sum(
                 binary_gas_connection_flow[conn, n_to, d, s, t] * duration(t)
                 for (conn, n_to, d, s, t) in connection_flow_indices(
                     m;
@@ -62,18 +83,16 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                     direction=direction(:to_node),
                 )
             )
-        ) for (conn, n_from, n_to, s, t) in constraint_connection_flow_gas_capacity_indices(m)
+        )
+        for (conn, n_from, n_to, s, t) in constraint_connection_flow_gas_capacity_indices(m)
     )
 end
 
 function constraint_connection_flow_gas_capacity_indices(m::Model)
     unique(
         (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
-        for (conn, n1, n2) in indices(fixed_pressure_constant_1) for t in t_lowest_resolution(
-            time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1), members(n2))))),
-        ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in connection_flow_indices(m; connection=conn, node=[n1, n2], t=t)),
-        )
+        for (conn, n1, n2) in indices(fixed_pressure_constant_1)
+        for (t, path) in t_lowest_resolution_path(m, connection_flow_indices(m; connection=conn, node=[n1, n2]))
     )
 end
 

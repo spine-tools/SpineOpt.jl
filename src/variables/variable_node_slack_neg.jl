@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -22,4 +22,4 @@
 
 Add `node_slack_neg` variables to model `m`.
 """
-add_variable_node_slack_neg!(m::Model) = add_variable!(m, :node_slack_neg, node_slack_indices; lb=x -> 0, use_long_history=false)
+add_variable_node_slack_neg!(m::Model) = add_variable!(m, :node_slack_neg, node_slack_indices; lb=Constant(0))

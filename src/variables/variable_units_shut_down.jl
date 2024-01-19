@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -23,5 +23,13 @@
 Add `units_shut_down` variables to model `m`.
 """
 function add_variable_units_shut_down!(m::Model)
-    add_variable!(m, :units_shut_down, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int,use_long_history=false,)
+    add_variable!(
+        m,
+        :units_shut_down,
+        units_on_indices;
+        lb=Constant(0),
+        bin=units_on_bin,
+        int=units_on_int,
+        replacement_value=units_switched_replacement_value,
+    )
 end

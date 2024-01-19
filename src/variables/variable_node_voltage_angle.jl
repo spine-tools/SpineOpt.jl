@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -52,13 +52,7 @@ function add_variable_node_voltage_angle!(m::Model)
         m,
         :node_voltage_angle,
         node_voltage_angle_indices;
-        fix_value=x -> fix_node_voltage_angle(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        use_long_history=false,
+        fix_value=fix_node_voltage_angle,
+        initial_value=initial_node_voltage_angle
     )
 end

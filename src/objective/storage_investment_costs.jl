@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -22,8 +22,8 @@
 
 Create and expression for node investment costs.
 """
-function storage_investment_costs(m::Model, t1)
-    @fetch storages_invested = m.ext[:variables]
+function storage_investment_costs(m::Model, t_range)
+    @fetch storages_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -40,8 +40,7 @@ function storage_investment_costs(m::Model, t1)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (n, s, t) in storages_invested_available_indices(m; node=indices(storage_investment_cost))
-                if end_(t) <= t1;
+            for (n, s, t) in storages_invested_available_indices(m; node=indices(storage_investment_cost), t=t_range);
             init=0,
         )
     )

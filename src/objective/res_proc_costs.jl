@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -22,8 +22,8 @@
 
 Add expression for reserve procurement costs.
 """
-function res_proc_costs(m::Model, t1)
-    @fetch unit_flow = m.ext[:variables]
+function res_proc_costs(m::Model, t_range)
+    @fetch unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -35,7 +35,7 @@ function res_proc_costs(m::Model, t1)
             * reserve_procurement_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
             * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             for (u, ng, d) in indices(reserve_procurement_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d) if end_(t) <= t1;
+            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range);
             init=0,
         )
     )
