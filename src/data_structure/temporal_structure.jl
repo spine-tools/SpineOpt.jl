@@ -306,7 +306,9 @@ function _generate_time_slice!(m::Model)
         filter!(t -> end_(t) > history_start, history_window_time_slices)
         prepend!(history_time_slices, history_window_time_slices)
     end
-    m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
+    # m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
     #histroy t_short #FIXME make this more elgant
     operational_blocks = intersect(
         model__temporal_block(model=instance),unique(
@@ -328,10 +330,12 @@ function _generate_time_slice!(m::Model)
     filter!(t -> end_(t) > history_start_short, history_window_time_slices_short)
     prepend!(history_time_slices_short, history_window_time_slices_short)
     entire_history = unique([history_time_slices...,history_time_slices_short...])
-    m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(entire_history)
-    m.ext[:temporal_structure][:t_history_t] = Dict(zip(entire_history .+ window_duration, entire_history))
-    # m.ext[:temporal_structure][:history_time_slice_short] = TimeSliceSet(history_time_slices_short)
-    # m.ext[:temporal_structure][:t_history_t_short] = Dict(zip(history_time_slices_short .+ window_duration, history_time_slices_short))
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    # m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(entire_history, dur_unit)
+    m.ext[:spineopt].temporal_structure[:t_history_t] = Dict(zip(entire_history .+ window_duration, entire_history))
+    # m.ext[:spineopt].temporal_structure[:history_time_slice_short] = TimeSliceSet(history_time_slices_short)
+    # m.ext[:spineopt].temporal_structure[:t_history_t_short] = Dict(zip(history_time_slices_short .+ window_duration, history_time_slices_short))
     _add_padding_time_slice!(instance, window_end, window_time_slices)
     history_time_slices, t_history_t = _history_time_slices!(instance, window_start, window_end, window_time_slices)
     _do_generate_time_slice!(m, window_time_slices, history_time_slices, t_history_t)
@@ -607,39 +611,39 @@ end
 
 current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
 
-current_window(m::Model) = m.ext[:temporal_structure][:current_window]
-time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](; kwargs...)
-history_time_slice(m::Model; use_long_history=true,kwargs...) = m.ext[:temporal_structure][:history_time_slice](; kwargs...)
+# current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
+time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
+history_time_slice(m::Model; use_long_history=true,kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
 # function history_time_slice(m::Model; use_long_history=true,kwargs...)
 #     if use_long_history
-#         unique([m.ext[:temporal_structure][:history_time_slice](; kwargs...)...,m.ext[:temporal_structure][:history_time_slice_short](; kwargs...)...])
-#         # m.ext[:temporal_structure][:history_time_slice](; kwargs...)
+#         unique([m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)...,m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)...])
+#         # m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
 #     else
-#         m.ext[:temporal_structure][:history_time_slice_short](; kwargs...)
+#         m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)
 #     end
 # end
-t_history_t(m::Model; use_long_history=true, t::TimeSlice) = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
+t_history_t(m::Model; use_long_history=true, t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
 # function t_history_t(m::Model; use_long_history=true, t::TimeSlice)
 #     if use_long_history
-#         a = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
-#         b = get(m.ext[:temporal_structure][:t_history_t_short], t, nothing)
+#         a = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
+#         b = get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
 #         (!isnothing(a) && !isnothing(b)) ? unique([a...,b...]) : (!isnothing(a) ? a : b)
 #     else
-#         get(m.ext[:temporal_structure][:t_history_t_short], t, nothing)
+#         get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
 #     end
 # end
-# history_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:history_time_slice](; kwargs...)
-# history_time_slice(m::Model; use_long_history=false, kwargs...) = m.ext[:temporal_structure][:history_time_slice_short](; kwargs...)
-# t_history_t(m::Model; t::TimeSlice) = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
-# t_history_t(m::Model; use_long_history=false, t::TimeSlice) = get(m.ext[:temporal_structure][:t_history_t_short], t, nothing)
-t_before_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_before_t](; kwargs...)
-t_in_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t](; kwargs...)
-t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](; kwargs...)
-t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t](t)
-t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
-representative_time_slice(m, t) = get(m.ext[:temporal_structure][:representative_time_slice], t, t)
-output_time_slices(m::Model; output::Object) = get(m.ext[:temporal_structure][:output_time_slices], output, nothing)
-
+# history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
+# history_time_slice(m::Model; use_long_history=false, kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)
+# t_history_t(m::Model; t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
+# t_history_t(m::Model; use_long_history=false, t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
+t_before_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
+t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
+t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
+t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t_excl](t)
+representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, t)
+output_time_slices(m::Model; output::Object) = get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
+"""
 An `Array` of `TimeSlice`s in model `m`.
 
  # Keyword arguments

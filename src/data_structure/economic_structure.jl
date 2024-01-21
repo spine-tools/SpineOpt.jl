@@ -53,7 +53,7 @@ unit_capacity_transfer_factor is a Map parameter that holds the fraction of an i
 year t_v in a unit u that is still available in the model year t.
 """
 function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt].instance
     capacity_transfer_factor = Dict()
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
     lead_time = eval(Symbol("$(obj_name)_lead_time"))
@@ -147,7 +147,7 @@ linearly towards the end of the economic lifetime.
 
 """
 function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     conversion_to_discounted_annuities = Dict()
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
@@ -255,7 +255,7 @@ end
 Generate salvage fraction of units, which exonomic lifetime exceeds the modeling horizon.
 """
 function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     EOH = model_end(model=instance)
     salvage_fraction = Dict()
@@ -320,7 +320,7 @@ end
 Generate technology-specific discount factors for investments (e.g., for risky investments).
 """
 function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt].instance
     discnt_rate_tech = eval(Symbol("$(obj_name)_discount_rate_technology_specific"))
     econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
@@ -365,7 +365,7 @@ This is used to scale and translate operational blocks according to their associ
 discount them to the models `discount_year`.
 """
 function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     discounted_duration = Dict()
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
@@ -419,7 +419,7 @@ end
 function create_discounted_duration(m;stochastic_scenario=nothing,invest_temporal_block=nothing)
     timeseries_ind = []
     timeseries_val = []
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt].instance
     last_timestep = end_(last(time_slice(m; temporal_block = invest_temporal_block)))
     for t in Iterators.flatten((time_slice(m; temporal_block = invest_temporal_block),TimeSlice(last_timestep,last_timestep)))
         discnt_rate = discount_rate(model=instance, stochastic_scenario=stochastic_scenario, t=t)
@@ -446,7 +446,7 @@ Investment payments are assumed to be constant over the decommissioning time.
 
 """
 function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     decommissioning_conversion_to_discounted_annuities = Dict()
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))

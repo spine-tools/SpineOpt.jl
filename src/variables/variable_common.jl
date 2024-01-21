@@ -57,8 +57,7 @@ function add_variable!(
         :use_long_history => use_long_history,
         :non_anticipativity_margin => non_anticipativity_margin
     )
-        for ind in indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
-        for ind in indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
+        
     var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(
             m,
@@ -71,8 +70,8 @@ function add_variable!(
             fix_value,
             internal_fix_value,
             replacement_value
-        )
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        ) for ind in indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
+        # for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing

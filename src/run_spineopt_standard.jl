@@ -121,6 +121,9 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
+    end
+end
+
 _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
 function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
     var = m.ext[:variables][name]
