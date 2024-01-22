@@ -87,16 +87,10 @@ function add_variable_units_invested_available_vintage!(m::Model)
         m,
         :units_invested_available_vintage,
         units_invested_available_vintage_indices;
-        lb=x -> 0,
-        ub=x -> candidate_units(unit=x.unit), #FIXME
-        fix_value=x -> fix_units_invested_available_vintage(
-            unit=x.unit,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t = x.t,
-            t_vintage=x.t_vintage,
-            _strict=false,
-        ),
-        vintage=true,
+        lb=Constant(0),
+        int=units_invested_available_int,
+        # fix_value=fix_units_invested_available_vintage,
+        # initial_value=initial_units_invested_available_vintage,
+        vintage=true
     )
 end

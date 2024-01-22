@@ -87,16 +87,9 @@ function add_variable_storages_invested_available_vintage!(m::Model)
         m,
         :storages_invested_available_vintage,
         storages_invested_available_vintage_indices;
-        lb=x -> 0,
-        ub=x -> candidate_storages(node=x.node), #FIXME
-        fix_value=x -> fix_storages_invested_available_vintage(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t_vintage = x.t_vintage,
-            t=x.t,
-            _strict=false,
-        ),
+        lb=Constant(0),
+        ub=candidate_storages, #FIXME
+        fix_value=fix_storages_invested_available_vintage,
         vintage=true,
     )
 end

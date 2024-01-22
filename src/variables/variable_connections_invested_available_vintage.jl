@@ -87,16 +87,9 @@ function add_variable_connections_invested_available_vintage!(m::Model)
         m,
         :connections_invested_available_vintage,
         connections_invested_available_vintage_indices;
-        lb=x -> 0,
-        ub=x -> candidate_connections(connection=x.connection),
-        fix_value=x -> fix_connections_invested_available_vintage(
-            connection=x.connection,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            t_vintage=x.t_vintage,
-            _strict=false,
-        ),
+        lb=Constant(0),
+        ub=candidate_connections,
+        fix_value=fix_connections_invested_available_vintage,
         vintage=true,
     )
 end

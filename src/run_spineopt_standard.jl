@@ -100,9 +100,11 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_connection_intact_flow!,
             add_variable_connections_invested!,
             add_variable_connections_invested_available!,
+            add_variable_connections_invested_available_vintage!,
             add_variable_connections_decommissioned!,
             add_variable_storages_invested!,
             add_variable_storages_invested_available!,
+            add_variable_storages_invested_available_vintage!,
             add_variable_storages_decommissioned!,
             add_variable_node_state!,
             add_variable_node_slack_pos!,
@@ -110,6 +112,7 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_node_injection!,
             add_variable_units_invested!,
             add_variable_units_invested_available!,
+            add_variable_units_invested_available_vintage!,
             add_variable_units_mothballed!,
             add_variable_nonspin_units_started_up!,
             add_variable_nonspin_units_shut_down!,
@@ -162,11 +165,11 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_unit_flow_capacity!,
             add_constraint_connections_invested_available!,
-            add_constraint_connection_lifetime!,
-            add_constraint_connections_invested_transition!,
+            # add_constraint_connection_lifetime!,
+            # add_constraint_connections_invested_transition!,
             add_constraint_storages_invested_available!,
-            add_constraint_storage_lifetime!,
-            add_constraint_storages_invested_transition!,
+            # add_constraint_storage_lifetime!,
+            # add_constraint_storages_invested_transition!,
             add_constraint_operating_point_bounds!,
             add_constraint_operating_point_rank!,
             add_constraint_unit_flow_op_bounds!,
@@ -197,7 +200,7 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_units_on!,
             add_constraint_units_available!,
             add_constraint_units_invested_available!,
-            add_constraint_unit_lifetime!,
+            # add_constraint_unit_lifetime!,
             add_constraint_units_invested_transition!,
             add_constraint_minimum_operating_point!,
             add_constraint_min_down_time!,
@@ -246,8 +249,11 @@ end
 
 function _create_objective_terms!(m)
     window_end = end_(current_window(m))
+    @show window_end
     window_very_end = end_(last(time_slice(m)))
+    @show window_very_end
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
+    @show beyond_window
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
     for term in objective_terms(

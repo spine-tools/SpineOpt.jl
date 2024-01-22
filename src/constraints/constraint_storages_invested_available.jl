@@ -24,9 +24,9 @@ is less than the number of investment candidate storages at that node.
 Link storages_invested_state to the sum of all storages_invested_state_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
 function add_constraint_storages_invested_available!(m::Model)
-    @fetch storages_invested_available, storages_invested_available_vintage = m.ext[:variables]
+    @fetch storages_invested_available, storages_invested_available_vintage = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:storages_invested_available] = Dict(
+    m.ext[:spineopt].constraints[:storages_invested_available] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
             + storages_invested_available[n, s, t]
