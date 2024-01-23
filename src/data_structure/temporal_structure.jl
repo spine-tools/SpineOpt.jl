@@ -259,6 +259,14 @@ function _do_generate_time_slice!(m, window_time_slices, history_time_slices, t_
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
+    temporal_block__t = RelationshipClass(
+        :temporal_block__t,
+        [:temporal_block, :t],
+        [(temporal_block=tb, t=t) for t in [history_time_slices; window_time_slices] for tb in blocks(t)],
+    )
+    @eval begin
+        temporal_block__t = $temporal_block__t
+    end
 end
 
 """

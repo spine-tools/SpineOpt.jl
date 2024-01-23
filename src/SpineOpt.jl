@@ -29,6 +29,7 @@ using Requires
 using JuMP
 using HiGHS
 using Arrow
+using DataFrames
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!

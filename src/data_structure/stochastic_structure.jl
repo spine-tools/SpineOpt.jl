@@ -126,6 +126,19 @@ function _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
         for (structure, dag) in all_stochastic_dags
         for (t, scens) in _time_slice_stochastic_scenarios(m, dag)
     )
+    stochastic_structure__t__stochastic_scenario = RelationshipClass(
+        :stochastic_structure__t__stochastic_scenario,
+        [:stochastic_structure, :t, :stochastic_scenario],
+        [
+            (stochastic_structure=ss, t=t, stochastic_scenario=scen)
+            for (ss, dag) in all_stochastic_dags
+            for (t, scens) in _time_slice_stochastic_scenarios(m, dag)
+            for scen in scens
+        ],
+    )
+    @eval begin
+        stochastic_structure__t__stochastic_scenario = $stochastic_structure__t__stochastic_scenario
+    end
 end
 
 function _stochastic_scenarios(m::Model, stoch_struct::Object, t::TimeSlice, scenarios)

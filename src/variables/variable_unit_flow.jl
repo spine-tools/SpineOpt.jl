@@ -39,15 +39,25 @@ function unit_flow_indices(
 )
     unit = members(unit)
     node = members(node)
-    unique(
-        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in unit__node__direction__temporal_block(
-            unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
-        )
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
-    )
+    select(
+        innerjoin(
+            innerjoin(
+                innerjoin(
+                    unit__node__direction__temporal_block(
+                        unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
+                    ),
+                    node__stochastic_structure(node=node, _compact=false);
+                    on=:node
+                ),
+                temporal_block__t(temporal_block=temporal_block, t=t, _compact=false);
+                on=:temporal_block
+            ),
+            stochastic_structure__t__stochastic_scenario(t=t, stochastic_scenario=stochastic_scenario, _compact=false);
+            on=[:stochastic_structure, :t]
+        ),
+        [:unit, :node, :direction, :stochastic_scenario, :t];
+        copycols=false
+    )  # FIXME: join with members of temporal_block, as in master
 end
 
 function unit_flow_time_indices(
