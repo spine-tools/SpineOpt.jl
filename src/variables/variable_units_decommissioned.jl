@@ -23,5 +23,5 @@
 Add `units_decommissioned` variables to model `m`.
 """
 function add_variable_units_decommissioned!(m::Model)
-    add_variable!(m, :units_decommissioned, units_invested_available_indices; lb=x -> 0)
+    add_variable!(m, :units_decommissioned, units_invested_available_indices; lb=Constant(0))
 end

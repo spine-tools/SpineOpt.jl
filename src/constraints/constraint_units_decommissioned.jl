@@ -23,7 +23,7 @@
 Link units_decommissioned to the sum of all units_decommissioned_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
 function add_constraint_units_decommissioned!(m::Model)
-    @fetch units_decommissioned, units_decommissioned_vintage = m.ext[:variables]
+    @fetch units_decommissioned, units_decommissioned_vintage = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:constraints][:units_decommissioned] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(

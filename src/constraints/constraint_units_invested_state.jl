@@ -23,9 +23,9 @@
 Link units_invested_state to the sum of all units_invested_state_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
 function add_constraint_units_invested_state!(m::Model)
-    @fetch units_invested_state, units_invested_state_vintage = m.ext[:variables]
+    @fetch units_invested_state, units_invested_state_vintage = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:units_invested_state] = Dict(
+    m.ext[:spineopt].constraints[:units_invested_state] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + units_invested_state[u, s, t]

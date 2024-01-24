@@ -23,9 +23,9 @@
 Limit the units_invested_available by the number of investment candidate units.
 """
 function add_constraint_units_invested_available_bound!(m::Model)
-    @fetch units_invested = m.ext[:variables]
+    @fetch units_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:units_invested_available_bound] = Dict(
+    m.ext[:spineopt].constraints[:units_invested_available_bound] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
             + sum(

@@ -23,9 +23,9 @@
 Constrain `units_mothballed_state_vintage` by the units de-/mothballed during current and previous timesteps.
 """
 function add_constraint_units_mothballed_state_vintage!(m::Model)
-    @fetch units_mothballed_state_vintage, units_mothballed_vintage, units_demothballed_vintage = m.ext[:variables]
+    @fetch units_mothballed_state_vintage, units_mothballed_vintage, units_demothballed_vintage = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:units_mothballed_state_vintage] = Dict(
+    m.ext[:spineopt].constraints[:units_mothballed_state_vintage] = Dict(
         (unit=u, stochastic_path=s, t_vintage=t_v, t=t_after) => @constraint(
             m,
             + expr_sum(

@@ -23,9 +23,9 @@
 Constrain units_invested_state_vintage by the investment lifetime of a unit and early decomissioning.
 """
 function add_constraint_units_invested_state_vintage!(m::Model)
-    @fetch units_invested_state_vintage, units_invested, units_early_decommissioned_vintage = m.ext[:variables]
+    @fetch units_invested_state_vintage, units_invested, units_early_decommissioned_vintage = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:constraints][:units_invested_state_vintage] = Dict(
+    m.ext[:spineopt].constraints[:units_invested_state_vintage] = Dict(
         (unit=u, stochastic_path=s, t_vintage=t_v, t=t) => @constraint(
             m,
             + expr_sum(
@@ -36,7 +36,7 @@ function add_constraint_units_invested_state_vintage!(m::Model)
             ==
             #FIXME: can we fix this parameter call? Currently, first needs to be added
             + expr_sum(
-                    + unit_capacity_transfer_factor[(unit=u, stochastic_scenario=s_v,vintage_t=first(t_v.start),t=t)]
+                    + unit_capacity_transfer_factor(unit=u, stochastic_scenario=s_v,vintage_t=t_v.start.x,t=t)
                     * (units_invested[u, s_v, t_v]
                     - expr_sum(
                         units_early_decommissioned_vintage[u, s_, t_v, t_]
@@ -72,7 +72,7 @@ function constraint_units_invested_state_vintage_indices(m::Model)
     unique(
         (unit=u, stochastic_path=path, t_vintage=t_v, t=t)
         for (u, s, t_v, t) in units_invested_available_vintage_indices(m)
-        for path in active_stochastic_paths(_constraint_units_invested_state_vintage_indices(m, u, s, t_v, t))
+        for path in active_stochastic_paths(m,_constraint_units_invested_state_vintage_indices(m, u, s, t_v, t))
     )
 end
 

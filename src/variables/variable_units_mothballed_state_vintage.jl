@@ -59,5 +59,5 @@ end
 Add `units_mothballed_state_vintage` variables to model `m`.
 """
 function add_variable_units_mothballed_state_vintage!(m::Model)
-    add_variable!(m, :units_mothballed_state_vintage, units_mothballed_state_vintage_indices; lb=x -> 0,vintage=true)
+    add_variable!(m, :units_mothballed_state_vintage, units_mothballed_state_vintage_indices; lb=Constant(0),vintage=true)
 end
