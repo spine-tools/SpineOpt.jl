@@ -210,7 +210,7 @@ function capital_recovery_factor(m, discnt_rate,ELIFE)
         ELIFE = Year(0)
     end
     if discnt_rate != 0
-        capital_recovery_factor =  discnt_rate * 1/(discount_factor(m,discnt_rate,ELIFE)) * 1/(1/(discount_factor(m,discnt_rate,ELIFE))-1)
+        capital_recovery_factor =  discnt_rate / (1+discnt_rate) * 1/(discount_factor(m,discnt_rate,ELIFE)) * 1/(1/(discount_factor(m,discnt_rate,ELIFE))-1)
     else
         capital_recovery_factor = 1/(Year(ELIFE)/Year(1))
     end
