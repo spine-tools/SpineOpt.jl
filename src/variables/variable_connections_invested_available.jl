@@ -30,17 +30,22 @@ function connections_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    connection = members(connection)
-    unique(
-        (connection=conn, stochastic_scenario=s, t=t)
-        for (conn, tb) in connection__investment_temporal_block(
-            connection=intersect(indices(candidate_connections), connection),
+    connection = intersect(indices(candidate_connections), members(connection))
+    select(
+        with_temporal_stochastic_indices(
+            innerjoin(
+                connection__investment_temporal_block(
+                    connection=connection, temporal_block=temporal_block, _compact=false
+                ),
+                connection__investment_stochastic_structure(connection=connection, _compact=false);
+                on=:connection
+            );
+            stochastic_scenario=stochastic_scenario,
+            t=t,
             temporal_block=temporal_block,
-            _compact=false
-        )
-        for (conn, s, t) in connection_investment_stochastic_time_indices(
-            m; connection=conn, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+        ),
+        [:connection, :stochastic_scenario, :t];
+        copycols=false,
     )
 end
 

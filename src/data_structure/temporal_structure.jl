@@ -613,16 +613,24 @@ function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 end
 
+function with_temporal_indices(ef::EntityFrame; temporal_block=anything, t=anything)
+    innerjoin(ef, temporal_block__t(temporal_block=temporal_block, t=t, _compact=false); on=:temporal_block)
+end
+
 """
     node_time_indices(m::Model;<keyword arguments>)
 
 Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword arguments that allow filtering.
 """
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
-    unique(
-        (node=n, t=t1)
-        for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+    select(
+        with_temporal_indices(
+            node__temporal_block(node=node, temporal_block=temporal_block, _compact=false);
+            temporal_block=temporal_block,
+            t=t,
+        ),
+        [:node, :t];
+        copycols=false,
     )
 end
 

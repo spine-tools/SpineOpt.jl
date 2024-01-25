@@ -30,14 +30,20 @@ function units_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    unit = members(unit)
-    unique(
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in unit__investment_temporal_block(
-            unit=intersect(indices(candidate_units), unit), temporal_block=temporal_block, _compact=false)
-        for (u, s, t) in unit_investment_stochastic_time_indices(
-            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+    unit = intersect(indices(candidate_units), members(unit))
+    select(
+        with_temporal_stochastic_indices(
+            innerjoin(
+                unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false),
+                unit__investment_stochastic_structure(unit=unit, _compact=false);
+                on=:unit
+            );
+            stochastic_scenario=stochastic_scenario,
+            t=t,
+            temporal_block=temporal_block,
+        ),
+        [:unit, :stochastic_scenario, :t];
+        copycols=false,
     )
 end
 

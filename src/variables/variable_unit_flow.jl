@@ -40,23 +40,20 @@ function unit_flow_indices(
     unit = members(unit)
     node = members(node)
     select(
-        innerjoin(
+        with_temporal_stochastic_indices(
             innerjoin(
-                innerjoin(
-                    unit__node__direction__temporal_block(
-                        unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
-                    ),
-                    node__stochastic_structure(node=node, _compact=false);
-                    on=:node
+                unit__node__direction__temporal_block(
+                    unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
                 ),
-                temporal_block__t(temporal_block=temporal_block, t=t, _compact=false);
-                on=:temporal_block
-            ),
-            stochastic_structure__t__stochastic_scenario(t=t, stochastic_scenario=stochastic_scenario, _compact=false);
-            on=[:stochastic_structure, :t]
+                node__stochastic_structure(node=node, _compact=false);
+                on=:node
+            );
+            stochastic_scenario=stochastic_scenario,
+            t=t,
+            temporal_block=temporal_block,
         ),
         [:unit, :node, :direction, :stochastic_scenario, :t];
-        copycols=false
+        copycols=false,
     )  # FIXME: join with members of temporal_block, as in master
 end
 

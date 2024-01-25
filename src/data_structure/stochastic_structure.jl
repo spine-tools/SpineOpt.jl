@@ -309,6 +309,16 @@ function _active_stochastic_paths(m, unique_active_scenarios)
     unique(intersect(path, unique_active_scenarios) for path in full_stochastic_paths)
 end
 
+function with_temporal_stochastic_indices(
+    ef::EntityFrame; stochastic_scenario=anything, temporal_block=anything, t=anything
+)
+    innerjoin(
+        with_temporal_indices(ef; temporal_block=temporal_block, t=t),
+        stochastic_structure__t__stochastic_scenario(t=t, stochastic_scenario=stochastic_scenario, _compact=false);
+        on=[:stochastic_structure, :t]
+    )
+end
+
 function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything)
     unique(
         (node=n, stochastic_scenario=s)
@@ -348,11 +358,19 @@ Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 function node_stochastic_time_indices(
     m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
 )
-    unique(
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, t) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for ss in node__stochastic_structure(node=n)
-        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+    select(
+        with_temporal_stochastic_indices(
+            innerjoin(
+                node__temporal_block(node=node, temporal_block=temporal_block, _compact=false),
+                node__stochastic_structure(node=node, _compact=false);
+                on=:node,
+            );
+            stochastic_scenario=stochastic_scenario,
+            temporal_block=temporal_block,
+            t=t,
+        ),
+        [:node, :stochastic_scenario, :t];
+        copycols=false,
     )
 end
 

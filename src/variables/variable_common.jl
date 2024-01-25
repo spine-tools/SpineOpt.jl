@@ -107,8 +107,8 @@ function _representative_periods_mapping(m::Model, var::Dict, indices::Function)
     # To include represented time slices, we need to specify `temporal_block=anything`.
     # Note that for node_state and investment variables, `represented_indices`, below, will be empty.
     representative_indices = indices(m)
-    all_indices = indices(m, temporal_block=anything)
-    represented_indices = setdiff(all_indices, representative_indices)
+    represented_indices = collect(indices(m, temporal_block=anything))
+    setdiff!(represented_indices, representative_indices)
     Dict(ind => var[_representative_index(m, ind, indices)] for ind in represented_indices)
 end
 
