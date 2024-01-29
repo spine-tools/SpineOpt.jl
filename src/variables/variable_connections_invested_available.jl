@@ -32,7 +32,8 @@ function connections_invested_available_indices(
 )
     connection = intersect(indices(candidate_connections), members(connection))
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 connection__investment_temporal_block(
                     connection=connection, temporal_block=temporal_block, _compact=false

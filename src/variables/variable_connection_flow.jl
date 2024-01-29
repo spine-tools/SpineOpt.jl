@@ -39,13 +39,14 @@ function connection_flow_indices(
 )
     node = members(node)
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 connection__node__direction__temporal_block(
                     connection=connection, node=node, direction=direction, temporal_block=temporal_block, _compact=false
                 ),
                 node__stochastic_structure(node=node, _compact=false);
-                on=:node
+                on=:node,
             );
             stochastic_scenario=stochastic_scenario,
             t=t,

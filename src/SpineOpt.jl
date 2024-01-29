@@ -45,6 +45,8 @@ export prepare_spineopt
 export generate_temporal_structure!
 export roll_temporal_structure!
 export rewind_temporal_structure!
+export period__temporal_block__t
+export history_time_slice
 export time_slice
 export t_before_t
 export t_in_t

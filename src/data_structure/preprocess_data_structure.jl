@@ -43,6 +43,7 @@ function preprocess_data_structure(; log_level=3)
     generate_benders_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
+    generate_period()
 end
 
 """
@@ -828,5 +829,14 @@ function generate_is_boundary()
         is_boundary_connection = $is_boundary_connection
         export is_boundary_node
         export is_boundary_connection
+    end
+end
+
+function generate_period()
+    history, window = Object(:history, :period), Object(:window, :period)
+    period = ObjectClass(:period, [history, window])
+    @eval begin
+        period = $period
+        export period
     end
 end

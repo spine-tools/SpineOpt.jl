@@ -66,7 +66,7 @@ function add_variable!(
             internal_fix_value,
             replacement_value
         )
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        for ind in indices(m; t=[time_slice(m); history_time_slice(m)])
     )
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
@@ -104,12 +104,13 @@ function _representative_periods_mapping(m::Model, var::Dict, indices::Function)
     # By default, `indices` skips represented time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
     # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
-    # To include represented time slices, we need to specify `temporal_block=anything`.
     # Note that for node_state and investment variables, `represented_indices`, below, will be empty.
-    representative_indices = indices(m)
-    represented_indices = collect(indices(m, temporal_block=anything))
-    setdiff!(represented_indices, representative_indices)
-    Dict(ind => var[_representative_index(m, ind, indices)] for ind in represented_indices)
+    # FIXME: Does this work for node_state and investment variables?
+    # Remember these need not to use representative periods...
+    Dict(
+        ind => var[_representative_index(m, ind, indices)]
+        for ind in indices(m; temporal_block=SpineInterface.indices(representative_periods_mapping))
+    )
 end
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")

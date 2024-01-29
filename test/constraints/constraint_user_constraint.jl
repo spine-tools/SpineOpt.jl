@@ -167,9 +167,9 @@
             key_cf_b = (connection(:connection_bc), node(:node_b), direction(:from_node))
             key_cf_c = (connection(:connection_bc), node(:node_c), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
+            t1h1, t1h2, t1h3, t1h4 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h1, t2h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
+            t4h1 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:investments_four_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
                 + 4 * units_invested_coefficient * var_units_invested[unit(:unit_ab), s_parent, t4h1]
@@ -256,8 +256,8 @@
             m = run_spineopt(url_in; log_level=0, optimize=false)
             constraint = m.ext[:spineopt].constraints[:user_constraint]
             @test length(constraint) == 2
-            t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            t1h1, t1h2, t1h3, t1h4 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h1, t2h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             t1h_arr_by_t2h = Dict(t2h1 => [t1h1, t1h2], t2h2 => [t1h3, t1h4])
             ucx = user_constraint(:constraint_x)
             parent = stochastic_scenario(:parent)

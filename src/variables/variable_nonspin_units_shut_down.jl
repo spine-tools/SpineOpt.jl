@@ -31,13 +31,17 @@ function nonspin_units_shut_down_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unit_flow_indices(
-        m;
-        unit=unit,
-        node=intersect(node, SpineOpt.node(is_reserve_node=true, is_non_spinning=true)),
-        stochastic_scenario=stochastic_scenario,
-        t=t,
-        temporal_block=temporal_block,
+    select(
+        unit_flow_indices(
+            m;
+            unit=unit,
+            node=intersect(members(node), SpineOpt.node(is_reserve_node=true, is_non_spinning=true)),
+            stochastic_scenario=stochastic_scenario,
+            t=t,
+            temporal_block=temporal_block,
+        ),
+        [:unit, :node, :stochastic_scenario, :t];
+        copycols=false,
     )
 end
 

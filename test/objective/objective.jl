@@ -93,9 +93,9 @@
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         
-        duration = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        duration = length(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * duration *
         sum(             
             (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) 
@@ -114,7 +114,7 @@
         unit_flow = m.ext[:spineopt].variables[:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = fuel_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
@@ -135,7 +135,7 @@
         m = run_spineopt(url_in; log_level=0, optimize=false)
         units_invested = m.ext[:spineopt].variables[:units_invested]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = (
             unit_investment_cost * sum(units_invested[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices))
@@ -159,8 +159,8 @@
         n_b = node(:node_b)
         s_parent = stochastic_scenario(:parent)
         s_child = stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = (
             + 2 * node_a_slack_penalty * node_slack_neg[n_a, s_parent, t2h]
@@ -192,7 +192,7 @@
         uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
         ucx = user_constraint(:ucx)
         s_parent = stochastic_scenario(:parent)
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = (
             + 2 * uc_slack_penalty * uc_slack_neg[ucx, s_parent, t2h]
@@ -210,7 +210,7 @@
         units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = shut_down_cost * units_shut_down[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
@@ -225,7 +225,7 @@
         units_started_up = m.ext[:spineopt].variables[:units_started_up]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = start_up_cost * units_started_up[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
@@ -240,7 +240,7 @@
         unit_flow = m.ext[:spineopt].variables[:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = vom_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
@@ -264,7 +264,7 @@
         connection_flow = m.ext[:spineopt].variables[:connection_flow]
         key = (connection(:connection_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = connection_flow_cost * sum(
             connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices)
@@ -279,7 +279,7 @@
         m = run_spineopt(url_in; log_level=0, optimize=false)
         units_on = m.ext[:spineopt].variables[:units_on]        
         s_parent = stochastic_scenario(:parent)
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = 2 * units_on_cost * units_on[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj

@@ -197,7 +197,7 @@ function _test_test_mga_algorithm()
             constraint = m.ext[:spineopt].constraints[:mga_diff_ub1]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent),)
-            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
             @testset for (s, t) in zip(scenarios, time_slices)
                 key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
@@ -258,7 +258,7 @@ function _test_test_mga_algorithm()
             constraint = m.ext[:spineopt].constraints[:mga_diff_ub2]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
-            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             mga_current_iteration = SpineOpt.mga_iteration()[end-1]
             @testset for (s, t) in zip(scenarios, time_slices)
                 key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
@@ -323,7 +323,7 @@ function _test_test_mga_algorithm()
             constraint = m.ext[:spineopt].constraints[:mga_diff_lb1]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent),)
-            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
             @testset for (s, t) in zip(scenarios, time_slices)
                 key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
@@ -383,7 +383,7 @@ function _test_test_mga_algorithm()
             constraint = m.ext[:spineopt].constraints[:mga_diff_lb2]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
-            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
             @testset for (s, t) in zip(scenarios, time_slices)
                 key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
@@ -443,7 +443,7 @@ function _test_test_mga_algorithm()
             constraint = m.ext[:spineopt].constraints[:mga_slack_constraint]
             @test length(constraint) == 1
             scenarios = (stochastic_scenario(:parent),)
-            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             mga_first_iteration = SpineOpt.mga_iteration()[1]
             mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
             first_obj_result = m.ext[:spineopt].outputs[:total_costs][
@@ -581,7 +581,7 @@ function _test_test_mga_algorithm_2()
             constraint = m.ext[:spineopt].constraints[:mga_diff_ub1]
             @test length(constraint) == 18  # TODO: should actually delete constraint...
             scenarios = (stochastic_scenario(:parent),)
-            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
             @testset for (s, t) in zip(scenarios, time_slices)
                 key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)

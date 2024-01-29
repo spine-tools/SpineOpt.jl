@@ -32,7 +32,8 @@ function units_invested_available_indices(
 )
     unit = intersect(indices(candidate_units), members(unit))
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false),
                 unit__investment_stochastic_structure(unit=unit, _compact=false);

@@ -32,7 +32,8 @@ function storages_invested_available_indices(
 )
     node = intersect(indices(candidate_storages), members(node))
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false),
                 node__investment_stochastic_structure(node=node, _compact=false);

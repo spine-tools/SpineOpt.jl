@@ -82,10 +82,10 @@ function _test_representative_time_slice()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        rep_blk1_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1))
-        rep_blk2_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2))
+        rep_blk1_ts = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:rep_blk1))
+        rep_blk2_ts = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:rep_blk2))
         m_start = model_start(model=first(model(model_type=:spineopt_standard)))
-        for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
+        for t in period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_a))
             t_end = end_(t)
             if t_end <= m_start + Hour(4)
                 @test SpineOpt.representative_time_slice(m, t) == rep_blk1_ts[1]
@@ -143,9 +143,9 @@ function _test_block_start()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        @test start(first(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
-        @test start(first(time_slice(m; temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
-        @test start(first(time_slice(m; temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-01T00:00:00")
+        @test start(first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
+        @test start(first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
+        @test start(first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-01T00:00:00")
     end
 end
 
@@ -173,9 +173,9 @@ function _test_block_end()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        @test end_(last(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
-        @test end_(last(time_slice(m; temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
-        @test end_(last(time_slice(m; temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-03T00:00:00")
+        @test end_(last(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
+        @test end_(last(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
+        @test end_(last(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-03T00:00:00")
     end
 end
 
@@ -200,9 +200,9 @@ function _test_one_two_four_even()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
-        observed_ts_b = time_slice(m; temporal_block=temporal_block(:block_b))
-        observed_ts_c = time_slice(m; temporal_block=temporal_block(:block_c))
+        observed_ts_a = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_a))
+        observed_ts_b = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_b))
+        observed_ts_c = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_c))
         expected_ts_a = [TimeSlice(DateTime(i), DateTime(i + 1)) for i in 2000:2003]
         expected_ts_b = [TimeSlice(DateTime(i), DateTime(i + 2)) for i in 2000:2:2003]
         expected_ts_c = [TimeSlice(DateTime(2000), DateTime(2004))]
@@ -269,8 +269,8 @@ function _test_two_three_uneven()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
-        observed_ts_b = time_slice(m; temporal_block=temporal_block(:block_b))
+        observed_ts_a = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_a))
+        observed_ts_b = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_b))
         expected_ts_a = [TimeSlice(DateTime(i), DateTime(i + 2)) for i in 2000:2:2005]
         expected_ts_b = [TimeSlice(DateTime(i), DateTime(i + 3)) for i in 2000:3:2005]
         @test _is_time_slice_set_equal(observed_ts_a, expected_ts_a)
@@ -336,9 +336,9 @@ function _test_gaps()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
-        observed_ts_b = time_slice(m; temporal_block=temporal_block(:block_b))
-        observed_ts_c = time_slice(m; temporal_block=temporal_block(:block_c))
+        observed_ts_a = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_a))
+        observed_ts_b = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_b))
+        observed_ts_c = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_c))
         expected_ts_a = [TimeSlice(DateTime(2000 + i), DateTime(2000 + i + 1)) for i in 0:1]
         expected_ts_b = [TimeSlice(DateTime(2004 + i), DateTime(2004 + i + 1)) for i in 0:1]
         expected_ts_c = [TimeSlice(DateTime(2008 + i), DateTime(2008 + i + 1)) for i in 0:1]
@@ -391,7 +391,7 @@ function _test_to_time_slice_with_rolling()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        a1, a2 = time_slice(m; temporal_block=temporal_block(:block_a))
+        a1, a2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:block_a))
         t1 = TimeSlice(DateTime(2001, 1), DateTime(2001, 6))
         t2 = TimeSlice(DateTime(2001, 7), DateTime(2001, 12))
         @test _is_time_slice_equal(to_time_slice(m; t=t1)[1], a1)
@@ -428,8 +428,9 @@ function _test_history()
             TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), block_a; duration_unit=Hour),
             TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), block_b, block_a; duration_unit=Hour),
         ]
-        @test length(history_time_slice(m)) === 5
-        @testset for (te, to) in zip(expected_history_time_slice, history_time_slice(m))
+        hist_time_slices = period__temporal_block__t(m; period=period(:history), temporal_block=anything)
+        @test length(hist_time_slices) === 5
+        @testset for (te, to) in zip(expected_history_time_slice, hist_time_slices)
             @test te == to
         end
     end

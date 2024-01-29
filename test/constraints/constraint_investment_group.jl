@@ -107,14 +107,14 @@ function _test_equal_investments()
         connection_bc = connection(:connection_bc)
         node_c = node(:node_c)
         parent = stochastic_scenario(:parent)
-        t4h = first(time_slice(m; temporal_block=temporal_block(:investments_four_hourly)))
+        t4h = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:investments_four_hourly)))
         key_head = (investment_group=investment_group(:ig), entity1=unit_ab)
         key_tail = (stochastic_scenario=parent, t=t4h)
         u_ab_inv_avail = m.ext[:spineopt].variables[:units_invested_available][unit_ab, parent, t4h]
         conn_bc_inv_avail = [m.ext[:spineopt].variables[:connections_invested_available][connection_bc, parent, t4h]]
         node_c_inv_avail = [
             m.ext[:spineopt].variables[:storages_invested_available][node_c, parent, t]
-            for t in time_slice(m; temporal_block=temporal_block(:investments_two_hourly))
+            for t in period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:investments_two_hourly))
         ]
         @testset for entity2 in (connection_bc, node_c)
             con_key = (; key_head..., entity2=entity2, key_tail...)
@@ -140,13 +140,13 @@ function _test_min_max_entities_invested_available()
         connection_bc = connection(:connection_bc)
         node_c = node(:node_c)
         parent = stochastic_scenario(:parent)
-        t4h = first(time_slice(m; temporal_block=temporal_block(:investments_four_hourly)))
+        t4h = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:investments_four_hourly)))
         con_key = (investment_group=investment_group(:ig), stochastic_scenario=parent, t=t4h)
         u_ab_inv_avail = m.ext[:spineopt].variables[:units_invested_available][unit_ab, parent, t4h]
         conn_bc_inv_avail = m.ext[:spineopt].variables[:connections_invested_available][connection_bc, parent, t4h]
         node_c_inv_avail = [
             m.ext[:spineopt].variables[:storages_invested_available][node_c, parent, t]
-            for t in time_slice(m; temporal_block=temporal_block(:investments_two_hourly))
+            for t in period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:investments_two_hourly))
         ]
         observed_con = constraint_object(
             m.ext[:spineopt].constraints[:investment_group_minimum_entities_invested_available][con_key]
@@ -186,7 +186,7 @@ function _test_min_max_capacity_invested_available()
         unit_ab = unit(:unit_ab)
         connection_bc = connection(:connection_bc)
         parent = stochastic_scenario(:parent)
-        t4h = first(time_slice(m; temporal_block=temporal_block(:investments_four_hourly)))
+        t4h = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:investments_four_hourly)))
         con_key = (investment_group=investment_group(:ig), stochastic_scenario=parent, t=t4h)
         u_ab_inv_avail = m.ext[:spineopt].variables[:units_invested_available][unit_ab, parent, t4h]
         conn_bc_inv_avail = m.ext[:spineopt].variables[:connections_invested_available][connection_bc, parent, t4h]

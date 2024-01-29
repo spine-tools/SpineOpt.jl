@@ -154,7 +154,7 @@ function test_constraint_units_on()
         constraint = m.ext[:spineopt].constraints[:units_on]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
@@ -189,7 +189,7 @@ function test_constraint_units_available()
         constraint = m.ext[:spineopt].constraints[:units_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var_u_av = var_units_available[key...]
@@ -216,7 +216,7 @@ function test_constraint_unit_state_transition()
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (unit(:unit_ab), s1, t1)
@@ -275,8 +275,8 @@ function test_constraint_unit_flow_capacity()
                 @test length(constraint) == 4 * length(part_names)
                 s_child = stochastic_scenario(:child)
                 s_parent = stochastic_scenario(:parent)
-                t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-                t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+                t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+                t2h = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)))
                 s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
                 case_part = (Object(:min_up_time_gt_time_step, :case), Object(:one, :part))
                 @testset for con_key in keys(constraint)
@@ -362,8 +362,8 @@ function test_constraint_minimum_operating_point()
             @test length(constraint) == 3
             s_child = stochastic_scenario(:child)
             s_parent = stochastic_scenario(:parent)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+            t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)))
             s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
             @testset for con_key in keys(constraint)
                 u, n, d, s_path, t = con_key
@@ -436,8 +436,8 @@ function test_constraint_non_spinning_reserves_lower_bound()
         var_nonspin_units_shut_down = m.ext[:spineopt].variables[:nonspin_units_shut_down]
         s_child = stochastic_scenario(:child)
         s_parent = stochastic_scenario(:parent)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)))
         s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
         @testset for con_key in keys(constraint)
             u, n, d, s_path, t = con_key
@@ -497,8 +497,8 @@ function test_constraint_non_spinning_reserves_upper_bounds()
             var_nonspin_units_shut_down = m.ext[:spineopt].variables[:nonspin_units_shut_down]
             s_child = stochastic_scenario(:child)
             s_parent = stochastic_scenario(:parent)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+            t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)))
             s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
             @testset for con_key in keys(constraint)
                 u, n, d, s_path, t = con_key
@@ -555,7 +555,7 @@ function test_constraint_operating_point_bounds()
         constraint = m.ext[:spineopt].constraints[:operating_point_bounds]
         @test length(constraint) == 6
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (i, delta) in enumerate(deltas)
                 var_units_on_key = (unit(:unit_ab), s, t)
@@ -599,7 +599,7 @@ function test_constraint_operating_point_rank()
         constraint = m.ext[:spineopt].constraints[:operating_point_rank]
         @test length(constraint) == 4
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (i, delta) in enumerate(deltas)
                 var_u_flow_op_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
@@ -645,7 +645,7 @@ function test_constraint_unit_flow_op_bounds()
         constraint = m.ext[:spineopt].constraints[:unit_flow_op_bounds]
         @test length(constraint) == 6
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (i, delta) in enumerate(deltas)
                 var_u_flow_op_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
@@ -674,7 +674,7 @@ function test_constraint_unit_flow_op_bounds()
         constraint = m.ext[:spineopt].constraints[:unit_flow_op_bounds]
         @test length(constraint) == 6
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (i, delta) in enumerate(deltas)
                 var_u_flow_op_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
@@ -730,7 +730,7 @@ function test_constraint_unit_flow_op_rank()
         constraint = m.ext[:spineopt].constraints[:unit_flow_op_rank]
         @test length(constraint) == 4
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (i, delta) in enumerate(deltas)
                 var_u_flow_op_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
@@ -766,7 +766,7 @@ function test_constraint_unit_flow_op_sum()
         constraint = m.ext[:spineopt].constraints[:unit_flow_op_sum]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             subkey = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key = (subkey..., s, t)
@@ -821,8 +821,8 @@ function test_constraint_ratio_unit_flow()
             constraint = m.ext[:spineopt].constraints[Symbol(ratio)]
             @test length(constraint) == 1
             path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
-            t_long = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
-            t_short1, t_short2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t_long = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)))
+            t_short1, t_short2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
             directions_by_prefix = Dict("in" => direction(:from_node), "out" => direction(:to_node))
             d_a = directions_by_prefix[a]
             d_b = directions_by_prefix[b]
@@ -879,8 +879,8 @@ function test_constraint_total_cumulated_unit_flow()
             constraint = m.ext[:spineopt].constraints[Symbol(cumulated)]
             @test length(constraint) == 1
             path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
-            t_long = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
-            t_short1, t_short2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t_long = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)))
+            t_short1, t_short2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
             directions_by_prefix = Dict("from_node" => direction(:from_node), "to_node" => direction(:to_node))
             d_a = directions_by_prefix[a]
             var_u_flow_a1_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:parent), t_short1)
@@ -920,7 +920,7 @@ function test_constraint_min_up_time()
                 stochastic_scenario=stochastic_scenario(:parent),
             )
             head_hours = -(
-                length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
+                length(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
             )
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
@@ -928,8 +928,8 @@ function test_constraint_min_up_time()
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -978,7 +978,7 @@ function test_constraint_min_up_time_with_non_spinning_reserves()
                 stochastic_scenario=stochastic_scenario(:parent),
             )
             head_hours = -(
-                length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
+                length(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
             )
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
@@ -986,8 +986,8 @@ function test_constraint_min_up_time_with_non_spinning_reserves()
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1039,7 +1039,7 @@ function test_constraint_min_down_time()
                 stochastic_scenario=stochastic_scenario(:parent),
             )
             head_hours = length(
-                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+                period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
             ).value
             tail_hours = round(Minute(min_down_minutes), Hour(1)).value
             scenarios = [
@@ -1047,8 +1047,8 @@ function test_constraint_min_down_time()
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1108,7 +1108,7 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
                 stochastic_scenario=stochastic_scenario(:parent),
             )
             head_hours = length(
-                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+                period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
             ).value
             tail_hours = round(Minute(min_down_minutes), Hour(1)).value
             scenarios = [
@@ -1116,8 +1116,8 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1155,7 +1155,7 @@ function test_constraint_units_invested_available()
         constraint = m.ext[:spineopt].constraints[:units_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var = var_units_invested_available[key...]
@@ -1185,7 +1185,7 @@ function test_constraint_units_invested_available_mp()
         var_units_invested_available = m_mp.ext[:spineopt].variables[:units_invested_available]
         constraint = m_mp.ext[:spineopt].constraints[:units_invested_available]
         @test length(constraint) == 2
-        time_slices = time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))
+        time_slices = period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:investments_hourly))
         @testset for t in time_slices
             key = (unit(:unit_ab), stochastic_scenario(:parent), t)
             var = var_units_invested_available[key...]
@@ -1215,7 +1215,7 @@ function test_constraint_units_invested_transition()
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (unit(:unit_ab), s1, t1)
@@ -1255,7 +1255,7 @@ function test_constraint_units_invested_transition_mp()
         constraint = m_mp.ext[:spineopt].constraints[:units_invested_transition]
         @test length(constraint) == 2
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m_mp; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for t1 in time_slices
             path = [s0]
             var_key1 = (unit(:unit_ab), s0, t1)
@@ -1303,7 +1303,7 @@ function test_constraint_unit_lifetime()
                 stochastic_scenario=stochastic_scenario(:parent),
             )
             head_hours = length(
-                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+                period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
             ).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
@@ -1311,8 +1311,8 @@ function test_constraint_unit_lifetime()
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1360,15 +1360,15 @@ function test_constraint_unit_lifetime_mp()
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours = length(time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))) - Hour(1).value
+            head_hours = length(period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:investments_hourly))) - Hour(1).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:parent)], head_hours)
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m_mp; temporal_block=temporal_block(:investments_hourly)))
-                reverse(history_time_slice(m_mp; temporal_block=temporal_block(:investments_hourly)))
+                reverse(period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:investments_hourly)))
+                reverse(period__temporal_block__t(m_mp; period=period(:history), temporal_block=temporal_block(:investments_hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1422,12 +1422,12 @@ function test_constraint_ramp_up()
             constraint = m.ext[:spineopt].constraints[:ramp_up]
             @test length(constraint) == 4
             t3h0, t3h1, t3h2 = vcat(
-                history_time_slice(m; temporal_block=temporal_block(:hourly)),
-                time_slice(m; temporal_block=temporal_block(:hourly)),
+                period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)),
+                period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)),
             )
             t2h0, t2h1, t2h2, t2h3 = vcat(
-                history_time_slice(m; temporal_block=temporal_block(:two_hourly)),
-                time_slice(m; temporal_block=temporal_block(:two_hourly)),
+                period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:two_hourly)),
+                period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)),
             )
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             s_by_t = Dict(
@@ -1528,12 +1528,12 @@ function test_constraint_ramp_down()
             constraint = m.ext[:spineopt].constraints[:ramp_down]
             @test length(constraint) == 4
             t3h0, t3h1, t3h2 = vcat(
-                history_time_slice(m; temporal_block=temporal_block(:hourly)),
-                time_slice(m; temporal_block=temporal_block(:hourly)),
+                period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)),
+                period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)),
             )
             t2h0, t2h1, t2h2, t2h3 = vcat(
-                history_time_slice(m; temporal_block=temporal_block(:two_hourly)),
-                time_slice(m; temporal_block=temporal_block(:two_hourly)),
+                period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:two_hourly)),
+                period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly)),
             )
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             s_by_t = Dict(
@@ -1639,8 +1639,8 @@ function test_constraint_user_constraint()
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+            t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
                 + unit_flow_coefficient_a
@@ -1708,8 +1708,8 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+            t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
                 + unit_flow_coefficient_a * sum(
@@ -1766,8 +1766,8 @@ function test_constraint_pw_unit_heat_rate()
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
         key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
@@ -1816,8 +1816,8 @@ function test_constraint_pw_unit_heat_rate_simple()
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
         key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
@@ -1863,8 +1863,8 @@ function test_constraint_pw_unit_heat_rate_simple2()
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
         key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             == 2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h]
@@ -1897,7 +1897,7 @@ function test_unit_online_variable_type_none()
         constraint_u_on = m.ext[:spineopt].constraints[:units_on]
         constraint_u_avail = m.ext[:spineopt].constraints[:units_available]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]

@@ -31,7 +31,8 @@ function units_on_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false),
                 units_on__stochastic_structure(unit=unit, _compact=false);

@@ -126,7 +126,7 @@ function _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
         for (structure, dag) in all_stochastic_dags
         for (t, scens) in _time_slice_stochastic_scenarios(m, dag)
     )
-    stochastic_structure__t__stochastic_scenario = RelationshipClass(
+    m.ext[:spineopt].stochastic_structure[:stochastic_structure__t__stochastic_scenario] = RelationshipClass(
         :stochastic_structure__t__stochastic_scenario,
         [:stochastic_structure, :t, :stochastic_scenario],
         [
@@ -136,9 +136,10 @@ function _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
             for scen in scens
         ],
     )
-    @eval begin
-        stochastic_structure__t__stochastic_scenario = $stochastic_structure__t__stochastic_scenario
-    end
+end
+
+function stochastic_structure__t__stochastic_scenario(m; kwargs...)
+    m.ext[:spineopt].stochastic_structure[:stochastic_structure__t__stochastic_scenario](; kwargs...)
 end
 
 function _stochastic_scenarios(m::Model, stoch_struct::Object, t::TimeSlice, scenarios)
@@ -291,7 +292,7 @@ function active_stochastic_paths(m; stochastic_structure, t)
         scen for ss in stochastic_structure for t_ in t for scen in scenario_lookup[ss, t_]
     )
 end
-function active_stochastic_paths(m, indices::Vector)
+function active_stochastic_paths(m, indices::Union{Vector,EntityFrame})
     active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
 end
 function active_stochastic_paths(m, active_scenarios)
@@ -309,29 +310,35 @@ function _active_stochastic_paths(m, unique_active_scenarios)
     unique(intersect(path, unique_active_scenarios) for path in full_stochastic_paths)
 end
 
-function with_temporal_stochastic_indices(
-    ef::EntityFrame; stochastic_scenario=anything, temporal_block=anything, t=anything
+function join_temporal_stochastic_indices(
+    m, ef::EntityFrame; stochastic_scenario=anything, temporal_block=anything, t=anything
 )
     innerjoin(
-        with_temporal_indices(ef; temporal_block=temporal_block, t=t),
-        stochastic_structure__t__stochastic_scenario(t=t, stochastic_scenario=stochastic_scenario, _compact=false);
+        join_temporal_indices(m, ef; temporal_block=temporal_block, t=t),
+        stochastic_structure__t__stochastic_scenario(m; t=t, stochastic_scenario=stochastic_scenario, _compact=false);
         on=[:stochastic_structure, :t]
     )
 end
 
 function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything)
-    unique(
-        (node=n, stochastic_scenario=s)
-        for (n, ss) in node__stochastic_structure(node=node, _compact=false)
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+    select(
+        innerjoin(
+            node__stochastic_structure(node=node, _compact=false),
+            stochastic_structure__stochastic_scenario(stochastic_scenario=stochastic_scenario, _compact=false);
+            on=:stochastic_structure
+        ),
+        [:node, :stochastic_scenario]
     )
 end
 
 function unit_stochastic_indices(m::Model; unit=anything, stochastic_scenario=anything)
-    unique(
-        (unit=u, stochastic_scenario=s)
-        for (u, ss) in units_on__stochastic_structure(unit=unit, _compact=false)
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+    select(
+        innerjoin(
+            units_on__stochastic_structure(unit=unit, _compact=false),
+            stochastic_structure__stochastic_scenario(stochastic_scenario=stochastic_scenario, _compact=false);
+            on=:stochastic_structure
+        ),
+        [:unit, :stochastic_scenario]
     )
 end
 
@@ -341,12 +348,16 @@ function stochastic_time_indices(
     temporal_block=anything,
     t=anything,
 )
-    unique(
-        (stochastic_scenario=s, t=t)
-        for ss in stochastic_structure()
-        for tb in intersect(SpineOpt.temporal_block(), temporal_block)
-        for t in time_slice(m; temporal_block=members(tb), t=t)
-        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+    temporal_block = intersect(SpineOpt.temporal_block(), members(temporal_block))
+    select(
+        innerjoin(
+            period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block, t=t, _compact=false),
+            stochastic_structure__t__stochastic_scenario(
+                m; stochastic_scenario=stochastic_scenario, t=t, _compact=false
+            );
+            on=:t
+        ),
+        [:stochastic_scenario, :t]
     )
 end
 
@@ -359,7 +370,8 @@ function node_stochastic_time_indices(
     m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
 )
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 node__temporal_block(node=node, temporal_block=temporal_block, _compact=false),
                 node__stochastic_structure(node=node, _compact=false);

@@ -100,7 +100,7 @@ function test_constraint_connection_flow_capacity()
         constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
             var_conn_flow = var_connection_flow[key...]
@@ -139,8 +139,8 @@ function test_constraint_connection_flow_capacity()
         constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = [stochastic_scenario(:parent), stochastic_scenario(:child)]
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        daily_t = first(time_slice(m; temporal_block=temporal_block(:investments_daily)))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        daily_t = first(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:investments_daily)))
         @testset for (k, t) in enumerate(time_slices)
             s = scenarios[k]
             key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
@@ -187,7 +187,7 @@ function test_constraint_connection_flow_gas_capacity()
         constraint = m.ext[:spineopt].constraints[:connection_flow_gas_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         bigm = 10000
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for ((conn,n_from,n_to), val) in fixed_pressure_constant_1_
@@ -263,7 +263,7 @@ function test_constraint_fix_node_pressure_point()
         constraint = m.ext[:spineopt].constraints[:fix_node_pressure_point]
         @test length(constraint) == 12
         scenarios = (stochastic_scenario(:parent),)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         bigm = 10000
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for ((conn,n_from,n_to), val) in fixed_pressure_constant_1_
@@ -334,7 +334,7 @@ function test_constraint_connection_unitary_gas_flow()
         constraint = m.ext[:spineopt].constraints[:connection_unitary_gas_flow]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for ((conn,n_from,n_to), val) in fixed_pr_constant_1_
                 if binary["connection_ca"]
@@ -392,7 +392,7 @@ function test_constraint_node_voltage_angle()
         constraint = m.ext[:spineopt].constraints[:node_voltage_angle]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             conn = connection(:connection_ca)
             n_from = node(:node_c)
@@ -447,7 +447,7 @@ function test_constraint_connection_flow_capacity_investments()
         constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
             invest_key = (connection(:connection_ab), s, t)
@@ -529,7 +529,7 @@ function test_constraint_connection_intact_flow_ptdf()
             n_to = node(n_to_name)
             n_inj = node(n_inj_name)
             scenarios = (stochastic_scenario(s) for s in scen_names)
-            time_slices = time_slice(m; temporal_block=temporal_block(t_block))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(t_block))
             @testset for (s, t) in zip(scenarios, time_slices)
                 var_conn_flow_to = var_connection_flow[conn, n_to, direction(:to_node), s, t]
                 var_conn_flow_from = var_connection_flow[conn, n_to, direction(:from_node), s, t]
@@ -626,8 +626,8 @@ function test_constraint_connection_flow_lodf()
         d_from = direction(:from_node)
         s_parent = stochastic_scenario(:parent)
         s_child = stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         # connection_ab
         conn_mon = connection(:connection_ab)
         n_mon_to = node(:node_b)
@@ -819,11 +819,11 @@ function test_constraint_ratio_out_in_connection_flow()
                 d_to = direction(:to_node)
                 scenarios_from = [repeat([stochastic_scenario(:child)], 3); repeat([stochastic_scenario(:parent)], 5)]
                 time_slices_from = [
-                    reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                    reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+                    reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)))
+                    reverse(period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)))
                 ]
                 s_to = stochastic_scenario(:parent)
-                @testset for (j, t_to) in enumerate(reverse(time_slice(m; temporal_block=temporal_block(:two_hourly))))
+                @testset for (j, t_to) in enumerate(reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))))
                     coeffs = (1 - rem_minutes_delay, 1, rem_minutes_delay)
                     i = 2 * j - 1
                     a = i + h_delay
@@ -870,7 +870,7 @@ function test_constraint_connections_invested_transition()
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (connection(:connection_ab), s1, t1)
@@ -911,7 +911,7 @@ function test_constraint_connections_invested_transition_mp()
         constraint = m_mp.ext[:spineopt].constraints[:connections_invested_transition]
         @test length(constraint) == 2
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))
+        time_slices = period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:investments_hourly))
         @testset for t1 in time_slices
             path = [s0]
             var_key1 = (connection(:connection_ab), s0, t1)
@@ -960,15 +960,15 @@ function test_constraint_connection_lifetime()
                 stochastic_scenario=stochastic_scenario(:parent),
             )
             head_hours =
-                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+                length(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly)))
+                reverse(period__temporal_block__t(m; period=period(:history), temporal_block=temporal_block(:hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1017,15 +1017,15 @@ function test_constraint_connection_lifetime_mp()
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours = length(time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))) - Hour(1).value
+            head_hours = length(period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:investments_hourly))) - Hour(1).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:parent)], head_hours)
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m_mp; temporal_block=temporal_block(:investments_hourly)))
-                reverse(history_time_slice(m_mp; temporal_block=temporal_block(:investments_hourly)))
+                reverse(period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:investments_hourly)))
+                reverse(period__temporal_block__t(m_mp; period=period(:history), temporal_block=temporal_block(:investments_hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1059,7 +1059,7 @@ function test_constraint_connections_invested_available()
         constraint = m.ext[:spineopt].constraints[:connections_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (connection(:connection_ab), s, t)
             var = var_connections_invested_available[key...]
@@ -1089,7 +1089,7 @@ function test_constraint_connections_invested_available_mp()
         var_connections_invested_available = m_mp.ext[:spineopt].variables[:connections_invested_available]
         constraint = m_mp.ext[:spineopt].constraints[:connections_invested_available]
         @test length(constraint) == 2
-        time_slices = time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))
+        time_slices = period__temporal_block__t(m_mp; period=period(:window), temporal_block=temporal_block(:investments_hourly))
         @testset for t in time_slices
             key = (connection(:connection_ab), stochastic_scenario(:parent), t)
             var = var_connections_invested_available[key...]
@@ -1155,8 +1155,8 @@ function test_constraint_user_constraint_node_connection()
             key_a = (unit(:unit_c), node(:node_c), direction(:to_node))
             key_b = (connection(:connection_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+            t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
                 + unit_flow_coefficient
@@ -1247,8 +1247,8 @@ function test_constraint_connection_flow_intact_flow()
         @testset for conn_l in (connection(:connection_bc), connection(:connection_ca))
             n_to_l = last(connection__from_node(connection=conn_l)).node
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+            t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+            t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
             lodf_val = SpineOpt.lodf(connection1=conn_k, connection2=conn_l)
             expected_con = @build_constraint(
                 - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1]
@@ -1345,8 +1345,8 @@ function test_constraint_candidate_connection_lb()
         var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
         var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
         @test length(constraint) == 4
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         conn, n, s_path = connection(:connection_ab), node(:node_a), [s_parent, s_child]
         @testset for (d, cap) in ((direction(:to_node), connection_capacity), (direction(:from_node), 1e6))
@@ -1452,8 +1452,8 @@ function test_constraint_ratio_out_in_connection_intact_flow()
         @test length(constraint) == 8
         conn = connection(:connection_ab)
         n_to = node(:node_b)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
+        t2h = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))[1]
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         @testset for (conn, n_in, n_out) in (
             (connection(:connection_ab), node(:node_a), node(:node_b)),
@@ -1490,7 +1490,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             (connection(:connection_ca), node(:node_a), node(:node_c), temporal_block(:hourly)),
         )
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-            time_slices = time_slice(m; temporal_block=tb_in)
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=tb_in)
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
                     + var_connection_intact_flow[conn, n_in, direction(:to_node), s, t]
@@ -1577,7 +1577,7 @@ function test_constraint_candidate_connection_ub()
             (connection(:connection_ab), node(:node_a), direction(:to_node)),
         )
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
                     var_connection_flow[c, n, d, s, t] <= var_connection_intact_flow[c, n, d, s, t]
@@ -1593,7 +1593,7 @@ function test_constraint_candidate_connection_ub()
             (connection(:connection_ab), node(:node_b), direction(:to_node)),
         )
             scenarios = (stochastic_scenario(:parent))
-            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            time_slices = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:two_hourly))
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
                     var_connection_flow[c, n, d, s, t] <= var_connection_intact_flow[c, n, d, s, t]

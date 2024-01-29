@@ -23,9 +23,16 @@
 A set of tuples for indexing the `node_state` variable where filtering options can be specified
 for `node`, `s`, and `t`.
 """
-function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
+function node_state_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=anything
+)
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 node_with_state__temporal_block(node=node, temporal_block=temporal_block, _compact=false),
                 node__stochastic_structure(node=node, _compact=false);

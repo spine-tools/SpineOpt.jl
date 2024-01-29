@@ -40,7 +40,8 @@ function unit_flow_indices(
     unit = members(unit)
     node = members(node)
     select(
-        with_temporal_stochastic_indices(
+        join_temporal_stochastic_indices(
+            m,
             innerjoin(
                 unit__node__direction__temporal_block(
                     unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false

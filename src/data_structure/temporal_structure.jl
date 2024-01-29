@@ -248,25 +248,28 @@ function _history_time_slices!(instance, window_start, window_end, window_time_s
     end
     history_start = window_start - required_history_duration
     filter!(t -> end_(t) > history_start, history_time_slices)
-    t_history_t = Dict(
-        zip(history_time_slices .+ window_duration, history_time_slices)
-    )
+    t_history_t = Dict(zip(history_time_slices .+ window_duration, history_time_slices))
     history_time_slices, t_history_t
 end
 
 function _do_generate_time_slice!(m, window_time_slices, history_time_slices, t_history_t)
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-    m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
-    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:time_slice_set] = TimeSliceSet(window_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:history_time_slice_set] = TimeSliceSet(history_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
-    temporal_block__t = RelationshipClass(
-        :temporal_block__t,
-        [:temporal_block, :t],
-        [(temporal_block=tb, t=t) for t in [history_time_slices; window_time_slices] for tb in blocks(t)],
+    time_slice = ObjectClass(:t, window_time_slices)
+    history_time_slice = ObjectClass(:t, history_time_slices)
+    period__temporal_block__t = RelationshipClass(
+        :period__temporal_block__t,
+        [:period, :temporal_block, :t],
+        vcat(
+            [(period=period(:history), temporal_block=tb, t=t) for t in history_time_slices for tb in blocks(t)],
+            [(period=period(:window), temporal_block=tb, t=t) for t in window_time_slices for tb in blocks(t)],
+        )
     )
-    @eval begin
-        temporal_block__t = $temporal_block__t
-    end
+    m.ext[:spineopt].temporal_structure[:time_slice] = time_slice
+    m.ext[:spineopt].temporal_structure[:history_time_slice] = history_time_slice
+    m.ext[:spineopt].temporal_structure[:period__temporal_block__t] = period__temporal_block__t
 end
 
 """
@@ -368,8 +371,10 @@ function _generate_time_slice_relationships!(m::Model)
         # Here we bridge all gaps by making the last time slice of the previous window
         # be 'before' the fist one of the current window.
         succeeding_time_slices_hist = Dict(
-            last(history_time_slices) => [first(time_slice(m; temporal_block=blk))]
-            for (blk, history_time_slices) in m.ext[:spineopt].temporal_structure[:history_time_slice].block_time_slices
+            last(history_time_slices) => [
+                first(period__temporal_block__t(m; period=period(:window), temporal_block=blk))
+            ]
+            for (blk, history_time_slices) in m.ext[:spineopt].temporal_structure[:history_time_slice_set].block_time_slices
         )
         merge!(append!, succeeding_time_slices, succeeding_time_slices_hist)
     end
@@ -413,7 +418,7 @@ function _generate_representative_time_slice!(m::Model)
             if !(rep_blk in model_blocks)
                 error("representative temporal block $rep_blk is not included in model $(m.ext[:spineopt].instance)")
             end
-            for rep_t in time_slice(m, temporal_block=rep_blk)
+            for rep_t in period__temporal_block__t(m; period=period(:window), temporal_block=rep_blk)
                 rep_t_duration = end_(rep_t) - start(rep_t)
                 real_t_end = real_t_start + rep_t_duration
                 merge!(
@@ -511,8 +516,8 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
         start(temp_struct[:current_window]) + rf >= model_end(model=m.ext[:spineopt].instance) && return false
     end
     roll!(temp_struct[:current_window], rf; refresh=false)
-    _roll_time_slice_set!(temp_struct[:time_slice], rf)
-    _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
+    _roll_time_slice_set!(temp_struct[:time_slice_set], rf)
+    _roll_time_slice_set!(temp_struct[:history_time_slice_set], rf)
     true
 end
 
@@ -524,8 +529,8 @@ function rewind_temporal_structure!(m::Model)
         _update_variable_names!(m)
         _update_constraint_names!(m)
     else
-        _refresh_time_slice_set!(temp_struct[:time_slice])
-        _refresh_time_slice_set!(temp_struct[:history_time_slice])
+        _refresh_time_slice_set!(temp_struct[:time_slice_set])
+        _refresh_time_slice_set!(temp_struct[:history_time_slice_set])
     end
 end
 
@@ -536,7 +541,7 @@ An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` m
 """
 function to_time_slice(m::Model; t::TimeSlice)
     temp_struct = m.ext[:spineopt].temporal_structure
-    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
+    t_sets = (temp_struct[:time_slice_set], temp_struct[:history_time_slice_set])
     in_blocks = (
         s
         for t_set in t_sets
@@ -556,19 +561,6 @@ function to_time_slice(m::Model; t::TimeSlice)
 end
 
 current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
-
-"""
-    time_slice(m; temporal_block=anything, t=anything)
-
-An `Array` of `TimeSlice`s in model `m`.
-
- # Keyword arguments
-  - `temporal_block`: only return `TimeSlice`s in this block or blocks.
-  - `t`: only return time slices from this collection.
-"""
-time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
-
-history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
 
 t_history_t(m::Model; t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
 
@@ -607,14 +599,27 @@ t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_e
 
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t_excl](t)
 
-representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, t)
+function representative_time_slice(m, t)
+    get(get(m.ext[:spineopt].temporal_structure, :representative_time_slice, Dict()), t, t)
+end
+
+period__temporal_block__t(m; kwargs...) = m.ext[:spineopt].temporal_structure[:period__temporal_block__t](; kwargs...)
+
+time_slice(m; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
+
+history_time_slice(m; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
 
 function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 end
 
-function with_temporal_indices(ef::EntityFrame; temporal_block=anything, t=anything)
-    innerjoin(ef, temporal_block__t(temporal_block=temporal_block, t=t, _compact=false); on=:temporal_block)
+function join_temporal_indices(m, ef::EntityFrame; temporal_block=anything, t=anything)
+    period_ = t === anything ? period(:window) : anything
+    innerjoin(
+        ef,
+        period__temporal_block__t(m; temporal_block=temporal_block, t=t, period=period_, _compact=false);
+        on=:temporal_block,
+    )
 end
 
 """
@@ -624,7 +629,8 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 """
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     select(
-        with_temporal_indices(
+        join_temporal_indices(
+            m,
             node__temporal_block(node=node, temporal_block=temporal_block, _compact=false);
             temporal_block=temporal_block,
             t=t,
@@ -660,10 +666,15 @@ function unit_time_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
     t=anything,
 )
-    unique(
-        (unit=u, t=t1)
-        for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+    select(
+        join_temporal_indices(
+            m,
+            units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false);
+            temporal_block=temporal_block,
+            t=t,
+        ),
+        [:unit, :t];
+        copycols=false,
     )
 end
 
@@ -697,10 +708,15 @@ end
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment variables with filter keywords.
 """
 function unit_investment_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
-    unique(
-        (unit=u, t=t1)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+    select(
+        join_temporal_indices(
+            m,
+            unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false);
+            temporal_block=temporal_block,
+            t=t,
+        ),
+        [:unit, :t];
+        copycols=false,
     )
 end
 
@@ -710,12 +726,15 @@ end
 Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection` investment variables with filter keywords.
 """
 function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
-    unique(
-        (connection=conn, t=t1)
-        for (conn, tb) in connection__investment_temporal_block(
-            connection=connection, temporal_block=temporal_block, _compact=false
-        )
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+    select(
+        join_temporal_indices(
+            m,
+            connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false);
+            temporal_block=temporal_block,
+            t=t,
+        ),
+        [:connection, :t];
+        copycols=false,
     )
 end
 
@@ -725,10 +744,15 @@ end
 Generate an `Array` of all valid `(node, t)` `NamedTuples` for `node` investment variables (storages) with filter keywords.
 """
 function node_investment_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
-    unique(
-        (node=n, t=t1)
-        for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+    select(
+        join_temporal_indices(
+            m,
+            node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false);
+            temporal_block=temporal_block,
+            t=t,
+        ),
+        [:node, :t];
+        copycols=false,
     )
 end
 
