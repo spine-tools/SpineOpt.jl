@@ -78,7 +78,7 @@
         m = run_spineopt(url_in, "sqlite://"; log_level=0)
         connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
         @test length(connection_avg_throughflow) == 2
-        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t1, t2 = period__temporal_block__t(m; period=period(:window), temporal_block=temporal_block(:hourly))
         key = (connection=connection(:connection_ab), node=node(:node_b))
         key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
         key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)

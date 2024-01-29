@@ -26,7 +26,6 @@ function add_constraint_investment_group_equal_investments!(m::Model)
     @fetch (
         units_invested_available, connections_invested_available, storages_invested_available
     ) = m.ext[:spineopt].variables
-
     m.ext[:spineopt].constraints[:investment_group_equal_investments] = Dict(
         (investment_group=ig, entity1=e, entity2=other_e, stochastic_scenario=s, t=t) => @constraint(
             m,
@@ -91,9 +90,9 @@ end
 
 function entity_investment_group(ig)
     vcat(
-        unit__investment_group(investment_group=ig),
-        connection__investment_group(investment_group=ig),
-        node__investment_group(investment_group=ig)
+        collect(unit__investment_group(investment_group=ig)),
+        collect(connection__investment_group(investment_group=ig)),
+        collect(node__investment_group(investment_group=ig)),
     )
 end
 
