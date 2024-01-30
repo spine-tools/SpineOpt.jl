@@ -29,6 +29,23 @@ function node_injection_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
+#=
+    rc = get!(m.ext, :node_injection_indices) do
+        ef = node_stochastic_time_indices(m)
+        RelationshipClass(
+            :node_injection_indices,
+            [:node, :stochastic_scenario, :t],
+            ef.df,
+        )
+    end
+    return rc(;
+        node=node,
+        stochastic_scenario=stochastic_scenario,
+        t=t,
+        # temporal_block=temporal_block,
+        _compact=false,
+    )
+=#
     node_stochastic_time_indices(
         m; node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
     )

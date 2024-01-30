@@ -37,6 +37,33 @@ function unit_flow_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
+#=
+    rc = get!(m.ext, :unit_flow_indices) do
+        ef = select(
+            join_temporal_stochastic_indices(
+                m, innerjoin(unit__node__direction__temporal_block(), node__stochastic_structure(); on=:node)
+            ),
+            [:unit, :node, :direction, :stochastic_scenario, :t, :temporal_block];
+            copycols=false,
+        )
+        RelationshipClass(
+            :unit_flow_indices,
+            [:unit, :node, :direction, :stochastic_scenario, :t, :temporal_block],
+            ef.df,
+        )
+    end
+    unit = members(unit)
+    node = members(node)
+    return rc(;
+        unit=unit,
+        node=node,
+        direction=direction,
+        stochastic_scenario=stochastic_scenario,
+        t=t,
+        temporal_block=temporal_block,
+        _compact=false,
+    )
+=#
     unit = members(unit)
     node = members(node)
     select(
@@ -47,7 +74,7 @@ function unit_flow_indices(
                     unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
                 ),
                 node__stochastic_structure(node=node, _compact=false);
-                on=:node
+                on=:node,
             );
             stochastic_scenario=stochastic_scenario,
             t=t,

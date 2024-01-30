@@ -292,6 +292,9 @@ function active_stochastic_paths(m; stochastic_structure, t)
         scen for ss in stochastic_structure for t_ in t for scen in scenario_lookup[ss, t_]
     )
 end
+function active_stochastic_paths(m, active_scenarios::Vector{Union{Missing,Object}})
+    active_stochastic_paths(m, collect(Object, filter(!ismissing, active_scenarios)))
+end
 function active_stochastic_paths(m, indices::Union{Vector,EntityFrame})
     active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
 end

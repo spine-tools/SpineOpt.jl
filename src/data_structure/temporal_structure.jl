@@ -646,6 +646,16 @@ end
 Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with keyword arguments that allow filtering.
 """
 function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
+    innerjoin(
+        innerjoin(
+            select(node_time_indices(m; node=node, t=t_before), :node, :t => :t_before; copycols=false),
+            t_before_t(m; t_before=t_before, t_after=t_after, _compact=false);
+            on=:t_before,
+        ),
+        select(node_time_indices(m; node=node, t=t_after), :node, :t => :t_after; copycols=false);
+        on=[:node, :t_after],
+    )
+    #=
     unique(
         (node=n, t_before=tb, t_after=ta)
         for (n, ta) in node_time_indices(m; node=node, t=t_after)
@@ -653,6 +663,7 @@ function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t
             m; node=n, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
+    =#
 end
 
 """
