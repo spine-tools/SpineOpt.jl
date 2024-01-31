@@ -281,7 +281,7 @@ function test_constraint_unit_flow_capacity()
                 case_part = (Object(:min_up_time_gt_time_step, :case), Object(:one, :part))
                 @testset for con_key in keys(constraint)
                     con = constraint[con_key]
-                    u, n, d, s, t, case, part = con_key
+                    u, n, d, s, t, t_after, case, part = con_key
                     @test u.name == :unit_ab
                     @test (n.name, d.name) in ((:node_group_a, :from_node), (:node_group_bc, :to_node))
                     @test case.name == case_name
@@ -292,10 +292,13 @@ function test_constraint_unit_flow_capacity()
                         (:node_group_bc, [s_parent, s_child], t1h1),
                         (:node_group_bc, [s_parent, s_child], t1h2),
                     )
-                    t_after = t == t1h1 ? t1h2 : nothing
                     var_u_on_t = var_units_on[u, s_by_t[t], t]
                     var_u_su_t = var_units_started_up[u, s_by_t[t], t]
-                    var_u_sd_t_after = isnothing(t_after) ? 0 : var_units_shut_down[u, s_by_t[t_after], t_after]
+                    var_u_sd_t_after = try
+                        var_units_shut_down[u, s_by_t[t_after], t_after]
+                    catch KeyError
+                        0
+                    end
                     lhs = if n.name == :node_group_a
                         var_u_flow_a = var_unit_flow[u, node(:node_a), d, s_by_t[t], t]
                         var_u_flow_reserves_a = dr ? var_unit_flow[u, node(:reserves_a), d, s_by_t[t], t] : 0

@@ -180,15 +180,8 @@ function generate_direction()
         connection__from_node__user_constraint => from_node,
         connection__to_node__user_constraint => to_node,        
     )
-    for cls in keys(directions_by_class)
-        push!(cls.object_class_names, :direction)
-    end
     for (cls, d) in directions_by_class
-        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
-        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
-        for (key, new_key) in key_map
-            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
-        end
+        add_dimension!(cls, :direction, d)
     end
     @eval begin
         direction = $direction
@@ -208,7 +201,7 @@ function generate_node_has_ptdf()
             for c in node__commodity(node=n)
             if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
-        ptdf_durations = [commodity_physics_duration(commodity=c, _default=nothing) for c in ptdf_comms]
+        ptdf_durations = [commodity_physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
         ptdf_threshold = maximum(commodity_ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
@@ -287,11 +280,11 @@ function generate_connection_has_lodf()
 end
 
 function _build_ptdf(connections, nodes, unavailable_connections=Set())
-    nodecount = length(nodes)
-    conncount = length(connections)
-    node_numbers = Dict{Object,Int32}(n => ix for (ix, n) in enumerate(nodes))
-    A = zeros(Float64, nodecount, conncount)  # incidence_matrix
-    inv_X = zeros(Float64, conncount, conncount)
+    node_count = length(nodes)
+    conn_count = length(connections)
+    node_numbers = Dict(n => ix for (ix, n) in enumerate(nodes))
+    A = zeros(Float64, node_count, conn_count)  # incidence_matrix
+    inv_X = zeros(Float64, conn_count, conn_count)
     for (ix, conn) in enumerate(connections)
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
@@ -305,7 +298,7 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     end
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
     if i === nothing
-        error("slack node not found")
+        error("slack node not found - please set `node_opf_type` to \"node_opf_type_reference\" for one of your nodes")
     end
     slack = nodes[i]
     slack_position = node_numbers[slack]
@@ -319,11 +312,60 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     if binfo < 0
         error("illegal argument in inputs")
     elseif binfo > 0
-        error("singular value in factorization, possibly there is an islanded bus")
+        error_msg = "singular value in factorization"
+        islands = _islands(nodes)
+        island_count = length(islands)
+        if island_count > 1
+            islands_str = join((string(k, ": ", join(island, ", ")) for (k, island) in enumerate(islands)), "\n\n")
+            error_msg = string(
+                error_msg,
+                " - please make sure your network is fully connected\n\n",
+                "Currently, the network consists of $island_count islands: \n\n$islands_str"
+            )
+        end
+        error(error_msg)
     end
     S_ = gemm('N', 'N', gemm('N', 'T', inv_X, A[setdiff(1:end, slack_position), :]), getri!(B, bipiv))
-    hcat(S_[:, 1:(slack_position - 1)], zeros(conncount), S_[:, slack_position:end])
+    hcat(S_[:, 1:(slack_position - 1)], zeros(conn_count), S_[:, slack_position:end])
 end
+
+"""
+    _islands(nodes)
+
+An Array where each element is itself an Array of node Objects corresponding to an island.
+"""
+function _islands(nodes)
+    visited = Dict(n => false for n in nodes)
+    islands = []
+    for n in keys(visited)
+        if !visited[n]
+            island = Object[]
+            push!(islands, island)
+            _visit!(n, visited, island)
+        end
+    end
+    islands
+end
+
+"""
+Recursively visit nodes starting at given one `n` and add them to the `island` Array.
+"""
+function _visit!(n, visited, island)
+    visited[n] = true
+    push!(island, n)
+    connected_nodes = (
+        connected_n
+        for conn in connection__from_node(node=n, direction=anything)
+        for connected_n in connection__from_node(connection=conn, direction=anything)
+        if connected_n != n && connected_n in keys(visited)
+    )
+    for connected_n in connected_nodes
+        if !visited[connected_n]
+            _visit!(connected_n, visited, island)
+        end
+    end
+end
+
 
 """
     _ptdf_unfiltered_values()
@@ -342,10 +384,10 @@ function _ptdf_unfiltered_values()
             end
         end
     end
-    ptdf_by_ind = Dict(
-        ind => _build_ptdf(connections, nodes, unavailable_connections)
-        for (ind, unavailable_connections) in unavailable_connections_by_ind
-    )
+    ptdf_by_ind = Dict()
+    for (ind, unavailable_connections) in unavailable_connections_by_ind
+        ptdf_by_ind[ind] = _build_ptdf(connections, nodes, unavailable_connections)
+    end
     Dict(
         (conn, n) => Dict(
             :ptdf_unfiltered => parameter_value(
@@ -814,7 +856,10 @@ function generate_is_boundary()
         has_boundary_conn = false
         for (conn, _d) in connection__from_node(node=n)
             remote_commodities = unique(
-                c for (remote_n, _d) in connection__to_node(connection=conn) for c in node__commodity(node=remote_n)
+                c 
+                for (remote_n, _d) in connection__to_node(connection=conn)
+                if remote_n != n
+                for c in node__commodity(node=remote_n)
             )
             if !(c in remote_commodities)
                 has_boundary_conn = true

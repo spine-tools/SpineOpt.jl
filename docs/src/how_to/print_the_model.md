@@ -8,8 +8,23 @@ To write that file you need to set the `write_mps_file` parameter of the model o
 
 SpineOpt will write the file to the working directory. If you are using Spine Toolbox that working directory will be the Spine Toolbox work folder which is typically in your user directory e.g. C:\\Users\\username\\.spinetoolbox\\work\\run\_spineopt\_gibberish\_toolbox\\model\_diagnostics.mps
 
-An alternative approach is to directly use the write\_model\_file(m, filename) command in which m is a reference to your model and filename is the filename you want the model file written to.
+An alternative approach is to directly use the [`write_model_file(m;file_name)`](https://github.com/spine-tools/SpineOpt.jl/blob/master/src/util/write_information_files.jl) function, where `m` is a reference to your model and `file_name` is the filename you want the model file written to.
 
-m can be obtained from the call to run\_spineopt(). In Spine Toolbox, more particularly the run\_SpineOpt tool, you will have m=run\_spineopt(). That means that you can call write\_model\_file(m,filename) in the console once SpineOpt has finished executing and the console remains open.
+`m` can be obtained from the call to `run_spineopt()`. In Spine Toolbox, more particularly the run\_SpineOpt tool, you will have `m=run_spineopt()`. That means that you can call `write_model_file(m;file_name)` in the console once SpineOpt has finished executing and the console remains open.
 
-In either case, here are some tips if you are using this file for debugging. The file can be very large so often it is helpful to create a minimum example of your model with only one or two timesteps. Also, in the call to run\_spineopt() you can add the keyword argument optimize=false so it will just build the model and not attempt to solve it.
+```julia
+using SpineOpt
+m = run_spineopt(
+    raw"sqlite:///C:\path\to\your\inputputdb.sqlite", 
+    raw"sqlite:///C:\path\to\your\outputdb.sqlite";
+    optimize=false
+    )
+write_model_file(m; file_name="<path-with-file-name>")
+```
+
+The resulting file has the extension `*.so_model` in the especified path.
+
+!!! note
+    If running the previous code gives you an error, please try replacing the last line with `SpineOpt.write_model_file(m; file_name="<path-with-file-name>")`. This error might appear in previous versions of SpineOpt where the `write_model_file` was not exported as part of the SpineOpt package.
+
+In either case, here are some tips if you are using this file for debugging. The file can be very large so often it is helpful to create a minimum example of your model with only one or two timesteps. In addition, in the call to run\_spineopt() you can add the keyword argument `optimize=false`, as in the example above, so it will just build the model and not attempt to solve it.

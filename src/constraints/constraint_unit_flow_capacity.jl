@@ -93,7 +93,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
     ) = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s, t=t, case=case, part=part) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t, t_next=t_next, case=case, part=part) => @constraint(
             m,
             expr_sum(
                 unit_flow[u, n, d, s, t_over] * overlap_duration(t_over, t)
@@ -119,9 +119,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
                     * units_shut_down[u, s, t_after]
                     * duration(t_after)
-                    for (u, s, t_after) in units_on_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_before_t(m; t_before=t)
-                    );
+                    for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_next);
                     init=0
                 )                
                 + expr_sum(
@@ -145,7 +143,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 init=0
             )
         )
-        for (u, ng, d, s, t, case, part) in constraint_unit_flow_capacity_indices(m)
+        for (u, ng, d, s, t, t_next, case, part) in constraint_unit_flow_capacity_indices(m)
     )
 end
 
@@ -171,17 +169,18 @@ end
 
 function constraint_unit_flow_capacity_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, case=case, part=part)
+        (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
         for (u, ng, d) in indices(unit_capacity)
         for t in t_highest_resolution(
             Iterators.flatten(
                 ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
             )
         )
+        for t_next in _t_next(m, u, t)
         for path in active_stochastic_paths(
             m,
             [
-                units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_before_t(m; t_before=t)]);
+                units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_next]);
                 unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t));
                 nonspin_units_shut_down_indices(m; unit=u, t=t_overlaps_t(m; t=t))
             ]
@@ -191,6 +190,18 @@ function constraint_unit_flow_capacity_indices(m::Model)
         for part in parts
     )
 end
+
+function _t_next(m, u, t)
+    t_next = unit_time_indices(m; unit=u, t=t_before_t(m; t_before=t))
+    if isempty(t_next)
+        # Nothing next, return a tuple with a dummy TimeSlice so things work,
+        # but essentially it will be as if there is nothing next indeed.
+        (TimeSlice(end_(t), end_(t)),)
+    else
+        (t for (u, t) in t_next)
+    end
+end
+
 
 """
     _unit_capacity_constraint_subpaths(path, u, t)
@@ -206,6 +217,7 @@ function _unit_capacity_constraint_subpaths(path, u, t0, t)
     t_flow_duration = end_(t) - start(t)
     for s in path
         mut = min_up_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t, _default=nothing)
+        mut = align_variable_duration_unit(mut, start(t))
         mut_gt_dur = mut === nothing || mut > t_flow_duration
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
             # Outcome change, store current subpath and start a new one

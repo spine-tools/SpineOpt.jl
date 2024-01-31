@@ -116,8 +116,8 @@ _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
 function _variable(m, name, ind, bin, int, lb, ub, fix_value, internal_fix_value, replacement_value)
     if replacement_value !== nothing
-        ind = (analysis_time=_analysis_time(m), ind...)
-        value = replacement_value(ind)
+        ind_ = (analysis_time=_analysis_time(m), ind...)
+        value = replacement_value(ind_)
         if value !== nothing
             return value
         end
