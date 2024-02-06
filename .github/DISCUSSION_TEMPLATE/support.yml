@@ -1,0 +1,20 @@
+title: "[General]"
+body:
+  - type: textarea
+    attributes:
+      description: "Describe your problem"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      description: "Attach your model (encouraged)"
+      value: "Use the paperclip to attach the file"
+  - type: textarea
+    attributes:
+      description: "What versions are you using?"
+      value: |
+        SpineOpt: 
+        SpineToolbox: 
+        SpineInterface: 
+        ...
+      
