@@ -1,26 +1,27 @@
-name: "Request for Support"
-decription: Ask for help from the developers and other users
-title: "<title>"
+---
+name: Request for Support
+description: Ask for help from the developers and other users
+title: <title>
 body:
-    - type: textarea
-      attributes:
-          description: "Describe your problem"
-      validations:
-          required: true
-    - type: textarea
-      attributes:
-          description: "Attach your model (encouraged)"
-          value: "Use the paperclip to attach the file"
-      validations:
-          required: false
-    - type: textarea
-      attributes:
-          description: "What versions are you using?"
-          value: |
-              SpineOpt: 
-              SpineToolbox: 
-              SpineInterface: 
-              ...
-      validations:
-          required: true
+  - type: textarea
+    attributes:
+      description: Describe your problem
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      description: Attach your model (encouraged)
+      value: Use the paperclip to attach the file
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      description: What versions are you using?
+      value: |
+        SpineOpt: 
+        SpineToolbox: 
+        SpineInterface: 
+        ...
+    validations:
+      required: true
       
