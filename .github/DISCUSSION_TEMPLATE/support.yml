@@ -1,25 +1,13 @@
-name: "Support Request"
-description: Ask for help from the developers and other users.
-title: "<title>"
+title: "[title]"
 body:
     - type: textarea
-      attributes:
-          label: "Describe your problem"
-      validations:
-          required: true
+        attributes:
+            label: Describe your problem
+        validations:
+            required: true
     - type: textarea
-      attributes:
-          label: "Attach your model (encouraged)"
-          placeholder: Use the paperclip to attach the file
-      validations:
-          required: false
-    - type: textarea
-      attributes:
-          label: "What versions are you using?"
-          value: |
-            SpineOpt: 
-            SpineToolbox: 
-            SpineInterface: 
-            ...
-      validations:
-          required: true
+        attributes:
+            label: Attach your model (encouraged)
+            placeholder: "Use the paperclip to attach the file."
+        validations:
+            required: false
