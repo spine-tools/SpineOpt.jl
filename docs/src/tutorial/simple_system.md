@@ -57,7 +57,7 @@ but there are some things that need to be configured:
     tool arguments. The order of the items is first the input, then the output.
     See below for how the property window should look.
 
-![image](figs_simple_system/simple_system_spinetoolbox_run_spineopt.png)
+![image](figs_simple_system/simple_system_toolbox_run_spineopt.png)
 
 -   (optional) The Spine data stores are quite generic. In order for SpineOpt to be able 
     to read the input database, we need to change its format from the Spine format 

@@ -62,24 +62,18 @@ current_version() = length(_upgrade_functions) + 1
 Run migrations on the given url starting from the given version.
 """
 function run_migrations(url, version, log_level)
-	while _run_migration(url, version, log_level)
-		version = find_version(url)
+	without_filters(url) do clean_url
+		while _run_migration(clean_url, version, log_level)
+			version += 1
+		end
+		run_request(clean_url, "import_data", (SpineOpt.template(), "Upgrade data structure to version $(version - 1)"))
 	end
-	run_request(url, "import_data",	(SpineOpt.template(), "Import last version of the template"))
 end
 
 function _run_migration(url, version, log_level)
 	upgrade_fn = get(_upgrade_functions, version, nothing)
 	upgrade_fn === nothing && return false
 	upgrade_fn(url, log_level) || return false
-	run_request(
-		url,
-		"import_data",
-		(
-			Dict("object_parameters" => [("settings", "version", version + 1)]),
-			"Update SpineOpt data structure to $(version + 1)"
-		)
-	)
 	true
 end
 

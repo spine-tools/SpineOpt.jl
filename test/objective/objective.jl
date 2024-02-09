@@ -93,17 +93,13 @@
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         
-        t_count = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
-        duration = 2
+        duration = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        expected_obj = sum(
-            unit_capacity * fom_cost 
-            * (
-                number_of_units 
-                + sum(var_units_invested_available[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices))
-            ) 
-            * duration * t_count
+        expected_obj = fom_cost * unit_capacity * duration *
+        sum(             
+            (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) 
+            for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
