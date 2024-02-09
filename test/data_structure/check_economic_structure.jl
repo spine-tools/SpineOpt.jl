@@ -19,7 +19,7 @@
 
 # TODO: fix_units_on, fix_unit_flow
 
-@testset "algorithm strucutre" begin
+@testset "algorithm structure" begin
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -42,7 +42,7 @@
             ["connection", "connection_group_abbc"],
             ["stochastic_scenario", "parent"],
             ["stochastic_scenario", "child"],
-            #FIXME: maybe nicer way rahter than outputs?
+            #FIXME: maybe nicer way rather than outputs?
             ["output","units_invested"],
             ["output","connections_invested"],
             ["output","storages_invested"],
