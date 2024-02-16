@@ -109,7 +109,6 @@
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_year", "resolution", Dict("type" => "duration", "data" => "2Y")],
             ["temporal_block", "hourly", "block_start", Dict("type" => "date_time", "data" => "2031-01-01T00:00:00")],
-            ["temporal_block", "hourly", "block_end", Dict("type" => "date_time", "data" => "2031-01-02T00:00:00")]
             # ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
         :relationship_parameter_values => [
@@ -151,11 +150,11 @@
             ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
         m=run_spineopt(url_in; log_level=1)
-        var_unit_flow = m.ext[:variables][:unit_flow]
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow] 
         t0 = SpineOpt._analysis_time(m)
         @testset "test discounted duration" begin
             u_ts = [ind.t for ind in unit_flow_indices(m;unit=unit(:unit_ab))]
-            express = SpineOpt.fuel_costs(m,end_(u_ts[1]))
+            express = SpineOpt.fuel_costs(m,u_ts[1])
             express = SpineOpt.realize(express)
             @test 1.1985925426271964 == coefficient(express,var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]])
          end
