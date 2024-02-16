@@ -30,6 +30,8 @@
         ["model__default_investment_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions"],
         ["model__default_stochastic_structure", ["model", "stochastic_structure"], "Defines the default stochastic structure used for model variables, which will be replaced by more specific definitions"],
         ["model__default_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for model variables, which will be replaced by more specific definitions"],
+        ["model__stochastic_structure", ["model", "stochastic_structure"], "Defines which `stochastic_structure`s are included in which `model`s."],
+        ["model__temporal_block", ["model", "temporal_block"], "Defines which `temporal_block`s are included in which `model`s."],        
         ["model__report", ["model", "report"], "Determines which reports are written for each model and in turn, which outputs are written for each model"],
         ["node__commodity", ["node", "commodity"], "Define a `commodity` for a `node`. Only a single `commodity` is permitted per `node`"],
         ["node__investment_group", ["node", "investment_group"], "Indicates that a `node` belongs in a `investment_group`."],
