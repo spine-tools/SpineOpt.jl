@@ -213,22 +213,23 @@ end
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
 function _required_history_duration(instance::Object; use_long_history=true)
-    if use_long_history
-        lookback_params = (
-            # min_up_time,
-            # min_down_time,
-            # connection_flow_delay,
-            unit_investment_tech_lifetime,
-            connection_investment_tech_lifetime,
-            storage_investment_tech_lifetime
-        )
-    else
+    # TODO: Potential fix in PR #378. So, we can have both long and short history
+    # if use_long_history
         lookback_params = (
             min_up_time,
             min_down_time,
             connection_flow_delay,
+            unit_investment_tech_lifetime,
+            connection_investment_tech_lifetime,
+            storage_investment_tech_lifetime
         )
-    end
+    # else
+    #     lookback_params = (
+    #         min_up_time,
+    #         min_down_time,
+    #         connection_flow_delay,
+    #     )
+    # end
     max_vals = (maximum_parameter_value(p) for p in lookback_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
