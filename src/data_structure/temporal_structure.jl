@@ -213,22 +213,23 @@ end
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
 function _required_history_duration(instance::Object; use_long_history=true)
-    if use_long_history
-        lookback_params = (
-            # min_up_time,
-            # min_down_time,
-            # connection_flow_delay,
-            unit_investment_tech_lifetime,
-            connection_investment_tech_lifetime,
-            storage_investment_tech_lifetime
-        )
-    else
+    # TODO: Potential fix in PR #378. So, we can have both long and short history
+    # if use_long_history
         lookback_params = (
             min_up_time,
             min_down_time,
             connection_flow_delay,
+            unit_investment_tech_lifetime,
+            connection_investment_tech_lifetime,
+            storage_investment_tech_lifetime
         )
-    end
+    # else
+    #     lookback_params = (
+    #         min_up_time,
+    #         min_down_time,
+    #         connection_flow_delay,
+    #     )
+    # end
     max_vals = (maximum_parameter_value(p) for p in lookback_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
@@ -611,38 +612,6 @@ end
 
 current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
 
-# current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
-time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
-history_time_slice(m::Model; use_long_history=true,kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
-# function history_time_slice(m::Model; use_long_history=true,kwargs...)
-#     if use_long_history
-#         unique([m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)...,m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)...])
-#         # m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
-#     else
-#         m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)
-#     end
-# end
-t_history_t(m::Model; use_long_history=true, t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
-# function t_history_t(m::Model; use_long_history=true, t::TimeSlice)
-#     if use_long_history
-#         a = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
-#         b = get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
-#         (!isnothing(a) && !isnothing(b)) ? unique([a...,b...]) : (!isnothing(a) ? a : b)
-#     else
-#         get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
-#     end
-# end
-# history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
-# history_time_slice(m::Model; use_long_history=false, kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)
-# t_history_t(m::Model; t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
-# t_history_t(m::Model; use_long_history=false, t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
-t_before_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
-t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
-t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
-t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
-t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t_excl](t)
-representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, t)
-output_time_slices(m::Model; output::Object) = get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 """
 An `Array` of `TimeSlice`s in model `m`.
 
@@ -654,7 +623,30 @@ time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slic
 
 history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
 
+# code to handle long and short history
+#history_time_slice(m::Model; use_long_history=true,kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
+# function history_time_slice(m::Model; use_long_history=true,kwargs...)
+#     if use_long_history
+#         unique([m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)...,m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)...])
+#         # m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
+#     else
+#         m.ext[:spineopt].temporal_structure[:history_time_slice_short](; kwargs...)
+#     end
+# end
+
 t_history_t(m::Model; t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
+
+# code to handle long and short history
+#t_history_t(m::Model; use_long_history=true, t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
+# function t_history_t(m::Model; use_long_history=true, t::TimeSlice)
+#     if use_long_history
+#         a = get(m.ext[:spineopt].temporal_structure[:t_history_t], t, nothing)
+#         b = get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
+#         (!isnothing(a) && !isnothing(b)) ? unique([a...,b...]) : (!isnothing(a) ? a : b)
+#     else
+#         get(m.ext[:spineopt].temporal_structure[:t_history_t_short], t, nothing)
+#     end
+# end
 
 """
     t_before_t(m; t_before=anything, t_after=anything)
