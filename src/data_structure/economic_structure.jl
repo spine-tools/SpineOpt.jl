@@ -223,16 +223,18 @@ end
 The discount factor discounts payments at a certain timestep `t` to the models `discount_year`
 """
 
-function discount_factor(m,discnt_rate,year::DateTime)
+function discount_factor(m, discnt_rate, year::Union{DateTime})
     discnt_year = discount_year(model=m)
+    if isnothing(discnt_year)
+        discnt_year = Year(1)
+    end
     discnt_factor = 1/(1+discnt_rate)^((Year(year)-Year(discnt_year))/Year(1))
 end
 
-function discount_factor(m,discnt_rate,year::T) where {T<:Period}
+function discount_factor(m,discnt_rate,year::Union{T, Nothing}) where {T<:Period}
     if year.value == 0
         year = Year(0)
     end
-    discnt_year = discount_year(model=m)
     discnt_factor = 1/(1+discnt_rate)^((Year(year))/Year(1))
 end
 
