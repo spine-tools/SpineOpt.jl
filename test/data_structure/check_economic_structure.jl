@@ -203,7 +203,7 @@
         bool_scaling = false
         inv_cost = 1
         object_parameter_values = [
-            ["model", "instance", "discount_rate",	discnt_rate ],
+            ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
@@ -219,18 +219,18 @@
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
         m=run_spineopt(url_in; log_level=1)
-        var_units_inv = m.ext[:variables][:units_invested]
+        var_units_inv = m.ext[:spineopt].variables[:units_invested]
         t0 = SpineOpt._analysis_time(m)
         @testset "test investment costs, salvage fraction" begin
             u_ts = [ind.t for ind in units_invested_available_indices(m;unit=unit(:unit_ab))]
             key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
-            express = SpineOpt.unit_investment_costs(m,end_(u_ts[1]))
+            express = SpineOpt.unit_investment_costs(m, u_ts[1])
             express = SpineOpt.realize(express)
             salvae_frac = 0.5705230510993654
-            conv_to_disc_annuities = 0.6446089162177964
-            @test conv_to_disc_annuities ==  SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1])
-            @test salvae_frac ==  SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1])
-            @test conv_to_disc_annuities*(1-salvae_frac) == coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]])
+            conv_to_disc_annuities = 0.6446089162177964 
+            @test conv_to_disc_annuities ==  SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) # this is false
+            @test salvae_frac ==  SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) # this is true
+            @test conv_to_disc_annuities*(1-salvae_frac) == coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) # this is false
          end
          # econ_lifetime = ...
          # SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
@@ -261,7 +261,7 @@
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
         m=run_spineopt(url_in; log_level=1)
-        var_units_inv = m.ext[:variables][:units_invested]
+        var_units_inv = m.ext[:spineopt].variables[:units_invested]
         t0 = SpineOpt._analysis_time(m)
         @testset "test investment costs, salvage fraction" begin
             u_ts = [ind.t for ind in units_invested_available_indices(m;unit=unit(:unit_ab))]
@@ -303,7 +303,7 @@
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
         m=run_spineopt(url_in; log_level=1)
-        var_units_inv = m.ext[:variables][:units_invested]
+        var_units_inv = m.ext[:spineopt].variables[:units_invested]
         t0 = SpineOpt._analysis_time(m)
         @testset "test investment costs, salvage fraction" begin
             u_ts = [ind.t for ind in units_invested_available_indices(m;unit=unit(:unit_ab))]
