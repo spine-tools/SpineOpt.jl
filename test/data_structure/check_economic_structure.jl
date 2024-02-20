@@ -140,7 +140,7 @@
         # candidate_storages = 1
         cost = 1
         object_parameter_values = [
-            ["model", "instance", "discount_rate",	discnt_rate ],
+            ["model", "instance", "discount_rate",	discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
             #What if milestone defined for e.g. unit only; but I also have node available?
@@ -171,7 +171,7 @@
         # candidate_storages = 1
         cost = 1
         object_parameter_values = [
-            ["model", "instance", "discount_rate",	discnt_rate ],
+            ["model", "instance", "discount_rate",	discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
             #What if milestone defined for e.g. unit only; but I also have node available?
@@ -181,11 +181,11 @@
             ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
         m=run_spineopt(url_in; log_level=1)
-        var_unit_flow = m.ext[:variables][:unit_flow]
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow] 
         t0 = SpineOpt._analysis_time(m)
         @testset "test discounted duration" begin
             u_ts = [ind.t for ind in unit_flow_indices(m;unit=unit(:unit_ab))]
-            express = SpineOpt.fuel_costs(m,end_(u_ts[1]))
+            express = SpineOpt.fuel_costs(m,u_ts[1])
             express = SpineOpt.realize(express)
             @test 0.5846792890864373 == coefficient(express,var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]])
          end
