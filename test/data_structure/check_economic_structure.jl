@@ -266,7 +266,7 @@
         @testset "test investment costs, salvage fraction" begin
             u_ts = [ind.t for ind in units_invested_available_indices(m;unit=unit(:unit_ab))]
             key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
-            express = SpineOpt.unit_investment_costs(m,end_(u_ts[1]))
+            express = SpineOpt.unit_investment_costs(m, u_ts[1])
             express = SpineOpt.realize(express)
             @test unt_capacity*inv_cost == coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]])
          end
