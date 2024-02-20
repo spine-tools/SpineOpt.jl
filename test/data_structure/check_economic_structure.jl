@@ -308,16 +308,16 @@
         @testset "test investment costs, salvage fraction" begin
             u_ts = [ind.t for ind in units_invested_available_indices(m;unit=unit(:unit_ab))]
             key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
-            express = SpineOpt.unit_investment_costs(m,end_(u_ts[1]))
+            express = SpineOpt.unit_investment_costs(m, u_ts[1])
             express = SpineOpt.realize(express)
             @show express
             tech_fac = 3.8580937555432007
             salvae_frac = 0.5705230510993654
             conv_to_disc_annuities = 0.6446089162177964
-            @test salvae_frac ==  SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1])
-            @test tech_fac ==  SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1])
-            @test conv_to_disc_annuities ==  SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1])
-            @test round(conv_to_disc_annuities*tech_fac*(1-salvae_frac),digits=15) == coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]])
+            @test salvae_frac ==  SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) # this is true
+            @test tech_fac ==  SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) # this is false
+            @test conv_to_disc_annuities ==  SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) # this is false
+            @test round(conv_to_disc_annuities*tech_fac*(1-salvae_frac),digits=15) == coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) # this is false
          end
     end
 end
