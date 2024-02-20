@@ -22,6 +22,7 @@
 
 Run SpineOpt using the contents of `url_in` and write report(s) to `url_out`.
 At least `url_in` must point to a valid Spine database.
+Alternatively, `url_in` can be a julia dictionary (e.g. manually created or parsed from a json file).
 A new Spine database is created at `url_out` if one doesn't exist.
 
 # Arguments
@@ -169,6 +170,56 @@ function run_spineopt(
             end
         end
     end
+end
+
+function run_spineopt(
+    url_in::Dict,
+    url_out::Union{String,Nothing}=nothing;
+    upgrade=false,
+    mip_solver=nothing,
+    lp_solver=nothing,
+    add_user_variables=m -> nothing,
+    add_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    update_names=false,
+    alternative="",
+    write_as_roll=0,
+    use_direct_model=false,
+    filters=Dict("tool" => "object_activity_control"),
+    templates=(),
+    log_file_path=nothing,
+    resume_file_path=nothing,
+    run_kernel=run_spineopt_kernel!,
+)
+    db_url = "sqlite://"
+    data_template = Dict(Symbol(key) => value for (key, value) in template())#SpineOpt.template()
+    data_in = Dict(Symbol(key) => value for (key, value) in url_in)
+    data_run = merge(data_template, data_in)
+    SpineInterface.close_connection(db_url)
+    SpineInterface.open_connection(db_url)
+    SpineInterface.import_data(db_url, "From Julia dictionary to Spine database."; data_run...)
+
+    run_spineopt(
+        db_url,
+        url_out;
+        upgrade=upgrade,
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        log_level=log_level,
+        optimize=optimize,
+        update_names=update_names,
+        alternative=alternative,
+        write_as_roll=write_as_roll,
+        use_direct_model=use_direct_model,
+        filters=filters,
+        templates=templates,
+        log_file_path=log_file_path,
+        resume_file_path=resume_file_path,
+        run_kernel=run_kernel,
+    )
 end
 
 function _run_spineopt(url_in, url_out; upgrade, log_level, filters, templates, kwargs...)
