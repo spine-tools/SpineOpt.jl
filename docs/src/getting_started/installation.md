@@ -8,8 +8,8 @@ This package requires Julia 1.2 or later.
 
 
 If you haven't yet installed the tools yet, please follow the installation guides: 
-- For Spine Toolbox: https://github.com/spine-tools/SpineOpt.jl#installation
-- For SpineOpt: https://github.com/spine-tools/Spine-Toolbox#installation
+- For Spine Toolbox: <https://github.com/spine-tools/Spine-Toolbox#installation>
+- For SpineOpt: <https://github.com/spine-tools/SpineOpt.jl#installation>
 
 If you are not sure whether you have the latest version, please upgrade to ensure compatibility with this guide.
 - For Spine Toolbox:
