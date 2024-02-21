@@ -37,3 +37,6 @@ docs/src/mathematical_formulation/sets.md
 docs/src/mathematical_formulation/variables.md
 test/Manifest.toml
 Manifest.toml
+
+# vs code
+settings.json
