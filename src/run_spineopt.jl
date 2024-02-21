@@ -79,7 +79,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 """
 function run_spineopt(
-    url_in::String,
+    url_in::Union{String,Dict},
     url_out::Union{String,Nothing}=url_in;
     upgrade=false,
     mip_solver=nothing,
@@ -172,56 +172,6 @@ function run_spineopt(
     end
 end
 
-function run_spineopt(
-    url_in::Dict,
-    url_out::Union{String,Nothing}=nothing;
-    upgrade=false,
-    mip_solver=nothing,
-    lp_solver=nothing,
-    add_user_variables=m -> nothing,
-    add_constraints=m -> nothing,
-    log_level=3,
-    optimize=true,
-    update_names=false,
-    alternative="",
-    write_as_roll=0,
-    use_direct_model=false,
-    filters=Dict("tool" => "object_activity_control"),
-    templates=(),
-    log_file_path=nothing,
-    resume_file_path=nothing,
-    run_kernel=run_spineopt_kernel!,
-)
-    db_url = "sqlite://"
-    data_template = Dict(Symbol(key) => value for (key, value) in template())#SpineOpt.template()
-    data_in = Dict(Symbol(key) => value for (key, value) in url_in)
-    data_run = merge(data_template, data_in)
-    SpineInterface.close_connection(db_url)
-    SpineInterface.open_connection(db_url)
-    SpineInterface.import_data(db_url, "From Julia dictionary to Spine database."; data_run...)
-
-    run_spineopt(
-        db_url,
-        url_out;
-        upgrade=upgrade,
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        add_user_variables=add_user_variables,
-        add_constraints=add_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        update_names=update_names,
-        alternative=alternative,
-        write_as_roll=write_as_roll,
-        use_direct_model=use_direct_model,
-        filters=filters,
-        templates=templates,
-        log_file_path=log_file_path,
-        resume_file_path=resume_file_path,
-        run_kernel=run_kernel,
-    )
-end
-
 function _run_spineopt(url_in, url_out; upgrade, log_level, filters, templates, kwargs...)
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
@@ -242,28 +192,15 @@ function prepare_spineopt(
     filters=Dict("tool" => "object_activity_control"),
     templates=(),
 )
-    @log log_level 0 "Preparing SpineOpt for $(run_request(url_in, "get_db_url"))..."
-    version = find_version(url_in)
-    if version < current_version()
-        if !upgrade
-            @warn """
-            The data structure is not the latest version.
-            SpineOpt might still be able to run, but results aren't guaranteed.
-            Please use `run_spineopt(url_in; upgrade=true)` to upgrade.
-            """
-        else
-            @log log_level 0 "Upgrading data structure to the latest version... "
-            run_migrations(url_in, version, log_level)
-            @log log_level 0 "Done!"
-        end
-    end
+    @log log_level 0 "Preparing SpineOpt for $(_real_url(url_in))..."
+    _check_version(url_in; log_level, upgrade)
     @timelog log_level 2 "Initializing data structure from db..." begin
         template = SpineOpt.template()
         using_spinedb(template, @__MODULE__; extend=false)
         for template in templates
             using_spinedb(template, @__MODULE__; extend=true)
         end
-        data = export_data(url_in; upgrade=upgrade, filters=filters)
+        data = _data(url_in; upgrade, filters)
         using_spinedb(data, @__MODULE__; extend=true)
         missing_items = difference(template, data)
         if !isempty(missing_items)
@@ -282,6 +219,34 @@ function prepare_spineopt(
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
 end
+
+_real_url(url_in::String) = run_request(url_in, "get_db_url")
+_real_url(::Dict) = "dictionary data"
+
+function _check_version(url_in::String; log_level, upgrade)
+    version = find_version(url_in)
+    if version < current_version()
+        if !upgrade
+            @warn """
+            The data structure is not the latest version.
+            SpineOpt might still be able to run, but results aren't guaranteed.
+            Please use `run_spineopt(url_in; upgrade=true)` to upgrade.
+            """
+        else
+            _do_upgrade_db(url_in, version; log_level)
+        end
+    end
+end
+_check_version(data::Dict; kwargs...) = nothing
+
+function _do_upgrade_db(url_in, version; log_level)
+    @log log_level 0 "Upgrading data structure to the latest version... "
+    run_migrations(url_in, version, log_level)
+    @log log_level 0 "Done!"
+end
+
+_data(url_in::String; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
+_data(data::Dict; kwargs...) = data
 
 function rerun_spineopt(
     url_out::Union{String,Nothing};
@@ -480,3 +445,10 @@ end
 JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing
 
 master_problem_model(m) = m.ext[:spineopt].master_problem_model
+
+function upgrade_db(url_in; log_level)
+    version = find_version(url_in)
+    if version < current_version()
+        _do_upgrade_db(url_in, version; log_level)
+    end
+end
