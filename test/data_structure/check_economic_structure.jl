@@ -234,7 +234,6 @@
          end
          # econ_lifetime = ...
          # SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
-
     end
     @testset "test investment cost scaling" begin
         _load_test_data(url_in, test_data)
@@ -318,7 +317,6 @@
             @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test conv_to_disc_annuities*tech_fac*(1-salvae_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
-
          end
     end
 end
