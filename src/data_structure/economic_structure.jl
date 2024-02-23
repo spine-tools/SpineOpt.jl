@@ -385,8 +385,9 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, o
                 stoch_map_val = []
                 stoch_map_ind = []
                 for s in invest_stoch_struct(;Dict(obj_cls.name=>id,)...)
-                    for (s_all,t) in stochastic_time_indices(m;temporal_block=invest_temporal_block_,stochastic_scenario=_find_children(s))
-                        timeseries_ind, timeseries_val = create_discounted_duration(m;stochastic_scenario=s, invest_temporal_block=t.block)
+                    _stochastic_scenario = isempty(_find_children(s)) ? _find_root_scenarios(m,s) : _find_children(s) # to get all sto scenarios                  
+                    for (s_all,t) in stochastic_time_indices(m;temporal_block=invest_temporal_block_,stochastic_scenario=_stochastic_scenario)
+                        timeseries_ind, timeseries_val = create_discounted_duration(m;stochastic_scenario=s, invest_temporal_block=t.blocks[1]) 
                         push!(stoch_map_ind,s_all)
                         push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
                     end
