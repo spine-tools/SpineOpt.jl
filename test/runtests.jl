@@ -23,6 +23,8 @@ using Test
 using Dates
 using JuMP
 using PyCall
+import JSON
+import MathOptInterface as MOI
 
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
 import SpineInterface: Parameter, parameter_value
@@ -43,7 +45,8 @@ import SpineOpt:
     node_stochastic_time_indices,
     unit_stochastic_time_indices,
     node_investment_dynamic_time_indices,
-    rerun_spineopt!
+    rerun_spineopt
+    run_spineopt
 
 # Test code uses legacy syntax for `import_data`, so interpret here
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, "testing"; kwargs...)
@@ -111,4 +114,5 @@ end
     include("util/misc.jl")
     include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
+    include("run_examples.jl")
 end
