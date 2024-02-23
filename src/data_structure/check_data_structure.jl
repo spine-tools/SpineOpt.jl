@@ -201,7 +201,7 @@ end
 
 function check_model_start_smaller_than_end()
     for m in indices(model_start)
-        _check(model_start(model=m) <= model_end(model=m), "The model start for $(mod) is greater than the model end")
+        _check(model_start(model=m) <= model_end(model=m), "The model start for $m is greater than the model end")
     end
 end
 
