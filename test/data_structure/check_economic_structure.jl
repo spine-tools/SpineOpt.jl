@@ -318,6 +318,7 @@
             @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test conv_to_disc_annuities*tech_fac*(1-salvae_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
+
          end
     end
 end

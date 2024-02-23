@@ -91,10 +91,17 @@ function test_constraint_connection_flow_capacity()
     @testset "constraint_connection_flow_capacity_basic" begin
         url_in = _test_constraint_connection_setup()
         connection_capacity = 200
-        relationship_parameter_values = [
-            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]
+        relationships = [
+            ["connection__to_node", ["connection_ab", "node_a"]],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        relationship_parameter_values = [
+            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            relationship_parameter_values=relationship_parameter_values,
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
@@ -102,8 +109,9 @@ function test_constraint_connection_flow_capacity()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
-            key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
-            var_conn_flow = var_connection_flow[key...]
+            key_from = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            key_to = (connection(:connection_ab), node(:node_a), direction(:to_node), s, t)
+            var_conn_flow = var_connection_flow[key_from...] + var_connection_flow[key_to...]
             expected_con = @build_constraint(var_conn_flow <= connection_capacity)
             con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), [s], t)
             observed_con = constraint_object(constraint[con_key...])

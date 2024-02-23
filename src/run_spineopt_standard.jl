@@ -563,14 +563,14 @@ end
 function _save_marginal_values!(m::Model, dual=JuMP.dual)
     for (constraint_name, con) in m.ext[:spineopt].constraints
         name = Symbol(string("constraint_", constraint_name))
-        m.ext[:spineopt].values[name] = Dict(i => dual(c) for (i, c) in con)
+        m.ext[:spineopt].values[name] = Dict(i => dual(c) for (i, c) in con if c isa ConstraintRef)
     end
 end
 
 function _save_bound_marginal_values!(m::Model, reduced_cost=JuMP.reduced_cost)
     for (variable_name, var) in m.ext[:spineopt].variables
         name = Symbol(string("bound_", variable_name))
-        m.ext[:spineopt].values[name] = Dict(i => reduced_cost(v) for (i, v) in var)
+        m.ext[:spineopt].values[name] = Dict(i => reduced_cost(v) for (i, v) in var if v isa VariableRef)
     end
 end
 
