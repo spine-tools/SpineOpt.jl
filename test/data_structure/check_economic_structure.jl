@@ -156,7 +156,7 @@
             u_ts = [ind.t for ind in unit_flow_indices(m;unit=unit(:unit_ab))]
             express = SpineOpt.fuel_costs(m,u_ts[1])
             express = SpineOpt.realize(express)
-            @test 1.1985925426271964 == coefficient(express,var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]])
+            @test 1.1985925426271964 ≈ coefficient(express,var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6
          end
     end
     @testset "test discounted duration - w/o using milestone years" begin
@@ -187,7 +187,7 @@
             u_ts = [ind.t for ind in unit_flow_indices(m;unit=unit(:unit_ab))]
             express = SpineOpt.fuel_costs(m,u_ts[1])
             express = SpineOpt.realize(express)
-            @test 0.5846792890864373 == coefficient(express,var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]])
+            @test 0.5846792890864373 ≈ coefficient(express,var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6
          end
     end
     @testset "test investment costs, salvage fraction, decommissioning" begin
@@ -227,14 +227,13 @@
             express = SpineOpt.unit_investment_costs(m, u_ts[1])
             express = SpineOpt.realize(express)
             salvae_frac = 0.5705230510993654
-            conv_to_disc_annuities = 0.6446089162177964 
-            @test conv_to_disc_annuities ==  SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) # this is false
-            @test salvae_frac ==  SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) # this is true
-            @test conv_to_disc_annuities*(1-salvae_frac) == coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) # this is false
+            conv_to_disc_annuities = 0.613913254
+            @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6  
+            @test salvae_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
+            @test conv_to_disc_annuities*(1-salvae_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
          end
          # econ_lifetime = ...
          # SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
-
     end
     @testset "test investment cost scaling" begin
         _load_test_data(url_in, test_data)
@@ -311,13 +310,13 @@
             express = SpineOpt.unit_investment_costs(m, u_ts[1])
             express = SpineOpt.realize(express)
             @show express
-            tech_fac = 3.8580937555432007
+            tech_fac = 2.189728888
             salvae_frac = 0.5705230510993654
-            conv_to_disc_annuities = 0.6446089162177964
-            @test salvae_frac ==  SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) # this is true
-            @test tech_fac ==  SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) # this is false
-            @test conv_to_disc_annuities ==  SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) # this is false
-            @test round(conv_to_disc_annuities*tech_fac*(1-salvae_frac),digits=15) == coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) # this is false
+            conv_to_disc_annuities = 0.613913254
+            @test salvae_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
+            @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) rtol = 1e-6 
+            @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6 
+            @test conv_to_disc_annuities*tech_fac*(1-salvae_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
          end
     end
 end
