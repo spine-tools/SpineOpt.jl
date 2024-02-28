@@ -184,7 +184,7 @@ function test_constraint_units_available()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_units_available = m.ext[:spineopt].variables[:units_available]
+        var_units_available = m.ext[:spineopt].variables[:units_available]        
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         constraint = m.ext[:spineopt].constraints[:units_available]
         @test length(constraint) == 2
