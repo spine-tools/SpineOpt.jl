@@ -226,7 +226,7 @@ end
 
 function _create_objective_terms!(m)
     window_end = end_(current_window(m))
-    window_very_end = end_(last(time_slice(m)))
+    window_very_end = maximum(end_.(time_slice(m)))
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
