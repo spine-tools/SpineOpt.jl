@@ -76,7 +76,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 connection_flow[conn, n, d_reverse, s, t] * duration(t)
                 for (conn, n, d_reverse, s, t) in connection_flow_indices(
                     m; connection=conn, direction=_d_reverse(d), node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
