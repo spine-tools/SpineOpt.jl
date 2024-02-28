@@ -42,7 +42,7 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
     m.ext[:spineopt].constraints[:connection_intact_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 connection_intact_flow[conn, n, d, s, t] * duration(t)
                 for (conn, n, d, s, t) in connection_intact_flow_indices(
                     m; connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t),
