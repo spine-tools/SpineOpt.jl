@@ -351,20 +351,6 @@ function _generate_time_slice_relationships!(m::Model)
     succeeding_time_slices = Dict(
         t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
     )
-    if get(m.ext[:spineopt].temporal_structure, :window_count, 1) > 1
-        # Ensure continuity on the window boundary.
-        # This is needed in case a block ends before the window, or starts after the window.
-        # When that's the case, there is a gap on the window boundary
-        # that would result in 'transition' constraints not being properly enforced
-        # (and thus, for instance, free units started at the beginning of each window).
-        # Here we bridge all gaps by making the last time slice of the previous window
-        # be 'before' the fist one of the current window.
-        succeeding_time_slices_hist = Dict(
-            last(history_time_slices) => [first(time_slice(m; temporal_block=blk))]
-            for (blk, history_time_slices) in m.ext[:spineopt].temporal_structure[:history_time_slice].block_time_slices
-        )
-        merge!(append!, succeeding_time_slices, succeeding_time_slices_hist)
-    end
     overlapping_time_slices = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
     overlapping_time_slices_excl = Dict(
         t => setdiff(time_slices, t) for (t, time_slices) in overlapping_time_slices
