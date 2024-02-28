@@ -51,7 +51,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
     m.ext[:spineopt].constraints[ratio_out_in.name] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => sense_constraint(
             m,
-            + expr_sum(
+            + sum(
                 + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
                 for (conn, n_out, d, s, t_short) in connection_flow_indices(
                     m;
@@ -64,7 +64,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 init=0,
             ),
             sense,
-            + expr_sum(
+            + sum(
                 + connection_flow[conn, n_in, d, s, t_short]
                 * ratio_out_in[
                     (connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t_short),

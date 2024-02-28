@@ -69,7 +69,7 @@ function add_constraint_ramp_up!(m::Model)
     m.ext[:spineopt].constraints[:ramp_up] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after)
@@ -77,7 +77,7 @@ function add_constraint_ramp_up!(m::Model)
                 if !is_reserve_node(node=n);
                 init=0,
             )
-            - expr_sum(
+            - sum(
                 + unit_flow[u, n, d, s, t] * overlap_duration(t_before, t)
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before)
@@ -85,7 +85,7 @@ function add_constraint_ramp_up!(m::Model)
                 if !is_reserve_node(node=n);
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after)
@@ -97,7 +97,7 @@ function add_constraint_ramp_up!(m::Model)
             )
             <=
             + (
-                + expr_sum(
+                + sum(
                     + (
                         + _start_up_limit(u, ng, d, s, t0, t_after)
                         - _minimum_operating_point(u, ng, d, s, t0, t_after)
@@ -111,7 +111,7 @@ function add_constraint_ramp_up!(m::Model)
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0
                 )
-                - expr_sum(
+                - sum(
                     + _minimum_operating_point(u, ng, d, s, t0, t_after)
                     * units_on[u, s, t]
                     * duration(t)

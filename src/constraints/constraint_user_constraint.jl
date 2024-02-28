@@ -78,7 +78,7 @@ function add_constraint_user_constraint!(m::Model)
     m.ext[:spineopt].constraints[:user_constraint] = Dict(
         (user_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
             m,
-            + expr_sum(
+            + sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
                 * unit_flow_coefficient[(
                     unit=u,
@@ -97,7 +97,7 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_flow_coefficient[(
                     unit=u,
@@ -117,7 +117,7 @@ function add_constraint_user_constraint!(m::Model)
                 if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
                 * unit_flow_coefficient[(
                     unit=u,
@@ -136,7 +136,7 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_flow_coefficient[(
                     unit=u,
@@ -156,7 +156,7 @@ function add_constraint_user_constraint!(m::Model)
                 if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 (   
                     + units_on[u, s, t1]
                     * units_on_coefficient[(user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
@@ -170,7 +170,7 @@ function add_constraint_user_constraint!(m::Model)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )            
-            + expr_sum(
+            + sum(
                 (   
                     + units_invested_available[u, s, t1]
                     * units_invested_available_coefficient[
@@ -188,7 +188,7 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 (   
                     + connections_invested_available[c, s, t1]
                     * connections_invested_available_coefficient[
@@ -206,7 +206,7 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 (   
                     + storages_invested_available[n, s, t1]
                     * storages_invested_available_coefficient[
@@ -224,7 +224,7 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )                        
-            + expr_sum(
+            + sum(
                 + connection_flow[c, n, d, s, t_short]
                 * connection_flow_coefficient[(
                     connection=c,
@@ -249,7 +249,7 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + connection_flow[c, n, d, s, t_short]
                 * connection_flow_coefficient[(
                     connection=c,
@@ -267,7 +267,7 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + node_state[n, s, t_short]
                 * node_state_coefficient[
                     (node=n, user_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t_short),
@@ -277,7 +277,7 @@ function add_constraint_user_constraint!(m::Model)
                 for (n, s, t_short) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t));
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * demand_coefficient[(node=n, user_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * duration(t_short)
@@ -287,14 +287,14 @@ function add_constraint_user_constraint!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 user_constraint_slack_pos[uc, s, t] - user_constraint_slack_neg[uc, s, t]
                 for (uc, s, t) in user_constraint_slack_indices(m; user_constraint=uc, stochastic_scenario=s, t=t);
                 init=0,
             )
             ,
             constraint_sense(user_constraint=uc),
-            + expr_sum(
+            + sum(
                 right_hand_side[(user_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)] for s in s;
                 init=0,
             )

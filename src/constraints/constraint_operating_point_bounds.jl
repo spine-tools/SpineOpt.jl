@@ -38,14 +38,14 @@ function add_constraint_operating_point_bounds!(m::Model)
     m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
         (unit=u, node=n, direction=d, i=op, stochastic_path=s, t=t) => @constraint(
             m,
-            expr_sum(
+            sum(
                 unit_flow_op_active[u, n, d, op, s, t]
                 for (u, n, d, op, s, t) in unit_flow_op_active_indices(
                     m; unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 ); init=0
             )
             <= 
-            expr_sum(
+            sum(
                 units_on[u, s, t] for (u, s, t) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 ); init=0

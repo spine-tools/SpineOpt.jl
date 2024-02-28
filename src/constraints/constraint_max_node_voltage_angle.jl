@@ -40,7 +40,7 @@ function add_constraint_max_node_voltage_angle!(m::Model)
     m.ext[:spineopt].constraints[:max_node_voltage_angle] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + node_voltage_angle[ng, s, t]
                 for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,

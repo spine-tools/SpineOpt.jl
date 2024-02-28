@@ -75,14 +75,14 @@ function _group_entities_invested_available(m, ig, s, t)
         units_invested_available, connections_invested_available, storages_invested_available
     ) = m.ext[:spineopt].variables
     (
-        + expr_sum(
+        + sum(
             units_invested_available[u, s, t]
             for (u, s, t) in units_invested_available_indices(
                 m; unit=unit__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
             );
             init=0
         )
-        + expr_sum(
+        + sum(
             connections_invested_available[conn, s, t]
             for (conn, s, t) in connections_invested_available_indices(
                 m;
@@ -92,7 +92,7 @@ function _group_entities_invested_available(m, ig, s, t)
             );
             init=0
         )
-        + expr_sum(
+        + sum(
             storages_invested_available[n, s, t]
             for (n, s, t) in storages_invested_available_indices(
                 m; node=node__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
