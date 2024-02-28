@@ -58,7 +58,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
             m,
             - connection_minimum_emergency_capacity(m, conn_mon, s, t)
             <=
-            + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, expr_sum)
+            + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, sum)
             * connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)]
             <=
             + connection_minimum_emergency_capacity(m, conn_mon, s, t)

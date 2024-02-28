@@ -37,11 +37,11 @@ function add_constraint_units_available!(m::Model)
     m.ext[:spineopt].constraints[:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 units_available[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
-            - expr_sum(
+            - sum(
                 units_invested_available[u, s, t1]
                 for (u, s, t1) in units_invested_available_indices(
                     m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)

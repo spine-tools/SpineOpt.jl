@@ -37,7 +37,7 @@ function add_constraint_min_node_pressure!(m::Model)
     m.ext[:spineopt].constraints[:min_node_pressure] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + node_pressure[ng, s, t]
                 for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,

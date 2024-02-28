@@ -40,7 +40,7 @@ function add_constraint_node_state_capacity!(m::Model)
     m.ext[:spineopt].constraints[:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + node_state[ng, s, t] for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,
             )
@@ -48,7 +48,7 @@ function add_constraint_node_state_capacity!(m::Model)
             + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (
                 candidate_storages(node=ng) !== nothing ?
-                expr_sum(
+                sum(
                     storages_invested_available[n, s, t1]
                     for (n, s, t1) in storages_invested_available_indices(
                         m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_short=t)

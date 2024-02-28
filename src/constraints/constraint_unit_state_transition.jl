@@ -35,7 +35,7 @@ function add_constraint_unit_state_transition!(m::Model)
     m.ext[:spineopt].constraints[:unit_state_transition] = Dict(
         (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
                 for (u, s, t_after) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t_after, temporal_block=anything,
@@ -43,7 +43,7 @@ function add_constraint_unit_state_transition!(m::Model)
                 init=0,
             )
             ==
-            expr_sum(
+            sum(
                 + units_on[u, s, t_before]
                 for (u, s, t_before) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t_before, temporal_block=anything,
