@@ -19,11 +19,11 @@
 
 @doc raw"""
 The aggregated available units are constrained by the parameter [number\_of\_units](@ref)
-and the variable number of invested units [units\_invested\_available](@ref):
+, the variable number of invested units [units\_invested\_available](@ref) less the number of units on outage [units\_out\_of\_service](@ref):
 
 ```math
 \begin{aligned}
-& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} \\
+& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} + v^{units\_out\_of\_service}_{(u,s,t)}\\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}

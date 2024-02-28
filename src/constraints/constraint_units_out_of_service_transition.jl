@@ -22,7 +22,7 @@ This constraint describes the relationship between units_out_of_service, units_t
 
 ```math
 \begin{aligned}
-& v^{units\_on}_{(u,s,t)} - v^{units\_started\_up}_{(u,s,t)} + v^{units\_shut\_down}_{(u,s,t)} = v^{units\_on}_{(u,s,t-1)} \\
+& v^{units\_on}_{(u,s,t)} - v^{units\_taken\_out\_of\_service}_{(u,s,t)} + v^{units\_returned\_to\_service}_{(u,s,t)} = v^{units\_out\_of\_service}_{(u,s,t-1)} \\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}

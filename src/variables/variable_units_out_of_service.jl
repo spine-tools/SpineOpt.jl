@@ -49,9 +49,9 @@ end
 
 
 """
-    add_variable_units_on!(m::Model)
+    add_variable_units_out_of_service!(m::Model)
 
-Add `units_on` variables to model `m`.
+Add `units_out_of_service` variables to model `m`.
 """
 function add_variable_units_out_of_service!(m::Model)
     t0 = _analysis_time(m)

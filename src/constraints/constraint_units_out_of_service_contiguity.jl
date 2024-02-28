@@ -75,10 +75,10 @@ end
 """
     constraint_units_out_of_service_contiguity_indices_filtered(m::Model; filtering_options...)
 
-Form the stochastic indexing Array for the `:min_up_time` constraint.
+Form the stochastic indexing Array for the `:units_out_of_service_contiguity` constraint.
 
-Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
-`units_started_up` variables on past time slices. Keyword arguments can be used to filter the resulting Array.
+Uses stochastic path indices due to potentially different stochastic structures between `units_out_of_service` and
+`units_taken_out_of_service` variables on past time slices. Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_units_out_of_service_contiguity_indices_filtered(m::Model; unit=anything, stochastic_path=anything, t=anything)
     f(ind) = _index_in(ind; unit=unit, stochastic_path=stochastic_path, t=t)

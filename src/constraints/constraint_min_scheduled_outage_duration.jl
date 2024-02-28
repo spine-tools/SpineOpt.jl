@@ -18,13 +18,12 @@
 #############################################################################
 
 @doc raw"""
-The number of online units needs to be restricted to the aggregated available units:
+The unit must be taken out of service for maintenance for a duration equal to scheduled_outage_duration:
 
 ```math
-v^{units\_on}_{(u,s,t)} \leq v^{units\_available}_{(u,s,t)} \quad \forall u \in unit, \, \forall (s,t)
+\sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t \geq scheduled\_outage\_duration_{(u,s,t)}number\_of\_units_u \quad \forall u \in unit, \, \forall (s,t)
 ```
 
-The investment formulation is described in chapter [Investments](@ref).
 """
 function add_constraint_min_scheduled_outage_duration!(m::Model)
     @fetch units_out_of_service = m.ext[:spineopt].variables
