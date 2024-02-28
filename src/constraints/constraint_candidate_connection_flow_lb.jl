@@ -25,7 +25,7 @@ equals [connection\_intact\_flow](@ref) otherwise.
 ```math
 \begin{aligned}
 & v^{connection\_flow}_{(c, n, d, s, t)} \\
-& \leq \\
+& \geq \\
 & v^{connection\_intact\_flow}_{(c, n, d, s, t)}
 - p^{connection\_capacity}_{(c, n, d, s, t)} \cdot \left(
     p^{candidate\_connections}_{(c, s, t)} - v^{connections\_invested\_available}_{(c, s, t)} \right) \\
