@@ -352,9 +352,6 @@ function _generate_time_slice_relationships!(m::Model)
         t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
     )
     overlapping_time_slices = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
-    overlapping_time_slices_excl = Dict(
-        t => setdiff(time_slices, t) for (t, time_slices) in overlapping_time_slices
-    )
     t_before_t_tuples = unique(
         (t_before, t_after)
         for (t_before, time_slices) in succeeding_time_slices
@@ -367,14 +364,11 @@ function _generate_time_slice_relationships!(m::Model)
         for t_long in time_slices
         if iscontained(t_short, t_long)
     )
-    t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
     # Create the function-like objects
     temp_struct = m.ext[:spineopt].temporal_structure
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
-    temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
     temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
-    temp_struct[:t_overlaps_t_excl] = TOverlapsT(overlapping_time_slices_excl)
 end
 
 """
@@ -580,10 +574,6 @@ t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwa
 An `Array` of `TimeSlice`s in model `m` that overlap the given `t`.
 """
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
-
-t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
-
-t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t_excl](t)
 
 representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, t)
 
