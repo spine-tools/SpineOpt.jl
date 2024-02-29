@@ -110,7 +110,8 @@ function test_constraint_connection_flow_capacity()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key_from = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
-            var_conn_flow = var_connection_flow[key_from...]
+            key_to = (connection(:connection_ab), node(:node_a), direction(:to_node), s, t)
+            var_conn_flow = var_connection_flow[key_from...] + var_connection_flow[key_to...]
             expected_con = @build_constraint(var_conn_flow <= connection_capacity)
             con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), [s], t)
             observed_con = constraint_object(constraint[con_key...])

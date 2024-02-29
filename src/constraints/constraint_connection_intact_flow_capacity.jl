@@ -26,9 +26,9 @@ according to [connection\_capacity](@ref)
 & \sum_{
 n \in ng
 } v^{connection\_intact\_flow}_{(conn,n,d,s,t)}
-- \sum_{
-n \in ng
-} v^{connection\_intact\_flow}_{(conn,n,reverse(d),s,t)} \\
+# - \sum_{
+# n \in ng
+# } v^{connection\_intact\_flow}_{(conn,n,reverse(d),s,t)} \\
 & <= p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)}
 \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
@@ -56,16 +56,6 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
             * duration(t)
-            <=
-            + sum(
-                connection_intact_flow[conn, n, d_reverse, s, t] * duration(t)
-                for (conn, n, d_reverse, s, t) in connection_intact_flow_indices(
-                    m; connection=conn, node=ng, direction=_d_reverse(d), stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                )
-                # if !is_reserve_node(node=n);
-                # TODO: this syntax doesn't seem needed
-                ; init=0,
-            )
         )
         for (conn, ng, d, s, t) in constraint_connection_intact_flow_capacity_indices(m)
     )
