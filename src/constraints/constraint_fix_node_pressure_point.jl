@@ -149,7 +149,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
         (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, t=t, i=j) => @constraint(
             m,
             (
-                expr_sum(
+                sum(
                     connection_flow[conn, n_orig, d, s, t]
                     for (conn, n_orig, d, s, t) in connection_flow_indices(
                         m;
@@ -161,7 +161,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                     );
                     init=0
                 )
-                + expr_sum(
+                + sum(
                     connection_flow[conn, n_dest, d, s, t]
                     for (conn, n_dest, d, s, t) in connection_flow_indices(
                         m;
@@ -180,7 +180,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
             + fixed_pressure_constant_1[
                 (connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
-            * expr_sum(
+            * sum(
                 node_pressure[n_orig, s, t]
                 for (n_orig, s, t) in node_pressure_indices(
                     m; node=n_orig, stochastic_scenario=s, t=t_in_t(m; t_long=t)
@@ -190,7 +190,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
             - fixed_pressure_constant_0[
                 (connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
-            * expr_sum(
+            * sum(
                 node_pressure[n_dest, s, t]
                 for (n_dest, s, t) in node_pressure_indices(
                     m; node=n_dest, stochastic_scenario=s, t=t_in_t(m; t_long=t)
@@ -198,7 +198,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                 init=0
             )            
             + big_m(model=m.ext[:spineopt].instance)
-            * expr_sum(
+            * sum(
                 1 - binary_gas_connection_flow[conn, n_dest, direction(:to_node), s, t]
                 for (conn, n_dest, d, s, t) in connection_flow_indices(
                     m;

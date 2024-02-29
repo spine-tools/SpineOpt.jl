@@ -27,7 +27,7 @@ function add_constraint_non_spinning_reserves_lower_bound!(m::Model)
     m.ext[:spineopt].constraints[:non_spinning_reserves_lower_bound] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + minimum_operating_point[
                     (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=0)
                 ]
@@ -42,7 +42,7 @@ function add_constraint_non_spinning_reserves_lower_bound!(m::Model)
                 init=0
             )
             <=
-            expr_sum(
+            sum(
                 unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
@@ -65,7 +65,7 @@ function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Par
     m.ext[:spineopt].constraints[name] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            expr_sum(
+            sum(
                 unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
@@ -74,7 +74,7 @@ function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Par
                 init=0
             )
             <=
-            expr_sum(
+            sum(
                 + limit[
                     (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=1)
                 ]

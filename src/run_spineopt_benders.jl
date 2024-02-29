@@ -167,7 +167,7 @@ function _set_mp_objective!(m::Model)
     @objective(
         m,
         Min,
-        + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
+        + sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
         + investment_costs
     )
 end

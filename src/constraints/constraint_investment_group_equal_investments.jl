@@ -30,21 +30,21 @@ function add_constraint_investment_group_equal_investments!(m::Model)
     m.ext[:spineopt].constraints[:investment_group_equal_investments] = Dict(
         (investment_group=ig, entity1=e, entity2=other_e, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 units_invested_available[e, s, t]
                 for (e, s, t) in units_invested_available_indices(
                     m; unit=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 );
                 init=0
             )
-            + expr_sum(
+            + sum(
                 connections_invested_available[e, s, t]
                 for (e, s, t) in connections_invested_available_indices(
                     m; connection=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 );
                 init=0
             )
-            + expr_sum(
+            + sum(
                 storages_invested_available[e, s, t]
                 for (e, s, t) in storages_invested_available_indices(
                     m; node=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
@@ -52,21 +52,21 @@ function add_constraint_investment_group_equal_investments!(m::Model)
                 init=0
             )
             ==
-            + expr_sum(
+            + sum(
                 units_invested_available[other_e, s, t]
                 for (other_e, s, t) in units_invested_available_indices(
                     m; unit=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 );
                 init=0
             )
-            + expr_sum(
+            + sum(
                 connections_invested_available[other_e, s, t]
                 for (other_e, s, t) in connections_invested_available_indices(
                     m; connection=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 );
                 init=0
             )
-            + expr_sum(
+            + sum(
                 storages_invested_available[other_e, s, t]
                 for (other_e, s, t) in storages_invested_available_indices(
                     m; node=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)

@@ -53,7 +53,7 @@ function add_constraint_total_cumulated_unit_flow!(m::Model, bound, sense)
     m.ext[:spineopt].constraints[bound.name] = Dict(
         (unit=ug, node= ng, stochastic_path = s) => sense_constraint(
             m,
-            + expr_sum(
+            + sum(
                 unit_flow[u, n, d, s, t] * duration(t) # * node_stochastic_weight[(node=n, stochastic_scenario=s)]
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=ug, node = ng, direction=d, stochastic_scenario = s

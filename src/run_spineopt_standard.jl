@@ -511,6 +511,7 @@ function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && continue
         for v in values(var)
+            v isa VariableRef || continue
             ref_v = ref_map[v]
             if is_binary(ref_v)
                 unset_binary(ref_v)

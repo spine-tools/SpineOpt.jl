@@ -45,7 +45,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
     m.ext[:spineopt].constraints[:unit_pw_heat_rate] = Dict(
         (unit=u, node1=n_from, node2=n_to, stochastic_path=s, t=t) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
@@ -58,7 +58,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 init=0,
             )
             ==
-            + expr_sum(
+            + sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
                 * unit_incremental_heat_rate[
                     (unit=u, node1=n_from, node2=n, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short),
@@ -69,7 +69,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_incremental_heat_rate[
                     (unit=u, node1=n_from, node2=n, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short),
@@ -81,7 +81,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + units_on[u, s, t1]
                 * min(duration(t1), duration(t))
                 * unit_idle_heat_rate[

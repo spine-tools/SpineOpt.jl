@@ -69,7 +69,7 @@ function add_constraint_minimum_operating_point!(m::Model)
     m.ext[:spineopt].constraints[:minimum_operating_point] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
@@ -77,7 +77,7 @@ function add_constraint_minimum_operating_point!(m::Model)
                 if !is_reserve_node(node=n);
                 init=0,
             )
-            - expr_sum(
+            - sum(
                 + unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
@@ -86,10 +86,10 @@ function add_constraint_minimum_operating_point!(m::Model)
                 init=0,
             )
             >=
-            + expr_sum(
+            + sum(
                 (
                     + units_on[u, s, t_over]
-                    - expr_sum(
+                    - sum(
                         _switch(
                             d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
                         )[u, n, s, t]

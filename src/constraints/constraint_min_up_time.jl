@@ -42,12 +42,12 @@ function add_constraint_min_up_time!(m::Model)
     m.ext[:spineopt].constraints[:min_up_time] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + units_on[u, s, t]
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             )
-            - expr_sum(
+            - sum(
                 + nonspin_units_shut_down[u, n, s, t]
                 for (u, n, s, t) in nonspin_units_shut_down_indices(
                     m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything,
