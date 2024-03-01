@@ -30,6 +30,8 @@ function rerun_spineopt_benders!(
     resume_file_path,
     run_kernel,
 )
+    _add_window_about_to_solve_callback!(m, _set_sp_solution!)
+    _add_window_solved_callback!(m, process_subproblem_solution!)
     m_mp = master_problem_model(m)
     @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
@@ -62,8 +64,6 @@ function rerun_spineopt_benders!(
             update_names=update_names,
             calculate_duals=true,
             log_prefix="Benders iteration $j - ",
-            handle_window_about_to_solve=_set_sp_solution!,
-            handle_window_solved=process_subproblem_solution!,
         ) || break
         @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
         @log log_level 1 "Benders iteration $j complete"
