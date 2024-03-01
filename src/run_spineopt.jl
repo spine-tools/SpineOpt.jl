@@ -262,6 +262,8 @@ function rerun_spineopt(
     resume_file_path=nothing,
     use_direct_model=false,
     run_kernel=run_spineopt_kernel!,
+    handle_window_about_to_solve=(m, k) -> nothing,
+    handle_window_solved=(m, k) -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
     m = create_model(mip_solver, lp_solver, use_direct_model)
@@ -270,6 +272,8 @@ function rerun_spineopt(
         :spineopt_benders => rerun_spineopt_benders!,
         :spineopt_mga => rerun_spineopt_mga!
     )[model_type(model=m.ext[:spineopt].instance)]
+    _add_window_about_to_solve_callback!(m, handle_window_about_to_solve)
+    _add_window_solved_callback!(m, handle_window_solved)
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
     Base.invokelatest(        
         rerun_spineopt!,
@@ -400,6 +404,8 @@ struct SpineOptExt
     objective_upper_bound::Base.RefValue{Float64}
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
+    window_about_to_solve_callbacks::Vector
+    window_solved_callbacks::Vector
     function SpineOptExt(instance, lp_solver=nothing, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
@@ -438,6 +444,8 @@ struct SpineOptExt
             Ref(0.0),  # objective_upper_bound
             [],  # benders_gaps
             Ref(false),  # has_results
+            [],  # window_about_to_solve_callbacks
+            [],  # window_solved_callbacks
         )
     end
 end
@@ -451,4 +459,12 @@ function upgrade_db(url_in; log_level)
     if version < current_version()
         _do_upgrade_db(url_in, version; log_level)
     end
+end
+
+function _add_window_about_to_solve_callback!(m, callback)
+    push!(m.ext[:spineopt].window_about_to_solve_callbacks, callback)
+end
+
+function _add_window_solved_callback!(m, callback)
+    push!(m.ext[:spineopt].window_solved_callbacks, callback)
 end
