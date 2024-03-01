@@ -27,7 +27,7 @@ function variable_om_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        expr_sum(
+        sum(
             + unit_flow[u, n, d, s, t]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)

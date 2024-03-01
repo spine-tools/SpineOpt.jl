@@ -37,7 +37,7 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
     m.ext[:spineopt].constraints[:ratio_out_in_connection_intact_flow] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + connection_intact_flow[conn, n_out, d, s, t_short] * duration(t_short)
                 for (conn, n_out, d, s, t_short) in connection_intact_flow_indices(
                     m;
@@ -50,7 +50,7 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
                 init=0,
             )
             ==
-            + expr_sum(
+            + sum(
                 + connection_intact_flow[conn, n_in, d, s, t_short] * duration(t_short)
                 for (conn, n_in, d, s, t_short) in connection_intact_flow_indices(
                     m;

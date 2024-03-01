@@ -27,7 +27,7 @@ function unit_investment_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        + expr_sum(
+        + sum(
             units_invested[u, s, t]
             * (1- unit_salvage_fraction[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)])
             * unit_tech_discount_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]

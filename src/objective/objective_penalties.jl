@@ -30,7 +30,7 @@ function objective_penalties(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        + expr_sum(
+        + sum(
             (node_slack_neg[n, s, t] + node_slack_pos[n, s, t])
             * node_discounted_duration[(node=n, stochastic_scenario=s,t=t)]
             * duration(t)
@@ -40,7 +40,7 @@ function objective_penalties(m::Model, t_range)
             for (n, s, t) in node_slack_indices(m; t=t_range);
             init=0,
         )
-        + expr_sum(
+        + sum(
             (user_constraint_slack_neg[uc, s, t] + user_constraint_slack_pos[uc, s, t])
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))

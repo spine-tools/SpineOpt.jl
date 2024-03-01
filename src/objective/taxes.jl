@@ -27,7 +27,7 @@ function taxes(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        + expr_sum(
+        + sum(
             + unit_flow[u, n, d, s, t]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
@@ -38,7 +38,7 @@ function taxes(m::Model, t_range)
             for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node), t=t_range);
             init=0,
         )
-        - expr_sum(
+        - sum(
             + unit_flow[u, n, d, s, t]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
@@ -49,7 +49,7 @@ function taxes(m::Model, t_range)
             for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node), t=t_range);
             init=0,
         )
-        + expr_sum(
+        + sum(
             + unit_flow[u, n, d, s, t]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
@@ -60,7 +60,7 @@ function taxes(m::Model, t_range)
             for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node), t=t_range);
             init=0,
         )
-        + expr_sum(
+        + sum(
             unit_flow[u, n, d, s, t]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)

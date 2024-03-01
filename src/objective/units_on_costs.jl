@@ -27,7 +27,7 @@ function units_on_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        expr_sum(
+        sum(
             + units_on[u, s, t]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)

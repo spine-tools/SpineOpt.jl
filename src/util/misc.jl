@@ -104,31 +104,8 @@ sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
 sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
 sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
 
-"""
-    expr_sum(iter; init::Number)
-
-Sum elements in iter to init in-place, and return the result as a GenericAffExpr.
-"""
-function expr_sum(iter; init::Number)
-    result = AffExpr(init)
-    isempty(iter) && return result
-    result += first(iter)  # NOTE: This is so result has the right type, e.g., `GenericAffExpr{Call,VariableRef}`
-    for item in Iterators.drop(iter, 1)
-        add_to_expression!(result, item)
-    end
-    result
-end
-
-function expr_avg(iter; init::Number)
-    result = AffExpr(init)
-    isempty(iter) && return result
-    result += first(iter)  # NOTE: This is so result has the right type, e.g., `GenericAffExpr{Call,VariableRef}`
-    k = 1
-    for item in Iterators.drop(iter, 1)
-        add_to_expression!(result, item)
-        k += 1
-    end
-    result / k
+function _avg(iter; init::Number)
+    isempty(iter) ? init : sum(iter; init=init) / length(iter)
 end
 
 

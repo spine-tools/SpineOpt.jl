@@ -54,7 +54,7 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
     m.ext[:spineopt].constraints[:connection_flow_intact_flow] = Dict(
         (connection=conn, node=ng, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + connection_flow[conn, n, direction(:from_node), s, t] * duration(t)
                 - connection_flow[conn, n, direction(:to_node), s, t] * duration(t)
                 - connection_intact_flow[conn, n, direction(:from_node), s, t] * duration(t)
@@ -70,7 +70,7 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                 init=0,
             )
             ==
-            + expr_sum(
+            + sum(
                 lodf(connection1=candidate_conn, connection2=conn) * (
                     + connection_intact_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
                     - connection_intact_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)

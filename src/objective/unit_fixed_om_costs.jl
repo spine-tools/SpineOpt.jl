@@ -27,7 +27,7 @@ function fixed_om_costs(m, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        expr_sum(
+        sum(
             + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]

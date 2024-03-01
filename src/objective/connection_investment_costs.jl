@@ -27,7 +27,7 @@ function connection_investment_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        + expr_sum(
+        + sum(
             connections_invested[c, s, t]
             * (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)])
             * connection_tech_discount_factor[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]

@@ -27,7 +27,7 @@ function renewable_curtailment_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        expr_sum(
+        sum(
             curtailment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_short)]
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             * (

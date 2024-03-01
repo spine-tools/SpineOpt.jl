@@ -27,7 +27,7 @@ function storage_investment_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        + expr_sum(
+        + sum(
             storages_invested[n, s, t]
             * (1- storage_salvage_fraction[(node=n, stochastic_scenario=s, t=t)])
             * storage_tech_discount_factor[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]

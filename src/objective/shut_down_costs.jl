@@ -27,7 +27,7 @@ function shut_down_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        expr_sum(
+        sum(
             + units_shut_down[u, s, t]
             * shut_down_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
