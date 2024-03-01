@@ -20,7 +20,7 @@
 """
     storages_invested_available_indices(node=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `storagess_invested_available` variable where
+A list of `NamedTuple`s corresponding to indices of the `nodess_invested_available` variable where
 the keyword arguments act as filters for each dimension.
 """
 function storages_invested_available_indices(

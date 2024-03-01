@@ -17,6 +17,38 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+
+"""
+    connections_invested_int(x)
+
+Check if conneciton investment variable type is defined to be an integer.
+"""
+
+function connections_invested_int(x)
+    connection_investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
+end
+
+"""
+    fix_initial_connections_invested()
+
+If fix_connections_invested_available is not defined in the timeslice preceding the first rolling window
+then force it to be zero so that the model doesn't get free investments and the user isn't forced
+to consider this.
+"""
+function fix_initial_connections_invested(m)
+    for conn in indices(candidate_connections)
+        t = history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn))
+        if fix_connections_invested(connection=conn, t=last(t), _strict=false) === nothing
+            connection.parameter_values[conn][:fix_connections_invested] = parameter_value(
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
+            )
+            connection.parameter_values[conn][:starting_fix_connections_invested] = parameter_value(
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
+            )
+        end
+    end
+end
+
 """
     add_variable_connections_invested!(m::Model)
 
@@ -24,6 +56,7 @@ Add `connections_invested` variables to model `m`.
 """
 function add_variable_connections_invested!(m::Model)
     t0 = _analysis_time(m)
+    fix_initial_connections_invested(m)
     add_variable!(
         m,
         :connections_invested,

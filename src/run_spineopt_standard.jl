@@ -32,6 +32,7 @@ function rerun_spineopt_standard!(
 )
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m;log_level=log_level)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
@@ -99,9 +100,11 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_connection_intact_flow!,
             add_variable_connections_invested!,
             add_variable_connections_invested_available!,
+            add_variable_connections_invested_available_vintage!,
             add_variable_connections_decommissioned!,
             add_variable_storages_invested!,
             add_variable_storages_invested_available!,
+            add_variable_storages_invested_available_vintage!,
             add_variable_storages_decommissioned!,
             add_variable_node_state!,
             add_variable_node_slack_pos!,
@@ -109,6 +112,15 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_node_injection!,
             add_variable_units_invested!,
             add_variable_units_invested_available!,
+            add_variable_units_invested_available_vintage!,
+            add_variable_units_decommissioned!,
+            add_variable_units_decommissioned_vintage!,
+            add_variable_units_early_decommissioned_vintage!,
+            add_variable_units_demothballed_vintage!,
+            add_variable_units_invested_state!,
+            add_variable_units_invested_state_vintage!,
+            add_variable_units_mothballed_state_vintage!,
+            add_variable_units_mothballed_vintage!,
             add_variable_units_mothballed!,
             add_variable_nonspin_units_started_up!,
             add_variable_nonspin_units_shut_down!,
@@ -120,6 +132,25 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
+    end
+end
+
+_fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
+function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
+    var = m.ext[:variables][name]
+    bin = m.ext[:variables_definition][name][:bin]
+    int = m.ext[:variables_definition][name][:int]
+    use_long_history = m.ext[:variables_definition][name][:use_long_history]
+    ###Fix me: we can spped this up by searchin for indices of fix_value function first!
+    use_vintage_key = m.ext[:variables_definition][name][:vintage]
+    if !use_vintage_key
+        all_inds = indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
+    else #FIXME: t_vintage could also be current time_slice, but then rahter fix investment variables accoridngly for optimization
+        all_inds = indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)), t_vintage = history_time_slice(m;use_long_history=use_long_history))
+    end
+    for ind in all_inds
+        fix_value_ = _apply_function_or_nothing(fix_value, ind)
+        fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end
     @timelog log_level 3 "- [user_defined]" add_user_variables(m)
 end
@@ -142,11 +173,11 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_unit_flow_capacity!,
             add_constraint_connections_invested_available!,
-            add_constraint_connection_lifetime!,
-            add_constraint_connections_invested_transition!,
+            # add_constraint_connection_lifetime!,
+            # add_constraint_connections_invested_transition!,
             add_constraint_storages_invested_available!,
-            add_constraint_storage_lifetime!,
-            add_constraint_storages_invested_transition!,
+            # add_constraint_storage_lifetime!,
+            # add_constraint_storages_invested_transition!,
             add_constraint_operating_point_bounds!,
             add_constraint_operating_point_rank!,
             add_constraint_unit_flow_op_bounds!,
@@ -177,7 +208,12 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_units_on!,
             add_constraint_units_available!,
             add_constraint_units_invested_available!,
-            add_constraint_unit_lifetime!,
+            add_constraint_units_invested_available_bound!,
+            add_constraint_units_invested_available_vintage!,
+            # add_constraint_unit_lifetime!,
+            add_constraint_units_mothballed_state_vintage!,
+            add_constraint_units_invested_state!,
+            # add_constraint_units_invested_state_vintage!, #TODO: fix me
             add_constraint_units_invested_transition!,
             add_constraint_minimum_operating_point!,
             add_constraint_min_down_time!,
@@ -228,6 +264,7 @@ function _create_objective_terms!(m)
     window_end = end_(current_window(m))
     window_very_end = maximum(end_.(time_slice(m)))
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
+    @show beyond_window
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
     for term in objective_terms(

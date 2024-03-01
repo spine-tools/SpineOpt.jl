@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of SpineOpt.
+# This file is part of Spine Model.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -18,10 +18,10 @@
 #############################################################################
 
 """
-    add_variable_units_mothballed!(m::Model)
+    add_variable_units_decommissioned!(m::Model)
 
-Add `units_mothballed` variables to model `m`.
+Add `units_decommissioned` variables to model `m`.
 """
-function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=Constant(0), int=units_invested_available_int)
+function add_variable_units_decommissioned!(m::Model)
+    add_variable!(m, :units_decommissioned, units_invested_available_indices; lb=Constant(0))
 end

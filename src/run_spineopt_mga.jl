@@ -88,6 +88,7 @@ function rerun_spineopt_mga!(
                     end
                 end
             end
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m_mga)
         end
         # TODO: needs to clean constraint (or simply clean within function)
         mga_iteration_count += 1

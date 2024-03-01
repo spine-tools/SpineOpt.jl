@@ -28,20 +28,36 @@ investment candidate connections.
 & \forall (s,t)
 \end{aligned}
 ```
+Link connections_invested_state to the sum of all connections_invested_available_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
 function add_constraint_connections_invested_available!(m::Model)
-    @fetch connections_invested_available = m.ext[:spineopt].variables
+    @fetch connections_invested_available, connections_invested_available_vintage = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:connections_invested_available] = Dict(
         (connection=conn, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + connections_invested_available[conn, s, t]
-            <=
-            + candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
-        for (conn, s, t) in connections_invested_available_indices(m)
+            + connections_invested_available[c, s, t]
+            ==
+            + expr_sum(
+                connections_invested_available_vintage[c, s, t_v, t]
+                for (c, s, t_v, t) in connections_invested_available_vintage_indices(
+                            m;
+                            connection=c,
+                            stochastic_scenario=s,
+                            t=t,
+                            t_vintage = to_time_slice(
+                                m;
+                                t=TimeSlice(
+                                    isnothing(connection_investment_tech_lifetime(connection=c)) ?
+                                    t0.ref.x #FIXME: needs to look back in history
+                                    : start(t - connection_investment_tech_lifetime(connection=c) -
+                                        (iszero(connection_lead_time(connection=c).value) ? Year(0) : connection_lead_time(connection=c))),
+                                            end_(t))
+                                )
+                                #TODO: check that this is sufficient look back time
+                            )
+                ; init=0
+                )
+        ) for (c, s, t) in connections_invested_available_indices(m;t=[t_before_t(m,t_after=time_slice(m)[1])...,time_slice(m)...])
     )
 end
-# TODO: units_invested_available or \sum(units_invested)?
-# Candidate units: max amount of units that can be installed over model horizon
-# or max amount of units that can be available at a time?

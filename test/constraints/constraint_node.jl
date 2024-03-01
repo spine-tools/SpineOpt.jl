@@ -826,7 +826,7 @@ function test_constraint_storage_lifetime()
                 ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_lifetime", storage_investment_lifetime],
+                ["node", "node_c", "node_investment_lifetime", node_investment_lifetime],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -886,7 +886,7 @@ function test_constraint_storage_lifetime_mp()
                 ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_lifetime", storage_investment_lifetime],
+                ["node", "node_c", "node_investment_lifetime", node_investment_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]

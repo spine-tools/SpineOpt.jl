@@ -37,6 +37,7 @@ function add_variable!(
     indices::Function;
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
+    vintage::Union{Function,Nothing,Bool}=Bool(0),
     lb::Union{Constant,Parameter,Nothing}=nothing,
     ub::Union{Constant,Parameter,Nothing}=nothing,
     initial_value::Union{Parameter,Nothing}=nothing,
@@ -45,14 +46,18 @@ function add_variable!(
     replacement_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
+    use_long_history::Union{Function,Nothing,Bool}=Bool(1),
 )
-    m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Nothing}}(
+    m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Nothing,Bool}}(
         :indices => indices,
         :bin => bin,
         :int => int,
         :non_anticipativity_time => non_anticipativity_time,
+        :vintage => vintage,
+        :use_long_history => use_long_history,
         :non_anticipativity_margin => non_anticipativity_margin
     )
+        
     var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(
             m,
@@ -65,7 +70,7 @@ function add_variable!(
             fix_value,
             internal_fix_value,
             replacement_value
-        )
+        ) # for ind in indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
@@ -80,6 +85,27 @@ function add_variable!(
             initial_value_ts = parameter_value(TimeSeries([t - dur_unit(1), t], [val, NaN]))
             fix(v, Call(initial_value_ts, (t=ind.t,)))
         end
+    end
+    if vintage
+        var = m.ext[:spineopt].variables[name] = Dict(
+            ind => 
+            _variable(
+                m,
+                name,
+                ind,
+                bin,
+                int,
+                lb,
+                ub,
+                fix_value,
+                internal_fix_value,
+                replacement_value
+            )
+            for ind in indices(m;
+                    t_vintage=vcat(history_time_slice(m), time_slice(m)),#;use_long_history=use_long_history
+                    t=vcat(history_time_slice(m), time_slice(m)))
+                    # t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
+        )
     end
     merge!(var, _representative_periods_mapping(m, var, indices))
 end

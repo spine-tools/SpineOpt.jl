@@ -806,10 +806,41 @@
         ],
         [
             "connection",
+            "connection_decommissioning_cost",
+            null,
+            null,
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+        ],
+        [
+            "connection",
+            "connection_decommissioning_time",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            null,
+            "A connection's decommissioning time, i.e., the time between the moment at which a connection decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "connection",
+            "connection_discount_rate_technology_specific",
+            0.0,
+            null,
+            "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "connection",
             "connection_investment_cost",
             null,
             null,
-            "The per unit investment cost for the connection over the `connection_investment_lifetime`"
+            "The per connection investment cost for the connection over the `connection_investment_lifetime`"
+        ],
+        [
+            "connection",
+            "connection_investment_econ_lifetime",
+            null,
+            null,
+            "Determines the minimum economical investment lifetime of a connection."
         ],
         [
             "connection",
@@ -820,10 +851,27 @@
         ],
         [
             "connection",
+            "connection_investment_tech_lifetime",
+            null,
+            null,
+            "Determines the maximum technical lifetime of a connection. Once invested, it remains in service for this long"
+        ],
+        [
+            "connection",
             "connection_investment_variable_type",
-            "variable_type_integer",
-            "variable_type_list",
+            "connection_investment_variable_type_continuous",
+            "connection_investment_variable_type_list",
             "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"
+        ],
+        [
+            "connection",
+            "connection_lead_time",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            null,
+            "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."
         ],
         [
             "connection",
@@ -862,6 +910,13 @@
         ],
         [
             "connection",
+            "connections_early_decommissioning",
+            false,
+            "boolean_value_list",
+            "If set to `true`, early decommissioning of connections is permitted"
+        ],
+        [
+            "connection",
             "connections_invested_big_m_mga",
             null,
             null,
@@ -894,6 +949,13 @@
             null,
             null,
             "Setting a value fixes the connections_invested_available variable accordingly"
+        ],
+        [
+            "connection",
+            "fix_connections_invested_available_vintage",
+            null,
+            null,
+            "Setting a value fixes the connections_invested_available_vintage variable accordingly"
         ],
         [
             "connection",
@@ -1104,6 +1166,20 @@
         ],
         [
             "model",
+            "discount_rate",
+            0,
+            null,
+            "The discount rate used for the discounting of future cashflows"
+        ],
+        [
+            "model",
+            "discount_year",
+            null,
+            null,
+            "The year to which all cashflows are discounted."
+        ],
+        [
+            "model",
             "duration_unit",
             "hour",
             "duration_unit_list",
@@ -1146,6 +1222,13 @@
         ],
         [
             "model",
+            "mga_diff_relative",
+            false,
+            null,
+            "If set to true, the elementwise differences are expressed relative to each other."
+        ],
+        [
+            "model",
             "min_iterations",
             1,
             null,
@@ -1184,6 +1267,13 @@
             null,
             null,
             "Defines how much the model moves ahead in time between solves in a rolling optimization. Without this parameter, everything is solved in as a single optimization."
+        ],
+        [
+            "model",
+            "use_milestone_years",
+            false,
+            "boolean_value_list",
+            "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."
         ],
         [
             "model",
@@ -1289,6 +1379,13 @@
             null,
             null,
             "Used to fix the value of the storages_invested_available variable"
+        ],
+        [
+            "node",
+            "fix_storages_invested_available_vintage",
+            null,
+            null,
+            "Used to fix the value of the storages_invested_available_vintage variable"
         ],
         [
             "node",
@@ -1467,10 +1564,55 @@
         ],
         [
             "node",
+            "storage_decommissioning_cost",
+            null,
+            null,
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+        ],
+        [
+            "node",
+            "storage_decommissioning_time",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            null,
+            "A storage's decommissioning time, i.e., the time between the moment at which a storage decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "node",
+            "storage_demothballing_cost",
+            null,
+            null,
+            "The demothballing cost are the discounted costs that immediately occur as soon as a demothballing decission occurs."
+        ],
+        [
+            "node",
+            "storage_discount_rate_technology_specific",
+            0.0,
+            null,
+            "storage-specific discount rate used to calculate the storage's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "node",
+            "storage_fom_cost",
+            null,
+            null,
+            "Fixed operation and maintenance costs of a `node`. Essentially, a cost coefficient on the number of installed units and `node_state_cap` parameters. E.g. EUR/MWh"
+        ],
+        [
+            "node",
             "storage_investment_cost",
             null,
             null,
             "Determines the investment cost per unit state_cap over the investment life of a storage"
+        ],
+        [
+            "node",
+            "storage_investment_econ_lifetime",
+            null,
+            null,
+            "Economic lifetime for storage investment decisions."
         ],
         [
             "node",
@@ -1481,10 +1623,41 @@
         ],
         [
             "node",
+            "storage_investment_tech_lifetime",
+            null,
+            null,
+            "Maximum technical lifetime for storage investment decisions."
+        ],
+        [
+            "node",
             "storage_investment_variable_type",
             "variable_type_integer",
             "variable_type_list",
             "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"
+        ],
+        [
+            "node",
+            "storage_lead_time",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            null,
+            "A storage's lead time, i.e., the time between the moment at which a storage investment decision is takien, and the moment at which the storage investment becomes operational."
+        ],
+        [
+            "node",
+            "storage_mothballing_cost",
+            null,
+            null,
+            "The mothballing cost are the discounted costs that immediately occur as soon as a mothballing decission occurs."
+        ],
+        [
+            "node",
+            "storages_early_decommissioning",
+            false,
+            "boolean_value_list",
+            "If set to `true`, early decommissioning of storages is permitted"
         ],
         [
             "node",
@@ -1506,6 +1679,13 @@
             1,
             null,
             "Used to scale mga variables. For weighted-sum mga method, the length of this weight given as an Array will determine the number of iterations."
+        ],
+        [
+            "node",
+            "storages_mothballing",
+            false,
+            "boolean_value_list",
+            "If set to `true`, mothballing of storages is permitted"
         ],
         [
             "node",
@@ -1534,6 +1714,13 @@
             false,
             null,
             "Identifier for `node`s providing upward reserves"
+        ],
+        [
+            "node",
+            "use_storage_capacity_for_investment_cost_scaling",
+            false,
+            "boolean_value_list",
+            "If this boolean parameter is set to `true`, the `node_state_cap` will be used to scale investment costs (given in e.g. \u00e2\u201a\u00ac/MWh)"
         ],
         [
             "output",
@@ -1666,6 +1853,13 @@
         ],
         [
             "unit",
+            "fix_units_invested_available_vintage",
+            null,
+            null,
+            "Fix the value of the `units_invested_available_vintage` variable"
+        ],
+        [
+            "unit",
             "fix_units_on",
             null,
             null,
@@ -1778,10 +1972,48 @@
         ],
         [
             "unit",
+            "unit_decommissioning_cost",
+            null,
+            null,
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+        ],
+        [
+            "unit",
+            "unit_decommissioning_time",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            null,
+            "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "unit",
+            "unit_demothballing_cost",
+            null,
+            null,
+            "The demothballing cost are the discounted costs that immediately occur as soon as a demothballing decission occurs."
+        ],
+        [
+            "unit",
+            "unit_discount_rate_technology_specific",
+            0.0,
+            null,
+            "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "unit",
             "unit_investment_cost",
             null,
             null,
             "Investment cost per 'sub unit' built."
+        ],
+        [
+            "unit",
+            "unit_investment_econ_lifetime",
+            null,
+            null,
+            "Economic lifetime for unit investment decisions."
         ],
         [
             "unit",
@@ -1792,10 +2024,41 @@
         ],
         [
             "unit",
+            "unit_investment_tech_lifetime",
+            null,
+            null,
+            "Maximum technical lifetime for unit investment decisions."
+        ],
+        [
+            "unit",
             "unit_investment_variable_type",
             "unit_investment_variable_type_continuous",
             "unit_investment_variable_type_list",
             "Determines whether investment variable is integer or continuous."
+        ],
+        [
+            "unit",
+            "unit_lead_time",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            null,
+            "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."
+        ],
+        [
+            "unit",
+            "unit_mothballing_cost",
+            null,
+            null,
+            "The mothballing cost are the discounted costs that immediately occur as soon as a mothballing decission occurs."
+        ],
+        [
+            "unit",
+            "units_early_decommissioning",
+            false,
+            "boolean_value_list",
+            "If set to `true`, early decommissioning of units is permitted"
         ],
         [
             "unit",
@@ -1817,6 +2080,13 @@
             1,
             null,
             "Used to scale mga variables. For weightd sum mga method, the length of this weight given as an Array will determine the number of iterations."
+        ],
+        [
+            "unit",
+            "units_mothballing",
+            false,
+            "boolean_value_list",
+            "If set to `true`, othballing of units is permitted"
         ],
         [
             "unit",
@@ -1866,80 +2136,6 @@
             null,
             null,
             "A penalty for violating a user constraint."
-        ]
-    ],
-    "relationship_parameter_values": [
-        [
-            "unit__from_node",
-            [
-                "power_plant_a",
-                "fuel_node"
-            ],
-            "vom_cost",
-            25,
-            "Base"
-        ],
-        [
-            "unit__from_node",
-            [
-                "power_plant_b",
-                "fuel_node"
-            ],
-            "vom_cost",
-            50,
-            "Base"
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant_a",
-                "electricity_node",
-                "fuel_node"
-            ],
-            "fix_ratio_out_in_unit_flow",
-            0.7,
-            "Base"
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant_b",
-                "electricity_node",
-                "fuel_node"
-            ],
-            "fix_ratio_out_in_unit_flow",
-            0.8,
-            "Base"
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant_a",
-                "electricity_node"
-            ],
-            "unit_capacity",
-            100,
-            "Base"
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant_b",
-                "electricity_node"
-            ],
-            "minimum_operating_point",
-            0.1,
-            "Base"
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant_b",
-                "electricity_node"
-            ],
-            "unit_capacity",
-            200,
-            "Base"
         ]
     ],
     "relationship_parameters": [

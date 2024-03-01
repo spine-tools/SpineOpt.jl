@@ -29,6 +29,7 @@ function units_on_costs(m::Model, t_range)
         m,
         sum(
             + units_on[u, s, t]
+            * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * units_on_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))

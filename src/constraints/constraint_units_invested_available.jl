@@ -20,24 +20,36 @@
 @doc raw"""
 The number of available invested-in units at any point in time is less than the number of investment candidate units.
 
-```math
-\begin{aligned}
-& v^{units\_invested\_available}_{(u,s,t)} < p^{candidate\_units}_{(u)} \\
-& \forall u \in unit: p^{candidate\_units}_{(u)} \neq 0 \\
-& \forall (s,t)
-\end{aligned}
-```
+Link units_invested_state to the sum of all units_invested_state_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
 function add_constraint_units_invested_available!(m::Model)
-    @fetch units_invested_available = m.ext[:spineopt].variables
+    @fetch units_invested_available, units_invested_available_vintage = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_invested_available] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + units_invested_available[u, s, t]
-            <=
-            + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
-        for (u, s, t) in units_invested_available_indices(m)
+            ==
+            + expr_sum(
+                units_invested_available_vintage[u, s, t_v, t]
+                for (u, s, t_v, t) in units_invested_available_vintage_indices(
+                            m;
+                            unit=u,
+                            stochastic_scenario=s,
+                            t=t,
+                            t_vintage = to_time_slice(
+                                m;
+                                t=TimeSlice(
+                                    (isnothing(unit_investment_tech_lifetime(unit=u)) ?
+                                    #FIXME: needs to look back in time
+                                    t0.ref.x
+                                    : start(t - unit_investment_tech_lifetime(unit=u))),
+                                            end_(t))
+                                )
+                                #TODO: check that this is sufficient look back time
+                            )
+                ; init=0
+                )
+        ) for (u, s, t) in units_invested_available_indices(m;t=[t_before_t(m,t_after=time_slice(m)[1])...,time_slice(m)...])
     )
 end

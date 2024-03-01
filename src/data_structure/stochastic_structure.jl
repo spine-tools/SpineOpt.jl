@@ -75,7 +75,7 @@ function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::D
         invalid_children = setdiff(children, valid_children)
         if !isempty(invalid_children)
             @warn """
-            prunning scenarios: $(join(invalid_children, ", ", " and ")), from $(stochastic_structure)'s dag, 
+            prunning scenarios: $(join(invalid_children, ", ", " and ")), from $(stochastic_structure)'s dag,
             since their value of `weight_relative_to_parents` is not specified
             """
         end

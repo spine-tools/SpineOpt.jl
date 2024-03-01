@@ -29,6 +29,7 @@ function preprocess_data_structure(; log_level=3)
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
+    expand_unit__investment_temporal_block()
     generate_report()
     generate_report__output()
     generate_model__report()
@@ -103,6 +104,22 @@ end
 
 """
     process_lossless_bidirectional_connections()
+    expand_unit__investment_temporal_block()
+
+Expand the `units__investment_temporal_block` `RelationshipClass` for with individual `units` in `unit_groups`.
+"""
+function expand_unit__investment_temporal_block()
+    add_relationships!(
+        unit__investment_temporal_block,
+        [
+            (unit=u, temporal_block=temporal_block)
+            for (ug, temporal_block) in unit__investment_temporal_block() for u in members(ug)
+        ],
+    )
+end
+
+"""
+    add_connection_relationships()
 
 Add connection relationships for connection_type=:connection_type_lossless_bidirectional.
 

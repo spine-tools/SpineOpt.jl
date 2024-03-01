@@ -231,7 +231,7 @@ For further explanation on setting up a database for nodal lossless DC power flo
 
 ### [Transfer of previous investments](@id constraint_connections_invested_transition)
 
-@@add_constraint_connections_invested_transition!
+<!-- @@add_constraint_connections_invested_transition! -->
 
 #### [Intact network ptdf-based flows on connections](@id constraint_connection_flow_intact_flow)
 
@@ -267,7 +267,7 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 
 #### [Storage capacity transfer ](@id constraint_storages_invested_transition)
 
-@@add_constraint_storages_invested_transition!
+<!-- @@add_constraint_storages_invested_transition! -->
 
 #### [Economic lifetime of a storage](@id constraint_storage_lifetime)
 (Comment 2023-05-12: Currently under development)

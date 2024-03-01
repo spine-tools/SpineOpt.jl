@@ -189,7 +189,7 @@
                 )
                 + 2 * units_on_coefficient * (
                     + var_units_on[unit(:unit_ab), s_parent, t2h1]
-                    + var_units_on[unit(:unit_ab), s_child, t2h2] 
+                    + var_units_on[unit(:unit_ab), s_child, t2h2]
                 )
                 + 2 * units_started_up_coefficient * (
                     + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
