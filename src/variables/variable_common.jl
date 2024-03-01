@@ -92,6 +92,22 @@ The representative index corresponding to the given one.
 function _representative_index(m, ind, indices)
     representative_t = representative_time_slice(m, ind.t)
     representative_inds = indices(m; ind..., t=representative_t)
+    if isempty(representative_inds)
+        representative_blocks = unique(
+            blk
+            for t in representative_t
+            for blk in blocks(t)
+            if representative_periods_mapping(temporal_block=blk) === nothing
+        )
+        node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
+        error(
+            "can't find a representative index for $ind -",
+            " this is probably because ",
+            node_or_unit,
+            " is not associated to any of the representative temporal_blocks ",
+            join(("'$blk'" for blk in representative_blocks), ", "),
+        )
+    end
     first(representative_inds)
 end
 
