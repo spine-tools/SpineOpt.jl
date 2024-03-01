@@ -117,11 +117,12 @@ function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, k, win_weig
 end
 
 function _save_sp_objective_value!(m, k, win_weight)
-    increment = win_weight * sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
+    current_sp_obj_val = win_weight * sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
     if _is_last_window(m, k)
-        increment += sum(values(m.ext[:spineopt].values[:total_costs_tail]); init=0)
+        current_sp_obj_val += sum(values(m.ext[:spineopt].values[:total_costs_tail]); init=0)
     end
-    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + increment
+    previous_sp_obj_val = k == 1 ? 0 : sp_objective_value_bi(benders_iteration=current_bi, _default=0)
+    total_sp_obj_val = previous_sp_obj_val + current_sp_obj_val
     add_object_parameter_values!(
         benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
     )
