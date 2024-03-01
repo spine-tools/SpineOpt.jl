@@ -379,24 +379,22 @@ Generate a `Dict` mapping all non-representative to representative time-slices
 function _generate_representative_time_slice!(m::Model)
     m.ext[:spineopt].temporal_structure[:representative_time_slice] = d = Dict()
     model_blocks = Set(members(temporal_block()))
-    for blk in indices(representative_periods_mapping)
-        for (real_t_start, rep_blk_name) in representative_periods_mapping(temporal_block=blk)
-            rep_blk = temporal_block(rep_blk_name)
-            if !(rep_blk in model_blocks)
-                error("representative temporal block $rep_blk is not included in model $(m.ext[:spineopt].instance)")
+    for represented_blk in indices(representative_periods_mapping)
+        for (represented_t_start, representative_blk_name) in representative_periods_mapping(temporal_block=represented_blk)
+            representative_blk = temporal_block(representative_blk_name)
+            if !(representative_blk in model_blocks)
+                error("representative temporal block $representative_blk is not in model $(m.ext[:spineopt].instance)")
             end
-            for rep_t in time_slice(m, temporal_block=rep_blk)
-                rep_t_duration = end_(rep_t) - start(rep_t)
-                real_t_end = real_t_start + rep_t_duration
-                merge!(
-                    d,
-                    Dict(
-                        real_t => rep_t
-                        for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))
-                        if blk in real_t.blocks
-                    )
+            for representative_t in time_slice(m, temporal_block=representative_blk)
+                representative_t_duration = end_(representative_t) - start(representative_t)
+                represented_t_end = represented_t_start + representative_t_duration
+                new_d = Dict(
+                    represented_t => [representative_t]
+                    for represented_t in to_time_slice(m, t=TimeSlice(represented_t_start, represented_t_end))
+                    if represented_blk in represented_t.blocks
                 )
-                real_t_start = real_t_end
+                merge!(append!, d, new_d)
+                represented_t_start = represented_t_end
             end
         end
     end
@@ -575,7 +573,7 @@ An `Array` of `TimeSlice`s in model `m` that overlap the given `t`.
 """
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
 
-representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, t)
+representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, [t])
 
 function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
