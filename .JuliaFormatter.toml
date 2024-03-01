@@ -3,15 +3,12 @@ always_for_in = true
 remove_extra_newlines = true
 whitespace_ops_in_indices = true
 whitespace_in_kwargs = false
-format_docstrings = true
-separate_kwargs_with_semicolon = true
+format_docstrings = false
+separate_kwargs_with_semicolon = false
 verbose = true
 whitespace_typedefs = false
 join_lines_based_on_source = true
 surround_whereop_typeparameters = true
-
-
-#  See if we want to use:
-annotate_untyped_fields_with_any = false
-
-#  Check custom alignment
+trailing_comma = "nothing"
+align_conditional = true
+annotate_untyped_fields_with_any = true
