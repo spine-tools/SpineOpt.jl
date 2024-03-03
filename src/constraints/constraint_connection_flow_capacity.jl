@@ -106,7 +106,26 @@ function add_constraint_connection_flow_capacity!(m::Model)
     )
 end
 
-function constraint_connection_flow_capacity_indices(m::Model)
+function constraint_connection_flow_capacity_indices(m::Model; with_reverse_directions=false)
+    with_reverse_directions ? 
+    # A tuple of unique indices containing both directions
+    unique!(
+        ind -> Set(values(ind)), 
+        # Array for the unique!() function, converted into a Tuple afterwards
+        [
+            (
+                _d_reverse(d) in indices(connection_capacity) ?
+                (connection=conn, node=ng, direction=d, direction_reverse=_d_reverse(d), stochastic_path=path, t=t) : 
+                (connection=conn, node=ng, direction=d, direction_reverse=nothing, stochastic_path=path, t=t)
+            ) 
+            for (conn, ng, d) in indices(connection_capacity)
+            for (t, path) in t_lowest_resolution_path(
+                m,
+                connection_flow_indices(m; connection=conn, node=ng, direction=d),
+                connections_invested_available_indices(m; connection=conn),
+            )
+        ]
+    ) |> Tuple :
     (
         (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
         for (conn, ng, d) in indices(connection_capacity)
@@ -115,7 +134,7 @@ function constraint_connection_flow_capacity_indices(m::Model)
             connection_flow_indices(m; connection=conn, node=ng, direction=d),
             connections_invested_available_indices(m; connection=conn),
         )
-    )
+    )    
 end
 
 """
