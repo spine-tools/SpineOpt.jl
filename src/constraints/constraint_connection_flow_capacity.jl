@@ -107,11 +107,11 @@ function add_constraint_connection_flow_capacity!(m::Model)
                         (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t),
                     ]
                 )
-                #TODO: operator `/` may cause numerical unstability if the denumerator is close to zero
+                #TODO: operator `/` may cause numerical unstability if the denumerator is too close to zero
                 <=
                 + connection_availability_factor[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * (
-                    candidate_connections(connection=conn) != nothing ? sum(
+                    !isnothing(candidate_connections(connection=conn)) ? sum(
                         connections_invested_available[conn, s, t1]
                         for (conn, s, t1) in connections_invested_available_indices(
                             m; connection=conn, stochastic_scenario=s, t=t_in_t(m; t_short=t)
@@ -139,7 +139,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                     (connection=conn, node=ng, direction=_d, stochastic_scenario=s, analysis_time=t0, t=t),
                 ]
                 * (
-                    candidate_connections(connection=conn) != nothing ? sum(
+                    !isnothing(candidate_connections(connection=conn)) ? sum(
                         connections_invested_available[conn, s, t1]
                         for (conn, s, t1) in connections_invested_available_indices(
                             m; connection=conn, stochastic_scenario=s, t=t_in_t(m; t_short=t)
