@@ -104,7 +104,7 @@ end
 
 Obtain the reverse direction Object of a given direction Object or Symbol `d`.
 `direction` ObjectClass is defined by the function `generate_direction()`
-in "src\data_structure\preprocess_data_structure.jl".
+in "src\\data_structure\\preprocess_data_structure.jl".
 
 # Example
 
