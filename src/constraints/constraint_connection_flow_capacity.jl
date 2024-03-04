@@ -117,16 +117,17 @@ function add_constraint_connection_flow_capacity!(m::Model)
     m.ext[:spineopt].constraints[:connection_flow_capacity] = Dict(
         (
             !isnothing(d_reverse)
-            && connection_capacity[
+            #TODO: would using realize() significantly threaten the performance?
+            && realize(connection_capacity[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            ] * connection_conv_cap_to_flow[
+            ]) * realize(connection_conv_cap_to_flow[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
-            ] > Constant(0) 
-            && connection_capacity[
+            ]) > 0
+            && realize(connection_capacity[
                 (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t)
-            ] * connection_conv_cap_to_flow[
+            ]) * realize(connection_conv_cap_to_flow[
                 (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t),
-            ] > Constant(0) ? 
+            ]) > 0 ? 
             (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
                 m,
                 + sum(
@@ -199,21 +200,22 @@ function add_constraint_connection_flow_capacity!(m::Model)
             )
         ) 
         for (conn, ng, d, d_reverse, s, t) in constraint_connection_flow_capacity_indices(
-            m; with_reverse_directions=true
+            m; incl_reverse_direction=true
         )
         for _d in (d, d_reverse) if !isnothing(_d)
     )
 end
 
-function constraint_connection_flow_capacity_indices(m::Model; with_reverse_directions=false)
-    with_reverse_directions ? 
+function constraint_connection_flow_capacity_indices(m::Model; incl_reverse_direction=false)    
+    incl_reverse_direction ? 
     # A tuple of unique indices containing both directions
     unique!(
         ind -> Set(values(ind)), 
         # Array for the unique!() function, converted into a Tuple afterwards
         [
             (
-                _d_reverse(d) in indices(connection_capacity) ?
+                # Potential threat to performance
+                (connection=conn, node=ng, direction=_d_reverse(d)) in indices(connection_capacity) ?
                 (connection=conn, node=ng, direction=d, direction_reverse=_d_reverse(d), stochastic_path=path, t=t) : 
                 (connection=conn, node=ng, direction=d, direction_reverse=nothing, stochastic_path=path, t=t)
             ) 
