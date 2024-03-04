@@ -1079,8 +1079,7 @@ function test_constraint_min_scheduled_outage_duration()
                 ["model", "instance", "model_end", model_end],                
             ]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-            m = run_spineopt(url_in; log_level=0, optimize=false)     
-            write_model_file(m; file_name="c:\\workspace\\min_sod")       
+            m = run_spineopt(url_in; log_level=0, optimize=false)
             var_units_out_of_service = m.ext[:spineopt].variables[:units_out_of_service]            
             constraint = m.ext[:spineopt].constraints[:min_scheduled_outage_duration]
             constraint_t = current_window(m)
