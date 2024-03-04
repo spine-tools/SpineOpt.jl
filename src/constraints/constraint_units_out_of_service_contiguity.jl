@@ -45,15 +45,7 @@ function add_constraint_units_out_of_service_contiguity!(m::Model)
                 + units_out_of_service[u, s, t]
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
-            )
-            #=- sum(
-                + units_returned_to_service[u, s, t]
-                for (u, s, t) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything,
-                );
-                init=0,
-            )
-            =#
+            )           
             >=
             + sum(
                 units_taken_out_of_service[u, s_past, t_past]
@@ -71,19 +63,6 @@ function constraint_units_out_of_service_contiguity_indices(m::Model; unit=anyth
         for (u, t) in unit_time_indices(m; unit=u)
         for path in active_stochastic_paths(m, past_units_out_of_service_indices(m, u, anything, t, scheduled_outage_duration))
     )
-end
-
-"""
-    constraint_units_out_of_service_contiguity_indices_filtered(m::Model; filtering_options...)
-
-Form the stochastic indexing Array for the `:units_out_of_service_contiguity` constraint.
-
-Uses stochastic path indices due to potentially different stochastic structures between `units_out_of_service` and
-`units_taken_out_of_service` variables on past time slices. Keyword arguments can be used to filter the resulting Array.
-"""
-function constraint_units_out_of_service_contiguity_indices_filtered(m::Model; unit=anything, stochastic_path=anything, t=anything)
-    f(ind) = _index_in(ind; unit=unit, stochastic_path=stochastic_path, t=t)
-    filter(f, constraint_units_out_of_service_contiguity_indices(m))
 end
 
 function past_units_out_of_service_indices(m, u, s, t, min_time)

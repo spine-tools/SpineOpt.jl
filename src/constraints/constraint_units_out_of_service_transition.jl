@@ -63,22 +63,3 @@ function constraint_units_out_of_service_transition_indices(m::Model)
         )
     )
 end
-
-"""
-    constraint_unit_state_transition_indices_filtered(m::Model; filtering_options...)
-
-Form the stochastic indexing Array for the `:unit_state_transition` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
-Keyword arguments can be used to filter the resulting Array.
-"""
-function constraint_units_out_of_service_transition_indices_filtered(
-    m::Model;
-    unit=anything,
-    stochastic_path=anything,
-    t_before=anything,
-    t_after=anything,
-)
-    f(ind) = _index_in(ind; unit=unit, stochastic_path=stochastic_path, t_before=t_before, t_after=t_after)
-    filter(f, constraint_unit_state_transition_indices(m))
-end
