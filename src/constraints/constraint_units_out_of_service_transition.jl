@@ -34,7 +34,7 @@ function add_constraint_units_out_of_service_transition!(m::Model)
     m.ext[:spineopt].constraints[:units_out_of_service_transition] = Dict(
         (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + units_out_of_service[u, s, t_after] - units_taken_out_of_service[u, s, t_after] + units_returned_to_service[u, s, t_after]
                 for (u, s, t_after) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t_after, temporal_block=anything,
@@ -42,7 +42,7 @@ function add_constraint_units_out_of_service_transition!(m::Model)
                 init=0,
             )
             ==
-            expr_sum(
+            sum(
                 + units_out_of_service[u, s, t_before]
                 for (u, s, t_before) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t_before, temporal_block=anything,

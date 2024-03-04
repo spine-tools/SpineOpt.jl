@@ -32,7 +32,7 @@ Check if unit online variable type is defined as an integer.
 units_out_of_service_int(x) = outage_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
 function units_out_of_service_replacement_value(ind)
-    if outage_variable_type(unit=ind.unit) == :unit_online_variable_type_none
+    if outage_variable_type(unit=ind.unit, _default=:unit_online_variable_type_none) == :unit_online_variable_type_none
         units_unavailable[(; ind...)]
     else
         nothing
@@ -40,7 +40,7 @@ function units_out_of_service_replacement_value(ind)
 end
 
 function units_out_of_service_switched_replacement_value(ind)
-    if outage_variable_type(unit=ind.unit) == :unit_online_variable_type_none
+    if outage_variable_type(unit=ind.unit, _default=:unit_online_variable_type_none) == :unit_online_variable_type_none
         Call(0)
     else
         nothing
