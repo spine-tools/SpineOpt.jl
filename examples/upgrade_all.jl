@@ -14,14 +14,15 @@ for path in readdir(@__DIR__; join=true)
         import_data(db_url, data, "Import $path")
         SpineOpt.upgrade_db(db_url; log_level=3)
         new_data = export_data(db_url)
-        for key in ("object_parameters", "relationship_parameters")
-            for x in get(new_data, key, ())
-                x[3] = db_value_and_type(parse_db_value(x[3]))
-            end
-        end
-        for key in ("object_parameter_values", "relationship_parameter_values")
-            for x in get(new_data, key, ())
-                x[4] = db_value_and_type(parse_db_value(x[4]))
+        for (index, keys) in (
+            2 => ("parameter_value_lists",),
+            3 => ("object_parameters", "relationship_parameters"),
+            4 => ("object_parameter_values", "relationship_parameter_values", "tool_feature_methods"),
+        )
+            for key in keys
+                for x in get(new_data, key, ())
+                    x[index] = db_value_and_type(parse_db_value(x[index]))
+                end
             end
         end
         open(path, "w") do f

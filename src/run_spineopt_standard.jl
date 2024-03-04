@@ -259,19 +259,17 @@ function run_spineopt_kernel!(
     resume_file_path=nothing,
     output_suffix=(;),
     log_prefix="",
-    handle_window_solved=(m, k) -> nothing,
-    handle_window_about_to_solve=(m, k) -> nothing,
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
     while true
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
-        handle_window_about_to_solve(m, k)
+        (callback -> callback(m, k)).(m.ext[:spineopt].window_about_to_solve_callbacks)
         optimize_model!(
             m; log_level=log_level, calculate_duals=calculate_duals, output_suffix=output_suffix
         ) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        handle_window_solved(m, k)
+        (callback -> callback(m, k)).(m.ext[:spineopt].window_solved_callbacks)
         if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$(log_prefix) ... Rolling complete\n" break
         end
