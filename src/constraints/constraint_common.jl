@@ -98,7 +98,23 @@ function _switch(d; from_node, to_node)
     Dict(:from_node => from_node, :to_node => to_node)[d.name]
 end
 
-_d_reverse(d) = d == :to_node ? direction(:from_node) : direction(:to_node)
+
+"""
+    _d_reverse(d)
+
+Obtain the reverse direction Object of a given direction Object or Symbol `d`.
+`direction` ObjectClass is defined by the function `generate_direction()`
+in "src\data_structure\preprocess_data_structure.jl".
+
+# Example
+
+```julia
+@assert _d_reverse(direction(:from_node)) == direction(:to_node)
+@assert _d_reverse(:from_node) == direction(:to_node)
+```
+"""
+_d_reverse(d::Object) = d.name == :to_node ? direction(:from_node) : direction(:to_node)
+_d_reverse(d::Symbol) = d == :to_node ? direction(:from_node) : direction(:to_node)
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
 
