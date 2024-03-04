@@ -198,10 +198,10 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 * duration(t)
             )
         ) 
-        for _d in (d, d_reverse) if !isnothing(_d)
         for (conn, ng, d, d_reverse, s, t) in constraint_connection_flow_capacity_indices(
             m; with_reverse_directions=true
         )
+        for _d in (d, d_reverse) if !isnothing(_d)
     )
 end
 
