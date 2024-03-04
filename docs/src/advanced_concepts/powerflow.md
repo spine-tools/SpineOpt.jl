@@ -10,6 +10,9 @@ Here we discuss the method of using power transfer distribution factors (PTDF) f
     
     On the other hand, investments using the angle based method work for multiple lines but this method is slower and does not take into account the N-1 rule.
 
+!!! warning
+    Connecting AC lines through two  DC lines is also not supported in our implementation of the PTDF method but it is possible to do this with our implementation of the angle based method.
+
 ## [Key concepts](@id key-concepts-advanced-ptdf-DC)
 1. **ptdf**: The power transfer distribution factors are a property of the network reactances and their derivation may be found [here](https://www.worldcat.org/title/power-generation-operation-and-control/oclc/886509477). `ptdf(n, c)` represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of `ptdf(n, c)*net_injection(c)`. The advantage of this method is that it introduces no additional variables into the problem and instead, introduces only one constraint for each connection whose flow we are interested in monitoring.
 2. **lodf**: Line outage distribution factors are a function of the network ptdfs and their derivation is also found [here](https://www.worldcat.org/title/power-generation-operation-and-control/oclc/886509477). `lodf(c_contingency, c_monitored)` represents the fraction of the pre-contingency flow on connection `c_contingency` that will flow on `c_monitored` if `c_contingency` is disconnected. Therefore, the post contingency flow on connection `c_monitored` is the `pre_contingency flow` plus `lodf(c_contingency, c_monitored)\*pre_contingency_flow(c_contingency))`. Therefore, consideration of N contingencies on M monitored lines introduces N x M constraints into the model. Usually one wishes to contain this number and methods are given below to achieve this.
