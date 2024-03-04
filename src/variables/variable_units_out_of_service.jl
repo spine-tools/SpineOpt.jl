@@ -64,8 +64,6 @@ function add_variable_units_out_of_service!(m::Model)
         int=units_out_of_service_int,
         fix_value=fix_units_out_of_service,
         initial_value=initial_units_out_of_service,
-        replacement_value=units_out_of_service_replacement_value,
-        #non_anticipativity_time=units_on_non_anticipativity_time,
-        #non_anticipativity_margin=units_on_non_anticipativity_margin,
+        replacement_value=units_out_of_service_replacement_value,        
     )
 end

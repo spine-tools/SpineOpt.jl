@@ -184,7 +184,7 @@ function test_constraint_units_available()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_units_available = m.ext[:spineopt].variables[:units_available]        
+        var_units_available = m.ext[:spineopt].variables[:units_available]
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         constraint = m.ext[:spineopt].constraints[:units_available]
         @test length(constraint) == 2
@@ -201,6 +201,8 @@ function test_constraint_units_available()
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+function test_constraint_units_available_units_unavailable()
     @testset "constraint_units_available_units_unavailable" begin
         url_in = _test_constraint_unit_setup()
         number_of_units = 4
@@ -271,7 +273,7 @@ function test_constraint_unit_state_transition()
 end
 
 function test_units_out_of_service_transition()
-    @testset "constraint_unit_state_transition" begin
+    @testset "constraint_units_out_of_service_transition" begin
         url_in = _test_constraint_unit_setup()
         object_parameter_values = [
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
@@ -1093,8 +1095,7 @@ function test_constraint_min_scheduled_outage_duration()
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
 
             vars_u_oos = [var_units_out_of_service[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)]
-            expected_con = @build_constraint(sum(vars_u_oos) >= scheduled_outage_duration_minutes/60 )
-            @show expected_con
+            expected_con = @build_constraint(sum(vars_u_oos) >= scheduled_outage_duration_minutes/60 )            
             con_key = (unit(:unit_ab), s_path, constraint_t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)           
@@ -2074,6 +2075,7 @@ end
     test_initial_units_on()
     test_constraint_units_on()
     test_constraint_units_available()
+    test_constraint_units_available_units_unavailable()
     test_constraint_unit_state_transition()
     test_constraint_unit_flow_capacity()
     test_constraint_minimum_operating_point()
