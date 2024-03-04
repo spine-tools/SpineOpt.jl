@@ -155,7 +155,59 @@ function test_constraint_connection_flow_capacity()
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_connection_flow_capacity_with_investments" begin
+    @testset "constraint_connection_flow_capacity_with_investments_bidirection" begin
+        url_in = _test_constraint_connection_setup()
+        connection_capacity_from_a = 100
+        connection_capacity_to_a = 200
+        objects = [["temporal_block", "investments_daily"]]
+        relationships = [
+            ["connection__to_node", ["connection_ab", "node_a"]],
+            ["model__temporal_block", ["instance", "investments_daily"]],
+            ["connection__investment_temporal_block", ["connection_ab", "investments_daily"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "deterministic"]],
+        ]
+        object_parameter_values = [
+            ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["connection", "connection_ab", "candidate_connections", 1],
+        ]
+        relationship_parameter_values = [
+            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity_from_a],
+            ["connection__to_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity_to_a],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
+        @test length(constraint) == 2
+        scenarios = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        daily_t = first(time_slice(m; temporal_block=temporal_block(:investments_daily)))
+        @testset for (k, t) in enumerate(time_slices)
+            s = scenarios[k]
+            key_from = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            key_to = (connection(:connection_ab), node(:node_a), direction(:to_node), s, t)
+            invest_key = (connection(:connection_ab), stochastic_scenario(:parent), daily_t)
+            var_conn_invest_avail = var_connections_invested_available[invest_key...]
+            conn_flows = 
+                var_connection_flow[key_from...] / connection_capacity_from_a + 
+                var_connection_flow[key_to...] / connection_capacity_to_a
+            rhs = realize(
+                connection_availability_factor[(connection=connection(:connection_ab), stochastic_scenario=s, t=t)]
+            ) * var_conn_invest_avail
+            expected_con = @build_constraint(conn_flows <= rhs)
+            con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), scenarios[1:k], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_connection_flow_capacity_with_investments_unidirection" begin
         url_in = _test_constraint_connection_setup()
         connection_capacity = 200
         objects = [["temporal_block", "investments_daily"]]
@@ -1654,24 +1706,24 @@ end
 
 @testset "connection-based constraints" begin
     test_constraint_connection_flow_capacity()
-    # test_constraint_connection_flow_gas_capacity()
-    # test_constraint_fix_node_pressure_point()
-    # test_constraint_connection_unitary_gas_flow()
-    # test_constraint_node_voltage_angle()
-    # test_constraint_connection_flow_capacity_investments()
-    # test_constraint_connection_intact_flow_ptdf()
-    # test_constraint_connection_flow_lodf()
-    # test_contraints_ptdf_lodf_duration()
-    # test_constraint_ratio_out_in_connection_flow()
-    # test_constraint_connections_invested_transition()
-    # test_constraint_connections_invested_transition_mp()
-    # test_constraint_connection_lifetime()
-    # test_constraint_connection_lifetime_mp()
-    # test_constraint_connections_invested_available()
-    # test_constraint_connections_invested_available_mp()
-    # test_constraint_user_constraint_node_connection()
-    # test_constraint_connection_flow_intact_flow()
-    # test_constraint_candidate_connection_lb()
-    # test_constraint_ratio_out_in_connection_intact_flow()
-    # test_constraint_candidate_connection_ub()
+    test_constraint_connection_flow_gas_capacity()
+    test_constraint_fix_node_pressure_point()
+    test_constraint_connection_unitary_gas_flow()
+    test_constraint_node_voltage_angle()
+    test_constraint_connection_flow_capacity_investments()
+    test_constraint_connection_intact_flow_ptdf()
+    test_constraint_connection_flow_lodf()
+    test_contraints_ptdf_lodf_duration()
+    test_constraint_ratio_out_in_connection_flow()
+    test_constraint_connections_invested_transition()
+    test_constraint_connections_invested_transition_mp()
+    test_constraint_connection_lifetime()
+    test_constraint_connection_lifetime_mp()
+    test_constraint_connections_invested_available()
+    test_constraint_connections_invested_available_mp()
+    test_constraint_user_constraint_node_connection()
+    test_constraint_connection_flow_intact_flow()
+    test_constraint_candidate_connection_lb()
+    test_constraint_ratio_out_in_connection_intact_flow()
+    test_constraint_candidate_connection_ub()
 end
