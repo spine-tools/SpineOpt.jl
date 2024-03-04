@@ -216,6 +216,7 @@ function _required_history_duration(instance::Object)
     lookback_params = (
         min_up_time,
         min_down_time,
+        scheduled_outage_duration,
         connection_flow_delay,
         unit_investment_lifetime,
         connection_investment_lifetime,

@@ -1566,7 +1566,7 @@
         [
             "settings",
             "version",
-            10,
+            11,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
         ],
@@ -1673,6 +1673,13 @@
         ],
         [
             "unit",
+            "fix_units_out_of_service",
+            null,
+            null,
+            "Fix the value of the `units_out_of_service` variable."
+        ],
+        [
+            "unit",
             "fom_cost",
             null,
             null,
@@ -1715,6 +1722,13 @@
         ],
         [
             "unit",
+            "initial_units_out_of_service",
+            null,
+            null,
+            "Initialize the value of the `units_out_of_service` variable."
+        ],
+        [
+            "unit",
             "is_active",
             true,
             "boolean_value_list",
@@ -1754,6 +1768,20 @@
             "unit_online_variable_type_linear",
             "unit_online_variable_type_list",
             "A selector for how the `units_on` variable is represented within the model."
+        ],
+        [
+            "unit",
+            "outage_variable_type",
+            "unit_online_variable_type_none",
+            "unit_online_variable_type_list",
+            "Determines whether the outage variable is integer or continuous or none(no optimisation of maintenance outages)."
+        ],
+        [
+            "unit",
+            "scheduled_outage_duration",
+            null,
+            null,
+            "Specifies the amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window"
         ],
         [
             "unit",
@@ -1838,6 +1866,13 @@
             null,
             null,
             "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "unit",
+            "units_unavailable",
+            0,
+            null,
+            "Represents the number of units out of service"
         ],
         [
             "user_constraint",

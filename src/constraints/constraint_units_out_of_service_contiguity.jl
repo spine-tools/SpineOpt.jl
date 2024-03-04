@@ -46,13 +46,14 @@ function add_constraint_units_out_of_service_contiguity!(m::Model)
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             )
-            - sum(
+            #=- sum(
                 + units_returned_to_service[u, s, t]
                 for (u, s, t) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything,
                 );
                 init=0,
             )
+            =#
             >=
             + sum(
                 units_taken_out_of_service[u, s_past, t_past]
