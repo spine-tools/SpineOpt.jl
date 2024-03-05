@@ -124,6 +124,7 @@ end
 function _set_sp_solution!(m, win_nb)
     for (name, vals) in get(m.ext[:spineopt].sp_values, win_nb, ())
         var = m.ext[:spineopt].variables[name]
+        var isa VariableRef || continue
         for (ind, val) in vals
             set_start_value(var[ind], val)
         end
