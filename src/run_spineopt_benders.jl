@@ -54,7 +54,6 @@ function rerun_spineopt_benders!(
             undo_force_starting_investments!()
         end
         optimize_model!(m_mp; log_level=log_level) || break
-        print_model_and_solution(m_mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) back to the first window..." begin
             rewind_temporal_structure!(m)

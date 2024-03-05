@@ -31,17 +31,6 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
         connections_invested_available,
         storages_invested_available
     ) = m.ext[:spineopt].variables
-
-    for (w,) in sp_objective_upperbound_indices(m)
-        @show w
-        @show sp_objective_value_bi(benders_iteration=current_bi, analysis_time=start(w))
-        for (u, s, t) in units_invested_available_indices(m)
-            @show u, s, t
-            @show duration(t)
-            @show units_invested_available_mv(unit=u, analysis_time=start(w), stochastic_scenario=s, t=t)
-        end
-    end
-
     merge!(
         get!(m.ext[:spineopt].constraints, :mp_any_invested_cut, Dict()),
         Dict(
@@ -56,23 +45,24 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                         + units_invested_available[u, s, t]
                         - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
                     )
-                    * units_invested_available_mv(unit=u, analysis_time=start(w), stochastic_scenario=s, t=t)
-                    * duration(t)
-                    for (u, s, t) in units_invested_available_indices(m)
-                    if start(w) <= start(t) <= last(
-                        keys(units_invested_available_mv(unit=u, analysis_time=start(w), stochastic_scenario=s))
-                    );
+                    * _number_or_zero(
+                        units_invested_available_mv(unit=u, analysis_time=start(w), stochastic_scenario=s, t=t)
+                    )
+                    for (u, s, t) in units_invested_available_indices(m);
                     init=0,
                 )
-                #=
                 # operating cost benefit from investments in connections
                 + sum(
                     (
                         + connections_invested_available[c, s, t]
                         - internal_fix_connections_invested_available(connection=c, stochastic_scenario=s, t=t)
                     )
-                    * connections_invested_available_mv(connection=c, stochastic_scenario=s, d=start(w), t=t)
-                    for (c, s, t) in connections_invested_available_indices(m; t=t_in_t(m; t_long=w))
+                    * _number_or_zero(
+                        connections_invested_available_mv(
+                            connection=c, analysis_time=start(w), stochastic_scenario=s, t=t
+                        )
+                    )
+                    for (c, s, t) in connections_invested_available_indices(m);
                     init=0,
                 )
                 # operating cost benefit from investments in storages
@@ -81,13 +71,16 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                         + storages_invested_available[n, s, t]
                         - internal_fix_storages_invested_available(node=n, stochastic_scenario=s, t=t)
                     )
-                    * storages_invested_available_mv(node=n, stochastic_scenario=s, d=start(w), t=t)
-                    for (n, s, t) in storages_invested_available_indices(m; t=t_in_t(m; t_long=w))
+                    * _number_or_zero(
+                        storages_invested_available_mv(node=n, analysis_time=start(w), stochastic_scenario=s, t=t)
+                    )
+                    for (n, s, t) in storages_invested_available_indices(m);
                     init=0,
                 )
-                =#
             )
             for (w,) in sp_objective_upperbound_indices(m)
         )
     )
 end
+
+_number_or_zero(x) = isnan(x) ? zero(x) : x
