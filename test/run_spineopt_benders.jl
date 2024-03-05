@@ -852,11 +852,11 @@ function _test_benders_starting_units_invested()
 end
 
 @testset "run_spineopt_benders" begin
-    # _test_benders_unit()
-    # _test_benders_storage()
-    # _test_benders_rolling_representative_periods()
+    _test_benders_unit()
+    _test_benders_storage()
+    _test_benders_rolling_representative_periods()
     _test_benders_rolling_representative_periods_yearly_investments_multiple_units()
-    # _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
-    # _test_benders_starting_units_invested()
+    _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
+    _test_benders_starting_units_invested()
     # FIXME: _test_benders_unit_storage()
 end
