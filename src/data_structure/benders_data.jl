@@ -59,36 +59,27 @@ end
 function process_subproblem_solution!(m, win_nb)
     win_weight = window_weight(model=m.ext[:spineopt].instance, i=win_nb, _strict=false)
     win_weight = win_weight !== nothing ? win_weight : 1.0
-    _save_sp_marginal_values!(m, win_nb, win_weight)
-    _save_sp_objective_value!(m, win_nb, win_weight)
+    _save_sp_marginal_values!(m, win_weight)
+    _save_sp_objective_value!(m, win_weight)
     _save_sp_unit_flow!(m)
     _save_sp_solution!(m, win_nb)
 end
 
-function _save_sp_marginal_values!(m, win_nb, win_weight)
+function _save_sp_marginal_values!(m, win_weight)
     _wait_for_dual_solves(m)
     _save_sp_marginal_values!(
-        m, :bound_units_invested_available, :units_invested_available_mv, unit, win_nb, win_weight
+        m, :bound_units_invested_available, :units_invested_available_mv, unit, win_weight
     )
     _save_sp_marginal_values!(
-        m, :bound_connections_invested_available, :connections_invested_available_mv, connection, win_nb, win_weight
+        m, :bound_connections_invested_available, :connections_invested_available_mv, connection, win_weight
     )
     _save_sp_marginal_values!(
-        m, :bound_storages_invested_available, :storages_invested_available_mv, node, win_nb, win_weight
+        m, :bound_storages_invested_available, :storages_invested_available_mv, node, win_weight
     )
 end
 
-function _is_last_window(m, win_nb)
-    win_nb == m.ext[:spineopt].temporal_structure[:window_count]
-end
-
-function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, win_nb, win_weight)
-    vals = Dict(
-        k => v
-        for (k, v) in m.ext[:spineopt].values[var_name]
-        if _is_last_window(m, win_nb) || iscontained(k.t, current_window(m))
-    )
-    map_by_ent = _map_by_entity(vals)
+function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, win_weight)
+    map_by_ent = _map_by_entity(m.ext[:spineopt].values[var_name])
     at = start(current_window(m))
     pvals = Dict(
         only(ent) => Dict(param_name => parameter_value(Map([at], [win_weight * val]))) for (ent, val) in map_by_ent
@@ -96,10 +87,8 @@ function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, win_nb, win
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function _save_sp_objective_value!(m, win_nb, win_weight)
-    keys = [:total_costs]
-    _is_last_window(m, win_nb) && push!(keys, :total_costs_tail)
-    total_costs = sum(sum(values(m.ext[:spineopt].values[k]); init=0) for k in keys)
+function _save_sp_objective_value!(m, win_weight)
+    total_costs = sum(sum(values(m.ext[:spineopt].values[k]); init=0) for k in (:total_costs, :total_costs_tail))
     at = start(current_window(m))
     total_sp_obj_val = Map([at], [win_weight * total_costs])
     add_object_parameter_values!(
