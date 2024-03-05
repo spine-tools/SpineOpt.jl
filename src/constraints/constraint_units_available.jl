@@ -61,13 +61,18 @@ end
 Creates all indices required to include units, stochastic paths and temporals for the `add_constraint_units_available!`
 constraint generation.
 """
+
 function constraint_units_available_indices(m::Model)
     unique(
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, t) in unit_time_indices(m)
-        for path in active_stochastic_paths(
-            m, [units_on_indices(m; unit=u, t=t); units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t))]
-        )
-        for s in path
+        (unit=u, stochastic_scenario=s, t=t) for
+        (u, t) in vcat(unit_time_indices(m), unit_investment_time_indices(m)) if t in t_highest_resolution(
+            time_slice(
+                m;
+                temporal_block=vcat(unit__investment_temporal_block(unit=u), units_on__temporal_block(unit=u)),
+            ),
+        ) for path in active_stochastic_paths(
+            m,
+            [units_on_indices(m; unit=u, t=t); units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t))],
+        ) for s in path
     )
 end
