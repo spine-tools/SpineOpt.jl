@@ -6,7 +6,8 @@ using SpineOpt
 for path in readdir(@__DIR__; join=true)
     if splitext(path)[end] == ".json"
         @info "upgrading $path"
-        data = JSON.parsefile(path)
+        data = JSON.parsefile(path, use_mmap=false) 
+        # memory mapped files causing issues on windows https://discourse.julialang.org/t/error-when-trying-to-open-a-file/78782
         db_url = "sqlite://"
         SpineInterface.close_connection(db_url)
         SpineInterface.open_connection(db_url)

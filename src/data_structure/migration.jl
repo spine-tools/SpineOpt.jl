@@ -37,6 +37,10 @@ include("versions/rename_benders_master_to_just_benders.jl")
 include("versions/translate_ramp_parameters.jl")
 include("versions/remove_model_tb_ss.jl")
 
+function units_out_of_service_upgrade(db_url, log_level)
+	true
+end
+
 _upgrade_functions = [
 	rename_unit_constraint_to_user_constraint,
 	move_connection_flow_cost,
@@ -47,6 +51,7 @@ _upgrade_functions = [
 	rename_benders_master_to_just_benders,
 	translate_ramp_parameters,
 	remove_model_tb_ss,
+	units_out_of_service_upgrade,
 ]
 
 """
@@ -112,6 +117,8 @@ function find_version(url)
 	version = parse_db_value(pdefs[j]["default_value"], pdefs[j]["default_type"])
 	_parse_version(version)
 end
+
+
 
 _parse_version(version::String) = _parse_version(parse(Float64, version))
 _parse_version(version::Float64) = _parse_version(round(Int, version))
