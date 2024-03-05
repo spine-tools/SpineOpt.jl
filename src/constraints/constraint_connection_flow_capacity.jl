@@ -255,8 +255,6 @@ function constraint_connection_flow_capacity_indices_filtered(
     stochastic_path=anything,
     t=anything,
 )
-    f(ind) = _index_in(
-        ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t
-    )
+    f(ind) = _index_in(ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_connection_flow_capacity_indices(m))
 end
