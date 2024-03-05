@@ -58,8 +58,6 @@ function constraint_min_scheduled_outage_duration_indices(m::Model)
         (unit=u, stochastic_path=path, t=t)
         for u in indices(scheduled_outage_duration)
         for t in current_window(m)
-        for path in active_stochastic_paths(
-            m, units_on_indices(m; unit=u)
-        )        
+        for path in active_stochastic_paths(m, units_on_indices(m; unit=u))        
     )
 end
