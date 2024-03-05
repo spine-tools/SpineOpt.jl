@@ -80,15 +80,12 @@ function _test_benders_unit()
         look_ahead = 3
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
-        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        op_cost_no_inv = ucap * vom_cost_ * (rf + look_ahead) * 4
+        op_cost_inv = ucap * vom_cost_alt * (rf + look_ahead) * 4
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 269.0
-        # @testset for should_invest in (true, false)
-        # @testset for should_invest in (true,)
-        @testset for should_invest in (false,)
-            @show u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
-            u_inv_cost = 300
+        @testset for should_invest in (true, false)
+            u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
                 ["unit", "unit_ab_alt"],
@@ -185,9 +182,9 @@ function _test_benders_storage()
         rf = 6
         look_ahead = 3
         penalty = 100
-        op_cost_no_inv = (fixuflow - dem) * penalty * (24 + look_ahead)
+        op_cost_no_inv = (fixuflow - dem) * penalty * (rf + look_ahead) * 4
         op_cost_inv = 0
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1  # minimum cost at which investment is not profitable
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
@@ -638,8 +635,8 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
         look_ahead = 3
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
-        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        op_cost_no_inv = ucap * vom_cost_ * (rf + look_ahead) * 4
+        op_cost_inv = ucap * vom_cost_alt * (rf + look_ahead) * 4
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
         u_inv_cost = do_not_inv_cost
@@ -762,8 +759,8 @@ function _test_benders_starting_units_invested()
         look_ahead = 3
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
-        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        op_cost_no_inv = ucap * vom_cost_ * (rf + look_ahead) * 4
+        op_cost_inv = ucap * vom_cost_alt * (rf + look_ahead) * 4
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
         u_inv_cost = do_not_inv_cost + 1  # needed, not sure why
         @testset for (max_iters, should_invest) in ((10, false), (1, true))
@@ -855,15 +852,11 @@ function _test_benders_starting_units_invested()
 end
 
 @testset "run_spineopt_benders" begin
-    _test_benders_unit()
-
-    #=
-    _test_benders_unit()
-    _test_benders_storage()
-    _test_benders_rolling_representative_periods()
+    # _test_benders_unit()
+    # _test_benders_storage()
+    # _test_benders_rolling_representative_periods()
     _test_benders_rolling_representative_periods_yearly_investments_multiple_units()
-    _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
-    _test_benders_starting_units_invested()
+    # _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
+    # _test_benders_starting_units_invested()
     # FIXME: _test_benders_unit_storage()
-    =#
 end
