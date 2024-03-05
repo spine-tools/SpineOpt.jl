@@ -19,11 +19,11 @@
 
 @doc raw"""
 The aggregated available units are constrained by the parameter [number\_of\_units](@ref)
-and the variable number of invested units [units\_invested\_available](@ref):
+, the variable number of invested units [units\_invested\_available](@ref) less the number of units on outage [units\_out\_of\_service](@ref):
 
 ```math
 \begin{aligned}
-& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} \\
+& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} + v^{units\_out\_of\_service}_{(u,s,t)}\\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}
@@ -32,13 +32,15 @@ and the variable number of invested units [units\_invested\_available](@ref):
 See also [number\_of\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
-    @fetch units_available, units_invested_available = m.ext[:spineopt].variables
+    @fetch units_available, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
             + sum(
-                units_available[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+                + units_available[u, s, t] 
+                + units_out_of_service[u, s, t]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
             - sum(
@@ -47,7 +49,7 @@ function add_constraint_units_available!(m::Model)
                     m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
-            )
+            )            
             <=
             number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
         )
