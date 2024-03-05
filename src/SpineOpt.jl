@@ -131,6 +131,7 @@ include("objective/connection_flow_costs.jl")
 include("objective/res_proc_costs.jl")
 include("objective/units_on_costs.jl")
 include("objective/mp_objective_penalties.jl")
+include("objective/capacity_margin.jl")
 include("constraints/constraint_common.jl")
 include("constraints/constraint_total_cumulated_unit_flow_bounds.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
@@ -192,6 +193,7 @@ include("constraints/constraint_non_spinning_reserves_bounds.jl")
 include("constraints/constraint_min_scheduled_outage_duration.jl")
 include("constraints/constraint_units_out_of_service_contiguity.jl")
 include("constraints/constraint_units_out_of_service_transition.jl")
+include("constraints/constraint_min_capacity_margin.jl")
 
 
 export unit_flow_indices

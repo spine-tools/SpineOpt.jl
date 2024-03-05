@@ -32,6 +32,7 @@ const op_terms = [
     :renewable_curtailment_costs,
     :res_proc_costs,
     :units_on_costs,
+    :capacity_margin_penalty_term,
 ]
 const all_objective_terms = [op_terms; invest_terms]
 
