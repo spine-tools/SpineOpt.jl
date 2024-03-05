@@ -38,7 +38,7 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
     m.ext[:spineopt].constraints[:connection_unitary_gas_flow] = Dict(
         (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t) => @constraint(
             m,
-            expr_avg(
+            _avg(
                 binary_gas_connection_flow[conn, n1, d, s, t]
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m;
@@ -52,7 +52,7 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
             )
             ==
             + 1
-            - expr_avg(
+            - _avg(
                 binary_gas_connection_flow[conn, n2, direction(:to_node), s, t]
                 for (conn, n2, d, s, t) in connection_flow_indices(
                     m;

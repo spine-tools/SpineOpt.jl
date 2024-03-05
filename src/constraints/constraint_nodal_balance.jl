@@ -65,7 +65,7 @@ function add_constraint_nodal_balance!(m::Model)
             # Net injection
             + node_injection[n, s, t]
             # Commodity flows from connections
-            + expr_sum(
+            + sum(
                 connection_flow[conn, n1, d, s, t]
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
@@ -76,7 +76,7 @@ function add_constraint_nodal_balance!(m::Model)
                 init=0,
             )
             # Commodity flows to connections
-            - expr_sum(
+            - sum(
                 connection_flow[conn, n1, d, s, t]
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t

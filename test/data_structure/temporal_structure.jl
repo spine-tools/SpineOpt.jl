@@ -88,17 +88,17 @@ function _test_representative_time_slice()
         for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
             t_end = end_(t)
             if t_end <= m_start + Hour(4)
-                @test SpineOpt.representative_time_slice(m, t) == rep_blk1_ts[1]
+                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk1_ts[1]
             elseif t_end <= m_start + Hour(8)
-                @test SpineOpt.representative_time_slice(m, t) == t
+                @test first(SpineOpt.representative_time_slice(m, t)) == t
             elseif t_end <= m_start + Hour(12)
-                @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[1]
+                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[1]
             elseif t_end <= m_start + Hour(16)
-                @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[2]
+                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[2]
             elseif t_end <= m_start + Hour(20)
-                @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[3]
+                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[3]
             else
-                @test SpineOpt.representative_time_slice(m, t) == t
+                @test first(SpineOpt.representative_time_slice(m, t)) == t
             end
         end
     end

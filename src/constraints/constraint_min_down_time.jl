@@ -42,9 +42,9 @@ function add_constraint_min_down_time!(m::Model)
     m.ext[:spineopt].constraints[:min_down_time] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
-                + expr_sum(
+                + sum(
                     units_invested_available[u, s, t1]
                     for (u, s, t1) in units_invested_available_indices(
                         m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_short=t)
@@ -56,12 +56,12 @@ function add_constraint_min_down_time!(m::Model)
                 init=0,
             )
             >=
-            + expr_sum(
+            + sum(
                 units_shut_down[u, s_past, t_past]
                 for (u, s_past, t_past) in past_units_on_indices(m, u, s, t, min_down_time);
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 nonspin_units_started_up[u, n, s, t]
                 for (u, n, s, t) in nonspin_units_started_up_indices(
                     m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything

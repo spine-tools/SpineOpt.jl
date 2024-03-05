@@ -95,7 +95,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
     m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t, t_next=t_next, case=case, part=part) => @constraint(
             m,
-            expr_sum(
+            sum(
                 unit_flow[u, n, d, s, t_over] * overlap_duration(t_over, t)
                 for (u, n, d, s, t_over) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
@@ -108,13 +108,13 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 init=0,
             )
             <=
-            + expr_sum(
+            + sum(
                 _unit_flow_capacity(u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
                 for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0
             )
             - (
-                + expr_sum(
+                + sum(
                     + _shutdown_margin(u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
                     * units_shut_down[u, s, t_after]
@@ -122,7 +122,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_next);
                     init=0
                 )                
-                + expr_sum(
+                + sum(
                     + _shutdown_margin(u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)
                     * _switch(
@@ -135,7 +135,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     init=0
                 )
             )
-            - expr_sum(
+            - sum(
                 + _startup_margin(u, ng, d, s, t0, t, case, part)
                 * _unit_flow_capacity(u, ng, d, s, t0, t)
                 * units_started_up[u, s, t_over]
@@ -217,6 +217,7 @@ function _unit_capacity_constraint_subpaths(path, u, t0, t)
     t_flow_duration = end_(t) - start(t)
     for s in path
         mut = min_up_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t, _default=nothing)
+        mut = align_variable_duration_unit(mut, start(t))
         mut_gt_dur = mut === nothing || mut > t_flow_duration
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
             # Outcome change, store current subpath and start a new one

@@ -51,7 +51,6 @@ function check_data_structure(; log_level=3)
     check_node__stochastic_structure()
     check_unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
-    # check_islands(; log_level=log_level)
     check_branching_before_rolling()
     check_parameter_values()
 end
@@ -172,63 +171,6 @@ function check_minimum_operating_point_unit_capacity()
 end
 
 """
-    check_islands()
-
-Check network for islands and warn the user if problems.
-"""
-function check_islands(; log_level=3)
-    for c in commodity()
-        if commodity_physics(commodity=c) in (:commodity_physics_ptdf, :commodity_physics_lodf)
-            @timelog log_level 3 "Checking network of commodity $(c) for islands" n_islands, island_node = islands(c)
-            @log log_level 3 "The network consists of $(n_islands) islands"
-            if n_islands > 1
-                @warn "the network of commodity $(c) consists of multiple islands, this may end badly..."
-                # add diagnostic option to print island_node which will tell the user which nodes are in which islands
-            end
-        end
-    end
-end
-
-"""
-    islands()
-
-Determine the number of islands in a commodity network - used for diagnostic purposes.
-"""
-function islands(c)
-    visited_d = Dict{Object,Bool}()
-    island_node = Dict{Int64,Array}()
-    island_count = 0
-
-    for n in node__commodity(commodity=c)
-        visited_d[n] = false
-    end
-
-    for n in node__commodity(commodity=c)
-        if !visited_d[n]
-            island_count = island_count + 1
-            island_node[island_count] = Object[]
-            visit(n, island_count, visited_d, island_node)
-        end
-    end
-    island_count, island_node
-end
-
-"""
-    visit()
-
-Recursively visit nodes in the network to determine number of islands.
-"""
-function visit(n, island_count, visited_d, island_node)
-    visited_d[n] = true
-    push!(island_node[island_count], n)
-    for (conn, n2) in connection__node__node(node1=n)
-        if !visited_d[n2]
-            visit(n2, island_count, visited_d, island_node)
-        end
-    end
-end
-
-"""
     check_branching_before_rolling()
 
 Check that no `stochastic_structure` branches before `roll_forward`.
@@ -259,7 +201,7 @@ end
 
 function check_model_start_smaller_than_end()
     for m in indices(model_start)
-        _check(model_start(model=m) <= model_end(model=m), "The model start for $(mod) is greater than the model end")
+        _check(model_start(model=m) <= model_end(model=m), "The model start for $m is greater than the model end")
     end
 end
 

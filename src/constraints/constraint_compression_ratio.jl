@@ -41,7 +41,7 @@ function add_constraint_compression_ratio!(m::Model)
     m.ext[:spineopt].constraints[:compression_ratio] = Dict(
         (connection=conn, node1=n_orig, node2=n_dest, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 node_pressure[n_dest, s, t] * duration(t)
                 for (n_dest, s, t) in node_pressure_indices(
                     m; node=n_dest, stochastic_scenario=s, t=t_in_t(m; t_long=t)
@@ -52,7 +52,7 @@ function add_constraint_compression_ratio!(m::Model)
             compression_factor[
                 (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
-            * expr_sum(
+            * sum(
                 node_pressure[n_orig, s, t] * duration(t)
                 for (n_orig, s, t) in node_pressure_indices(
                     m; node=n_orig, stochastic_scenario=s, t=t_in_t(m; t_long=t),

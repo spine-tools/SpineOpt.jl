@@ -27,7 +27,7 @@ function storage_investment_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        + expr_sum(
+        + sum(
             storages_invested[n, s, t]
             * storage_investment_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))

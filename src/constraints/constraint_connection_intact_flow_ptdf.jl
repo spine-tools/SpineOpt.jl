@@ -51,14 +51,14 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
     m.ext[:spineopt].constraints[:connection_intact_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + get(connection_intact_flow, (conn, n_to, direction(:to_node), s, t), 0)
                 - get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0)
                 for s in s;
                 init=0
             )
             ==
-            + expr_sum(
+            + sum(
                 ptdf[(connection=conn, node=n, t=t)]
                 * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
                 * node_injection[n, s, t]
@@ -67,7 +67,7 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t);                                  
                 init=0
             )
-            + expr_sum(
+            + sum(
                 ptdf[(connection=conn, node=n, t=t)]
                 * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
                 * connection_flow[conn1, n1, d, s, t]                                
@@ -80,7 +80,7 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
                 if is_boundary_connection(connection=conn1);
                 init=0
             )
-            - expr_sum(
+            - sum(
                 ptdf[(connection=conn, node=n, t=t)]
                 * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
                 * connection_flow[conn1, n1, d, s, t]                                

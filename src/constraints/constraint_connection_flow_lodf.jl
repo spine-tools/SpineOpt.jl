@@ -20,7 +20,7 @@
 @doc raw"""
 The N-1 security constraint for the post-contingency flow on monitored connection, ``c_{mon}``,
 upon the outage of a contingency connection, ``c_{cont}``, is formed using line outage distribution factors (LODF).
-``p^{lodf}_{(c_con, c_mon)}`` represents the fraction of the pre-contingency flow on connection ``c_{cont}`` that will flow
+``p^{lodf}_{(c_{cont}, c_{mon})}`` represents the fraction of the pre-contingency flow on connection ``c_{cont}`` that will flow
 on ``c_{mon}`` if the former is disconnected.
 If [connection](@ref) ``c_{cont}`` is disconnected, the post-contingency flow on the monitored connection
 [connection](@ref) ``c_{mon}`` is the pre-contingency [connection\_flow](@ref) on ``c_{mon}`` plus the LODF
@@ -58,7 +58,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
             m,
             - connection_minimum_emergency_capacity(m, conn_mon, s, t)
             <=
-            + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, expr_sum)
+            + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, sum)
             * connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)]
             <=
             + connection_minimum_emergency_capacity(m, conn_mon, s, t)

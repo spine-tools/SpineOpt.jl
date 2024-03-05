@@ -38,7 +38,7 @@ function add_constraint_connections_invested_transition!(m::Model)
     m.ext[:spineopt].constraints[:connections_invested_transition] = Dict(
         (connection=conn, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + connections_invested_available[conn, s, t_after] - connections_invested[conn, s, t_after]
                 + connections_decommissioned[conn, s, t_after]
                 for (conn, s, t_after) in connections_invested_available_indices(
@@ -47,7 +47,7 @@ function add_constraint_connections_invested_transition!(m::Model)
                 init=0,
             )
             ==
-            expr_sum(
+            sum(
                 + connections_invested_available[conn, s, t_before]
                 for (conn, s, t_before) in connections_invested_available_indices(
                     m; connection=conn, stochastic_scenario=s, t=t_before

@@ -226,7 +226,7 @@ end
 
 function _create_objective_terms!(m)
     window_end = end_(current_window(m))
-    window_very_end = end_(last(time_slice(m)))
+    window_very_end = maximum(end_.(time_slice(m)))
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
@@ -253,19 +253,17 @@ function run_spineopt_kernel!(
     resume_file_path=nothing,
     output_suffix=(;),
     log_prefix="",
-    handle_window_solved=(m, k) -> nothing,
-    handle_window_about_to_solve=(m, k) -> nothing,
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
     while true
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
-        handle_window_about_to_solve(m, k)
+        (callback -> callback(m, k)).(m.ext[:spineopt].window_about_to_solve_callbacks)
         optimize_model!(
             m; log_level=log_level, calculate_duals=calculate_duals, output_suffix=output_suffix
         ) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        handle_window_solved(m, k)
+        (callback -> callback(m, k)).(m.ext[:spineopt].window_solved_callbacks)
         if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$(log_prefix) ... Rolling complete\n" break
         end
@@ -505,6 +503,7 @@ function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && continue
         for v in values(var)
+            v isa VariableRef || continue
             ref_v = ref_map[v]
             if is_binary(ref_v)
                 unset_binary(ref_v)
@@ -524,14 +523,14 @@ end
 function _save_marginal_values!(m::Model, dual=JuMP.dual)
     for (constraint_name, con) in m.ext[:spineopt].constraints
         name = Symbol(string("constraint_", constraint_name))
-        m.ext[:spineopt].values[name] = Dict(i => dual(c) for (i, c) in con)
+        m.ext[:spineopt].values[name] = Dict(i => dual(c) for (i, c) in con if c isa ConstraintRef)
     end
 end
 
 function _save_bound_marginal_values!(m::Model, reduced_cost=JuMP.reduced_cost)
     for (variable_name, var) in m.ext[:spineopt].variables
         name = Symbol(string("bound_", variable_name))
-        m.ext[:spineopt].values[name] = Dict(i => reduced_cost(v) for (i, v) in var)
+        m.ext[:spineopt].values[name] = Dict(i => reduced_cost(v) for (i, v) in var if v isa VariableRef)
     end
 end
 
@@ -921,7 +920,7 @@ function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
         var = m.ext[:spineopt].variables[name]
         # NOTE: only update names for the representative variables
         # This is achieved by using the indices function from the variable definition
-        for ind in m.ext[:spineopt].variables_definition[name][:indices](m)
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); history_time_slice(m)])
             _set_name(var[ind], _base_name(name, ind))
         end
     end
