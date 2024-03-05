@@ -35,9 +35,9 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
     for (w,) in sp_objective_upperbound_indices(m)
         @show w
         @show sp_objective_value_bi(benders_iteration=current_bi, analysis_time=start(w))
-        for (u, s, t) in units_invested_available_indices(m; t=to_time_slice(m; t=w))
+        for (u, s, t) in units_invested_available_indices(m)
             @show u, s, t
-            @show overlap_duration(w, t)
+            @show duration(t)
             @show units_invested_available_mv(unit=u, analysis_time=start(w), stochastic_scenario=s, t=t)
         end
     end
@@ -57,8 +57,11 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                         - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
                     )
                     * units_invested_available_mv(unit=u, analysis_time=start(w), stochastic_scenario=s, t=t)
-                    * overlap_duration(w, t)
-                    for (u, s, t) in units_invested_available_indices(m; t=to_time_slice(m; t=w))
+                    * duration(t)
+                    for (u, s, t) in units_invested_available_indices(m)
+                    if start(w) <= start(t) <= last(
+                        keys(units_invested_available_mv(unit=u, analysis_time=start(w), stochastic_scenario=s))
+                    );
                     init=0,
                 )
                 #=
