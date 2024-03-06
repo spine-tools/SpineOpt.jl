@@ -39,6 +39,7 @@ and ```math U_{n\_to} ``` is the set of all non-storage units connected to node 
 
 See also
 [min\_capacity\_margin](@ref),
+[min\_capacity\_margin\_penalty](@ref),
 [unit\_\_from\_node](@ref),
 [unit\_\_to\_node](@ref),
 [demand](@ref),
