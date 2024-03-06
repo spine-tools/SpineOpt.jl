@@ -36,11 +36,25 @@ function _map_by_entity(vals)
         by_t[ind.t] = val
     end
     Dict(
-        ent => Map(
-            collect(keys(by_s)), [TimeSeries(start.(keys(by_t)), realize.(values(by_t))) for by_t in values(by_s)]
-        )
-        for (ent, by_s) in by_ent
+        ent => Map(collect(keys(by_s)), [_window_time_series(by_t) for by_t in values(by_s)]) for (ent, by_s) in by_ent
     )
+end
+
+"""
+    _window_time_series(by_t)
+
+A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Number`, covering the full range of `TimeSlice`s.
+This is important so investment decisions from the master problem are fixed over the full horizon
+and not only the first window.
+"""
+function _window_time_series(by_t)
+    time_slices, vals = collect(keys(by_t)), realize.(values(by_t))
+    inds = start.(time_slices)
+    ends = end_.(time_slices)
+    i = argmax(ends)
+    push!(inds, ends[i])
+    push!(vals, vals[i])
+    TimeSeries(inds, vals)
 end
 
 function process_master_problem_solution!(m_mp)
