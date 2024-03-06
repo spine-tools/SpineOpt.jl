@@ -17,12 +17,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
+@doc raw"""
     add_expression_capacity_margin!(m::Model)
 
 Create an expression for `capacity_margin`. This represents the loat that must be met by conventional
     resources net of variable renewable production and storage. It is used in the `min_capacity_margin` constraint
+
+```math 
+\begin{aligned}
+expr^{capacity\_margin}_{n,s,t} = \\
+& + \sum_{u\in{U_{n\_to}}}(p^{unit\_capacity}_{u,s,t} \cdot p^{unit\_availability\_factor}_{u,s,t} \cdot v^{units\_available}_{u,s,t}) \\
+& + \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,to,s,t}) \\
+& - \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,from,s,t}) \\
+& - p^{demand}_{n,s,t} \\
+& - p^{fractional\_demand}_{n,s,t} \cdot p^{group\_demand}_{n_{group},s,t} \\
+& \forall n \in node: p^{min\_capacity\_margin} \\
+\end{aligned}
+```
+where ```math U_{storage_n} ``` is the set of all storage units connected to node n \\
+and ```math U_{n\_to} ``` is the set of all non-storage units connected to node n \\
+
+See also
+[min\_capacity\_margin](@ref),
+[unit\_\_from\_node](@ref),
+[unit\_\_to\_node](@ref),
+[demand](@ref),
+[fractional\_demand](@ref),
+[has\_state](@ref)
+
 """
 
 function add_expression_capacity_margin!(m::Model)
