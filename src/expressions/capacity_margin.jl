@@ -17,35 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    fixed_om_costs(m)
-
-Create an expression for fixed operation costs of units.
-"""
-function capacity_margin_penalty_term(m, t_range)
-    @fetch capacity_margin = m.ext[:spineopt].expressions
-    t0 = _analysis_time(m)
-    @expression(
-        m,
-        sum(
-            + capacity_margin_penalty[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * capacity_margin[n, s, t]
-            
-            # This term is activated when there is a representative termporal block in those containing TimeSlice t.
-            # We assume only one representative temporal structure available, of which the termporal blocks represent
-            # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
-            * duration(t)
-            for (n, s, t) in expression_capacity_margin_indices(m; t_range=t_range);
-            init=0,
-        )
-    )
-end
-
 
 """
-    add_expression_capacity_margin!(m)
+    add_expression_capacity_margin!(m::Model)
 
-Create a expression for the capacity margin at nodes where `margin_penalty` is specified
+Create an expression for `capacity_margin`. This represents the loat that must be met by conventional
+    resources net of variable renewable production and storage. It is used in the `min_capacity_margin` constraint
 """
 
 function add_expression_capacity_margin!(m::Model)
@@ -129,21 +106,48 @@ function add_expression_capacity_margin!(m::Model)
     )
 end
 
-# TODO: can we find an easier way to define the constraint indices?
-# I feel that for unexperienced uses it gets more an more complicated to understand our code
+"""
+    expression_capacity_margin_indices!(m::Model; t_range)
+
+    Return the indices for the capacity_margin expression
+"""
+
 function expression_capacity_margin_indices(m::Model; t_range=anything)
     unique(
         (node=n, stochastic_path=path, t=t)        
-        for n_margin in indices(capacity_margin_penalty)
-        for (n, t) in node_time_indices(m; node=n_margin, t=t_range)
+        for n in indices(min_capacity_margin)        
+        for (n, t) in node_time_indices(m; node=n)
         for path in active_stochastic_paths(
-            m,           
-            node_stochastic_time_indices(m; node=n, t=t),
+            m,  
+            [                                      
+                node_stochastic_time_indices(m; node=n, t=t);
+                [
+                    (unit=u, stochastic_scenario=s, t=t2)
+                    for u in indices(unit_capacity; node=n, direction=direction(:to_node)) if !is_storage_unit(u)
+                    for (u, s, t2) in units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t))
+                ];
+                [
+                   (unit=u, node=n, stochastic_scenario=s, t=t)
+                   for u in unit__to_node(node=n, direction=direction(:to_node)) if is_storage_unit(u)
+                   for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=direction(:to_node), t=t) 
+                ];
+                [
+                   (unit=u, node=n, stochastic_scenario=s, t=t)
+                   for u in unit__to_node(node=n, direction=direction(:from_node)) if is_storage_unit(u)
+                   for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=direction(:from_node), t=t) 
+                ]
+            ]
+            
         )
+        
     )
 end
 
+"""
+    is_storage_unit(u)
 
+    Determines whether the unit u is attached to a node with storage or not.
+"""
 
 function is_storage_unit(u)
     for n in unit__from_node(unit=u, direction=direction(:from_node))

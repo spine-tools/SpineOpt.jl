@@ -524,6 +524,7 @@ TODO What is the purpose of this function? It clearly generates a number of `Rel
 """
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
+    node_with_min_capacity_margin_penalty = ObjectClass(:node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty)))
     unit__node__direction__temporal_block = RelationshipClass(
         :unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
@@ -550,6 +551,7 @@ function generate_variable_indexing_support()
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
+        node_with_min_capacity_margin_penalty = $node_with_min_capacity_margin_penalty
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block

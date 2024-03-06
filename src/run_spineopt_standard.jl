@@ -123,6 +123,7 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_binary_gas_connection_flow!,
             add_variable_user_constraint_slack_pos!,
             add_variable_user_constraint_slack_neg!,
+            add_variable_min_capacity_margin_slack!,
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)

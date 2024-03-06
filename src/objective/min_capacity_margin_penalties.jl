@@ -17,31 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    min_capacity_margin_penalty(m::Model)
 
-function add_constraint_min_capacity_margin!(m::Model)
+Create an expression for min_capacity_margin_penalty.
+"""
+
+function min_capacity_margin_penalties(m::Model, t_range)
     @fetch min_capacity_margin_slack = m.ext[:spineopt].variables
-    @fetch capacity_margin = m.ext[:spineopt].expressions    
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_capacity_margin] = Dict(
-        (node=n, stochastic_path=s, t=t) => @constraint(
-            m,
-            + capacity_margin[n, s, t]
-            + sum(
-                + get(min_capacity_margin_slack, (n, s, t), 0)                
-                for s in s;
-                init=0
-            )
-            >=
-            + min_capacity_margin[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
-        for (n, s, t) in constraint_min_capacity_margin_indices(m)
+    @expression(
+        m,
+        + sum(
+            min_capacity_margin_slack[n, s, t]
+            * duration(t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+            * min_capacity_margin_penalty[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+            for (n, s, t) in min_capacity_margin_slack_indices(m; t=t_range);
+            init=0,
+        )        
     )
 end
-
-function constraint_min_capacity_margin_indices(m;)
-    unique(
-        (node=n, stochastic_path=s, t=t)
-        for (n, s, t) in expression_capacity_margin_indices(m)        
-    )
-end
-    
