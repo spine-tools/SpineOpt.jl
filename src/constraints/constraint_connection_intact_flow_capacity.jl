@@ -26,6 +26,9 @@ according to [connection\_capacity](@ref)
 & \sum_{
 n \in ng
 } v^{connection\_intact\_flow}_{(conn,n,d,s,t)}
+- \sum_{
+n \in ng
+} v^{connection\_intact\_flow}_{(conn,n,reverse(d),s,t)} \\
 & <= p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)}
 \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
