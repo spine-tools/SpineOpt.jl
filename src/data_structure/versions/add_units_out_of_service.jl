@@ -1,1 +1,0 @@
-# Empty migration script - template update is all that is required

@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    node_state_indices(filtering_options...)
+    create indices for the `min_capacity_margin_slack` variable
 """
 function min_capacity_margin_slack_indices(
     m::Model;

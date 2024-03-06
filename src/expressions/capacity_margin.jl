@@ -34,8 +34,8 @@ expr^{capacity\_margin}_{n,s,t} = \\
 & \forall n \in node: p^{min\_capacity\_margin} \\
 \end{aligned}
 ```
-where ```math U_{storage_n} ``` is the set of all storage units connected to node n \\
-and ```math U_{n\_to} ``` is the set of all non-storage units connected to node n \\
+where ```math U_{storage_n} ``` is the set of all storage units connected to node n
+and ```math U_{n\_to} ``` is the set of all non-storage units connected to node n
 
 See also
 [min\_capacity\_margin](@ref),
@@ -109,6 +109,7 @@ function add_expression_capacity_margin!(m::Model)
             + sum(
                 + unit_capacity[(unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * (                   
                     + sum(
                         + units_available[u, s, t_ua]
@@ -148,17 +149,7 @@ function expression_capacity_margin_indices(m::Model; t_range=anything)
                     (unit=u, stochastic_scenario=s, t=t2)
                     for u in indices(unit_capacity; node=n, direction=direction(:to_node)) if !is_storage_unit(u)
                     for (u, s, t2) in units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t))
-                ];
-                [
-                   (unit=u, node=n, stochastic_scenario=s, t=t)
-                   for u in unit__to_node(node=n, direction=direction(:to_node)) if is_storage_unit(u)
-                   for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=direction(:to_node), t=t) 
-                ];
-                [
-                   (unit=u, node=n, stochastic_scenario=s, t=t)
-                   for u in unit__to_node(node=n, direction=direction(:from_node)) if is_storage_unit(u)
-                   for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=direction(:from_node), t=t) 
-                ]
+                ];                
             ]
             
         )
