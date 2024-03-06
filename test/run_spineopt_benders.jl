@@ -21,7 +21,7 @@ module Y
 using SpineInterface
 end
 
-function _test_run_spineopt_benders_setup()
+function _test_run_spineopt_benders_setup(include_unit=true)
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
@@ -31,16 +31,12 @@ function _test_run_spineopt_benders_setup()
             ["temporal_block", "hourly"],
             ["stochastic_structure", "deterministic"],
             ["stochastic_scenario", "parent"],
-            ["unit", "unit_ab"],
             ["node", "node_b"],
             ["report", "report_x"],
             ["output", "unit_flow"],
             ["output", "variable_om_costs"],
         ],
         :relationships => [
-            ["unit__to_node", ["unit_ab", "node_b"]],
-            ["units_on__temporal_block", ["unit_ab", "hourly"]],
-            ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
@@ -59,6 +55,17 @@ function _test_run_spineopt_benders_setup()
             ["model", "instance", "db_lp_solver", "HiGHS.jl"]
         ],
     )
+    if include_unit
+        push!(test_data[:objects], ["unit", "unit_ab"])
+        append!(
+            test_data[:relationships],
+            [
+                ["unit__to_node", ["unit_ab", "node_b"]],
+                ["units_on__temporal_block", ["unit_ab", "hourly"]],
+                ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
+            ]
+        )
+    end
     _load_test_data(url_in, test_data)
     url_in, url_out, file_path_out
 end
@@ -445,7 +452,7 @@ function _test_benders_rolling_representative_periods()
         vom_cost_alt = vom_cost_ / 2
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
-        do_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
+        do_inv_cost = op_cost_no_inv - op_cost_inv - 1  # minimum cost at which investment is not profitable
         do_not_inv_cost = do_inv_cost + 1  # maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
@@ -540,7 +547,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
         dem = 0.7 * candidate_count
         rf = 14
         wc = div(365, rf)
-        url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
+        url_in, url_out, file_path_out = _test_run_spineopt_benders_setup(false)
         objects = [
             ["output", "total_costs"],
             ["output", "units_invested"],
@@ -590,7 +597,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
         append!(
             object_parameter_values, [["unit", c, "unit_investment_cost", 20 * k] for (k, c) in enumerate(candidates)]
         )
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 0]]
+        relationship_parameter_values = []
         append!(
             relationship_parameter_values, [["unit__to_node", [c, "node_b"], "unit_capacity", 1] for c in candidates]
         )
