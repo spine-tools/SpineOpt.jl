@@ -108,7 +108,6 @@ function _avg(iter; init::Number)
     isempty(iter) ? init : sum(iter; init=init) / length(iter)
 end
 
-
 """
     _index_in(ind::NamedTuple; kwargs...)
 

@@ -151,7 +151,7 @@ end
 function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
-        (t=t,) => @constraint(m, sp_objective_upperbound[t] >= 0) for (t,) in sp_objective_upperbound_indices(m)
+        (window=w,) => @constraint(m, sp_objective_upperbound[w] >= 0) for (w,) in sp_objective_upperbound_indices(m)
     )
 end
 
@@ -163,12 +163,11 @@ Minimize total investment costs plus upperbound on subproblem objective.
 function _set_mp_objective!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     _create_mp_objective_terms!(m)
-    investment_costs = sum(in_window for (in_window, _bw) in values(m.ext[:spineopt].objective_terms))
     @objective(
         m,
         Min,
-        + sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
-        + investment_costs
+        + sum(sp_objective_upperbound[w] for (w,) in sp_objective_upperbound_indices(m); init=0)
+        + investment_costs(m)
     )
 end
 

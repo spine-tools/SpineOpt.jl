@@ -22,5 +22,5 @@ function add_variable_sp_objective_upperbound!(m::Model)
 end
 
 function sp_objective_upperbound_indices(m::Model; kwargs...)
-    [(t=current_window(m),)]
+    [(window=w,) for w in m.ext[:spineopt].temporal_structure[:sp_windows]]
 end

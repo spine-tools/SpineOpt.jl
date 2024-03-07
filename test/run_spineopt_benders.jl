@@ -21,7 +21,7 @@ module Y
 using SpineInterface
 end
 
-function _test_run_spineopt_benders_setup()
+function _test_run_spineopt_benders_setup(include_unit=true)
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
@@ -30,27 +30,16 @@ function _test_run_spineopt_benders_setup()
             ["model", "instance"],
             ["temporal_block", "hourly"],
             ["stochastic_structure", "deterministic"],
-            ["stochastic_structure", "unused_structure"],
-            ["unit", "unit_ab"],
-            ["node", "node_b"],
             ["stochastic_scenario", "parent"],
-            ["stochastic_scenario", "unused_child"],
+            ["node", "node_b"],
             ["report", "report_x"],
             ["output", "unit_flow"],
             ["output", "variable_om_costs"],
         ],
         :relationships => [
-            ["unit__to_node", ["unit_ab", "node_b"]],
-            ["units_on__temporal_block", ["unit_ab", "hourly"]],
-            ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
-            ["model__temporal_block", ["instance", "hourly"]],
-            ["model__stochastic_structure", ["instance", "deterministic"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
-            ["stochastic_structure__stochastic_scenario", ["unused_structure", "parent"]],
-            ["stochastic_structure__stochastic_scenario", ["unused_structure", "unused_child"]],
-            ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "unused_child"]],
             ["report__output", ["report_x", "unit_flow"]],
             ["report__output", ["report_x", "variable_om_costs"]],
             ["model__report", ["instance", "report_x"]],
@@ -66,6 +55,17 @@ function _test_run_spineopt_benders_setup()
             ["model", "instance", "db_lp_solver", "HiGHS.jl"]
         ],
     )
+    if include_unit
+        push!(test_data[:objects], ["unit", "unit_ab"])
+        append!(
+            test_data[:relationships],
+            [
+                ["unit__to_node", ["unit_ab", "node_b"]],
+                ["units_on__temporal_block", ["unit_ab", "hourly"]],
+                ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
+            ]
+        )
+    end
     _load_test_data(url_in, test_data)
     url_in, url_out, file_path_out
 end
@@ -80,8 +80,8 @@ function _test_benders_unit()
         look_ahead = 3
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
-        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        op_cost_no_inv = ucap * vom_cost_ * (rf + look_ahead) * 4
+        op_cost_inv = ucap * vom_cost_alt * (rf + look_ahead) * 4
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 269.0
         @testset for should_invest in (true, false)
@@ -100,7 +100,6 @@ function _test_benders_unit()
                 ["unit__to_node", ["unit_ab_alt", "node_b"]],
                 ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
-                ["model__temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
                 ["report__output", ["report_x", "total_costs"]],
@@ -182,9 +181,9 @@ function _test_benders_storage()
         rf = 6
         look_ahead = 3
         penalty = 100
-        op_cost_no_inv = (fixuflow - dem) * penalty * (24 + look_ahead)
+        op_cost_no_inv = (fixuflow - dem) * penalty * (rf + look_ahead) * 4
         op_cost_inv = 0
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1  # minimum cost at which investment is not profitable
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
@@ -208,7 +207,6 @@ function _test_benders_storage()
                 ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
                 ["node__temporal_block", ["node_a", "hourly"]],
                 ["node__stochastic_structure", ["node_a", "deterministic"]],
-                ["model__temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
                 ["report__output", ["report_x", "total_costs"]],
@@ -329,7 +327,6 @@ function _test_benders_unit_storage()
                 ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
                 ["node__temporal_block", ["node_a", "hourly"]],
                 ["node__stochastic_structure", ["node_a", "deterministic"]],
-                ["model__temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
                 ["report__output", ["report_x", "total_costs"]],
@@ -455,7 +452,7 @@ function _test_benders_rolling_representative_periods()
         vom_cost_alt = vom_cost_ / 2
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
-        do_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
+        do_inv_cost = op_cost_no_inv - op_cost_inv - 1  # minimum cost at which investment is not profitable
         do_not_inv_cost = do_inv_cost + 1  # maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
@@ -474,7 +471,6 @@ function _test_benders_rolling_representative_periods()
                 ["unit__to_node", ["unit_ab_alt", "node_b"]],
                 ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
-                ["model__temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
                 ["report__output", ["report_x", "units_invested_available"]],
@@ -546,9 +542,12 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
     @testset "benders_rolling_representative_periods_yearly_investments_multiple_units" begin
         benders_gap = 1e-6  # needed so that we get the exact master problem solution
         mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
-        candidates = [string("investments_candidate_", k) for k in 1:10]
-        dem = 7
-        url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
+        candidate_count = 10
+        candidates = [string("investments_candidate_", k) for k in 1:candidate_count]
+        dem = 0.7 * candidate_count
+        rf = 14
+        wc = div(365, rf)
+        url_in, url_out, file_path_out = _test_run_spineopt_benders_setup(false)
         objects = [
             ["output", "total_costs"],
             ["output", "units_invested"],
@@ -560,7 +559,6 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
         ]
         append!(objects, [["unit", c] for c in candidates])
         relationships = [
-            ["model__temporal_block", ["instance", "investments_yearly"]],
             ["model__default_investment_temporal_block", ["instance", "investments_yearly"]],
             ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
             ["report__output", ["report_x", "units_invested_available"]],
@@ -575,8 +573,8 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             ["model", "instance", "model_start", unparse_db_value(DateTime(2000))],
             ["model", "instance", "model_end", unparse_db_value(DateTime(2001))],
             ["model", "instance", "window_duration", unparse_db_value(Day(1))],
-            ["model", "instance", "roll_forward", unparse_db_value([Day(14) for k in 1:23])],
-            ["model", "instance", "window_weight", unparse_db_value([14.0 for k in 1:24])],
+            ["model", "instance", "roll_forward", unparse_db_value([Day(rf) for k in 1 : wc - 1])],
+            ["model", "instance", "window_weight", unparse_db_value([Float64(rf) for k in 1:wc])],
             ["model", "instance", "model_type", "spineopt_benders"],
             ["model", "instance", "max_iterations", 10],
             ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
@@ -597,23 +595,21 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             [["unit", c, "online_variable_type", "unit_online_variable_type_integer"] for c in candidates]
         )
         append!(
-            object_parameter_values,
-            [["unit", c, "unit_investment_cost", 20 * k] for (k, c) in enumerate(candidates)]
+            object_parameter_values, [["unit", c, "unit_investment_cost", 20 * k] for (k, c) in enumerate(candidates)]
         )
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 0]]
+        relationship_parameter_values = []
         append!(
             relationship_parameter_values, [["unit__to_node", [c, "node_b"], "unit_capacity", 1] for c in candidates]
         )
         append!(
-            relationship_parameter_values,
-            [["unit__to_node", [c, "node_b"], "vom_cost", 10] for c in candidates]
+            relationship_parameter_values, [["unit__to_node", [c, "node_b"], "vom_cost", 10] for c in candidates]
         )
         SpineInterface.import_data(
             url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values,
         )
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
@@ -635,8 +631,8 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
         look_ahead = 3
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
-        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        op_cost_no_inv = ucap * vom_cost_ * (rf + look_ahead) * 4
+        op_cost_inv = ucap * vom_cost_alt * (rf + look_ahead) * 4
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
         u_inv_cost = do_not_inv_cost
@@ -659,7 +655,6 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["unit__to_node", ["unit_ab_alt", "node_b"]],
                 ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
-                ["model__temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
                 ["report__output", ["report_x", "total_costs"]],
@@ -759,8 +754,8 @@ function _test_benders_starting_units_invested()
         look_ahead = 3
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
-        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        op_cost_no_inv = ucap * vom_cost_ * (rf + look_ahead) * 4
+        op_cost_inv = ucap * vom_cost_alt * (rf + look_ahead) * 4
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
         u_inv_cost = do_not_inv_cost + 1  # needed, not sure why
         @testset for (max_iters, should_invest) in ((10, false), (1, true))
@@ -778,7 +773,6 @@ function _test_benders_starting_units_invested()
                 ["unit__to_node", ["unit_ab_alt", "node_b"]],
                 ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
-                ["model__temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
                 ["report__output", ["report_x", "total_costs"]],
