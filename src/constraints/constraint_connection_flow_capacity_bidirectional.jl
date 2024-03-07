@@ -25,10 +25,17 @@ in both directions do not exceed their own capacity nor does their sum exceed th
 ```math
 \begin{aligned}
 & p^{connection\_capacity}_{(conn,ng,d\_reverse,s,t)} \cdot 
-        p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d\_reverse,s,t)} \cdot\sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
-& + p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot 
-        p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \cdot \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d\_reverse,s,t)} \\
+  p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d\_reverse,s,t)} \cdot
+  \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
+& + \\ 
+& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot 
+  p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \cdot 
+  \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d\_reverse,s,t)} \\
 & \leq p^{connection\_availability\_factor}_{(conn,s,t)} \\
+& \cdot p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot 
+  p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& \cdot p^{connection\_capacity}_{(conn,ng,d\_reverse,s,t)} \cdot 
+  p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d\_reverse,s,t)} \\
 & \cdot \begin{cases}       
    v^{connections\_invested\_available}_{(conn,s,t)} 
    & \text{if } p^{candidate\_connections}_{(conn,s,t)} \geq 1 \\
