@@ -69,8 +69,8 @@ See also
 function add_constraint_connection_flow_capacity_bidirection!(m::Model)
     @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:connection_flow_capacity] = Dict(
-        (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
+    m.ext[:spineopt].constraints[:connection_flow_capacity_bidirection] = Dict(
+        (connection=conn, node=ng, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
                 connection_flow[conn, n, d, s, t] * duration(t)
@@ -94,14 +94,16 @@ function add_constraint_connection_flow_capacity_bidirection!(m::Model)
             ) 
             * connection_capacity[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            ] * connection_conv_cap_to_flow[
+            ] 
+            * connection_conv_cap_to_flow[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
             <=
             + connection_availability_factor[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
             * connection_capacity[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            ] * connection_conv_cap_to_flow[
+            ] 
+            * connection_conv_cap_to_flow[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
             * connection_capacity[
@@ -130,11 +132,13 @@ function constraint_connection_flow_capacity_bidirection_indices(m::Model)
     unique!(
         ind -> Set(values(ind)), 
         # Array for the unique!() function, converted into a Tuple afterwards
-        [
+        filter!(!isnothing, [
             (
                 # Potential threat to performance
-                (connection=conn, node=ng, direction=_d_reverse(d)) in indices(connection_capacity) &&
-                (connection=conn, node=ng, direction=d, direction_reverse=_d_reverse(d), stochastic_path=path, t=t)
+                (connection=conn, node=ng, direction=_d_reverse(d)) in indices(connection_capacity) ?
+                (
+                    connection=conn, node=ng, direction=d, direction_reverse=_d_reverse(d), stochastic_path=path, t=t
+                ) : nothing
             ) 
             for (conn, ng, d) in indices(connection_capacity)
             for (t, path) in t_lowest_resolution_path(
@@ -142,7 +146,7 @@ function constraint_connection_flow_capacity_bidirection_indices(m::Model)
                 connection_flow_indices(m; connection=conn, node=ng, direction=d),
                 connections_invested_available_indices(m; connection=conn),
             )
-        ]
+        ])
     ) |> Tuple  
 end
 
