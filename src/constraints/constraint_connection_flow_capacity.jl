@@ -49,9 +49,11 @@ in both directions do not exceed their own capacity nor does their sum exceed th
    & \text{if } p^{candidate\_connections}_{(conn,s,t)} \geq 1 \\
    1 & \text{otherwise} \\
 \end{cases} \\
-& \forall  (conn, ng, d, d\_reverse) \in indices(p^{connection\_capacity}): \\ 
-& \quad \text{(1) } \exist d\_reverse \\
-& \qquad \ \land p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot 
+& \forall (conn, ng, d, d\_reverse): \\
+& \quad \text{(1) } (conn, ng, d) \in indices(p^{connection\_capacity}) \\
+& \qquad \land (conn, ng, d\_reverse) \in indices(p^{connection\_capacity}) \\ 
+& \quad \text{and} \\
+& \quad \text{(2) } p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot 
           p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} > 0 \\
 & \qquad \ \land p^{connection\_capacity}_{(conn,ng,d\_reverse,s,t)} \cdot 
           p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d\_reverse,s,t)} > 0 \\
@@ -74,8 +76,7 @@ to ensure that the flow does not exceed the capacity.
    1 & \text{otherwise} \\
 \end{cases} \\
 & \forall \_d \in \{d, d\_reverse\}: \exist \_d \\
-& \forall (conn, ng, d, d\_reverse) \in indices(p^{connection\_capacity}): \\
-& \quad \neg \text{(1)} \\
+& \forall (conn, ng, d, d\_reverse): \neg [\text{(1)} \land \text{(2)}] \\
 & \forall (s,t)
 \end{aligned}
 ```
@@ -83,11 +84,9 @@ to ensure that the flow does not exceed the capacity.
 ```math
 \begin{aligned}
 & \text{where:} \\
-& \text{(i) } \exist x \Leftrightarrow x \neq nothing \\
-& \text{(ii) } (conn, ng, d, d\_reverse) \in indices(p^{connection\_capacity}) \\
-& \quad \Rightarrow \exist d \Rightarrow \exist p^{connection\_capacity}_{(conn,ng,d,s,t)} \\
-& \text{(iii) } \exist d\_reverse \in (conn, ng, d, d\_reverse) \\
-& \quad \Rightarrow \exist p^{connection\_capacity}_{(conn,ng,d\_reverse,s,t)} \\
+& \text{(i) } \text{(1)} \Rightarrow \exist d \land \exist d\_reverse \\
+& \qquad \ \ \ \Rightarrow \exist p^{connection\_capacity}_{(conn,ng,d,s,t)} \land \exist p^{connection\_capacity}_{(conn,ng,d\_reverse,s,t)} \\
+& \text{(ii) } \exist x \Leftrightarrow x \neq nothing \\
 \end{aligned}
 ```
 
@@ -117,16 +116,17 @@ function add_constraint_connection_flow_capacity!(m::Model)
     m.ext[:spineopt].constraints[:connection_flow_capacity] = Dict(
         (
             !isnothing(d_reverse)
-            #TODO: would using realize() significantly threaten the performance?
+            # FIXME: using `realize()` here does not work with rolling window 
+            # as the existence of the constraint is fixed in the 1st window and only the coeffcients are updated
             && realize(connection_capacity[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
             ]) * realize(connection_conv_cap_to_flow[
-                (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+                (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
             ]) > 0
             && realize(connection_capacity[
                 (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t)
             ]) * realize(connection_conv_cap_to_flow[
-                (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t),
+                (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t)
             ]) > 0 ? 
             (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
                 m,
@@ -136,11 +136,12 @@ function add_constraint_connection_flow_capacity!(m::Model)
                         m; connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                     );
                     init=0,
-                ) / (
+                ) 
+                * inv(
                     connection_capacity[
                         (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
                     ] * connection_conv_cap_to_flow[
-                        (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+                        (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
                     ]
                 )
                 + sum(
@@ -149,14 +150,14 @@ function add_constraint_connection_flow_capacity!(m::Model)
                         m; connection=conn, direction=d_reverse, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                     );
                     init=0,
-                ) / (
+                ) 
+                * inv(
                     connection_capacity[
                         (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t)
                     ] * connection_conv_cap_to_flow[
-                        (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t),
+                        (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t)
                     ]
                 )
-                #TODO: operator `/` may cause numerical unstability if the denumerator is too close to zero
                 <=
                 + connection_availability_factor[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * (
