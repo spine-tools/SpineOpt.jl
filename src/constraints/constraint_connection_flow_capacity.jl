@@ -136,7 +136,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                         m; connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                     );
                     init=0,
-                ) \ (
+                ) / (
                     connection_capacity[
                         (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
                     ] * connection_conv_cap_to_flow[
@@ -149,14 +149,14 @@ function add_constraint_connection_flow_capacity!(m::Model)
                         m; connection=conn, direction=d_reverse, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                     );
                     init=0,
-                ) \ (
+                ) / (
                     connection_capacity[
                         (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t)
                     ] * connection_conv_cap_to_flow[
                         (connection=conn, node=ng, direction=d_reverse, stochastic_scenario=s, analysis_time=t0, t=t)
                     ]
                 )
-                # FIXME: `\` may cause numerical unstability when the denominator is close to 0
+                # FIXME: `/` may cause numerical unstability when the denominator is close to 0
                 # TODO: use `inv()` requires defining `inv(call::Call)``)`
                 <=
                 + connection_availability_factor[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
