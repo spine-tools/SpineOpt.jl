@@ -83,7 +83,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
             * (
-                candidate_connections(connection=conn) != nothing ? sum(
+                !isnothing(candidate_connections(connection=conn)) ? sum(
                     connections_invested_available[conn, s, t1]
                     for (conn, s, t1) in connections_invested_available_indices(
                         m; connection=conn, stochastic_scenario=s, t=t_in_t(m; t_short=t)
