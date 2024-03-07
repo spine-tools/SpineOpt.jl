@@ -150,27 +150,27 @@ function constraint_connection_flow_capacity_bidirection_indices(m::Model)
     ) |> Tuple  
 end
 
-"""
-    constraint_connection_flow_capacity_bidirection_indices_filtered(m::Model; filtering_options...)
+# """
+#     constraint_connection_flow_capacity_bidirection_indices_filtered(m::Model; filtering_options...)
 
-Form the stochastic index array for the `:connection_flow_capacity_bidirection` constraint.
+# Form the stochastic index array for the `:connection_flow_capacity_bidirection` constraint.
 
-Uses stochastic path indices of the `connection_flow` variables. Only the lowest resolution time slices are included,
-as the `:connection_flow_capacity_bidirection` is used to constrain the "average power" of the `connection`
-instead of "instantaneous power". Keyword arguments can be used to filter the resulting
-"""
-function constraint_connection_flow_capacity_bidirection_indices_filtered(
-    m::Model;
-    connection=anything,
-    node=anything,
-    direction=anything,
-    direction_reverse=anything,
-    stochastic_path=anything,
-    t=anything,
-)
-    f(ind) = _index_in(
-        ind; connection=connection, node=node, direction=direction, direction_reverse=direction_reverse, 
-        stochastic_path=stochastic_path, t=t
-    )
-    filter(f, constraint_connection_flow_capacity_bidirection_indices(m))
-end
+# Uses stochastic path indices of the `connection_flow` variables. Only the lowest resolution time slices are included,
+# as the `:connection_flow_capacity_bidirection` is used to constrain the "average power" of the `connection`
+# instead of "instantaneous power". Keyword arguments can be used to filter the resulting
+# """
+# function constraint_connection_flow_capacity_bidirection_indices_filtered(
+#     m::Model;
+#     connection=anything,
+#     node=anything,
+#     direction=anything,
+#     direction_reverse=anything,
+#     stochastic_path=anything,
+#     t=anything,
+# )
+#     f(ind) = _index_in(
+#         ind; connection=connection, node=node, direction=direction, direction_reverse=direction_reverse, 
+#         stochastic_path=stochastic_path, t=t
+#     )
+#     filter(f, constraint_connection_flow_capacity_bidirection_indices(m))
+# end
