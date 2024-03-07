@@ -2107,5 +2107,5 @@ end
     test_constraint_pw_unit_heat_rate()
     test_constraint_pw_unit_heat_rate_simple()
     test_constraint_pw_unit_heat_rate_simple2()
-    test_unit_online_variable_type_none()    
+    test_unit_online_variable_type_none()
 end
