@@ -78,7 +78,7 @@ function process_subproblem_solution!(m, k)
     win_weight = win_weight !== nothing ? win_weight : 1.0
     _save_sp_marginal_values!(m, win_weight)
     _save_sp_objective_value!(m, win_weight)
-    _save_sp_unit_flow!(m, k)
+    _save_sp_unit_flow!(m)
     _save_sp_solution!(m, k)
 end
 
@@ -115,7 +115,7 @@ function _save_sp_objective_value!(m, win_weight)
     )
 end
 
-function _save_sp_unit_flow!(m, k)
+function _save_sp_unit_flow!(m)
     window_values = Dict(
         k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
     )
