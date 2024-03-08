@@ -53,8 +53,11 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
     sizehint!(avg_throughflow, length(connection()) * length(stochastic_scenario()) * length(time_slice(m)))
     for ((conn, n, d, s, t), value) in connection_flow
         start(t) >= m_start || continue
-        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
-        n_from, n_to, _other_nodes... = connection__from_node(connection=conn, direction=anything)
+        # NOTE: always assume that the flow goes from the first node in `connection__from_node` 
+        # to the first node in `connection__to_node` s.t. only one node for each direction is needed
+        # CAUTION: would cause trouble for multi-terminal connections (with >= 3 nodes linked)
+        n_from, n_from_others... = connection__from_node(connection=conn, direction=anything)
+        n_to, n_to_others... = connection__to_node(connection=conn, direction=anything)
         if (n == n_to && d == direction(:to_node)) || (n == n_from && d == direction(:from_node))
             new_value = 0.5 * value
         elseif (n == n_from && d == direction(:to_node)) || (n == n_to && d == direction(:from_node))
