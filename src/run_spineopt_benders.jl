@@ -20,45 +20,30 @@
 function rerun_spineopt_benders!(
     m,
     url_out;
-    add_user_variables,
-    add_constraints,
     log_level,
     optimize,
     update_names,
     alternative,
     write_as_roll,
     resume_file_path,
-    run_kernel,
 )
     _add_window_about_to_solve_callback!(m, _set_sp_solution!)
     _add_window_solved_callback!(m, process_subproblem_solution!)
     m_mp = master_problem_model(m)
-    @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
-    @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
-    sp_roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
-    roll_temporal_structure!(m, 1:sp_roll_count)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     _init_mp_model!(m_mp; log_level=log_level)
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+    undo_force_starting_investments! = _force_starting_investments!(m_mp)
     j = 1
-    undo_force_starting_investments! = nothing
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
-        if j == 1
-            undo_force_starting_investments! = _force_starting_investments!(m_mp)
-        elseif j == 2
-            undo_force_starting_investments!()
-        end
+        j == 2 && undo_force_starting_investments!()
         optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
-        @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) back to the first window..." begin
-            rewind_temporal_structure!(m)
-        end
-        run_kernel(
+        run_spineopt_kernel!(
             m;
             log_level=log_level,
             update_names=update_names,

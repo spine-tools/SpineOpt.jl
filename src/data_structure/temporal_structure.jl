@@ -489,9 +489,9 @@ end
 
 function rewind_temporal_structure!(m::Model)
     temp_struct = m.ext[:spineopt].temporal_structure
-    sp_roll_count = temp_struct[:window_count] - 1
-    if sp_roll_count > 0
-        roll_temporal_structure!(m, 1:sp_roll_count; rev=true)
+    roll_count = temp_struct[:window_count] - 1
+    if roll_count > 0
+        roll_temporal_structure!(m, 1:roll_count; rev=true)
         _update_variable_names!(m)
         _update_constraint_names!(m)
     else

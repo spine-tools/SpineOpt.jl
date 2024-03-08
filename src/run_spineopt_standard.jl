@@ -20,32 +20,19 @@
 function rerun_spineopt_standard!(
     m,
     url_out;
-    add_user_variables,
-    add_constraints,
     log_level,
     optimize,
     update_names,
     alternative,
     write_as_roll,
     resume_file_path,
-    run_kernel,
 )
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
-    roll_temporal_structure!(m, 1:roll_count)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
-    @timelog log_level 2 "Bringing model to the first window..." begin
-        roll_temporal_structure!(m, 1:roll_count; rev=true)
-        _update_variable_names!(m)
-        _update_constraint_names!(m)
-    end
     optimize || return m
     calculate_duals = any(
         startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
     try
-        run_kernel(
+        run_spineopt_kernel!(
             m;
             log_level=log_level,
             update_names=update_names,
@@ -67,6 +54,16 @@ function rerun_spineopt_standard!(
             write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
         end
     end
+end
+
+setup_model!(m; kwargs...) = setup_model!(m, m.ext[:spineopt].extension; kwargs...)
+function setup_model!(m, _extension; add_user_variables, add_constraints, log_level)
+    instance = m.ext[:spineopt].instance
+    @timelog log_level 2 "Creating $instance temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating $instance stochastic structure..." generate_stochastic_structure!(m)
+    roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
+    roll_temporal_structure!(m, 1:roll_count)
+    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
 end
 
 """
@@ -250,8 +247,10 @@ function _init_outputs!(m::Model)
     end
 end
 
+run_spineopt_kernel!(m; kwargs...) = run_spineopt_kernel!(m, m.ext[:spineopt].extension; kwargs...)
 function run_spineopt_kernel!(
-    m;
+    m,
+    _extension;
     log_level=3,
     update_names=false,
     calculate_duals=false,
@@ -262,6 +261,7 @@ function run_spineopt_kernel!(
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
+    @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) to the first window..." rewind_temporal_structure!(m)
     while true
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
         (callback -> callback(m, k)).(m.ext[:spineopt].window_about_to_solve_callbacks)

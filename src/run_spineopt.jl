@@ -63,9 +63,9 @@ A new Spine database is created at `url_out` if one doesn't exist.
   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
   Also, save resume data to that same file as the model rolls and results are written to the output database.
 
-- `run_kernel`: a function to call with the model object in order to solve the optimisation problem. It defaults to
-  `run_spineopt_kernel!` but another function with the same signature can be provided to extend the current algorithm
-  or use a different one. This is intended to develop extensions.
+- `extension`: an object representing an extension to SpineOpt.
+  It will be passed as last positional argument to create_model and run_spineopt_kernel!.
+  To develop an extension, just provide methods for those two functions that handle your type.
 
 # Example
 
@@ -96,7 +96,7 @@ function run_spineopt(
     templates=(),
     log_file_path=nothing,
     resume_file_path=nothing,
-    run_kernel=run_spineopt_kernel!,
+    extension=nothing,
 )
     if log_file_path === nothing
         return _run_spineopt(
@@ -116,7 +116,7 @@ function run_spineopt(
             filters=filters,
             templates=templates,
             resume_file_path=resume_file_path,
-            run_kernel=run_kernel,
+            extension=extension,
         )
     end
     done = false
@@ -159,7 +159,7 @@ function run_spineopt(
                         filters=filters,
                         templates=templates,
                         resume_file_path=resume_file_path,
-                        run_kernel=run_kernel,
+                        extension=extension,
                     )
                 catch err
                     showerror(log_file, err, stacktrace(catch_backtrace()))
@@ -261,12 +261,12 @@ function rerun_spineopt(
     write_as_roll=0,
     resume_file_path=nothing,
     use_direct_model=false,
-    run_kernel=run_spineopt_kernel!,
+    extension=nothing,
     handle_window_about_to_solve=(m, k) -> nothing,
     handle_window_solved=(m, k) -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
-    m = create_model(mip_solver, lp_solver, use_direct_model)
+    m = create_model(mip_solver, lp_solver, use_direct_model, extension; add_user_variables, add_constraints, log_level)
     rerun_spineopt! = Dict(
         :spineopt_standard => rerun_spineopt_standard!,
         :spineopt_benders => rerun_spineopt_benders!,
@@ -279,22 +279,21 @@ function rerun_spineopt(
         rerun_spineopt!,
         m,
         url_out;
-        add_user_variables=add_user_variables,
-        add_constraints=add_constraints,
         log_level=log_level,
         optimize=optimize,
         update_names=update_names,
         alternative=alternative,
         write_as_roll=write_as_roll,
         resume_file_path=resume_file_path,
-        run_kernel=run_kernel,
     )
 end
 
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(mip_solver, lp_solver, use_direct_model=false)
+function create_model(
+    mip_solver, lp_solver, use_direct_model, extension; add_user_variables, add_constraints, log_level
+)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
@@ -304,7 +303,8 @@ function create_model(mip_solver, lp_solver, use_direct_model=false)
         m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver)
         m_mp
     end
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
+    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, extension, m_mp)
+    setup_model!(m; add_user_variables, add_constraints, log_level)    
     m
 end
 
@@ -385,6 +385,7 @@ _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model
 struct SpineOptExt
     instance::Object
     lp_solver
+    extension
     master_problem_model::Union{Model,Nothing}
     intermediate_results_folder::String
     report_name_keys_by_url::Dict
@@ -406,7 +407,7 @@ struct SpineOptExt
     has_results::Base.RefValue{Bool}
     window_about_to_solve_callbacks::Vector
     window_solved_callbacks::Vector
-    function SpineOptExt(instance, lp_solver=nothing, master_problem_model=nothing)
+    function SpineOptExt(instance, lp_solver, extension=nothing, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
         report_name_keys_by_url = Dict()
@@ -425,6 +426,7 @@ struct SpineOptExt
         new(
             instance,
             lp_solver,
+            extension,
             master_problem_model,
             intermediate_results_folder,
             report_name_keys_by_url,

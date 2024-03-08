@@ -20,30 +20,21 @@
 function rerun_spineopt_mga!(
     m,
     url_out;
-    add_user_variables,
-    add_constraints,
     log_level,
     optimize,
     update_names,
     alternative,
     write_as_roll,
     resume_file_path,
-    run_kernel,
 )
     outputs = Dict()
     mga_iteration_count = 0
     max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
     mga_iteration = ObjectClass(:mga_iteration, [])
     @eval mga_iteration = $mga_iteration
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
-    run_kernel(m; log_level=log_level, update_names=update_names, output_suffix=_add_mga_iteration(mga_iteration_count))
-    objective_value_mga = :objective_value_mga
-    add_object_parameter_values!(
-        model, Dict(m.ext[:spineopt].instance => Dict(:objective_value_mga => parameter_value(objective_value(m))))
+    run_spineopt_kernel!(
+        m; log_level=log_level, update_names=update_names, output_suffix=_add_mga_iteration(mga_iteration_count)
     )
-    @eval $(objective_value_mga) = $(Parameter(objective_value_mga, [model]))
     mga_iteration_count += 1
     add_mga_objective_constraint!(m)
     set_mga_objective!(m)
