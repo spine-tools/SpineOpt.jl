@@ -93,7 +93,11 @@ function write_lodfs()
     end
     print(io, "\n")
     for conn_cont in connection(connection_contingency=true)
-        n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
+        # NOTE: always assume that the flow goes from the first node in `connection__from_node` 
+        # to the first node in `connection__to_node` s.t. only one node for each direction is needed
+        # CAUTION: would cause trouble for multi-terminal connections (with >= 3 nodes linked)
+        n_from, n_from_others... = connection__from_node(connection=conn_cont, direction=anything)
+        n_to, n_to_others... = connection__to_node(connection=conn_cont, direction=anything)
         print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
         for conn_mon in connection(connection_monitored=true)
             print(io, ",")
