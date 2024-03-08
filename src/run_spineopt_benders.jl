@@ -38,7 +38,7 @@ function rerun_spineopt_benders!(
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     undo_force_starting_investments! = _force_starting_investments!(m_mp)
-    warmup_benders!(m, m_mp)
+    warmup_benders!(m, m_mp, extension)
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
@@ -167,7 +167,6 @@ function _create_mp_objective_terms!(m)
     end
 end
 
-warmup_benders!(m, m_mp) = warmup_benders!(m, m_mp, m.ext[:spineopt].extension)
 warmup_benders!(_m, _m_mp, _extension) = nothing
 
 """
