@@ -91,40 +91,6 @@ function _model_window_duration(instance)
     end
 end
 
-"""
-    _generate_current_window!(m::Model)
-
-Generate the current window TimeSlice for given model.
-"""
-function _generate_current_window!(m::Model)
-    instance = m.ext[:spineopt].instance
-    w_start = model_start(model=instance)
-    w_end = w_start + _model_window_duration(instance)
-    m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        w_start, w_end; duration_unit=_model_duration_unit(instance)
-    )
-end
-
-function _generate_windows_and_window_count!(m::Model)
-    instance = m.ext[:spineopt].instance
-    w_start = model_start(model=instance)
-    w_duration = _model_window_duration(instance)
-    w_end = w_start + w_duration
-    m.ext[:spineopt].temporal_structure[:windows] = windows = []
-    push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
-    i = 1
-    while true
-        rf = roll_forward(model=instance, i=i, _strict=false)
-        (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
-        w_start += rf
-        w_start >= model_end(model=instance) && break
-        w_end += rf
-        push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
-        i += 1
-    end
-    m.ext[:spineopt].temporal_structure[:window_count] = i
-end
-
 # Adjuster functions, in case blocks specify their own start and end
 """
     _adjuster_start(window_start, window_end, blk_start)
@@ -254,14 +220,6 @@ function _history_time_slices!(instance, window_start, window_end, window_time_s
     )
     history_time_slices, t_history_t
 end
-
-function _do_generate_time_slice!(m, window_time_slices, history_time_slices, t_history_t)
-    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-    m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
-    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
-    m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
-end
-
 """
     _generate_time_slice!(m::Model)
 
@@ -277,20 +235,10 @@ function _generate_time_slice!(m::Model)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
     _add_padding_time_slice!(instance, window_end, window_time_slices)
     history_time_slices, t_history_t = _history_time_slices!(instance, window_start, window_end, window_time_slices)
-    _do_generate_time_slice!(m, window_time_slices, history_time_slices, t_history_t)
-end
-
-function _generate_master_window_and_time_slice!(m_mp::Model)
-    instance = m_mp.ext[:spineopt].instance
-    mp_start = model_start(model=instance)
-    mp_end = model_end(model=instance)
-    m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        mp_start, mp_end, duration_unit=_model_duration_unit(instance)
-    )
-    mp_time_slices = _window_time_slices(instance, mp_start, mp_end)
-    _add_padding_time_slice!(instance, mp_end, mp_time_slices)
-    history_time_slices, t_history_t = _history_time_slices!(instance, mp_start, mp_end, mp_time_slices)
-    _do_generate_time_slice!(m_mp, mp_time_slices, history_time_slices, t_history_t)
+    dur_unit = _model_duration_unit(instance)
+    m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
 end
 
 """
@@ -432,6 +380,46 @@ function _refresh_time_slice_set!(t_set::TimeSliceSet)
     refresh!.(values(t_set.bridges))
 end
 
+function generate_time_slice!(m::Model)
+    _generate_time_slice!(m)
+    _generate_output_time_slices!(m)
+    _generate_time_slice_relationships!(m)
+end
+
+"""
+    _generate_current_window!(m::Model)
+
+Generate the current window TimeSlice for given model.
+"""
+function _generate_current_window!(m::Model)
+    instance = m.ext[:spineopt].instance
+    w_start = model_start(model=instance)
+    w_end = w_start + _model_window_duration(instance)
+    m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
+        w_start, w_end; duration_unit=_model_duration_unit(instance)
+    )
+end
+
+function _generate_windows_and_window_count!(m::Model)
+    instance = m.ext[:spineopt].instance
+    w_start = model_start(model=instance)
+    w_duration = _model_window_duration(instance)
+    w_end = w_start + w_duration
+    m.ext[:spineopt].temporal_structure[:windows] = windows = []
+    push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
+    i = 1
+    while true
+        rf = roll_forward(model=instance, i=i, _strict=false)
+        (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
+        w_start += rf
+        w_start >= model_end(model=instance) && break
+        w_end += rf
+        push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
+        i += 1
+    end
+    m.ext[:spineopt].temporal_structure[:window_count] = i
+end
+
 """
     generate_temporal_structure!(m::Model)
 
@@ -440,10 +428,17 @@ Create the temporal structure for SpineOpt from the input database.
 function generate_temporal_structure!(m::Model)
     _generate_current_window!(m)
     _generate_windows_and_window_count!(m)
-    _generate_time_slice!(m)
-    _generate_output_time_slices!(m)
-    _generate_time_slice_relationships!(m)
+    generate_time_slice!(m)
     _generate_representative_time_slice!(m)
+end
+
+function _generate_master_window!(m_mp::Model)
+    instance = m_mp.ext[:spineopt].instance
+    mp_start = model_start(model=instance)
+    mp_end = model_end(model=instance)
+    m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
+        mp_start, mp_end, duration_unit=_model_duration_unit(instance)
+    )
 end
 
 """
@@ -452,9 +447,8 @@ end
 Create the master problem temporal structure for SpineOpt benders.
 """
 function generate_master_temporal_structure!(m_mp::Model)
-    _generate_master_window_and_time_slice!(m_mp)
-    _generate_output_time_slices!(m_mp)
-    _generate_time_slice_relationships!(m_mp)
+    _generate_master_window!(m_mp)
+    generate_time_slice!(m_mp)
 end
 
 """

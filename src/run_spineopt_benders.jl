@@ -37,6 +37,7 @@ function rerun_spineopt_benders!(
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     undo_force_starting_investments! = _force_starting_investments!(m_mp)
+    warmup_benders!(m, m_mp)
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
@@ -65,7 +66,7 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
-        _unfix_history!(m)
+        unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
     end
@@ -164,6 +165,9 @@ function _create_mp_objective_terms!(m)
     end
 end
 
+warmup_benders!(m, m_mp) = warmup_benders!(m, m_mp, m.ext[:spineopt].extension)
+warmup_benders!(_m, _m_mp, _extension) = nothing
+
 """
 Add benders cuts to master problem.
 """
@@ -177,19 +181,6 @@ function _add_mp_cuts!(m; log_level=3)
     end
     _update_constraint_names!(m)
 end
-
-function _unfix_history!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        var = m.ext[:spineopt].variables[name]
-        indices = definition[:indices]
-        for history_ind in indices(m; t=history_time_slice(m))
-            _unfix(var[history_ind])
-        end
-    end
-end
-
-_unfix(v::VariableRef) = is_fixed(v) && unfix(v)
-_unfix(::Call) = nothing
 
 """
 Force starting investments and return a function to be called without arguments to undo the operation.

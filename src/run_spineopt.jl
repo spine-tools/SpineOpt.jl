@@ -21,8 +21,8 @@
     run_spineopt(url_in, url_out; <keyword arguments>)
 
 Run SpineOpt using the contents of `url_in` and write report(s) to `url_out`.
-At least `url_in` must point to a valid Spine database.
-Alternatively, `url_in` can be a julia dictionary (e.g. manually created or parsed from a json file).
+The argument `url_in` must be either a `String` pointing to a valid Spine database,
+or a `Dict` (e.g. manually created or parsed from a json file).
 A new Spine database is created at `url_out` if one doesn't exist.
 
 # Arguments
@@ -64,8 +64,9 @@ A new Spine database is created at `url_out` if one doesn't exist.
   Also, save resume data to that same file as the model rolls and results are written to the output database.
 
 - `extension`: an object representing an extension to SpineOpt.
-  It will be passed as last positional argument to create_model and run_spineopt_kernel!.
-  To develop an extension, just provide methods for those two functions that handle your type.
+  It will be passed as last positional argument to `create_model`, `setup_model!`, `run_spineopt_kernel!`,
+  and warmup_benders!.
+  To develop an extension, just provide the necessary methods for those functions to handle your type.
 
 # Example
 
@@ -185,6 +186,13 @@ function _run_spineopt(url_in, url_out; upgrade, log_level, filters, templates, 
     # possibly adapt union? + allow for conflicts if direct model is used
 end
 
+"""
+    prepare_spineopt(url_in; <keyword arguments>)
+
+Prepare to run SpineOpt from the contents of `url_in`,
+which must be either a `String` pointing to a valid Spine database,
+or a `Dict` (e.g. manually created or parsed from a json file).
+"""
 function prepare_spineopt(
     url_in;
     upgrade=false,
@@ -248,6 +256,13 @@ end
 _data(url_in::String; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
 _data(data::Dict; kwargs...) = data
 
+"""
+    run_spineopt(url_in, url_out; <keyword arguments>)
+
+Re-run the last instance of SpineOpt (created by calling either `run_spineopt` or `prepare_spineopt`)
+and write report(s) to `url_out`.
+A new Spine database is created at `url_out` if one doesn't exist.
+"""
 function rerun_spineopt(
     url_out::Union{String,Nothing};
     mip_solver=nothing,
@@ -266,12 +281,13 @@ function rerun_spineopt(
     handle_window_solved=(m, k) -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
-    m = create_model(mip_solver, lp_solver, use_direct_model, extension; add_user_variables, add_constraints, log_level)
+    m = create_model(mip_solver, lp_solver, use_direct_model, extension)
     rerun_spineopt! = Dict(
         :spineopt_standard => rerun_spineopt_standard!,
         :spineopt_benders => rerun_spineopt_benders!,
         :spineopt_mga => rerun_spineopt_mga!
     )[model_type(model=m.ext[:spineopt].instance)]
+    setup_model!(m; add_user_variables, add_constraints, log_level)
     _add_window_about_to_solve_callback!(m, handle_window_about_to_solve)
     _add_window_solved_callback!(m, handle_window_solved)
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
@@ -291,9 +307,7 @@ end
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(
-    mip_solver, lp_solver, use_direct_model, extension; add_user_variables, add_constraints, log_level
-)
+function create_model(mip_solver, lp_solver, use_direct_model, extension)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
@@ -304,7 +318,6 @@ function create_model(
         m_mp
     end
     m.ext[:spineopt] = SpineOptExt(instance, lp_solver, extension, m_mp)
-    setup_model!(m; add_user_variables, add_constraints, log_level)    
     m
 end
 

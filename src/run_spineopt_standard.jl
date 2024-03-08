@@ -1013,3 +1013,16 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
         end
     end
 end
+
+function unfix_history!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        var = m.ext[:spineopt].variables[name]
+        indices = definition[:indices]
+        for history_ind in indices(m; t=history_time_slice(m))
+            _unfix(var[history_ind])
+        end
+    end
+end
+
+_unfix(v::VariableRef) = is_fixed(v) && unfix(v)
+_unfix(::Call) = nothing
