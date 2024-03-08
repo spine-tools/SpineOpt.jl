@@ -1,7 +1,7 @@
 # This is a template for users to post their problems to the
 # relevant Github Discussions board.
 
-title: "Support Request"
+title: "YOUR TITLE"
 body:
   - type: textarea
     attributes:
