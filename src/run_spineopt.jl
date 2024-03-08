@@ -287,7 +287,7 @@ function rerun_spineopt(
         :spineopt_benders => rerun_spineopt_benders!,
         :spineopt_mga => rerun_spineopt_mga!
     )[model_type(model=m.ext[:spineopt].instance)]
-    setup_model!(m; add_user_variables, add_constraints, log_level)
+    setup_model!(m, extension; add_user_variables, add_constraints, log_level)
     _add_window_about_to_solve_callback!(m, handle_window_about_to_solve)
     _add_window_solved_callback!(m, handle_window_solved)
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
@@ -301,13 +301,14 @@ function rerun_spineopt(
         alternative=alternative,
         write_as_roll=write_as_roll,
         resume_file_path=resume_file_path,
+        extension=extension,
     )
 end
 
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(mip_solver, lp_solver, use_direct_model, extension)
+function create_model(mip_solver, lp_solver, use_direct_model, extension=nothing)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
@@ -317,7 +318,7 @@ function create_model(mip_solver, lp_solver, use_direct_model, extension)
         m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver)
         m_mp
     end
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, extension, m_mp)
+    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
     m
 end
 
@@ -398,7 +399,6 @@ _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model
 struct SpineOptExt
     instance::Object
     lp_solver
-    extension
     master_problem_model::Union{Model,Nothing}
     intermediate_results_folder::String
     report_name_keys_by_url::Dict
@@ -420,7 +420,7 @@ struct SpineOptExt
     has_results::Base.RefValue{Bool}
     window_about_to_solve_callbacks::Vector
     window_solved_callbacks::Vector
-    function SpineOptExt(instance, lp_solver, extension=nothing, master_problem_model=nothing)
+    function SpineOptExt(instance, lp_solver, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
         report_name_keys_by_url = Dict()
@@ -439,7 +439,6 @@ struct SpineOptExt
         new(
             instance,
             lp_solver,
-            extension,
             master_problem_model,
             intermediate_results_folder,
             report_name_keys_by_url,

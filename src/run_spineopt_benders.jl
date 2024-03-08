@@ -26,6 +26,7 @@ function rerun_spineopt_benders!(
     alternative,
     write_as_roll,
     resume_file_path,
+    extension,
 )
     _add_window_about_to_solve_callback!(m, _set_sp_solution!)
     _add_window_solved_callback!(m, process_subproblem_solution!)
@@ -45,7 +46,8 @@ function rerun_spineopt_benders!(
         optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         run_spineopt_kernel!(
-            m;
+            m,
+            extension;
             log_level=log_level,
             update_names=update_names,
             calculate_duals=true,

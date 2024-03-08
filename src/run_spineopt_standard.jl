@@ -26,6 +26,8 @@ function rerun_spineopt_standard!(
     alternative,
     write_as_roll,
     resume_file_path,
+    extension,
+
 )
     optimize || return m
     calculate_duals = any(
@@ -33,7 +35,8 @@ function rerun_spineopt_standard!(
     )
     try
         run_spineopt_kernel!(
-            m;
+            m,
+            extension;
             log_level=log_level,
             update_names=update_names,
             calculate_duals=calculate_duals,
@@ -56,8 +59,7 @@ function rerun_spineopt_standard!(
     end
 end
 
-setup_model!(m; kwargs...) = setup_model!(m, m.ext[:spineopt].extension; kwargs...)
-function setup_model!(m, _extension; add_user_variables, add_constraints, log_level)
+function setup_model!(m, _extension=nothing; add_user_variables, add_constraints, log_level)
     instance = m.ext[:spineopt].instance
     @timelog log_level 2 "Creating $instance temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $instance stochastic structure..." generate_stochastic_structure!(m)
@@ -247,10 +249,9 @@ function _init_outputs!(m::Model)
     end
 end
 
-run_spineopt_kernel!(m; kwargs...) = run_spineopt_kernel!(m, m.ext[:spineopt].extension; kwargs...)
 function run_spineopt_kernel!(
     m,
-    _extension;
+    _extension=nothing;
     log_level=3,
     update_names=false,
     calculate_duals=false,

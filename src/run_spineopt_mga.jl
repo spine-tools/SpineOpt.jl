@@ -26,6 +26,7 @@ function rerun_spineopt_mga!(
     alternative,
     write_as_roll,
     resume_file_path,
+    extension,
 )
     outputs = Dict()
     mga_iteration_count = 0
@@ -33,7 +34,11 @@ function rerun_spineopt_mga!(
     mga_iteration = ObjectClass(:mga_iteration, [])
     @eval mga_iteration = $mga_iteration
     run_spineopt_kernel!(
-        m; log_level=log_level, update_names=update_names, output_suffix=_add_mga_iteration(mga_iteration_count)
+        m,
+        extension;
+        log_level=log_level,
+        update_names=update_names,
+        output_suffix=_add_mga_iteration(mga_iteration_count),
     )
     mga_iteration_count += 1
     add_mga_objective_constraint!(m)

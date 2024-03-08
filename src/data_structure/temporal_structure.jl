@@ -329,7 +329,9 @@ function _generate_representative_time_slice!(m::Model)
     m.ext[:spineopt].temporal_structure[:representative_time_slice] = d = Dict()
     model_blocks = Set(members(temporal_block()))
     for represented_blk in indices(representative_periods_mapping)
-        for (represented_t_start, representative_blk_name) in representative_periods_mapping(temporal_block=represented_blk)
+        for (represented_t_start, representative_blk_name) in representative_periods_mapping(
+            temporal_block=represented_blk
+        )
             representative_blk = temporal_block(representative_blk_name)
             if !(representative_blk in model_blocks)
                 error("representative temporal block $representative_blk is not in model $(m.ext[:spineopt].instance)")
