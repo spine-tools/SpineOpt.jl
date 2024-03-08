@@ -286,11 +286,8 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     A = zeros(Float64, node_count, conn_count)  # incidence_matrix
     inv_X = zeros(Float64, conn_count, conn_count)
     for (ix, conn) in enumerate(connections)
-        # NOTE: always assume that the flow goes from the first node in `connection__from_node` 
-        # to the first node in `connection__to_node` s.t. only one node for each direction is needed
-        # CAUTION: would cause trouble for multi-terminal connections (with >= 3 nodes linked)
-        n_from, n_from_others... = connection__from_node(connection=conn, direction=anything)
-        n_to, n_to_others... = connection__to_node(connection=conn, direction=anything)
+        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
+        n_from, n_to = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[n_from], ix] = 1
         A[node_numbers[n_to], ix] = -1
         reactance = max(connection_reactance(connection=conn, _default=0), 1e-6)
@@ -471,11 +468,7 @@ function generate_lodf()
     Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
     function _lodf_fn(conn_cont)
-        # NOTE: always assume that the flow goes from the first node in `connection__from_node` 
-        # to the first node in `connection__to_node` s.t. only one node for each direction is needed
-        # CAUTION: would cause trouble for multi-terminal connections (with >= 3 nodes linked)
-        n_from, n_from_others... = connection__from_node(connection=conn_cont, direction=anything)
-        n_to, n_to_others... = connection__to_node(connection=conn_cont, direction=anything)
+        n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         denom = 1 - (
             ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to)
         )
