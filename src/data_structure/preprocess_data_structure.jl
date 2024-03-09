@@ -515,9 +515,12 @@ function generate_ptdf_lodf()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
-    # write_ptdf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_ptdfs()
-    # write_lodf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_lodfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_ptdf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_ptdfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_lodf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_lodfs()
 end
 
 """
