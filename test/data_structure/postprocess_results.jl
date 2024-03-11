@@ -54,7 +54,6 @@ function _test_save_connection_avg_throughflow_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
             ["connection", "connection_ab", "connection_monitored", true],
             ["connection", "connection_ab", "connection_reactance", 0.1],
             ["connection", "connection_ab", "connection_resistance", 0.9],
@@ -78,8 +77,41 @@ function _test_save_connection_avg_throughflow_setup()
 end
 
 function test_save_connection_avg_throughflow()
-    @testset "save_connection_avg_throughflow" begin
+    @testset "save_connection_avg_throughflow_unidirectional" begin
         url_in = _test_save_connection_avg_throughflow_setup()
+        m = run_spineopt(url_in; log_level=0)
+        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
+        @test length(connection_avg_throughflow) == 2
+        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        key = (connection=connection(:connection_ab), node=node(:node_b))
+        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
+        @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+    end
+    @testset "save_connection_avg_throughflow_unidirectional_imbalanced_terminal" begin
+        url_in = _test_save_connection_avg_throughflow_setup()
+        relationships = [
+            ["connection__from_node", ["connection_ab", "node_b"]],
+        ]
+        SpineInterface.import_data(url_in; relationships=relationships)
+        m = run_spineopt(url_in; log_level=0)
+        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
+        @test length(connection_avg_throughflow) == 2
+        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        key = (connection=connection(:connection_ab), node=node(:node_b))
+        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
+        @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+    end
+    @testset "save_connection_avg_throughflow_bidirectional" begin
+        url_in = _test_save_connection_avg_throughflow_setup()
+        object_parameter_values = [
+            ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+        )
         m = run_spineopt(url_in; log_level=0)
         connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
         @test length(connection_avg_throughflow) == 2
@@ -267,7 +299,6 @@ function test_save_contingency_is_binding()
         end
     end
 end
-
 
 @testset "postprocess_results" begin
     test_save_connection_avg_throughflow()
