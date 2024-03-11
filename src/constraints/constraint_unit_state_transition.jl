@@ -17,10 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_state_transition!(m::Model)
+@doc raw"""
+The units on status is constrained by shutting down and starting up actions. This transition is defined as follows:
 
-Ensure consistency between the variables `units_on`, `units_started_up` and `units_shut_down`.
+```math
+\begin{aligned}
+& v^{units\_on}_{(u,s,t)} - v^{units\_started\_up}_{(u,s,t)} + v^{units\_shut\_down}_{(u,s,t)} = v^{units\_on}_{(u,s,t-1)} \\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_unit_state_transition!(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
@@ -29,7 +35,7 @@ function add_constraint_unit_state_transition!(m::Model)
     m.ext[:spineopt].constraints[:unit_state_transition] = Dict(
         (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
                 for (u, s, t_after) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t_after, temporal_block=anything,
@@ -37,7 +43,7 @@ function add_constraint_unit_state_transition!(m::Model)
                 init=0,
             )
             ==
-            expr_sum(
+            sum(
                 + units_on[u, s, t_before]
                 for (u, s, t_before) in units_on_indices(
                     m; unit=u, stochastic_scenario=s, t=t_before, temporal_block=anything,

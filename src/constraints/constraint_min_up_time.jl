@@ -17,24 +17,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_min_up_time!(m::Model)
+@doc raw"""
+Similarly to the [minimum down time constraint](@ref constraint_min_down_time),
+a minimum time that a unit needs to remain online after a start up can be imposed
+by defining the [min\_up\_time](@ref) parameter. This will trigger the generation of the following constraint:
 
-Constrain running by minimum up time.
-"""
+```math
+\begin{aligned}
+& v^{units\_on}_{(u,s,t)} - \sum_{n} v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \\
+& \geq
+\sum_{t'=t-p^{min\_up\_time}_{(u,s,t)} +1 }^{t}
+v^{units\_started\_up}_{(u,s,t')} \\
+& \forall u \in indices(p^{min\_up\_time})\\
+& \forall (s,t)
+\end{aligned}
+```
 
+See also
+[min\_up\_time](@ref)
+"""
 function add_constraint_min_up_time!(m::Model)
     @fetch units_on, units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:min_up_time] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + units_on[u, s, t]
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             )
-            - expr_sum(
+            - sum(
                 + nonspin_units_shut_down[u, n, s, t]
                 for (u, n, s, t) in nonspin_units_shut_down_indices(
                     m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything,

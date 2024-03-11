@@ -49,7 +49,7 @@ function storages_invested_mga_indices(mga_iteration)
     )
 end
 
-function set_objective_mga_iteration!(m;iteration=nothing,iterations_num=0)
+function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
     instance = m.ext[:spineopt].instance
     _set_objective_mga_iteration!(
         m,
@@ -60,7 +60,7 @@ function set_objective_mga_iteration!(m;iteration=nothing,iterations_num=0)
         units_invested_mga_weight,
         units_invested_big_m_mga,
         iteration,
-        iterations_num
+        iteration_number
     )
     _set_objective_mga_iteration!(
         m,
@@ -71,7 +71,7 @@ function set_objective_mga_iteration!(m;iteration=nothing,iterations_num=0)
         connections_invested_mga_weight,
         connections_invested_big_m_mga,
         iteration,
-        iterations_num
+        iteration_number
     )
     _set_objective_mga_iteration!(
         m,
@@ -82,13 +82,13 @@ function set_objective_mga_iteration!(m;iteration=nothing,iterations_num=0)
         storages_invested_mga_weight,
         storages_invested_big_m_mga,
         iteration,
-        iterations_num
+        iteration_number
     )
     @fetch mga_aux_diff, mga_objective = m.ext[:spineopt].variables
     ub_objective = get!(m.ext[:spineopt].constraints, :mga_objective_ub, Dict())
     ub_objective[(model=m.ext[:spineopt].instance,)] = @constraint(
         m,
-        mga_objective[(model = m.ext[:spineopt].instance,t=current_window(m))]
+        mga_objective[(model = m.ext[:spineopt].instance, t=current_window(m))]
         <= sum(
             mga_aux_diff[ind]
             for ind in vcat(
@@ -110,7 +110,7 @@ function _set_objective_mga_iteration!(
     mga_weight_iteration::Parameter,
     mga_variable_bigM::Parameter,
     mga_current_iteration::Object,
-    iterations_num::Int64,
+    iteration_number::Int64,
 )
     if !isempty(mga_indices())
         weighted_investments = all(
@@ -122,7 +122,6 @@ function _set_objective_mga_iteration!(
         )
         t0 = start(current_window(m))
         @fetch units_invested = m.ext[:spineopt].variables
-        mga_results = m.ext[:spineopt].outputs
         d_aux = get!(m.ext[:spineopt].variables, :mga_aux_diff, Dict())
         d_bin = get!(m.ext[:spineopt].variables, :mga_aux_binary, Dict())
         for ind in mga_indices(mga_current_iteration)
@@ -134,7 +133,6 @@ function _set_objective_mga_iteration!(
             end
         end
         @fetch mga_aux_diff, mga_aux_binary = m.ext[:spineopt].variables
-        mga_results = m.ext[:spineopt].outputs
         variable = m.ext[:spineopt].variables[variable_name]
         # FIXME: don't create new dict everytime, but get existing one
         d_diff_ub1 = get!(m.ext[:spineopt].constraints, :mga_diff_ub1, Dict())
@@ -146,7 +144,7 @@ function _set_objective_mga_iteration!(
                 # for ind_ in variable_indices_function(m; ind...) end  # ???!!!
                 d_diff_ub1[(ind..., mga_current_iteration...)] = @constraint(
                     m,
-                    mga_aux_diff[((ind..., mga_iteration=mga_current_iteration))]
+                    mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     ==
                     (
                         sum(
@@ -154,7 +152,7 @@ function _set_objective_mga_iteration!(
                             for ind_ in variable_indices_function(m; ind...)
                         )
                     )
-                    * mga_weight_iteration(; ind..., i=iterations_num)
+                    * mga_weight_iteration(; ind..., i=iteration_number)
                 )
                 # TODO: add scaling factor to template
             end
@@ -163,13 +161,10 @@ function _set_objective_mga_iteration!(
                 # TODO: ADD mga_scaling factor
                 d_diff_ub1[(ind..., mga_current_iteration...)] = @constraint(
                     m,
-                    mga_aux_diff[((ind..., mga_iteration=mga_current_iteration))]
+                    mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     <=
                     sum(
-                        (
-                            + variable[ind_]
-                            - mga_results[variable_name][(_drop_key(ind_, :t)..., mga_iteration=mga_current_iteration)][t0][ind_.t.start.x]
-                        )
+                        (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration, t0))
                         * scenario_weight_function(m; _drop_key(ind_, :t)...) # FIXME: can also be only node or so
                         for ind_ in variable_indices_function(m; ind...)
                     )
@@ -178,13 +173,10 @@ function _set_objective_mga_iteration!(
                 )
                 d_diff_ub2[(ind..., mga_current_iteration...)] = @constraint(
                     m,
-                    mga_aux_diff[((ind..., mga_iteration=mga_current_iteration))]
+                    mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     <=
                     sum(
-                        -(
-                            + variable[ind_]
-                            - mga_results[variable_name][(_drop_key(ind_, :t)..., mga_iteration=mga_current_iteration)][t0][ind_.t.start.x]
-                        )
+                        (_mga_result(m, variable_name, ind_, mga_current_iteration, t0) - variable[ind_])
                         * scenario_weight_function(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     )
@@ -193,13 +185,10 @@ function _set_objective_mga_iteration!(
                 )
                 d_diff_lb1[(ind..., mga_current_iteration...)] = @constraint(
                     m,
-                    mga_aux_diff[((ind..., mga_iteration=mga_current_iteration))]
+                    mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     >=
                     sum(
-                        (
-                            + variable[ind_]
-                            - mga_results[variable_name][(_drop_key(ind_, :t)..., mga_iteration=mga_current_iteration)][t0][ind_.t.start.x]
-                        )
+                        (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration, t0))
                         * scenario_weight_function(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     )
@@ -207,21 +196,22 @@ function _set_objective_mga_iteration!(
                 )
                 d_diff_lb2[(ind..., mga_current_iteration...)] = @constraint(
                     m,
-                    mga_aux_diff[((ind..., mga_iteration=mga_current_iteration))]
+                    mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     >=
                     sum(
-                        - (
-                            + variable[ind_]
-                            - mga_results[variable_name][(_drop_key(ind_, :t)..., mga_iteration=mga_current_iteration)][t0][ind_.t.start.x]
-                        )
+                        (_mga_result(m, variable_name, ind_, mga_current_iteration, t0) - variable[ind_])
                         * scenario_weight_function(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     ) 
                     * mga_weight_iteration(; ind...)
                 )
            end
-       end
+        end
     end
+end
+
+function _mga_result(m, variable_name, ind, mga_iteration, t0)
+    m.ext[:spineopt].outputs[variable_name][(_drop_key(ind, :t)..., mga_iteration=mga_iteration)][t0][start(ind.t)]
 end
 
 function add_mga_objective_constraint!(m::Model)

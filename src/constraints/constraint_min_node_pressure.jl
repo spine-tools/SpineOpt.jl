@@ -17,10 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_min_node_pressure!(m::Model)
+@doc raw"""
+In order to impose a lower limit on the pressure at a node the parameter [min\_node\_pressure](@ref)
+can be specified which triggers the following constraint:
 
-Limit the minimum value of a `node_pressure` variable to be below `min_node_pressure`, if it exists.
+```math
+\sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \geq p^{min\_node\_pressure}_{(ng,s,t)}
+\quad \forall (ng) \in indices(p^{min\_node\_pressure}), \, \forall (s,t)
+```
+
+As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group,
+in order to impose a lower limit on the aggregated [node\_pressure](@ref) within one node group.
+
+See also [min\_node\_pressure](@ref).
 """
 function add_constraint_min_node_pressure!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables
@@ -28,7 +37,7 @@ function add_constraint_min_node_pressure!(m::Model)
     m.ext[:spineopt].constraints[:min_node_pressure] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + node_pressure[ng, s, t]
                 for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,

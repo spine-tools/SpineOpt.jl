@@ -16,7 +16,7 @@ default_translation = Dict(
     ["object_classes"] => "Object Classes",
 )
 concept_dictionary = add_cross_references!(
-    initialize_concept_dictionary(SpineOpt.template(); translation=default_translation),
+    initialize_concept_dictionary(SpineOpt.template(); translation = default_translation),
 )
 write_concept_reference_files(concept_dictionary, path)
 
@@ -25,7 +25,7 @@ write_concept_reference_files(concept_dictionary, path)
 mathpath = joinpath(path, "src", "mathematical_formulation")
 docstrings = all_docstrings(SpineOpt)
 constraints_lines = readlines(joinpath(mathpath, "constraints.md"))
-expand_instructions!(constraints_lines, docstrings)
+expand_tags!(constraints_lines, docstrings)
 open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
     write(file, join(constraints_lines, "\n"))
 end
@@ -41,13 +41,16 @@ pages = [
         "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
         "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
         "Archetypes" => joinpath("getting_started", "archetypes.md"),
-        "Managing Outputs" => joinpath("getting_started", "output_data.md")
+        "Managing Outputs" => joinpath("getting_started", "output_data.md"),
     ],
     "Tutorials" => Any[
         "Webinars" => joinpath("tutorial", "webinars.md"),
         "Simple system" => joinpath("tutorial", "simple_system.md"),
+        "Reserve requirements" => joinpath("tutorial", "reserves.md"),
+        "Ramping constraints" => joinpath("tutorial", "ramping.md"),
+        "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
         "Two hydro plants" => joinpath("tutorial", "tutorialTwoHydro.md"),
-        "Case Study A5" => joinpath("tutorial", "case_study_a5.md")
+        "Case Study A5" => joinpath("tutorial", "case_study_a5.md"),
     ],
     "How to" => [],
     "Concept Reference" => Any[
@@ -66,7 +69,8 @@ pages = [
         "Temporal Framework" => joinpath("advanced_concepts", "temporal_framework.md"),
         "Stochastic Framework" => joinpath("advanced_concepts", "stochastic_framework.md"),
         "Unit Commitment" => joinpath("advanced_concepts", "unit_commitment.md"),
-        "Ramping and Reserves" => joinpath("advanced_concepts", "ramping_and_reserves.md"),
+        "Ramping" => joinpath("advanced_concepts", "ramping.md"),
+        "Reserves" => joinpath("advanced_concepts", "reserves.md"),
         "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
         "User Constraints" => joinpath("advanced_concepts", "user_constraints.md"),
         "Decomposition" => joinpath("advanced_concepts", "decomposition.md"),
@@ -74,7 +78,7 @@ pages = [
         "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
         "Lossless nodal DC power flows" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
         "Representative days with seasonal storages" => joinpath(
-            "advanced_concepts", "representative_days_w_seasonal_storage.md"
+            "advanced_concepts", "representative_days_w_seasonal_storage.md",
         ),
         "Imposing renewable energy targets" => joinpath("advanced_concepts", "cumulated_flow_restrictions.md"),
         "Modelling to generate alternatives" => joinpath("advanced_concepts", "mga.md"),
@@ -86,9 +90,9 @@ populate_empty_chapters!(pages, joinpath(path, "src"))
 
 # Create and deploy the documentation
 makedocs(
-    sitename="SpineOpt.jl",
-    format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true", size_threshold=409600),  # uncomment to deploy locally
-    pages=pages,
-    warnonly=true
+    sitename = "SpineOpt.jl",
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true", size_threshold = 409600, assets = ["assets/style.css"]),  # uncomment to deploy locally
+    pages = pages,
+    warnonly = true,
 )
-deploydocs(repo="github.com/spine-tools/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])
+deploydocs(repo = "github.com/spine-tools/SpineOpt.jl.git", versions = ["stable" => "v^", "v#.#"])

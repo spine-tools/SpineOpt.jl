@@ -17,11 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_candidate_connection_flow_ub!(m::Model)
+@doc raw"""
+For candidate connections with PTDF-based poweflow, together with [this](@ref constraint_candidate_connection_flow_lb),
+this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in
+and equals [connection\_intact\_flow](@ref) otherwise.
 
-For connection investments with PTDF flow enabled, this constraint limits the flow on the candidate_connection
-to the intact_flow on that connection, which represents the flow on the line if it is invested.
+```math
+\begin{aligned}
+& v^{connection\_flow}_{(c, n, d, s, t)} 
+\leq
+v^{connection\_intact\_flow}_{(c, n, d, s, t)} \\
+& \forall c \in connection : p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_candidate_connection_flow_ub!(m::Model)
     @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables

@@ -17,13 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_ratio_out_in_connection_intact_flow!(m, ratio_out_in, sense)
+@doc raw"""
+For PTDF-based lossless DC power flow, ensures that the output flow to the ``to\_node``
+equals the input flow from the ``from\_node``.
 
-Ratio of `connection_intact_flow` variables.
-
-Note that the `<sense>_ratio_<directions>_connection_intact_flow` parameter uses the stochastic dimensions of the second
-<direction>!
+```math
+\begin{aligned}              
+& v^{connection\_intact\_flow}_{(c, n_{out}, d_{to}, s, t)}
+=
+v^{connection\_intact\_flow}_{(c, n_{in}, d_{from}, s, t)} \\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
     @fetch connection_intact_flow = m.ext[:spineopt].variables
@@ -31,7 +37,7 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
     m.ext[:spineopt].constraints[:ratio_out_in_connection_intact_flow] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + connection_intact_flow[conn, n_out, d, s, t_short] * duration(t_short)
                 for (conn, n_out, d, s, t_short) in connection_intact_flow_indices(
                     m;
@@ -44,7 +50,7 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
                 init=0,
             )
             ==
-            + expr_sum(
+            + sum(
                 + connection_intact_flow[conn, n_in, d, s, t_short] * duration(t_short)
                 for (conn, n_in, d, s, t_short) in connection_intact_flow_indices(
                     m;

@@ -1,3 +1,0 @@
-The definition of the `min_startup_ramp` parameter will trigger the creation of the [constraint on minimum startup ramp](@ref constraint_min_start_up_ramp). It sets a lower bound on the [unit\_flow](@ref) variable for the timestep right after a startup.
-
-It can be defined for [unit__to_node](@ref) or [unit__from_node](@ref) relationships, as well as their counterparts for node groups. It will then impose restrictions on the `unit_flow` variables that indicate flows between the two members of the relationship for which the parameter is defined. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. When the parameter is not included, the aforementioned constraint will not be created, which is equivalent to choosing a value of 0.

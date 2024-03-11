@@ -17,10 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_max_node_voltage_angle!(m::Model)
+@doc raw"""
+In order to impose an upper limit on the maximum voltage angle at a node
+the parameter [max\_voltage\_angle](@ref) can be specified which triggers the following constraint:
 
-Limit the maximum value of a `node_voltage_angle` variable to be below `max_voltage_angle`, if it exists.
+```math
+\begin{aligned}
+& \sum_{n \in ng} v^{node\_voltage\_angle}_{(n,s,t)} \geq p^{max\_voltage\_angle}_{(ng,s,t)} \\
+& \forall ng \in indices(p^{max\_voltage\_angle}) \\
+& \forall (s,t)
+\end{aligned}
+```
+As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also be defined on a node group,
+in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
+
+See also [max\_voltage\_angle](@ref).
+
 """
 function add_constraint_max_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle = m.ext[:spineopt].variables
@@ -28,7 +40,7 @@ function add_constraint_max_node_voltage_angle!(m::Model)
     m.ext[:spineopt].constraints[:max_node_voltage_angle] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + node_voltage_angle[ng, s, t]
                 for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,

@@ -17,28 +17,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_units_available!(m::Model)
+@doc raw"""
+The aggregated available units are constrained by the parameter [number\_of\_units](@ref)
+, the variable number of invested units [units\_invested\_available](@ref) less the number of units on outage [units\_out\_of\_service](@ref):
 
-Limit the units_online by the number of available units.
+```math
+\begin{aligned}
+& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} + v^{units\_out\_of\_service}_{(u,s,t)}\\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also [number\_of\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
-    @fetch units_available, units_invested_available = m.ext[:spineopt].variables
+    @fetch units_available, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                units_available[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+            + sum(
+                + units_available[u, s, t] 
+                + units_out_of_service[u, s, t]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
-            - expr_sum(
+            - sum(
                 units_invested_available[u, s, t1]
                 for (u, s, t1) in units_invested_available_indices(
                     m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
-            )
+            )            
             <=
             number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
         )

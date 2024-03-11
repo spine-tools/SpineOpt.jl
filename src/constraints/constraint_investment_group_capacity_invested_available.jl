@@ -69,7 +69,7 @@ function _group_capacity_invested_available(m, ig, s, t)
     t0 = _analysis_time(m)
     @fetch units_invested_available, connections_invested_available = m.ext[:spineopt].variables
     (
-        + expr_sum(
+        + sum(
             + units_invested_available[u, s, t]
             * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
             for (u, s, t) in units_invested_available_indices(
@@ -93,7 +93,7 @@ function _group_capacity_invested_available(m, ig, s, t)
             );
             init=0
         )
-        + expr_sum(
+        + sum(
             + connections_invested_available[conn, s, t]
             * connection_capacity[(connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
             for (conn, s, t) in connections_invested_available_indices(

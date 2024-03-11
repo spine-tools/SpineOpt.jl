@@ -17,12 +17,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_pw_heat_rate!(m)
+@doc raw"""
+Implements a standard piecewise linear heat-rate function where [unit\_flow](@ref) from a (input fuel consumption) node
+is equal to the sum over operating point segments of [unit\_flow\_op](@ref) to a (output electricity node) node
+times the corresponding [incremental\_heat\_rate](@ref).
 
-Implements a standard piecewise linear heat_rate function where `unit_flow` from `node_from` (input fuel consumption)
-is equal to the sum over operating point segments of `unit_flow_op` to `node_to` (output electricity node) times the
-corresponding incremental_heat_rate
+```math
+\begin{aligned}
+& v^{unit\_flow}_{(u, n_{in}, d, s, t)} \\
+& = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} p^{unit\_incremental\_heat\_rate}_{(u, n_{in}, n_{out}, op, s, t)}
+\cdot v^{unit\_flow\_op}_{(u, n_{out}, d, op, s, t)} \\
+& + p^{unit\_idle\_heat\_rate}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_on}_{(u, s, t)} \\
+& + p^{unit\_start\_flow}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_started\_up}_{(u, s, t)} \\
+& \forall (u,n_{in},n_{out}) \in indices(p^{unit\_incremental\_heat\_rate}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also
+[unit\_incremental\_heat\_rate](@ref),
+[unit\_idle\_heat\_rate](@ref),
+[unit\_start\_flow](@ref).
 """
 function add_constraint_unit_pw_heat_rate!(m::Model)
     @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:spineopt].variables
@@ -30,7 +45,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
     m.ext[:spineopt].constraints[:unit_pw_heat_rate] = Dict(
         (unit=u, node1=n_from, node2=n_to, stochastic_path=s, t=t) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + unit_flow[u, n, d, s, t_short] * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
@@ -43,7 +58,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 init=0,
             )
             ==
-            + expr_sum(
+            + sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
                 * unit_incremental_heat_rate[
                     (unit=u, node1=n_from, node2=n, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short),
@@ -54,7 +69,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 );
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_incremental_heat_rate[
                     (unit=u, node1=n_from, node2=n, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short),
@@ -66,7 +81,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
             )
-            + expr_sum(
+            + sum(
                 + units_on[u, s, t1]
                 * min(duration(t1), duration(t))
                 * unit_idle_heat_rate[

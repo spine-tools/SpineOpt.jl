@@ -1,0 +1,3 @@
+`outage_variable_type` is a method parameter to model the 'commitment' or 'activation' of [unit](@ref) maintenance outages.
+
+To scheduled maintenance outages, one must activate the [units\_out\of\_service](@ref) variable. This is done by changing the value of the [outage\_variable\_type](@ref) to either `online_variable_type_integer` (for clustered units) or `online_variable_type_binary` for binary units or `unit_online_variable_type_linear` for continuous units. Setting [outage\_variable\_type](@ref) to `online_variable_type_none` will deactivate the [units\_out\of\_service](@ref) variable and this is the default value.

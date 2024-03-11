@@ -31,3 +31,7 @@ Thanks for taking the plunge!
 * Don't explicitly parameterize types unless it's necessary
 * Never leave things without type qualifications. Use an explicit `::Any`.
 * Order method definitions from most specific to least specific type constraints
+
+## Further questions
+* For developers there is some additional information in the implementation details (e.g. how to write a constraint).
+* You can talk to your fellow developers over gitter if the above is insufficient.

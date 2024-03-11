@@ -17,24 +17,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_storages_invested_transition!(m::Model)
+@doc raw"""
+[storages\_invested](@ref) represents the point-in-time decision to invest in storage at a node ``n`` or not,
+while [storages\_invested\_available](@ref) represents the invested-in storages that are available at a node at a
+specific time.
+This constraint enforces the relationship between [storages\_invested](@ref), [storages\_invested\_available](@ref)
+and [storages\_decommissioned](@ref) in adjacent timeslices.
 
-Ensure consistency between the variables `storages_invested_available`, `storages_invested` and `storages_decommissioned`.
+```math
+\begin{aligned}
+& v^{storages\_invested\_available}_{(n,s,t)} - v^{storages\_invested}_{(n,s,t)}
++ v^{storages\_decommissioned}_{(n,s,t)}
+= v^{storages\_invested\_available}_{(n,s,t-1)} \\
+& \forall n \in node: p^{candidate\_storages}_{(n)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_storages_invested_transition!(m::Model)
     @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:storages_invested_transition] = Dict(
         (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
-            expr_sum(
+            sum(
                 + storages_invested_available[n, s, t_after] - storages_invested[n, s, t_after]
                 + storages_decommissioned[n, s, t_after]
                 for (n, s, t_after) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_after);
                 init=0,
             )
             ==
-            expr_sum(
+            sum(
                 + storages_invested_available[n, s, t_before]
                 for (n, s, t_before) in storages_invested_available_indices(
                     m; node=n, stochastic_scenario=s, t=t_before

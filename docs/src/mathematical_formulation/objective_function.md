@@ -4,14 +4,14 @@ The objective function of SpineOpt expresses the minimization of the total syste
 
 ```math
 \begin{aligned}
-& \min obj = v_{unit\_investment\_costs} + v_{connection\_investment\_costs} + v_{storage\_investment\_costs}\\
-& + v_{fixed\_om\_costs} + v_{variable\_om\_costs} + v_{fuel\_costs}  +  v_{start\_up\_costs} \\
-& + v_{shut\_down\_costs} + v_{ramp\_costs} + v_{res\_proc\_costs} \\
-& + v_{renewable\_curtailment\_costs} + v_{connection\_flow\_costs} +  v_{taxes} +
-v_{objective\_penalties}\\
+& \min obj = {unit\_investment\_costs} + {connection\_investment\_costs} + {storage\_investment\_costs}\\
+& + {fixed\_om\_costs} + {variable\_om\_costs} + {fuel\_costs}  +  {start\_up\_costs} \\
+& + {shut\_down\_costs} + {res\_proc\_costs} \\
+& + {renewable\_curtailment\_costs} + {connection\_flow\_costs} +  {taxes} +
+{objective\_penalties}\\
 \end{aligned}
 ```
-Note that each cost term is reflected here as a separate variable that can be expressed mathematically by the equations below. All cost terms are weighted by the associated scenario and temporal block weights. To enhance readability and avoid writing a product of weights in every cost term, all weights are combined in a single weight parameter ``p_{weight}(...)``. As such, the indices associated with each weight parameter indicate which weights are included.
+Note that each cost term is reflected here as a separate variable that can be expressed mathematically by the equations below. All cost terms are weighted by the associated scenario and temporal block weights. To enhance readability and avoid writing a product of weights in every cost term, all weights are combined in a single weight parameter ``p^{weight}_{(...)}``. As such, the indices associated with each weight parameter indicate which weights are included.
 
 # Unit investment costs
 
@@ -19,10 +19,9 @@ To take into account unit investments in the objective function, the parameter [
 
 ```math
 \begin{aligned}
-& v_{unit\_investment\_costs} \\
-& = \sum_{\substack{(u,s,t) \in units\_invested\_available\_indices:\\
-      u \in ind(p_{unit\_investment\_cost})}}
-    v_{units\_invested}(u, s, t) \cdot p_{unit\_investment\_cost}(u,s,t) \cdot p_{weight}(u,s,t)\\
+& {unit\_investment\_costs}
+ = \sum_{(u,s,t)}
+    v^{units\_invested}_{(u, s, t)} \cdot p^{unit\_investment\_cost}_{(u,s,t)} \cdot p^{weight}_{(u,s,t)}\\
 \end{aligned}
 ```
 
@@ -33,9 +32,9 @@ To take into account connection investments in the objective function, the param
 
 ```math
 \begin{aligned}
-& v_{connection\_investment\_costs} \\
-& = \sum_{\substack{(conn,s,t) \in connections\_invested\_available\_indices: \\ conn \in ind(p_{connection\_investment\_cost})}}
- v_{connections\_invested}(conn, s, t) \cdot p_{connection\_investment\_cost}(conn,s,t) \cdot p_{weight}(conn,s,t) \\
+& {connection\_investment\_costs}
+ = \sum_{(conn,s,t)}
+ v^{connections\_invested}_{(conn, s, t)} \cdot p^{connection\_investment\_cost}_{(conn,s,t)} \cdot p^{weight}_{(conn,s,t)} \\
 \end{aligned}
 ```
 
@@ -45,9 +44,9 @@ To take into account storage investments in the objective function, the paramete
 
 ```math
 \begin{aligned}
-& v_{storage\_investment\_costs} \\
-& = \sum_{\substack{(n,s,t) \in storages\_invested\_available\_indices:\\ n \in ind(p_{storage\_investment\_cost})}}
- v_{storages\_invested}(n, s, t) \cdot p_{storage\_investment\_cost}(n,s,t) \cdot p_{weight}(n,s,t) \\
+& {storage\_investment\_costs} 
+ = \sum_{(n,s,t)}
+ v^{storages\_invested}_{(n, s, t)} \cdot p^{storage\_investment\_cost}_{(n,s,t)} \cdot p^{weight}_{(n,s,t)} \\
 \end{aligned}
 ```
 
@@ -59,15 +58,11 @@ The total fixed O&M costs can be expressed as:
 
 ```math
 \begin{aligned}
-& v_{fixed\_om\_costs} \\
-& = 
-\sum_{\substack{(u,s,t)  \in  units\_on\_indices}}
-\text{ } \sum_{\substack{(u,n,d) \in ind(p_{unit\_capacity}):\\ u \in ind(p_{fom\_cost})}} \\
- & \left[p_{number\_of\_units}(u,s,t) + \sum_{\substack{(u,s,t') \in units\_invested\_available\_indices:\\ t' \in t\_overlaps\_t(t)}} v_{units\_invested\_available}(u, s, t') \right] \\
- & \cdot p_{unit\_capacity}(u,n,d,s,t)
- \cdot p_{fom\_cost}(u,s,t)
- p_{weight}(t) \cdot
- p_{duration}(t)\\
+& {fixed\_om\_costs}
+ = 
+\sum_{(u,n,d,s,t)}
+ \left( p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)} \right)
+ \cdot p^{unit\_capacity}_{(u,n,d,s,t)} \cdot p^{fom\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -78,9 +73,9 @@ The total variable O&M costs can be expressed as:
 
 ```math
 \begin{aligned}
-& v_{variable\_om\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\(u,n,d) \in ind(p_{vom\_cost})}}
- v_{unit\_flow}(u, n, d, s, t) \cdot  p_{vom\_cost}(u,n,d,s,t) \cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
+& {variable\_om\_costs}
+ = \sum_{(u,n,d,s,t)}
+ v^{unit\_flow}_{(u, n, d, s, t)} \cdot  p^{vom\_cost}_{(u,n,d,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -89,9 +84,9 @@ Fuel costs associated with a specific unit can be accounted for by defining the 
 
 ```math
 \begin{aligned}
-& v_{fuel\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ (u,n,d) \in ind(p_{fuel\_cost})}}
- v_{unit\_flow}(u, n, d, s, t) \cdot  p_{fuel\_cost}(u,n,d,s,t) \cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
+& {fuel\_costs}
+ = \sum_{(u,n,d,s,t)}
+ v^{unit\_flow}_{(u, n, d, s, t)} \cdot  p^{fuel\_cost}_{(u,n,d,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -100,9 +95,9 @@ To account for operational costs associated with flows over a specific connectio
 
 ```math
 \begin{aligned}
-& v_{connection\_flow\_costs} \\
-& = \sum_{\substack{(conn,n,d,s,t) \in connection\_flow\_indices: \\ conn \in ind(p_{connection\_flow\_cost})}}
-v_{connection\_flow }(conn, n, d, s, t) \cdot  p_{connection\_flow\_cost}(conn,s,t) \cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
+& {connection\_flow\_costs}
+ = \sum_{(conn,n,d,s,t)}
+v^{connection\_flow }_{(conn, n, d, s, t)} \cdot  p^{connection\_flow\_cost}_{(conn,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -112,9 +107,9 @@ Start up costs associated with a specific unit can be included by defining the [
 
 ```math
 \begin{aligned}
-& v_{start\_up\_costs} \\
-& = \sum_{\substack{(u,s,t) \in units\_on\_indices:\\ u \in ind(p_{start\_up\_cost})}}
- v_{units\_started\_up}(u, s, t) \cdot p_{start\_up\_cost}(u,s,t)\cdot p_{weight}(u,s,t)\\
+& {start\_up\_costs}
+ = \sum_{(u,s,t)}
+ v^{units\_started\_up}_{(u, s, t)} \cdot p^{start\_up\_cost}_{(u,s,t)} \cdot p^{weight}_{(u,s,t)}\\
 \end{aligned}
 ```
 # Shut down costs
@@ -122,35 +117,29 @@ Shut down costs associated with a specific unit can be included by defining the 
 
 ```math
 \begin{aligned}
-& v_{shut\_down\_costs} \\
-& = \sum_{\substack{(u,s,t) \in units\_on\_indices:\\ u \in ind(p_{shut\_down\_cost})}}
-v_{units\_shut\_down}(u,s,t) \cdot p_{start\_up\_cost}(u,s,t)\cdot p_{weight}(u,s,t)\\
+& {shut\_down\_costs}
+ = \sum_{(u,s,t)}
+v^{units\_shut\_down}_{(u,s,t)} \cdot p^{start\_up\_cost}_{(u,s,t)} \cdot p^{weight}_{(u,s,t)}\\
 \end{aligned}
 ```
-
-# Ramping costs
-To account for the ramping costs (up and down) associated with a specific unit, the parameters [ramp\_up\_cost](@ref) and [ramp\_down\_cost](@ref) can be defined. For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the sets `ramp_up_unit_flow_indices` and `ramp_down_unit_flow_indices` for which [ramp\_up\_cost](@ref) and [ramp\_down\_cost](@ref) are  defined, respectively, a ramping cost term is added to the objective function. The total ramping costs can be expressed as:
-
-```math
-\begin{aligned}
-& v_{ramp\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \in ind(p_{ramp\_up\_cost})}}
-v_{ramp\_up\_unit\_flow}(u, n, d, s, t)\cdot p_{ramp\_up\_cost}(u,n,d,s,t)\cdot p_{weight}(n,s,t)\cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \in ind(p_{ramp\_down\_cost})}}
-  v_{ramp\_down\_unit\_flow}(u, n, d, s, t) \cdot p_{ramp\_down\_cost}(u,n,d,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
-\end{aligned}
-```
-
 
 # Reserve procurement costs
 The procurement costs for reserves provided by a specific unit can be accounted for by defining the [reserve\_procurement\_cost](@ref) parameter. For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set `unit_flow_indices` for which this parameter is defined, a reserve procurement cost term is added to the objective function. The total reserve procurement costs can be expressed as:
 
 ```math
 \begin{aligned}
-& v_{res\_proc\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\ (u,n,d) \in ind(p_{reserve\_procurement\_cost})}}
-v_{unit\_flow}(u, n, d, s, t) \cdot p_{reserve\_procurement\_cost}(u,n,d,s,t) \cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
+& {res\_proc\_costs}
+ = \sum_{(u,n,d,s,t)}
+v^{unit\_flow}_{(u, n, d, s, t)} \cdot p^{reserve\_procurement\_cost}_{(u,n,d,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t
+\cdot \left[p^{is\_reserve\_node}_{n}\right] \\
 \end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
 ```
 
 # Renewable curtailment costs
@@ -158,13 +147,11 @@ The curtailment costs of renewable units can be accounted for by defining the pa
 
 ```math
 \begin{aligned}
-& v_{renewable\_curtailment\_costs} \\
-& = \sum_{\substack{(u,n,d) \in ind(p_{unit\_capacity}): \\ u \in ind(p_{curtailment\_cost})}}
-\sum_{\substack{(u,s,t_{long}) \in units\_on\_indices}}
-\sum_{\substack{(u,n,s,t_{short}) \in unit\_flow\_indices}} \\
-& (  v_{units\_available}(u, s, t_{long})\cdot p_{unit\_capacity}(u,n,d,s,t_{short}) \cdot  p_{unit\_conv\_cap\_to\_flow}(u,n,d,s,t_{short}) \\
-& - v_{unit\_flow}(u, n, d, s, t_{short}) ) \\
-& \cdot  p_{curtailment\_cost}(u,s,t_{short}) \cdot p_{weight}(n,s,t_{short}) \cdot p_{duration}(t_{short})\\
+& {renewable\_curtailment\_costs}
+ = \sum_{(u,n,d,s,t)}
+ \left(v^{units\_available}_{(u, s, t)} \cdot p^{unit\_capacity}_{(u,n,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,n,d,s,t)}
+ - v^{unit\_flow}_{(u, n, d, s, t)} \right)
+ \cdot p^{curtailment\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -173,15 +160,15 @@ To account for taxes on certain commodity flows, the tax unit flow parameters (i
 
 ```math
 \begin{aligned}
-& v_{taxes} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_net\_unit\_flow}) \& d=  to\_node}}
-v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_net\_unit\_flow}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
-& - \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_net\_unit\_flow}) \& d=  from\_node}}
-v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_net\_unit\_flow}(n,s,t)\cdot p_{weight}(n,s,t)\cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_out\_unit\_flow}) \& d=  from\_node}}
- v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_out\_unit\_flow}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_in\_unit\_flow}) \& d=  to\_node}}
- v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_in\_unit\_flow}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
+{taxes} = 
+& \sum_{(u,n,s,t) }
+v^{unit\_flow}_{(u, n, to\_node, s, t)} \cdot p^{tax\_net\_unit\_flow}_{(n,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
+& - \sum_{(u,n,s,t)}
+v^{unit\_flow}_{(u, n, from\_node, s, t)} \cdot p^{tax\_net\_unit\_flow}_{(n,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
+& + \sum_{(u,n,s,t)}
+v^{unit\_flow}_{(u, n, from\_node, s, t)} \cdot p^{tax\_out\_unit\_flow}_{(n,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
+& + \sum_{(u,n,s,t)}
+v^{unit\_flow}_{(u, n, to\_node, s, t)} \cdot p^{tax\_in\_unit\_flow}_{(n,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -191,8 +178,9 @@ Penalty cost terms associated with the slack variables of a specific constraint 
 
 ```math
 \begin{aligned}
-& v_{objective\_penalties} \\
-& = \sum_{\substack{(u,s,t) \in node\_slack\_indices}}
-\left[v_{node\_slack\_neg}(n, s, t)-v_{node\_slack\_pos}(n, s, t) \right]\cdot p_{node\_slack\_penalty}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
+& {objective\_penalties}
+ = \sum_{(n,s,t)}
+\left(v^{node\_slack\_neg}_{(n, s, t)} - v^{node\_slack\_pos}_{(n, s, t)} \right) \cdot p^{node\_slack\_penalty}_{(n,s,t)}
+\cdot p^{weight}_{(n,s,t)} \cdot \Delta t \\
 \end{aligned}
 ```
