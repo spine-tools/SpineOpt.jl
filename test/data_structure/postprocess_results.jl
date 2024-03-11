@@ -17,65 +17,70 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "postprocess_results" begin
+function _test_save_connection_avg_throughflow_setup()
+    url_in = "sqlite://"
+    test_data = Dict(
+        :objects => [
+            ["model", "instance"],
+            ["temporal_block", "hourly"],
+            ["stochastic_structure", "stochastic"],
+            ["connection", "connection_ab"],
+            ["node", "node_a"],
+            ["node", "node_b"],
+            ["stochastic_scenario", "parent"],
+            ["stochastic_scenario", "child"],
+            ["commodity", "electricity"],
+            ["report", "report_x"],
+            ["output", "connection_avg_intact_throughflow"],
+        ],
+        :relationships => [
+            ["connection__from_node", ["connection_ab", "node_a"]],
+            ["connection__to_node", ["connection_ab", "node_b"]],
+            ["model__temporal_block", ["instance", "hourly"]],
+            ["model__stochastic_structure", ["instance", "stochastic"]],
+            ["node__temporal_block", ["node_a", "hourly"]],
+            ["node__temporal_block", ["node_b", "hourly"]],
+            ["node__stochastic_structure", ["node_a", "stochastic"]],
+            ["node__stochastic_structure", ["node_b", "stochastic"]],
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
+            ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
+            ["node__commodity", ["node_a", "electricity"]],
+            ["node__commodity", ["node_b", "electricity"]],
+            ["report__output", ["report_x", "connection_avg_intact_throughflow"]],
+        ],
+        :object_parameter_values => [
+            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["model", "instance", "duration_unit", "hour"],
+            ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
+            ["connection", "connection_ab", "connection_monitored", true],
+            ["connection", "connection_ab", "connection_reactance", 0.1],
+            ["connection", "connection_ab", "connection_resistance", 0.9],
+            ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
+            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+            ["node", "node_a", "demand", -100],
+            ["node", "node_b", "demand", 100],
+            ["output", "connection_avg_intact_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
+            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+        ],
+        :relationship_parameter_values => [[
+            "stochastic_structure__stochastic_scenario",
+            ["stochastic", "parent"],
+            "stochastic_scenario_end",
+            Dict("type" => "duration", "data" => "1h"),
+        ]],
+    )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function test_save_connection_avg_throughflow()
     @testset "save_connection_avg_throughflow" begin
-        url_in = "sqlite://"
-        test_data = Dict(
-            :objects => [
-                ["model", "instance"],
-                ["temporal_block", "hourly"],
-                ["stochastic_structure", "stochastic"],
-                ["connection", "connection_ab"],
-                ["node", "node_a"],
-                ["node", "node_b"],
-                ["stochastic_scenario", "parent"],
-                ["stochastic_scenario", "child"],
-                ["commodity", "electricity"],
-                ["report", "report_x"],
-                ["output", "connection_avg_intact_throughflow"],
-            ],
-            :relationships => [
-                ["connection__from_node", ["connection_ab", "node_a"]],
-                ["connection__to_node", ["connection_ab", "node_b"]],
-                ["model__temporal_block", ["instance", "hourly"]],
-                ["model__stochastic_structure", ["instance", "stochastic"]],
-                ["node__temporal_block", ["node_a", "hourly"]],
-                ["node__temporal_block", ["node_b", "hourly"]],
-                ["node__stochastic_structure", ["node_a", "stochastic"]],
-                ["node__stochastic_structure", ["node_b", "stochastic"]],
-                ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
-                ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
-                ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
-                ["node__commodity", ["node_a", "electricity"]],
-                ["node__commodity", ["node_b", "electricity"]],
-                ["report__output", ["report_x", "connection_avg_intact_throughflow"]],
-            ],
-            :object_parameter_values => [
-                ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
-                ["model", "instance", "duration_unit", "hour"],
-                ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-                ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
-                ["connection", "connection_ab", "connection_monitored", true],
-                ["connection", "connection_ab", "connection_reactance", 0.1],
-                ["connection", "connection_ab", "connection_resistance", 0.9],
-                ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
-                ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-                ["node", "node_a", "demand", -100],
-                ["node", "node_b", "demand", 100],
-                ["output", "connection_avg_intact_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
-                ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-                ["model", "instance", "db_lp_solver", "HiGHS.jl"],
-            ],
-            :relationship_parameter_values => [[
-                "stochastic_structure__stochastic_scenario",
-                ["stochastic", "parent"],
-                "stochastic_scenario_end",
-                Dict("type" => "duration", "data" => "1h"),
-            ]],
-        )
-        _load_test_data(url_in, test_data)
-        m = run_spineopt(url_in, "sqlite://"; log_level=0)
+        url_in = _test_save_connection_avg_throughflow_setup()
+        m = run_spineopt(url_in; log_level=0)
         connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -84,6 +89,9 @@
         key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
         @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
     end
+end
+
+function test_save_contingency_is_binding()
     @testset "save_contingency_is_binding" begin
         url_in = "sqlite://"
         file_path_out = "$(@__DIR__)/test_out.sqlite"
@@ -258,4 +266,10 @@
             @test obs == exp
         end
     end
+end
+
+
+@testset "postprocess_results" begin
+    test_save_connection_avg_throughflow()
+    test_save_contingency_is_binding()
 end
