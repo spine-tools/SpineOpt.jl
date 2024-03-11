@@ -4,7 +4,7 @@ Thanks for taking the plunge!
 
 * It's always good to start with a quick search for an existing issue to post on, or related issues for context, before opening a new issue
 * Including minimal examples is greatly appreciated
-* If it's a bug, or unexpected behavior, reproducing on the latest development version (`Pkg.checkout("SpineOpt")`) is a good gut check and can streamline the process, along with including the first two lines of output from `versioninfo()`
+* If it's a bug, or unexpected behavior, reproducing on the latest development version (`Pkg.checkout("SpineOpt")`) is a good check and can streamline the process, along with including the first two lines of output from `versioninfo()`
 
 ## Contributing
 
