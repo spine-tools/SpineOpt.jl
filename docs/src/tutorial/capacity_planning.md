@@ -22,10 +22,11 @@ This tutorial includes a step-by-step guide to include the parameters to help an
 
 ### Entering input data
 
-- Begin by downloading the [6-unit system sqlite database](figs_capacity_planning/6_unit_system.sqlite)
+- Begin by downloading the [6-unit system json database](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/6_unit_system.json)
 - Launch Spine Toolbox and select **File** and then **Open Project** or use the keyboard shortcut **Ctrl + O** to open the desired project.
-- Select the 'input' Data Store item in the *Design View* and navigate to the sqlite file just downloaded or move the downloaded file to the input folder of the project.
+- Select the 'input' Data Store item in the *Design View* and create a new sqlite database.
 - Go to *Data Store Properties* and hit **Open editor**. This will open the database in the *Spine DB editor*.
+- Go to the hamburger menu (typically at the top right) and select **import**. Navigate to the downloaded json file and import it.
 
 
 #### Creating objects
