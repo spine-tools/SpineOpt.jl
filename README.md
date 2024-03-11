@@ -190,6 +190,28 @@ To compile SpineOpt into a system image just do the following:
 ### Troubleshooting
 
 #### Problem
+Some of the development of SpineOpt depends on the development of SpineInterface and vice versa. At some points in time that can create an incompatibility between the two.
+
+You could get an error like:
+```julia
+ERROR: LoadError: MethodError: no method matching MathOptInterface.EqualTo(::SpineInterface.Map{Symbol, SpineInterface.TimeSeries{Float64}})
+Closest candidates are:
+MathOptInterface.EqualTo(::T) where T\<:Number at C:\\Users\\prokjt.julia\\packages\\MathOptInterface\\vwZYM\\src\\sets.jl:223
+```
+
+#### Solution
+It might just be a matter of time before the projects are updated. In the meanwhile you can check the issues whether someone has already reported the out-of-sync issue or otherwise create the issue yourself.
+
+In the meanwhile you can try another version. One option is to update directly from the github repository instead of the julia registry:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/spine-tools/SpineInterface.jl.git")
+```
+
+Another option is to use the developer version as described in the installation section.
+
+#### Problem
 
 Using Julia 1.5.3 on Windows, installation fails with one of the following messages (or similar):
 
