@@ -73,7 +73,7 @@ function _save_mp_values!(m_mp, var_name, obj_cls)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function process_subproblem_solution!(m, k)
+function process_subproblem_solution!(m, k; kwargs...)
     win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
     win_weight = win_weight !== nothing ? win_weight : 1.0
     _save_sp_marginal_values!(m, k, win_weight)
@@ -151,7 +151,7 @@ function _save_sp_solution!(m, k)
     )
 end
 
-function _set_sp_solution!(m, k)
+function _set_sp_solution!(m, k; kwargs...)
     for (name, vals) in get(m.ext[:spineopt].sp_values, k, ())
         var = m.ext[:spineopt].variables[name]
         for (ind, val) in vals

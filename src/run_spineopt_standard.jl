@@ -56,19 +56,12 @@ function run_spineopt_standard!(
     end
 end
 
-function build_model!(m, _extension=nothing; log_level)
+function build_model!(m; log_level)
     instance = m.ext[:spineopt].instance
     @timelog log_level 2 "Creating $instance temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $instance stochastic structure..." generate_stochastic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
-    init_model!(m; log_level=log_level)
-end
-
-"""
-Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
-"""
-function init_model!(m; log_level=3)
     @timelog log_level 2 "Adding variables...\n" _add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding constraints...\n" _add_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting objective..." _set_objective!(m)
@@ -241,8 +234,7 @@ function _init_outputs!(m::Model)
 end
 
 function solve_model!(
-    m,
-    _extension=nothing;
+    m;
     log_level=3,
     update_names=false,
     calculate_duals=false,
