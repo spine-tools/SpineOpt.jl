@@ -29,8 +29,8 @@ function _test_save_connection_avg_throughflow_setup()
             ["node", "node_b"],
             ["stochastic_scenario", "parent"],
             ["stochastic_scenario", "child"],
-            ["commodity", "electricity"],
             ["report", "report_x"],
+            ["output", "connection_avg_throughflow"],
             ["output", "connection_avg_intact_throughflow"],
         ],
         :relationships => [
@@ -45,8 +45,7 @@ function _test_save_connection_avg_throughflow_setup()
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
             ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
+            ["report__output", ["report_x", "connection_avg_throughflow"]],
             ["report__output", ["report_x", "connection_avg_intact_throughflow"]],
         ],
         :object_parameter_values => [
@@ -54,13 +53,9 @@ function _test_save_connection_avg_throughflow_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["connection", "connection_ab", "connection_monitored", true],
-            ["connection", "connection_ab", "connection_reactance", 0.1],
-            ["connection", "connection_ab", "connection_resistance", 0.9],
-            ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["node", "node_a", "demand", -100],
             ["node", "node_b", "demand", 100],
+            ["output", "connection_avg_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
             ["output", "connection_avg_intact_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
@@ -78,9 +73,10 @@ end
 
 function test_save_connection_avg_throughflow()
     @testset "save_connection_avg_throughflow_unidirectional" begin
+        # The case where the connection has a single connection__from_node and connection__to_node from node a to b.
         url_in = _test_save_connection_avg_throughflow_setup()
         m = run_spineopt(url_in; log_level=0)
-        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
+        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
         key = (connection=connection(:connection_ab), node=node(:node_b))
@@ -88,14 +84,33 @@ function test_save_connection_avg_throughflow()
         key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
         @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
     end
-    @testset "save_connection_avg_throughflow_unidirectional_imbalanced_terminal" begin
+    @testset "save_connection_avg_throughflow_unidirectional_imbalanced_terminal_a" begin
+        # The case where the connection has connection__from_node for both node a and b 
+        # and a single connection__to_node for node b.
         url_in = _test_save_connection_avg_throughflow_setup()
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships)
         m = run_spineopt(url_in; log_level=0)
-        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
+        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
+        @test length(connection_avg_throughflow) == 2
+        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        key = (connection=connection(:connection_ab), node=node(:node_b))
+        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
+        @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+    end
+    @testset "save_connection_avg_throughflow_unidirectional_imbalanced_terminal_b" begin
+        # The case where the connection has connection__to_node for both node a and b 
+        # and a single connection__from_node for node a.
+        url_in = _test_save_connection_avg_throughflow_setup()
+        relationships = [
+            ["connection__to_node", ["connection_ab", "node_a"]],
+        ]
+        SpineInterface.import_data(url_in; relationships=relationships)
+        m = run_spineopt(url_in; log_level=0)
+        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
         key = (connection=connection(:connection_ab), node=node(:node_b))
@@ -104,12 +119,27 @@ function test_save_connection_avg_throughflow()
         @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
     end
     @testset "save_connection_avg_throughflow_bidirectional" begin
+        # The case where the connection between node a and b is bidirectional, including the ptdf calculation.
         url_in = _test_save_connection_avg_throughflow_setup()
+        objects = [
+            ["commodity", "electricity"],
+        ]
+        relationships = [
+            ["node__commodity", ["node_a", "electricity"]],
+            ["node__commodity", ["node_b", "electricity"]],
+        ]
         object_parameter_values = [
+            ["connection", "connection_ab", "connection_monitored", true],
+            ["connection", "connection_ab", "connection_reactance", 0.1],
+            ["connection", "connection_ab", "connection_resistance", 0.9],
+            ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
+            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
         ]
         SpineInterface.import_data(
             url_in;
+            objects=objects,
+            relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0)
