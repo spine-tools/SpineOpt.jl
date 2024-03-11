@@ -1,13 +1,6 @@
-# Hydro Power Planning
+# How to model hydro power coupling
 
-Welcome to this Spine Toolbox tutorial for building hydro power planning
-models. The tutorial guides you through the implementation of different
-ways of modelling hydrodologically-coupled hydropower systems.
-
-
-## Introduction
-
-This tutorial aims at demonstrating how we can model a hydropower system
+This how-to aims at demonstrating how we can model a hydropower system
 in Spine (*SpineOpt.jl* and *Spine-Toolbox*) with different assumptions and
 goals. It starts off by setting up a simple model of system of two
 hydropower plants and gradually introduces additional features. The goal
