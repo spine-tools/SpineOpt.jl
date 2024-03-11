@@ -10,8 +10,6 @@
         ["model__default_stochastic_structure", ["simple", "deterministic"]],
         ["model__default_temporal_block", ["simple", "flat"]],
         ["model__report", ["simple", "report1"]],
-        ["model__stochastic_structure", ["simple", "deterministic"]],
-        ["model__temporal_block", ["simple", "flat"]],
         ["stochastic_structure__stochastic_scenario", ["deterministic", "realization"]]
     ],
     "object_parameter_values": [

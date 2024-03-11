@@ -16,23 +16,31 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    add_constraint_cyclic_node_state!(m::Model)
+@doc raw"""
+To ensure that the node state at the end of the optimization is at least the same value as the initial value
+at the beginning of the optimization (or higher),
+the cyclic node state constraint can be used by setting the [cyclic\_condition](@ref) of
+a [node\_\_temporal\_block](@ref) to `true`. This triggers the following constraint:
 
-Enforces cyclic constraint on node state over a temporal block.
+```math
+v^{node\_state}_{(n, s, start(tb))} \geq  v^{node\_state}_{(n, s, end(tb))}
+\qquad \forall (n,tb) \in indices(p^{cyclic\_condition}): p^{cyclic\_condition}_{(n,tb)}
+```
+
+See also [cyclic\_condition](@ref).
 """
 function add_constraint_cyclic_node_state!(m::Model)
     @fetch node_state = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:cyclic_node_state] = Dict(
         (node=n, stochastic_scenario=s, t_start=t_start, t_end=t_end) => @constraint(
             m,
-            expr_sum(
+            sum(
                 node_state[n, s, t_end]
                 for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_end);
                 init=0,
             )
             >=
-            expr_sum(
+            sum(
                 node_state[n, s, t_start]
                 for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_start);
                 init=0,

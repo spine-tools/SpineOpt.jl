@@ -17,24 +17,48 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_intact_flow_ptdf!(m::Model)
+@doc raw"""
+The power transfer distribution factors are a property of the network reactances.
+``p^{ptdf}_{(c, n)}`` represents the fraction of an injection at [node](@ref) ``n`` that will flow
+on [connection](@ref) ``c``.
+The flow on [connection](@ref) ``c`` is then the sum over all nodes of ``p^{ptdf}_{(c, n)}`` multiplied by the
+net injection at that node.
+[connection\_intact\_flow](@ref) represents the flow on each line of the network with all candidate connections
+with PTDF-based flow present in the network.
 
-For connection networks with monitored and has_ptdf set to true, set the steady state flow based on PTDFs.
+```math
+\begin{aligned}
+& v^{connection\_intact\_flow}_{(c, n_{to}, to\_node, s, t)}
+- v^{connection\_intact\_flow}_{(c, n_{to}, from\_node, s, t)} \\
+& = \sum_{n_{inj}} p^{ptdf}_{(c, n_{inj}, t)} \cdot v^{node\_injection}_{(n_{inj}, s, t)}
+\cdot \left[p^{node\_opf\_type}_{(n_{inj})} \neq node\_opf\_type\_reference \right]
+\\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
+
 """
 function add_constraint_connection_intact_flow_ptdf!(m::Model)
     @fetch connection_intact_flow, node_injection, connection_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:connection_intact_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + get(connection_intact_flow, (conn, n_to, direction(:to_node), s, t), 0)
                 - get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0)
                 for s in s;
                 init=0
             )
             ==
-            + expr_sum(
+            + sum(
                 ptdf[(connection=conn, node=n, t=t)]
                 * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
                 * node_injection[n, s, t]
@@ -43,7 +67,7 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t);                                  
                 init=0
             )
-            + expr_sum(
+            + sum(
                 ptdf[(connection=conn, node=n, t=t)]
                 * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
                 * connection_flow[conn1, n1, d, s, t]                                
@@ -56,7 +80,7 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
                 if is_boundary_connection(connection=conn1);
                 init=0
             )
-            - expr_sum(
+            - sum(
                 ptdf[(connection=conn, node=n, t=t)]
                 * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
                 * connection_flow[conn1, n1, d, s, t]                                
@@ -82,6 +106,7 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (n_to, t) in node_time_indices(m; node=n_to)
+        if _check_ptdf_duration(m, t, conn)
         for path in active_stochastic_paths(
             m,
             vcat(

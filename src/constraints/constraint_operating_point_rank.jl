@@ -17,11 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_operating_point_rank!(m::Model)
-
-Rank operating points by enforcing that the variable `unit_flow_op_active` of operating point `i` can only be active 
+@doc raw"""
+Rank operating segments by enforcing that the variable `unit_flow_op_active` of operating point `i` can only be active 
 if previous operating point `i-1` is also active. The first segment does not need this constraint.
+
+```math
+\begin{aligned}
+& v^{unit\_flow\_op\_active}_{(u,n,d,op,s,t)} \leq v^{unit\_flow\_op\_active}_{(u,n,d,op-1,s,t)} \\
+& \forall (u,n,d) \in indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
+& \forall op \in \{ 2, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| \} \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also [operating\_points](@ref), [ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_operating_point_rank!(m::Model)
     @fetch unit_flow_op_active = m.ext[:spineopt].variables
@@ -33,6 +42,6 @@ function add_constraint_operating_point_rank!(m::Model)
             unit_flow_op_active[u, n, d, op - 1, s, t]
         )
         for (u, n, d, op, s, t) in unit_flow_op_active_indices(m)
-        if ordered_unit_flow_op(unit = u, node=n, direction=d, _default=false) && (op > 1)
+        if (op > 1)
     )
 end

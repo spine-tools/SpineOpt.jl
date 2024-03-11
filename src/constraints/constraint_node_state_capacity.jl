@@ -17,10 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_node_state_capacity!(m::Model)
+@doc raw"""
+To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
-Limit the maximum value of a `node_state` variable under `node_state_cap`, if it exists.
+```math
+v^{node\_state}_{(n, s, t)} \leq p^{node\_state\_cap}_{(n, s, t)} \quad \forall n \in node : p^{has\_state}_{(n)}, \, \forall (s,t)
+```
+
+The discharging and charging behavior of storage nodes can be described through unit(s),
+representing the link between the storage node and the supply node.
+Note that the dis-/charging efficiencies and capacities are properties of these units.
+See the [capacity constraint](@ref constraint_unit_flow_capacity) and
+the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
+
+See also
+[node\_state\_cap](@ref),
+[has\_state](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
@@ -28,7 +40,7 @@ function add_constraint_node_state_capacity!(m::Model)
     m.ext[:spineopt].constraints[:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 + node_state[ng, s, t] for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,
             )
@@ -36,7 +48,7 @@ function add_constraint_node_state_capacity!(m::Model)
             + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (
                 candidate_storages(node=ng) !== nothing ?
-                expr_sum(
+                sum(
                     storages_invested_available[n, s, t1]
                     for (n, s, t1) in storages_invested_available_indices(
                         m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_short=t)

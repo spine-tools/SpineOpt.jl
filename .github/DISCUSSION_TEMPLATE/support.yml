@@ -1,0 +1,26 @@
+# This is a template for users to post their problems to the
+# relevant Github Discussions board.
+
+title: "YOUR TITLE"
+body:
+  - type: textarea
+    attributes:
+      label: Describe your problem
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Attach your model as a JSON file (encouraged)
+      placeholder: "Use the paperclip to attach the file."
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: What versions are you using?
+      value: |
+        SpineOpt:
+        SpineInterface:
+        SpineToolbox:
+        Julia:
+    validations:
+      required: true

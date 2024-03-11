@@ -28,7 +28,7 @@ function add_constraint_storage_lifetime!(m::Model)
     m.ext[:spineopt].constraints[:storage_lifetime] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
-            expr_sum(
+            sum(
                 storages_invested_available[n, s, t]
                 for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
                 init=0,

@@ -17,10 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connections_invested_available!(m::Model)
+@doc raw"""
+The number of available invested-in connections at any point in time is less than the number of
+investment candidate connections.
 
-Limit the connections_invested_available by the number of investment candidate connections.
+```math
+\begin{aligned}
+& v^{connections\_invested\_available}_{(c,s,t)} < p^{candidate\_connections}_{(c)} \\
+& \forall c \in connection: p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_connections_invested_available!(m::Model)
     @fetch connections_invested_available = m.ext[:spineopt].variables

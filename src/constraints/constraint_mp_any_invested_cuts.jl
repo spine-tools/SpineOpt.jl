@@ -34,43 +34,42 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
     merge!(
         get!(m.ext[:spineopt].constraints, :mp_any_invested_cut, Dict()),
         Dict(
-            (benders_iteration=bi, t=t) => @constraint(
+            (benders_iteration=current_bi, t=t) => @constraint(
                 m,
                 + sp_objective_upperbound[t]
                 >=
-                + sp_objective_value_bi(benders_iteration=bi)
+                + sp_objective_value_bi(benders_iteration=current_bi)
                 # operating cost benefit from investments in units
-                + expr_sum(
+                + sum(
                     (
                         + units_invested_available[u, s, t]
                         - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
                     )
                     * window_sum(units_invested_available_mv(unit=u, stochastic_scenario=s), t)
-                    for (u, s, t) in units_invested_available_indices(m)
+                    for (u, s, t) in units_invested_available_indices(m);
                     init=0,
                 )
                 # operating cost benefit from investments in connections
-                + expr_sum(
+                + sum(
                     (
                         + connections_invested_available[c, s, t]
                         - internal_fix_connections_invested_available(connection=c, stochastic_scenario=s, t=t)
                     )
                     * window_sum(connections_invested_available_mv(connection=c, stochastic_scenario=s), t)
-                    for (c, s, t) in connections_invested_available_indices(m)
+                    for (c, s, t) in connections_invested_available_indices(m);
                     init=0,
                 )
                 # operating cost benefit from investments in storages
-                + expr_sum(
+                + sum(
                     (
                         + storages_invested_available[n, s, t]
                         - internal_fix_storages_invested_available(node=n, stochastic_scenario=s, t=t)
                     )
                     * window_sum(storages_invested_available_mv(node=n, stochastic_scenario=s), t)
-                    for (n, s, t) in storages_invested_available_indices(m)
+                    for (n, s, t) in storages_invested_available_indices(m);
                     init=0,
                 )
             )
-            for bi in last(benders_iteration())
             for (t,) in sp_objective_upperbound_indices(m)
         )
     )

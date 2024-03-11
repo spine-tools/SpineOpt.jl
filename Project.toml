@@ -1,14 +1,13 @@
 name = "SpineOpt"
 uuid = "0d8fc150-4032-4b6e-9540-20efcb304861"
 authors = ["Spine Project consortium <spine_info@vtt.fi>"]
-version = "0.6.16"
+version = "0.7.1"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -18,5 +17,6 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 
 [compat]
-SpineInterface = "0.11.9"
+SpineInterface = "0.12.2"
 julia = "^1.2"
+JuMP = "^1.20"

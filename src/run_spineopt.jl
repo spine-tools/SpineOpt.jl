@@ -17,17 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-module _Template
-using SpineInterface
-end
-using ._Template
-
-
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
 
 Run SpineOpt using the contents of `url_in` and write report(s) to `url_out`.
 At least `url_in` must point to a valid Spine database.
+Alternatively, `url_in` can be a julia dictionary (e.g. manually created or parsed from a json file).
 A new Spine database is created at `url_out` if one doesn't exist.
 
 # Arguments
@@ -58,12 +53,19 @@ A new Spine database is created at `url_out` if one doesn't exist.
 - `filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
   Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
 
+- `templates`: a collection of templates to load on top of the SpineOpt template.
+  Each template must be a `Dict` with the same structure as the one returned by `SpineOpt.template()`.
+
 - `log_file_path::String=nothing`: if not nothing, log all console output to a file at the given path. The file
   is overwritten at each call.
 
 - `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
   Also, save resume data to that same file as the model rolls and results are written to the output database.
+
+- `run_kernel`: a function to call with the model object in order to solve the optimisation problem. It defaults to
+  `run_spineopt_kernel!` but another function with the same signature can be provided to extend the current algorithm
+  or use a different one. This is intended to develop extensions.
 
 # Example
 
@@ -77,7 +79,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 """
 function run_spineopt(
-    url_in::String,
+    url_in::Union{String,Dict},
     url_out::Union{String,Nothing}=url_in;
     upgrade=false,
     mip_solver=nothing,
@@ -91,8 +93,10 @@ function run_spineopt(
     write_as_roll=0,
     use_direct_model=false,
     filters=Dict("tool" => "object_activity_control"),
+    templates=(),
     log_file_path=nothing,
-    resume_file_path=nothing
+    resume_file_path=nothing,
+    run_kernel=run_spineopt_kernel!,
 )
     if log_file_path === nothing
         return _run_spineopt(
@@ -110,7 +114,9 @@ function run_spineopt(
             write_as_roll=write_as_roll,
             use_direct_model=use_direct_model,
             filters=filters,
-            resume_file_path=resume_file_path
+            templates=templates,
+            resume_file_path=resume_file_path,
+            run_kernel=run_kernel,
         )
     end
     done = false
@@ -151,7 +157,9 @@ function run_spineopt(
                         write_as_roll=write_as_roll,
                         use_direct_model=use_direct_model,
                         filters=filters,
-                        resume_file_path=resume_file_path
+                        templates=templates,
+                        resume_file_path=resume_file_path,
+                        run_kernel=run_kernel,
                     )
                 catch err
                     showerror(log_file, err, stacktrace(catch_backtrace()))
@@ -164,40 +172,11 @@ function run_spineopt(
     end
 end
 
-function _run_spineopt(
-    url_in::String,
-    url_out::Union{String,Nothing}=url_in;
-    upgrade=false,
-    mip_solver=nothing,
-    lp_solver=nothing,
-    add_user_variables=m -> nothing,
-    add_constraints=m -> nothing,
-    log_level=3,
-    optimize=true,
-    update_names=false,
-    alternative="",
-    write_as_roll=0,
-    use_direct_model=false,
-    filters=Dict("tool" => "object_activity_control"),
-    resume_file_path=nothing
-)
+function _run_spineopt(url_in, url_out; upgrade, log_level, filters, templates, kwargs...)
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
-    prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
-    m = rerun_spineopt(
-        url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        add_user_variables=add_user_variables,
-        add_constraints=add_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        update_names=update_names,
-        alternative=alternative,
-        write_as_roll=write_as_roll,
-        resume_file_path=resume_file_path,
-        use_direct_model=use_direct_model
-    )
+    prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters, templates=templates)
+    m = rerun_spineopt(url_out; log_level=log_level, kwargs...)
     t_end = now()
     elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))    
     @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
@@ -210,27 +189,20 @@ function prepare_spineopt(
     url_in;
     upgrade=false,
     log_level=3,
-    filters=Dict("tool" => "object_activity_control")
+    filters=Dict("tool" => "object_activity_control"),
+    templates=(),
 )
-    @log log_level 0 "Preparing SpineOpt for $(run_request(url_in, "get_db_url"))..."
-    version = find_version(url_in)
-    if version < current_version()
-        if !upgrade
-            @warn """
-            The data structure is not the latest version.
-            SpineOpt might still be able to run, but results aren't guaranteed.
-            Please use `run_spineopt(url_in; upgrade=true)` to upgrade.
-            """
-        else
-            @log log_level 0 "Upgrading data structure to the latest version... "
-            run_migrations(url_in, version, log_level)
-            @log log_level 0 "Done!"
-        end
-    end
+    @log log_level 0 "Preparing SpineOpt for $(_real_url(url_in))..."
+    _check_version(url_in; log_level, upgrade)
     @timelog log_level 2 "Initializing data structure from db..." begin
-        using_spinedb(SpineOpt.template(), _Template)
-        using_spinedb(url_in, @__MODULE__; upgrade=upgrade, filters=filters)
-        missing_items = difference(_Template, @__MODULE__)
+        template = SpineOpt.template()
+        using_spinedb(template, @__MODULE__; extend=false)
+        for template in templates
+            using_spinedb(template, @__MODULE__; extend=true)
+        end
+        data = _data(url_in; upgrade, filters)
+        using_spinedb(data, @__MODULE__; extend=true)
+        missing_items = difference(template, data)
         if !isempty(missing_items)
             println()
             @warn """
@@ -246,7 +218,35 @@ function prepare_spineopt(
     end
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-end    
+end
+
+_real_url(url_in::String) = run_request(url_in, "get_db_url")
+_real_url(::Dict) = "dictionary data"
+
+function _check_version(url_in::String; log_level, upgrade)
+    version = find_version(url_in)
+    if version < current_version()
+        if !upgrade
+            @warn """
+            The data structure is not the latest version.
+            SpineOpt might still be able to run, but results aren't guaranteed.
+            Please use `run_spineopt(url_in; upgrade=true)` to upgrade.
+            """
+        else
+            _do_upgrade_db(url_in, version; log_level)
+        end
+    end
+end
+_check_version(data::Dict; kwargs...) = nothing
+
+function _do_upgrade_db(url_in, version; log_level)
+    @log log_level 0 "Upgrading data structure to the latest version... "
+    run_migrations(url_in, version, log_level)
+    @log log_level 0 "Done!"
+end
+
+_data(url_in::String; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
+_data(data::Dict; kwargs...) = data
 
 function rerun_spineopt(
     url_out::Union{String,Nothing};
@@ -254,7 +254,6 @@ function rerun_spineopt(
     lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    alternative_objective=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -262,6 +261,9 @@ function rerun_spineopt(
     write_as_roll=0,
     resume_file_path=nothing,
     use_direct_model=false,
+    run_kernel=run_spineopt_kernel!,
+    handle_window_about_to_solve=(m, k) -> nothing,
+    handle_window_solved=(m, k) -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
     m = create_model(mip_solver, lp_solver, use_direct_model)
@@ -270,6 +272,8 @@ function rerun_spineopt(
         :spineopt_benders => rerun_spineopt_benders!,
         :spineopt_mga => rerun_spineopt_mga!
     )[model_type(model=m.ext[:spineopt].instance)]
+    _add_window_about_to_solve_callback!(m, handle_window_about_to_solve)
+    _add_window_solved_callback!(m, handle_window_solved)
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
     Base.invokelatest(        
         rerun_spineopt!,
@@ -283,7 +287,7 @@ function rerun_spineopt(
         alternative=alternative,
         write_as_roll=write_as_roll,
         resume_file_path=resume_file_path,
-        alternative_objective=alternative_objective
+        run_kernel=run_kernel,
     )
 end
 
@@ -375,6 +379,7 @@ _parse_solver_options(db_solver_name, db_solver_options) = []
 _parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
+
 _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
 
 struct SpineOptExt
@@ -399,6 +404,8 @@ struct SpineOptExt
     objective_upper_bound::Base.RefValue{Float64}
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
+    window_about_to_solve_callbacks::Vector
+    window_solved_callbacks::Vector
     function SpineOptExt(instance, lp_solver=nothing, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
@@ -437,6 +444,8 @@ struct SpineOptExt
             Ref(0.0),  # objective_upper_bound
             [],  # benders_gaps
             Ref(false),  # has_results
+            [],  # window_about_to_solve_callbacks
+            [],  # window_solved_callbacks
         )
     end
 end
@@ -444,3 +453,18 @@ end
 JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing
 
 master_problem_model(m) = m.ext[:spineopt].master_problem_model
+
+function upgrade_db(url_in; log_level)
+    version = find_version(url_in)
+    if version < current_version()
+        _do_upgrade_db(url_in, version; log_level)
+    end
+end
+
+function _add_window_about_to_solve_callback!(m, callback)
+    push!(m.ext[:spineopt].window_about_to_solve_callbacks, callback)
+end
+
+function _add_window_solved_callback!(m, callback)
+    push!(m.ext[:spineopt].window_solved_callbacks, callback)
+end

@@ -16,10 +16,24 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    constraint_compression_ratio(m::Model)
 
-Set a fixed compression ratio between two nodes connected through active pipeline.
+@doc raw"""
+If a compression station is located in between two nodes, the connection is considered to be active
+and a compression ratio between the two nodes can be imposed.
+The parameter [compression\_factor](@ref) needs to be defined on a [connection\_\_node\_\_node](@ref) relationship,
+where the first node corresponds the origin node, before the compression,
+while the second node corresponds to the destination node, after compression.
+The existence of this parameter will trigger the following constraint:
+
+```math
+\begin{aligned}
+& \sum_{n \in ng2} v^{node\_pressure}_{(n,s,t)} \leq p^{compression\_factor}_{(conn,ng1,ng2,s,t)} \cdot \sum_{n \in ng1} v^{node\_pressure}_{(n,s,t)} \\
+& \forall (conn,ng1,ng2) \in indices(p^{compression\_factor}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also [compression\_factor](@ref).
 """
 function add_constraint_compression_ratio!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables
@@ -27,7 +41,7 @@ function add_constraint_compression_ratio!(m::Model)
     m.ext[:spineopt].constraints[:compression_ratio] = Dict(
         (connection=conn, node1=n_orig, node2=n_dest, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            + sum(
                 node_pressure[n_dest, s, t] * duration(t)
                 for (n_dest, s, t) in node_pressure_indices(
                     m; node=n_dest, stochastic_scenario=s, t=t_in_t(m; t_long=t)
@@ -38,7 +52,7 @@ function add_constraint_compression_ratio!(m::Model)
             compression_factor[
                 (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
-            * expr_sum(
+            * sum(
                 node_pressure[n_orig, s, t] * duration(t)
                 for (n_orig, s, t) in node_pressure_indices(
                     m; node=n_orig, stochastic_scenario=s, t=t_in_t(m; t_long=t),

@@ -1,5 +1,5 @@
 The [state\_coeff](@ref) parameter acts as a coefficient for the `node_state` variable
-in the [node injection constraint](@ref constraint_node_injection2).
+in the [node injection constraint](@ref constraint_node_injection).
 Essentially, it tells how the `node_state` variable should be treated in relation to the [commodity](@ref) flows
 and [demand](@ref), and can be used for e.g. scaling or unit conversions.
 For most use-cases a [state\_coeff](@ref) parameter value of `1.0` should suffice,

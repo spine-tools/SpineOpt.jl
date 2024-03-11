@@ -25,7 +25,6 @@ using Dates
 using SpineInterface
 using JSON
 using Printf
-using Documenter
 using Requires
 using JuMP
 using HiGHS
@@ -37,22 +36,33 @@ import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
 import SpineInterface: Parameter, parameter_value
 
+export SpineOptExt
 export run_spineopt
 export rerun_spineopt
 export run_spineopt_kernel!
 export prepare_spineopt
 export generate_temporal_structure!
 export roll_temporal_structure!
+export rewind_temporal_structure!
 export time_slice
+export t_before_t
+export t_in_t
+export t_overlaps_t
+export to_time_slice
+export current_window
+export generate_stochastic_structure!
+export active_stochastic_paths
 export output_value
 export collect_output_values
 export write_report
 export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
-export SpineOptExt
 export master_problem_model
+export write_model_file
 export @fetch
+export @log
+export @timelog
 
 include("util/misc.jl")
 include("util/write_information_files.jl")
@@ -91,6 +101,9 @@ include("variables/variable_units_mothballed.jl")
 include("variables/variable_units_available.jl")
 include("variables/variable_units_started_up.jl")
 include("variables/variable_units_shut_down.jl")
+include("variables/variable_units_out_of_service.jl")
+include("variables/variable_units_taken_out_of_service.jl")
+include("variables/variable_units_returned_to_service.jl")
 include("variables/variable_node_slack_pos.jl")
 include("variables/variable_node_slack_neg.jl")
 include("variables/variable_node_injection.jl")
@@ -134,6 +147,7 @@ include("constraints/constraint_ratio_unit_flow.jl")
 include("constraints/constraint_ratio_out_in_connection_flow.jl")
 include("constraints/constraint_ratio_out_in_connection_intact_flow.jl")
 include("constraints/constraint_connection_flow_capacity.jl")
+include("constraints/constraint_connection_flow_capacity_bidirection.jl")
 include("constraints/constraint_connection_intact_flow_capacity.jl")
 include("constraints/constraint_connection_flow_intact_flow.jl")
 include("constraints/constraint_connection_intact_flow_ptdf.jl")
@@ -175,6 +189,10 @@ include("constraints/constraint_mp_min_res_gen_to_demand_ratio_cuts.jl")
 include("constraints/constraint_investment_group_equal_investments.jl")
 include("constraints/constraint_investment_group_entities_invested_available.jl")
 include("constraints/constraint_investment_group_capacity_invested_available.jl")
+include("constraints/constraint_non_spinning_reserves_bounds.jl")
+include("constraints/constraint_min_scheduled_outage_duration.jl")
+include("constraints/constraint_units_out_of_service_contiguity.jl")
+include("constraints/constraint_units_out_of_service_transition.jl")
 
 
 export unit_flow_indices

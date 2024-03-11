@@ -28,7 +28,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
     m.ext[:spineopt].constraints[:res_minimum_node_state] = Dict(
         (node=n_stor, stochastic_path=s, t=t_after) => @constraint(
             m,
-            expr_sum(
+            sum(
                 node_state[n_stor, s, t_before]
                 for (n_stor, s, t_before) in node_state_indices(
                     m; node=n_stor, stochastic_scenario=s, t=t_before_t(m; t_after=t_after)
@@ -37,7 +37,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
             )
             >=
             + node_state_min[(node=n_stor, stochastic_scenario=s, analysis_time=t0, t=t_after)]
-            + expr_sum(
+            + sum(
                 + unit_flow[u, n_res, d, s, t_after]
                 * duration(t_after)
                 * _div(

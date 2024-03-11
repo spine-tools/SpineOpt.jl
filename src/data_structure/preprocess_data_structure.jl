@@ -180,15 +180,8 @@ function generate_direction()
         connection__from_node__user_constraint => from_node,
         connection__to_node__user_constraint => to_node,        
     )
-    for cls in keys(directions_by_class)
-        push!(cls.object_class_names, :direction)
-    end
     for (cls, d) in directions_by_class
-        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
-        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
-        for (key, new_key) in key_map
-            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
-        end
+        add_dimension!(cls, :direction, d)
     end
     @eval begin
         direction = $direction
@@ -199,7 +192,7 @@ end
 """
     generate_node_has_ptdf()
 
-Generate `has_ptdf` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
+Generate `has_ptdf`, `ptdf_duration` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
 """
 function generate_node_has_ptdf()
     function _new_node_pvals(n)
@@ -208,19 +201,24 @@ function generate_node_has_ptdf()
             for c in node__commodity(node=n)
             if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
+        ptdf_durations = [commodity_physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
+        filter!(!isnothing, ptdf_durations)
+        ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
+        ptdf_threshold = maximum(commodity_ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
         Dict(
             :has_ptdf => parameter_value(!isempty(ptdf_comms)),
-            :node_ptdf_threshold => parameter_value(
-                reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.001),
-            )
+            :ptdf_duration => parameter_value(ptdf_duration),
+            :node_ptdf_threshold => parameter_value(ptdf_threshold),
         )
     end
 
     add_object_parameter_values!(node, Dict(n => _new_node_pvals(n) for n in node()))
     has_ptdf = Parameter(:has_ptdf, [node])
+    ptdf_duration = Parameter(:ptdf_duration, [node])
     node_ptdf_threshold = Parameter(:node_ptdf_threshold, [node])
     @eval begin
         has_ptdf = $has_ptdf
+        ptdf_duration = $ptdf_duration
         node_ptdf_threshold = $node_ptdf_threshold
     end
 end
@@ -228,7 +226,7 @@ end
 """
     generate_connection_has_ptdf()
 
-Generate `has_ptdf` parameter associated to the `connection` `ObjectClass`.
+Generate `has_ptdf` and `ptdf_duration` parameter associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_ptdf()
     function _new_connection_pvals(conn)
@@ -238,13 +236,16 @@ function generate_connection_has_ptdf()
         is_loseless = length(from_nodes) == 2 && fix_ratio_out_in_connection_flow(;
             connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false
         ) == 1
-        Dict(
-            :has_ptdf => parameter_value(is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes))
-        )
+        has_ptdf_ = is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes)
+        ptdf_durations = [ptdf_duration(node=n, _default=nothing) for n in from_nodes]
+        filter!(!isnothing, ptdf_durations)
+        ptdf_duration_ = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
+        Dict(:has_ptdf => parameter_value(has_ptdf_), :ptdf_duration => parameter_value(ptdf_duration_))
     end
 
     add_object_parameter_values!(connection, Dict(conn => _new_connection_pvals(conn) for conn in connection()))
     push!(has_ptdf.classes, connection)
+    push!(ptdf_duration.classes, connection)
 end
 
 """
@@ -279,11 +280,11 @@ function generate_connection_has_lodf()
 end
 
 function _build_ptdf(connections, nodes, unavailable_connections=Set())
-    nodecount = length(nodes)
-    conncount = length(connections)
-    node_numbers = Dict{Object,Int32}(n => ix for (ix, n) in enumerate(nodes))
-    A = zeros(Float64, nodecount, conncount)  # incidence_matrix
-    inv_X = zeros(Float64, conncount, conncount)
+    node_count = length(nodes)
+    conn_count = length(connections)
+    node_numbers = Dict(n => ix for (ix, n) in enumerate(nodes))
+    A = zeros(Float64, node_count, conn_count)  # incidence_matrix
+    inv_X = zeros(Float64, conn_count, conn_count)
     for (ix, conn) in enumerate(connections)
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
@@ -297,7 +298,7 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     end
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
     if i === nothing
-        error("slack node not found")
+        error("slack node not found - please set `node_opf_type` to \"node_opf_type_reference\" for one of your nodes")
     end
     slack = nodes[i]
     slack_position = node_numbers[slack]
@@ -311,11 +312,60 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     if binfo < 0
         error("illegal argument in inputs")
     elseif binfo > 0
-        error("singular value in factorization, possibly there is an islanded bus")
+        error_msg = "singular value in factorization"
+        islands = _islands(nodes)
+        island_count = length(islands)
+        if island_count > 1
+            islands_str = join((string(k, ": ", join(island, ", ")) for (k, island) in enumerate(islands)), "\n\n")
+            error_msg = string(
+                error_msg,
+                " - please make sure your network is fully connected\n\n",
+                "Currently, the network consists of $island_count islands: \n\n$islands_str"
+            )
+        end
+        error(error_msg)
     end
     S_ = gemm('N', 'N', gemm('N', 'T', inv_X, A[setdiff(1:end, slack_position), :]), getri!(B, bipiv))
-    hcat(S_[:, 1:(slack_position - 1)], zeros(conncount), S_[:, slack_position:end])
+    hcat(S_[:, 1:(slack_position - 1)], zeros(conn_count), S_[:, slack_position:end])
 end
+
+"""
+    _islands(nodes)
+
+An Array where each element is itself an Array of node Objects corresponding to an island.
+"""
+function _islands(nodes)
+    visited = Dict(n => false for n in nodes)
+    islands = []
+    for n in keys(visited)
+        if !visited[n]
+            island = Object[]
+            push!(islands, island)
+            _visit!(n, visited, island)
+        end
+    end
+    islands
+end
+
+"""
+Recursively visit nodes starting at given one `n` and add them to the `island` Array.
+"""
+function _visit!(n, visited, island)
+    visited[n] = true
+    push!(island, n)
+    connected_nodes = (
+        connected_n
+        for conn in connection__from_node(node=n, direction=anything)
+        for connected_n in connection__from_node(connection=conn, direction=anything)
+        if connected_n != n && connected_n in keys(visited)
+    )
+    for connected_n in connected_nodes
+        if !visited[connected_n]
+            _visit!(connected_n, visited, island)
+        end
+    end
+end
+
 
 """
     _ptdf_unfiltered_values()
@@ -334,10 +384,10 @@ function _ptdf_unfiltered_values()
             end
         end
     end
-    ptdf_by_ind = Dict(
-        ind => _build_ptdf(connections, nodes, unavailable_connections)
-        for (ind, unavailable_connections) in unavailable_connections_by_ind
-    )
+    ptdf_by_ind = Dict()
+    for (ind, unavailable_connections) in unavailable_connections_by_ind
+        ptdf_by_ind[ind] = _build_ptdf(connections, nodes, unavailable_connections)
+    end
     Dict(
         (conn, n) => Dict(
             :ptdf_unfiltered => parameter_value(
@@ -381,7 +431,6 @@ function _filter_ptdf_values(ptdf_values)
         if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold)
     )
 end
-
 
 """
     generate_ptdf()
@@ -525,11 +574,9 @@ end
 Process the `model__default_investment_temporal_block` relationship.
 
 If a `unit__investment_temporal_block` relationship is not defined, then create one using
-`model__default_investment_temporal_block`. Similarly, add the corresponding `model__temporal_block` relationship
-if it is not already defined.
+`model__default_investment_temporal_block`.
 """
 function expand_model__default_investment_temporal_block()
-    add_relationships!(model__temporal_block, model__default_investment_temporal_block())
     add_relationships!(
         unit__investment_temporal_block,
         [
@@ -564,11 +611,9 @@ end
 Process the `model__default_investment_stochastic_structure` relationship.
 
 If a `unit__investment_stochastic_structure` relationship is not defined, then create one using
-`model__default_investment_stochastic_structure`. Similarly, add the corresponding `model__stochastic_structure`
-relationship if it is not already defined.
+`model__default_investment_stochastic_structure`.
 """
 function expand_model__default_investment_stochastic_structure()
-    add_relationships!(model__stochastic_structure, model__default_investment_stochastic_structure())
     add_relationships!(
         unit__investment_stochastic_structure,
         [
@@ -606,11 +651,9 @@ end
     expand_model__default_stochastic_structure()
 
 Expand the `model__default_stochastic_structure` relationship to all `nodes` without `node__stochastic_structure`
-and `units_on` without `units_on__stochastic_structure`. Similarly, add the corresponding `model__stochastic_structure`
-relationship if it not already defined.
+and `units_on` without `units_on__stochastic_structure`.
 """
 function expand_model__default_stochastic_structure()
-    add_relationships!(model__stochastic_structure, model__default_stochastic_structure())
     add_relationships!(
         node__stochastic_structure,
         unique(
@@ -636,7 +679,6 @@ Expand the `model__default_temporal_block` relationship to all `nodes` without `
 and `units_on` without `units_on_temporal_block`.
 """
 function expand_model__default_temporal_block()
-    add_relationships!(model__temporal_block, model__default_temporal_block())
     add_relationships!(
         node__temporal_block,
         unique(
@@ -814,7 +856,10 @@ function generate_is_boundary()
         has_boundary_conn = false
         for (conn, _d) in connection__from_node(node=n)
             remote_commodities = unique(
-                c for (remote_n, _d) in connection__to_node(connection=conn) for c in node__commodity(node=remote_n)
+                c 
+                for (remote_n, _d) in connection__to_node(connection=conn)
+                if remote_n != n
+                for c in node__commodity(node=remote_n)
             )
             if !(c in remote_commodities)
                 has_boundary_conn = true
