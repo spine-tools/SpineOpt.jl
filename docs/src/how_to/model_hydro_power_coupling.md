@@ -18,34 +18,7 @@ the downstream power plant.
 
 *A system of two hydropower plants*
 
-In order to run this tutorial you must first execute some preliminary
-steps from the [Simple System](simple_system.md) tutorial.
-Specifically, execute all steps from the
-[guide](simple_system.md#guide), up to and including the step of
-[importing-the-spineopt-database-template](simple_system.md#importing-the-spineopt-database-template).
-It is advisable to go through the whole tutorial in order to familiarise
-yourself with Spine.
-
-!!! note
-    Just remember to give a different name for the Spine Project of the
-    hydropower tutorial (e.g., ‘Two_hydro’) in the corresponding step, so to
-    not mix up the Spine Toolbox projects!
-
-That is all you need at the moment, you can now start inserting the
-data.
-
 ## Setting up a Basic Hydropower Model
-
-For creating a SpineOpt model you need to create *Objects*, *Relationships* (associating the objects), and in
-some cases, parameters values accompanying them. To do this, open the
-input database using the Spine DB Editor (double click on the input
-database in the *Design View* pane of Spine
-Toolbox).
-
-!!! note
-    To save your work in the Spine DB Editor you need to *commit* your changes (please check the Simple
-    System tutorial for how to do that). As a good practice, you should
-    commit often as you enter the data in the model to avoid data loss.
 
 ### Defining objects
 
