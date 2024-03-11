@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_standard!(
+function run_spineopt_standard!(
     m,
     url_out;
     log_level,
@@ -26,17 +26,14 @@ function rerun_spineopt_standard!(
     alternative,
     write_as_roll,
     resume_file_path,
-    extension,
-
 )
     optimize || return m
     calculate_duals = any(
         startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
     try
-        run_spineopt_kernel!(
-            m,
-            extension;
+        solve_model!(
+            m;
             log_level=log_level,
             update_names=update_names,
             calculate_duals=calculate_duals,
@@ -59,25 +56,21 @@ function rerun_spineopt_standard!(
     end
 end
 
-function setup_model!(m, _extension=nothing; add_user_variables, add_constraints, log_level)
+function build_model!(m, _extension=nothing; log_level)
     instance = m.ext[:spineopt].instance
     @timelog log_level 2 "Creating $instance temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $instance stochastic structure..." generate_stochastic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
+    init_model!(m; log_level=log_level)
 end
 
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Adding variables...\n" _add_variables!(
-        m; add_user_variables=add_user_variables, log_level=log_level
-    )
-    @timelog log_level 2 "Adding constraints...\n" _add_constraints!(
-        m; add_constraints=add_constraints, log_level=log_level
-    )
+function init_model!(m; log_level=3)
+    @timelog log_level 2 "Adding variables...\n" _add_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding constraints...\n" _add_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting objective..." _set_objective!(m)
     _init_outputs!(m)
 end
@@ -85,7 +78,7 @@ end
 """
 Add SpineOpt variables to the given model.
 """
-function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
+function _add_variables!(m; log_level=3)
     for add_variable! in (
             add_variable_units_available!,
             add_variable_units_on!,
@@ -123,13 +116,12 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
-    @timelog log_level 3 "- [user_defined]" add_user_variables(m)
 end
 
 """
 Add SpineOpt constraints to the given model.
 """
-function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
+function _add_constraints!(m; log_level=3)
     for add_constraint! in (
             add_constraint_unit_pw_heat_rate!,
             add_constraint_user_constraint!,
@@ -213,7 +205,6 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)
     end
-    @timelog log_level 3 "- [user_defined]" add_constraints(m)
     _update_constraint_names!(m)
 end
 
@@ -249,7 +240,7 @@ function _init_outputs!(m::Model)
     end
 end
 
-function run_spineopt_kernel!(
+function solve_model!(
     m,
     _extension=nothing;
     log_level=3,
@@ -263,20 +254,22 @@ function run_spineopt_kernel!(
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
     @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) to the first window..." rewind_temporal_structure!(m)
+    _call_event_handlers(m, :model_about_to_solve; log_prefix)
     while true
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
-        (callback -> callback(m, k)).(m.ext[:spineopt].window_about_to_solve_callbacks)
+        _call_event_handlers(m, :window_about_to_solve, k; log_prefix)
         optimize_model!(
             m; log_level=log_level, calculate_duals=calculate_duals, output_suffix=output_suffix
         ) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        (callback -> callback(m, k)).(m.ext[:spineopt].window_solved_callbacks)
+        _call_event_handlers(m, :window_solved, k; log_prefix)
         if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$(log_prefix) ... Rolling complete\n" break
         end
         update_model!(m; log_level=log_level, update_names=update_names)
         k += 1
     end
+    _call_event_handlers(m, :model_solved)
     true
 end
 

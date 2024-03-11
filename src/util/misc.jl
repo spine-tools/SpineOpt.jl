@@ -226,13 +226,54 @@ new_duration4 = align_variable_duration_unit(_duration2, dt1)
 This convertion is needed for comparing a duration of the type `Month` or `Year` with 
 one of `Day`, `Hour` or the finer units, which is not allowed because the former are variable duration types.
 """
-function align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead=true)
-    #TODO: the value of `_duration` is assumed to be an integer. A warning should be given.
+function align_variable_duration_unit(duration::Union{Period, Nothing}, dt::DateTime; ahead=true)
+    #TODO: the value of `duration` is assumed to be an integer. A warning should be given.
     #TODO: new format to record durations would be benefitial, e.g. 3M2d1h,
     #      cf. Dates.CompoundPeriod in the periods.jl of Julia standard library.
-    if _duration isa Month || _duration isa Year
-        ahead ? Day((dt + _duration) - dt) : Day(dt - (dt - _duration))
+    if duration isa Month || duration isa Year
+        ahead ? Day((dt + duration) - dt) : Day(dt - (dt - duration))
     else
-        _duration
+        duration
     end
+end
+
+function _log_to_file(fn, log_file_path)
+    log_file_path === nothing && return fn()
+    done = false
+    actual_stdout = stdout
+    @async begin
+        open(log_file_path, "r") do log_file
+            while !done
+                data = read(log_file, String)
+                if !isempty(data)
+                    print(actual_stdout, data)
+                    flush(actual_stdout)
+                end
+                yield()
+            end
+        end
+    end
+    open(log_file_path, "w") do log_file
+        @async while !done
+            flush(log_file)
+            yield()
+        end
+        redirect_stdout(log_file) do
+            redirect_stderr(log_file) do
+                yield()
+                try
+                    fn()
+                catch err
+                    showerror(log_file, err, stacktrace(catch_backtrace()))
+                    rethrow()
+                finally
+                    done = true
+                end
+            end
+        end
+    end
+end
+
+function _call_event_handlers(m, event, args...; kwargs...)
+    (fn -> fn(m, args...; kwargs...)).(m.ext[:spineopt].event_handlers[event])
 end

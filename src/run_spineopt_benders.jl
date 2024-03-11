@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_benders!(
+function run_spineopt_benders!(
     m,
     url_out;
     log_level,
@@ -26,10 +26,9 @@ function rerun_spineopt_benders!(
     alternative,
     write_as_roll,
     resume_file_path,
-    extension,
 )
-    _add_window_about_to_solve_callback!(m, _set_sp_solution!)
-    _add_window_solved_callback!(m, process_subproblem_solution!)
+    add_event_handler!(m, :window_about_to_solve, _set_sp_solution!)
+    add_event_handler!(m, :window_solved, process_subproblem_solution!)
     m_mp = master_problem_model(m)
     @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
@@ -38,16 +37,14 @@ function rerun_spineopt_benders!(
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     undo_force_starting_investments! = _force_starting_investments!(m_mp)
-    warmup_benders!(m, m_mp, extension)
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
         j == 2 && undo_force_starting_investments!()
         optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
-        run_spineopt_kernel!(
-            m,
-            extension;
+        solve_model!(
+            m;
             log_level=log_level,
             update_names=update_names,
             calculate_duals=true,
@@ -166,8 +163,6 @@ function _create_mp_objective_terms!(m)
         m.ext[:spineopt].objective_terms[term] = (func(m, anything), 0)
     end
 end
-
-warmup_benders!(_m, _m_mp, _extension) = nothing
 
 """
 Add benders cuts to master problem.

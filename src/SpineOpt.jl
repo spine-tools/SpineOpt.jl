@@ -38,9 +38,12 @@ import SpineInterface: Parameter, parameter_value
 
 export SpineOptExt
 export run_spineopt
-export rerun_spineopt
-export run_spineopt_kernel!
 export prepare_spineopt
+export run_spineopt!
+export add_event_handler!
+export create_model
+export build_model!
+export solve_model!
 export generate_temporal_structure!
 export roll_temporal_structure!
 export rewind_temporal_structure!

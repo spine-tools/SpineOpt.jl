@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_mga!(
+function run_spineopt_mga!(
     m,
     url_out;
     log_level,
@@ -26,16 +26,14 @@ function rerun_spineopt_mga!(
     alternative,
     write_as_roll,
     resume_file_path,
-    extension,
 )
     outputs = Dict()
     mga_iteration_count = 0
     max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
     mga_iteration = ObjectClass(:mga_iteration, [])
     @eval mga_iteration = $mga_iteration
-    run_spineopt_kernel!(
-        m,
-        extension;
+    solve_model!(
+        m;
         log_level=log_level,
         update_names=update_names,
         output_suffix=_add_mga_iteration(mga_iteration_count),
