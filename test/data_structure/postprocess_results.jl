@@ -123,82 +123,87 @@ function test_save_connection_avg_throughflow()
     end
 end
 
+function _test_save_contingency_is_binding_setup()
+    url_in = "sqlite://"
+    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    url_out = "sqlite:///$file_path_out"
+    test_data = Dict(
+        :objects => [
+            ["model", "instance"],
+            ["model", "master"],
+            ["temporal_block", "hourly"],
+            ["temporal_block", "investments_hourly"],
+            ["temporal_block", "two_hourly"],
+            ["stochastic_structure", "deterministic"],
+            ["stochastic_structure", "investments_deterministic"],
+            ["stochastic_structure", "stochastic"],
+            ["connection", "connection_ab"],
+            ["connection", "connection_bc"],
+            ["connection", "connection_ca"],
+            ["node", "node_a"],
+            ["node", "node_b"],
+            ["node", "node_c"],
+            ["stochastic_scenario", "parent"],
+            ["stochastic_scenario", "child"],
+        ],
+        :relationships => [
+            ["model__temporal_block", ["instance", "hourly"]],
+            ["model__temporal_block", ["instance", "two_hourly"]],
+            ["model__temporal_block", ["master", "investments_hourly"]],
+            ["model__stochastic_structure", ["instance", "deterministic"]],
+            ["model__stochastic_structure", ["instance", "stochastic"]],
+            ["model__stochastic_structure", ["master", "investments_deterministic"]],
+            ["connection__from_node", ["connection_ab", "node_a"]],
+            ["connection__to_node", ["connection_ab", "node_b"]],
+            ["connection__from_node", ["connection_bc", "node_b"]],
+            ["connection__to_node", ["connection_bc", "node_c"]],
+            ["connection__from_node", ["connection_ca", "node_c"]],
+            ["connection__to_node", ["connection_ca", "node_a"]],
+            ["node__temporal_block", ["node_a", "hourly"]],
+            ["node__temporal_block", ["node_b", "two_hourly"]],
+            ["node__temporal_block", ["node_c", "hourly"]],
+            ["node__stochastic_structure", ["node_a", "stochastic"]],
+            ["node__stochastic_structure", ["node_b", "deterministic"]],
+            ["node__stochastic_structure", ["node_c", "stochastic"]],
+            ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
+            ["stochastic_structure__stochastic_scenario", ["investments_deterministic", "parent"]],
+            ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
+        ],
+        :object_parameter_values => [
+            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
+            ["model", "instance", "duration_unit", "hour"],
+            ["model", "instance", "model_type", "spineopt_standard"],
+            ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["model", "master", "duration_unit", "hour"],
+            ["model", "master", "model_type", "spineopt_other"],
+            ["model", "master", "max_gap", "0.05"],
+            ["model", "master", "max_iterations", "2"],
+            ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
+            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+        ],
+        :relationship_parameter_values => [
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "6h")
+            ]
+        ],
+    )
+    _load_test_data(url_in, test_data)
+    url_in, url_out, file_path_out
+end
+
 function test_save_contingency_is_binding()
     @testset "save_contingency_is_binding" begin
-        url_in = "sqlite://"
-        file_path_out = "$(@__DIR__)/test_out.sqlite"
-        url_out = "sqlite:///$file_path_out"
-        test_data = Dict(
-            :objects => [
-                ["model", "instance"],
-                ["model", "master"],
-                ["temporal_block", "hourly"],
-                ["temporal_block", "investments_hourly"],
-                ["temporal_block", "two_hourly"],
-                ["stochastic_structure", "deterministic"],
-                ["stochastic_structure", "investments_deterministic"],
-                ["stochastic_structure", "stochastic"],
-                ["connection", "connection_ab"],
-                ["connection", "connection_bc"],
-                ["connection", "connection_ca"],
-                ["node", "node_a"],
-                ["node", "node_b"],
-                ["node", "node_c"],
-                ["stochastic_scenario", "parent"],
-                ["stochastic_scenario", "child"],
-            ],
-            :relationships => [
-                ["model__temporal_block", ["instance", "hourly"]],
-                ["model__temporal_block", ["instance", "two_hourly"]],
-                ["model__temporal_block", ["master", "investments_hourly"]],
-                ["model__stochastic_structure", ["instance", "deterministic"]],
-                ["model__stochastic_structure", ["instance", "stochastic"]],
-                ["model__stochastic_structure", ["master", "investments_deterministic"]],
-                ["connection__from_node", ["connection_ab", "node_a"]],
-                ["connection__to_node", ["connection_ab", "node_b"]],
-                ["connection__from_node", ["connection_bc", "node_b"]],
-                ["connection__to_node", ["connection_bc", "node_c"]],
-                ["connection__from_node", ["connection_ca", "node_c"]],
-                ["connection__to_node", ["connection_ca", "node_a"]],
-                ["node__temporal_block", ["node_a", "hourly"]],
-                ["node__temporal_block", ["node_b", "two_hourly"]],
-                ["node__temporal_block", ["node_c", "hourly"]],
-                ["node__stochastic_structure", ["node_a", "stochastic"]],
-                ["node__stochastic_structure", ["node_b", "deterministic"]],
-                ["node__stochastic_structure", ["node_c", "stochastic"]],
-                ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
-                ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
-                ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
-                ["stochastic_structure__stochastic_scenario", ["investments_deterministic", "parent"]],
-                ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
-            ],
-            :object_parameter_values => [
-                ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-                ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
-                ["model", "instance", "duration_unit", "hour"],
-                ["model", "instance", "model_type", "spineopt_standard"],
-                ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-                ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
-                ["model", "master", "duration_unit", "hour"],
-                ["model", "master", "model_type", "spineopt_other"],
-                ["model", "master", "max_gap", "0.05"],
-                ["model", "master", "max_iterations", "2"],
-                ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-                ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-                ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-                ["model", "instance", "db_lp_solver", "HiGHS.jl"],
-            ],
-            :relationship_parameter_values => [
-                [
-                    "stochastic_structure__stochastic_scenario",
-                    ["stochastic", "parent"],
-                    "stochastic_scenario_end",
-                    Dict("type" => "duration", "data" => "6h")
-                ]
-            ],
-        )
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_save_contingency_is_binding_setup()
         conn_r = 0.9
         conn_x = 0.1
         conn_emergency_cap_ab = 80
