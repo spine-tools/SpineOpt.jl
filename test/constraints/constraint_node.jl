@@ -933,7 +933,106 @@ function test_constraint_storage_lifetime_mp()
     end
 end
 
+function test_constraint_min_capacity_margin()
+    @testset "constraint_min_capacity_margin" begin
+        url_in = _test_constraint_node_setup()        
+        margin_b = 100
+        demand_b = 105
+        capacity = 200
+        object_parameter_values = [
+            ["node", "node_b", "min_capacity_margin", margin_b],            
+            ["node", "node_b", "demand", demand_b],            
+        ]
+
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
+        ]      
+        
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)               
+        
+        constraint = m.ext[:spineopt].constraints[:min_capacity_margin]
+        margin_expression = m.ext[:spineopt].expressions[:capacity_margin]
+        @test length(constraint) == 2
+        paths = ([stochastic_scenario(:parent)], [stochastic_scenario(:parent), stochastic_scenario(:child)])
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(paths, time_slices)                
+            n = node(:node_b)            
+            expr_key = (n, s, t)
+            con_key = (n, s, t)
+            expr = margin_expression[expr_key...]         
+
+            expected_con = @build_constraint(realize(expr) >= margin_b)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+
+            @test _is_constraint_equal(observed_con, expected_con)            
+        end             
+    end
+end
+
+function test_constraint_min_capacity_margin_penalty()
+    @testset "constraint_min_capacity_margin_penalty" begin
+        url_in = _test_constraint_node_setup()        
+        margin_b = 100
+        demand_b = 105
+        capacity = 200
+        penalty = 1000
+        object_parameter_values = [
+            ["node", "node_b", "min_capacity_margin", margin_b],
+            ["node", "node_b", "min_capacity_margin_penalty", penalty],
+            ["node", "node_b", "demand", demand_b],
+        ]
+
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
+        ]      
+        
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+                
+        var_mcm_slack = m.ext[:spineopt].variables[:min_capacity_margin_slack]
+        constraint = m.ext[:spineopt].constraints[:min_capacity_margin]
+        margin_expression = m.ext[:spineopt].expressions[:capacity_margin]
+        @test length(constraint) == 2        
+        paths = ([stochastic_scenario(:parent)], [stochastic_scenario(:parent), stochastic_scenario(:child)])
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))        
+        t_ss = Dict(
+            time_slices[1]=>scenarios[1],
+            time_slices[2]=>scenarios[2]
+        )
+        
+        @testset for (path, t) in zip(paths, time_slices)            
+            n = node(:node_b)
+            var_mcm_slack_indices = (n, t_ss[t], t)
+            expr_key = (n, path, t)
+            con_key = (n, path, t)
+            expr = margin_expression[expr_key...]         
+
+            expected_con = @build_constraint(
+                realize(expr) + var_mcm_slack[var_mcm_slack_indices...] >= margin_b)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @show expected_con
+            @show observed_con
+
+            @test _is_constraint_equal(observed_con, expected_con)            
+        end             
+    end
+end
+
+
 @testset "node-based constraints" begin
+    
     test_constraint_nodal_balance()
     test_constraint_nodal_balance_group()
     test_constraint_node_injection()
@@ -952,4 +1051,6 @@ end
     test_constraint_storages_invested_transition_mp()
     test_constraint_storage_lifetime()
     test_constraint_storage_lifetime_mp()
+    test_constraint_min_capacity_margin()
+    test_constraint_min_capacity_margin_penalty()
 end

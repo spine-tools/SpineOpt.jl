@@ -63,6 +63,8 @@ function build_model!(m; log_level)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
     @timelog log_level 2 "Adding variables...\n" _add_variables!(m; log_level=log_level)
+
+    @timelog log_level 2 "Adding expressions...\n" _add_expressions!(m; log_level=log_level)
     @timelog log_level 2 "Adding constraints...\n" _add_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting objective..." _set_objective!(m)
     _init_outputs!(m)
@@ -105,6 +107,7 @@ function _add_variables!(m; log_level=3)
             add_variable_binary_gas_connection_flow!,
             add_variable_user_constraint_slack_pos!,
             add_variable_user_constraint_slack_neg!,
+            add_variable_min_capacity_margin_slack!,
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
@@ -112,10 +115,24 @@ function _add_variables!(m; log_level=3)
 end
 
 """
+Add SpineOpt expressions to the given model.
+"""
+function _add_expressions!(m; log_level=3)
+    for add_expression! in (
+            add_expression_capacity_margin!,
+        )
+        name = name_from_fn(add_expression!)
+        @timelog log_level 3 "- [$name]" add_expression!(m)
+    end        
+end
+
+
+"""
 Add SpineOpt constraints to the given model.
 """
 function _add_constraints!(m; log_level=3)
     for add_constraint! in (
+            add_constraint_min_capacity_margin!,
             add_constraint_unit_pw_heat_rate!,
             add_constraint_user_constraint!,
             add_constraint_node_injection!,
@@ -126,6 +143,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_connection_flow_intact_flow!,
             add_constraint_connection_flow_lodf!,
             add_constraint_connection_flow_capacity!,
+            add_constraint_connection_flow_capacity_bidirection!,
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_unit_flow_capacity!,
             add_constraint_connections_invested_available!,
@@ -193,7 +211,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_investment_group_minimum_entities_invested_available!,
             add_constraint_investment_group_maximum_entities_invested_available!,
             add_constraint_investment_group_minimum_capacity_invested_available!,
-            add_constraint_investment_group_maximum_capacity_invested_available!,
+            add_constraint_investment_group_maximum_capacity_invested_available!,            
         )
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)

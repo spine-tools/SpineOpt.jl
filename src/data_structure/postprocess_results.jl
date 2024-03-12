@@ -53,8 +53,21 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
     sizehint!(avg_throughflow, length(connection()) * length(stochastic_scenario()) * length(time_slice(m)))
     for ((conn, n, d, s, t), value) in connection_flow
         start(t) >= m_start || continue
-        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
-        n_from, n_to, _other_nodes... = connection__from_node(connection=conn, direction=anything)
+        # NOTE: Whenever available, always assume that the flow goes from 
+        # the first to the second node in `connection__from_node`.
+        # CAUTION: works for bi-directional connections with 2 nodes
+        if length(connection__from_node(connection=conn, direction=anything)) >= 2 
+            n_from, n_to, n_others... = connection__from_node(connection=conn, direction=anything)
+        # NOTE: When only one node in `connection__from_node`, assume that the flow goes from
+        # the first node in `connection__from_node` to the first node in `connection__to_node` that is different.
+        else
+            n_from, n_from_others... = connection__from_node(connection=conn, direction=anything)
+            n_to, n_to_others... = filter(
+                x -> x != n_from, connection__to_node(connection=conn, direction=anything)
+            )
+        end
+        # CAUTION: may cause trouble for multi-terminal connections (with >= 3 nodes linked)
+        
         if (n == n_to && d == direction(:to_node)) || (n == n_from && d == direction(:from_node))
             new_value = 0.5 * value
         elseif (n == n_from && d == direction(:to_node)) || (n == n_to && d == direction(:from_node))
@@ -62,6 +75,7 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
         else
             continue
         end
+        
         inner_key = (connection=conn, node=n_to, stochastic_scenario=s, t=t)
         current_value = get(avg_throughflow, inner_key, 0)
         avg_throughflow[inner_key] = current_value + new_value
