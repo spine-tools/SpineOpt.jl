@@ -464,8 +464,9 @@ Below is a table of events, arguments, and when does it fire.
         # Do something with `m` after it's been built
     end
 
-    m = preprare_spineopt("sqlite://path-to-my-db")
+    m = prepare_spineopt("sqlite:///path-to-your-input-db")
     add_event_handler!(m, :model_built, handle_model_built)
+    run_spineopt!(m, "sqlite:///path-to-your-results-db")  # `handle_model_built` will be called right after `m` is built
 """
 function add_event_handler!(m, event, fn)
     event_handlers = m.ext[:spineopt].event_handlers
