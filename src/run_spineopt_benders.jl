@@ -29,11 +29,12 @@ function run_spineopt_benders!(
 )
     add_event_handler!(m, :window_about_to_solve, _set_sp_solution!)
     add_event_handler!(m, :window_solved, process_subproblem_solution!)
-    m_mp = master_problem_model(m)
+    m_mp = master_model(m)
     @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
     _init_mp_model!(m_mp; log_level=log_level)
+    _call_event_handlers(m, :master_model_built)
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     undo_force_starting_investments! = _force_starting_investments!(m_mp)
@@ -41,7 +42,9 @@ function run_spineopt_benders!(
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
         j == 2 && undo_force_starting_investments!()
+        _call_event_handlers(m, :master_model_about_to_solve, j)
         optimize_model!(m_mp; log_level=log_level) || break
+        _call_event_handlers(m, :master_model_solved, j)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         solve_model!(
             m;

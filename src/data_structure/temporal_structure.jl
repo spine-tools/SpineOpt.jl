@@ -423,9 +423,16 @@ function _generate_windows_and_window_count!(m::Model)
 end
 
 """
-    generate_temporal_structure!(m::Model)
+    generate_temporal_structure!(m)
 
-Create the temporal structure for SpineOpt from the input database.
+Create the temporal structure for the given SpineOpt model.
+After this, you can call the following functions to query the generated structure.
+- `time_slice`
+- `t_before_t`
+- `t_in_t`
+- `t_overlaps_t`
+- `to_time_slice`
+- `current_window`
 """
 function generate_temporal_structure!(m::Model)
     _generate_current_window!(m)
@@ -444,9 +451,9 @@ function _generate_master_window!(m_mp::Model)
 end
 
 """
-    generate_master_temporal_structure!( m_mp::Model)
+    generate_master_temporal_structure!(m_mp)
 
-Create the master problem temporal structure for SpineOpt benders.
+Create the Benders master problem temporal structure for given model.
 """
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window!(m_mp)
@@ -454,11 +461,16 @@ function generate_master_temporal_structure!(m_mp::Model)
 end
 
 """
-    roll_temporal_structure!(m::Model, window_number)
+    roll_temporal_structure!(m[, window_number=1]; rev=false)
 
-Move the entire temporal structure ahead according to the `roll_forward` parameter.
+Roll the temporal structure of given SpineOpt model forward a period of time
+equal to the value of the `roll_forward` parameter.
+If `roll_forward` is an array, then `window_number` can be given either as an `Integer` or a `UnitRange`
+indicating the position or successive positions in that array.
+
+If `rev` is `true`, then the structure is rolled backwards instead of forward.
 """
-function roll_temporal_structure!(m::Model, i::Integer; rev=false)
+function roll_temporal_structure!(m::Model, i::Integer=1; rev=false)
     rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
     _do_roll_temporal_structure!(m, rf, rev)
 end
@@ -483,6 +495,11 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     true
 end
 
+"""
+    rewind_temporal_structure!(m)
+
+Rewind the temporal structure of given SpineOpt model back to the first window.
+"""
 function rewind_temporal_structure!(m::Model)
     temp_struct = m.ext[:spineopt].temporal_structure
     roll_count = temp_struct[:window_count] - 1
@@ -497,9 +514,9 @@ function rewind_temporal_structure!(m::Model)
 end
 
 """
-    to_time_slice(m::Model; t::TimeSlice)
+    to_time_slice(m; t)
 
-An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
+An `Array` of `TimeSlice`s in model `m` overlapping the given `TimeSlice` (where `t` may not be in `m`).
 """
 function to_time_slice(m::Model; t::TimeSlice)
     temp_struct = m.ext[:spineopt].temporal_structure
@@ -522,6 +539,11 @@ function to_time_slice(m::Model; t::TimeSlice)
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
 
+"""
+    current_window(m)
+
+A `TimeSlice` corresponding to the current window of given model.
+"""
 current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
 
 """

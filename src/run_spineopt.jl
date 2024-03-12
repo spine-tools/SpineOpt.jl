@@ -27,38 +27,26 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 # Arguments
 
-- `upgrade::Bool=false`: whether or not to automatically upgrade the data structure in `url_in` to latest.
-
-- `mip_solver=nothing`: a MIP solver to use if no MIP solver specified in the DB.
-
-- `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
-
 - `log_level::Int=3`: an integer to control the log level.
-
-- `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
-
-- `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
-  (expensive).
-
-- `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
-
-- `write_as_roll::Int=0`: if greater than 0 and the run has a rolling horizon, then write results every that many
-  windows.
-
-- `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
-
+- `upgrade::Bool=false`: whether or not to automatically upgrade the data structure in `url_in` to latest.
 - `filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
-  Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
-
+   Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
 - `templates`: a collection of templates to load on top of the SpineOpt template.
-  Each template must be a `Dict` with the same structure as the one returned by `SpineOpt.template()`.
-
+   Each template must be a `Dict` with the same structure as the one returned by `SpineOpt.template()`.
+- `mip_solver=nothing`: a MIP solver to use if no MIP solver specified in the DB.
+- `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
+- `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
+- `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
+- `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
+   (expensive).
+- `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
+- `write_as_roll::Int=0`: if greater than 0 and the run has a rolling horizon, then write results every that many
+   windows.
 - `log_file_path::String=nothing`: if not nothing, log all console output to a file at the given path. The file
-  is overwritten at each call.
-
+   is overwritten at each call.
 - `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
-  equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
-  Also, save resume data to that same file as the model rolls and results are written to the output database.
+   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
+   Also, save resume data to that same file as the model rolls and results are written to the output database.
 
 # Example
 
@@ -129,6 +117,18 @@ end
 A SpineOpt model from the contents of `url_in`.
 The argument `url_in` must be either a `String` pointing to a valid Spine database,
 or a `Dict` (e.g. manually created or parsed from a json file).
+
+# Arguments
+
+- `log_level::Int=3`: an integer to control the log level.
+- `upgrade::Bool=false`: whether or not to automatically upgrade the data structure in `url_in` to latest.
+- `filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
+   Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
+- `templates`: a collection of templates to load on top of the SpineOpt template.
+   Each template must be a `Dict` with the same structure as the one returned by `SpineOpt.template()`.
+- `mip_solver=nothing`: a MIP solver to use if no MIP solver specified in the DB.
+- `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
+- `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
 """
 function prepare_spineopt(
     url_in;
@@ -202,6 +202,21 @@ _data(data::Dict; kwargs...) = data
 
 Run given SpineOpt model and write report(s) to `url_out`.
 A new Spine database is created at `url_out` if one doesn't exist.
+
+# Arguments
+
+- `log_level::Int=3`: an integer to control the log level.
+- `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
+- `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
+   (expensive).
+- `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
+- `write_as_roll::Int=0`: if greater than 0 and the run has a rolling horizon, then write results every that many
+   windows.
+- `log_file_path::String=nothing`: if not nothing, log all console output to a file at the given path. The file
+   is overwritten at each call.
+- `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
+   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
+   Also, save resume data to that same file as the model rolls and results are written to the output database.
 """
 function run_spineopt!(
     m::Model,
@@ -236,7 +251,11 @@ function run_spineopt!(
 end
 
 """
-A JuMP `Model` for SpineOpt.
+    create_model(mip_solver, lp_solver, use_direct_model)
+
+A `JuMP.Model` extended to be used with SpineOpt.
+`mip_solver` and `lp_solver` are 'optimizer factories' to be passed to JuMP.Model` or `JuMP.direct_model`.
+`use_direct_model` is a `Bool` indicating whether `JuMP.Model` or `JuMP.direct_model` should be used.
 """
 function create_model(mip_solver, lp_solver, use_direct_model)
     instance = first(model())
@@ -329,7 +348,7 @@ _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model
 struct SpineOptExt
     instance::Object
     lp_solver
-    master_problem_model::Union{Model,Nothing}
+    master_model::Union{Model,Nothing}
     intermediate_results_folder::String
     report_name_keys_by_url::Dict
     reports_by_output::Dict
@@ -350,7 +369,7 @@ struct SpineOptExt
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
-    function SpineOptExt(instance, lp_solver, master_problem_model=nothing)
+    function SpineOptExt(instance, lp_solver, master_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
         report_name_keys_by_url = Dict()
@@ -372,11 +391,14 @@ struct SpineOptExt
             :model_solved => [],
             :window_about_to_solve => [],
             :window_solved => [],
+            :master_model_built => [],
+            :master_model_about_to_solve => [],
+            :master_model_solved => [],
         )
         new(
             instance,
             lp_solver,
-            master_problem_model,
+            master_model,
             intermediate_results_folder,
             report_name_keys_by_url,
             reports_by_output,
@@ -403,7 +425,12 @@ end
 
 JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing
 
-master_problem_model(m) = m.ext[:spineopt].master_problem_model
+"""
+    master_model(m)
+
+The Benders master model for given model.
+"""
+master_model(m) = m.ext[:spineopt].master_model
 
 function upgrade_db(url_in; log_level)
     version = find_version(url_in)
@@ -412,6 +439,34 @@ function upgrade_db(url_in; log_level)
     end
 end
 
+"""
+    add_event_handler!(m, event, fn)
+
+Add an event handler for given model.
+`event` must be a `Symbol` corresponding to an event.
+`fn` must be a function callable with the arguments corresponding to that event.
+Below is a table of events, arguments, and when does it fire.
+
+| event | arguments | when does it fire |
+| --- | --- | --- |
+| `:model_built` | `m` | Right after model `m` is built. |
+| `:model_about_to_solve` | `m` | Right before model `m` is solved. |
+| `:model_solved` | `m` | Right after model `m` is solved. |
+| `:window_about_to_solve` | `(m, k)` | Right before window `k` for model `m` is solved. |
+| `:window_solved` | `(m, k)` | Right after window `k` for model `m` is solved. |
+| `:master_model_built` | `m` | Right after the Benders master model for model `m` is built. |
+| `:master_model_about_to_solve` | `(m, j)` | Right before the Benders master model for model `m` and iteration `j` is solved. |
+| `:master_model_solved` | `(m, j)` | Right after the Benders master model for model `m` and iteration `j` is solved. |
+
+# Example
+
+    function handle_model_built(m)
+        # Do something with `m` after it's been built
+    end
+
+    m = preprare_spineopt("sqlite://path-to-my-db")
+    add_event_handler!(m, :model_built, handle_model_built)
+"""
 function add_event_handler!(m, event, fn)
     event_handlers = m.ext[:spineopt].event_handlers
     listeners = get(event_handlers, event, nothing)

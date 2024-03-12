@@ -56,12 +56,11 @@ export current_window
 export generate_stochastic_structure!
 export active_stochastic_paths
 export output_value
-export collect_output_values
 export write_report
 export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
-export master_problem_model
+export master_model
 export write_model_file
 export @fetch
 export @log
