@@ -109,7 +109,7 @@ end
     include("data_structure/stochastic_structure.jl")
     include("data_structure/algorithm_mga_structure.jl")
     include("data_structure/postprocess_results.jl")
-    include("expressions/expression_tests.jl")
+    include("expressions/expression.jl")
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
