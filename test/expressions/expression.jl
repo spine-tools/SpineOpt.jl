@@ -30,10 +30,10 @@ function _test_expressions_setup()
             ["stochastic_structure", "investments_deterministic"],
             ["unit", "unit_ab"],
             ["unit", "unit_b"],
-            ["unit", "unit_cb"],            
+            ["unit", "unit_cb"],
             ["node", "node_a"],
             ["node", "node_b"],
-            ["node", "node_c"],            
+            ["node", "node_c"],
             ["stochastic_scenario", "parent"],
             ["stochastic_scenario", "child"],
         ],
@@ -50,7 +50,7 @@ function _test_expressions_setup()
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_b", "node_b"]],
             ["unit__to_node", ["unit_cb", "node_b"]],
-            ["unit__to_node", ["unit_cb", "node_c"]],            
+            ["unit__to_node", ["unit_cb", "node_c"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__temporal_block", ["unit_b", "hourly"]],
             ["units_on__temporal_block", ["unit_cb", "hourly"]],
@@ -98,7 +98,7 @@ function _test_expressions_setup()
             ],
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 75],
             ["unit__to_node", ["unit_b", "node_b"], "unit_capacity", 30],
-            ["unit__to_node", ["unit_cb", "node_b"], "unit_capacity", 10],                       
+            ["unit__to_node", ["unit_cb", "node_b"], "unit_capacity", 10],
         ]
     )
     _load_test_data(url_in, test_data)
@@ -122,7 +122,6 @@ function test_expression_capacity_margin()
         ]        
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        write_model_file(m; file_name="c:\\workspace\\min_margin")        
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_available = m.ext[:spineopt].variables[:units_available]
         
@@ -146,7 +145,7 @@ function test_expression_capacity_margin()
             var_ua_b = var_units_available[unit_b, s, t]
             var_ua_ab = var_units_available[unit_ab, s, t2]
             var_uff_cb = var_unit_flow[unit_cb, n, d_f, s, t]
-            var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]            
+            var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]
      
             expected_expr = @expression(m,
                 + var_uft_cb
@@ -157,7 +156,7 @@ function test_expression_capacity_margin()
                 - fractional_demand_b * group_demand_a
             )            
 
-            observed_expr = expression[n, [s], t]            
+            observed_expr = expression[n, [s], t]
             
             @test _is_expression_equal(observed_expr, expected_expr)
         end                
