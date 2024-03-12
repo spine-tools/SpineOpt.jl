@@ -64,14 +64,17 @@ export @fetch
 export @log
 export @timelog
 
+# Util
 include("util/misc.jl")
 include("util/write_information_files.jl")
 include("util/promise.jl")
+# Main stage
 include("run_spineopt.jl")
 include("generate_forced_availability_factor.jl")
 include("run_spineopt_standard.jl")
 include("run_spineopt_benders.jl")
 include("run_spineopt_mga.jl")
+# Data structure
 include("data_structure/migration.jl")
 include("data_structure/benders_data.jl")
 include("data_structure/mga_data.jl")
@@ -81,6 +84,7 @@ include("data_structure/preprocess_data_structure.jl")
 include("data_structure/check_data_structure.jl")
 include("data_structure/postprocess_results.jl")
 include("data_structure/diagnose.jl")
+# Variables
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
 include("variables/variable_unit_flow_op.jl")
@@ -115,6 +119,10 @@ include("variables/variable_binary_gas_connection_flow.jl")
 include("variables/variable_sp_objective_upperbound.jl")
 include("variables/variable_mp_min_res_gen_to_demand_ratio_slack.jl")
 include("variables/variable_user_constraint_slack.jl")
+include("variables/variable_min_capacity_margin_slack.jl")
+# Expressions
+include("expressions/capacity_margin.jl")
+# Objective
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")
@@ -131,6 +139,8 @@ include("objective/connection_flow_costs.jl")
 include("objective/res_proc_costs.jl")
 include("objective/units_on_costs.jl")
 include("objective/mp_objective_penalties.jl")
+include("objective/min_capacity_margin_penalties.jl")
+# Constraints
 include("constraints/constraint_common.jl")
 include("constraints/constraint_total_cumulated_unit_flow_bounds.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
@@ -193,6 +203,7 @@ include("constraints/constraint_non_spinning_reserves_bounds.jl")
 include("constraints/constraint_min_scheduled_outage_duration.jl")
 include("constraints/constraint_units_out_of_service_contiguity.jl")
 include("constraints/constraint_units_out_of_service_transition.jl")
+include("constraints/constraint_min_capacity_margin.jl")
 
 
 export unit_flow_indices

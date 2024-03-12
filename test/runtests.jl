@@ -69,6 +69,11 @@ function _is_constraint_equal(x, y)
     x.set == y.set && keys(x_terms) == keys(y_terms) && all(isapprox(x_terms[k], y_terms[k]) for k in keys(x_terms))
 end
 
+function _is_expression_equal(x, y)
+    x_terms, y_terms = x.terms, y.terms
+    keys(x_terms) == keys(y_terms) && all(isapprox(realize(x_terms[k]), realize(y_terms[k])) for k in keys(x_terms))
+end
+
 """
     _dismember_constraint(constraint)
 
@@ -104,6 +109,7 @@ end
     include("data_structure/stochastic_structure.jl")
     include("data_structure/algorithm_mga_structure.jl")
     include("data_structure/postprocess_results.jl")
+    include("expressions/expression.jl")
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")

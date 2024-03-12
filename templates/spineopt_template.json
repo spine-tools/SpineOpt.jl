@@ -231,6 +231,8 @@
         ["node", "storages_invested_big_m_mga", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For units_invested_mga an appropriate big_m_mga would be twice the candidate storages."],
         ["node", "storages_invested_mga", false, "boolean_value_list", "Defines whether a certain variable (here: storages_invested) will be considered in the maximal-differences of the mga objective"],
         ["node", "storages_invested_mga_weight", 1, null, "Used to scale mga variables. For weighted-sum mga method, the length of this weight given as an Array will determine the number of iterations."],
+        ["node", "min_capacity_margin_penalty", null, null, "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"],
+        ["node", "min_capacity_margin", null, null, "minimum capacity margin applying to the `node` or `node_group`"],
         ["output", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["output", "output_resolution", null, null, "Temporal resolution of the output variables associated with this `output`."],
         ["report", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],

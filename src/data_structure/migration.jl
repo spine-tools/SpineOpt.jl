@@ -37,7 +37,8 @@ include("versions/rename_benders_master_to_just_benders.jl")
 include("versions/translate_ramp_parameters.jl")
 include("versions/remove_model_tb_ss.jl")
 
-function units_out_of_service_upgrade(db_url, log_level)
+function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
+	# No changes, just make sure we load the newest template
 	true
 end
 
@@ -51,7 +52,7 @@ _upgrade_functions = [
 	rename_benders_master_to_just_benders,
 	translate_ramp_parameters,
 	remove_model_tb_ss,
-	units_out_of_service_upgrade,
+	add_units_out_of_service_and_min_capacity_margin,
 ]
 
 """
