@@ -283,6 +283,7 @@ Solve given SpineOpt model and save outputs.
 - `calculate_duals::Bool=false`: whether or not to calculate duals after the model solve.
 - `output_suffix::NamedTuple=(;)`: to add to the outputs.
 - `log_prefix::String`="": to prepend to log messages.
+- `slice_to_stamp=t -> (start(t),)`: a function that takes a `TimeSlice` and returns a sequence of `DateTime`s.
 """
 function solve_model!(
     m;
@@ -293,6 +294,7 @@ function solve_model!(
     calculate_duals=false,
     output_suffix=(;),
     log_prefix="",
+    slice_to_stamp=t -> (start(t),),
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
@@ -301,9 +303,7 @@ function solve_model!(
     while true
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k; log_prefix)
-        optimize_model!(
-            m; log_level=log_level, calculate_duals=calculate_duals, output_suffix=output_suffix
-        ) || return false
+        optimize_model!(m; log_level, calculate_duals, output_suffix, slice_to_stamp) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
         _call_event_handlers(m, :window_solved, k; log_prefix)
         if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
@@ -356,7 +356,9 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;))
+function optimize_model!(
+    m::Model; log_level=3, calculate_duals=false, output_suffix=(;), slice_to_stamp=t -> (start(t),)
+)
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -370,7 +372,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
             @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(m)
             calculate_duals && _calculate_duals(m; log_level=log_level)
             @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
-            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; output_suffix)
+            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; output_suffix, slice_to_stamp)
         else
             m.ext[:spineopt].has_results[] = false
             @warn "no solution available for window $(current_window(m)) - moving on..."
@@ -580,44 +582,46 @@ end
 """
 Save the outputs of a model.
 """
-function _save_outputs!(m; output_suffix)
+function _save_outputs!(m; output_suffix, slice_to_stamp)
     is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
     for (out, rpts) in m.ext[:spineopt].reports_by_output
         value = get(m.ext[:spineopt].values, out.name, nothing)
         crop_to_window = !is_last_window && all(overwrite_results_on_rolling(report=rpt, output=out) for rpt in rpts)
-        if _save_output!(m, out, value, crop_to_window; output_suffix)
+        if _save_output!(m, out, value, crop_to_window; output_suffix, slice_to_stamp)
             continue
         end
         param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param, crop_to_window; output_suffix)
+        if _save_output!(m, out, param, crop_to_window; output_suffix, slice_to_stamp)
             continue
         end
         @warn "can't find any values for '$(out.name)'"
     end
 end
 
-function _save_output!(m, out, value_or_param, crop_to_window; output_suffix)
+function _save_output!(m, out, value_or_param, crop_to_window; output_suffix, slice_to_stamp)
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param, crop_to_window)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         entity = (; entity..., output_suffix...)
         for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
             t_highest_resolution!(by_time_slice_non_aggr)
             output_time_slices_ = output_time_slices(m; output=out)
-            by_time_slice_aggr = _value_by_time_slice_aggregated(by_time_slice_non_aggr, output_time_slices_)
-            isempty(by_time_slice_aggr) && continue
+            by_time_stamp_aggr = _value_by_time_stamp_aggregated(
+                by_time_slice_non_aggr, output_time_slices_, slice_to_stamp
+            )
+            isempty(by_time_stamp_aggr) && continue
             by_entity = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
             by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
             current_by_time_slice_aggr = get(by_analysis_time, analysis_time, nothing)
             if current_by_time_slice_aggr === nothing
-                by_analysis_time[analysis_time] = by_time_slice_aggr
+                by_analysis_time[analysis_time] = by_time_stamp_aggr
             else
-                merge!(current_by_time_slice_aggr, by_time_slice_aggr)
+                merge!(current_by_time_slice_aggr, by_time_stamp_aggr)
             end
         end
     end
     true
 end
-_save_output!(m, out, ::Nothing, crop_to_window; output_suffix) = false
+_save_output!(m, out, ::Nothing, crop_to_window; output_suffix, slice_to_stamp) = false
 
 function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
     by_entity_non_aggr = Dict()
@@ -651,16 +655,21 @@ function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window
     by_entity_non_aggr
 end
 
-function _value_by_time_slice_aggregated(by_time_slice_non_aggr, output_time_slices::Array)
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices::Array, slice_to_stamp)
     by_time_stamp_aggr = Dict()
     for t_aggr in output_time_slices
         time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_non_aggr))
         isempty(time_slices) && continue  # No aggregation possible
-        by_time_stamp_aggr[t_aggr] = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
+        val = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
+        for i in slice_to_stamp(t_aggr)
+            by_time_stamp_aggr[i] = val
+        end
     end
     by_time_stamp_aggr
 end
-_value_by_time_slice_aggregated(by_time_slice_non_aggr, ::Nothing) = by_time_slice_non_aggr
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing, slice_to_stamp)
+    Dict(i => v for (t, v) in by_time_slice_non_aggr for i in slice_to_stamp(t))
+end
 
 function _compute_and_print_conflict!(m)
     compute_conflict!(m)    
@@ -872,7 +881,7 @@ function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output
 end
 
 """
-    output_value(by_analysis_time, overwrite_results_on_rolling[, slice_to_stamp=start])
+    output_value(by_analysis_time, overwrite_results_on_rolling)
 
 A `TimeSeries` or `Map` from a result of SpineOpt.
 
@@ -880,34 +889,30 @@ A `TimeSeries` or `Map` from a result of SpineOpt.
 - `by_analysis_time::Dict`: mapping `DateTime` analysis time, to `TimeSlice`, to value.
 - `overwrite_results_on_rolling::Bool`: if `true`, ignore the analysis times and return a `TimeSeries`.
     If `false`, return a `Map` where the topmost keys are the analysis times.
-- `slice_to_stamp`: a function to convert `TimeSlice` to `DateTime` timestamp.
 """
-function output_value(by_analysis_time, overwrite_results_on_rolling::Bool, slice_to_stamp=start)
+function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
     by_analysis_time_realized = Dict(
-        analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_slice)
-        for (analysis_time, by_time_slice) in by_analysis_time
+        analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
+        for (analysis_time, by_time_stamp) in by_analysis_time
     )
-    _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling), slice_to_stamp)
+    _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling))
 end
 
-function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true}, slice_to_stamp)
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
-    TimeSeries(
-        [slice_to_stamp(t) for by_time_slice in values(by_analysis_time_sorted) for t in keys(by_time_slice)],
-        [val for by_time_slice in values(by_analysis_time_sorted) for val in values(by_time_slice)],
-        false,
-        false;
-        merge_ok=true
-    )
+    by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time_sorted) for (t, val) in by_time_stamp)
+    TimeSeries(_indices_and_values(by_time_stamp)...; merge_ok=true)
 end
-function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false}, slice_to_stamp)
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
-        [
-            TimeSeries(slice_to_stamp.(keys(by_time_slice)), collect(values(by_time_slice)), false, false)
-            for by_time_slice in values(by_analysis_time)
-        ]
+        [TimeSeries(_indices_and_values(by_time_stamp)...) for by_time_stamp in values(by_analysis_time)]
     )
+end
+
+function _indices_and_values(by_time_stamp)
+    indices, values = zip(by_time_stamp...)
+    collect(indices), collect(values)
 end
 
 function _flatten_stochastic_path(entity::NamedTuple)
