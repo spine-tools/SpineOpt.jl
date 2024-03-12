@@ -287,6 +287,7 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     inv_X = zeros(Float64, conn_count, conn_count)
     for (ix, conn) in enumerate(connections)
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
+        # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the ptdf calculation
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[n_from], ix] = 1
         A[node_numbers[n_to], ix] = -1
@@ -468,6 +469,8 @@ function generate_lodf()
     Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
     function _lodf_fn(conn_cont)
+        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
+        # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the lodf calculation
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         denom = 1 - (
             ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to)
@@ -512,9 +515,12 @@ function generate_ptdf_lodf()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
-    # write_ptdf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_ptdfs()
-    # write_lodf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_lodfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_ptdf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_ptdfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_lodf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_lodfs()
 end
 
 """
