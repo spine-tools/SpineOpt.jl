@@ -713,7 +713,7 @@ function test_constraint_storages_invested_available_mp()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        m_mp = master_problem_model(m)
+        m_mp = master_model(m)
         var_storages_invested_available = m_mp.ext[:spineopt].variables[:storages_invested_available]
         constraint = m_mp.ext[:spineopt].constraints[:storages_invested_available]
         @test length(constraint) == 2
@@ -788,7 +788,7 @@ function test_constraint_storages_invested_transition_mp()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        m_mp = master_problem_model(m)
+        m_mp = master_model(m)
         var_storages_invested_available = m_mp.ext[:spineopt].variables[:storages_invested_available]
         var_storages_invested = m_mp.ext[:spineopt].variables[:storages_invested]
         var_storages_decommissioned = m_mp.ext[:spineopt].variables[:storages_decommissioned]
@@ -898,7 +898,7 @@ function test_constraint_storage_lifetime_mp()
                 url_in; relationships=relationships, object_parameter_values=object_parameter_values
             )
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            m_mp = master_problem_model(m)
+            m_mp = master_model(m)
             var_storages_invested_available = m_mp.ext[:spineopt].variables[:storages_invested_available]
             var_storages_invested = m_mp.ext[:spineopt].variables[:storages_invested]
             constraint = m_mp.ext[:spineopt].constraints[:storage_lifetime]

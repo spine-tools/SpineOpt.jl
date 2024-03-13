@@ -514,7 +514,7 @@ function _test_benders_rolling_representative_periods()
             )
             rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
-            m_mp = master_problem_model(m)
+            m_mp = master_model(m)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
                 for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 12)
@@ -617,7 +617,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
         )
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
-        m_mp = master_problem_model(m)
+        m_mp = master_model(m)
         using_spinedb(url_out, Y)
         @testset for (k, c) in enumerate(candidates)
             @test first(values(Y.units_invested(unit=Y.unit(c)))) == (k <= dem ? 1 : 0)
@@ -703,7 +703,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
             )
             rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
-            m_mp = master_problem_model(m)
+            m_mp = master_model(m)
             cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio_cuts]
             invest_vars = m_mp.ext[:spineopt].variables[:units_invested_available]
             slack_vars = m_mp.ext[:spineopt].variables[:mp_min_res_gen_to_demand_ratio_slack]

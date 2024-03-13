@@ -254,8 +254,8 @@ end
     create_model(mip_solver, lp_solver, use_direct_model)
 
 A `JuMP.Model` extended to be used with SpineOpt.
-`mip_solver` and `lp_solver` are 'optimizer factories' to be passed to JuMP.Model` or `JuMP.direct_model`.
-`use_direct_model` is a `Bool` indicating whether `JuMP.Model` or `JuMP.direct_model` should be used.
+`mip_solver` and `lp_solver` are 'optimizer factories' to be passed to `JuMP.Model` or `JuMP.direct_model`,
+whereas `use_direct_model` is a `Bool` indicating whether `JuMP.Model` or `JuMP.direct_model` should be used.
 """
 function create_model(mip_solver, lp_solver, use_direct_model)
     instance = first(model())
@@ -445,7 +445,7 @@ end
 Add an event handler for given model.
 `event` must be a `Symbol` corresponding to an event.
 `fn` must be a function callable with the arguments corresponding to that event.
-Below is a table of events, arguments, and when does it fire.
+Below is a table of events, arguments, and when does each one fire.
 
 | event | arguments | when does it fire |
 | --- | --- | --- |
