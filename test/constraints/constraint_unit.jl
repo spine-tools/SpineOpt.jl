@@ -1338,7 +1338,7 @@ function test_constraint_units_invested_available_mp()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        m_mp = master_problem_model(m)
+        m_mp = master_model(m)
         var_units_invested_available = m_mp.ext[:spineopt].variables[:units_invested_available]
         constraint = m_mp.ext[:spineopt].constraints[:units_invested_available]
         @test length(constraint) == 2
@@ -1405,7 +1405,7 @@ function test_constraint_units_invested_transition_mp()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        m_mp = master_problem_model(m)
+        m_mp = master_model(m)
         var_units_invested_available = m_mp.ext[:spineopt].variables[:units_invested_available]
         var_units_invested = m_mp.ext[:spineopt].variables[:units_invested]
         var_units_mothballed = m_mp.ext[:spineopt].variables[:units_mothballed]
@@ -1508,7 +1508,7 @@ function test_constraint_unit_lifetime_mp()
                 url_in; relationships=relationships, object_parameter_values=object_parameter_values
             )
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            m_mp = master_problem_model(m)
+            m_mp = master_model(m)
             var_units_invested_available = m_mp.ext[:spineopt].variables[:units_invested_available]
             var_units_invested = m_mp.ext[:spineopt].variables[:units_invested]
             constraint = m_mp.ext[:spineopt].constraints[:unit_lifetime]

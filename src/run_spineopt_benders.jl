@@ -17,48 +17,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_benders!(
+function run_spineopt_benders!(
     m,
     url_out;
-    add_user_variables,
-    add_constraints,
     log_level,
     optimize,
     update_names,
     alternative,
     write_as_roll,
     resume_file_path,
-    run_kernel,
 )
-    _add_window_about_to_solve_callback!(m, _set_sp_solution!)
-    _add_window_solved_callback!(m, process_subproblem_solution!)
-    m_mp = master_problem_model(m)
-    @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
+    add_event_handler!(m, :window_about_to_solve, _set_sp_solution!)
+    add_event_handler!(m, :window_solved, process_subproblem_solution!)
+    m_mp = master_model(m)
     @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
-    @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
-    sp_roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
-    roll_temporal_structure!(m, 1:sp_roll_count)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     _init_mp_model!(m_mp; log_level=log_level)
+    _call_event_handlers(m, :master_model_built)
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+    undo_force_starting_investments! = _force_starting_investments!(m_mp)
     j = 1
-    undo_force_starting_investments! = nothing
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
-        if j == 1
-            undo_force_starting_investments! = _force_starting_investments!(m_mp)
-        elseif j == 2
-            undo_force_starting_investments!()
-        end
+        j == 2 && undo_force_starting_investments!()
+        _call_event_handlers(m, :master_model_about_to_solve, j)
         optimize_model!(m_mp; log_level=log_level) || break
+        _call_event_handlers(m, :master_model_solved, j)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
-        @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) back to the first window..." begin
-            rewind_temporal_structure!(m)
-        end
-        run_kernel(
+        solve_model!(
             m;
             log_level=log_level,
             update_names=update_names,
@@ -80,7 +68,7 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
-        _unfix_history!(m)
+        unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
     end
@@ -192,19 +180,6 @@ function _add_mp_cuts!(m; log_level=3)
     end
     _update_constraint_names!(m)
 end
-
-function _unfix_history!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        var = m.ext[:spineopt].variables[name]
-        indices = definition[:indices]
-        for history_ind in indices(m; t=history_time_slice(m))
-            _unfix(var[history_ind])
-        end
-    end
-end
-
-_unfix(v::VariableRef) = is_fixed(v) && unfix(v)
-_unfix(::Call) = nothing
 
 """
 Force starting investments and return a function to be called without arguments to undo the operation.

@@ -44,9 +44,7 @@ import SpineOpt:
     node_dynamic_time_indices,
     node_stochastic_time_indices,
     unit_stochastic_time_indices,
-    node_investment_dynamic_time_indices,
-    rerun_spineopt
-    run_spineopt
+    node_investment_dynamic_time_indices
 
 # Test code uses legacy syntax for `import_data`, so interpret here
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, "testing"; kwargs...)

@@ -17,35 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_standard!(
+function run_spineopt_standard!(
     m,
     url_out;
-    add_user_variables,
-    add_constraints,
     log_level,
     optimize,
     update_names,
     alternative,
     write_as_roll,
     resume_file_path,
-    run_kernel,
 )
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
-    roll_temporal_structure!(m, 1:roll_count)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
-    @timelog log_level 2 "Bringing model to the first window..." begin
-        roll_temporal_structure!(m, 1:roll_count; rev=true)
-        _update_variable_names!(m)
-        _update_constraint_names!(m)
-    end
     optimize || return m
     calculate_duals = any(
         startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
     try
-        run_kernel(
+        solve_model!(
             m;
             log_level=log_level,
             update_names=update_names,
@@ -70,18 +57,30 @@ function rerun_spineopt_standard!(
 end
 
 """
-Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
+    build_model!(m; log_level)
+
+Build given SpineOpt model:
+- create temporal and stochastic structures
+- add variables
+- add expressions
+- add constraints
+- set objective
+- initialize outputs
+
+
+# Arguments
+- `log_level::Int`: an integer to control the log level.
 """
-function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Adding variables...\n" _add_variables!(
-        m; add_user_variables=add_user_variables, log_level=log_level
-    )
-    @timelog log_level 2 "Adding expressions...\n" _add_expressions!(
-        m; log_level=log_level
-    )
-    @timelog log_level 2 "Adding constraints...\n" _add_constraints!(
-        m; add_constraints=add_constraints, log_level=log_level
-    )
+function build_model!(m; log_level)
+    instance = m.ext[:spineopt].instance
+    @timelog log_level 2 "Creating $instance temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating $instance stochastic structure..." generate_stochastic_structure!(m)
+    roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
+    roll_temporal_structure!(m, 1:roll_count)
+    @timelog log_level 2 "Adding variables...\n" _add_variables!(m; log_level=log_level)
+
+    @timelog log_level 2 "Adding expressions...\n" _add_expressions!(m; log_level=log_level)
+    @timelog log_level 2 "Adding constraints...\n" _add_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting objective..." _set_objective!(m)
     _init_outputs!(m)
 end
@@ -89,7 +88,7 @@ end
 """
 Add SpineOpt variables to the given model.
 """
-function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
+function _add_variables!(m; log_level=3)
     for add_variable! in (
             add_variable_units_available!,
             add_variable_units_on!,
@@ -128,7 +127,6 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
-    @timelog log_level 3 "- [user_defined]" add_user_variables(m)
 end
 
 """
@@ -147,7 +145,7 @@ end
 """
 Add SpineOpt constraints to the given model.
 """
-function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
+function _add_constraints!(m; log_level=3)
     for add_constraint! in (
             add_constraint_min_capacity_margin!,
             add_constraint_unit_pw_heat_rate!,
@@ -233,7 +231,6 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)
     end
-    @timelog log_level 3 "- [user_defined]" add_constraints(m)
     _update_constraint_names!(m)
 end
 
@@ -269,32 +266,53 @@ function _init_outputs!(m::Model)
     end
 end
 
-function run_spineopt_kernel!(
+"""
+    solve_model!(m; <keyword arguments>)
+
+Solve given SpineOpt model and save outputs.
+
+# Arguments
+- `log_level::Int=3`: an integer to control the log level.
+- `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
+   (expensive).
+- `write_as_roll::Int=0`: if greater than 0 and the run has a rolling horizon, then write results every that many
+   windows.
+- `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
+   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
+   Also, save resume data to that same file as the model rolls and results are written to the output database.
+- `calculate_duals::Bool=false`: whether or not to calculate duals after the model solve.
+- `output_suffix::NamedTuple=(;)`: to add to the outputs.
+- `log_prefix::String`="": to prepend to log messages.
+- `discretize_t=t -> (start(t),)`: a function that takes a `TimeSlice` and returns a sequence of `DateTime`s.
+"""
+function solve_model!(
     m;
     log_level=3,
     update_names=false,
-    calculate_duals=false,
     write_as_roll=0,
     resume_file_path=nothing,
+    calculate_duals=false,
     output_suffix=(;),
     log_prefix="",
+    discretize_t=t -> (start(t),),
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
+    _call_event_handlers(m, :model_about_to_solve; log_prefix)
+    @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) to the first window..." rewind_temporal_structure!(m)
     while true
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
-        (callback -> callback(m, k)).(m.ext[:spineopt].window_about_to_solve_callbacks)
-        optimize_model!(
-            m; log_level=log_level, calculate_duals=calculate_duals, output_suffix=output_suffix
-        ) || return false
+        _call_event_handlers(m, :window_about_to_solve, k; log_prefix)
+        optimize_model!(m; log_level, calculate_duals, output_suffix, discretize_t) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        (callback -> callback(m, k)).(m.ext[:spineopt].window_solved_callbacks)
+        _call_event_handlers(m, :window_solved, k; log_prefix)
         if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$(log_prefix) ... Rolling complete\n" break
         end
         update_model!(m; log_level=log_level, update_names=update_names)
         k += 1
     end
+    _call_event_handlers(m, :model_solved)
     true
 end
 
@@ -338,7 +356,9 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;))
+function optimize_model!(
+    m::Model; log_level=3, calculate_duals=false, output_suffix=(;), discretize_t=t -> (start(t),)
+)
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -352,7 +372,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
             @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(m)
             calculate_duals && _calculate_duals(m; log_level=log_level)
             @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
-            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; output_suffix)
+            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; output_suffix, discretize_t)
         else
             m.ext[:spineopt].has_results[] = false
             @warn "no solution available for window $(current_window(m)) - moving on..."
@@ -562,44 +582,46 @@ end
 """
 Save the outputs of a model.
 """
-function _save_outputs!(m; output_suffix)
+function _save_outputs!(m; output_suffix, discretize_t)
     is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
     for (out, rpts) in m.ext[:spineopt].reports_by_output
         value = get(m.ext[:spineopt].values, out.name, nothing)
         crop_to_window = !is_last_window && all(overwrite_results_on_rolling(report=rpt, output=out) for rpt in rpts)
-        if _save_output!(m, out, value, crop_to_window; output_suffix)
+        if _save_output!(m, out, value, crop_to_window; output_suffix, discretize_t)
             continue
         end
         param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param, crop_to_window; output_suffix)
+        if _save_output!(m, out, param, crop_to_window; output_suffix, discretize_t)
             continue
         end
         @warn "can't find any values for '$(out.name)'"
     end
 end
 
-function _save_output!(m, out, value_or_param, crop_to_window; output_suffix)
+function _save_output!(m, out, value_or_param, crop_to_window; output_suffix, discretize_t)
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param, crop_to_window)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         entity = (; entity..., output_suffix...)
         for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
             t_highest_resolution!(by_time_slice_non_aggr)
-            output_time_slices_ = output_time_slices(m, output=out)
-            by_time_stamp_aggr = _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices_)
+            output_time_slices_ = output_time_slices(m; output=out)
+            by_time_stamp_aggr = _value_by_time_stamp_aggregated(
+                by_time_slice_non_aggr, output_time_slices_, discretize_t
+            )
             isempty(by_time_stamp_aggr) && continue
             by_entity = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
             by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_stamp = get(by_analysis_time, analysis_time, nothing)
-            if by_time_stamp === nothing
+            current_by_time_slice_aggr = get(by_analysis_time, analysis_time, nothing)
+            if current_by_time_slice_aggr === nothing
                 by_analysis_time[analysis_time] = by_time_stamp_aggr
             else
-                merge!(by_time_stamp, by_time_stamp_aggr)
+                merge!(current_by_time_slice_aggr, by_time_stamp_aggr)
             end
         end
     end
     true
 end
-_save_output!(m, out, ::Nothing, crop_to_window; output_suffix) = false
+_save_output!(m, out, ::Nothing, crop_to_window; output_suffix, discretize_t) = false
 
 function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
     by_entity_non_aggr = Dict()
@@ -633,17 +655,20 @@ function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window
     by_entity_non_aggr
 end
 
-function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices::Array)
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices::Array, discretize_t)
     by_time_stamp_aggr = Dict()
     for t_aggr in output_time_slices
         time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_non_aggr))
         isempty(time_slices) && continue  # No aggregation possible
-        by_time_stamp_aggr[start(t_aggr)] = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
+        val = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
+        for i in discretize_t(t_aggr)
+            by_time_stamp_aggr[i] = val
+        end
     end
     by_time_stamp_aggr
 end
-function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
-    Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing, discretize_t)
+    Dict(i => v for (t, v) in by_time_slice_non_aggr for i in discretize_t(t))
 end
 
 function _compute_and_print_conflict!(m)
@@ -661,7 +686,7 @@ _entity_name(entity::ObjectLike) = entity.name
 _entity_name(entities::Vector{T}) where {T<:ObjectLike} = [entity.name for entity in entities]
 
 function _write_intermediate_results(m)
-    values = collect_output_values(m)
+    values = _collect_output_values(m)
     tables = []
     for ((output_name, overwrite), by_entity) in values
         table = [
@@ -786,33 +811,34 @@ function _prepare_for_deletion(path::AbstractString)
 end
 
 """
-    write_report(m, default_url, output_value=output_value; alternative="")
+    write_report(m, url_out; <keyword arguments>)
 
-Write report from given model into a db.
+Write report(s) from given SpineOpt model to `url_out`.
+A new Spine database is created at `url_out` if one doesn't exist.
 
 # Arguments
-- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
-- `default_url::String`: a db url to write the report to.
-- `output_value`: a function to replace `SpineOpt.output_value` if needed.
 
-# Keyword arguments
-- `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
+- `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
+
+- `log_level::Int=3`: an integer to control the log level.
 """
-function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
-    default_url === nothing && return
-    values = collect_output_values(m, output_value)
-    write_report(m, default_url, values; alternative=alternative, log_level=log_level)
+function write_report(m, url_out; alternative="", log_level=3)
+    url_out === nothing && return
+    values = _collect_output_values(m)
+    write_report(m, url_out, values; alternative=alternative, log_level=log_level)
 end
-function write_report(m, default_url, values::Dict; alternative="", log_level=3)
+function write_report(m, url_out, values::Dict; alternative="", log_level=3)
     write_report(
-        m.ext[:spineopt].report_name_keys_by_url, default_url, values, alternative=alternative, log_level=log_level
+        m.ext[:spineopt].report_name_keys_by_url, url_out, values, alternative=alternative, log_level=log_level
     )
 end
-function write_report(report_name_keys_by_url::Dict, default_url, values::Dict; alternative="", log_level=3)
+function write_report(report_name_keys_by_url::Dict, url_out, values::Dict; alternative="", log_level=3)
     for (output_url, report_name_keys) in report_name_keys_by_url
-        url = output_url !== nothing ? output_url : default_url
-        actual_url = run_request(url, "get_db_url")
-        @timelog log_level 2 "Writing report to $actual_url..." for (report_name, keys) in report_name_keys
+        if output_url !== nothing
+            url_out = output_url
+        end
+        actual_url_out = run_request(url_out, "get_db_url")
+        @timelog log_level 2 "Writing report to $actual_url_out..." for (report_name, keys) in report_name_keys
             vals = Dict()
             for (output_name, overwrite) in keys
                 value = get(values, (output_name, overwrite), nothing)
@@ -820,22 +846,12 @@ function write_report(report_name_keys_by_url::Dict, default_url, values::Dict; 
                 output_name = output_name in all_objective_terms ? Symbol("objective_", output_name) : output_name
                 vals[output_name] = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
             end
-            write_parameters(vals, url; report=string(report_name), alternative=alternative, on_conflict="merge")
+            write_parameters(vals, url_out; report=string(report_name), alternative=alternative, on_conflict="merge")
         end
     end
 end
 
-"""
-    collect_output_values(m, output_value=output_value)
-
-A Dict mapping tuples (output, overwrite results on rolling) to another Dict mapping entities to TimeSeries or Map
-parameter values.
-
-# Arguments
-- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
-- `output_value`: a function to replace `SpineOpt.output_value` if needed.
-"""
-function collect_output_values(m, output_value=output_value)
+function _collect_output_values(m)
     _wait_for_dual_solves(m)
     values = Dict()
     for (output_name, overwrite) in _output_keys(m.ext[:spineopt].report_name_keys_by_url)
@@ -843,7 +859,7 @@ function collect_output_values(m, output_value=output_value)
         by_entity === nothing && continue
         key = (output_name, overwrite)
         haskey(values, key) && continue
-        values[key] = _output_value_by_entity(by_entity, overwrite, output_value)
+        values[key] = _output_value_by_entity(by_entity, overwrite)
     end
     values
 end
@@ -858,24 +874,14 @@ function _wait_for_dual_solves(m)
     end
 end
 
-function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
+function _output_value_by_entity(by_entity, overwrite_results_on_rolling)
     Dict(
-        entity => output_value(by_analysis_time, overwrite_results_on_rolling)
+        entity => _output_value(by_analysis_time, overwrite_results_on_rolling)
         for (entity, by_analysis_time) in by_entity
     )
 end
 
-"""
-    output_value(by_analysis_time, overwrite_results_on_rolling)
-
-A value from a SpineOpt result.
-
-# Arguments
-- `by_analysis_time::Dict`: mapping analysis times, to timestamps, to values.
-- `overwrite_results_on_rolling::Bool`: if `true`, ignore the analysis times and return a `TimeSeries`.
-    If `false`, return a `Map` where the topmost keys are the analysis times.
-"""
-function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
     by_analysis_time_realized = Dict(
         analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
         for (analysis_time, by_time_stamp) in by_analysis_time
@@ -885,22 +891,19 @@ end
 
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
-    TimeSeries(
-        [t for by_time_stamp in values(by_analysis_time_sorted) for t in keys(by_time_stamp)],
-        [val for by_time_stamp in values(by_analysis_time_sorted) for val in values(by_time_stamp)],
-        false,
-        false;
-        merge_ok=true
-    )
+    by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time_sorted) for (t, val) in by_time_stamp)
+    TimeSeries(_indices_and_values(by_time_stamp)...; merge_ok=true)
 end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
-        [
-            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
-            for by_time_stamp in values(by_analysis_time)
-        ]
+        [TimeSeries(_indices_and_values(by_time_stamp)...) for by_time_stamp in values(by_analysis_time)]
     )
+end
+
+function _indices_and_values(by_time_stamp)
+    indices, values = zip(by_time_stamp...)
+    collect(indices), collect(values)
 end
 
 function _flatten_stochastic_path(entity::NamedTuple)
@@ -1032,3 +1035,16 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
         end
     end
 end
+
+function unfix_history!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        var = m.ext[:spineopt].variables[name]
+        indices = definition[:indices]
+        for history_ind in indices(m; t=history_time_slice(m))
+            _unfix(var[history_ind])
+        end
+    end
+end
+
+_unfix(v::VariableRef) = is_fixed(v) && unfix(v)
+_unfix(::Call) = nothing

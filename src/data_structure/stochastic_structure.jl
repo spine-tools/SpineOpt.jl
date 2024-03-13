@@ -243,9 +243,14 @@ function _generate_active_stochastic_paths(m::Model)
 end
 
 """
-    generate_master_stochastic_structure(m::Model)
+    generate_stochastic_structure(m::Model)
 
-Generate stochastic structure all models.
+Generate the stochastic structure for given SpineOpt model.
+
+The stochastic structure is a directed acyclic graph (DAG) where the vertices are the `stochastic_scenario` objects,
+and the edges are given by the `parent_stochastic_scenario__child_stochastic_scenario` relationships.
+
+After this, you can call `active_stochastic_paths` to slice the generated structure.
 """
 function generate_stochastic_structure!(m::Model)
     all_stochastic_dags = _all_stochastic_dags(m)
@@ -261,15 +266,11 @@ end
     active_stochastic_paths(m; stochastic_structure, t)
 
 An `Array` where each element is itself an `Array` of `stochastic_scenario` `Object`s,
-corresponding to a branch (or path) of the stochastic DAG associated to model `m`.
+corresponding to a path (i.e., a branch) of the stochastic DAG associated to model `m`.
 
-This DAG has one vertex per `stochastic_scenario`, and the edges are given
-by the `parent_stochastic_scenario__child_stochastic_scenario` relationships.
-
-The result is obtained by first taking the subset of the stochastic DAG defined by `stochastic_structure`
-(which can be a single `Object` or an `Array` of `Object`s);
-and then taking the branches of that subset that cover `t`
-(which can be a single `TimeSlice` or an `Array` of `TimeSlice`s)
+# Arguments
+- `stochastic_structure::Union{Object,Vector{Object}}`: only return paths of `stochastic_scenario`s within these structures.
+- `t::Union{TimeSlice,Vector{TimeSlice}}`: only return paths covering these `TimeSlice`s.
 """
 function active_stochastic_paths(m; stochastic_structure, t)
     scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]

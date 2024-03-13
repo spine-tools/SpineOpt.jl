@@ -221,7 +221,7 @@ function add_mga_objective_constraint!(m::Model)
             m,
             total_costs(m, anything)
             <=
-            (1 + max_mga_slack(model=instance)) * objective_value_mga(model=instance)
+            (1 + max_mga_slack(model=instance)) * objective_value(m)
         )
     )
 end
