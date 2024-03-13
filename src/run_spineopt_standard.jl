@@ -298,14 +298,14 @@ function solve_model!(
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
-    _call_event_handlers(m, :model_about_to_solve; log_prefix)
+    _call_event_handlers(m, :model_about_to_solve)
     @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) to the first window..." rewind_temporal_structure!(m)
     while true
         @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
-        _call_event_handlers(m, :window_about_to_solve, k; log_prefix)
+        _call_event_handlers(m, :window_about_to_solve, k)
         optimize_model!(m; log_level, calculate_duals, output_suffix, discretize_t) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        _call_event_handlers(m, :window_solved, k; log_prefix)
+        _call_event_handlers(m, :window_solved, k)
         if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$(log_prefix) ... Rolling complete\n" break
         end
