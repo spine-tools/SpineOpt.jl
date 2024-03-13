@@ -340,16 +340,16 @@ function solve_model!(
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
-    _call_event_handlers(m, :model_about_to_solve; log_prefix)
+    _call_event_handlers(m, :model_about_to_solve)
     _solve_stage_models!(m; log_level, log_prefix) || return false
     model_name = string(log_prefix, _model_name(m))
     @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     while true
         @log log_level 1 "\n$model_name - Window $k: $(current_window(m))"
-        _call_event_handlers(m, :window_about_to_solve, k; log_prefix)
+        _call_event_handlers(m, :window_about_to_solve, k)
         optimize_model!(m; log_level, calculate_duals, output_suffix, discretize_t) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        _call_event_handlers(m, :window_solved, k; log_prefix)
+        _call_event_handlers(m, :window_solved, k)
         if @timelog log_level 2 "$model_name - Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$model_name ... Rolling complete\n" break
         end
