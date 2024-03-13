@@ -261,13 +261,18 @@ function create_model(mip_solver, lp_solver, use_direct_model)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+    model_by_stage = OrderedDict()
+    for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
+        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver; stage=st)
+    end
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
         m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver)
         m_mp
     end
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
+    m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)
     m
 end
 
@@ -349,6 +354,8 @@ struct SpineOptExt
     instance::Object
     lp_solver
     master_model::Union{Model,Nothing}
+    model_by_stage::OrderedDict{Object,Model}
+    stage::Union{Object,Nothing}
     intermediate_results_folder::String
     report_name_keys_by_url::Dict
     reports_by_output::Dict
@@ -360,6 +367,7 @@ struct SpineOptExt
     expressions::Dict{Symbol,Dict}
     objective_terms::Dict{Symbol,Any}
     outputs::Dict{Symbol,Union{Dict,Nothing}}
+    downstream_outputs::Dict{Symbol,Dict}
     temporal_structure::Dict
     stochastic_structure::Dict
     dual_solves::Array{Any,1}
@@ -369,7 +377,7 @@ struct SpineOptExt
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
-    function SpineOptExt(instance, lp_solver, master_model=nothing)
+    function SpineOptExt(instance, lp_solver, master_model=nothing, model_by_stage=Dict(); stage=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
         report_name_keys_by_url = Dict()
@@ -383,6 +391,11 @@ struct SpineOptExt
         reports_by_output = Dict()
         for rpt in model__report(model=instance), out in report__output(report=rpt)
             push!(get!(reports_by_output, out, []), rpt)
+        end
+        if stage !== nothing
+            for out in stage__output(stage=stage)
+                get!(reports_by_output, out, [])
+            end
         end
         event_handlers = Dict(
             :model_built => [],
@@ -398,6 +411,8 @@ struct SpineOptExt
             instance,
             lp_solver,
             master_model,
+            model_by_stage,
+            stage,
             intermediate_results_folder,
             report_name_keys_by_url,
             reports_by_output,
@@ -409,6 +424,7 @@ struct SpineOptExt
             Dict{Symbol,Dict}(),  # expressions
             Dict{Symbol,Any}(),  # objective_terms
             Dict{Symbol,Union{Dict,Nothing}}(),  # outputs
+            Dict{Symbol,Dict}(),  # downstream_outputs
             Dict(),  # temporal_structure
             Dict(),  # stochastic_structure
             [],  # dual_solves
@@ -420,6 +436,12 @@ struct SpineOptExt
             event_handlers,
         )
     end
+end
+
+function _model_name(m)
+    st = m.ext[:spineopt].stage
+    st !== nothing && return string(st.name, " stage")
+    string(m.ext[:spineopt].instance.name)
 end
 
 JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing

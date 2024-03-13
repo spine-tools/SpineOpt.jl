@@ -67,6 +67,24 @@ function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
     unique(overlapping_t for s in t for overlapping_t in get(h.overlapping_time_slices, s, ()))
 end
 
+function _roll_forward(m::Model; kwargs...)
+    st = m.ext[:spineopt].stage
+    if st !== nothing
+        stage_rf = roll_forward(; stage=st, kwargs..., _default=missing)
+        stage_rf !== missing && return stage_rf
+    end
+    roll_forward(; model=m.ext[:spineopt].instance, kwargs...)
+end
+
+function _resolution(m::Model; kwargs...)
+    st = m.ext[:spineopt].stage
+    if st !== nothing
+        stage_res = resolution(; stage=st, kwargs..., _default=missing)
+        stage_res !== missing && return stage_res
+    end
+    resolution(; kwargs...)
+end
+
 """
     _model_duration_unit(instance::Object)
 
@@ -76,13 +94,14 @@ function _model_duration_unit(instance::Object)
     get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute)
 end
 
-function _model_window_duration(instance)
+function _model_window_duration(m)
+    instance = m.ext[:spineopt].instance
     m_start = model_start(model=instance)
     m_end = model_end(model=instance)
     m_duration = m_end - m_start
     w_duration = window_duration(model=instance, _strict=false)
     if w_duration === nothing
-        w_duration = roll_forward(model=instance, i=1, _strict=false)
+        w_duration = _roll_forward(m; i=1, _strict=false)
     end
     if w_duration === nothing || m_start + w_duration > m_end
         m_duration
@@ -111,28 +130,29 @@ _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::Union{Period,Compoun
 _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_start, blk_end)
 
 """
-    _blocks_by_time_interval(instance, window_start, window_end)
+    _blocks_by_time_interval(m::Model, window_start, window_end)
 
 A `Dict` mapping (start, end) tuples to an Array of temporal blocks where found.
 """
-function _blocks_by_time_interval(instance::Object, window_start::DateTime, window_end::DateTime)
+function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::DateTime)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
     model_blocks = members(temporal_block())
-    isempty(model_blocks) && error("model $instance doesn't have any temporal_blocks")
+    model_name = _model_name(m)
+    isempty(model_blocks) && error("model $model_name doesn't have any temporal_blocks")
     for block in model_blocks
         adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
         adjusted_end = _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
-            duration = resolution(temporal_block=block, i=i)
-            duration !== nothing || break
-            if iszero(duration)
+            res = _resolution(m; temporal_block=block, i=i, _strict=false)
+            res !== nothing || break
+            if iszero(res)
                 # TODO: Try to move this to a check...
                 error("`resolution` of temporal block `$(block)` cannot be zero!")
             end
-            time_slice_end = time_slice_start + duration
+            time_slice_end = time_slice_start + res
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
                 @info "the last time slice of temporal block $block has been cut to fit within the block"
@@ -146,14 +166,14 @@ function _blocks_by_time_interval(instance::Object, window_start::DateTime, wind
 end
 
 """
-    _window_time_slices(instance, window_start, window_end)
+    _window_time_slices(m, window_start, window_end)
 
 A sorted `Array` of `TimeSlices` in the given window.
 """
-function _window_time_slices(instance::Object, window_start::DateTime, window_end::DateTime)
+function _window_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
     window_time_slices = [
-        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(instance))
-        for (interval, blocks) in _blocks_by_time_interval(instance, window_start, window_end)
+        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m.ext[:spineopt].instance))
+        for (interval, blocks) in _blocks_by_time_interval(m, window_start, window_end)
     ]
     sort!(window_time_slices)
 end
@@ -232,7 +252,7 @@ function _generate_time_slice!(m::Model)
     window = current_window(m)
     window_start = start(window)
     window_end = end_(window)
-    window_time_slices = _window_time_slices(instance, window_start, window_end)
+    window_time_slices = _window_time_slices(m, window_start, window_end)
     _add_padding_time_slice!(instance, window_end, window_time_slices)
     history_time_slices, t_history_t = _history_time_slices!(instance, window_start, window_end, window_time_slices)
     dur_unit = _model_duration_unit(instance)
@@ -396,7 +416,7 @@ Generate the current window TimeSlice for given model.
 function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
-    w_end = w_start + _model_window_duration(instance)
+    w_end = w_start + _model_window_duration(m)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
         w_start, w_end; duration_unit=_model_duration_unit(instance)
     )
@@ -405,13 +425,13 @@ end
 function _generate_windows_and_window_count!(m::Model)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
-    w_duration = _model_window_duration(instance)
+    w_duration = _model_window_duration(m)
     w_end = w_start + w_duration
     m.ext[:spineopt].temporal_structure[:windows] = windows = []
     push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
     i = 1
     while true
-        rf = roll_forward(model=instance, i=i, _strict=false)
+        rf = _roll_forward(m; i=i, _strict=false)
         (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
         w_start += rf
         w_start >= model_end(model=instance) && break
@@ -471,11 +491,11 @@ indicating the position or successive positions in that array.
 If `rev` is `true`, then the structure is rolled backwards instead of forward.
 """
 function roll_temporal_structure!(m::Model, i::Integer=1; rev=false)
-    rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
+    rf = _roll_forward(m; i=i, _strict=false)
     _do_roll_temporal_structure!(m, rf, rev)
 end
 function roll_temporal_structure!(m::Model, rng::UnitRange{T}; rev=false) where T<:Integer
-    rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
+    rfs = [_roll_forward(m; i=i, _strict=false) for i in rng]
     filter!(!isnothing, rfs)
     rf = sum(rfs; init=Minute(0))
     _do_roll_temporal_structure!(m, rf, rev)

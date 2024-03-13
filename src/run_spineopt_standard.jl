@@ -72,17 +72,17 @@ Build given SpineOpt model:
 - `log_level::Int`: an integer to control the log level.
 """
 function build_model!(m; log_level)
-    instance = m.ext[:spineopt].instance
-    @timelog log_level 2 "Creating $instance temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating $instance stochastic structure..." generate_stochastic_structure!(m)
+    model_name = _model_name(m)
+    @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
-    @timelog log_level 2 "Adding variables...\n" _add_variables!(m; log_level=log_level)
-
-    @timelog log_level 2 "Adding expressions...\n" _add_expressions!(m; log_level=log_level)
-    @timelog log_level 2 "Adding constraints...\n" _add_constraints!(m; log_level=log_level)
-    @timelog log_level 2 "Setting objective..." _set_objective!(m)
+    @timelog log_level 2 "Adding $model_name variables...\n" _add_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name expressions...\n" _add_expressions!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name constraints...\n" _add_constraints!(m; log_level=log_level)
+    @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
     _init_outputs!(m)
+    _build_stage_models!(m; log_level)
 end
 
 """
@@ -266,6 +266,48 @@ function _init_outputs!(m::Model)
     end
 end
 
+function _build_stage_models!(m; log_level)
+    for (st, stage_m) in m.ext[:spineopt].model_by_stage
+        build_model!(stage_m; log_level)
+        child_models = _child_models(m, st)
+        _init_downstream_outputs!(st, stage_m, child_models)
+    end
+end
+
+function _child_models(m, st)
+    child_models = [m.ext[:spineopt].model_by_stage[child_st] for child_st in stage__child_stage(stage1=st)]
+    if isempty(child_models)
+        child_models = [m]
+    end
+    child_models
+end
+
+function _init_downstream_outputs!(st, stage_m, child_models)
+    for out in stage__output(stage=st)
+        downstream_outputs = stage_m.ext[:spineopt].downstream_outputs[out.name] = Dict(
+            _drop_key(ind, :t) => parameter_value(TimeSeries([DateTime(0)], [NaN]))
+            for ind in stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
+        )
+        for child_m in child_models
+            window_boundaries = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
+            boundary_indices_by_ent = Dict()
+            for ind in child_m.ext[:spineopt].variables_definition[out.name][:indices](child_m)
+                any(start(ind.t) <= b <= end_(ind.t) for b in window_boundaries) || continue
+                ent = _drop_key(ind, :t)
+                push!(get!(boundary_indices_by_ent, ent, []), ind)
+            end
+            for (ent, boundary_indices) in boundary_indices_by_ent
+                input = downstream_outputs[ent]
+                for ind in boundary_indices
+                    call_kwargs = (analysis_time=startref(current_window(child_m)), t=ind.t)
+                    call = Call(input, call_kwargs, (Symbol(st.name, :_, out.name), call_kwargs))
+                    fix(child_m.ext[:spineopt].variables[out.name][ind], call)
+                end
+            end
+        end
+    end
+end
+
 """
     solve_model!(m; <keyword arguments>)
 
@@ -299,21 +341,40 @@ function solve_model!(
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
     _call_event_handlers(m, :model_about_to_solve; log_prefix)
-    @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) to the first window..." rewind_temporal_structure!(m)
+    _solve_stage_models!(m; log_level, log_prefix) || return false
+    model_name = string(log_prefix, _model_name(m))
+    @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     while true
-        @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
+        @log log_level 1 "\n$model_name - Window $k: $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k; log_prefix)
         optimize_model!(m; log_level, calculate_duals, output_suffix, discretize_t) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
         _call_event_handlers(m, :window_solved, k; log_prefix)
-        if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
-            @timelog log_level 2 "$(log_prefix) ... Rolling complete\n" break
+        if @timelog log_level 2 "$model_name - Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
+            @timelog log_level 2 "$model_name ... Rolling complete\n" break
         end
         update_model!(m; log_level=log_level, update_names=update_names)
         k += 1
     end
     _call_event_handlers(m, :model_solved)
     true
+end
+
+function _solve_stage_models!(m; log_level, log_prefix)
+    for (st, stage_m) in m.ext[:spineopt].model_by_stage
+        solve_model!(stage_m; log_level, log_prefix, discretize_t=t -> (start(t), end_(t))) || return false
+        _update_downstream_outputs!(st, stage_m)
+    end
+    true
+end
+
+function _update_downstream_outputs!(st, stage_m)
+    for out in stage__output(stage=st)
+        new_downstream_outputs = Dict(
+            ent => parameter_value(_output_value(val, true)) for (ent, val) in stage_m.ext[:spineopt].outputs[out.name]
+        )
+        mergewith!(merge!, stage_m.ext[:spineopt].downstream_outputs[out.name], new_downstream_outputs)
+    end
 end
 
 _resume_run!(m, ::Nothing; log_level, update_names) = 1
@@ -362,26 +423,27 @@ function optimize_model!(
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
-    @timelog log_level 0 "Optimizing model $(m.ext[:spineopt].instance)..." optimize!(m)
+    model_name = _model_name(m)
+    @timelog log_level 0 "Optimizing model $model_name..." optimize!(m)
     termination_st = termination_status(m)
     if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
             @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
             m.ext[:spineopt].has_results[] = true
-            @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(m)
+            @timelog log_level 2 "Saving $model_name results..." _save_model_results!(m)
             calculate_duals && _calculate_duals(m; log_level=log_level)
-            @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
-            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; output_suffix, discretize_t)
+            @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m)
+            @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m; output_suffix, discretize_t)
         else
             m.ext[:spineopt].has_results[] = false
-            @warn "no solution available for window $(current_window(m)) - moving on..."
+            @warn "no solution available for $model_name - window $(current_window(m)) - moving on..."
         end
         true
     elseif termination_st == MOI.INFEASIBLE
         printstyled(
-            "model is infeasible - if conflicting constraints can be identified, they will be reported below\n";
-            bold=true
+            "model $model_name is infeasible - if conflicting constraints can be identified, they will be reported below\n";
+            bold=true,
         )
         try
             _compute_and_print_conflict!(m)
@@ -390,7 +452,7 @@ function optimize_model!(
         end
         false
     else
-        @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
+        @log log_level 0 "Unable to find solution for $model_name (reason: $(termination_status(m)))"
         write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_on_no_solve && write_to_file(
             m, "model_diagnostics.mps"
         )
@@ -470,15 +532,16 @@ function _save_window_state(m, k; write_as_roll, resume_file_path)
 end
 
 function _calculate_duals(m; log_level=3)
+    model_name = _model_name(m)
     if has_duals(m)
         _save_marginal_values!(m)
         _save_bound_marginal_values!(m)
     elseif model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
-        @log log_level 1 "Obtaining duals for $(m.ext[:spineopt].instance)..."
+        @log log_level 1 "Obtaining duals for $model_name..."
         _calculate_duals_cplex(m; log_level=log_level) && return
         _calculate_duals_fallback(m; log_level=log_level)
     else
-        @log log_level 1 "Obtaining duals for $(m.ext[:spineopt].instance) to generate Benders cuts..."
+        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
         _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
     end
 end
