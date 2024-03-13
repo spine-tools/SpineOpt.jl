@@ -1,99 +1,65 @@
 # How does SpineOpt perceive time?
 
-Questions:
+This section answers the following questions:
 1. What are time slices?
-2. What are time slices functions?
+2. What are time slice convenience functions?
 3. How can they be used?
 
-## From temporal block to time slices
+## From temporal blocks to time slices
 
-Overview of the process:
-1. run_spineopt
-    a. create time slices for each of the (model) temporal blocks
-    b. create fictitious relationships between time slice objects
-        i. relationship between two consecutive time slices (t\_before and t\_after)
-        ii. relationship between overlapping time slices (t\_short which is in t\_long)
-    c. store these in m.ext
-2. time slice convenience functions
-    a. fetch generated relations from m.ext
+Within the [run\_spineopt](@ref) function, one key step is to generate the temporal structure for the model.
+The process goes as follows:
+1. Generate the temporal structure
+   1. Translate the [temporal\_block](@ref)s in the input DB to a set of `TimeSlice` objects
+   1. Create relationships between these `TimeSlice` objects
+      - Relationships between two consecutive time slices (`t_before` ending right when `t_after` starts)
+      - Relationship between overlapping time slices (`t_short` contained in `t_long`)
+   1. Store all the above within `m.ext[:spineopt].temporal_structure`
+1. Build the model
+   1. Query `m.ext[:spineopt].temporal_structure` to collect generated `TimeSlice` objects and relationships
+   1. Use them for indexing variables and generating constraints
 
-SpineOpt starts with the *run_spineopt* function.
-One of its main parts is to create the temporal (and stochastic) structure.
-The temporal structure starts from the temporal blocks in the input data.
-Only the temporal blocks that are connected to a model object are considered.
-Time slices are created for each of these temporal blocks.
-A time slice is characterised by a start time and an end time.
-In other words, the time frame is composed of a bunch of segments,
-determined from the resolution of the temporal block
-between the model start and end time.
+To translate the [temporal\_block](@ref)s into `TimeSlice` objects,
+we basically look at the value of [model\_start](@ref) and [model\_end](@ref) for the [model](@ref) object,
+as well as the value of the [resolution](@ref) for the different [temporal\_block](@ref) objects.
+Then we build as many `TimeSlice`s as needed to cover the period between [model\_start](@ref) and [model\_end](@ref) at each [resolution](@ref).
+Note that a `TimeSlice` is simply a *slice* of time with a start and an end.
 
-To keep track of the order of the time slices,
-SpineOpt then creates a fictitious relationship between time slice objects (across all temporal blocks connected to the model).
-There are two types of relationships, i.e. a relationship between consecutive time steps and a relationship between overlapping time steps.
-
-These time slices and their relationships are stored in m.ext.
-To later make use of the time slices and their relationships,
-there are time slice convenience functions
-that fetch the generated slices and relations from m.ext.
 
 !!! note
-    m is the model that SpineOpt builds and sends to the JuMP solver.
-    m.ext is an additional field where SpineOpt stores some extra stuff.
+    `m` is the `JuMP.Model` object that SpineOpt builds and solves using `JuMP`.
+    It has a field called `ext` which is s `Dict` where one can store more data.
+    `m.ext[:spineopt].temporal_structure` is just a `Dict` where we store data related to the temporal structure.
 
 ## What are the time slice convenience functions?
 
-The time slice convenience functions help
-with the interaction of time slices in constraints.
+To facilitate querying the temporal structure, we have developed the following convenience functions:
 
-The functionality is similar to a dictionary or a lookup table;
-for each time slice function and for each time slice
-collect all time slices of all temporal blocks combined.
-
-The functions are (with t* the input time slice):
-
-t\_in\_t
-+ uses the relationship between t\_short and t\_long
-+ if you provide the keyword `short=t*`
-you get t\_long in which t\* resides
-+ if you provide the keyword `long=t*`
-you get t\_short that is contained in t\*
-
-t\_consecutive\_t
-+ uses the relationship between t\_before and t\_after
-+ if you provide the keyword `t\_before=t*`
-you get all the possible t\_after
-+ if you provide the keyword `t\_after=t*`
-you get all the possible t\_before
-
-t\_overlapping\_t
-+ is a dictionary from a time slice to an array of time slices
-+ it uses a dictionary instead of a relationship because the operation is symmetric and does not require logic and loops
-+ provides all overlapping time slices (including partially overlapping time slices)
-
-!!! note
-    If you are looking for the time slice convenience functions in the code,
-    you should not look for a typical *function end* structure
-    but rather the short hand notation in *f()* format.
+- [t\_before\_t](@ref)
+- [t\_overlaps\_t](@ref)
+- [t\_in\_t](@ref)
 
 !!! note
     To further figure out what the time slice convenience functions do,
-    you can play around with these functions.
-    To do so, you first need to make a database (e.g. in SpineToolbox).
-    Then you can run run_spineopt with that database and collect the model m.
-    If you are impatient you do not even need to solve the model
-    and set the optimize option to *false*.
-    And then you can start with calling the time slice convenience functions with m
-    (e.g. t_in_t).
-
-!!! note
-    Older versions of SpineOpt use t\_before\_t instead of t\_consecutive\_t but that naming has changed because it is rather confusing.
-
-    There was also a variation on the time slicing functions with \_excl which excludes t* from the returned time slices. That functionality was scrapped because it was not used.
+    you can play around with them.
+    To do so, you first need to make a database (e.g. in Spine Toolbox).
+    Then you can call `run_spineopt` with that database and collect the model `m`.
+    If you are impatient you do not even need to solve the model, you can pass `optimize=false`
+    as keyword argument to `run_spineopt`.
+    And then you can start calling the time slice convenience functions with `m`
+    (e.g. `t_in_t`).
 
 ## How can the time slice convenience functions be used?
 
-When designing a constraint in SpineOpt, you should determine which time slices to use as a reference (which will be obtained from the index function below the constraint). The reference time slice can be used directly in the constraints whereas the other time slices (for each variable and parameter) need to be determined from the reference using the time slicing functions.
+When building constraints you typically want to know which `TimeSlice`s come after/before another,
+overlap another, or contain/are contained in another. You can obtain this by calling the above convenience functions.
 
-A fool proof way of designing the constraint is to always consider the highest resolution among the overlapping time slices as the reference time slice. The other time slices can then be obtained from t\_overlapping\_t.
+For example, say you're generating a constraint at a 3-hour resolution.
+This means you have a `TimeSlice` in your constraint index, and that `TimeSlice` covers 3 hours.
+Now, say you want to sum a certain variable over those 3 hours in your constraint expression.
+You need to know all the `TimeSlice`s contained in the one from your constraint index. You can find out this
+by calling [t\_in\_t](@ref) with it.
 
-More information can be found in the design of constraints.
+A fool proof way of writing the constraint is to always take the highest resolution among the overlapping `TimeSlice`s to generate the constraint indices. The other `TimeSlice`s can then be obtained from [t\_overlaps\_t](@ref).
+
+More information can be found in the [Write a constraint for SpineOpt](@ref) section.
