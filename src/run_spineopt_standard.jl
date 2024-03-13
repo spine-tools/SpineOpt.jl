@@ -811,33 +811,34 @@ function _prepare_for_deletion(path::AbstractString)
 end
 
 """
-    write_report(m, default_url, output_value=output_value; alternative="")
+    write_report(m, url_out; <keyword arguments>)
 
-Write report from given model into a DB.
+Write report(s) from given SpineOpt model to `url_out`.
+A new Spine database is created at `url_out` if one doesn't exist.
 
 # Arguments
-- `m::Model`: a SpineOpt model.
-- `default_url::String`: a DB url to write the report to.
-- `output_value`: a function to replace `SpineOpt.output_value`.
 
-# Keyword arguments
-- `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
+- `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
+
+- `log_level::Int=3`: an integer to control the log level.
 """
-function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
-    default_url === nothing && return
-    values = _collect_output_values(m, output_value)
-    write_report(m, default_url, values; alternative=alternative, log_level=log_level)
+function write_report(m, url_out; alternative="", log_level=3)
+    url_out === nothing && return
+    values = _collect_output_values(m)
+    write_report(m, url_out, values; alternative=alternative, log_level=log_level)
 end
-function write_report(m, default_url, values::Dict; alternative="", log_level=3)
+function write_report(m, url_out, values::Dict; alternative="", log_level=3)
     write_report(
-        m.ext[:spineopt].report_name_keys_by_url, default_url, values, alternative=alternative, log_level=log_level
+        m.ext[:spineopt].report_name_keys_by_url, url_out, values, alternative=alternative, log_level=log_level
     )
 end
-function write_report(report_name_keys_by_url::Dict, default_url, values::Dict; alternative="", log_level=3)
+function write_report(report_name_keys_by_url::Dict, url_out, values::Dict; alternative="", log_level=3)
     for (output_url, report_name_keys) in report_name_keys_by_url
-        url = output_url !== nothing ? output_url : default_url
-        actual_url = run_request(url, "get_db_url")
-        @timelog log_level 2 "Writing report to $actual_url..." for (report_name, keys) in report_name_keys
+        if output_url !== nothing
+            url_out = output_url
+        end
+        actual_url_out = run_request(url_out, "get_db_url")
+        @timelog log_level 2 "Writing report to $actual_url_out..." for (report_name, keys) in report_name_keys
             vals = Dict()
             for (output_name, overwrite) in keys
                 value = get(values, (output_name, overwrite), nothing)
@@ -845,12 +846,12 @@ function write_report(report_name_keys_by_url::Dict, default_url, values::Dict; 
                 output_name = output_name in all_objective_terms ? Symbol("objective_", output_name) : output_name
                 vals[output_name] = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
             end
-            write_parameters(vals, url; report=string(report_name), alternative=alternative, on_conflict="merge")
+            write_parameters(vals, url_out; report=string(report_name), alternative=alternative, on_conflict="merge")
         end
     end
 end
 
-function _collect_output_values(m, output_value=output_value)
+function _collect_output_values(m)
     _wait_for_dual_solves(m)
     values = Dict()
     for (output_name, overwrite) in _output_keys(m.ext[:spineopt].report_name_keys_by_url)
@@ -858,7 +859,7 @@ function _collect_output_values(m, output_value=output_value)
         by_entity === nothing && continue
         key = (output_name, overwrite)
         haskey(values, key) && continue
-        values[key] = _output_value_by_entity(by_entity, overwrite, output_value)
+        values[key] = _output_value_by_entity(by_entity, overwrite)
     end
     values
 end
@@ -873,24 +874,14 @@ function _wait_for_dual_solves(m)
     end
 end
 
-function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
+function _output_value_by_entity(by_entity, overwrite_results_on_rolling)
     Dict(
-        entity => output_value(by_analysis_time, overwrite_results_on_rolling)
+        entity => _output_value(by_analysis_time, overwrite_results_on_rolling)
         for (entity, by_analysis_time) in by_entity
     )
 end
 
-"""
-    output_value(by_analysis_time, overwrite_results_on_rolling)
-
-A `TimeSeries` or `Map` from a result of SpineOpt.
-
-# Arguments
-- `by_analysis_time::Dict`: mapping `DateTime` analysis time, to `TimeSlice`, to value.
-- `overwrite_results_on_rolling::Bool`: if `true`, ignore the analysis times and return a `TimeSeries`.
-    If `false`, return a `Map` where the topmost keys are the analysis times.
-"""
-function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
     by_analysis_time_realized = Dict(
         analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
         for (analysis_time, by_time_stamp) in by_analysis_time

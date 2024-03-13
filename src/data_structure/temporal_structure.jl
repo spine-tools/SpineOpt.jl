@@ -426,7 +426,7 @@ end
     generate_temporal_structure!(m)
 
 Create the temporal structure for the given SpineOpt model.
-After this, you can call the following functions to query the generated structure.
+After this, you can call the following functions to query the generated structure:
 - `time_slice`
 - `t_before_t`
 - `t_in_t`
@@ -551,9 +551,9 @@ current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
 
 An `Array` of `TimeSlice`s in model `m`.
 
- # Keyword arguments
-  - `temporal_block`: only return `TimeSlice`s in this block or blocks.
-  - `t`: only return time slices from this collection.
+ # Arguments
+  - `temporal_block::Union{Object,Vector{Object}}`: only return `TimeSlice`s in these blocks.
+  - `t::Union{TimeSlice,Vector{TimeSlice}}`: only return `TimeSlice`s that are also in this collection.
 """
 time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
 
@@ -564,10 +564,10 @@ t_history_t(m::Model; t::TimeSlice) = get(m.ext[:spineopt].temporal_structure[:t
 """
     t_before_t(m; t_before=anything, t_after=anything)
 
-An `Array` where each element is a `Tuple` of two consecutive `TimeSlice`s in model `m`
-(the second starting when the first ends).
+An `Array` where each element is a `Tuple` of two *consecutive* `TimeSlice`s in model `m`, i.e.,
+the second starting when the first ends.
 
- # Keyword arguments
+ # Arguments
   - `t_before`: if given, return an `Array` of `TimeSlice`s that start when `t_before` ends.
   - `t_after`: if given, return an `Array` of `TimeSlice`s that end when `t_after` starts.
 """
@@ -588,7 +588,7 @@ t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwa
 """
     t_overlaps_t(m; t)
 
-An `Array` of `TimeSlice`s in model `m` that overlap the given `t`.
+An `Array` of `TimeSlice`s in model `m` that overlap the given `t`, where `t` *must* be in `m`.
 """
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
 

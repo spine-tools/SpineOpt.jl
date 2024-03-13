@@ -20,7 +20,7 @@
 """
     write_model_file(m; file_name="model")
 
-Write model file for given model, including objective, constraints and variable bounds.
+Write model file for given model.
 """
 function write_model_file(m::JuMP.Model; file_name="model")
     model_string = "$m"

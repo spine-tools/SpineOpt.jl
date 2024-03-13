@@ -266,13 +266,11 @@ end
     active_stochastic_paths(m; stochastic_structure, t)
 
 An `Array` where each element is itself an `Array` of `stochastic_scenario` `Object`s,
-corresponding to a branch (or path) of the stochastic DAG associated to model `m`.
+corresponding to a path (i.e., a branch) of the stochastic DAG associated to model `m`.
 
-The argument `stochastic_structure` can either be a single `Object` or `Vector` of `Object`s.
-Similarly, `t` can either be a single `TimeSlice` or an `Array` of `TimeSlice`s.
-
-The result is obtained by first taking the subset of the stochastic DAG associated to `stochastic_structure`,
-and then taking the branches of that subset that cover `t`.
+# Arguments
+- `stochastic_structure::Union{Object,Vector{Object}}`: only return paths of `stochastic_scenario`s within these structures.
+- `t::Union{TimeSlice,Vector{TimeSlice}}`: only return paths covering these `TimeSlice`s.
 """
 function active_stochastic_paths(m; stochastic_structure, t)
     scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]
