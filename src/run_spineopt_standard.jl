@@ -289,6 +289,7 @@ function _init_downstream_outputs!(st, stage_m, child_models)
             for ind in stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
         )
         for child_m in child_models
+            # FIXME: use `fix_region`
             window_boundaries = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
             boundary_indices_by_ent = Dict()
             for ind in child_m.ext[:spineopt].variables_definition[out.name][:indices](child_m)
@@ -340,8 +341,8 @@ function solve_model!(
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
-    _call_event_handlers(m, :model_about_to_solve)
     _solve_stage_models!(m; log_level, log_prefix) || return false
+    _call_event_handlers(m, :model_about_to_solve)
     model_name = string(log_prefix, _model_name(m))
     @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     while true

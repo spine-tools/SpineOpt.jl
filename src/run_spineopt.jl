@@ -441,7 +441,9 @@ end
 function _model_name(m)
     st = m.ext[:spineopt].stage
     st !== nothing && return string(st.name, " stage")
-    string(m.ext[:spineopt].instance.name)
+    name = string(m.ext[:spineopt].instance.name)
+    master_model(m) !== nothing && return name
+    string(name, " master")
 end
 
 JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing
