@@ -52,12 +52,12 @@ To facilitate querying the temporal structure, we have developed the following c
 ## How can the time slice convenience functions be used?
 
 When building constraints you typically want to know which `TimeSlice`s come after/before another,
-overlap another, or contain/are contained in another. You can obtain this by calling the above convenience functions.
+overlap another, or contain/are contained in another. You can obtain this type of info by calling the above convenience functions.
 
 For example, say you're generating a constraint at a 3-hour resolution.
 This means you have a `TimeSlice` in your constraint index, and that `TimeSlice` covers 3 hours.
 Now, say you want to sum a certain variable over those 3 hours in your constraint expression.
-You need to know all the `TimeSlice`s contained in the one from your constraint index. You can find out this
+You need to know all the `TimeSlice`s contained in the one from your constraint index. You can find this out
 by calling [t\_in\_t](@ref) with it.
 
 A fool proof way of writing the constraint is to always take the highest resolution among the overlapping `TimeSlice`s to generate the constraint indices. The other `TimeSlice`s can then be obtained from [t\_overlaps\_t](@ref).
