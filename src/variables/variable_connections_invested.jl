@@ -31,5 +31,6 @@ function add_variable_connections_invested!(m::Model)
         fix_value=fix_connections_invested,
         initial_value=initial_connections_invested,
         int=connections_invested_available_int,
+        required_history=history_time_slice(m),
     )
 end

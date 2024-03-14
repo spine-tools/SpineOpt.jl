@@ -463,7 +463,7 @@ end
 function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
     m.ext[:spineopt].values[name] = Dict(
         ind => values[string(name)][string(ind)]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), temporal_block=anything)
+        for ind in indices(m; t=vcat(m.ext[:spineopt].variables_definition[name][:required_history], time_slice(m)), temporal_block=anything)
     )
 end
 
@@ -1064,7 +1064,7 @@ function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
         var = m.ext[:spineopt].variables[name]
         # NOTE: only update names for the representative variables
         # This is achieved by using the indices function from the variable definition
-        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); history_time_slice(m)])
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); m.ext[:spineopt].variables_definition[name][:required_history]])
             _set_name(var[ind], _base_name(name, ind))
         end
     end

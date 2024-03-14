@@ -55,5 +55,6 @@ function add_variable_nonspin_units_started_up!(m::Model)
         int=units_on_int,
         fix_value=fix_nonspin_units_started_up,
         initial_value=initial_nonspin_units_started_up,
+        required_history=history_time_slice(m),
     )
 end

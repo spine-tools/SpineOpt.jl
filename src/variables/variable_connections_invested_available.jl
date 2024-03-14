@@ -69,5 +69,6 @@ function add_variable_connections_invested_available!(m::Model)
         fix_value=fix_connections_invested_available,
         internal_fix_value=internal_fix_connections_invested_available,
         initial_value=initial_connections_invested_available,
+        required_history=history_time_slice(m),
     )
 end

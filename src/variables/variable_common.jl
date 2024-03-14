@@ -30,6 +30,7 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
   - `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable or nothing
   - `non_anticipativity_time::Union{Function,Nothing}=nothing`: given an index, return the non-anticipatity time or nothing
   - `non_anticipativity_margin::Union{Function,Nothing}=nothing`: given an index, return the non-anticipatity margin or nothing
+  - `required_history::Union{Vector{TimeSlice},Nothing}=nothing`: given an index, return the required history time slice or nothing
 """
 function add_variable!(
     m::Model,
@@ -45,13 +46,21 @@ function add_variable!(
     replacement_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
+    required_history::Union{Vector{TimeSlice},Nothing}=nothing, 
 )
-    m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Nothing}}(
+    if isnothing(required_history)
+        dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+        t0 = model_start(model=m.ext[:spineopt].instance)
+        minimum_required_history = TimeSlice(t0 - dur_unit(1), t0)
+        required_history = [t for t in history_time_slice(m) if iscontained(minimum_required_history, t)]
+    end
+    m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Vector{TimeSlice},Nothing}}(
         :indices => indices,
         :bin => bin,
         :int => int,
         :non_anticipativity_time => non_anticipativity_time,
-        :non_anticipativity_margin => non_anticipativity_margin
+        :non_anticipativity_margin => non_anticipativity_margin,
+        :required_history => required_history
     )
     var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(
@@ -66,18 +75,18 @@ function add_variable!(
             internal_fix_value,
             replacement_value
         )
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        for ind in indices(m; t=vcat(required_history, time_slice(m)))
     )
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
-        last_history_t = last(history_time_slice(m))
-        t = model_start(model=m.ext[:spineopt].instance)
+        last_history_t = last(required_history)
+        t0 = model_start(model=m.ext[:spineopt].instance)
         dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
         for (ind, v) in var
             overlaps(ind.t, last_history_t) || continue
             val = initial_value(; ind..., _strict=false)
             val === nothing && continue
-            initial_value_ts = parameter_value(TimeSeries([t - dur_unit(1), t], [val, NaN]))
+            initial_value_ts = parameter_value(TimeSeries([t0 - dur_unit(1), t0], [val, NaN]))
             fix(v, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
         end
     end
