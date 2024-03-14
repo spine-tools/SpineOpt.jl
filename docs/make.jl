@@ -7,18 +7,14 @@ include("docs_utils.jl")
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
 default_translation = Dict(
-    # ["tool_features"] => "Tool Features",
-    ["relationship_classes"] => "Relationship Classes",
-    ["parameter_value_lists"] => "Parameter Value Lists",
-    # ["features"] => "Features",
-    # ["tools"] => "Tools",
-    ["object_parameters", "relationship_parameters"] => "Parameters",
-    ["object_classes"] => "Object Classes",
+    "relationship_classes" => "Relationship Classes",
+    "parameter_value_lists" => "Parameter Value Lists",
+    "object_parameters" => "Parameters",
+    "relationship_parameters" => "Parameters",
+    "object_classes" => "Object Classes",
 )
-concept_dictionary = add_cross_references!(
-    initialize_concept_dictionary(SpineOpt.template(); translation = default_translation),
-)
-write_concept_reference_files(concept_dictionary, path)
+concept_dict = concept_dictionary(SpineOpt.template(); translation = default_translation)
+write_concept_reference_files(concept_dict, path)
 
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
 # and content from docstrings
