@@ -31,5 +31,6 @@ function add_variable_storages_invested!(m::Model)
         int=storages_invested_available_int,
         fix_value=fix_storages_invested,
         initial_value=initial_storages_invested,
+        required_history=history_time_slice(m),
     )
 end

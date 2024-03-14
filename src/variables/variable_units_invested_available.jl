@@ -65,5 +65,6 @@ function add_variable_units_invested_available!(m::Model)
         fix_value=fix_units_invested_available,
         internal_fix_value=internal_fix_units_invested_available,
         initial_value=initial_units_invested_available,
+        required_history=history_time_slice(m),
     )
 end

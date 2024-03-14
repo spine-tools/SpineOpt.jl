@@ -64,5 +64,6 @@ function add_variable_connection_flow!(m::Model)
         initial_value=initial_connection_flow,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
+        required_history=history_time_slice(m),
     )
 end

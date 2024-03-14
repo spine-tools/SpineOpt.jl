@@ -88,5 +88,6 @@ function add_variable_units_on!(m::Model)
         replacement_value=units_on_replacement_value,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,
+        required_history=history_time_slice(m),
     )
 end

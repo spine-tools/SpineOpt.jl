@@ -31,5 +31,6 @@ function add_variable_units_started_up!(m::Model)
         bin=units_on_bin,
         int=units_on_int,
         replacement_value=units_switched_replacement_value,
+        required_history=history_time_slice(m),
     )
 end
