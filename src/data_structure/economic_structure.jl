@@ -26,10 +26,10 @@ function generate_economic_structure!(m::Model;log_level=3)
         @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(m::Model,obj, name)
     end
     !isempty([
-        model__default_investment_temporal_block()...,
-        node__investment_temporal_block()...,
-        unit__investment_temporal_block()...,
-        connection__investment_temporal_block()...
+        model__default_investment_temporal_block();
+        node__investment_temporal_block();
+        unit__investment_temporal_block();
+        connection__investment_temporal_block();
     ]) || return
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
         @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" generate_capacity_transfer_factor!(m::Model,obj, name)
@@ -73,19 +73,19 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_
                             :t => Iterators.flatten((history_time_slice(m), time_slice(m)))
                             )...
                         )
-                    LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                    if isnothing(LT)
-                        LT = Year(0)
-                        #NOTE: In case LT is `none`, we will assume a duration of `0 Years`
+                    p_lt = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    if isnothing(p_lt)
+                        p_lt = Year(0)
+                        #NOTE: In case p_lt is `none`, we will assume a duration of `0 Years`
                     end
-                    TLIFE = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                    if isnothing(TLIFE)
+                    p_tlife = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    if isnothing(p_tlife)
                         max(Year(last(time_slice(m)).start.x)-Year(first(time_slice(m)).end_.x),Year(1))
-                        #NOTE: In case TLIFE is `none`, we assume that the unit exists until the end of the optimization
+                        #NOTE: In case p_tlife is `none`, we assume that the unit exists until the end of the optimization
                     end
                     vintage_t_start = start(vintage_t)
-                    start_of_operation = vintage_t_start + LT
-                    end_of_operation = vintage_t_start + LT + TLIFE
+                    start_of_operation = vintage_t_start + p_lt
+                    end_of_operation = vintage_t_start + p_lt + p_tlife
                     timeseries_val = []
                     timeseries_ind = []
                     for t in time_slice(m; temporal_block = invest_temporal_block(;Dict(obj_cls.name=>id,)...),t = Iterators.flatten((history_time_slice(m), time_slice(m))))
@@ -163,11 +163,11 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
                 timeseries_val = []
                 for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
                     discnt_rate = discount_rate(model=instance, stichastic_scenario=s, t=vintage_t) #TODO time and stoch dependent
-                    LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                    if isnothing(LT)
-                        LT = Year(0)
+                    p_lt = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    if isnothing(p_lt)
+                        p_lt = Year(0)
                     end
-                    ELIFE = econ_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    p_elife = econ_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     vintage_t_start = start(vintage_t)
                     if isnothing(econ_lifetime(;Dict(obj_cls.name=>id)...))
                         ### if empty it should translate to discounted overnight costs
@@ -175,15 +175,15 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
                         push!(timeseries_ind,vintage_t_start)
                         push!(timeseries_val,val)
                     else
-                        end_of_operation = vintage_t_start + LT + ELIFE
+                        end_of_operation = vintage_t_start + p_lt + p_elife
                         j = vintage_t_start
                         val = 0
                         while j<= end_of_operation
-                            val+= payment_fraction(vintage_t_start, j, ELIFE, LT)*discount_factor(instance,discnt_rate,j) #1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
+                            val+= payment_fraction(vintage_t_start, j, p_elife, p_lt)*discount_factor(instance,discnt_rate,j) #1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
                             j+= Year(1)
                         end
                         push!(timeseries_ind,start(vintage_t))
-                        push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,ELIFE))
+                        push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,p_elife))
                     end
                 end
                 push!(stochastic_map_indices,s)
@@ -198,19 +198,19 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
 end
 
 """
-    function capital_recovery_factor(m, discnt_rate ,ELIFE)
+    function capital_recovery_factor(m, discnt_rate ,p_elife)
 
 The `captial_recovery_factor` is the ratio between constant annuities and the present value of these annuities over the economic lifetime of the investment.
 """
 
-function capital_recovery_factor(m, discnt_rate,ELIFE)
-    if ELIFE.value==0
-        ELIFE = Year(0)
+function capital_recovery_factor(m, discnt_rate,p_elife)
+    if p_elife.value==0
+        p_elife = Year(0)
     end
     if discnt_rate != 0
-        capital_recovery_factor =  discnt_rate / (1+discnt_rate) * 1/(discount_factor(m,discnt_rate,ELIFE)) * 1/(1/(discount_factor(m,discnt_rate,ELIFE))-1)
+        capital_recovery_factor =  discnt_rate / (1+discnt_rate) * 1/(discount_factor(m,discnt_rate,p_elife)) * 1/(1/(discount_factor(m,discnt_rate,p_elife))-1)
     else
-        capital_recovery_factor = 1/(Year(ELIFE)/Year(1))
+        capital_recovery_factor = 1/(Year(p_elife)/Year(1))
     end
     capital_recovery_factor
 end
@@ -244,9 +244,9 @@ in payment year t. Depends on leadtime and economic lifetime of u (assumed to in
 """
 function payment_fraction(t_vintage, t, t_econ_life, t_lead)
     t_lead = t_lead.value == 0 ? Year(1) : t_lead
-    UP = min(t_vintage + t_lead -Year(1), t)
-    DOWN = max(t_vintage,t-t_econ_life+Year(1))
-    pfrac = max((Year(UP)-Year(DOWN)+Year(1))/t_lead,0)
+    p_up = min(t_vintage + t_lead -Year(1), t)
+    p_down = max(t_vintage,t-t_econ_life+Year(1))
+    pfrac = max((Year(p_up)-Year(p_down)+Year(1))/t_lead,0)
 end
 
 """
@@ -257,7 +257,7 @@ Generate salvage fraction of units, which exonomic lifetime exceeds the modeling
 function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
-    EOH = model_end(model=instance)
+    p_eoh = model_end(model=instance)
     salvage_fraction = Dict()
     econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
@@ -272,27 +272,27 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Sy
                 timeseries_ind = []
                 timeseries_val = []
                 for vintage_t in time_slice(m; temporal_block = invest_temporal_block(;Dict(obj_cls.name=>id)...))
-                    ELIFE = econ_lifetime(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
-                    LT = lead_time(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
-                    if isnothing(LT)
-                        LT= Year(0)
+                    p_elife = econ_lifetime(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
+                    p_lt = lead_time(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
+                    if isnothing(p_lt)
+                        p_lt= Year(0)
                     end
                     discnt_rate = discount_rate(model=instance, stochastic_scenario=s,t=vintage_t) #TODO! scenario dependent and time
                     vintage_t_start = start(vintage_t)
-                    start_of_operation = vintage_t_start + LT
-                    end_of_operation = vintage_t_start + LT + ELIFE
-                    j1= EOH #+ Year(1) #numerator +1 or not?
+                    start_of_operation = vintage_t_start + p_lt
+                    end_of_operation = vintage_t_start + p_lt + p_elife
+                    j1= p_eoh #+ Year(1) #numerator +1 or not?
                     j2 = vintage_t_start
                     val1 = 0
                     val2 = 0
                     while j1<= end_of_operation
                         ## start_of_operation!
-                        val1+= payment_fraction(vintage_t_start, j1, ELIFE, LT) *discount_factor(instance,discnt_rate,j1)
+                        val1+= payment_fraction(vintage_t_start, j1, p_elife, p_lt) *discount_factor(instance,discnt_rate,j1)
                         j1+= Year(1)
                     end
                     while j2<= end_of_operation
                         ## start_of_operation!
-                        val2+= payment_fraction(vintage_t_start, j2, ELIFE, LT) *discount_factor(instance,discnt_rate,j2)
+                        val2+= payment_fraction(vintage_t_start, j2, p_elife, p_lt) *discount_factor(instance,discnt_rate,j2)
                         j2+= Year(1)
                     end
                     val2 == 0 ? val=0 : val = max(val1/val2,0)
@@ -335,10 +335,10 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, obj_name
             for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name => id)...))
                 val = []
                 for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                    ELIFE = econ_lifetime(;Dict(obj_cls.name => id, stochastic_scenario.name => s,)...,t=vintage_t)
+                    p_elife = econ_lifetime(;Dict(obj_cls.name => id, stochastic_scenario.name => s,)...,t=vintage_t)
                     tech_discount_rate = discnt_rate_tech(;Dict(obj_cls.name => id, stochastic_scenario.name => s,)...,t=vintage_t)
                     discnt_rate = discount_rate(model=instance, stochastic_scenario=s,t=vintage_t) #TODO time and stoch dependent
-                    val = capital_recovery_factor(instance,tech_discount_rate,ELIFE)/capital_recovery_factor(instance,discnt_rate,ELIFE)
+                    val = capital_recovery_factor(instance,tech_discount_rate,p_elife)/capital_recovery_factor(instance,discnt_rate,p_elife)
                 end
                 push!(stoch_map_val,val)
                 push!(stoch_map_ind,s)
@@ -460,13 +460,13 @@ function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, 
             timeseries_ind = []
             timeseries_val = []
             for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                DECOM_T = decom_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                if isnothing(DECOM_T)
-                    DECOM_T = Year(0)
+                p_decom_t = decom_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                if isnothing(p_decom_t)
+                    p_decom_t = Year(0)
                     #NOTE: if decom time not defined, assumed to be 0 years.
                 end
                 vintage_t_start = start(vintage_t)
-                end_of_decommissioning = vintage_t_start + DECOM_T
+                end_of_decommissioning = vintage_t_start + p_decom_t
                 j = vintage_t_start
                 val = 0
                 discnt_rate = discount_rate(model=instance, stochastic_scenario=s) #TODO time and stoch dependent
@@ -475,7 +475,7 @@ function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, 
                     j+= Year(1)
                 end
                 push!(timeseries_ind,start(vintage_t))
-                push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,DECOM_T))
+                push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,p_decom_t))
             end
             push!(stochastic_map_indices,s)
             push!(stochastic_map_vals,TimeSeries(timeseries_ind,timeseries_val,false,false))
