@@ -162,7 +162,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
         # Loop over the unique names and write their information into the filename under a dedicated section.
         for name in unique!(sort!(collect(keys(concept_dict_for_key))))
             concept_dict_for_name = concept_dict_for_key[name]
-            section = "## `$(name)`\n\n"
+            section = "## `$name`\n\n"
             # If description is defined, include it into the preamble.
             description = get(concept_dict_for_name, :description, nothing)
             if description !== nothing
@@ -173,7 +173,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             if length(classes_by_description) == 1
                 description = first(collect(keys(classes_by_description)))
                 section *= "> $description\n\n"
-            else
+            elseif !isempty(classes_by_description)
                 description = join(
                     ["> - For $(join(classes, ", ")): $desc" for (desc, classes) in classes_by_description], "\n"
                 )
@@ -184,7 +184,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             if length(classes_by_default_value) == 1
                 default_value = first(collect(keys(classes_by_default_value)))
                 section *= ">**Default value**: $default_value\n\n"
-            else
+            elseif !isempty(classes_by_default_value)
                 default_value = join(
                     ["> - For $(join(classes, ", ")): $val" for (val, classes) in classes_by_default_value], "\n"
                 )
@@ -221,19 +221,20 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             end
             # Try to fetch the description from the corresponding .md filename.
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
-            try
-                description = open(f -> read(f, String), description_path, "r")
+            description = try
+                open(f -> read(f, String), description_path, "r")
                 while description[(end - 1):end] != "\n\n"
                     description *= "\n"
                 end
-                push!(system_string, section * description)
+                description
             catch
-                @info("Long description for `$name` not found! Consider adding a description to `$description_path`.")
+                @warn "Long description for `$name` not found! Consider adding a description to `$description_path`."
+                ""
             end
+            push!(system_string, section * description)
         end
-        system_string = join(system_string)
         open(joinpath(makedocs_path, "src", "concept_reference", "$(key).md"), "w") do file
-            write(file, system_string)
+            write(file, join(system_string))
         end
     end
 end
