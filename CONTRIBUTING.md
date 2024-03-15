@@ -46,30 +46,6 @@ In VSCode, you can activate "Format on Save" for `JuliaFormatter`.
 To do so, open VSCode Settings (<kbd>Ctrl</kbd> + <kbd>,</kbd>), then in "Search
 Settings", type "Format on Save" and tick the first result.
 
-## Using pre-commit
-
-Install [pre-commit](https://pre-commit.com) to run the linters and formatters.
-
-You can install `pre-commit` globally using
-
-```bash
-pip install --user pre-commit
-```
-
-If you prefer to create a local environment with it, do the following:
-
-```bash
-python -m venv env
-. env/bin/activate
-pip install --upgrade pip setuptools pre-commit
-```
-
-On Windows, you need to active the environment using the following command instead of the previous one:
-
-```bash
-. env/Scrips/activate
-```
-
 ## Further questions
 
 * For developers there is some additional information in the implementation details (e.g. how to write a constraint).
