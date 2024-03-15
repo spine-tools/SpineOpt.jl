@@ -821,12 +821,12 @@ function test_constraint_storage_lifetime()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
-            storage_investment_technical_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_technical_lifetime", storage_investment_technical_lifetime],
+                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -881,12 +881,12 @@ function test_constraint_storage_lifetime_mp()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
-            storage_investment_technical_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_technical_lifetime", storage_investment_technical_lifetime],
+                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]

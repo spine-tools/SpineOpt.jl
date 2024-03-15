@@ -521,7 +521,7 @@ function test_constraint_connection_flow_capacity_investments()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_technical_lifetime",
+                "connection_investment_tech_lifetime",
                 Dict("type" => "duration", "data" => "60m"),
             ],
         ]
@@ -1033,10 +1033,10 @@ function test_constraint_connection_lifetime()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_connection_setup()
-            connection_investment_technical_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
-                ["connection", "connection_ab", "connection_investment_technical_lifetime", connection_investment_technical_lifetime],
+                ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -1089,10 +1089,10 @@ function test_constraint_connection_lifetime_mp()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_connection_setup()
-            connection_investment_technical_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
-                ["connection", "connection_ab", "connection_investment_technical_lifetime", connection_investment_technical_lifetime],
+                ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]
@@ -1406,7 +1406,7 @@ function test_constraint_candidate_connection_lb()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_technical_lifetime",
+                "connection_investment_tech_lifetime",
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "connection_monitored", true],
@@ -1512,7 +1512,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_technical_lifetime",
+                "connection_investment_tech_lifetime",
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "connection_monitored", true],
@@ -1636,7 +1636,7 @@ function test_constraint_candidate_connection_ub()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_technical_lifetime",
+                "connection_investment_tech_lifetime",
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "connection_monitored", true],
