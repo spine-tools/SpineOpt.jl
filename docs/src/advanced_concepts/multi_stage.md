@@ -5,6 +5,9 @@
     not to be confused with the rolling horizon optimisation technique described in [Temporal Framework](@ref),
     nor the Benders decomposition algorithm described in [Decomposition](@ref).
 
+!!! warning
+    This feature is experimental. It may change in future versions without notice.
+
 By default, SpineOpt is solved as a 'single-stage' optimisation problem.
 However you can add *additional* stages to the optimisation by creating [stage](@ref) objects in your DB.
 
