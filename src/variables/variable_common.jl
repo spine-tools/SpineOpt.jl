@@ -79,7 +79,7 @@ function add_variable!(
     )
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
-        last_history_t = last(required_history)
+        last_history_t = last(history_time_slice(m))
         t0 = model_start(model=m.ext[:spineopt].instance)
         dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
         for (ind, v) in var
