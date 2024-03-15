@@ -809,11 +809,11 @@
             "connection_investment_cost",
             null,
             null,
-            "The per unit investment cost for the connection over the `connection_investment_technical_lifetime`"
+            "The per unit investment cost for the connection over the `connection_investment_tech_lifetime`"
         ],
         [
             "connection",
-            "connection_investment_technical_lifetime",
+            "connection_investment_tech_lifetime",
             null,
             null,
             "Determines the minimum investment lifetime of a connection. Once invested, it remains in service for this long"
@@ -1474,7 +1474,7 @@
         ],
         [
             "node",
-            "storage_investment_technical_lifetime",
+            "storage_investment_tech_lifetime",
             null,
             null,
             "Minimum lifetime for storage investment decisions."
@@ -1813,7 +1813,7 @@
         ],
         [
             "unit",
-            "unit_investment_technical_lifetime",
+            "unit_investment_tech_lifetime",
             null,
             null,
             "Minimum lifetime for unit investment decisions."
