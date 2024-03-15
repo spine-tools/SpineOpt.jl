@@ -892,18 +892,16 @@ end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
     by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time_sorted) for (t, val) in by_time_stamp)
-    TimeSeries(_indices_and_values(by_time_stamp)...; merge_ok=true)
+    TimeSeries(first.(by_time_stamp), last.(by_time_stamp); merge_ok=true)
 end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
-        [TimeSeries(_indices_and_values(by_time_stamp)...) for by_time_stamp in values(by_analysis_time)]
+        [
+            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)))
+            for by_time_stamp in values(by_analysis_time)
+        ]
     )
-end
-
-function _indices_and_values(by_time_stamp)
-    indices, values = zip(by_time_stamp...)
-    collect(indices), collect(values)
 end
 
 function _flatten_stochastic_path(entity::NamedTuple)
