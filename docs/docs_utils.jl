@@ -228,7 +228,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
                 end
                 description
             catch
-                @warn "Long description for `$name` not found! Consider adding a description to `$description_path`."
+                @warn "extended description for `$name` not found! consider adding one to `$description_path`."
                 ""
             end
             push!(system_string, section * description)
