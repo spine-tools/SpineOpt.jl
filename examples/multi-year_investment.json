@@ -866,7 +866,7 @@
             "connection_investment_cost",
             null,
             null,
-            "The per connection investment cost for the connection over the `connection_investment_lifetime`"
+            "The per connection investment cost for the connection over the `connection_investment_technical_lifetime`"
         ],
         [
             "connection",
@@ -877,7 +877,7 @@
         ],
         [
             "connection",
-            "connection_investment_lifetime",
+            "connection_investment_technical_lifetime",
             null,
             null,
             "Determines the minimum investment lifetime of a connection. Once invested, it remains in service for this long"
@@ -1649,7 +1649,7 @@
         ],
         [
             "node",
-            "storage_investment_lifetime",
+            "storage_investment_technical_lifetime",
             null,
             null,
             "Minimum lifetime for storage investment decisions."
@@ -2050,7 +2050,7 @@
         ],
         [
             "unit",
-            "unit_investment_lifetime",
+            "unit_investment_technical_lifetime",
             null,
             null,
             "Minimum lifetime for unit investment decisions."
@@ -12997,7 +12997,7 @@
         [
             "unit",
             "Wind farm",
-            "unit_investment_lifetime",
+            "unit_investment_technical_lifetime",
             {
                 "type": "duration",
                 "data": "1Y"
