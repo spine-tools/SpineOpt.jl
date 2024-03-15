@@ -47,7 +47,7 @@ end
 function constraint_connection_lifetime_indices(m::Model)
     unique(
         (connection=conn, stochastic_path=path, t=t)
-        for conn in indices(connection_investment_lifetime)
+        for conn in indices(connection_investment_technical_lifetime)
         for (conn, t) in connection_investment_time_indices(m; connection=conn)
         for path in active_stochastic_paths(m, _past_connections_invested_available_indices(m, conn, anything, t))
     )
@@ -62,7 +62,7 @@ function _past_connections_invested_available_indices(m, conn, s, t)
         t=to_time_slice(
             m;
             t=TimeSlice(
-                end_(t) - connection_investment_lifetime(connection=conn, analysis_time=t0, stochastic_scenario=s, t=t),
+                end_(t) - connection_investment_technical_lifetime(connection=conn, analysis_time=t0, stochastic_scenario=s, t=t),
                 end_(t)
             )
         )

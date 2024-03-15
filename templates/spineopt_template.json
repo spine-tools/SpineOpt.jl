@@ -146,7 +146,7 @@
         ["connection", "forced_availability_factor", null, null, "Availability factor due to outages/deratings."],
         ["connection", "connection_availability_factor", 1.0, null, "Availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."],
         ["connection", "connection_contingency", null, "boolean_value_list", "A boolean flag for defining a contingency `connection`."],
-        ["connection", "connection_investment_cost", null, null, "The per unit investment cost for the connection over the `connection_investment_lifetime`"],
+        ["connection", "connection_investment_cost", null, null, "The per unit investment cost for the connection over the `connection_investment_technical_lifetime`"],
         ["connection", "connection_investment_economic_lifetime", null, null, "Economic investment lifetime of a connection."],
         ["connection", "connection_investment_technical_lifetime", null, null, "Technical lifetime of a connection."],
         ["connection", "connection_investment_variable_type", "variable_type_integer", "variable_type_list", "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"],
