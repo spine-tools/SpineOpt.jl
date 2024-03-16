@@ -78,7 +78,7 @@ function add_variable!(
             val = initial_value(; ind..., _strict=false)
             val === nothing && continue
             initial_value_ts = parameter_value(TimeSeries([t - dur_unit(1), t], [val, NaN]))
-            fix(v, Call(initial_value_ts, (t=ind.t,)))
+            fix(v, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
         end
     end
     merge!(var, _representative_periods_mapping(m, var, indices))

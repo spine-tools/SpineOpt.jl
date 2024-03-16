@@ -85,15 +85,6 @@ function _resolution(m::Model; kwargs...)
     resolution(; kwargs...)
 end
 
-function _output_resolution(m::Model; kwargs...)
-    st = m.ext[:spineopt].stage
-    if st !== nothing
-        stage_out_res = output_resolution(; stage=st, kwargs..., _default=missing)
-        stage_out_res !== missing && return stage_out_res
-    end
-    output_resolution(; kwargs...)
-end
-
 """
     _model_duration_unit(instance::Object)
 
@@ -277,15 +268,12 @@ A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the outp
 """
 function _output_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
     output_time_slices = Dict{Object,Array{TimeSlice,1}}()
-    for out in output()
-        if _output_resolution(m; output=out) === nothing
-            continue
-        end
+    for out in indices(output_resolution)
         output_time_slices[out] = arr = TimeSlice[]
         time_slice_start = window_start
         i = 1
         while time_slice_start < window_end
-            duration = _output_resolution(m; output=out, i=i)
+            duration = output_resolution(output=out, i=i)
             if iszero(duration)
                 # TODO: Try to move this to a check...
                 error("`output_resolution` of output `$(out)` cannot be zero!")

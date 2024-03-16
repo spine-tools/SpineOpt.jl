@@ -270,7 +270,10 @@ function _build_stage_models!(m; log_level)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
         build_model!(stage_m; log_level)
         child_models = _child_models(m, st)
-        _init_downstream_outputs!(st, stage_m, child_models)
+        model_name = _model_name(stage_m)
+        @timelog log_level 2 "Initializing outputs for $model_name..." _init_downstream_outputs!(
+            st, stage_m, child_models
+        )
     end
 end
 
@@ -289,23 +292,35 @@ function _init_downstream_outputs!(st, stage_m, child_models)
             for ind in stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
         )
         for child_m in child_models
-            # FIXME: use `fix_region`
-            window_boundaries = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
-            boundary_indices_by_ent = Dict()
+            fix_points = _fix_points(fix_region(stage=st, output=out), child_m)
+            fix_indices_by_ent = Dict()
             for ind in child_m.ext[:spineopt].variables_definition[out.name][:indices](child_m)
-                any(start(ind.t) <= b <= end_(ind.t) for b in window_boundaries) || continue
+                any(overlaps(ind.t, fix_t) for fix_t in fix_points) || continue
                 ent = _drop_key(ind, :t)
-                push!(get!(boundary_indices_by_ent, ent, []), ind)
+                push!(get!(fix_indices_by_ent, ent, []), ind)
             end
-            for (ent, boundary_indices) in boundary_indices_by_ent
+            for (ent, fix_indices) in fix_indices_by_ent
                 input = downstream_outputs[ent]
-                for ind in boundary_indices
+                for ind in fix_indices
                     call_kwargs = (analysis_time=startref(current_window(child_m)), t=ind.t)
                     call = Call(input, call_kwargs, (Symbol(st.name, :_, out.name), call_kwargs))
                     fix(child_m.ext[:spineopt].variables[out.name][ind], call)
                 end
             end
         end
+    end
+end
+
+function _fix_points(fix_region_, child_m)
+    w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
+    if fix_region_ == :window_boundaries
+        (TimeSlice(w_start, w_start + Minute(1)), TimeSlice(w_end - Minute(1), w_end))
+    elseif fix_region_ == :window_end
+        (TimeSlice(w_end - Minute(1), w_end),)
+    elseif fix_region_ == :window_start
+        (TimeSlice(w_start, w_start + Minute(1)),)
+    elseif fix_region_ == :whole_window
+        (TimeSlice(w_start, w_end),)
     end
 end
 
@@ -363,7 +378,8 @@ end
 function _solve_stage_models!(m; log_level, log_prefix)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
         solve_model!(stage_m; log_level, log_prefix, save_history=true) || return false
-        _update_downstream_outputs!(st, stage_m)
+        model_name = _model_name(stage_m)
+        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(st, stage_m)
     end
     true
 end
