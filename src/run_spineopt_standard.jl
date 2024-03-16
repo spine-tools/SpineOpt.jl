@@ -423,7 +423,6 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
     # but is not mentioned in the COLUMNS section.
     model_name = _model_name(m)
     @timelog log_level 0 "Optimizing model $model_name..." optimize!(m)
-    println(m)
     termination_st = termination_status(m)
     if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         if result_count(m) > 0
