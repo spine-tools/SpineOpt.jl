@@ -246,7 +246,7 @@ Expand `pages` in-place so that empty chapters are populated with the entire lis
 in the associated folder.
 
 The code assumes a specific structure.
-+ All chapters and corresponding markdownfiles are in the "docs/src folder".
++ All chapters and corresponding markdown files are in the "docs/src folder".
 + folder names need to be lowercase with underscores because folder names are derived from the page names
 + markdown file names can have uppercases and can have underscores but don't need to
   because the page names are derived from file names

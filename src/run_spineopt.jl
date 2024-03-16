@@ -268,7 +268,7 @@ function create_model(mip_solver, lp_solver, use_direct_model)
     end
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-        m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver)
+        m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
         m_mp
     end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
@@ -357,7 +357,6 @@ struct SpineOptExt
     model_by_stage::OrderedDict{Object,Model}
     stage::Union{Object,Nothing}
     intermediate_results_folder::String
-    report_name_keys_by_url::Dict
     reports_by_output::Dict
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
@@ -378,24 +377,20 @@ struct SpineOptExt
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
     function SpineOptExt(instance, lp_solver, master_model=nothing, model_by_stage=Dict(); stage=nothing)
-        intermediate_results_folder = tempname(; cleanup=false)
-        mkpath(intermediate_results_folder)
-        report_name_keys_by_url = Dict()
-        for rpt in model__report(model=instance)
-            keys = [
-                (out.name, overwrite_results_on_rolling(report=rpt, output=out)) for out in report__output(report=rpt)
-            ]
-            output_url = output_db_url(report=rpt, _strict=false)
-            push!(get!(report_name_keys_by_url, output_url, []), (rpt.name, keys))
-        end
-        reports_by_output = Dict()
-        for rpt in model__report(model=instance), out in report__output(report=rpt)
-            push!(get!(reports_by_output, out, []), rpt)
-        end
-        if stage !== nothing
-            for out in stage__output(stage=stage)
-                get!(reports_by_output, out, [])
+        if stage === nothing
+            intermediate_results_folder = tempname(; cleanup=false)
+            mkpath(intermediate_results_folder)
+            reports_by_output = Dict()
+            for rpt in model__report(model=instance)
+                output_url = output_db_url(report=rpt, _strict=false)
+                for out in report__output(report=rpt)
+                    output_key = (out.name, overwrite_results_on_rolling(report=rpt, output=out))
+                    push!(get!(reports_by_output, output_key, []), (rpt.name, output_url))
+                end
             end
+        else
+            intermediate_results_folder = ""
+            reports_by_output = Dict((out.name, true) => [] for out in stage__output(stage=stage))
         end
         event_handlers = Dict(
             :model_built => [],
@@ -414,7 +409,6 @@ struct SpineOptExt
             model_by_stage,
             stage,
             intermediate_results_folder,
-            report_name_keys_by_url,
             reports_by_output,
             Dict{Symbol,Dict}(),  # variables
             Dict{Symbol,Dict}(),  # variables_definition
@@ -442,9 +436,11 @@ function _model_name(m)
     st = m.ext[:spineopt].stage
     st !== nothing && return string(st.name, " stage")
     name = string(m.ext[:spineopt].instance.name)
-    master_model(m) !== nothing && return name
-    string(name, " master")
+    master_model(m) === m && return string(name, " master")
+    name
 end
+
+_output_names(m::Model) = unique(first.(keys(m.ext[:spineopt].reports_by_output)))
 
 JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing
 
@@ -455,7 +451,19 @@ The Benders master model for given model.
 """
 master_model(m) = m.ext[:spineopt].master_model
 
-function upgrade_db(url_in; log_level)
+"""
+    stage_model(m, stage_name)
+
+A stage model associated to given model.
+"""
+stage_model(m, stage_name::Symbol) = get(m.ext[:spineopt].model_by_stage, stage(stage_name), nothing)
+
+"""
+    upgrade_db(url_in; log_level=3)
+
+Upgrade the data structure in `url_in` to latest.
+"""
+function upgrade_db(url_in; log_level=3)
     version = find_version(url_in)
     if version < current_version()
         _do_upgrade_db(url_in, version; log_level)

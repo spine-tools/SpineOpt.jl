@@ -85,6 +85,15 @@ function _resolution(m::Model; kwargs...)
     resolution(; kwargs...)
 end
 
+function _output_resolution(m::Model; kwargs...)
+    st = m.ext[:spineopt].stage
+    if st !== nothing
+        stage_out_res = output_resolution(; stage=st, kwargs..., _default=missing)
+        stage_out_res !== missing && return stage_out_res
+    end
+    output_resolution(; kwargs...)
+end
+
 """
     _model_duration_unit(instance::Object)
 
@@ -262,22 +271,21 @@ function _generate_time_slice!(m::Model)
 end
 
 """
-    _output_time_slices(instance, window_start, window_end)
+    _output_time_slices(m, window_start, window_end)
 
 A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the output's resolution.
 """
-function _output_time_slices(instance::Object, window_start::DateTime, window_end::DateTime)
+function _output_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
     output_time_slices = Dict{Object,Array{TimeSlice,1}}()
-    for out in indices(output_resolution)
-        if output_resolution(output=out) === nothing
-            output_time_slices[out] = nothing
+    for out in output()
+        if _output_resolution(m; output=out) === nothing
             continue
         end
         output_time_slices[out] = arr = TimeSlice[]
         time_slice_start = window_start
         i = 1
         while time_slice_start < window_end
-            duration = output_resolution(output=out, i=i)
+            duration = _output_resolution(m; output=out, i=i)
             if iszero(duration)
                 # TODO: Try to move this to a check...
                 error("`output_resolution` of output `$(out)` cannot be zero!")
@@ -287,6 +295,7 @@ function _output_time_slices(instance::Object, window_start::DateTime, window_en
                 time_slice_end = window_end
                 @warn("the last time slice of output $out has been cut to fit within the optimisation window")
             end
+            instance = m.ext[:spineopt].instance
             push!(arr, TimeSlice(time_slice_start, time_slice_end; duration_unit=_model_duration_unit(instance)))
             iszero(duration) && break
             time_slice_start = time_slice_end
@@ -305,7 +314,7 @@ function _generate_output_time_slices!(m::Model)
     instance = m.ext[:spineopt].instance
     window_start = model_start(model=instance)
     window_end = model_end(model=instance)
-    m.ext[:spineopt].temporal_structure[:output_time_slices] = _output_time_slices(instance, window_start, window_end)
+    m.ext[:spineopt].temporal_structure[:output_time_slices] = _output_time_slices(m, window_start, window_end)
 end
 
 """

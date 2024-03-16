@@ -349,6 +349,7 @@
         ["report__output", "overwrite_results_on_rolling", true, null, "Whether or not results from further windows should overwrite results from previous ones."],
         ["stage__temporal_block", "resolution", null, null, "Overrides a `temporal_block`'s resolution in a certain `stage` (EXPERIMENTAL)."],
         ["stage__output", "fix_region", "window_boundaries", "fix_region_list", "Defines the moments in time in which the outputs of a stage should be fixed (EXPERIMENTAL)."],
+        ["stage__output", "output_resolution", null, null, "Overrides an `output`s `output_resolution` in a certain `stage` (EXPERIMENTAL)."],
         ["stochastic_structure__stochastic_scenario", "stochastic_scenario_end", null, null, "A `Duration` for when a `stochastic_scenario` ends and its `child_stochastic_scenarios` start. Values are interpreted relative to the start of the current solve, and if no value is given, the `stochastic_scenario` is assumed to continue indefinitely."],
         ["stochastic_structure__stochastic_scenario", "weight_relative_to_parents", 1.0, null, "The weight of the `stochastic_scenario` in the objective function relative to its parents."],
         ["unit__commodity", "max_cum_in_unit_flow_bound", null, null, "Set a maximum cumulative upper bound for a `unit_flow`"],
