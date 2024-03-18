@@ -901,6 +901,15 @@ function _test_only_linear_model_has_duals()
     end
 end
 
+function _test_add_event_handler()
+    url_in, url_out, file_path_out = _test_run_spineopt_setup()
+    called = false
+    m = run_spineopt(url_in, url_out; log_level=0) do m
+        add_event_handler!(m, :model_built, m -> (called = true))
+    end
+    @test called
+end
+
 @testset "run_spineopt" begin
     _test_rolling()
     _test_rolling_with_updating_data()
@@ -923,4 +932,5 @@ end
     _test_time_limit()
     _test_only_linear_model_has_duals()
     _test_report_relative_optimality_gap()
+    _test_add_event_handler()
 end

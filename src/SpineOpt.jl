@@ -38,8 +38,6 @@ import SpineInterface: Parameter, parameter_value
 
 export SpineOptExt
 export run_spineopt
-export prepare_spineopt
-export run_spineopt!
 export add_event_handler!
 export create_model
 export build_model!
