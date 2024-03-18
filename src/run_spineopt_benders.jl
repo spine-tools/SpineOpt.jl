@@ -27,8 +27,8 @@ function run_spineopt_benders!(
     write_as_roll,
     resume_file_path,
 )
-    add_event_handler!(m, :window_about_to_solve, _set_sp_solution!)
-    add_event_handler!(m, :window_solved, process_subproblem_solution!)
+    add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
+    add_event_handler!(process_subproblem_solution!, m, :window_solved)
     m_mp = master_model(m)
     @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
