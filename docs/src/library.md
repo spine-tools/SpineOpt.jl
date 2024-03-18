@@ -19,8 +19,6 @@ Depth = 3
 
 ```@docs
 run_spineopt
-prepare_spineopt
-run_spineopt!
 create_model
 build_model!
 solve_model!

@@ -50,16 +50,34 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 # Example
 
-    using SpineOpt
-    m = run_spineopt(
-        raw"sqlite:///C:\\path\\to\\your\\inputputdb.sqlite", 
-        raw"sqlite:///C:\\path\\to\\your\\outputdb.sqlite";
-        filters=Dict("tool" => "object_activity_control", "scenario" => "scenario_to_run"),
-        alternative="your_results_alternative"
-    )
+```julia
+using SpineOpt
+m = run_spineopt(
+    raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite", 
+    raw"sqlite:///C:\\path\\to\\your\\output_db.sqlite";
+    filters=Dict("tool" => "object_activity_control", "scenario" => "scenario_to_run"),
+    alternative="alternative_to_write_results"
+)
+```
+"""
+run_spineopt(url_in, url_out; kwargs...) = run_spineopt(m -> nothing, url_in, url_out; kwargs...)
 
 """
+    run_spineopt(f, url_in, url_out; <keyword arguments>)
+
+Same as `run_spineopt(url_in, url_out; kwargs...)` but call function `f` with the SpineOpt model as argument
+right after its creation (but before building and solving it).
+
+This is intended to be called using do block syntax.
+
+```julia
+run_spineopt(url_in, url_out) do m
+    # Do something with m after its creation
+end  # Building and solving begins after quiting this block
+```
+"""
 function run_spineopt(
+    f::Function,
     url_in::Union{String,Dict},
     url_out::Union{String,Nothing}=url_in;
     log_level=3,
@@ -78,6 +96,7 @@ function run_spineopt(
 )
     _log_to_file(log_file_path) do
         _run_spineopt(
+            f,
             url_in,
             url_out;
             log_level=log_level,
@@ -97,11 +116,12 @@ function run_spineopt(
 end
 
 function _run_spineopt(
-    url_in, url_out; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level, kwargs...
+    f, url_in, url_out; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level, kwargs...
 )
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
     m = prepare_spineopt(url_in; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level)
+    f(m)
     run_spineopt!(m, url_out; log_level=log_level, kwargs...)
     t_end = now()
     elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))
@@ -491,13 +511,11 @@ Below is a table of events, arguments, and when do they fire.
 
 # Example
 
-    function handle_model_built(m)
-        # Do something with `m` after it's been built
-    end
-
-    m = prepare_spineopt("sqlite:///path-to-your-input-db")
-    add_event_handler!(m, :model_built, handle_model_built)
-    run_spineopt!(m, "sqlite:///path-to-your-results-db")  # `handle_model_built` will be called right after `m` is built
+```julia
+run_spineopt("sqlite:///path-to-input-db", "sqlite:///path-to-output-db") do m
+    add_event_handler!(m, :model_built, println)  # Print the model right after it's built
+end
+```
 """
 function add_event_handler!(m, event, fn)
     event_handlers = m.ext[:spineopt].event_handlers
