@@ -287,15 +287,17 @@ end
 
 function _init_downstream_outputs!(st, stage_m, child_models)
     for out in stage__output(stage=st)
+        out_indices = stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
+        unique_entities = unique(_drop_key(ind, :t) for ind in out_indices)
         downstream_outputs = stage_m.ext[:spineopt].downstream_outputs[out.name] = Dict(
-            _drop_key(ind, :t) => parameter_value(TimeSeries([DateTime(0)], [NaN]))
-            for ind in stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
+            ent => parameter_value(TimeSeries([DateTime(0)], [NaN])) for ent in unique_entities
         )
+        out_res = output_resolution(stage=st, output=out, _strict=false)
         for child_m in child_models
-            fix_points = _fix_points(fix_region(stage=st, output=out), child_m)
+            fix_points = _fix_points(out_res, child_m)
             fix_indices_by_ent = Dict()
             for ind in child_m.ext[:spineopt].variables_definition[out.name][:indices](child_m)
-                any(overlaps(ind.t, fix_t) for fix_t in fix_points) || continue
+                any(start(ind.t) <= fix_t <= end_(ind.t) for fix_t in fix_points) || continue
                 ent = _drop_key(ind, :t)
                 push!(get!(fix_indices_by_ent, ent, []), ind)
             end
@@ -311,17 +313,21 @@ function _init_downstream_outputs!(st, stage_m, child_models)
     end
 end
 
-function _fix_points(fix_region_, child_m)
+# If output_resolution is not specified, just fix the window end
+_fix_points(::Nothing, child_m) = (maximum(end_.(time_slice(child_m))),)
+_fix_points(out_res, child_m) = _fix_points(parameter_value(out_res), child_m)
+function _fix_points(out_res, child_m)
     w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
-    if fix_region_ == :window_boundaries
-        (TimeSlice(w_start, w_start + Minute(1)), TimeSlice(w_end - Minute(1), w_end))
-    elseif fix_region_ == :window_end
-        (TimeSlice(w_end - Minute(1), w_end),)
-    elseif fix_region_ == :window_start
-        (TimeSlice(w_start, w_start + Minute(1)),)
-    elseif fix_region_ == :whole_window
-        (TimeSlice(w_start, w_end),)
+    next_point = w_start
+    points = Set()
+    for i in Iterators.countfrom(1)
+        res = out_res(i=i)
+        res === nothing && break
+        next_point += res
+        next_point > w_end && break
+        push!(points, next_point)
     end
+    points
 end
 
 """

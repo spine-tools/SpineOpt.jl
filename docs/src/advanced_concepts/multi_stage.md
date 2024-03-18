@@ -36,8 +36,14 @@ If a [stage](@ref) has no [stage\_\_child\_stage](@ref) relationships as a paren
 then it is assumed to have only one children: the [model](@ref) itself.
 
 The [output](@ref)s that a [stage](@ref) fixes for its children are defined via [stage\_\_output](@ref)
-relationships. You can also choose *where* (at which moments in time) to fix the [output](@ref)s
-by specifying the [fix\_region](@ref) parameter.
+relationships. By default, the [output](@ref) is fixed at the *end* of each child's rolling window.
+However, you can fix it at other points in time by specifying the [output\_resolution](@ref) parameter
+as a duration (or array of durations) relative to the *start* of the child's rolling window.
+
+For example, if you specify an [output\_resolution](@ref) of `1 day`,
+then the [output](@ref) will be fixed at one day after the child's window start.
+If you specify something like `[1 day, 2 days]`, then it will be fixed at one day after the window start,
+and then at two days after that (i.e., three days after the window start).
 
 The optimisation model that a [stage](@ref) solves is essentially the same SpineOpt model
 defined by the [model](@ref),
@@ -70,8 +76,7 @@ Now, the 'stage' stuff:
 1. Create a [stage](@ref) called "lt_storage".
 1. (Don't create any [stage\_\_child\_stage](@ref) relationsips - the only child is the [model](@ref) - plus you don't have/need other [stage](@ref)s).
 1. Create a [stage\_\_output](@ref) between your [stage](@ref) and the "node_state" [output](@ref).
-1. Specify [fix\_region](@ref) for the above relationship - for example, you can choose `:window_boundaries` so the [node\_state](@ref)
-   is fixed at the beginning and end of the rolling window.
+1. Don't specify [output\_resolution](@ref) so the output is fixed at the end of the [model](@ref)'s rolling window.
 1. Specify [roll\_forward](@ref) for your [stage](@ref) as `nothing` - so the model doesn't roll - the entire year is solved at once.
 1. Create a [stage\_\_temporal\_block](@ref) relationship between your [stage](@ref) and the "flat" [temporal\_block](ref).
 1. Specify [resolution](@ref) for the above [stage\_\_temporal\_block](@ref) as `1 day`.
