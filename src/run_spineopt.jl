@@ -60,8 +60,9 @@ m = run_spineopt(
 )
 ```
 """
-run_spineopt(url_in, url_out=url_in; kwargs...) = run_spineopt(m -> nothing, url_in, url_out; kwargs...)
-
+function run_spineopt(url_in::Union{String,Dict}, url_out::Union{String,Nothing}=url_in; kwargs...)
+    run_spineopt(m -> nothing, url_in, url_out; kwargs...)
+end
 """
     run_spineopt(f, url_in, url_out; <keyword arguments>)
 
