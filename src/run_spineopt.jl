@@ -60,7 +60,7 @@ m = run_spineopt(
 )
 ```
 """
-run_spineopt(url_in, url_out; kwargs...) = run_spineopt(m -> nothing, url_in, url_out; kwargs...)
+run_spineopt(url_in, url_out=url_in; kwargs...) = run_spineopt(m -> nothing, url_in, url_out; kwargs...)
 
 """
     run_spineopt(f, url_in, url_out; <keyword arguments>)
@@ -459,7 +459,7 @@ function upgrade_db(url_in; log_level)
 end
 
 """
-    add_event_handler!(m, event, fn)
+    add_event_handler!(fn, m, event)
 
 Add an event handler for given model.
 `event` must be a `Symbol` corresponding to an event.
@@ -481,11 +481,11 @@ Below is a table of events, arguments, and when do they fire.
 
 ```julia
 run_spineopt("sqlite:///path-to-input-db", "sqlite:///path-to-output-db") do m
-    add_event_handler!(m, :model_built, println)  # Print the model right after it's built
+    add_event_handler!(println, m, :model_built)  # Print the model right after it's built
 end
 ```
 """
-function add_event_handler!(m, event, fn)
+function add_event_handler!(fn, m, event)
     event_handlers = m.ext[:spineopt].event_handlers
     listeners = get(event_handlers, event, nothing)
     listeners === nothing && error(
