@@ -713,7 +713,9 @@ relationship between report and output exists.
 """
 function generate_report__output()
     isempty(report__output()) || return
-    add_relationships!(report__output, [(r, out) for r in report() for out in output()])
+    add_relationships!(
+        report__output, [(r, out) for r in report() for out in output() if out.name != :contingency_is_binding]
+    )
 end
 
 """
