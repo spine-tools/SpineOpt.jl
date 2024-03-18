@@ -902,12 +902,16 @@ function _test_only_linear_model_has_duals()
 end
 
 function _test_add_event_handler()
-    url_in, url_out, file_path_out = _test_run_spineopt_setup()
-    called = false
-    m = run_spineopt(url_in, url_out; log_level=0) do m
-        add_event_handler!(m, :model_built, m -> (called = true))
+    @testset "add_event_handler" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        called = false
+        m = run_spineopt(url_in, url_out; log_level=0) do m
+            add_event_handler!(m, :model_built) do m
+                called = true
+            end
+        end
+        @test called
     end
-    @test called
 end
 
 @testset "run_spineopt" begin
