@@ -255,9 +255,9 @@ function run_spineopt!(
         :spineopt_benders => run_spineopt_benders!,
         :spineopt_mga => run_spineopt_mga!
     )[model_type(model=m.ext[:spineopt].instance)]
-    build_model!(m; log_level)
-    _call_event_handlers(m, :model_built)
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
+    Base.invokelatest(build_model!, m; log_level)
+    _call_event_handlers(m, :model_built)
     Base.invokelatest(        
         do_run_spineopt!,
         m,
