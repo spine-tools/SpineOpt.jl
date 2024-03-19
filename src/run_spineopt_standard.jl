@@ -288,6 +288,7 @@ end
 function _init_downstream_outputs!(st, stage_m, child_models)
     for out in stage__output(stage=st)
         out_indices = stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
+        isempty(out_indices) && continue
         unique_entities = unique(_drop_key(ind, :t) for ind in out_indices)
         model_very_end = maximum(end_.(ind.t for ind in out_indices))
         # Since we take the `start` of the `TimeSlice` when saving outputs,
@@ -385,20 +386,20 @@ function solve_model!(
 end
 
 function _solve_stage_models!(m; log_level, log_prefix)
-    for (st, stage_m) in m.ext[:spineopt].model_by_stage
+    for stage_m in values(m.ext[:spineopt].model_by_stage)
         solve_model!(stage_m; log_level, log_prefix) || return false
         model_name = _model_name(stage_m)
-        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(st, stage_m)
+        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
     end
     true
 end
 
-function _update_downstream_outputs!(st, stage_m)
-    for out in stage__output(stage=st)
+function _update_downstream_outputs!(stage_m)
+    for (out_name, current_downstream_outputs) in stage_m.ext[:spineopt].downstream_outputs
         new_downstream_outputs = Dict(
-            ent => parameter_value(_output_value(val, true)) for (ent, val) in stage_m.ext[:spineopt].outputs[out.name]
+            ent => parameter_value(_output_value(val, true)) for (ent, val) in stage_m.ext[:spineopt].outputs[out_name]
         )
-        mergewith!(merge!, stage_m.ext[:spineopt].downstream_outputs[out.name], new_downstream_outputs)
+        mergewith!(merge!, current_downstream_outputs, new_downstream_outputs)
     end
 end
 
