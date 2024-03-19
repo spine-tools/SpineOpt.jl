@@ -268,13 +268,12 @@ A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the outp
 """
 function _output_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
     output_time_slices = Dict{Object,Array{TimeSlice,1}}()
-    for out in indices(output_resolution)
-        haskey(out, :stage) && continue
+    for out in indices(output_resolution; stage=nothing)
         output_time_slices[out] = arr = TimeSlice[]
         time_slice_start = window_start
         i = 1
         while time_slice_start < window_end
-            duration = output_resolution(output=out, i=i)
+            duration = output_resolution(output=out, stage=nothing, i=i)
             if iszero(duration)
                 # TODO: Try to move this to a check...
                 error("`output_resolution` of output `$(out)` cannot be zero!")
