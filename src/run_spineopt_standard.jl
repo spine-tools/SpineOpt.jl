@@ -289,8 +289,12 @@ function _init_downstream_outputs!(st, stage_m, child_models)
     for out in stage__output(stage=st)
         out_indices = stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
         unique_entities = unique(_drop_key(ind, :t) for ind in out_indices)
+        model_very_end = maximum(end_.(ind.t for ind in out_indices))
+        # Since we take the `start` of the `TimeSlice` when saving outputs,
+        # we initialize each output as a TimeSeries mapping the window very end plus 1 minute to NaN.
+        # This allows the previous point (last actual data point) to stick till the end
         downstream_outputs = stage_m.ext[:spineopt].downstream_outputs[out.name] = Dict(
-            ent => parameter_value(TimeSeries([DateTime(0)], [NaN])) for ent in unique_entities
+            ent => parameter_value(TimeSeries([model_very_end + Minute(1)], [NaN])) for ent in unique_entities
         )
         out_res = output_resolution(stage=st, output=out, _strict=false)
         for child_m in child_models
@@ -347,8 +351,6 @@ Solve given SpineOpt model and save outputs.
 - `calculate_duals::Bool=false`: whether or not to calculate duals after the model solve.
 - `output_suffix::NamedTuple=(;)`: to add to the outputs.
 - `log_prefix::String`="": to prepend to log messages.
-- `discretize_t=t -> (start(t),)`: a function that takes a `TimeSlice` and returns a sequence of `DateTime`
-  for writing results.
 """
 function solve_model!(
     m;
@@ -359,7 +361,6 @@ function solve_model!(
     calculate_duals=false,
     output_suffix=(;),
     log_prefix="",
-    discretize_t=t -> (start(t),),
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
@@ -370,7 +371,7 @@ function solve_model!(
     while true
         @log log_level 1 "\n$model_name - Window $k: $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
-        optimize_model!(m; log_level, calculate_duals, output_suffix, discretize_t) || return false
+        optimize_model!(m; log_level, calculate_duals, output_suffix) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
         _call_event_handlers(m, :window_solved, k)
         if @timelog log_level 2 "$model_name - Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
@@ -385,7 +386,7 @@ end
 
 function _solve_stage_models!(m; log_level, log_prefix)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
-        solve_model!(stage_m; log_level, log_prefix, discretize_t=t -> (start(t), end_(t))) || return false
+        solve_model!(stage_m; log_level, log_prefix) || return false
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(st, stage_m)
     end
@@ -441,7 +442,7 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;), discretize_t=t -> (start(t),))
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;))
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -456,7 +457,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
             @timelog log_level 2 "Saving $model_name results..." _save_model_results!(m)
             calculate_duals && _calculate_duals(m; log_level=log_level)
             @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m)
-            @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix, discretize_t)
+            @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix)
         else
             m.ext[:spineopt].has_results[] = false
             @warn "no solution available for $model_name - window $(current_window(m)) - moving on..."
@@ -667,7 +668,7 @@ end
 """
 Save the outputs of a model.
 """
-function _save_outputs!(m, output_suffix, discretize_t)
+function _save_outputs!(m, output_suffix)
     is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
     for out_name in _output_names(m)
         out = output(out_name)
@@ -675,25 +676,25 @@ function _save_outputs!(m, output_suffix, discretize_t)
         crop_to_window = !is_last_window && all(
             overwrite_results_on_rolling(report=rpt, output=out) for rpt in report__output(output=out)
         )
-        if _save_output!(m, out, value, output_suffix, discretize_t, crop_to_window)
+        if _save_output!(m, out, value, output_suffix, crop_to_window)
             continue
         end
         param = parameter(out_name, @__MODULE__)
-        if _save_output!(m, out, param, output_suffix, discretize_t, crop_to_window)
+        if _save_output!(m, out, param, output_suffix, crop_to_window)
             continue
         end
         @warn "can't find any values for '$out_name'"
     end
 end
 
-function _save_output!(m, out, value_or_param, output_suffix, discretize_t, crop_to_window)
+function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
     by_entity = _value_by_entity(m, value_or_param, crop_to_window)
     for (entity, by_analysis_time) in by_entity
         entity = (; entity..., output_suffix...)
         for (analysis_time, by_time_slice) in by_analysis_time
             t_highest_resolution!(by_time_slice)
             by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
-                by_time_slice, output_time_slices(m; output=out), discretize_t
+                by_time_slice, output_time_slices(m; output=out)
             )
             isempty(by_time_stamp_adjusted) && continue
             by_entity_adjusted = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
@@ -708,7 +709,7 @@ function _save_output!(m, out, value_or_param, output_suffix, discretize_t, crop
     end
     true
 end
-_save_output!(m, out, ::Nothing, output_suffix, discretize_t, crop_to_window) = false
+_save_output!(m, out, ::Nothing, output_suffix, crop_to_window) = false
 
 function _value_by_entity(m, value::Dict, crop_to_window)
     by_entity = Dict()
@@ -743,19 +744,17 @@ function _value_by_entity(m, parameter::Parameter, crop_to_window)
     by_entity
 end
 
-function _value_by_time_stamp_adjusted(by_time_slice, output_time_slices::Array, discretize_t)
+function _value_by_time_stamp_adjusted(by_time_slice, output_time_slices::Array)
     by_time_stamp_adjusted = Dict()
     for t_out in output_time_slices
         val = _get_ajusted_value(by_time_slice, t_out)
         val === nothing && continue  # No adjustment possible
-        for dt in discretize_t(t_out)
-            by_time_stamp_adjusted[dt] = val
-        end
+        by_time_stamp_adjusted[start(t_out)] = val
     end
     by_time_stamp_adjusted
 end
-function _value_by_time_stamp_adjusted(by_time_slice, ::Nothing, discretize_t)
-    Dict(dt => by_time_slice[t] for t in sort(collect(keys(by_time_slice))) for dt in discretize_t(t))
+function _value_by_time_stamp_adjusted(by_time_slice, ::Nothing)
+    Dict(start(t) => v for (t, v) in by_time_slice)
 end
 
 function _get_ajusted_value(by_time_slice, t_out)

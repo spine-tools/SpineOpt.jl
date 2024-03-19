@@ -242,6 +242,7 @@
         ["report", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["report", "output_db_url", null, null, "Database url for SpineOpt output."],
         ["settings", "version", 11, null, "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."],
+        ["stage", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["stage", "roll_forward", null, null, "Overrides the `model`'s `roll_forward` in a given `stage` (EXPERIMENTAL)."],
         ["stochastic_scenario", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["stochastic_structure", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],

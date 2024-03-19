@@ -52,7 +52,7 @@ SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_da
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
-    merge!(data, test_data)
+    merge!(append!, data, test_data)
     _load_test_data_without_template(db_url, data)
 end
 
@@ -117,5 +117,6 @@ end
     include("util/misc.jl")
     include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
+    include("run_spineopt_multi_stage.jl")
     include("run_examples.jl")
 end
