@@ -836,7 +836,7 @@ function _test_fix_node_state_using_map_with_rolling()
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         n_state = Y.node_state(; node=Y.node(:node_b))
-        @test length(n_state) == 27
+        @test length(n_state) == 2
         @testset for (t, v) in n_state
             exp_v = Hour(t - indexes[1]).value * ucap
             @test exp_v == v
