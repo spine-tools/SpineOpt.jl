@@ -269,6 +269,7 @@ A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the outp
 function _output_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
     output_time_slices = Dict{Object,Array{TimeSlice,1}}()
     for out in indices(output_resolution)
+        haskey(out, :stage) && continue
         output_time_slices[out] = arr = TimeSlice[]
         time_slice_start = window_start
         i = 1
