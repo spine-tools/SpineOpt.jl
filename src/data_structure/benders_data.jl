@@ -163,10 +163,13 @@ end
 function save_mp_objective_bounds_and_gap!(m_mp)
     obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = objective_value(m_mp)
     sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
-    invest_costs = value(realize(total_costs(m_mp, anything; operations=false)))
-    obj_ub = m_mp.ext[:spineopt].objective_upper_bound[] = sp_obj_val + invest_costs
+    obj_ub = m_mp.ext[:spineopt].objective_upper_bound[] = sp_obj_val + value(realize(investment_costs(m_mp)))
     gap = (obj_ub == obj_lb) ? 0 : 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)
     push!(m_mp.ext[:spineopt].benders_gaps, gap)
+end
+
+function investment_costs(m_mp)
+    sum(in_window for (in_window, _bw) in values(m_mp.ext[:spineopt].objective_terms))
 end
 
 function add_benders_iteration(j)
