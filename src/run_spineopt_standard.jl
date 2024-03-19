@@ -1103,7 +1103,9 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         history_t = t_history_t(m; t=ind.t)
         history_t === nothing && continue
         for history_ind in indices(m; ind..., t=history_t)
-            _fix(var[history_ind], val[ind])
+            v = get(var, history_ind, nothing) # NOTE: only fix variables that have history
+            if v === nothing continue end
+            _fix(v, val[ind])
         end
     end
 end
