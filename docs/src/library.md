@@ -35,9 +35,10 @@ current_window
 generate_stochastic_structure!
 active_stochastic_paths
 write_model_file
-output_value
 write_report
 write_report_from_intermediate_results
 master_model
+stage_model
+upgrade_db
 generate_forced_availability_factor
 ```

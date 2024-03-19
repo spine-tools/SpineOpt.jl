@@ -46,7 +46,7 @@ p^{is\_monitored}_{(c_{mon})} \land p^{is\_contingency}_{(c_{cont})} \\
 ```
 """
 function add_constraint_connection_flow_lodf!(m::Model)
-    rpts = join(get(m.ext[:spineopt].reports_by_output, output(:contingency_is_binding), []), ", ", " and ")
+    rpts = join(report__output(output=output(:contingency_is_binding)), ", ", " and ")
     if !isempty(rpts)
         @info "skipping constraint connection_flow_lodf - instead will report contingency_is_binding in $rpts"
         return

@@ -867,7 +867,7 @@ function _test_time_limit()
         )
         rm(file_path_out; force=true)
         windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
-        msgs = ["no solution available for window $w - moving on..." for w in windows]
+        msgs = ["no solution available for instance - window $w - moving on..." for w in windows]
         @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
     end
 end

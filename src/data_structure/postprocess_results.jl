@@ -29,8 +29,8 @@ function postprocess_results!(m::Model)
         :connection_avg_intact_throughflow => save_connection_avg_intact_throughflow!,
         :contingency_is_binding => save_contingency_is_binding!
     )
-    for out in keys(m.ext[:spineopt].reports_by_output)
-        fn! = get(fns!, out.name, nothing)
+    for out_name in _output_names(m)
+        fn! = get(fns!, out_name, nothing)
         fn! === nothing || fn!(m)
     end
 end

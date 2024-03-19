@@ -78,6 +78,7 @@ pages = [
         ),
         "Imposing renewable energy targets" => joinpath("advanced_concepts", "cumulated_flow_restrictions.md"),
         "Modelling to generate alternatives" => joinpath("advanced_concepts", "mga.md"),
+        "Multi-stage optimisation" => joinpath("advanced_concepts", "multi_stage.md"),
     ],
     "Implementation details" => [],
     "Library" => "library.md",

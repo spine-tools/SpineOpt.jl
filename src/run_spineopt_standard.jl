@@ -72,17 +72,17 @@ Build given SpineOpt model:
 - `log_level::Int`: an integer to control the log level.
 """
 function build_model!(m; log_level)
-    instance = m.ext[:spineopt].instance
-    @timelog log_level 2 "Creating $instance temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating $instance stochastic structure..." generate_stochastic_structure!(m)
+    model_name = _model_name(m)
+    @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
-    @timelog log_level 2 "Adding variables...\n" _add_variables!(m; log_level=log_level)
-
-    @timelog log_level 2 "Adding expressions...\n" _add_expressions!(m; log_level=log_level)
-    @timelog log_level 2 "Adding constraints...\n" _add_constraints!(m; log_level=log_level)
-    @timelog log_level 2 "Setting objective..." _set_objective!(m)
+    @timelog log_level 2 "Adding $model_name variables...\n" _add_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name expressions...\n" _add_expressions!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name constraints...\n" _add_constraints!(m; log_level=log_level)
+    @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
     _init_outputs!(m)
+    _build_stage_models!(m; log_level)
 end
 
 """
@@ -261,9 +261,78 @@ function _create_objective_terms!(m)
 end
 
 function _init_outputs!(m::Model)
-    for out in keys(m.ext[:spineopt].reports_by_output)
-        get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
+    for out_name in _output_names(m)
+        get!(m.ext[:spineopt].outputs, out_name, Dict{NamedTuple,Dict}())
     end
+end
+
+function _build_stage_models!(m; log_level)
+    for (st, stage_m) in m.ext[:spineopt].model_by_stage
+        build_model!(stage_m; log_level)
+        child_models = _child_models(m, st)
+        model_name = _model_name(stage_m)
+        @timelog log_level 2 "Initializing outputs for $model_name..." _init_downstream_outputs!(
+            st, stage_m, child_models
+        )
+    end
+end
+
+function _child_models(m, st)
+    child_models = [m.ext[:spineopt].model_by_stage[child_st] for child_st in stage__child_stage(stage1=st)]
+    if isempty(child_models)
+        child_models = [m]
+    end
+    child_models
+end
+
+function _init_downstream_outputs!(st, stage_m, child_models)
+    for out in stage__output(stage=st)
+        out_indices = stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
+        isempty(out_indices) && continue
+        unique_entities = unique(_drop_key(ind, :t) for ind in out_indices)
+        model_very_end = maximum(end_.(ind.t for ind in out_indices))
+        # Since we take the `start` of the `TimeSlice` when saving outputs,
+        # we initialize each output as a TimeSeries mapping the window very end plus 1 minute to NaN.
+        # This allows the previous point (last actual data point) to stick till the end
+        downstream_outputs = stage_m.ext[:spineopt].downstream_outputs[out.name] = Dict(
+            ent => parameter_value(TimeSeries([model_very_end + Minute(1)], [NaN])) for ent in unique_entities
+        )
+        out_res = output_resolution(stage=st, output=out, _strict=false)
+        for child_m in child_models
+            fix_points = _fix_points(out_res, child_m)
+            fix_indices_by_ent = Dict()
+            for ind in child_m.ext[:spineopt].variables_definition[out.name][:indices](child_m)
+                any(start(ind.t) <= fix_t <= end_(ind.t) for fix_t in fix_points) || continue
+                ent = _drop_key(ind, :t)
+                push!(get!(fix_indices_by_ent, ent, []), ind)
+            end
+            for (ent, fix_indices) in fix_indices_by_ent
+                input = downstream_outputs[ent]
+                for ind in fix_indices
+                    call_kwargs = (analysis_time=startref(current_window(child_m)), t=ind.t)
+                    call = Call(input, call_kwargs, (Symbol(st.name, :_, out.name), call_kwargs))
+                    fix(child_m.ext[:spineopt].variables[out.name][ind], call)
+                end
+            end
+        end
+    end
+end
+
+# If output_resolution is not specified, just fix the window end
+_fix_points(::Nothing, child_m) = (maximum(end_.(time_slice(child_m))),)
+function _fix_points(out_res, child_m)
+    out_res = parameter_value(out_res)
+    w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
+    next_point = w_start
+    points = Set()
+    for i in Iterators.countfrom(1)
+        res = out_res(i=i)
+        res === nothing && break
+        next_point += res
+        next_point > w_end && break
+        push!(points, next_point)
+    end
+    points
 end
 
 """
@@ -283,7 +352,6 @@ Solve given SpineOpt model and save outputs.
 - `calculate_duals::Bool=false`: whether or not to calculate duals after the model solve.
 - `output_suffix::NamedTuple=(;)`: to add to the outputs.
 - `log_prefix::String`="": to prepend to log messages.
-- `discretize_t=t -> (start(t),)`: a function that takes a `TimeSlice` and returns a sequence of `DateTime`s.
 """
 function solve_model!(
     m;
@@ -294,26 +362,45 @@ function solve_model!(
     calculate_duals=false,
     output_suffix=(;),
     log_prefix="",
-    discretize_t=t -> (start(t),),
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
+    _solve_stage_models!(m; log_level, log_prefix) || return false
     _call_event_handlers(m, :model_about_to_solve)
-    @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) to the first window..." rewind_temporal_structure!(m)
+    model_name = string(log_prefix, _model_name(m))
+    @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     while true
-        @log log_level 1 "\n$(log_prefix)Window $k: $(current_window(m))"
+        @log log_level 1 "\n$model_name - Window $k: $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
-        optimize_model!(m; log_level, calculate_duals, output_suffix, discretize_t) || return false
+        optimize_model!(m; log_level, calculate_duals, output_suffix) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
         _call_event_handlers(m, :window_solved, k)
-        if @timelog log_level 2 "$(log_prefix)Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
-            @timelog log_level 2 "$(log_prefix) ... Rolling complete\n" break
+        if @timelog log_level 2 "$model_name - Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
+            @timelog log_level 2 "$model_name ... Rolling complete\n" break
         end
         update_model!(m; log_level=log_level, update_names=update_names)
         k += 1
     end
     _call_event_handlers(m, :model_solved)
     true
+end
+
+function _solve_stage_models!(m; log_level, log_prefix)
+    for stage_m in values(m.ext[:spineopt].model_by_stage)
+        solve_model!(stage_m; log_level, log_prefix) || return false
+        model_name = _model_name(stage_m)
+        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
+    end
+    true
+end
+
+function _update_downstream_outputs!(stage_m)
+    for (out_name, current_downstream_outputs) in stage_m.ext[:spineopt].downstream_outputs
+        new_downstream_outputs = Dict(
+            ent => parameter_value(_output_value(val, true)) for (ent, val) in stage_m.ext[:spineopt].outputs[out_name]
+        )
+        mergewith!(merge!, current_downstream_outputs, new_downstream_outputs)
+    end
 end
 
 _resume_run!(m, ::Nothing; log_level, update_names) = 1
@@ -356,32 +443,31 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(
-    m::Model; log_level=3, calculate_duals=false, output_suffix=(;), discretize_t=t -> (start(t),)
-)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;))
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
-    @timelog log_level 0 "Optimizing model $(m.ext[:spineopt].instance)..." optimize!(m)
+    model_name = _model_name(m)
+    @timelog log_level 0 "Optimizing $model_name..." optimize!(m)
     termination_st = termination_status(m)
     if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
             @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
             m.ext[:spineopt].has_results[] = true
-            @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(m)
+            @timelog log_level 2 "Saving $model_name results..." _save_model_results!(m)
             calculate_duals && _calculate_duals(m; log_level=log_level)
-            @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
-            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; output_suffix, discretize_t)
+            @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m)
+            @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix)
         else
             m.ext[:spineopt].has_results[] = false
-            @warn "no solution available for window $(current_window(m)) - moving on..."
+            @warn "no solution available for $model_name - window $(current_window(m)) - moving on..."
         end
         true
     elseif termination_st == MOI.INFEASIBLE
         printstyled(
-            "model is infeasible - if conflicting constraints can be identified, they will be reported below\n";
-            bold=true
+            "model $model_name is infeasible - if conflicting constraints can be identified, they will be reported below\n";
+            bold=true,
         )
         try
             _compute_and_print_conflict!(m)
@@ -390,7 +476,7 @@ function optimize_model!(
         end
         false
     else
-        @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
+        @log log_level 0 "Unable to find solution for $model_name (reason: $(termination_status(m)))"
         write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_on_no_solve && write_to_file(
             m, "model_diagnostics.mps"
         )
@@ -470,15 +556,16 @@ function _save_window_state(m, k; write_as_roll, resume_file_path)
 end
 
 function _calculate_duals(m; log_level=3)
+    model_name = _model_name(m)
     if has_duals(m)
         _save_marginal_values!(m)
         _save_bound_marginal_values!(m)
     elseif model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
-        @log log_level 1 "Obtaining duals for $(m.ext[:spineopt].instance)..."
+        @log log_level 1 "Obtaining duals for $model_name..."
         _calculate_duals_cplex(m; log_level=log_level) && return
         _calculate_duals_fallback(m; log_level=log_level)
     else
-        @log log_level 1 "Obtaining duals for $(m.ext[:spineopt].instance) to generate Benders cuts..."
+        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
         _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
     end
 end
@@ -582,49 +669,51 @@ end
 """
 Save the outputs of a model.
 """
-function _save_outputs!(m; output_suffix, discretize_t)
+function _save_outputs!(m, output_suffix)
     is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
-    for (out, rpts) in m.ext[:spineopt].reports_by_output
-        value = get(m.ext[:spineopt].values, out.name, nothing)
-        crop_to_window = !is_last_window && all(overwrite_results_on_rolling(report=rpt, output=out) for rpt in rpts)
-        if _save_output!(m, out, value, crop_to_window; output_suffix, discretize_t)
+    for out_name in _output_names(m)
+        out = output(out_name)
+        value = get(m.ext[:spineopt].values, out_name, nothing)
+        crop_to_window = !is_last_window && all(
+            overwrite_results_on_rolling(report=rpt, output=out) for rpt in report__output(output=out)
+        )
+        if _save_output!(m, out, value, output_suffix, crop_to_window)
             continue
         end
-        param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param, crop_to_window; output_suffix, discretize_t)
+        param = parameter(out_name, @__MODULE__)
+        if _save_output!(m, out, param, output_suffix, crop_to_window)
             continue
         end
-        @warn "can't find any values for '$(out.name)'"
+        @warn "can't find any values for '$out_name'"
     end
 end
 
-function _save_output!(m, out, value_or_param, crop_to_window; output_suffix, discretize_t)
-    by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param, crop_to_window)
-    for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
+function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
+    by_entity = _value_by_entity(m, value_or_param, crop_to_window)
+    for (entity, by_analysis_time) in by_entity
         entity = (; entity..., output_suffix...)
-        for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
-            t_highest_resolution!(by_time_slice_non_aggr)
-            output_time_slices_ = output_time_slices(m; output=out)
-            by_time_stamp_aggr = _value_by_time_stamp_aggregated(
-                by_time_slice_non_aggr, output_time_slices_, discretize_t
+        for (analysis_time, by_time_slice) in by_analysis_time
+            t_highest_resolution!(by_time_slice)
+            by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
+                by_time_slice, output_time_slices(m; output=out)
             )
-            isempty(by_time_stamp_aggr) && continue
-            by_entity = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
-            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            current_by_time_slice_aggr = get(by_analysis_time, analysis_time, nothing)
-            if current_by_time_slice_aggr === nothing
-                by_analysis_time[analysis_time] = by_time_stamp_aggr
+            isempty(by_time_stamp_adjusted) && continue
+            by_entity_adjusted = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
+            by_analysis_time_adjusted = get!(by_entity_adjusted, entity, Dict{DateTime,Any}())
+            current_by_time_slice_adjusted = get(by_analysis_time_adjusted, analysis_time, nothing)
+            if current_by_time_slice_adjusted === nothing
+                by_analysis_time_adjusted[analysis_time] = by_time_stamp_adjusted
             else
-                merge!(current_by_time_slice_aggr, by_time_stamp_aggr)
+                merge!(current_by_time_slice_adjusted, by_time_stamp_adjusted)
             end
         end
     end
     true
 end
-_save_output!(m, out, ::Nothing, crop_to_window; output_suffix, discretize_t) = false
+_save_output!(m, out, ::Nothing, output_suffix, crop_to_window) = false
 
-function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
-    by_entity_non_aggr = Dict()
+function _value_by_entity(m, value::Dict, crop_to_window)
+    by_entity = Dict()
     analysis_time = start(current_window(m))
     for (ind, val) in value
         t_keys = collect(_time_slice_keys(ind))
@@ -632,43 +721,49 @@ function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
         t <= analysis_time && continue
         crop_to_window && start(t) >= end_(current_window(m)) && continue
         entity = _drop_key(ind, t_keys...)
-        by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
-        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
-        by_time_slice_non_aggr[t] = val
+        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+        by_time_slice = get!(by_analysis_time, analysis_time, Dict{TimeSlice,Any}())
+        by_time_slice[t] = val
     end
-    by_entity_non_aggr
+    by_entity
 end
-function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window)
-    by_entity_non_aggr = Dict()
+function _value_by_entity(m, parameter::Parameter, crop_to_window)
+    by_entity = Dict()
     analysis_time = start(current_window(m))
     for entity in indices_as_tuples(parameter)
         for (scen, t) in stochastic_time_indices(m)
+            t <= analysis_time && continue
             crop_to_window && start(t) >= end_(current_window(m)) && continue
             entity = (; entity..., stochastic_scenario=scen)
             val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
             val === nothing && continue
-            by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
-            by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
-            by_time_slice_non_aggr[t] = val
+            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+            by_time_slice = get!(by_analysis_time, analysis_time, Dict{TimeSlice,Any}())
+            by_time_slice[t] = val
         end
     end
-    by_entity_non_aggr
+    by_entity
 end
 
-function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices::Array, discretize_t)
-    by_time_stamp_aggr = Dict()
-    for t_aggr in output_time_slices
-        time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_non_aggr))
-        isempty(time_slices) && continue  # No aggregation possible
-        val = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
-        for i in discretize_t(t_aggr)
-            by_time_stamp_aggr[i] = val
-        end
+function _value_by_time_stamp_adjusted(by_time_slice, output_time_slices::Array)
+    by_time_stamp_adjusted = Dict()
+    for t_out in output_time_slices
+        val = _get_ajusted_value(by_time_slice, t_out)
+        val === nothing && continue  # No adjustment possible
+        by_time_stamp_adjusted[start(t_out)] = val
     end
-    by_time_stamp_aggr
+    by_time_stamp_adjusted
 end
-function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing, discretize_t)
-    Dict(i => v for (t, v) in by_time_slice_non_aggr for i in discretize_t(t))
+function _value_by_time_stamp_adjusted(by_time_slice, ::Nothing)
+    Dict(start(t) => v for (t, v) in by_time_slice)
+end
+
+function _get_ajusted_value(by_time_slice, t_out)
+    higher_res_time_slices = filter(t -> iscontained(t, t_out), keys(by_time_slice))
+    if !isempty(higher_res_time_slices)
+        # Aggregate
+        sum(by_time_slice[t] for t in higher_res_time_slices) / length(higher_res_time_slices)
+    end
 end
 
 function _compute_and_print_conflict!(m)
@@ -699,7 +794,7 @@ function _write_intermediate_results(m)
         push!(tables, (file_path, table))
     end
     isempty(tables) && return
-    file_path = joinpath(m.ext[:spineopt].intermediate_results_folder, ".report_name_keys_by_url")
+    file_path = joinpath(m.ext[:spineopt].intermediate_results_folder, ".reports_by_output")
     if !isfile(file_path)
         @info """
         Intermediate results are being written to $(m.ext[:spineopt].intermediate_results_folder).
@@ -711,21 +806,12 @@ function _write_intermediate_results(m)
 
         """
         open(file_path, "w") do f
-            JSON.print(f, m.ext[:spineopt].report_name_keys_by_url)
+            JSON.print(f, m.ext[:spineopt].reports_by_output)
         end
     end
     for (file_path, table) in tables
         isfile(file_path) ? Arrow.append(file_path, table) : Arrow.write(file_path, table; file=false)
     end
-end
-
-function _output_keys(report_name_keys_by_url)
-    unique(
-        key
-        for report_name_keys in values(report_name_keys_by_url)
-        for (_rpt_name, keys) in report_name_keys
-        for key in keys
-    )
 end
 
 """
@@ -745,10 +831,10 @@ function write_report_from_intermediate_results(
     x::Union{Model,AbstractString}, default_url; alternative="", log_level=3
 )
     intermediate_results_folder = _intermediate_results_folder(x)
-    report_name_keys_by_url = _report_name_keys_by_url(x)
-    values = _collect_values_from_intermediate_results(intermediate_results_folder, report_name_keys_by_url)
+    reports_by_output = _reports_by_output(x)
+    values = _collect_values_from_intermediate_results(intermediate_results_folder, reports_by_output)
     isempty(values) || write_report(
-        report_name_keys_by_url, default_url, values; alternative=alternative, log_level=log_level
+        reports_by_output, default_url, values; alternative=alternative, log_level=log_level
     )
     _clear_intermediate_results(x)
 end
@@ -756,14 +842,14 @@ end
 _intermediate_results_folder(m::Model) = m.ext[:spineopt].intermediate_results_folder
 _intermediate_results_folder(intermediate_results_folder::AbstractString) = intermediate_results_folder
 
-_report_name_keys_by_url(m::Model) = m.ext[:spineopt].report_name_keys_by_url
-function _report_name_keys_by_url(intermediate_results_folder::AbstractString)
-    JSON.parsefile(joinpath(intermediate_results_folder, ".report_name_keys_by_url"))
+_reports_by_output(m::Model) = m.ext[:spineopt].reports_by_output
+function _reports_by_output(intermediate_results_folder::AbstractString)
+    JSON.parsefile(joinpath(intermediate_results_folder, ".reports_by_output"))
 end
 
-function _collect_values_from_intermediate_results(intermediate_results_folder, report_name_keys_by_url)
+function _collect_values_from_intermediate_results(intermediate_results_folder, reports_by_output)
     values = Dict()
-    for (output_name, overwrite) in _output_keys(report_name_keys_by_url)
+    for (output_name, overwrite) in keys(reports_by_output)
         file_path = joinpath(intermediate_results_folder, _output_file_name(output_name, overwrite))
         isfile(file_path) || continue
         table = Arrow.Table(file_path)
@@ -828,25 +914,29 @@ function write_report(m, url_out; alternative="", log_level=3)
     write_report(m, url_out, values; alternative=alternative, log_level=log_level)
 end
 function write_report(m, url_out, values::Dict; alternative="", log_level=3)
-    write_report(
-        m.ext[:spineopt].report_name_keys_by_url, url_out, values, alternative=alternative, log_level=log_level
-    )
+    write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end
-function write_report(report_name_keys_by_url::Dict, url_out, values::Dict; alternative="", log_level=3)
-    for (output_url, report_name_keys) in report_name_keys_by_url
-        if output_url !== nothing
-            url_out = output_url
+function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
+    vals_by_url_by_report = Dict()
+    for ((output_name, overwrite), reports) in reports_by_output
+        value = get(values, (output_name, overwrite), nothing)
+        value === nothing && continue
+        if output_name in all_objective_terms
+            output_name = Symbol(:objective_, output_name)
         end
-        actual_url_out = run_request(url_out, "get_db_url")
-        @timelog log_level 2 "Writing report to $actual_url_out..." for (report_name, keys) in report_name_keys
-            vals = Dict()
-            for (output_name, overwrite) in keys
-                value = get(values, (output_name, overwrite), nothing)
-                value === nothing && continue
-                output_name = output_name in all_objective_terms ? Symbol("objective_", output_name) : output_name
-                vals[output_name] = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
+        output_val = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
+        for (report_name, output_url) in reports
+            if output_url === nothing
+                output_url = url_out
             end
-            write_parameters(vals, url_out; report=string(report_name), alternative=alternative, on_conflict="merge")
+            vals = get!(get!(vals_by_url_by_report, output_url, Dict()), report_name, Dict())
+            vals[output_name] = output_val
+        end
+    end
+    for (output_url, vals_by_report) in vals_by_url_by_report
+        actual_output_url = run_request(output_url, "get_db_url")
+        @timelog log_level 2 "Writing report to $actual_output_url..." for (report_name, vals) in vals_by_report
+            write_parameters(vals, output_url; report=string(report_name), alternative=alternative, on_conflict="merge")
         end
     end
 end
@@ -854,7 +944,7 @@ end
 function _collect_output_values(m)
     _wait_for_dual_solves(m)
     values = Dict()
-    for (output_name, overwrite) in _output_keys(m.ext[:spineopt].report_name_keys_by_url)
+    for (output_name, overwrite) in keys(m.ext[:spineopt].reports_by_output)
         by_entity = get(m.ext[:spineopt].outputs, output_name, nothing)
         by_entity === nothing && continue
         key = (output_name, overwrite)
