@@ -631,8 +631,10 @@ end
 function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
     (
         (tb, ta)
-        for (tb, ta) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
-        if all(!isempty(intersect(members(blk), blocks(t))) for t in (tb, ta))
+        for (tb, ta) in t_before_t(
+            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk), t=t_after), _compact=false
+        )
+        if !isempty(intersect(members(blk), blocks(tb)))
     )
 end
 
