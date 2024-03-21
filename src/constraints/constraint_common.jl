@@ -29,12 +29,14 @@ function t_lowest_resolution_path(m, indices, extra_indices...)
     isempty(indices) && return ()
     scens_by_t = t_lowest_resolution_sets!(_scens_by_t(indices))
     extra_scens_by_t = _scens_by_t(Iterators.flatten(extra_indices))
+    t_arr = sort(collect(keys(scens_by_t)))
     extra_t_arr = sort(collect(keys(extra_scens_by_t)))
+    t = _popfirst!(t_arr, nothing)
     extra_t = _popfirst!(extra_t_arr, nothing)
-    for t in sort(collect(keys(scens_by_t)))
-        extra_t === nothing && break
+    while t !== nothing && extra_t !== nothing
         if iscontained(t, extra_t)
             union!(scens_by_t[t], extra_scens_by_t[extra_t])
+            t = _popfirst!(t_arr, nothing)
         else
             extra_t = _popfirst!(extra_t_arr, nothing)
         end
