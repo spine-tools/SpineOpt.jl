@@ -39,7 +39,7 @@ function t_lowest_resolution_path(m, indices, more_indices...)
 end
 
 function _scens_by_t(indices)
-    scens_by_t = Dict()
+    scens_by_t = Dict{TimeSlice,Set}()
     for x in indices
         scens = get!(scens_by_t, x.t) do
             Set{Object}()
