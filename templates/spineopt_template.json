@@ -31,6 +31,7 @@
         ["model__default_investment_temporal_block", ["model", "temporal_block"], "The default `temporal_block` of all investments in the `model`."],
         ["model__default_stochastic_structure", ["model", "stochastic_structure"], "The default `stochastic_structure` of the `model."],
         ["model__default_temporal_block", ["model", "temporal_block"], "The default `temporal_block` of the `model`."],
+        ["model__report", ["model", "report"], "A `report` that should be written for the `model`."],
         ["model__stochastic_structure", ["model", "stochastic_structure"], "Defines which `stochastic_structure`s are included in which `model`s."],
         ["model__temporal_block", ["model", "temporal_block"], "Defines which `temporal_block`s are included in which `model`s."], 
         ["node__commodity", ["node", "commodity"], "A `commodity` for a `node`. Only a single `commodity` is permitted per `node`."],
