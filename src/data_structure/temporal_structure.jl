@@ -621,10 +621,18 @@ end
 Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword arguments that allow filtering.
 """
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
-    unique(
+    (
         (node=n, t=t1)
         for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
+    )
+end
+
+function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
+    (
+        (tb, ta)
+        for (tb, ta) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+        if all(!isempty(intersect(members(blk), blocks(t))) for t in (tb, ta))
     )
 end
 
@@ -634,12 +642,10 @@ end
 Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with keyword arguments that allow filtering.
 """
 function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
-    unique(
+    (
         (node=n, t_before=tb, t_after=ta)
-        for (n, ta) in node_time_indices(m; node=node, t=t_after)
-        for (n, tb) in node_time_indices(
-            m; node=n, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
-        )
+        for (n, blk) in node__temporal_block(node=node, _compact=false)
+        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
     )
 end
 
@@ -654,7 +660,7 @@ function unit_time_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
     t=anything,
 )
-    unique(
+    (
         (unit=u, t=t1)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
@@ -671,17 +677,11 @@ function unit_dynamic_time_indices(
     unit=anything,
     t_before=anything,
     t_after=anything,
-    temporal_block=anything,
 )
-    unique(
+    (
         (unit=u, t_before=tb, t_after=ta)
-        for (u, ta) in unit_time_indices(m; unit=unit, t=t_after)
-        for (u, tb) in unit_time_indices(
-            m;
-            unit=u,
-            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
-            temporal_block=temporal_block,
-        )
+        for (u, blk) in units_on__temporal_block(unit=unit, _compact=false)
+        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
     )
 end
 
@@ -691,7 +691,7 @@ end
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment variables with filter keywords.
 """
 function unit_investment_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
-    unique(
+    (
         (unit=u, t=t1)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
@@ -704,7 +704,7 @@ end
 Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection` investment variables with filter keywords.
 """
 function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
-    unique(
+    (
         (connection=conn, t=t1)
         for (conn, tb) in connection__investment_temporal_block(
             connection=connection, temporal_block=temporal_block, _compact=false
@@ -719,7 +719,7 @@ end
 Generate an `Array` of all valid `(node, t)` `NamedTuples` for `node` investment variables (storages) with filter keywords.
 """
 function node_investment_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
-    unique(
+    (
         (node=n, t=t1)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
@@ -732,12 +732,10 @@ end
 Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `unit` investment variables with filters.
 """
 function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything)
-    unique(
+    (
         (unit=u, t_before=tb, t_after=ta)
-        for (u, ta) in unit_investment_time_indices(m; unit=unit, t=t_after)
-        for (u, tb) in unit_investment_time_indices(
-            m; unit=u, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
-        )
+        for (u, blk) in unit__investment_temporal_block(unit=unit, _compact=false)
+        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
     )
 end
 
@@ -747,12 +745,11 @@ end
 Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples` for `connection` investment variables with filters.
 """
 function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
-    unique(
+    (
         (connection=conn, t_before=tb, t_after=ta)
-        for (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after)
-        for (conn, tb) in connection_investment_time_indices(
-            m; connection=conn, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
-        )
+        for (conn, blk) in connection__investment_temporal_block(connection=connection, _compact=false)
+        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
+
     )
 end
 
@@ -762,11 +759,9 @@ end
 Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` for `node` investment variables with filters.
 """
 function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
-    unique(
+    (
         (node=n, t_before=tb, t_after=ta)
-        for (n, ta) in node_investment_time_indices(m; node=node, t=t_after)
-        for (node, tb) in node_investment_time_indices(
-            m; node=n, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
-        )
+        for (n, blk) in node__investment_temporal_block(node=node, _compact=false)
+        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
     )
 end

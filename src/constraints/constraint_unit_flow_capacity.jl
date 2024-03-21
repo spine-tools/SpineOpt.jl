@@ -121,7 +121,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     * duration(t_after)
                     for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_next);
                     init=0
-                )                
+                )
                 + sum(
                     + _shutdown_margin(u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(u, ng, d, s, t0, t)

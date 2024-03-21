@@ -144,7 +144,7 @@ function expression_capacity_margin_indices(m::Model; t_range=anything)
         for path in active_stochastic_paths(
             m,  
             [                                      
-                node_stochastic_time_indices(m; node=n, t=t);
+                collect(node_stochastic_time_indices(m; node=n, t=t));
                 [
                     (unit=u, stochastic_scenario=s, t=t2)
                     for u in indices(unit_capacity; node=n, direction=direction(:to_node)) if !is_storage_unit(u)
