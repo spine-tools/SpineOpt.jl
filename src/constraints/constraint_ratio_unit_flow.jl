@@ -237,7 +237,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
         for (u, n1, n2) in indices(ratio)
         for (t, path) in t_lowest_resolution_path(
             m,
-            unit_flow_indices(m; unit=u, node=[n1; n2]),
+            unit_flow_indices(m; unit=u, node=[n1, n2]),
             vcat(
                 unit_flow_indices(m; unit=u, node=n1, direction=d1),
                 unit_flow_indices(m; unit=u, node=n2, direction=d2),

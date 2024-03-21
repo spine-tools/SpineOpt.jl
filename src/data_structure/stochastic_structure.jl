@@ -319,7 +319,7 @@ function stochastic_time_indices(
     temporal_block=anything,
     t=anything,
 )
-    unique(
+    (
         (stochastic_scenario=s, t=t)
         for ss in stochastic_structure()
         for tb in intersect(SpineOpt.temporal_block(), temporal_block)
@@ -329,14 +329,14 @@ function stochastic_time_indices(
 end
 
 """
-    node_stochastic_time_indices(m;<keyword arguments>)
+    node_stochastic_time_indices(m; <keyword arguments>)
 
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
 function node_stochastic_time_indices(
     m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
 )
-    unique(
+    (
         (node=n, stochastic_scenario=s, t=t)
         for (n, t) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
         for ss in node__stochastic_structure(node=n)
@@ -345,7 +345,7 @@ function node_stochastic_time_indices(
 end
 
 """
-    unit_stochastic_time_indices(;<keyword arguments>)
+    unit_stochastic_time_indices(m; <keyword arguments>)
 
 Stochastic time indexes for `units` with keyword arguments that allow filtering.
 """
@@ -356,7 +356,7 @@ function unit_stochastic_time_indices(
     temporal_block=anything,
     t=anything,
 )
-    unique(
+    (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, t) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
         for ss in units_on__stochastic_structure(unit=u)
@@ -365,7 +365,7 @@ function unit_stochastic_time_indices(
 end
 
 """
-    unit_investment_stochastic_time_indices(;<keyword arguments>)
+    unit_investment_stochastic_time_indices(m; <keyword arguments>)
 
 Stochastic time indexes for `units_invested` with keyword arguments that allow filtering.
 """
@@ -376,7 +376,7 @@ function unit_investment_stochastic_time_indices(
     temporal_block=anything,
     t=anything,
 )
-    unique(
+    (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, t) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
         for ss in unit__investment_stochastic_structure(unit=u)
@@ -385,7 +385,7 @@ function unit_investment_stochastic_time_indices(
 end
 
 """
-    connection_investment_stochastic_time_indices(;<keyword arguments>)
+    connection_investment_stochastic_time_indices(m; <keyword arguments>)
 
 Stochastic time indexes for `connections_invested` with keyword arguments that allow filtering.
 """
@@ -396,7 +396,7 @@ function connection_investment_stochastic_time_indices(
     temporal_block=anything,
     t=anything,
 )
-    unique(
+    (
         (connection=conn, stochastic_scenario=s, t=t)
         for (conn, t) in connection_investment_time_indices(
             m; connection=connection, temporal_block=temporal_block, t=t,
@@ -407,7 +407,7 @@ function connection_investment_stochastic_time_indices(
 end
 
 """
-    node_investment_stochastic_time_indices(;<keyword arguments>)
+    node_investment_stochastic_time_indices(m; <keyword arguments>)
 
 Stochastic time indexes for `storages_invested` with keyword arguments that allow filtering.
 """
@@ -418,7 +418,7 @@ function node_investment_stochastic_time_indices(
     temporal_block=anything,
     t=anything,
 )
-    unique(
+    (
         (node=n, stochastic_scenario=s, t=t)
         for (n, t) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
         for ss in node__investment_stochastic_structure(node=n)

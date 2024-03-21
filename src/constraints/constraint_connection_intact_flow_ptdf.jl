@@ -111,7 +111,7 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
             m,
             vcat(
                 connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
-                node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t)
+                collect(node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t)),
             )
         )
     )
