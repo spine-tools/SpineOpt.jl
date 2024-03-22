@@ -1,0 +1,26 @@
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.4.0
+      hooks:
+          - id: check-json
+          - id: check-toml
+          - id: check-yaml
+          - id: end-of-file-fixer
+          - id: file-contents-sorter
+            files: .JuliaFormatter.toml
+            args: [--unique]
+          - id: mixed-line-ending
+            args: [--fix=lf]
+          - id: no-commit-to-branch
+          - id: pretty-format-json
+            args: [--autofix, --indent=4]
+          - id: trailing-whitespace
+    - repo: https://github.com/domluna/JuliaFormatter.jl
+      rev: v1.0.35
+      hooks:
+          - id: julia-formatter
+    - repo: https://github.com/tcort/markdown-link-check
+      rev: v3.11.2
+      hooks:
+          - id: markdown-link-check
+            args: [--config, .markdown-link-check.json]
