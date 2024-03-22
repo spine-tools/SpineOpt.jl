@@ -45,13 +45,8 @@ then the [output](@ref) will be fixed at one day after the child's window start.
 If you specify something like `[1 day, 2 days]`, then it will be fixed at one day after the window start,
 and then at two days after that (i.e., three days after the window start).
 
-The optimisation model that a [stage](@ref) solves is essentially the same SpineOpt model
-defined by the [model](@ref),
-but you can (and probably should) override certain parameters to make it solve quicker.
-At the moment you can specify [roll\_forward](@ref) for your [stage](@ref),
-and this will override the [roll\_forward](@ref) of the [model](@ref) for that [stage](@ref).
-You can also create [stage\_\_temporal\_block](@ref) relationships and specify [resolution](@ref) for them,
-and this will override the [resolution](@ref) of that [temporal\_block](@ref) for that [stage](@ref).
+The optimisation model that a [stage](@ref) solves is given by the [stage\_scenario](@ref) parameter value,
+which must be a scenario in your DB.
 
 And that's basically it!
 
@@ -73,11 +68,13 @@ With the above, you will have a rolling-horizon model that would probably solve 
 but wouldn't capture the long-term value of your storage.
 
 Now, the 'stage' stuff:
+1. Create an alternative called "lt_storage_alt".
+1. Create a scenario called "lt_storage_scen" with the "lt_storage_alt" alternative in the highest rank.
 1. Create a [stage](@ref) called "lt_storage".
 1. (Don't create any [stage\_\_child\_stage](@ref) relationsips - the only child is the [model](@ref) - plus you don't have/need other [stage](@ref)s).
 1. Create a [stage\_\_output](@ref) between your [stage](@ref) and the "node_state" [output](@ref).
 1. Don't specify [output\_resolution](@ref) so the output is fixed at the end of the [model](@ref)'s rolling window.
-1. Specify [roll\_forward](@ref) for your [stage](@ref) as `nothing` - so the model doesn't roll - the entire year is solved at once.
-1. Create a [stage\_\_temporal\_block](@ref) relationship between your [stage](@ref) and the "flat" [temporal\_block](ref).
-1. Specify [resolution](@ref) for the above [stage\_\_temporal\_block](@ref) as `1 day`.
+1. Specify [roll\_forward](@ref) for your [model](@ref) in the "lt_storage_alt" alternative as `nothing` - so the model doesn't roll - the entire year is solved at once.
+1. Specify [resolution](@ref) for the "flat" [temporal\_block](@ref) in the "lt_storage_alt" alternative as `1 day`.
+1. Specify [stage\_scenario](@ref) for the "lt_storage" [stage](@ref) as `"lt_storage_scen"`.
 

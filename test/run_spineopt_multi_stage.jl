@@ -136,11 +136,12 @@ end
 function _lt_storage_data()
     rf = Day(1)
     lt_stor_res = Day(1)
-    filters_map = Map(["scenario"], ["lt_storage"])
     Dict(
         :alternatives => [("lt_storage_alt",)],
-        :scenarios => [("base",), ("lt_storage",)],
-        :scenario_alternatives => [("base", "Base"), ("lt_storage", "Base"), ("lt_storage", "lt_storage_alt")],
+        :scenarios => [("base",), ("lt_storage_scen",)],
+        :scenario_alternatives => [
+            ("base", "Base"), ("lt_storage_scen", "Base"), ("lt_storage_scen", "lt_storage_alt")
+        ],
         :objects => Any[
             ("stage", "lt_storage"),
         ],
@@ -148,7 +149,7 @@ function _lt_storage_data()
             ("stage__output", ("lt_storage", "node_state")),
         ],
         :object_parameter_values => Any[
-            ("stage", "lt_storage", "stage_filters", unparse_db_value(filters_map)),
+            ("stage", "lt_storage", "stage_scenario", "lt_storage_scen"),
             ("model", "test_model", "roll_forward", unparse_db_value(rf)),
             ("model", "test_model", "roll_forward", nothing, "lt_storage_alt"),
             ("temporal_block", "flat", "resolution", unparse_db_value(lt_stor_res), "lt_storage_alt"),

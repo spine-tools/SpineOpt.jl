@@ -178,7 +178,9 @@ function prepare_spineopt(
         """
     end
     for st in stage()
-        filters = _parse_stage_filters(stage_filters(stage=st, _strict=false), st)
+        scenario = stage_scenario(stage=st, _strict=false)
+        scenario isa Symbol || error("invalid scenario $scenario for stage $st")
+        filters = merge(filters, Dict("scenario" => string(scenario)))
         with_env(st.name) do
             _init_data_from_db(url_in, log_level, upgrade, templates, filters, st)
         end
@@ -229,9 +231,6 @@ end
 
 _data(url_in::String; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
 _data(data::Dict; kwargs...) = data
-
-_parse_stage_filters(filters::Map{Symbol,T}, _st) where T = Dict(string(k) => v for (k, v) in filters)
-_parse_stage_filters(x, st) = error("invalid filters $x for stage $st - please specify a valid map")
 
 """
     run_spineopt!(m, url_out; <keyword arguments>)

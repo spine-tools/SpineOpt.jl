@@ -242,7 +242,7 @@
         ["report", "output_db_url", null, null, "Database url for SpineOpt output."],
         ["settings", "version", 11, null, "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."],
         ["stage", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
-        ["stage", "stage_filters", null, null, "A map with the filters for this `stage` (EXPERIMENTAL)."],
+        ["stage", "stage_scenario", null, null, "The scenario that this `stage` should run (EXPERIMENTAL)."],
         ["stochastic_scenario", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["stochastic_structure", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["temporal_block", "block_end", null, null, "The end time for the `temporal_block`. Can be given either as a `DateTime` for a static end point, or as a `Duration` for an end point relative to the start of the current optimization."],
