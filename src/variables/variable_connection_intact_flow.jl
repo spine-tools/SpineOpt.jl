@@ -55,7 +55,6 @@ end
 Add `connection_intact_flow` variables to model `m`.
 """
 function add_variable_connection_intact_flow!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connection_intact_flow,

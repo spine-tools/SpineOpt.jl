@@ -59,7 +59,6 @@ set_bin(x) = true
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_binary_gas_connection_flow!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :binary_gas_connection_flow,

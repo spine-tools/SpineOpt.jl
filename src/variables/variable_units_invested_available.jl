@@ -55,7 +55,6 @@ units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == 
 Add `units_invested_available` variables to model `m`.
 """
 function add_variable_units_invested_available!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_invested_available,
@@ -65,6 +64,6 @@ function add_variable_units_invested_available!(m::Model)
         replacement_value=units_on_replacement_value,
         fix_value=fix_units_invested_available,
         internal_fix_value=internal_fix_units_invested_available,
-        initial_value=initial_units_invested_available
+        initial_value=initial_units_invested_available,
     )
 end

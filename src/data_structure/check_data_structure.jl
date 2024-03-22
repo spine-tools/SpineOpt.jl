@@ -39,11 +39,11 @@ Check the conditional `cond` and throws a warning with a message `warn_msg` if `
 _check_warn(cond, msg_parts...) = cond || @warn string(msg_parts...)
 
 """
-    check_data_structure(log_level::Int64)
+    check_data_structure()
 
 Check if the data structure provided from the db results in a valid model.
 """
-function check_data_structure(; log_level=3)
+function check_data_structure()
     check_model_object()
     check_temporal_block_object()
     check_node_object()

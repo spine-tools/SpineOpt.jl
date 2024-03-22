@@ -54,7 +54,6 @@ end
 Add `units_out_of_service` variables to model `m`.
 """
 function add_variable_units_out_of_service!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_out_of_service,

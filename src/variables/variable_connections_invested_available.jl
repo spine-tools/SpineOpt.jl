@@ -60,7 +60,6 @@ end
 Add `connections_invested_available` variables to model `m`.
 """
 function add_variable_connections_invested_available!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connections_invested_available,
@@ -69,6 +68,6 @@ function add_variable_connections_invested_available!(m::Model)
         int=connections_invested_available_int,
         fix_value=fix_connections_invested_available,
         internal_fix_value=internal_fix_connections_invested_available,
-        initial_value=initial_connections_invested_available
+        initial_value=initial_connections_invested_available,
     )
 end

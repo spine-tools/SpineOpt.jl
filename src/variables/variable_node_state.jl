@@ -39,13 +39,12 @@ end
 Add `node_state` variables to model `m`.
 """
 function add_variable_node_state!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :node_state,
         node_state_indices;
         lb=node_state_min,
         fix_value=fix_node_state,
-        initial_value=initial_node_state
+        initial_value=initial_node_state,
     )
 end

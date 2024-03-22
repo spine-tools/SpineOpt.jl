@@ -67,24 +67,6 @@ function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
     unique(overlapping_t for s in t for overlapping_t in get(h.overlapping_time_slices, s, ()))
 end
 
-function _roll_forward(m::Model; kwargs...)
-    st = m.ext[:spineopt].stage
-    if st !== nothing
-        stage_rf = roll_forward(; stage=st, kwargs..., _default=missing)
-        stage_rf !== missing && return stage_rf
-    end
-    roll_forward(; model=m.ext[:spineopt].instance, kwargs...)
-end
-
-function _resolution(m::Model; kwargs...)
-    st = m.ext[:spineopt].stage
-    if st !== nothing
-        stage_res = resolution(; stage=st, kwargs..., _default=missing)
-        stage_res !== missing && return stage_res
-    end
-    resolution(; kwargs...)
-end
-
 """
     _model_duration_unit(instance::Object)
 
@@ -101,7 +83,7 @@ function _model_window_duration(m)
     m_duration = m_end - m_start
     w_duration = window_duration(model=instance, _strict=false)
     if w_duration === nothing
-        w_duration = _roll_forward(m; i=1, _strict=false)
+        w_duration = roll_forward(model=instance, i=1, _strict=false)
     end
     if w_duration === nothing || m_start + w_duration > m_end
         m_duration
@@ -146,7 +128,7 @@ function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
-            res = _resolution(m; temporal_block=block, i=i, _strict=false)
+            res = resolution(temporal_block=block, i=i, _strict=false)
             res !== nothing || break
             if iszero(res)
                 # TODO: Try to move this to a check...
@@ -428,7 +410,7 @@ function _generate_windows_and_window_count!(m::Model)
     push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
     i = 1
     while true
-        rf = _roll_forward(m; i=i, _strict=false)
+        rf = roll_forward(model=instance, i=i, _strict=false)
         (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
         w_start += rf
         w_start >= model_end(model=instance) && break
@@ -488,11 +470,11 @@ indicating the position or successive positions in that array.
 If `rev` is `true`, then the structure is rolled backwards instead of forward.
 """
 function roll_temporal_structure!(m::Model, i::Integer=1; rev=false)
-    rf = _roll_forward(m; i=i, _strict=false)
+    rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
     _do_roll_temporal_structure!(m, rf, rev)
 end
 function roll_temporal_structure!(m::Model, rng::UnitRange{T}; rev=false) where T<:Integer
-    rfs = [_roll_forward(m; i=i, _strict=false) for i in rng]
+    rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
     filter!(!isnothing, rfs)
     rf = sum(rfs; init=Minute(0))
     _do_roll_temporal_structure!(m, rf, rev)
