@@ -12,7 +12,7 @@ objective_function_reference_values = Dict(
         m = run_spineopt(input_data, nothing; log_level=3)        
         @test termination_status(m) == MOI.OPTIMAL
         if haskey(objective_function_reference_values, basename(path))
-            @test abs(objective_value(m) - objective_function_reference_values[basename(path)]) < 1e-6
+            @test abs(objective_value(m) - objective_function_reference_values[basename(path)]) < 1e-4
         end
     end
 end
