@@ -1076,7 +1076,7 @@
                             "data": [
                                 [
                                     "mip_rel_gap",
-                                    0.01
+                                    1e-6
                                 ],
                                 [
                                     "presolve",
