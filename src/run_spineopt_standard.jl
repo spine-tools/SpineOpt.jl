@@ -268,7 +268,9 @@ end
 
 function _build_stage_models!(m; log_level)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
-        build_model!(stage_m; log_level)
+        with_env(st.name) do
+            build_model!(stage_m; log_level)
+        end
         child_models = _child_models(m, st)
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Initializing outputs for $model_name..." _init_downstream_outputs!(
