@@ -43,6 +43,7 @@ export create_model
 export build_model!
 export solve_model!
 export generate_temporal_structure!
+export generate_economic_structure!
 export roll_temporal_structure!
 export rewind_temporal_structure!
 export time_slice
@@ -75,6 +76,7 @@ include("run_spineopt_standard.jl")
 include("run_spineopt_benders.jl")
 include("run_spineopt_mga.jl")
 # Data structure
+include("data_structure/economic_structure.jl")
 include("data_structure/migration.jl")
 include("data_structure/benders_data.jl")
 include("data_structure/mga_data.jl")

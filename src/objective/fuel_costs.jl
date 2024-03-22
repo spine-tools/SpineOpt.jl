@@ -29,6 +29,7 @@ function fuel_costs(m::Model, t_range)
         m,
         sum(
             unit_flow[u, n, d, s, t]
+            * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * fuel_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

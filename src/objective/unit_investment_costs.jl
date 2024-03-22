@@ -29,7 +29,16 @@ function unit_investment_costs(m::Model, t_range)
         m,
         + sum(
             units_invested[u, s, t]
+            * (1- unit_salvage_fraction[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)])
+            * unit_tech_discount_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * reduce(*,
+                unit_capacity[(unit=u, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, n, d) in indices(use_unit_capacity_for_investment_cost_scaling; unit=u)
+                    if use_unit_capacity_for_investment_cost_scaling(unit=u, node=n, direction = d)
+                ;init=1
+            )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             # This term is activated when there is a representative termporal block in those containing TimeSlice t.
             # We assume only one representative temporal structure available, of which the termporal blocks represent

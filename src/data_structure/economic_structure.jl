@@ -26,10 +26,10 @@ function generate_economic_structure!(m::Model;log_level=3)
         @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(m::Model,obj, name)
     end
     !isempty([
-        model__default_investment_temporal_block();
-        node__investment_temporal_block();
-        unit__investment_temporal_block();
-        connection__investment_temporal_block();
+        model__default_investment_temporal_block()...,
+        node__investment_temporal_block()...,
+        unit__investment_temporal_block()...,
+        connection__investment_temporal_block()...
     ]) || return
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
         @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" generate_capacity_transfer_factor!(m::Model,obj, name)
@@ -41,11 +41,6 @@ function generate_economic_structure!(m::Model;log_level=3)
     end
 end
 
-set_investment_indices = Dict(unit => :units_invested_available_indices, node => :storages_invested_available_indices, connection => connections_invested_available_indices)
-set_lead_time = Dict(unit => :units_lead_time, node => :storages_lead_time, connection => connections_lead_time)
-set_tech_lifetime = Dict(unit => :units_investment_tech_lifetime, node => :storages_investment_tech_lifetime, connection => connections_investment_tech_lifetime)
-set_invest_temporal_block = Dict(unit => :units__investment_temporal_block, node => :storages__investment_temporal_block, connection => connections__investment_temporal_block)
-set_param_name = Dict(unit => :units_capacity_transfer_factor, node => :storages_capacity_transfer_factor, connection => connections_capacity_transfer_factor)
 
 """
     generate_unit_capacity_transfer_factor()
@@ -57,11 +52,13 @@ year t_v in a unit u that is still available in the model year t.
 function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:spineopt].instance
     capacity_transfer_factor = Dict()
-    investment_indices = set_investment_indices[obj_cls]
-    lead_time = set_lead_time[obj_cls]
-    invest_temporal_block = set_invest_temporal_block[obj_cls]
-    param_name = set_param_name[obj_cls]
-    
+
+    investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
+    lead_time = eval(Symbol("$(obj_name)_lead_time"))
+    tech_lifetime = eval(Symbol("$(obj_name)_investment_tech_lifetime"))
+    invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
+    param_name = Symbol("$(obj_name)_capacity_transfer_factor")
+
     for id in invest_temporal_block(temporal_block=anything)
         if (!isnothing(tech_lifetime(;Dict(obj_cls.name=>id)...))
             || !(isnothing(lead_time(;Dict(obj_cls.name=>id)...)) || iszero(lead_time(;Dict(obj_cls.name=>id)...))))
