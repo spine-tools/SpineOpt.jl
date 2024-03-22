@@ -26,10 +26,10 @@ function generate_economic_structure!(m::Model;log_level=3)
         @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(m::Model,obj, name)
     end
     !isempty([
-        model__default_investment_temporal_block()...,
-        node__investment_temporal_block()...,
-        unit__investment_temporal_block()...,
-        connection__investment_temporal_block()...
+        model__default_investment_temporal_block();
+        node__investment_temporal_block();
+        unit__investment_temporal_block();
+        connection__investment_temporal_block();
     ]) || return
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
         @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" generate_capacity_transfer_factor!(m::Model,obj, name)
@@ -52,13 +52,11 @@ year t_v in a unit u that is still available in the model year t.
 function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:spineopt].instance
     capacity_transfer_factor = Dict()
-
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
     lead_time = eval(Symbol("$(obj_name)_lead_time"))
     tech_lifetime = eval(Symbol("$(obj_name)_investment_tech_lifetime"))
     invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
     param_name = Symbol("$(obj_name)_capacity_transfer_factor")
-
     for id in invest_temporal_block(temporal_block=anything)
         if (!isnothing(tech_lifetime(;Dict(obj_cls.name=>id)...))
             || !(isnothing(lead_time(;Dict(obj_cls.name=>id)...)) || iszero(lead_time(;Dict(obj_cls.name=>id)...))))
