@@ -36,7 +36,7 @@ the following constraint is enforced:
 function add_constraint_connection_unitary_gas_flow!(m::Model)
     @fetch binary_gas_connection_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:connection_unitary_gas_flow] = Dict(
-        (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t) => @constraint(
+        (connection=conn, node1=n1, node2=n2, stochastic_path=s_path, t=t) => @constraint(
             m,
             _avg(
                 binary_gas_connection_flow[conn, n1, d, s, t]
@@ -44,7 +44,7 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
                     m;
                     connection=conn,
                     node=n1,
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t),
                 );
@@ -58,13 +58,13 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
                     m;
                     connection=conn,
                     node=n2,
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t),
                 );
                 init=0
             )
         )
-        for (conn, n1, n2, s, t) in constraint_connection_flow_gas_capacity_indices(m)
+        for (conn, n1, n2, s_path, t) in constraint_connection_flow_gas_capacity_indices(m)
     )
 end

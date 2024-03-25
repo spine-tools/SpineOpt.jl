@@ -43,21 +43,21 @@ function add_constraint_storage_line_pack!(m::Model)
     @fetch node_state, node_pressure = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:storage_line_pack] = Dict(
-        (connection=conn, node1=stor, node2=ng, stochastic_path=s, t=t) => @constraint(
+        (connection=conn, node1=stor, node2=ng, stochastic_path=s_path, t=t) => @constraint(
             m,
             sum(
                 node_state[stor, s, t] * duration(t)
-                for (stor, s, t) in node_state_indices(m; node=stor, stochastic_scenario=s, t=t_in_t(m; t_long=t))
+                for (stor, s, t) in node_state_indices(m; node=stor, stochastic_scenario=s_path, t=t_in_t(m; t_long=t))
             )
             ==
             connection_linepack_constant(connection=conn, node1=stor, node2=ng)
             * 0.5
             * sum( # summing up the partial pressure of each component for both sides
                 node_pressure[ng, s, t] * duration(t)
-                for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t))
+                for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_long=t))
             )
         )
-        for (conn, stor, ng, s, t) in constraint_storage_line_pack_indices(m)
+        for (conn, stor, ng, s_path, t) in constraint_storage_line_pack_indices(m)
     )
 end
 

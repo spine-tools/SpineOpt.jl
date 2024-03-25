@@ -44,7 +44,7 @@ See also
 function add_constraint_connection_flow_gas_capacity!(m::Model)
     @fetch connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:connection_flow_gas_capacity] = Dict(
-        (connection=conn, node1=n_from, node2=n_to, stochastic_scenario=s, t=t) => @constraint(
+        (connection=conn, node1=n_from, node2=n_to, stochastic_scenario=s_path, t=t) => @constraint(
             m,
             (
                 sum(
@@ -53,7 +53,7 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                         m;
                         connection=conn,
                         node=n_from,
-                        stochastic_scenario=s,
+                        stochastic_scenario=s_path,
                         t=t_in_t(m; t_long=t),
                         direction=direction(:from_node),
                     )
@@ -63,7 +63,7 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                     for (conn, n_to, d, s, t) in connection_flow_indices(
                         m; connection=conn,
                         node=n_to,
-                        stochastic_scenario=s,
+                        stochastic_scenario=s_path,
                         t=t_in_t(m; t_long=t),
                         direction=direction(:to_node),
                     )
@@ -78,13 +78,13 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                     m;
                     connection=conn,
                     node=n_to,
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     t=t_in_t(m; t_long=t),
                     direction=direction(:to_node),
                 )
             )
         )
-        for (conn, n_from, n_to, s, t) in constraint_connection_flow_gas_capacity_indices(m)
+        for (conn, n_from, n_to, s_path, t) in constraint_connection_flow_gas_capacity_indices(m)
     )
 end
 

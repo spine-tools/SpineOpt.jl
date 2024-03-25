@@ -76,7 +76,7 @@ function add_constraint_user_constraint!(m::Model)
     ) = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:user_constraint] = Dict(
-        (user_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
+        (user_constraint=uc, stochastic_path=path, t=t) => sense_constraint(
             m,
             + sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
@@ -93,7 +93,7 @@ function add_constraint_user_constraint!(m::Model)
                 * duration(t_short)
                 for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
-                    m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
@@ -112,7 +112,7 @@ function add_constraint_user_constraint!(m::Model)
                 * duration(t_short)
                 for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
                 for (u, n, d, s, t_short) in unit_flow_indices(
-                    m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
                 )
                 if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
@@ -132,7 +132,7 @@ function add_constraint_user_constraint!(m::Model)
                 * duration(t_short)
                 for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
-                    m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
@@ -151,7 +151,7 @@ function add_constraint_user_constraint!(m::Model)
                 * duration(t_short)
                 for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
                 for (u, n, d, s, t_short) in unit_flow_indices(
-                    m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
                 )
                 if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
@@ -167,7 +167,7 @@ function add_constraint_user_constraint!(m::Model)
                 )
                 * min(duration(t1), duration(t))
                 for u in unit__user_constraint(user_constraint=uc)
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=path, t=t_overlaps_t(m; t=t));
                 init=0,
             )            
             + sum(
@@ -184,7 +184,7 @@ function add_constraint_user_constraint!(m::Model)
                 * min(duration(t1), duration(t))
                 for u in unit__user_constraint(user_constraint=uc)
                 for (u, s, t1) in units_invested_available_indices(
-                    m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+                    m; unit=u, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
             )
@@ -202,7 +202,7 @@ function add_constraint_user_constraint!(m::Model)
                 * min(duration(t1), duration(t))
                 for c in connection__user_constraint(user_constraint=uc)
                 for (c, s, t1) in connections_invested_available_indices(
-                    m; connection=c, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+                    m; connection=c, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
             )
@@ -220,7 +220,7 @@ function add_constraint_user_constraint!(m::Model)
                 * min(duration(t1), duration(t))
                 for n in node__user_constraint(user_constraint=uc)
                 for (n, s, t1) in storages_invested_available_indices(
-                    m; node=n, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+                    m; node=n, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
             )                        
@@ -244,7 +244,7 @@ function add_constraint_user_constraint!(m::Model)
                     connection=c,
                     node=n,
                     direction=direction(:from_node),
-                    stochastic_scenario=s,
+                    stochastic_scenario=path,
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
@@ -263,7 +263,12 @@ function add_constraint_user_constraint!(m::Model)
                 * duration(t_short)
                 for (c, n) in connection__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
                 for (c, n, d, s, t_short) in connection_flow_indices(
-                    m; connection=c, node=n, direction=direction(:to_node), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m;
+                    connection=c,
+                    node=n,
+                    direction=direction(:to_node),
+                    stochastic_scenario=path,
+                    t=t_in_t(m; t_long=t),
                 );
                 init=0,
             )
@@ -274,7 +279,7 @@ function add_constraint_user_constraint!(m::Model)
                 ]
                 * duration(t_short)
                 for n in indices(node_state_coefficient; user_constraint=uc)
-                for (n, s, t_short) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t));
+                for (n, s, t_short) in node_state_indices(m; node=n, stochastic_scenario=path, t=t_in_t(m; t_long=t));
                 init=0,
             )
             + sum(
@@ -283,25 +288,25 @@ function add_constraint_user_constraint!(m::Model)
                 * duration(t_short)
                 for n in node__user_constraint(user_constraint=uc)
                 for (ns, s, t_short) in node_stochastic_time_indices(
-                    m; node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m; node=n, stochastic_scenario=path, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
             + sum(
                 user_constraint_slack_pos[uc, s, t] - user_constraint_slack_neg[uc, s, t]
-                for (uc, s, t) in user_constraint_slack_indices(m; user_constraint=uc, stochastic_scenario=s, t=t);
+                for (uc, s, t) in user_constraint_slack_indices(m; user_constraint=uc, stochastic_scenario=path, t=t);
                 init=0,
             )
             ,
             constraint_sense(user_constraint=uc),
             + sum(
-                right_hand_side[(user_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)] for s in s;
+                right_hand_side[(user_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)] for s in path;
                 init=0,
             )
             * duration(t)
-            / length(s),
+            / length(path),
         )
-        for (uc, s, t) in constraint_user_constraint_indices(m)
+        for (uc, path, t) in constraint_user_constraint_indices(m)
     )
 end
 
