@@ -52,14 +52,14 @@ function _scens_by_t(indices)
     scens_by_t
 end
 
-function past_units_on_indices(m, u, s, t, min_time)
+function past_units_on_indices(m, u, s_path, t, min_time)
     t0 = _analysis_time(m)
     units_on_indices(
         m;
         unit=u,
-        stochastic_scenario=s,
+        stochastic_scenario=s_path,
         t=to_time_slice(
-            m; t=TimeSlice(end_(t) - min_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t), end_(t))
+            m; t=TimeSlice(end_(t) - min_time(unit=u, analysis_time=t0, stochastic_scenario=s_path, t=t), end_(t))
         ),
         temporal_block=anything
     )    

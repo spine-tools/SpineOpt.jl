@@ -33,12 +33,12 @@ function add_constraint_unit_state_transition!(m::Model)
     # TODO: add support for units that start_up over multiple timesteps?
     # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
     m.ext[:spineopt].constraints[:unit_state_transition] = Dict(
-        (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
+        (unit=u, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
             m,
             sum(
                 + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
                 for (u, s, t_after) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s, t=t_after, temporal_block=anything,
+                    m; unit=u, stochastic_scenario=s_path, t=t_after, temporal_block=anything,
                 );
                 init=0,
             )
@@ -46,12 +46,12 @@ function add_constraint_unit_state_transition!(m::Model)
             sum(
                 + units_on[u, s, t_before]
                 for (u, s, t_before) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s, t=t_before, temporal_block=anything,
+                    m; unit=u, stochastic_scenario=s_path, t=t_before, temporal_block=anything,
                 );
                 init=0,
             )
         )
-        for (u, s, t_before, t_after) in constraint_unit_state_transition_indices(m)
+        for (u, s_path, t_before, t_after) in constraint_unit_state_transition_indices(m)
     )
 end
 

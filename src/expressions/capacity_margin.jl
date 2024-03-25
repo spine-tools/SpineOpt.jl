@@ -53,14 +53,14 @@ function add_expression_capacity_margin!(m::Model)
     t0 = _analysis_time(m)
     
     m.ext[:spineopt].expressions[:capacity_margin] = Dict(
-        (node=n, stochastic_path=s, t=t) => @expression(
+        (node=n, stochastic_path=s_path, t=t) => @expression(
             m,
             - sum(                
                 + demand[
                     (node=n, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))
                 ]                
                 for (n, s, t) in node_injection_indices(
-                    m; node=n, stochastic_scenario=s, t=t, temporal_block=anything
+                    m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 );
                 init=0,
             )
@@ -70,12 +70,11 @@ function add_expression_capacity_margin!(m::Model)
                 ]
                 * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))]
                 for (n, s, t) in node_injection_indices(
-                    m; node=n, stochastic_scenario=s, t=t, temporal_block=anything
+                    m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 )
                 for ng in groups(n);
                 init=0,
             )                                  
-           
             # Commodity flows to storage units
             - sum(
                 unit_flow[u, n, d, s, t_short]
@@ -83,13 +82,12 @@ function add_expression_capacity_margin!(m::Model)
                     m;
                     node=n,
                     direction=direction(:from_node),
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     t=t,
                     temporal_block=anything,
                 ) if is_storage_unit(u);
                 init=0,
             )
-
             # Commodity flows from storage units
             + sum(
                 unit_flow[u, n, d, s, t_short]
@@ -97,63 +95,73 @@ function add_expression_capacity_margin!(m::Model)
                     m;
                     node=n,
                     direction=direction(:to_node),
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     t=t,
                     temporal_block=anything,
                 )
                 if is_storage_unit(u);
                 init=0,
             )           
-
             # Conventional and Renewable Capacity
             + sum(
-                + unit_capacity[(unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                + sum(
+                    + unit_capacity[(unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+                    * unit_conv_cap_to_flow[
+                        (unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+                    ]
+                    for (u, n_, d, s, t_short) in unit_flow_indices(
+                        m;
+                        unit=u,
+                        node=n_,
+                        stochastic_scenario=s_path,
+                        t=t,
+                    )
+                )
                 * (                   
                     + sum(
                         + units_available[u, s, t_ua]
                         for (u, s, t_ua) in units_on_indices(
                             m;
                             unit=u,
-                            stochastic_scenario=s,
+                            stochastic_scenario=s_path,
                             t=t_overlaps_t(m; t=t),
                             temporal_block=anything,
                         );
                         init=0,
                     )                                           
                 )
-                for (u, n_, d) in indices(unit_capacity; node=n, direction=direction(:to_node)) if !is_storage_unit(u)
+                for (u, n_, d) in indices(unit_capacity; node=n, direction=direction(:to_node))
+                if !is_storage_unit(u)
             )
         )
-        for (n, s, t) in expression_capacity_margin_indices(m)
+        for (n, s_path, t) in expression_capacity_margin_indices(m)
     )
 end
 
 """
-    expression_capacity_margin_indices!(m::Model; t_range)
+    expression_capacity_margin_indices!(m::Model)
 
     Return the indices for the capacity_margin expression
 """
 
-function expression_capacity_margin_indices(m::Model; t_range=anything)
+function expression_capacity_margin_indices(m::Model)
     unique(
-        (node=n, stochastic_path=path, t=t)        
-        for n in indices(min_capacity_margin)        
+        (node=n, stochastic_path=path, t=t)
+        for n in indices(min_capacity_margin)
         for (n, t) in node_time_indices(m; node=n)
         for path in active_stochastic_paths(
             m,  
-            [                                      
+            [
                 collect(node_stochastic_time_indices(m; node=n, t=t));
                 [
                     (unit=u, stochastic_scenario=s, t=t2)
-                    for u in indices(unit_capacity; node=n, direction=direction(:to_node)) if !is_storage_unit(u)
+                    for u in indices(unit_capacity; node=n, direction=direction(:to_node))
+                    if !is_storage_unit(u)
                     for (u, s, t2) in units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t))
-                ];                
+                ];
             ]
-            
         )
-        
     )
 end
 

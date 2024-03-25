@@ -39,28 +39,29 @@ function add_constraint_compression_ratio!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:compression_ratio] = Dict(
-        (connection=conn, node1=n_orig, node2=n_dest, stochastic_path=s, t=t) => @constraint(
+        (connection=conn, node1=n_orig, node2=n_dest, stochastic_path=s_path, t=t) => @constraint(
             m,
             + sum(
                 node_pressure[n_dest, s, t] * duration(t)
                 for (n_dest, s, t) in node_pressure_indices(
-                    m; node=n_dest, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m; node=n_dest, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
             <=
-            compression_factor[
-                (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, analysis_time=t0, t=t),
-            ]
-            * sum(
-                node_pressure[n_orig, s, t] * duration(t)
+            + sum(
+                node_pressure[n_orig, s, t]
+                * compression_factor[
+                    (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, analysis_time=t0, t=t),
+                ]
+                * duration(t)
                 for (n_orig, s, t) in node_pressure_indices(
-                    m; node=n_orig, stochastic_scenario=s, t=t_in_t(m; t_long=t),
+                    m; node=n_orig, stochastic_scenario=s_path, t=t_in_t(m; t_long=t),
                 );
                 init=0,
             )
         )
-        for (conn, n_orig, n_dest, s, t) in constraint_compression_ratio_indices(m)
+        for (conn, n_orig, n_dest, s_path, t) in constraint_compression_ratio_indices(m)
     )
 end
 

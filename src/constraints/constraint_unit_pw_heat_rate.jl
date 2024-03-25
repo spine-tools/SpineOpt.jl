@@ -43,7 +43,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
     @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_pw_heat_rate] = Dict(
-        (unit=u, node1=n_from, node2=n_to, stochastic_path=s, t=t) => @constraint(
+        (unit=u, node1=n_from, node2=n_to, stochastic_path=s_path, t=t) => @constraint(
             m,
             sum(
                 + unit_flow[u, n, d, s, t_short] * duration(t_short)
@@ -52,7 +52,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     unit=u,
                     node=n_from,
                     direction=direction(:from_node),
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
@@ -65,7 +65,12 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 ]
                 * duration(t_short)
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
-                    m; unit=u, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m;
+                    unit=u,
+                    node=n_to,
+                    direction=direction(:to_node),
+                    stochastic_scenario=s_path,
+                    t=t_in_t(m; t_long=t),
                 );
                 init=0,
             )
@@ -76,7 +81,12 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 ]
                 * duration(t_short)
                 for (u, n, d, s, t_short) in unit_flow_indices(
-                    m; unit=u, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                    m;
+                    unit=u,
+                    node=n_to,
+                    direction=direction(:to_node),
+                    stochastic_scenario=s_path,
+                    t=t_in_t(m; t_long=t),
                 )
                 if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
@@ -91,11 +101,11 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 * unit_start_flow[
                     (unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t)
                 ]
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
                 init=0,
             )
         )
-        for (u, n_from, n_to, s, t) in constraint_unit_pw_heat_rate_indices(m)
+        for (u, n_from, n_to, s_path, t) in constraint_unit_pw_heat_rate_indices(m)
     )
 end
 
