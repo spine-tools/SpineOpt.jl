@@ -26,20 +26,20 @@ function add_constraint_storage_lifetime!(m::Model)
     @fetch storages_invested_available, storages_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:storage_lifetime] = Dict(
-        (node=n, stochastic_path=s, t=t) => @constraint(
+        (node=n, stochastic_path=s_path, t=t) => @constraint(
             m,
             sum(
                 storages_invested_available[n, s, t]
-                for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
+                for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s_path, t=t);
                 init=0,
             )
             >=
             sum(
                 storages_invested[n, s_past, t_past]
-                for (n, s_past, t_past) in _past_storages_invested_available_indices(m, n, s, t)
+                for (n, s_past, t_past) in _past_storages_invested_available_indices(m, n, s_path, t)
             )
         )
-        for (n, s, t) in constraint_storage_lifetime_indices(m)
+        for (n, s_path, t) in constraint_storage_lifetime_indices(m)
     )
 end
 
@@ -52,16 +52,17 @@ function constraint_storage_lifetime_indices(m::Model)
     )
 end
 
-function _past_storages_invested_available_indices(m, n, s, t)
+function _past_storages_invested_available_indices(m, n, s_path, t)
     t0 = _analysis_time(m)
     storages_invested_available_indices(
         m;
         node=n,
-        stochastic_scenario=s,
+        stochastic_scenario=s_path,
         t=to_time_slice(
             m;
             t=TimeSlice(
-                end_(t) - storage_investment_lifetime(node=n, analysis_time=t0, stochastic_scenario=s, t=t), end_(t)
+                end_(t) - storage_investment_lifetime(node=n, analysis_time=t0, stochastic_scenario=s_path, t=t),
+                end_(t),
             )
         )
     )

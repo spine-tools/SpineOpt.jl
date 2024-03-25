@@ -32,21 +32,21 @@ See also [cyclic\_condition](@ref).
 function add_constraint_cyclic_node_state!(m::Model)
     @fetch node_state = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:cyclic_node_state] = Dict(
-        (node=n, stochastic_scenario=s, t_start=t_start, t_end=t_end) => @constraint(
+        (node=n, stochastic_scenario=s_path, t_start=t_start, t_end=t_end) => @constraint(
             m,
             sum(
                 node_state[n, s, t_end]
-                for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_end);
+                for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_end);
                 init=0,
             )
             >=
             sum(
                 node_state[n, s, t_start]
-                for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_start);
+                for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_start);
                 init=0,
             )
         )
-        for (n, s, t_start, t_end) in constraint_cyclic_node_state_indices(m)
+        for (n, s_path, t_start, t_end) in constraint_cyclic_node_state_indices(m)
     )
 end
 

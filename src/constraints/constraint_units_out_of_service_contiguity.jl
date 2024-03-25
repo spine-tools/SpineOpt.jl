@@ -39,24 +39,26 @@ function add_constraint_units_out_of_service_contiguity!(m::Model)
     @fetch units_out_of_service, units_taken_out_of_service, units_returned_to_service = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_out_of_service_contiguity] = Dict(
-        (unit=u, stochastic_path=s, t=t) => @constraint(
+        (unit=u, stochastic_path=s_path, t=t) => @constraint(
             m,
             + sum(
                 + units_out_of_service[u, s, t]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything);
                 init=0,
             )           
             >=
             + sum(
                 units_taken_out_of_service[u, s_past, t_past]
-                for (u, s_past, t_past) in past_units_on_indices(m, u, s, t, scheduled_outage_duration)
+                for (u, s_past, t_past) in past_units_on_indices(m, u, s_path, t, scheduled_outage_duration)
             )
         )
-        for (u, s, t) in constraint_units_out_of_service_contiguity_indices(m)
+        for (u, s_path, t) in constraint_units_out_of_service_contiguity_indices(m)
     )
 end
 
-function constraint_units_out_of_service_contiguity_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
+function constraint_units_out_of_service_contiguity_indices(
+    m::Model; unit=anything, stochastic_path=anything, t=anything
+)
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(scheduled_outage_duration)

@@ -1086,16 +1086,11 @@ function test_constraint_min_scheduled_outage_duration()
             constraint = m.ext[:spineopt].constraints[:min_scheduled_outage_duration]
             constraint_t = current_window(m)
             @test length(constraint) == 1
-            s_path=[stochastic_scenario(:parent), stochastic_scenario(:child)]
-            
-            scenarios = [
-                [stochastic_scenario(:parent)] 
-                repeat([stochastic_scenario(:child)], 4)
-            ]
+            s_path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+            scenarios = [[stochastic_scenario(:parent)]; repeat([stochastic_scenario(:child)], 4)]
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-
             vars_u_oos = [var_units_out_of_service[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)]
-            expected_con = @build_constraint(sum(vars_u_oos) >= scheduled_outage_duration_minutes/60 )            
+            expected_con = @build_constraint(sum(vars_u_oos) >= scheduled_outage_duration_minutes / 60)
             con_key = (unit(:unit_ab), s_path, constraint_t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)           

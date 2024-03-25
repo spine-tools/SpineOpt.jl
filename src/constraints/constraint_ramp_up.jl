@@ -67,12 +67,12 @@ function add_constraint_ramp_up!(m::Model)
     @fetch units_on, units_started_up, unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:ramp_up] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + sum(
                 + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after)
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
                 )
                 if !is_reserve_node(node=n);
                 init=0,
@@ -80,7 +80,7 @@ function add_constraint_ramp_up!(m::Model)
             - sum(
                 + unit_flow[u, n, d, s, t] * overlap_duration(t_before, t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before)
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_before)
                 )
                 if !is_reserve_node(node=n);
                 init=0,
@@ -88,7 +88,7 @@ function add_constraint_ramp_up!(m::Model)
             + sum(
                 + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after)
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
                 )
                 if is_reserve_node(node=n)
                 && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
@@ -103,26 +103,28 @@ function add_constraint_ramp_up!(m::Model)
                         - _minimum_operating_point(u, ng, d, s, t0, t_after)
                         - _ramp_up_limit(u, ng, d, s, t0, t_after)
                     )
+                    * _unit_flow_capacity(u, ng, d, s, t0, t_after)
                     * units_started_up[u, s, t]
                     * duration(t)
                     + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_up_limit(u, ng, d, s, t0, t_after))
+                    * _unit_flow_capacity(u, ng, d, s, t0, t_after)
                     * units_on[u, s, t]
                     * duration(t)
-                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
+                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
                     init=0
                 )
                 - sum(
                     + _minimum_operating_point(u, ng, d, s, t0, t_after)
+                    * _unit_flow_capacity(u, ng, d, s, t0, t_after)
                     * units_on[u, s, t]
                     * duration(t)
-                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_before);
+                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
                     init=0
                 )
             )
-            * _unit_flow_capacity(u, ng, d, s, t0, t_after)
             * duration(t_after)
         )
-        for (u, ng, d, s, t_before, t_after) in constraint_ramp_up_indices(m)
+        for (u, ng, d, s_path, t_before, t_after) in constraint_ramp_up_indices(m)
     )
 end
 

@@ -211,7 +211,6 @@ function _add_constraints!(m; log_level=3)
             add_constraint_non_spinning_reserves_lower_bound!,
             add_constraint_non_spinning_reserves_start_up_upper_bound!,
             add_constraint_non_spinning_reserves_shut_down_upper_bound!,
-            add_constraint_res_minimum_node_state!,
             add_constraint_fix_node_pressure_point!,
             add_constraint_connection_unitary_gas_flow!,
             add_constraint_compression_ratio!,

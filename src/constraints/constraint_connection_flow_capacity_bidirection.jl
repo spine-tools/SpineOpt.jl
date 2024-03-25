@@ -132,21 +132,24 @@ function constraint_connection_flow_capacity_bidirection_indices(m::Model)
     unique!(
         ind -> Set(values(ind)), 
         # Array for the unique!() function, converted into a Tuple afterwards
-        filter!(!isnothing, [
-            (
-                # Potential threat to performance
-                (connection=conn, node=ng, direction=_d_reverse(d)) in indices(connection_capacity) ?
+        filter!(
+            !isnothing,
+            [
                 (
-                    connection=conn, node=ng, direction=d, direction_reverse=_d_reverse(d), stochastic_path=path, t=t
-                ) : nothing
-            ) 
-            for (conn, ng, d) in indices(connection_capacity)
-            for (t, path) in t_lowest_resolution_path(
-                m,
-                connection_flow_indices(m; connection=conn, node=ng, direction=d),
-                connections_invested_available_indices(m; connection=conn),
-            )
-        ])
+                    # Potential threat to performance
+                    (connection=conn, node=ng, direction=_d_reverse(d)) in indices(connection_capacity) ?
+                    (
+                        connection=conn, node=ng, direction=d, direction_reverse=_d_reverse(d), stochastic_path=path, t=t
+                    ) : nothing
+                ) 
+                for (conn, ng, d) in indices(connection_capacity)
+                for (t, path) in t_lowest_resolution_path(
+                    m,
+                    connection_flow_indices(m; connection=conn, node=ng, direction=d),
+                    connections_invested_available_indices(m; connection=conn),
+                )
+            ]
+        )
     ) |> Tuple  
 end
 

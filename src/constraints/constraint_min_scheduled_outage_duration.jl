@@ -29,21 +29,23 @@ function add_constraint_min_scheduled_outage_duration!(m::Model)
     @fetch units_out_of_service = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:min_scheduled_outage_duration] = Dict(
-        (unit=u, stochastic_path=s_long, t=t_long) => @constraint(
+        (unit=u, stochastic_path=s_path, t=t) => @constraint(
             m, 
             + sum(
-                units_out_of_service[u, s, t] * duration(t)
-                for (u, s, t) in units_on_indices(m; unit=u);
-                init=0
-            ) 
-            >= 
-            (
-                + scheduled_outage_duration[(unit=u, stochastic_scenario=s_long, analysis_time=t0, t=t_long)]
-                * number_of_units[(unit=u, stochastic_scenario=s_long, analysis_time=t0, t=t_long)]
-            ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
-            
+                + units_out_of_service[u, s, t] * duration(t)
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path);
+                init=0,
+            )
+            >=
+            + maximum(
+                (
+                    + scheduled_outage_duration[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+                    * number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+                ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
+                for s in s_path
+            )
         )
-        for (u, s_long, t_long) in constraint_min_scheduled_outage_duration_indices(m)
+        for (u, s_path, t) in constraint_min_scheduled_outage_duration_indices(m)
     )
 end
 
@@ -57,7 +59,7 @@ function constraint_min_scheduled_outage_duration_indices(m::Model)
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(scheduled_outage_duration)
-        for t in current_window(m)
         for path in active_stochastic_paths(m, units_on_indices(m; unit=u))        
+        for t in current_window(m)
     )
 end
