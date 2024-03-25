@@ -25,12 +25,12 @@ according to [connection\_capacity](@ref)
 \begin{aligned}
 & \sum_{
 n \in ng
-} v^{connection\_intact\_flow}_{(conn,n,d,s,t)}
-- \sum_{
-n \in ng
-} v^{connection\_intact\_flow}_{(conn,n,reverse(d),s,t)} \\
-& <= p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)}
+} v^{connection\_intact\_flow}_{(conn,n,d,s,t)} \\
+& \leq \\
+& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)}
 \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + p^{candidate\_connections}_{(conn,s,t)} \right)
+\\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
@@ -55,6 +55,10 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
             * connection_conv_cap_to_flow[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
+            * (
+                + candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
+                + number_of_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
+            )
             * duration(t)
         )
         for (conn, ng, d, s, t) in constraint_connection_intact_flow_capacity_indices(m)
