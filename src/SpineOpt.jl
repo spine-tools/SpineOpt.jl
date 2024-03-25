@@ -48,6 +48,7 @@ export rewind_temporal_structure!
 export time_slice
 export t_before_t
 export t_in_t
+export t_in_t_excl
 export t_overlaps_t
 export to_time_slice
 export current_window

@@ -695,7 +695,7 @@ function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
     for (entity, by_analysis_time) in by_entity
         entity = (; entity..., output_suffix...)
         for (analysis_time, by_time_slice) in by_analysis_time
-            t_highest_resolution!(by_time_slice)
+            t_highest_resolution!(m, by_time_slice)
             by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
                 by_time_slice, output_time_slices(m; output=out)
             )
