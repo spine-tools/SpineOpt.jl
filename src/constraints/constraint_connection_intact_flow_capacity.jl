@@ -59,8 +59,14 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
                     (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
                 ]
                 * (
-                    + candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    + number_of_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                    + candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t, _default=0)]
+                    + number_of_connections[(
+                        connection=conn,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t,
+                        _default=_default_number_of_connections(conn),
+                    )]
                 )
                 for (conn, n, d, s, t) in connection_intact_flow_indices(
                     m; connection=conn, direction=d, node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_long=t),

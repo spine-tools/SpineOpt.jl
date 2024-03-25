@@ -611,6 +611,16 @@ function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 end
 
+function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
+    (
+        (tb, ta)
+        for (tb, ta) in t_before_t(
+            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk), t=t_after), _compact=false
+        )
+        if !isempty(intersect(members(blk), blocks(tb)))
+    )
+end
+
 """
     node_time_indices(m::Model;<keyword arguments>)
 
@@ -621,16 +631,6 @@ function node_time_indices(m::Model; node=anything, temporal_block=anything, t=a
         (node=n, t=t1)
         for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
-    )
-end
-
-function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
-    (
-        (tb, ta)
-        for (tb, ta) in t_before_t(
-            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk), t=t_after), _compact=false
-        )
-        if !isempty(intersect(members(blk), blocks(tb)))
     )
 end
 

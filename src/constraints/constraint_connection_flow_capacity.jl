@@ -79,29 +79,34 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 * connection_conv_cap_to_flow[
                     (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
                 ]
+                * (
+                    + sum(
+                        connections_invested_available[conn, s, t1]
+                        for (conn, s, t1) in connections_invested_available_indices(
+                            m; connection=conn, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
+                        );
+                        init=0,
+                    )
+                    + number_of_connections[(
+                        connection=conn,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t,
+                        _default=_default_number_of_connections(conn),
+                    )]
+                )
                 for (conn, _n, d, s, t) in connection_flow_indices(
                     m; connection=conn, direction=d, node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
                 );
                 init=0,
-            )
-            * (
-                + sum(
-                    connections_invested_available[conn, s, t1]
-                    for (conn, s, t1) in connections_invested_available_indices(
-                        m; connection=conn, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
-                    );
-                    init=0,
-                )
-                + sum(
-                    number_of_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    for s in s
-                )
             )
             * duration(t)
         )
         for (conn, ng, d, s_path, t) in constraint_connection_flow_capacity_indices(m)
     )
 end
+
+_default_number_of_connections(conn) = is_candidate(connection=conn) ? 0 : 1
 
 function constraint_connection_flow_capacity_indices(m::Model)
     (
