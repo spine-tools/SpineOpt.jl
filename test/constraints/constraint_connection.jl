@@ -162,8 +162,8 @@ function test_constraint_connection_flow_capacity()
     end
 end
 
-function test_constraint_connection_flow_capacity_bidirection()
-    @testset "constraint_connection_flow_capacity_bidirection_basic" begin
+function test_constraint_connection_flow_capacity_bidirectional()
+    @testset "constraint_connection_flow_capacity_bidirectional_basic" begin
     # When both directions are bounded by positive capacities
         url_in = _test_constraint_connection_setup()
         connection_capacity_from_a = 100
@@ -182,7 +182,7 @@ function test_constraint_connection_flow_capacity_bidirection()
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity_bidirection]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity_bidirectional]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -199,7 +199,7 @@ function test_constraint_connection_flow_capacity_bidirection()
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_connection_flow_capacity_bidirection_with_investments" begin
+    @testset "constraint_connection_flow_capacity_bidirectional_with_investments" begin
         url_in = _test_constraint_connection_setup()
         connection_capacity_from_a = 100
         connection_capacity_to_a = 200
@@ -228,7 +228,7 @@ function test_constraint_connection_flow_capacity_bidirection()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity_bidirection]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity_bidirectional]
         @test length(constraint) == 2
         scenarios = [stochastic_scenario(:parent), stochastic_scenario(:child)]
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -1705,7 +1705,7 @@ end
 
 @testset "connection-based constraints" begin
     test_constraint_connection_flow_capacity()
-    test_constraint_connection_flow_capacity_bidirection()
+    test_constraint_connection_flow_capacity_bidirectional()
     test_constraint_connection_flow_gas_capacity()
     test_constraint_fix_node_pressure_point()
     test_constraint_connection_unitary_gas_flow()

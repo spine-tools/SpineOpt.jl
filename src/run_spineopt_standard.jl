@@ -158,7 +158,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_connection_flow_intact_flow!,
             add_constraint_connection_flow_lodf!,
             add_constraint_connection_flow_capacity!,
-            add_constraint_connection_flow_capacity_bidirection!,
+            add_constraint_connection_flow_capacity_bidirectional!,
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_unit_flow_capacity!,
             add_constraint_connections_invested_available!,
