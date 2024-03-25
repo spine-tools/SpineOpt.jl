@@ -312,10 +312,12 @@ function _generate_time_slice_relationships!(m::Model)
         for t_long in time_slices
         if iscontained(t_short, t_long)
     )
+    t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
     # Create the function-like objects
     temp_struct = m.ext[:spineopt].temporal_structure
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
+    temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
     temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
 end
 
@@ -429,6 +431,7 @@ After this, you can call the following functions to query the generated structur
 - `time_slice`
 - `t_before_t`
 - `t_in_t`
+- `t_in_t_excl`
 - `t_overlaps_t`
 - `to_time_slice`
 - `current_window`
@@ -583,6 +586,17 @@ the second containing the first.
   - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long`.
 """
 t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
+
+"""
+    t_in_t_excl(m; t_short=anything, t_long=anything)
+
+Same as [t_in_t](@ref) but exclude tuples of the same `TimeSlice`.
+
+ # Keyword arguments
+  - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short` (other than `t_short` itself).
+  - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long` (other than `t_long` itself).
+"""
+t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
 
 """
     t_overlaps_t(m; t)
@@ -748,4 +762,43 @@ function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=
         for (n, blk) in node__investment_temporal_block(node=node, _compact=false)
         for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
     )
+end
+
+t_highest_resolution(m, t_iter) = t_highest_resolution!(m, collect(t_iter))
+
+t_highest_resolution!(m, t_arr::Union{Vector,Dict}) = _t_extreme_resolution!(m, t_arr, :t_short)
+
+t_lowest_resolution(m, t_iter) = t_lowest_resolution!(m, collect(t_iter))
+
+t_lowest_resolution!(m, t_arr::Union{Vector,Dict}) = _t_extreme_resolution!(m, t_arr, :t_long)
+
+function _t_extreme_resolution!(m, t_arr::Vector, kw)
+    isempty(t_in_t_excl(m)) && return t_arr
+    for t in t_arr
+        setdiff!(t_arr, t_in_t_excl(m; NamedTuple{(kw,)}((t,))...))
+    end
+    t_arr
+end
+function _t_extreme_resolution!(m, t_dict::Dict, kw) where V
+    isempty(t_in_t_excl(m)) && return t_dict
+    for t in keys(t_dict)
+        for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...)
+            delete!(t_dict, other_t)
+        end
+    end
+    t_dict
+end
+
+t_lowest_resolution_sets!(m, t_dict) = _t_extreme_resolution_sets!(m, t_dict, :t_long)
+
+t_highest_resolution_sets!(m, t_dict) = _t_extreme_resolution_sets!(m, t_dict, :t_short)
+
+function _t_extreme_resolution_sets!(m, t_dict, kw)
+    isempty(t_in_t_excl(m)) && return t_dict
+    for t in keys(t_dict)
+        for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...)
+            union!(t_dict[t], pop!(t_dict, other_t, ()))
+        end
+    end
+    t_dict
 end

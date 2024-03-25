@@ -172,6 +172,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
         for (u, ng, d) in indices(unit_capacity)
         for t in t_highest_resolution(
+            m,
             Iterators.flatten(
                 ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
             )
