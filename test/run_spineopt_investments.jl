@@ -95,18 +95,23 @@ function _test_capacity_investments()
         url_in, url_out, file_path_out = _test_run_spineopt_investments_setup()
         object_parameter_values = [
             ["model", "instance", "use_connection_intact_flow", false],
-            ["unit", "unit_a", "number_of_units", 0],
-            ["unit", "unit_a", "candidate_units", 50],
+            ["unit", "unit_a", "number_of_units", 10],
+            ["unit", "unit_a", "candidate_units", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],
             ["unit", "unit_a", "unit_investment_variable_type", "unit_investment_variable_type_continuous"],
-            ["node", "node_a", "number_of_storages", 0],
-            ["node", "node_a", "candidate_storages", 25],
+            ["node", "node_a", "number_of_storages", 5],
+            ["node", "node_a", "candidate_storages", 20],
             ["node", "node_a", "storage_investment_cost", 0],
             ["node", "node_a", "storage_investment_variable_type", "storage_investment_variable_type_continuous"],
-            ["connection", "connection_ab", "number_of_connections", 0],
-            ["connection", "connection_ab", "candidate_connections", 25],
+            ["connection", "connection_ab", "number_of_connections", 5],
+            ["connection", "connection_ab", "candidate_connections", 20],
             ["connection", "connection_ab", "connection_investment_cost", 0],
-            ["connection", "connection_ab", "connection_investment_variable_type", "connection_investment_variable_type_continuous"],
+            [
+                "connection",
+                "connection_ab",
+                "connection_investment_variable_type",
+                "connection_investment_variable_type_continuous"
+            ],
             ["node", "node_a", "node_state_cap", 1]
         ]
         relationship_parameter_values = [
@@ -124,9 +129,9 @@ function _test_capacity_investments()
         Y = Module()
         @eval Y using SpineInterface
         using_spinedb(url_out, Y)
-        @test Y.units_invested(unit=Y.unit(:unit_a), t=DateTime(2000)) == 50
-        @test Y.connections_invested(connection=Y.connection(:connection_ab), t=DateTime(2000)) == 25
-        @test Y.storages_invested(node=Y.node(:node_a), t=DateTime(2000)) == 25
+        @test Y.units_invested(unit=Y.unit(:unit_a), t=DateTime(2000)) == 40
+        @test Y.connections_invested(connection=Y.connection(:connection_ab), t=DateTime(2000)) == 20
+        @test Y.storages_invested(node=Y.node(:node_a), t=DateTime(2000)) == 20
     end
 end
 
