@@ -51,7 +51,7 @@ Check if conneciton investment variable type is defined to be an integer.
 """
 
 function connections_invested_available_int(x)
-    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+    connection_investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
 end
 
 """
