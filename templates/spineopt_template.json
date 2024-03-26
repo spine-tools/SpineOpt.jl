@@ -190,6 +190,7 @@
         ["model", "db_lp_solver_options", {"type": "map", "index_type": "str", "data": [["HiGHS.jl", {"type": "map", "index_type": "str", "data": [["presolve", "on"], ["time_limit", 300.01]]}], ["Clp.jl", {"type": "map", "index_type": "str", "data": [["LogLevel", 0.0]]}]]}, null, "Map parameter containing LP solver option name option value pairs. See solver documentation for supported solver options"],
         ["model", "window_duration", null, null, "The duration of the window in case it differs from roll_forward"],
         ["model", "window_weight", 1, null, "The weight of the window in the rolling subproblem"],
+        ["model", "use_connection_intact_flow", true, "boolean_value_list", "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."],
         ["node", "balance_type", "balance_type_node", "balance_type_list", "A selector for how the `nodal_balance` constraint should be handled."],
         ["node", "number_of_storages", 1.0, null, "Denotes the number of 'sub storages' aggregated to form the modelled `node`."],
         ["node", "candidate_storages", null, null, "Determines the maximum number of new storages which may be invested in"],

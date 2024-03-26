@@ -32,6 +32,7 @@ v^{connection\_intact\_flow}_{(c, n_{in}, d_{from}, s, t)} \\
 ```
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
+    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
     @fetch connection_intact_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:ratio_out_in_connection_intact_flow] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s_path, t=t) => @constraint(

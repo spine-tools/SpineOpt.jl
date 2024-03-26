@@ -35,6 +35,7 @@ equals [connection\_intact\_flow](@ref) otherwise.
 ```
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
+    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
     @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:candidate_connection_flow_lb] = Dict(

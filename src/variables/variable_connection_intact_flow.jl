@@ -37,6 +37,7 @@ function connection_intact_flow_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
+    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return ()
     node = members(node)
     unique(
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
