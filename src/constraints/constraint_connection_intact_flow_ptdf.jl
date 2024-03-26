@@ -48,6 +48,9 @@ where
 """
 function add_constraint_connection_intact_flow_ptdf!(m::Model)
     @fetch connection_intact_flow, node_injection, connection_flow = m.ext[:spineopt].variables
+    if !use_connection_intact_flow(model=m.ext[:spineopt].instance)
+        connection_intact_flow = connection_flow
+    end
     m.ext[:spineopt].constraints[:connection_intact_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s_path, t=t) => @constraint(
             m,

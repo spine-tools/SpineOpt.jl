@@ -72,7 +72,7 @@ end
 
 function connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s_path, t, sum=sum)
     (
-        # flow in monitored connection
+        # flow on monitored connection
         sum(
             + connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short]
             - connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]

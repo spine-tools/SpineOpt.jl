@@ -49,6 +49,7 @@ from investment connections that are not invested in.
 ```
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
+    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
     @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:connection_flow_intact_flow] = Dict(

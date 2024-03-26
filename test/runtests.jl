@@ -118,5 +118,6 @@ end
     include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
     include("run_spineopt_multi_stage.jl")
+    include("run_spineopt_investments.jl")
     include("run_examples.jl")
 end

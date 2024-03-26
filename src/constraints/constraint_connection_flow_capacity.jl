@@ -28,11 +28,9 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 ```math
 \begin{aligned}
 & \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
-& <= p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
-& \cdot \begin{cases}       
-   v^{connections\_invested\_available}_{(conn,s,t)} & \text{if } p^{candidate\_connections}_{(conn,s,t)} \geq 1 \\
-   1 & \text{otherwise} \\
-\end{cases} \\
+& <= \\
+& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
@@ -42,6 +40,7 @@ See also
 [connection\_capacity](@ref),
 [connection\_availability\_factor](@ref),
 [connection\_conv\_cap\_to\_flow](@ref),
+[number\_of\_connections](@ref),
 [candidate\_connections](@ref)
 
 !!! note
@@ -80,25 +79,34 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 * connection_conv_cap_to_flow[
                     (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
                 ]
+                * (
+                    + sum(
+                        connections_invested_available[conn, s, t1]
+                        for (conn, s, t1) in connections_invested_available_indices(
+                            m; connection=conn, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
+                        );
+                        init=0,
+                    )
+                    + number_of_connections[(
+                        connection=conn,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t,
+                        _default=_default_number_of_connections(conn),
+                    )]
+                )
                 for (conn, _n, d, s, t) in connection_flow_indices(
                     m; connection=conn, direction=d, node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
                 );
                 init=0,
-            )
-            * (
-                !isnothing(candidate_connections(connection=conn)) ? sum(
-                    connections_invested_available[conn, s, t1]
-                    for (conn, s, t1) in connections_invested_available_indices(
-                        m; connection=conn, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
-                    );
-                    init=0,
-                ) : 1
             )
             * duration(t)
         )
         for (conn, ng, d, s_path, t) in constraint_connection_flow_capacity_indices(m)
     )
 end
+
+_default_number_of_connections(conn) = is_candidate(connection=conn) ? 0 : 1
 
 function constraint_connection_flow_capacity_indices(m::Model)
     (

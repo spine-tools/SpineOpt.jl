@@ -50,25 +50,6 @@ function unit_flow_indices(
     )
 end
 
-function unit_flow_time_indices(
-    m::Model;
-    unit=anything,
-    node=anything,
-    direction=anything,
-    t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
-)
-    unit = members(unit)
-    node = members(node)
-    unique(
-        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in unit__node__direction__temporal_block(
-            unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
-        )
-        for (n, t) in node_time_indices(m; node=n, temporal_block=tb, t=t)
-    )
-end
-
 """
     add_variable_unit_flow!(m::Model)
 

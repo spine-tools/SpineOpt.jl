@@ -48,7 +48,9 @@ end
 Check if storage investment variable type is defined to be an integer.
 """
 
-storages_invested_available_int(x) = storage_investment_variable_type(node=x.node) == :variable_type_integer
+function storages_invested_available_int(x)
+    storage_investment_variable_type(node=x.node) == :storage_investment_variable_type_integer
+end
 
 """
     add_variable_storages_invested_available!(m::Model)
