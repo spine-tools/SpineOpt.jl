@@ -779,7 +779,7 @@ function _t_extreme_resolution!(m, t_arr::Vector, kw)
     end
     t_arr
 end
-function _t_extreme_resolution!(m, t_dict::Dict, kw) where V
+function _t_extreme_resolution!(m, t_dict::Dict, kw)
     isempty(t_in_t_excl(m)) && return t_dict
     for t in keys(t_dict)
         for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...)
