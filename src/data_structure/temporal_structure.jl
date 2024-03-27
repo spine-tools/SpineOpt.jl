@@ -447,9 +447,11 @@ function _generate_master_window!(m_mp::Model)
     instance = m_mp.ext[:spineopt].instance
     mp_start = model_start(model=instance)
     mp_end = model_end(model=instance)
-    m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
+    m_mp.ext[:spineopt].temporal_structure[:current_window] = current_window = TimeSlice(
         mp_start, mp_end, duration_unit=_model_duration_unit(instance)
     )
+    m_mp.ext[:spineopt].temporal_structure[:windows] = [current_window]
+    m_mp.ext[:spineopt].temporal_structure[:window_count] = 1
 end
 
 """
@@ -487,11 +489,11 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     rf in (nothing, Minute(0)) && return false
     rf = rev ? -rf : rf
     temp_struct = m.ext[:spineopt].temporal_structure
-    if !rev
-        end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
-        start(temp_struct[:current_window]) + rf >= model_end(model=m.ext[:spineopt].instance) && return false
-    end
-    roll!(temp_struct[:current_window], rf; refresh=false)
+    current_window = temp_struct[:current_window]
+    !rev && any(
+        x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
+    ) && return false
+    roll!(current_window, rf; refresh=false)
     _roll_time_slice_set!(temp_struct[:time_slice], rf)
     _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
     true

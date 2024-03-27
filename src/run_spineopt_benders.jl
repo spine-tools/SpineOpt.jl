@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
 function run_spineopt_benders!(
     m,
     url_out;
@@ -30,19 +29,17 @@ function run_spineopt_benders!(
     add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
     add_event_handler!(process_subproblem_solution!, m, :window_solved)
     m_mp = master_model(m)
-    _init_mp_model!(m_mp; log_level=log_level)
+    _build_mp_model!(m_mp; log_level=log_level)
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
-    _call_event_handlers(m, :master_model_built)
+    undo_force_starting_investments! = _force_starting_investments!(m_mp)
+    _call_event_handlers(m_mp, :model_built)
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
-    undo_force_starting_investments! = _force_starting_investments!(m_mp)
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
         j == 2 && undo_force_starting_investments!()
-        _call_event_handlers(m, :master_model_about_to_solve, j)
-        optimize_model!(m_mp; log_level=log_level) || break
-        _call_event_handlers(m, :master_model_solved, j)
+        solve_model!(m_mp; log_level=log_level, rewind=false) || break
         @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution!(m_mp)
         solve_model!(
             m;
@@ -78,7 +75,8 @@ end
 """
 Initialize the given model for SpineOpt Master Problem: add variables, add constraints and set objective.
 """
-function _init_mp_model!(m; log_level=3)
+function _build_mp_model!(m; log_level=3)
+    num_variables(m) == 0 || return
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
