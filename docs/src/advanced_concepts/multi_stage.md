@@ -71,13 +71,14 @@ First, the basic setup:
    1. Specify [roll\_forward](@ref) for your [model](@ref) as `1 day`.
    1. Specify [resolution](@ref) for your [temporal\_block](@ref) as `1 hour`.
 
-With the above, if you run the `Base_scenario` SpineOpt will run an hourly-resolution day-long rolling horizon model
+With the above, if you run the `Base_scenario` SpineOpt will run an hourly-resolution year-long rolling horizon model
+solving one day at a time,
 that would probably finish in reasonable time but wouldn't capture the long-term value of your storage.
 
 Next, the 'stage' stuff:
 1. Create a [stage](@ref) called `lt_storage`.
 1. (Don't create any [stage\_\_child\_stage](@ref) relationsips - the only child is the [model](@ref) - plus you don't have/need other [stage](@ref)s).
-1. Create a [stage\_\_output\_\_node](@ref) with your [stage](@ref), the `node_state` [output](@ref) and your storage [node](@ref).
+1. Create a [stage\_\_output\_\_node](@ref) between your [stage](@ref), the `node_state` [output](@ref) and your storage [node](@ref).
 1. Create an alternative called `lt_storage_alt`.
 1. Create a scenario called `lt_storage_scen` with `lt_storage_alt` in the higher rank and the `Base` alternative in the lower rank.
 1. For the `lt_storage_alt`:
@@ -86,9 +87,9 @@ Next, the 'stage' stuff:
     1. (Don't specify [output\_resolution](@ref) so the output is fixed at the end of the [model](@ref)'s rolling window.)
 1. For the `Base` alternative, specify [stage\_scenario](@ref) for the `lt_storage` [stage](@ref) as `lt_storage_scen`.
 
-
 Now, if you run the `Base_scenario` SpineOpt will run a two-stage model:
 - First, a daily-resolution year-long model that will capture the long-term value of your storage.
-- Next, an hourly-resolution day-long rolling horizon model where the [node\_state](@ref) of your storage [node](@ref)
-  will be fixed at the end of each window to the value of the previous solve.
+- Next, an hourly-resolution year-long rolling horizon model solving one day at a time,
+  where the [node\_state](@ref) of your storage [node](@ref)
+  will be fixed at the end of each day to the optimal LT trajectory computed in the previous stage.
 
