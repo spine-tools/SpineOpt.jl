@@ -1,0 +1,124 @@
+BEGIN:VCALENDAR
+PRODID:-//Microsoft Corporation//Outlook 16.0 MIMEDIR//EN
+VERSION:2.0
+METHOD:REQUEST
+X-MS-OLK-FORCEINSPECTOROPEN:TRUE
+BEGIN:VTIMEZONE
+TZID:Romance Standard Time
+BEGIN:STANDARD
+DTSTART:16011028T030000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:16010325T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+ATTENDEE;CN=wp4mopo@ls.kuleuven.be;RSVP=TRUE:mailto:wp4mopo@ls.kuleuven.be
+ATTENDEE;CN=wp3mopo@ls.kuleuven.be;RSVP=TRUE:mailto:wp3mopo@ls.kuleuven.be
+CLASS:PUBLIC
+CREATED:20240326T150917Z
+DESCRIPTION:A meeting dedicated to connect with the Spine(Opt) users to dis
+	cuss issues\, development and use cases.\n\nDuring the mopo project (2023-
+	2027) the teams meeting is organised by the KU Leuven. Afterwards the orga
+	nisation will probably be handed over to Energy Reform.\n\n_______________
+	_________________________________________________________________\nMicroso
+	ft Teams Need help? <https://aka.ms/JoinTeamsMeeting?omkt=en-US>  \nJoin t
+	he meeting now <https://teams.microsoft.com/l/meetup-join/19%3ameeting_ZDB
+	kZjBhNmEtMGFmZi00ZDllLWE4ZmQtMWJhMWZjYjUyNDUy%40thread.v2/0?context=%7b%22
+	Tid%22%3a%223973589b-9e40-4eb5-800e-b0b6383d1621%22%2c%22Oid%22%3a%224c379
+	655-31a5-4c3e-b6d6-b61817a44e14%22%7d>  \nMeeting ID: 379 444 982 595 \nPa
+	sscode: foEAsN \n________________________________\n\nFor organizers: Meeti
+	ng options <https://teams.microsoft.com/meetingOptions/?organizerId=4c3796
+	55-31a5-4c3e-b6d6-b61817a44e14&tenantId=3973589b-9e40-4eb5-800e-b0b6383d16
+	21&threadId=19_meeting_ZDBkZjBhNmEtMGFmZi00ZDllLWE4ZmQtMWJhMWZjYjUyNDUy@th
+	read.v2&messageId=0&language=en-US>  | Reset dial-in PIN <https://dialin.t
+	eams.microsoft.com/usp/pstnconferencing>  \nOrg help <https://admin.kuleuv
+	en.be/icts/services/teams>  \n____________________________________________
+	____________________________________\n
+DTEND;TZID="Romance Standard Time":20240402T160000
+DTSTAMP:20240326T142522Z
+DTSTART;TZID="Romance Standard Time":20240402T150000
+LAST-MODIFIED:20240326T150917Z
+LOCATION:Microsoft Teams Meeting
+ORGANIZER;CN="Tars Verschelde":mailto:tars.verschelde@kuleuven.be
+PRIORITY:5
+RRULE:FREQ=MONTHLY;BYDAY=TU;BYSETPOS=1
+SEQUENCE:0
+SUMMARY:Spine Tools user meeting
+TRANSP:OPAQUE
+UID:040000008200E00074C5B7101A82E00800000000FDF3556F897FDA01000000000000000
+	0100000006447FF4709B9684DB01064F78F232E9B
+X-ALT-DESC;FMTTYPE=text/html:<html><head>\n\n</head>\n<body>\n<div style="f
+	ont-family: Aptos\, Aptos_EmbeddedFont\, Aptos_MSFontService\, Calibri\, H
+	elvetica\, sans-serif\; font-size: 12pt\; color: rgb(0\, 0\, 0)\;" class="
+	elementToProof">\nA meeting dedicated to connect with the Spine(Opt) users
+	 to discuss issues\, development and use cases.</div>\n<div style="font-fa
+	mily: Aptos\, Aptos_EmbeddedFont\, Aptos_MSFontService\, Calibri\, Helveti
+	ca\, sans-serif\; font-size: 12pt\; color: rgb(0\, 0\, 0)\;" class="elemen
+	tToProof">\n<br>\n</div>\n<div style="font-family: Aptos\, Aptos_EmbeddedF
+	ont\, Aptos_MSFontService\, Calibri\, Helvetica\, sans-serif\; font-size: 
+	12pt\; color: rgb(0\, 0\, 0)\;" class="elementToProof">\nDuring the mopo p
+	roject (2023-2027) the teams meeting is organised by the KU Leuven. Afterw
+	ards the organisation will probably be handed over to Energy Reform.</div>
+	\n<br>\n<div style="max-width: 520px\; color: #242424\; font-family:'Segoe
+	 UI'\,'Helvetica Neue'\,Helvetica\,Arial\,sans-serif" class="me-email-text
+	">\n<div style="margin-bottom:24px\;overflow:hidden\;white-space:nowrap\;"
+	>_________________________________________________________________________
+	_______</div>\n<div style="margin-bottom: 12px\;"><span class="me-email-te
+	xt" style="font-size: 24px\;font-weight: 700\; margin-right:12px\;">Micros
+	oft Teams</span>\n<a id="meet_invite_block.action.help" class="me-email-li
+	nk" style="font-size:14px\; text-decoration:underline\; color: #5B5FC7\;" 
+	href="https://aka.ms/JoinTeamsMeeting?omkt=en-US">\nNeed help?</a> </div>\
+	n<div style="margin-bottom: 6px\;"><a id="meet_invite_block.action.join_li
+	nk" class="me-email-headline" style="font-size: 20px\; font-weight:600\; t
+	ext-decoration: underline\; color: #5B5FC7\;" href="https://teams.microsof
+	t.com/l/meetup-join/19%3ameeting_ZDBkZjBhNmEtMGFmZi00ZDllLWE4ZmQtMWJhMWZjY
+	jUyNDUy%40thread.v2/0?context=%7b%22Tid%22%3a%223973589b-9e40-4eb5-800e-b0
+	b6383d1621%22%2c%22Oid%22%3a%224c379655-31a5-4c3e-b6d6-b61817a44e14%22%7d"
+	 target="_blank" rel="noreferrer noopener">Join\n the meeting now</a> </di
+	v>\n<div style="margin-bottom: 6px\;"><span class="me-email-text-secondary
+	" style="font-size: 14px\; color: #616161\;">Meeting ID:\n</span><span cla
+	ss="me-email-text" style="font-size: 14px\; color: #242424\;">379 444 982 
+	595</span>\n</div>\n<div style="margin-bottom: 24px\;"><span class="me-ema
+	il-text-secondary" style="font-size: 14px\; color: #616161\;">Passcode:\n<
+	/span><span class="me-email-text" style="font-size: 14px\; color: #242424\
+	;">foEAsN</span>\n</div>\n<div style="margin-bottom: 24px\; max-width: 532
+	px\;">\n<hr style="border: 0\; background: #D1D1D1\; height: 1px\;">\n</di
+	v>\n<div><span class="me-email-text-secondary" style="font-size: 14px\; co
+	lor: #616161\;">For organizers:\n</span><a id="meet_invite_block.action.or
+	ganizer_meet_options" class="me-email-link" style="font-size: 14px\; text-
+	decoration: underline\; color: #5B5FC7\;" target="_blank" href="https://te
+	ams.microsoft.com/meetingOptions/?organizerId=4c379655-31a5-4c3e-b6d6-b618
+	17a44e14&amp\;tenantId=3973589b-9e40-4eb5-800e-b0b6383d1621&amp\;threadId=
+	19_meeting_ZDBkZjBhNmEtMGFmZi00ZDllLWE4ZmQtMWJhMWZjYjUyNDUy@thread.v2&amp\
+	;messageId=0&amp\;language=en-US" rel="noreferrer noopener">Meeting\n opti
+	ons</a> <span style="color: #D1D1D1">|</span> <a id="meet_invite_block.act
+	ion.organizer_reset_dialin_pin" class="me-email-link" style="font-size: 14
+	px\; text-decoration: underline\; color: #5B5FC7\;" target="_blank" href="
+	https://dialin.teams.microsoft.com/usp/pstnconferencing" rel="noreferrer n
+	oopener">\nReset dial-in PIN</a> </div>\n<div style="margin-top: 24px\; ma
+	rgin-bottom: 6px\;"></div>\n<div style="margin-bottom: 24px\;"><a id="meet
+	_invite_block.action.org_help" class="me-email-link" style="font-size: 14p
+	x\; text-decoration: underline\; color: #5B5FC7\;" target="_blank" href="h
+	ttps://admin.kuleuven.be/icts/services/teams" rel="noreferrer noopener">Or
+	g\n help</a> </div>\n<div style="margin-bottom:24px\;overflow:hidden\;whit
+	e-space:nowrap\;">________________________________________________________
+	________________________</div>\n</div>\n</body>\n</html>\n
+X-MICROSOFT-CDO-BUSYSTATUS:TENTATIVE
+X-MICROSOFT-CDO-IMPORTANCE:1
+X-MICROSOFT-CDO-INTENDEDSTATUS:BUSY
+X-MICROSOFT-DISALLOW-COUNTER:FALSE
+X-MS-OLK-APPTLASTSEQUENCE:0
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+END:VCALENDAR
