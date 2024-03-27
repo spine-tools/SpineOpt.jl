@@ -36,22 +36,23 @@ See also [operating\_points](@ref), [ordered\_unit\_flow\_op](@ref).
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
-        (unit=u, node=n, direction=d, i=op, stochastic_path=s, t=t) => @constraint(
+        (unit=u, node=n, direction=d, i=op, stochastic_path=s_path, t=t) => @constraint(
             m,
             sum(
                 unit_flow_op_active[u, n, d, op, s, t]
                 for (u, n, d, op, s, t) in unit_flow_op_active_indices(
-                    m; unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                ); init=0
+                    m; unit=u, node=n, direction=d, i=op, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+                );
+                init=0,
             )
             <= 
             sum(
-                units_on[u, s, t] for (u, s, t) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                ); init=0
+                units_on[u, s, t]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_in_t(m; t_long=t));
+                init=0,
             )
         )
-        for (u, n, d, op, s, t) in constraint_operating_point_bounds_indices(m)
+        for (u, n, d, op, s_path, t) in constraint_operating_point_bounds_indices(m)
     )
 end
 

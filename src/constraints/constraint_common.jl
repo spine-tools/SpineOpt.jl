@@ -27,18 +27,11 @@ For each of these `t`s, the `path` also includes scenarios in `extra_indices` wh
 """
 function t_lowest_resolution_path(m, indices, extra_indices...)
     isempty(indices) && return ()
-    scens_by_t = t_lowest_resolution_sets!(_scens_by_t(indices))
+    scens_by_t = t_lowest_resolution_sets!(m, _scens_by_t(indices))
     extra_scens_by_t = _scens_by_t(Iterators.flatten(extra_indices))
-    t_arr = sort(collect(keys(scens_by_t)))
-    extra_t_arr = sort(collect(keys(extra_scens_by_t)))
-    t = _popfirst!(t_arr, nothing)
-    extra_t = _popfirst!(extra_t_arr, nothing)
-    while t !== nothing && extra_t !== nothing
-        if iscontained(t, extra_t)
-            union!(scens_by_t[t], extra_scens_by_t[extra_t])
-            t = _popfirst!(t_arr, nothing)
-        else
-            extra_t = _popfirst!(extra_t_arr, nothing)
+    for (t, scens) in scens_by_t
+        for t_long in t_in_t(m; t_short=t)
+            union!(scens, get(extra_scens_by_t, t_long, ()))
         end
     end
     ((t, path) for (t, scens) in scens_by_t for path in active_stochastic_paths(m, scens))
@@ -59,14 +52,14 @@ function _scens_by_t(indices)
     scens_by_t
 end
 
-function past_units_on_indices(m, u, s, t, min_time)
+function past_units_on_indices(m, u, s_path, t, min_time)
     t0 = _analysis_time(m)
     units_on_indices(
         m;
         unit=u,
-        stochastic_scenario=s,
+        stochastic_scenario=s_path,
         t=to_time_slice(
-            m; t=TimeSlice(end_(t) - min_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t), end_(t))
+            m; t=TimeSlice(end_(t) - min_time(unit=u, analysis_time=t0, stochastic_scenario=s_path, t=t), end_(t))
         ),
         temporal_block=anything
     )    

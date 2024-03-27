@@ -48,7 +48,9 @@ end
 Check if storage investment variable type is defined to be an integer.
 """
 
-storages_invested_available_int(x) = storage_investment_variable_type(node=x.node) == :variable_type_integer
+function storages_invested_available_int(x)
+    storage_investment_variable_type(node=x.node) == :storage_investment_variable_type_integer
+end
 
 """
     add_variable_storages_invested_available!(m::Model)
@@ -56,7 +58,6 @@ storages_invested_available_int(x) = storage_investment_variable_type(node=x.nod
 Add `storages_invested_available` variables to model `m`.
 """
 function add_variable_storages_invested_available!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :storages_invested_available,
@@ -65,6 +66,6 @@ function add_variable_storages_invested_available!(m::Model)
         int=storages_invested_available_int,
         fix_value=fix_storages_invested_available,
         internal_fix_value=internal_fix_storages_invested_available,
-        initial_value=initial_storages_invested_available
+        initial_value=initial_storages_invested_available,
     )
 end

@@ -159,7 +159,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_connection_flow_intact_flow!,
             add_constraint_connection_flow_lodf!,
             add_constraint_connection_flow_capacity!,
-            add_constraint_connection_flow_capacity_bidirection!,
+            add_constraint_connection_flow_capacity_bidirectional!,
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_unit_flow_capacity!,
             add_constraint_connections_invested_available!,
@@ -212,7 +212,6 @@ function _add_constraints!(m; log_level=3)
             add_constraint_non_spinning_reserves_lower_bound!,
             add_constraint_non_spinning_reserves_start_up_upper_bound!,
             add_constraint_non_spinning_reserves_shut_down_upper_bound!,
-            add_constraint_res_minimum_node_state!,
             add_constraint_fix_node_pressure_point!,
             add_constraint_connection_unitary_gas_flow!,
             add_constraint_compression_ratio!,
@@ -269,7 +268,9 @@ end
 
 function _build_stage_models!(m; log_level)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
-        build_model!(stage_m; log_level)
+        with_env(st.name) do
+            build_model!(stage_m; log_level)
+        end
         child_models = _child_models(m, st)
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Initializing outputs for $model_name..." _init_downstream_outputs!(
@@ -287,35 +288,60 @@ function _child_models(m, st)
 end
 
 function _init_downstream_outputs!(st, stage_m, child_models)
-    for out in stage__output(stage=st)
-        out_indices = stage_m.ext[:spineopt].variables_definition[out.name][:indices](stage_m)
+    for (out_name, _ow) in keys(stage_m.ext[:spineopt].reports_by_output)
+        out = output(out_name)
+        out_indices = stage_m.ext[:spineopt].variables_definition[out_name][:indices](stage_m)
         isempty(out_indices) && continue
+        objs_by_class_name = Dict(
+            :unit => stage__output__unit(stage=st, output=out),
+            :node => stage__output__node(stage=st, output=out),
+            :connection => stage__output__connection(stage=st, output=out),
+        )
         unique_entities = unique(_drop_key(ind, :t) for ind in out_indices)
+        filter!(unique_entities) do ent
+            _stage_output_includes_entity(ent, objs_by_class_name)
+        end
+        isempty(unique_entities) && continue
         model_very_end = maximum(end_.(ind.t for ind in out_indices))
         # Since we take the `start` of the `TimeSlice` when saving outputs,
         # we initialize each output as a TimeSeries mapping the window very end plus 1 minute to NaN.
         # This allows the previous point (last actual data point) to stick till the end
-        downstream_outputs = stage_m.ext[:spineopt].downstream_outputs[out.name] = Dict(
+        downstream_outputs = stage_m.ext[:spineopt].downstream_outputs[out_name] = Dict(
             ent => parameter_value(TimeSeries([model_very_end + Minute(1)], [NaN])) for ent in unique_entities
         )
-        out_res = output_resolution(stage=st, output=out, _strict=false)
-        for child_m in child_models
-            fix_points = _fix_points(out_res, child_m)
-            fix_indices_by_ent = Dict()
-            for ind in child_m.ext[:spineopt].variables_definition[out.name][:indices](child_m)
-                any(start(ind.t) <= fix_t <= end_(ind.t) for fix_t in fix_points) || continue
-                ent = _drop_key(ind, :t)
-                push!(get!(fix_indices_by_ent, ent, []), ind)
+        objs_by_class_name_by_res = Dict()
+        for (class_name, objs) in objs_by_class_name
+            for obj in objs
+                res = output_resolution(; stage=st, output=out, ((class_name => obj),)..., _strict=false)
+                push!(get!(get!(objs_by_class_name_by_res, res, Dict()), class_name, []), obj)
             end
-            for (ent, fix_indices) in fix_indices_by_ent
-                input = downstream_outputs[ent]
-                for ind in fix_indices
-                    call_kwargs = (analysis_time=startref(current_window(child_m)), t=ind.t)
-                    call = Call(input, call_kwargs, (Symbol(st.name, :_, out.name), call_kwargs))
-                    fix(child_m.ext[:spineopt].variables[out.name][ind], call)
+        end
+        for (out_res, objs_by_class_name) in objs_by_class_name_by_res
+            for child_m in child_models
+                fix_points = _fix_points(out_res, child_m)
+                fix_indices_by_ent = Dict()
+                for ind in child_m.ext[:spineopt].variables_definition[out_name][:indices](child_m)
+                    any(start(ind.t) <= fix_t <= end_(ind.t) for fix_t in fix_points) || continue
+                    ent = _drop_key(ind, :t)
+                    _stage_output_includes_entity(ent, objs_by_class_name) || continue
+                    push!(get!(fix_indices_by_ent, ent, []), ind)
+                end
+                for (ent, fix_indices) in fix_indices_by_ent
+                    input = downstream_outputs[ent]
+                    for ind in fix_indices
+                        call_kwargs = (analysis_time=startref(current_window(child_m)), t=ind.t)
+                        call = Call(input, call_kwargs, (Symbol(st.name, :_, out_name), call_kwargs))
+                        fix(child_m.ext[:spineopt].variables[out_name][ind], call)
+                    end
                 end
             end
         end
+    end
+end
+
+function _stage_output_includes_entity(ent, objs_by_class_name)
+    any(objs_by_class_name) do (class_name, objs)
+        get(ent, class_name, nothing) in objs
     end
 end
 
@@ -694,7 +720,7 @@ function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
     for (entity, by_analysis_time) in by_entity
         entity = (; entity..., output_suffix...)
         for (analysis_time, by_time_slice) in by_analysis_time
-            t_highest_resolution!(by_time_slice)
+            t_highest_resolution!(m, by_time_slice)
             by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
                 by_time_slice, output_time_slices(m; output=out)
             )

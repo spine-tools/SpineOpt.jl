@@ -49,6 +49,7 @@ export rewind_temporal_structure!
 export time_slice
 export t_before_t
 export t_in_t
+export t_in_t_excl
 export t_overlaps_t
 export to_time_slice
 export current_window
@@ -159,7 +160,7 @@ include("constraints/constraint_ratio_unit_flow.jl")
 include("constraints/constraint_ratio_out_in_connection_flow.jl")
 include("constraints/constraint_ratio_out_in_connection_intact_flow.jl")
 include("constraints/constraint_connection_flow_capacity.jl")
-include("constraints/constraint_connection_flow_capacity_bidirection.jl")
+include("constraints/constraint_connection_flow_capacity_bidirectional.jl")
 include("constraints/constraint_connection_intact_flow_capacity.jl")
 include("constraints/constraint_connection_flow_intact_flow.jl")
 include("constraints/constraint_connection_intact_flow_ptdf.jl")
@@ -185,7 +186,6 @@ include("constraints/constraint_unit_lifetime.jl")
 include("constraints/constraint_unit_pw_heat_rate.jl")
 include("constraints/constraint_ramp_up.jl")
 include("constraints/constraint_ramp_down.jl")
-include("constraints/constraint_res_minimum_node_state.jl")
 include("constraints/constraint_fix_node_pressure_point.jl")
 include("constraints/constraint_compression_ratio.jl")
 include("constraints/constraint_storage_line_pack.jl")

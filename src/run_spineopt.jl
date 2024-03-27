@@ -163,7 +163,34 @@ function prepare_spineopt(
 )
     @log log_level 0 "Preparing SpineOpt for $(_real_url(url_in))..."
     _check_version(url_in; log_level, upgrade)
-    @timelog log_level 2 "Initializing data structure from db..." begin
+    template, data = _init_data_from_db(url_in, log_level, upgrade, templates, filters)
+    missing_items = difference(template, data)
+    if !isempty(missing_items)
+        println()
+        @warn """
+        Some items are missing from the input database.
+        We'll assume sensitive defaults for any missing parameter definitions,
+        and empty collections for any missing classes.
+        SpineOpt might still be able to run, but otherwise you'd need to check your input database.
+
+        Missing item list follows:
+        $missing_items
+        """
+    end
+    for st in stage()
+        scenario = stage_scenario(stage=st, _strict=false)
+        scenario isa Symbol || error("invalid scenario $scenario for stage $st")
+        filters = merge(filters, Dict("scenario" => string(scenario)))
+        with_env(st.name) do
+            _init_data_from_db(url_in, log_level, upgrade, templates, filters, st)
+        end
+    end
+    create_model(mip_solver, lp_solver, use_direct_model)
+end
+
+function _init_data_from_db(url_in, log_level, upgrade, templates, filters, st=nothing)
+    st_name = st !== nothing ? st : "base"
+    @timelog log_level 2 "Initializing $st_name data structure from db..." begin
         template = SpineOpt.template()
         using_spinedb(template, @__MODULE__; extend=false)
         for template in templates
@@ -171,23 +198,10 @@ function prepare_spineopt(
         end
         data = _data(url_in; upgrade, filters)
         using_spinedb(data, @__MODULE__; extend=true)
-        missing_items = difference(template, data)
-        if !isempty(missing_items)
-            println()
-            @warn """
-            Some items are missing from the input database.
-            We'll assume sensitive defaults for any missing parameter definitions,
-            and empty collections for any missing classes.
-            SpineOpt might still be able to run, but otherwise you'd need to check your input database.
-
-            Missing item list follows:
-            $missing_items
-            """
-        end
     end
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-    create_model(mip_solver, lp_solver, use_direct_model)
+    @timelog log_level 2 "Preprocessing $st_name data structure..." preprocess_data_structure()
+    @timelog log_level 2 "Checking $st_name data structure..." check_data_structure()
+    template, data
 end
 
 _real_url(url_in::String) = run_request(url_in, "get_db_url")
@@ -253,7 +267,7 @@ function run_spineopt!(
     do_run_spineopt! = Dict(
         :spineopt_standard => run_spineopt_standard!,
         :spineopt_benders => run_spineopt_benders!,
-        :spineopt_mga => run_spineopt_mga!
+        :spineopt_mga => run_spineopt_mga!,
     )[model_type(model=m.ext[:spineopt].instance)]
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
     Base.invokelatest(build_model!, m; log_level)
@@ -411,7 +425,11 @@ struct SpineOptExt
             end
         else
             intermediate_results_folder = ""
-            reports_by_output = Dict((out.name, true) => [] for out in stage__output(stage=stage))
+            reports_by_output = Dict(
+                (out.name, true) => []
+                for stage__output__entity in (stage__output__unit, stage__output__node, stage__output__connection)
+                for (out, _ent) in stage__output__entity(stage=stage)
+            )
         end
         event_handlers = Dict(
             :model_built => [],

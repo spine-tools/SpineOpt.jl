@@ -338,8 +338,8 @@ function node_stochastic_time_indices(
 )
     (
         (node=n, stochastic_scenario=s, t=t)
-        for (n, t) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for ss in node__stochastic_structure(node=n)
+        for (n, ss) in node__stochastic_structure(node=node, _compact=false)
+        for (n, t) in node_time_indices(m; node=n, temporal_block=temporal_block, t=t)
         for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
@@ -358,8 +358,8 @@ function unit_stochastic_time_indices(
 )
     (
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, t) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for ss in units_on__stochastic_structure(unit=u)
+        for (u, ss) in units_on__stochastic_structure(unit=unit, _compact=false)
+        for (u, t) in unit_time_indices(m; unit=u, temporal_block=temporal_block, t=t)
         for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
@@ -378,8 +378,8 @@ function unit_investment_stochastic_time_indices(
 )
     (
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, t) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for ss in unit__investment_stochastic_structure(unit=u)
+        for (u, ss) in unit__investment_stochastic_structure(unit=unit, _compact=false)
+        for (u, t) in unit_investment_time_indices(m; unit=u, temporal_block=temporal_block, t=t)
         for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
@@ -398,10 +398,8 @@ function connection_investment_stochastic_time_indices(
 )
     (
         (connection=conn, stochastic_scenario=s, t=t)
-        for (conn, t) in connection_investment_time_indices(
-            m; connection=connection, temporal_block=temporal_block, t=t,
-        )
-        for ss in connection__investment_stochastic_structure(connection=conn)
+        for (conn, ss) in connection__investment_stochastic_structure(connection=connection, _compact=false)
+        for (conn, t) in connection_investment_time_indices(m; connection=conn, temporal_block=temporal_block, t=t)
         for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
@@ -420,8 +418,8 @@ function node_investment_stochastic_time_indices(
 )
     (
         (node=n, stochastic_scenario=s, t=t)
-        for (n, t) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for ss in node__investment_stochastic_structure(node=n)
+        for (n, ss) in node__investment_stochastic_structure(node=node, _compact=false)
+        for (n, t) in node_investment_time_indices(m; node=n, temporal_block=temporal_block, t=t)
         for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end

@@ -25,22 +25,22 @@ Constrain connections_invested_available by the investment lifetime of a connect
 function add_constraint_connection_lifetime!(m::Model)
     @fetch connections_invested_available, connections_invested = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:connection_lifetime] = Dict(
-        (connection=conn, stochastic_path=s, t=t) => @constraint(
+        (connection=conn, stochastic_path=s_path, t=t) => @constraint(
             m,
             sum(
                 connections_invested_available[conn, s, t]
                 for (conn, s, t) in connections_invested_available_indices(
-                    m; connection=conn, stochastic_scenario=s, t=t
+                    m; connection=conn, stochastic_scenario=s_path, t=t
                 );
                 init=0,
             )
             >=
             sum(
                 connections_invested[conn, s_past, t_past]
-                for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, s, t)
+                for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, s_path, t)
             )
         )
-        for (conn, s, t) in constraint_connection_lifetime_indices(m)
+        for (conn, s_path, t) in constraint_connection_lifetime_indices(m)
     )
 end
 
@@ -53,16 +53,18 @@ function constraint_connection_lifetime_indices(m::Model)
     )
 end
 
-function _past_connections_invested_available_indices(m, conn, s, t)
+function _past_connections_invested_available_indices(m, conn, s_path, t)
     t0 = _analysis_time(m)
     connections_invested_available_indices(
         m;
         connection=conn,
-        stochastic_scenario=s,
+        stochastic_scenario=s_path,
         t=to_time_slice(
             m;
             t=TimeSlice(
-                end_(t) - connection_investment_tech_lifetime(connection=conn, analysis_time=t0, stochastic_scenario=s, t=t),
+                end_(t) - connection_investment_tech_lifetime(
+                    connection=conn, analysis_time=t0, stochastic_scenario=s_path, t=t
+                ),
                 end_(t)
             )
         )

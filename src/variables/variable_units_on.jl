@@ -76,7 +76,6 @@ end
 Add `units_on` variables to model `m`.
 """
 function add_variable_units_on!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_on,

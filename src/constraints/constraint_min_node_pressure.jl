@@ -35,17 +35,18 @@ function add_constraint_min_node_pressure!(m::Model)
     @fetch node_pressure = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:min_node_pressure] = Dict(
-        (node=ng, stochastic_scenario=s, t=t) => @constraint(
+        (node=ng, stochastic_scenario=s_path, t=t) => @constraint(
             m,
             + sum(
                 + node_pressure[ng, s, t]
-                for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t);
+                - min_node_pressure[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t);
                 init=0,
             )
             >=
-            + min_node_pressure[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+            0
         )
-        for (ng, s, t) in constraint_min_node_pressure_indices(m)
+        for (ng, s_path, t) in constraint_min_node_pressure_indices(m)
     )
 end
 

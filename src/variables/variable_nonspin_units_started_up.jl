@@ -46,7 +46,6 @@ end
 Add `nonspin_units_started_up` variables to model `m`.
 """
 function add_variable_nonspin_units_started_up!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :nonspin_units_started_up,
@@ -55,6 +54,6 @@ function add_variable_nonspin_units_started_up!(m::Model)
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_nonspin_units_started_up,
-        initial_value=initial_nonspin_units_started_up
+        initial_value=initial_nonspin_units_started_up,
     )
 end

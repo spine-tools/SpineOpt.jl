@@ -38,28 +38,37 @@ function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:node_state_capacity] = Dict(
-        (node=ng, stochastic_scenario=s, t=t) => @constraint(
+        (node=ng, stochastic_scenario=s_path, t=t) => @constraint(
             m,
             + sum(
-                + node_state[ng, s, t] for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);
+                + node_state[n, s, t]
+                for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
                 init=0,
             )
             <=
-            + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * (
-                candidate_storages(node=ng) !== nothing ?
-                sum(
-                    storages_invested_available[n, s, t1]
-                    for (n, s, t1) in storages_invested_available_indices(
-                        m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_short=t)
-                    );
-                    init=0,
-                ) : 1
+            + sum(
+                + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * (
+                    + number_of_storages[
+                        (node=ng, stochastic_scenario=s, analysis_time=t0, t=t, _default=_default_number_of_storages(n))
+                    ]
+                    + sum(
+                        storages_invested_available[n, s, t1]
+                        for (n, s, t1) in storages_invested_available_indices(
+                            m; node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
+                        );
+                        init=0,
+                    )
+                )
+                for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+                init=0,
             )
         )
-        for (ng, s, t) in constraint_node_state_capacity_indices(m)
+        for (ng, s_path, t) in constraint_node_state_capacity_indices(m)
     )
 end
+
+_default_number_of_storages(n) = is_candidate(node=n) ? 0 : 1
 
 function constraint_node_state_capacity_indices(m::Model)
     unique(

@@ -23,7 +23,6 @@
 Add `units_invested` variables to model `m`.
 """
 function add_variable_units_invested!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_invested,
@@ -31,6 +30,6 @@ function add_variable_units_invested!(m::Model)
         lb=Constant(0),
         int=units_invested_available_int,
         fix_value=fix_units_invested,
-        initial_value=initial_units_invested
+        initial_value=initial_units_invested,
     )
 end

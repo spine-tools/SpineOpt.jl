@@ -32,10 +32,10 @@ v^{connection\_intact\_flow}_{(c, n_{in}, d_{from}, s, t)} \\
 ```
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
+    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
     @fetch connection_intact_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:ratio_out_in_connection_intact_flow] = Dict(
-        (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => @constraint(
+        (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s_path, t=t) => @constraint(
             m,
             + sum(
                 + connection_intact_flow[conn, n_out, d, s, t_short] * duration(t_short)
@@ -44,7 +44,7 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
                     connection=conn,
                     node=ng_out,
                     direction=direction(:to_node),
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
@@ -57,18 +57,17 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
                     connection=conn,
                     node=ng_in,
                     direction=direction(:from_node),
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
             )
         )
-        for (conn, ng_in, ng_out, s, t) in constraint_ratio_out_in_connection_intact_flow_indices(m)
+        for (conn, ng_in, ng_out, s_path, t) in constraint_ratio_out_in_connection_intact_flow_indices(m)
     )
 end
 
 function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
-    t0 = _analysis_time(m)
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)

@@ -26,20 +26,20 @@ function add_constraint_unit_lifetime!(m::Model)
     @fetch units_invested_available, units_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_lifetime] = Dict(
-        (unit=u, stochastic_path=s, t=t) => @constraint(
+        (unit=u, stochastic_path=s_path, t=t) => @constraint(
             m,
             sum(
                 units_invested_available[u, s, t]
-                for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t);
+                for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s_path, t=t);
                 init=0,
             )
             >=
             sum(
                 units_invested[u, s_past, t_past]
-                for (u, s_past, t_past) in _past_units_invested_available_indices(m, u, s, t)
+                for (u, s_past, t_past) in _past_units_invested_available_indices(m, u, s_path, t)
             )
         )
-        for (u, s, t) in constraint_unit_lifetime_indices(m)
+        for (u, s_path, t) in constraint_unit_lifetime_indices(m)
     )
 end
 
@@ -53,16 +53,16 @@ function constraint_unit_lifetime_indices(m::Model)
     )
 end
 
-function _past_units_invested_available_indices(m, u, s, t)
+function _past_units_invested_available_indices(m, u, s_path, t)
     t0 = _analysis_time(m)
     units_invested_available_indices(
         m;
         unit=u,
-        stochastic_scenario=s,
+        stochastic_scenario=s_path,
         t=to_time_slice(
             m;
             t=TimeSlice(
-                end_(t) - unit_investment_tech_lifetime(unit=u, analysis_time=t0, stochastic_scenario=s, t=t), end_(t)
+                end_(t) - unit_investment_tech_lifetime(unit=u, analysis_time=t0, stochastic_scenario=s_path, t=t), end_(t)
             )
         )
     )

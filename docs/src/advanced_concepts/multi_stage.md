@@ -35,23 +35,23 @@ The children of a [stage](@ref) are defined via [stage\_\_child\_stage](@ref) re
 If a [stage](@ref) has no [stage\_\_child\_stage](@ref) relationships as a parent,
 then it is assumed to have only one children: the [model](@ref) itself.
 
-The [output](@ref)s that a [stage](@ref) fixes for its children are defined via [stage\_\_output](@ref)
-relationships. By default, the [output](@ref) is fixed at the *end* of each child's rolling window.
+The [output](@ref)s that a [stage](@ref) fixes for its children are defined via [stage\_\_output\_\_node](@ref),
+[stage\_\_output\_\_unit](@ref) and/or [stage\_\_output\_\_connection](@ref)
+relationships.
+For example, if you want to fix [node\_state](@ref) for a [node](@ref),
+then you would create a [stage\_\_output\_\_node](@ref) between the [stage](@ref),
+the `node_state` [output](@ref) and the [node](@ref).
+
+By default, the [output](@ref) is fixed at the *end* of each child's rolling window.
 However, you can fix it at other points in time by specifying the [output\_resolution](@ref) parameter
 as a duration (or array of durations) relative to the *start* of the child's rolling window.
-
 For example, if you specify an [output\_resolution](@ref) of `1 day`,
 then the [output](@ref) will be fixed at one day after the child's window start.
 If you specify something like `[1 day, 2 days]`, then it will be fixed at one day after the window start,
 and then at two days after that (i.e., three days after the window start).
 
-The optimisation model that a [stage](@ref) solves is essentially the same SpineOpt model
-defined by the [model](@ref),
-but you can (and probably should) override certain parameters to make it solve quicker.
-At the moment you can specify [roll\_forward](@ref) for your [stage](@ref),
-and this will override the [roll\_forward](@ref) of the [model](@ref) for that [stage](@ref).
-You can also create [stage\_\_temporal\_block](@ref) relationships and specify [resolution](@ref) for them,
-and this will override the [resolution](@ref) of that [temporal\_block](@ref) for that [stage](@ref).
+The optimisation model that a [stage](@ref) solves is given by the [stage\_scenario](@ref) parameter value,
+which must be a scenario in your DB.
 
 And that's basically it!
 
@@ -61,23 +61,35 @@ In case of the year-long storage model with hourly resolution, here is how you w
 
 First, the basic setup:
 1. Create your [model](@ref).
-1. Specify [model\_start](@ref) and [model\_end](@ref) for your [model](@ref) to cover the year of interest.
-1. Specify [roll\_forward](@ref) for your [model](@ref) as `1 day`.
-1. Create a [temporal\_block](@ref) called "flat".
-1. Specify [resolution](@ref) for your [temporal\_block](@ref) as `1 hour`.
-1. Create a [model\_\_default\_temporal\_block](@ref) between your [model](@ref) and your [temporal\_block](ref)
-   (to keep things simple, but of course you can use [node\_\_temporal\_block](@ref), etc., as needed).
+1. Create a [temporal\_block](@ref) called `flat`.
 1. Create the rest of your model (the storage [node](@ref), etc.)
+1. Create a [model\_\_default\_temporal\_block](@ref) between your [model](@ref) and the `flat` [temporal\_block](ref)
+   (to keep things simple, but of course you can use [node\_\_temporal\_block](@ref), etc., as needed).
+1. Create a scenario called e.g. `Base_scenario` including only the `Base` alternative.
+1. For the `Base` alternative:
+   1. Specify [model\_start](@ref) and [model\_end](@ref) for your [model](@ref) to cover the year of interest.
+   1. Specify [roll\_forward](@ref) for your [model](@ref) as `1 day`.
+   1. Specify [resolution](@ref) for your [temporal\_block](@ref) as `1 hour`.
 
-With the above, you will have a rolling-horizon model that would probably solve in reasonable time
-but wouldn't capture the long-term value of your storage.
+With the above, if you run the `Base_scenario` SpineOpt will run an hourly-resolution year-long rolling horizon model
+solving one day at a time,
+that would probably finish in reasonable time but wouldn't capture the long-term value of your storage.
 
-Now, the 'stage' stuff:
-1. Create a [stage](@ref) called "lt_storage".
+Next, the 'stage' stuff:
+1. Create a [stage](@ref) called `lt_storage`.
 1. (Don't create any [stage\_\_child\_stage](@ref) relationsips - the only child is the [model](@ref) - plus you don't have/need other [stage](@ref)s).
-1. Create a [stage\_\_output](@ref) between your [stage](@ref) and the "node_state" [output](@ref).
-1. Don't specify [output\_resolution](@ref) so the output is fixed at the end of the [model](@ref)'s rolling window.
-1. Specify [roll\_forward](@ref) for your [stage](@ref) as `nothing` - so the model doesn't roll - the entire year is solved at once.
-1. Create a [stage\_\_temporal\_block](@ref) relationship between your [stage](@ref) and the "flat" [temporal\_block](ref).
-1. Specify [resolution](@ref) for the above [stage\_\_temporal\_block](@ref) as `1 day`.
+1. Create a [stage\_\_output\_\_node](@ref) between your [stage](@ref), the `node_state` [output](@ref) and your storage [node](@ref).
+1. Create an alternative called `lt_storage_alt`.
+1. Create a scenario called `lt_storage_scen` with `lt_storage_alt` in the higher rank and the `Base` alternative in the lower rank.
+1. For the `lt_storage_alt`:
+    1. Specify [roll\_forward](@ref) for your [model](@ref) as `nothing` - so the model doesn't roll - the entire year is solved at once.
+    1. Specify [resolution](@ref) for the `flat` [temporal\_block](@ref) as `1 day`.
+    1. (Don't specify [output\_resolution](@ref) so the output is fixed at the end of the [model](@ref)'s rolling window.)
+1. For the `Base` alternative, specify [stage\_scenario](@ref) for the `lt_storage` [stage](@ref) as `lt_storage_scen`.
+
+Now, if you run the `Base_scenario` SpineOpt will run a two-stage model:
+- First, a daily-resolution year-long model that will capture the long-term value of your storage.
+- Next, an hourly-resolution year-long rolling horizon model solving one day at a time,
+  where the [node\_state](@ref) of your storage [node](@ref)
+  will be fixed at the end of each day to the optimal LT trajectory computed in the previous stage.
 

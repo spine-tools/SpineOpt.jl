@@ -25,7 +25,8 @@ This happens in the [run\_spineopt](@ref) function and it's done in two steps:
 To translate the [temporal\_block](@ref)s into `TimeSlice` objects,
 we basically look at the value of [model\_start](@ref) and [model\_end](@ref) for the [model](@ref) object,
 as well as the value of the [resolution](@ref) for the different [temporal\_block](@ref) objects.
-Then we build as many `TimeSlice`s as needed to cover the period between [model\_start](@ref) and [model\_end](@ref) at each [resolution](@ref).
+Then we build as many `TimeSlice`s as needed to cover the period between [model\_start](@ref) and [model\_end](@ref)
+at each [resolution](@ref).
 
 !!! note
     `m` is the `JuMP.Model` object that SpineOpt builds and solves using `JuMP`.
@@ -40,6 +41,7 @@ To facilitate querying the temporal structure, we have developed the following c
 - [t\_before\_t](@ref)
 - [t\_overlaps\_t](@ref)
 - [t\_in\_t](@ref)
+- [t\_in\_t\_excl](@ref)
 
 !!! note
     To further figure out what the time slice convenience functions do,
@@ -54,7 +56,8 @@ To facilitate querying the temporal structure, we have developed the following c
 ## How can the time slice convenience functions be used?
 
 When building constraints you typically want to know which `TimeSlice`s come after/before another,
-overlap another, or contain/are contained in another. You can obtain this type of info by calling the above convenience functions.
+overlap another, or contain/are contained in another.
+You can obtain this type of info by calling the above convenience functions.
 
 For example, say you're generating a constraint at a 3-hour resolution.
 This means you have a `TimeSlice` in your constraint index, and that `TimeSlice` covers 3 hours.
@@ -65,5 +68,6 @@ by calling [t\_in\_t](@ref) with it.
 More information can be found in the [Write a constraint for SpineOpt](@ref) section.
 
 !!! note
-    A fool proof way of writing a constraint - that may not be the most efficient - is to always take the highest resolution among the overlapping `TimeSlice`s to generate the constraint indices.
+    A fool proof way of writing a constraint - that may not be the most efficient -
+    is to always take the highest resolution among the overlapping `TimeSlice`s to generate the constraint indices.
     The other `TimeSlice`s can then be obtained from [t\_overlaps\_t](@ref).

@@ -67,24 +67,6 @@ function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
     unique(overlapping_t for s in t for overlapping_t in get(h.overlapping_time_slices, s, ()))
 end
 
-function _roll_forward(m::Model; kwargs...)
-    st = m.ext[:spineopt].stage
-    if st !== nothing
-        stage_rf = roll_forward(; stage=st, kwargs..., _default=missing)
-        stage_rf !== missing && return stage_rf
-    end
-    roll_forward(; model=m.ext[:spineopt].instance, kwargs...)
-end
-
-function _resolution(m::Model; kwargs...)
-    st = m.ext[:spineopt].stage
-    if st !== nothing
-        stage_res = resolution(; stage=st, kwargs..., _default=missing)
-        stage_res !== missing && return stage_res
-    end
-    resolution(; kwargs...)
-end
-
 """
     _model_duration_unit(instance::Object)
 
@@ -101,7 +83,7 @@ function _model_window_duration(m)
     m_duration = m_end - m_start
     w_duration = window_duration(model=instance, _strict=false)
     if w_duration === nothing
-        w_duration = _roll_forward(m; i=1, _strict=false)
+        w_duration = roll_forward(model=instance, i=1, _strict=false)
     end
     if w_duration === nothing || m_start + w_duration > m_end
         m_duration
@@ -146,7 +128,7 @@ function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
-            res = _resolution(m; temporal_block=block, i=i, _strict=false)
+            res = resolution(temporal_block=block, i=i, _strict=false)
             res !== nothing || break
             if iszero(res)
                 # TODO: Try to move this to a check...
@@ -330,10 +312,12 @@ function _generate_time_slice_relationships!(m::Model)
         for t_long in time_slices
         if iscontained(t_short, t_long)
     )
+    t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
     # Create the function-like objects
     temp_struct = m.ext[:spineopt].temporal_structure
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
+    temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
     temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
 end
 
@@ -428,7 +412,7 @@ function _generate_windows_and_window_count!(m::Model)
     push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
     i = 1
     while true
-        rf = _roll_forward(m; i=i, _strict=false)
+        rf = roll_forward(model=instance, i=i, _strict=false)
         (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
         w_start += rf
         w_start >= model_end(model=instance) && break
@@ -447,6 +431,7 @@ After this, you can call the following functions to query the generated structur
 - `time_slice`
 - `t_before_t`
 - `t_in_t`
+- `t_in_t_excl`
 - `t_overlaps_t`
 - `to_time_slice`
 - `current_window`
@@ -488,11 +473,11 @@ indicating the position or successive positions in that array.
 If `rev` is `true`, then the structure is rolled backwards instead of forward.
 """
 function roll_temporal_structure!(m::Model, i::Integer=1; rev=false)
-    rf = _roll_forward(m; i=i, _strict=false)
+    rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
     _do_roll_temporal_structure!(m, rf, rev)
 end
 function roll_temporal_structure!(m::Model, rng::UnitRange{T}; rev=false) where T<:Integer
-    rfs = [_roll_forward(m; i=i, _strict=false) for i in rng]
+    rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
     filter!(!isnothing, rfs)
     rf = sum(rfs; init=Minute(0))
     _do_roll_temporal_structure!(m, rf, rev)
@@ -603,6 +588,17 @@ the second containing the first.
 t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
 
 """
+    t_in_t_excl(m; t_short=anything, t_long=anything)
+
+Same as [t_in_t](@ref) but exclude tuples of the same `TimeSlice`.
+
+ # Keyword arguments
+  - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short` (other than `t_short` itself).
+  - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long` (other than `t_long` itself).
+"""
+t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+
+"""
     t_overlaps_t(m; t)
 
 An `Array` of `TimeSlice`s in model `m` that overlap the given `t`, where `t` *must* be in `m`.
@@ -615,6 +611,16 @@ function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 end
 
+function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
+    (
+        (tb, ta)
+        for (tb, ta) in t_before_t(
+            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk), t=t_after), _compact=false
+        )
+        if !isempty(intersect(members(blk), blocks(tb)))
+    )
+end
+
 """
     node_time_indices(m::Model;<keyword arguments>)
 
@@ -625,16 +631,6 @@ function node_time_indices(m::Model; node=anything, temporal_block=anything, t=a
         (node=n, t=t1)
         for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
-    )
-end
-
-function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
-    (
-        (tb, ta)
-        for (tb, ta) in t_before_t(
-            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk), t=t_after), _compact=false
-        )
-        if !isempty(intersect(members(blk), blocks(tb)))
     )
 end
 
@@ -766,4 +762,43 @@ function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=
         for (n, blk) in node__investment_temporal_block(node=node, _compact=false)
         for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
     )
+end
+
+t_highest_resolution(m, t_iter) = t_highest_resolution!(m, collect(t_iter))
+
+t_highest_resolution!(m, t_arr::Union{Vector,Dict}) = _t_extreme_resolution!(m, t_arr, :t_short)
+
+t_lowest_resolution(m, t_iter) = t_lowest_resolution!(m, collect(t_iter))
+
+t_lowest_resolution!(m, t_arr::Union{Vector,Dict}) = _t_extreme_resolution!(m, t_arr, :t_long)
+
+function _t_extreme_resolution!(m, t_arr::Vector, kw)
+    isempty(t_in_t_excl(m)) && return t_arr
+    for t in t_arr
+        setdiff!(t_arr, t_in_t_excl(m; NamedTuple{(kw,)}((t,))...))
+    end
+    t_arr
+end
+function _t_extreme_resolution!(m, t_dict::Dict, kw)
+    isempty(t_in_t_excl(m)) && return t_dict
+    for t in keys(t_dict)
+        for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...)
+            delete!(t_dict, other_t)
+        end
+    end
+    t_dict
+end
+
+t_lowest_resolution_sets!(m, t_dict) = _t_extreme_resolution_sets!(m, t_dict, :t_long)
+
+t_highest_resolution_sets!(m, t_dict) = _t_extreme_resolution_sets!(m, t_dict, :t_short)
+
+function _t_extreme_resolution_sets!(m, t_dict, kw)
+    isempty(t_in_t_excl(m)) && return t_dict
+    for t in keys(t_dict)
+        for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...)
+            union!(t_dict[t], pop!(t_dict, other_t, ()))
+        end
+    end
+    t_dict
 end
