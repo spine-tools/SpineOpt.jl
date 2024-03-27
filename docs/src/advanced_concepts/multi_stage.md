@@ -35,11 +35,16 @@ The children of a [stage](@ref) are defined via [stage\_\_child\_stage](@ref) re
 If a [stage](@ref) has no [stage\_\_child\_stage](@ref) relationships as a parent,
 then it is assumed to have only one children: the [model](@ref) itself.
 
-The [output](@ref)s that a [stage](@ref) fixes for its children are defined via [stage\_\_output](@ref)
-relationships. By default, the [output](@ref) is fixed at the *end* of each child's rolling window.
+The [output](@ref)s that a [stage](@ref) fixes for its children are defined via [stage\_\_output\_\_node](@ref),
+[stage\_\_output\_\_unit](@ref) and/or [stage\_\_output\_\_connection](@ref)
+relationships.
+For example, if you want to fix [node\_state](@ref) for a [node](@ref),
+then you would create a [stage\_\_output\_\_node](@ref) between the [stage](@ref),
+the `node_state` [output](@ref) and the [node](@ref).
+
+By default, the [output](@ref) is fixed at the *end* of each child's rolling window.
 However, you can fix it at other points in time by specifying the [output\_resolution](@ref) parameter
 as a duration (or array of durations) relative to the *start* of the child's rolling window.
-
 For example, if you specify an [output\_resolution](@ref) of `1 day`,
 then the [output](@ref) will be fixed at one day after the child's window start.
 If you specify something like `[1 day, 2 days]`, then it will be fixed at one day after the window start,

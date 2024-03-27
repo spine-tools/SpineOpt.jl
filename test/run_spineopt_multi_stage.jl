@@ -133,7 +133,7 @@ function _ref_investments_setup(storage_count)
     url_in, url_out
 end
 
-function _lt_storage_data()
+function _lt_storage_data(storage_count)
     rf = Day(1)
     lt_stor_res = Day(1)
     Dict(
@@ -146,7 +146,7 @@ function _lt_storage_data()
             ("stage", "lt_storage"),
         ],
         :relationships => Any[
-            ("stage__output", ("lt_storage", "node_state")),
+            ("stage__output__node", ("lt_storage", "node_state", "storage_node$k")) for k in 1:storage_count
         ],
         :object_parameter_values => Any[
             ("stage", "lt_storage", "stage_scenario", "lt_storage_scen"),
@@ -159,7 +159,7 @@ end
 
 function _lt_storage_setup(storage_count)
     url_in, url_out = _ref_setup(storage_count)
-    lt_storage_data = _lt_storage_data()
+    lt_storage_data = _lt_storage_data(storage_count)
     import_data(url_in, "Add lt storage data"; lt_storage_data...)
     url_in, url_out
 end
@@ -169,15 +169,17 @@ function _lt_storage_investments_setup(storage_count)
     lt_storage_data = _lt_storage_data()
     lt_storage_investments_data = Dict(
         :relationships => Any[
-            ("stage__output", ("lt_storage", "storages_invested_available")),
+            ("stage__output__node", ("lt_storage", "storages_invested_available", "storage_node$k"))
+            for k in 1:storage_count
         ],
         :relationship_parameter_values => Any[
             (
-                "stage__output",
-                ("lt_storage", "storages_invested_available"),
+                "stage__output__node",
+                ("lt_storage", "storages_invested_available", "storage_node$k"),
                 "output_resolution",
                 unparse_db_value(Hour(1)),
-            ),
+            )
+            for k in 1:storage_count
         ],
     )
     merge!(append!, lt_storage_data, lt_storage_investments_data)
@@ -209,7 +211,8 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
     url_in, url_out = _lt_storage_investments_setup(storage_count)
     m = run_spineopt(url_in, url_out; log_level=3, filters=Dict("scenario" => "base")) do m
         add_event_handler!(m, :window_about_to_solve) do m, k
-            for (out_name, out_pv_by_node) in out_pv_by_node_by_name
+            @testset for out_name in keys(out_pv_by_node_by_name)
+                out_pv_by_node = out_pv_by_node_by_name[out_name]
                 inds = m.ext[:spineopt].variables_definition[out_name][:indices](m)
                 last_ind = last(sort(inds))
                 @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds if ind != last_ind)
