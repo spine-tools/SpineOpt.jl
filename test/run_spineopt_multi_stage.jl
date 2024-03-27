@@ -166,7 +166,7 @@ end
 
 function _lt_storage_investments_setup(storage_count)
     url_in, url_out = _ref_investments_setup(storage_count)
-    lt_storage_data = _lt_storage_data()
+    lt_storage_data = _lt_storage_data(storage_count)
     lt_storage_investments_data = Dict(
         :relationships => Any[
             ("stage__output__node", ("lt_storage", "storages_invested_available", "storage_node$k"))
