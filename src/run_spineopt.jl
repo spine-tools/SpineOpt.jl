@@ -135,21 +135,21 @@ end
 """
     prepare_spineopt(url_in; <keyword arguments>)
 
-A SpineOpt model from the contents of `url_in`.
+A SpineOpt model from the contents of `url_in` - ready to be passed to [run_spineopt!](@ref).
 The argument `url_in` must be either a `String` pointing to a valid Spine database,
 or a `Dict` (e.g. manually created or parsed from a json file).
 
 # Arguments
 
-- `log_level::Int=3`: an integer to control the log level.
-- `upgrade::Bool=false`: whether or not to automatically upgrade the data structure in `url_in` to latest.
-- `filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
-   Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
-- `templates`: a collection of templates to load on top of the SpineOpt template.
-   Each template must be a `Dict` with the same structure as the one returned by `SpineOpt.template()`.
-- `mip_solver=nothing`: a MIP solver to use if no MIP solver specified in the DB.
-- `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
-- `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
+- `log_level`
+- `upgrade`
+- `filters`
+- `templates`
+- `mip_solver`
+- `lp_solver`
+- `use_direct_model`
+
+See [run_spineopt](@ref) for the description of the keyword arguments.
 """
 function prepare_spineopt(
     url_in;
@@ -235,23 +235,20 @@ _data(data::Dict; kwargs...) = data
 """
     run_spineopt!(m, url_out; <keyword arguments>)
 
-Run given SpineOpt model and write report(s) to `url_out`.
+Build SpineOpt on the given `m` and solve it; write report(s) to `url_out`.
 A new Spine database is created at `url_out` if one doesn't exist.
 
 # Arguments
 
-- `log_level::Int=3`: an integer to control the log level.
-- `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
-- `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
-   (expensive).
-- `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
-- `write_as_roll::Int=0`: if greater than 0 and the run has a rolling horizon, then write results every that many
-   windows.
-- `log_file_path::String=nothing`: if not nothing, log all console output to a file at the given path. The file
-   is overwritten at each call.
-- `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
-   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
-   Also, save resume data to that same file as the model rolls and results are written to the output database.
+- `log_level`
+- `optimize`
+- `update_names`
+- `alternative`
+- `write_as_roll`
+- `log_file_path`
+- `resume_file_path`
+
+See [run_spineopt](@ref) for the description of the keyword arguments.
 """
 function run_spineopt!(
     m::Model,
@@ -437,9 +434,6 @@ struct SpineOptExt
             :model_solved => [],
             :window_about_to_solve => [],
             :window_solved => [],
-            :master_model_built => [],
-            :master_model_about_to_solve => [],
-            :master_model_solved => [],
         )
         new(
             instance,
@@ -524,9 +518,6 @@ Below is a table of events, arguments, and when do they fire.
 | `:model_solved` | `m` | Right after model `m` is solved. |
 | `:window_about_to_solve` | `(m, k)` | Right before window `k` for model `m` is solved. |
 | `:window_solved` | `(m, k)` | Right after window `k` for model `m` is solved. |
-| `:master_model_built` | `m` | Right after the Benders master model for model `m` is built. |
-| `:master_model_about_to_solve` | `(m, j)` | Right before the Benders master model for model `m` and iteration `j` is solved. |
-| `:master_model_solved` | `(m, j)` | Right after the Benders master model for model `m` and iteration `j` is solved. |
 
 # Example
 
