@@ -72,6 +72,7 @@ Build given SpineOpt model:
 - `log_level::Int`: an integer to control the log level.
 """
 function build_model!(m; log_level)
+    num_variables(m) == 0 || return
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
@@ -389,13 +390,14 @@ function solve_model!(
     calculate_duals=false,
     output_suffix=(;),
     log_prefix="",
+    rewind=true,
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
     _solve_stage_models!(m; log_level, log_prefix) || return false
     _call_event_handlers(m, :model_about_to_solve)
     model_name = string(log_prefix, _model_name(m))
-    @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
+    rewind && @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     while true
         @log log_level 1 "\n$model_name - Window $k: $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
