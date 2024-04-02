@@ -50,7 +50,7 @@ function add_variable!(
 )
     if isnothing(required_history)
         dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-        t0 = model_start(model=m.ext[:spineopt].instance)
+        t0 = time_slice(m) |> first |> start 
         minimum_required_history = TimeSlice(t0 - dur_unit(1), t0)
         required_history = [t for t in history_time_slice(m) if iscontained(minimum_required_history, t)]
     end

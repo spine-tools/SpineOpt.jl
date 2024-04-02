@@ -279,7 +279,7 @@ function _test_benders_storage()
                 end
             end
             @testset "node_state" begin
-                @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 2))
+                @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23))
                     @test Y.node_state(node=Y.node(:node_a), t=t) == (should_invest ? 60 * k : 0)
                 end
             end
