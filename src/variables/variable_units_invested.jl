@@ -31,6 +31,6 @@ function add_variable_units_invested!(m::Model)
         int=units_invested_available_int,
         fix_value=fix_units_invested,
         initial_value=initial_units_invested,
-        required_history=history_time_slice(m),
+        required_history_period=maximum_parameter_value(unit_investment_lifetime),
     )
 end

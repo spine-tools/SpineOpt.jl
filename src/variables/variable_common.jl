@@ -30,7 +30,7 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
   - `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable or nothing
   - `non_anticipativity_time::Union{Function,Nothing}=nothing`: given an index, return the non-anticipatity time or nothing
   - `non_anticipativity_margin::Union{Function,Nothing}=nothing`: given an index, return the non-anticipatity margin or nothing
-  - `required_history::Union{Vector{TimeSlice},Nothing}=nothing`: given an index, return the required history time slice or nothing
+  - `required_history_period::Union{Period,Nothing}=nothing`: given an index, return the required history period or nothing
 """
 function add_variable!(
     m::Model,
@@ -46,14 +46,18 @@ function add_variable!(
     replacement_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
-    required_history::Union{Vector{TimeSlice},Nothing}=nothing, 
+    required_history_period::Union{Period,Nothing}=nothing, 
 )
-    if isnothing(required_history)
-        dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-        t0 = time_slice(m) |> first |> start 
-        minimum_required_history = TimeSlice(t0 - dur_unit(1), t0)
-        required_history = [t for t in history_time_slice(m) if iscontained(minimum_required_history, t)]
+    
+    t_start_time_slice = start(first(time_slice(m)))
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    if isnothing(required_history_period)
+        history_period = TimeSlice(t_start_time_slice - dur_unit(1), t_start_time_slice)
+    else
+        history_period = TimeSlice(t_start_time_slice - required_history_period, t_start_time_slice)
     end
+    required_history = [t for t in history_time_slice(m) if overlaps(history_period, t)]
+
     m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Vector{TimeSlice},Nothing}}(
         :indices => indices,
         :bin => bin,
@@ -81,7 +85,6 @@ function add_variable!(
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
         t0 = model_start(model=m.ext[:spineopt].instance)
-        dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
         for (ind, v) in var
             overlaps(ind.t, last_history_t) || continue
             val = initial_value(; ind..., _strict=false)
@@ -156,4 +159,15 @@ function _variable(m, name, ind, bin, int, lb, ub, fix_value, internal_fix_value
     fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
     internal_fix_value === nothing || fix(var, internal_fix_value[(; ind..., _strict=false)])
     var
+end
+
+"""
+    _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+
+A function to get the maximum duration from a list of parameters.
+"""
+function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+    max_vals = (maximum_parameter_value(p) for p in lookback_params)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
 end
