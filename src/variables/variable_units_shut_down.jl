@@ -31,6 +31,6 @@ function add_variable_units_shut_down!(m::Model)
         bin=units_on_bin,
         int=units_on_int,
         replacement_value=units_switched_replacement_value,
-        required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),
+        required_history_period=maximum_parameter_value(min_down_time),
     )
 end
