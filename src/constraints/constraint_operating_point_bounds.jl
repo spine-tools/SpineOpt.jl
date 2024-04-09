@@ -57,7 +57,7 @@ function add_constraint_operating_point_bounds!(m::Model)
 end
 
 function constraint_operating_point_bounds_indices(m::Model)
-    unique(
+    (
         (unit=u, node=ng, direction=d, i=i, stochastic_path=path, t=t)
         # NOTE: a stochastic_path is an array consisting of stochastic scenarios, e.g. [s1, s2]
         for (u, ng, d, i, _s, _t) in unit_flow_op_active_indices(m)

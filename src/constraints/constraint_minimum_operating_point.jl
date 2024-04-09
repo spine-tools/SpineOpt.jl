@@ -112,7 +112,7 @@ function add_constraint_minimum_operating_point!(m::Model)
 end
 
 function constraint_minimum_operating_point_indices(m::Model)
-    unique(
+    (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(minimum_operating_point)
         for (t, path) in t_lowest_resolution_path(

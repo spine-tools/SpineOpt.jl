@@ -45,7 +45,7 @@ end
 
 function constraint_unit_lifetime_indices(m::Model)
     t0 = _analysis_time(m)
-    unique(
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(unit_investment_lifetime)
         for (u, t) in unit_investment_time_indices(m; unit=u)

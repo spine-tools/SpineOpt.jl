@@ -55,7 +55,7 @@ function add_constraint_min_node_voltage_angle!(m::Model)
 end
 
 function constraint_min_node_voltage_angle_indices(m::Model)
-    unique(
+    (
         (node=ng, stochastic_path=[s], t=t)
         for (ng, s, t) in node_voltage_angle_indices(m; node=indices(min_voltage_angle))
     )

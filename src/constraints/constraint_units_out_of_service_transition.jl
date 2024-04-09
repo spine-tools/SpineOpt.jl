@@ -30,7 +30,6 @@ This constraint describes the relationship between units_out_of_service, units_t
 """
 function add_constraint_units_out_of_service_transition!(m::Model)
     @fetch units_out_of_service, units_returned_to_service, units_taken_out_of_service = m.ext[:spineopt].variables
-    
     m.ext[:spineopt].constraints[:units_out_of_service_transition] = Dict(
         (unit=u, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
             m,
@@ -57,7 +56,7 @@ function add_constraint_units_out_of_service_transition!(m::Model)
 end
 
 function constraint_units_out_of_service_transition_indices(m::Model)
-    unique(
+    (
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, t_before, t_after) in unit_dynamic_time_indices(m)
         for path in active_stochastic_paths(

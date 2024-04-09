@@ -118,7 +118,7 @@ function connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
 end
 
 function constraint_connection_flow_lodf_indices(m::Model)
-    unique(
+    (
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=path, t=t)
         for (conn_cont, conn_mon) in lodf_connection__connection()
         if all(

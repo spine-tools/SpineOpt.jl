@@ -133,7 +133,7 @@ function _ramp_up_limit(u, ng, d, s, t0, t)
 end
 
 function constraint_ramp_up_indices(m::Model)
-    unique(
+    (
         (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, ng, d) in Iterators.flatten((indices(ramp_up_limit), indices(start_up_limit)))
         for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)

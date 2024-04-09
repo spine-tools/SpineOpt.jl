@@ -280,8 +280,7 @@ function active_stochastic_paths(m; stochastic_structure, t)
     )
 end
 function active_stochastic_paths(m, indices)
-    full_stochastic_paths = m.ext[:spineopt].stochastic_structure[:full_stochastic_paths]
-    length(full_stochastic_paths) == 1 && return full_stochastic_paths
+    length(stochastic_scenario()) == 1 && return m.ext[:spineopt].stochastic_structure[:full_stochastic_paths]
     active_stochastic_paths(m, collect(Object, (x.stochastic_scenario for x in indices)))
 end
 function active_stochastic_paths(m, active_scenarios::Vector{Object})

@@ -51,7 +51,7 @@ function add_constraint_cyclic_node_state!(m::Model)
 end
 
 function constraint_cyclic_node_state_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t_start=t_start, t_end=t_end)
         for (n, blk) in indices(cyclic_condition)
         if cyclic_condition(node=n, temporal_block=blk)

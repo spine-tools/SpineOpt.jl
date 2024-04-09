@@ -96,7 +96,7 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
 end
 
 function constraint_connection_flow_intact_flow_indices(m::Model)
-    unique(
+    (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true, is_candidate=false)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)

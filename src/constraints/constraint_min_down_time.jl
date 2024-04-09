@@ -75,7 +75,7 @@ end
 
 # TODO: Does this require nonspin_units_started_up_indices() to be added here?
 function constraint_min_down_time_indices(m::Model)
-    unique(
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_down_time)
         for (u, t) in unit_time_indices(m; unit=u)

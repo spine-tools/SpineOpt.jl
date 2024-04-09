@@ -113,7 +113,7 @@ function add_constraint_min_ratio_out_in_connection_flow!(m::Model)
 end
 
 function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
-    unique(
+    (
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=path, t=t)
         for (conn, ng_out, ng_in) in indices(ratio_out_in)
         for (t, path_out) in t_lowest_resolution_path(
@@ -122,19 +122,21 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
         )
         for path in active_stochastic_paths(
             m, 
-            vcat(
-                path_out,
-                Object[
-                    ind.stochastic_scenario
-                    for s in path_out
-                    for ind in connection_flow_indices(
-                        m;
-                        connection=conn,
-                        node=ng_in,
-                        direction=direction(:from_node),
-                        t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
-                    )
-                ]
+            Iterators.flatten(
+                (
+                    ((stochastic_scenario=s,) for s in path_out),
+                    (
+                        ind
+                        for s in path_out
+                        for ind in connection_flow_indices(
+                            m;
+                            connection=conn,
+                            node=ng_in,
+                            direction=direction(:from_node),
+                            t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
+                        )
+                    ),
+                )
             )
         )
     )

@@ -152,15 +152,18 @@ function expression_capacity_margin_indices(m::Model)
         for (n, t) in node_time_indices(m; node=n)
         for path in active_stochastic_paths(
             m,  
-            [
-                collect(node_stochastic_time_indices(m; node=n, t=t));
-                [
-                    (unit=u, stochastic_scenario=s, t=t2)
-                    for u in indices(unit_capacity; node=n, direction=direction(:to_node))
-                    if !is_storage_unit(u)
-                    for (u, s, t2) in units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t))
-                ];
-            ]
+            Iterators.flatten(
+                (
+                    node_stochastic_time_indices(m; node=n, t=t),
+                    units_on_indices(
+                        m;
+                        unit=Iterators.filter(
+                            !is_storage_unit, indices(unit_capacity; node=n, direction=direction(:to_node))
+                        ),
+                        t=t_overlaps_t(m; t=t),
+                    ),
+                )
+            )
         )
     )
 end
@@ -168,14 +171,8 @@ end
 """
     is_storage_unit(u)
 
-    Determines whether the unit u is attached to a node with storage or not.
+Whether the unit u is attached to a node with storage or not.
 """
-
 function is_storage_unit(u)
-    for n in unit__from_node(unit=u, direction=direction(:from_node))
-        if has_state(node=n)
-            return true
-        end
-    end
-    false
+    any(has_state(node=n) for n in unit__from_node(unit=u, direction=direction(:from_node)))
 end

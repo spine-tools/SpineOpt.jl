@@ -56,10 +56,9 @@ Creates all indices required to include units, stochastic paths and a reference 
 constraint generation.
 """
 function constraint_min_scheduled_outage_duration_indices(m::Model)
-    unique(
-        (unit=u, stochastic_path=path, t=t)
+    (
+        (unit=u, stochastic_path=path, t=current_window(m))
         for u in indices(scheduled_outage_duration)
         for path in active_stochastic_paths(m, units_on_indices(m; unit=u))        
-        for t in current_window(m)
     )
 end

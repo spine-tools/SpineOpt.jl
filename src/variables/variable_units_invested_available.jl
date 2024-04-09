@@ -34,7 +34,8 @@ function units_invested_available_indices(
     (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in unit__investment_temporal_block(
-            unit=intersect(indices(candidate_units), unit), temporal_block=temporal_block, _compact=false)
+            unit=intersect(indices(candidate_units), unit), temporal_block=temporal_block, _compact=false
+        )
         for (u, s, t) in unit_investment_stochastic_time_indices(
             m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )

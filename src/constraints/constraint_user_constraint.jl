@@ -311,7 +311,7 @@ function add_constraint_user_constraint!(m::Model)
 end
 
 function constraint_user_constraint_indices(m::Model)
-    unique(
+    (
         (user_constraint=uc, stochastic_path=path, t=t)
         for uc in user_constraint()
         for (t, path) in t_lowest_resolution_path(

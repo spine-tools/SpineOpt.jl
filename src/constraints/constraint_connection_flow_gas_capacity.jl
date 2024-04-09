@@ -89,7 +89,7 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
 end
 
 function constraint_connection_flow_gas_capacity_indices(m::Model)
-    unique(
+    (
         (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (conn, n1, n2) in indices(fixed_pressure_constant_1)
         for (t, path) in t_lowest_resolution_path(m, connection_flow_indices(m; connection=conn, node=[n1, n2]))

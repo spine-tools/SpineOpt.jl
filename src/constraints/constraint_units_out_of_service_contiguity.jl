@@ -56,10 +56,8 @@ function add_constraint_units_out_of_service_contiguity!(m::Model)
     )
 end
 
-function constraint_units_out_of_service_contiguity_indices(
-    m::Model; unit=anything, stochastic_path=anything, t=anything
-)
-    unique(
+function constraint_units_out_of_service_contiguity_indices(m::Model)
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(scheduled_outage_duration)
         for (u, t) in unit_time_indices(m; unit=u)

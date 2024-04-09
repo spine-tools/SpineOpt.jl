@@ -62,7 +62,7 @@ function add_constraint_storage_line_pack!(m::Model)
 end
 
 function constraint_storage_line_pack_indices(m::Model)
-    unique(
+    (
         (connection=conn, node1=n_stor, node2=ng, stochastic_path=path, t=t)
         for (conn, n_stor, ng) in indices(connection_linepack_constant)
         for (t, path) in t_lowest_resolution_path(
