@@ -31,7 +31,7 @@ function units_invested_available_indices(
     temporal_block=anything,
 )
     unit = members(unit)
-    unique(
+    (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in unit__investment_temporal_block(
             unit=intersect(indices(candidate_units), unit), temporal_block=temporal_block, _compact=false)

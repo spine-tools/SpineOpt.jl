@@ -30,7 +30,7 @@ function units_on_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unique(
+    (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for (u, s, t) in unit_stochastic_time_indices(

@@ -87,9 +87,11 @@ function constraint_candidate_connection_flow_lb_indices(m::Model)
         for (conn, n, d, s, t) in connection_flow_indices(m; connection=connection(is_candidate=true, has_ptdf=true))
         for (t, path) in t_lowest_resolution_path(
             m,
-            vcat(
-                connection_flow_indices(m; connection=conn, node=n, direction=d),
-                connections_invested_available_indices(m; connection=conn),
+            Iterators.flatten(
+                (
+                    connection_flow_indices(m; connection=conn, node=n, direction=d),
+                    connections_invested_available_indices(m; connection=conn),
+                )
             )
         )
     )

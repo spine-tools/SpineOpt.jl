@@ -139,10 +139,12 @@ function constraint_ramp_up_indices(m::Model)
         for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m,
-            [
-                unit_flow_indices(m; unit=u, node=ng, direction=d, t=_overlapping_t(m, t_before, t_after));
-                units_on_indices(m; unit=u, t=[t_before; t_after])
-            ]
+            Iterators.flatten(
+                (
+                    unit_flow_indices(m; unit=u, node=ng, direction=d, t=_overlapping_t(m, t_before, t_after)),
+                    units_on_indices(m; unit=u, t=[t_before; t_after]),
+                )
+            )
         )
     )
 end

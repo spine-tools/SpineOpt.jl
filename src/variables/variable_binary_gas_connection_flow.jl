@@ -37,7 +37,7 @@ function binary_gas_connection_flow_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     node = members(node)
-    [
+    (
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d, s, t) in connection_flow_indices(
             m;
@@ -48,7 +48,7 @@ function binary_gas_connection_flow_indices(
             t=t,
             temporal_block=temporal_block,
         )
-    ]
+    )
 end
 
 set_bin(x) = true

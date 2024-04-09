@@ -60,10 +60,12 @@ function _entities_invested_available_s_t(m)
         (stochastic_scenario=s, t=t)
         for (t, path) in t_lowest_resolution_path(
             m,
-            vcat(
-                units_invested_available_indices(m),
-                connections_invested_available_indices(m),
-                storages_invested_available_indices(m)
+            Iterators.flatten(
+                (
+                    units_invested_available_indices(m),
+                    connections_invested_available_indices(m),
+                    storages_invested_available_indices(m),
+                )
             )
         )
         for s in path

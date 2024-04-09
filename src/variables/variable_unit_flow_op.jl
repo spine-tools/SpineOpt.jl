@@ -41,7 +41,7 @@ function unit_flow_op_indices(
 )
     unit = members(unit)
     node = members(node)
-    [
+    (
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
         for (u, n, d) in indices(operating_points, unit=unit, node=node, direction=direction)
         for (u, n, d, tb) in unit__node__direction__temporal_block(
@@ -51,7 +51,7 @@ function unit_flow_op_indices(
         for (n, s, t) in node_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
-    ]
+    )
 end
 
 """

@@ -214,7 +214,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
             @testset for out_name in keys(out_pv_by_node_by_name)
                 out_pv_by_node = out_pv_by_node_by_name[out_name]
                 inds = m.ext[:spineopt].variables_definition[out_name][:indices](m)
-                last_ind = last(sort(inds))
+                last_ind = last(sort(collect(inds)))
                 @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds if ind != last_ind)
                 var = m.ext[:spineopt].variables[out_name][last_ind]
                 fix_val = is_fixed(var) ? fix_value(var) : nothing

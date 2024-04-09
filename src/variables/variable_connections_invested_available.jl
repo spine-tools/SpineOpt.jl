@@ -31,7 +31,7 @@ function connections_invested_available_indices(
     temporal_block=anything,
 )
     connection = members(connection)
-    unique(
+    (
         (connection=conn, stochastic_scenario=s, t=t)
         for (conn, tb) in connection__investment_temporal_block(
             connection=intersect(indices(candidate_connections), connection),

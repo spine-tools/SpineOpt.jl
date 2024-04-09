@@ -74,9 +74,11 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
         for (n_in, n_out) in connection__node__node(connection=conn)
         for (t, path) in t_lowest_resolution_path(
             m, 
-            vcat(
-                connection_intact_flow_indices(m; connection=conn, node=n_out, direction=direction(:to_node)),
-                connection_intact_flow_indices(m; connection=conn, node=n_in, direction=direction(:from_node))
+            Iterators.flatten(
+                (
+                    connection_intact_flow_indices(m; connection=conn, node=n_out, direction=direction(:to_node)),
+                    connection_intact_flow_indices(m; connection=conn, node=n_in, direction=direction(:from_node)),
+                )
             )
         )
     )

@@ -279,11 +279,10 @@ function active_stochastic_paths(m; stochastic_structure, t)
         scen for ss in stochastic_structure for t_ in t for scen in scenario_lookup[ss, t_]
     )
 end
-function active_stochastic_paths(m, indices::Vector)
-    active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
-end
-function active_stochastic_paths(m, active_scenarios)
-    active_stochastic_paths(m, collect(Object, active_scenarios))
+function active_stochastic_paths(m, indices)
+    full_stochastic_paths = m.ext[:spineopt].stochastic_structure[:full_stochastic_paths]
+    length(full_stochastic_paths) == 1 && return full_stochastic_paths
+    active_stochastic_paths(m, collect(Object, (x.stochastic_scenario for x in indices)))
 end
 function active_stochastic_paths(m, active_scenarios::Vector{Object})
     _active_stochastic_paths(m, unique!(active_scenarios))
@@ -298,7 +297,7 @@ function _active_stochastic_paths(m, unique_active_scenarios)
 end
 
 function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything)
-    unique(
+    (
         (node=n, stochastic_scenario=s)
         for (n, ss) in node__stochastic_structure(node=node, _compact=false)
         for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
@@ -306,7 +305,7 @@ function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=an
 end
 
 function unit_stochastic_indices(m::Model; unit=anything, stochastic_scenario=anything)
-    unique(
+    (
         (unit=u, stochastic_scenario=s)
         for (u, ss) in units_on__stochastic_structure(unit=unit, _compact=false)
         for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)

@@ -31,7 +31,7 @@ function nonspin_units_shut_down_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unique(
+    (
         (unit=u, node=n, stochastic_scenario=s, t=t)
         for (u, n, d, s, t) in unit_flow_indices(
             m; unit=unit, node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block

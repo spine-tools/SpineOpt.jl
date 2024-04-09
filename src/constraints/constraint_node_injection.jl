@@ -160,10 +160,12 @@ function constraint_node_injection_indices(m::Model)
         for (n, t_before, t_after) in node_dynamic_time_indices(m)
         for path in active_stochastic_paths(
             m,
-            vcat(
-                collect(node_stochastic_time_indices(m; node=n, t=t_after)),
-                node_state_indices(m; node=n, t=t_before),
-                node_state_indices(m; node=[node__node(node2=n); node__node(node1=n)], t=t_after)
+            Iterators.flatten(
+                (
+                    node_stochastic_time_indices(m; node=n, t=t_after),
+                    node_state_indices(m; node=n, t=t_before),
+                    node_state_indices(m; node=[node__node(node2=n); node__node(node1=n)], t=t_after),
+                )
             )
         )
     )
