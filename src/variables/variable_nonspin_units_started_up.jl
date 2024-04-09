@@ -55,6 +55,6 @@ function add_variable_nonspin_units_started_up!(m::Model)
         int=units_on_int,
         fix_value=fix_nonspin_units_started_up,
         initial_value=initial_nonspin_units_started_up,
-        required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),
+        required_history_period=maximum_parameter_value(min_up_time),
     )
 end
