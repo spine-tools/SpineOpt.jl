@@ -356,7 +356,7 @@
                 "connection",
                 "node"
             ],
-            "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters.",
+            "A flow on a `connection` from a `node`.",
             280378317271897
         ],
         [
@@ -366,7 +366,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which connection capacities are included in the capacity invested available of an investment group",
+            "A flow on a `connection` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -376,7 +376,7 @@
                 "node",
                 "user_constraint"
             ],
-            "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint",
+            "A flow on a `connection` from a `node` constrained by a `user_constraint`.",
             null
         ],
         [
@@ -385,7 +385,7 @@
                 "connection",
                 "investment_group"
             ],
-            "Indicates that a `connection` belongs in an `investment_group`.",
+            "A `connection` that belongs in an `investment_group`.",
             null
         ],
         [
@@ -394,7 +394,7 @@
                 "connection",
                 "stochastic_structure"
             ],
-            "Defines the stochastic structure of the connections investments variable",
+            "The `stochastic_structure` of a `connection` investment.",
             null
         ],
         [
@@ -403,7 +403,7 @@
                 "connection",
                 "temporal_block"
             ],
-            "Defines the temporal resolution of the connections investments variable",
+            "The `temporal_block` of a `connection` investment.",
             null
         ],
         [
@@ -413,7 +413,7 @@
                 "node",
                 "node"
             ],
-            "Holds parameters spanning multiple `connection_flow` variables to and from multiple `nodes`.",
+            "A `connection` acting over two `node`s.",
             null
         ],
         [
@@ -422,7 +422,7 @@
                 "connection",
                 "node"
             ],
-            "Defines the `nodes` the `connection` can output to, and holds most `connection_flow` variable specific parameters.",
+            "A flow on a `connection` to a `node` .",
             280378317271898
         ],
         [
@@ -432,7 +432,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which connection capacities are included in the capacity invested available of an investment group",
+            "A flow on a `connection` to a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -442,7 +442,7 @@
                 "node",
                 "user_constraint"
             ],
-            "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint",
+            "A flow on a `connection` to a `node` constrained by a `user_constraint",
             null
         ],
         [
@@ -451,7 +451,7 @@
                 "connection",
                 "user_constraint"
             ],
-            "Relationship required to involve a connections investment variables in a user_constraint",
+            "A `connection` investment constrained by a `user_constraint`.",
             null
         ],
         [
@@ -460,7 +460,7 @@
                 "model",
                 "stochastic_structure"
             ],
-            "Defines the default stochastic structure used for investment variables, which will be replaced by more specific definitions",
+            "The default `stochastic_structure` of all investments in the `model`.",
             null
         ],
         [
@@ -469,7 +469,7 @@
                 "model",
                 "temporal_block"
             ],
-            "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions",
+            "The default `temporal_block` of all investments in the `model`.",
             null
         ],
         [
@@ -478,7 +478,7 @@
                 "model",
                 "stochastic_structure"
             ],
-            "Defines the default stochastic structure used for model variables, which will be replaced by more specific definitions",
+            "The default `stochastic_structure` of the `model.",
             null
         ],
         [
@@ -487,7 +487,7 @@
                 "model",
                 "temporal_block"
             ],
-            "Defines the default temporal block used for model variables, which will be replaced by more specific definitions",
+            "The default `temporal_block` of the `model`.",
             null
         ],
         [
@@ -496,7 +496,7 @@
                 "model",
                 "report"
             ],
-            "Determines which reports are written for each model and in turn, which outputs are written for each model",
+            "A `report` that should be written for the `model`.",
             null
         ],
         [
@@ -523,7 +523,7 @@
                 "node",
                 "commodity"
             ],
-            "Define a `commodity` for a `node`. Only a single `commodity` is permitted per `node`",
+            "A `commodity` for a `node`. Only a single `commodity` is permitted per `node`.",
             null
         ],
         [
@@ -532,7 +532,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates that a `node` belongs in a `investment_group`.",
+            "A `node` that belongs in an `investment_group`.",
             null
         ],
         [
@@ -541,7 +541,7 @@
                 "node",
                 "stochastic_structure"
             ],
-            "defines the stochastic structure for node related investments, currently only storages",
+            "The `stochastic_structure` of a `node` storage investment.",
             null
         ],
         [
@@ -550,7 +550,7 @@
                 "node",
                 "temporal_block"
             ],
-            "defines the temporal resolution for node related investments, currently only storages",
+            "The `temporal_block` of a `node` storage investment.",
             null
         ],
         [
@@ -559,7 +559,7 @@
                 "node",
                 "node"
             ],
-            "Holds parameters for direct interactions between two `nodes`, e.g. `node_state` diffusion coefficients.",
+            "An interaction between two `node`s.",
             null
         ],
         [
@@ -568,7 +568,7 @@
                 "node",
                 "stochastic_structure"
             ],
-            "Defines which specific `stochastic_structure` is used by the `node` and all `flow` variables associated with it. Only one `stochastic_structure` is permitted per `node`.",
+            "The `stochastic_structure` of a `node`. Only one `stochastic_structure` is permitted per `node`.",
             null
         ],
         [
@@ -577,7 +577,7 @@
                 "node",
                 "temporal_block"
             ],
-            "Defines the `temporal_blocks` used by the `node` and all the `flow` variables associated with it.",
+            "The `temporal_block` of a `node` and the corresponding `flow` variables.",
             null
         ],
         [
@@ -586,7 +586,7 @@
                 "node",
                 "user_constraint"
             ],
-            "specifying this relationship allows a node's demand or node_state to be included in the specified user constraint",
+            "A `node` state constrained by a `user_constraint`, or a `node` demand included in a `user_constraint`.",
             null
         ],
         [
@@ -595,7 +595,7 @@
                 "stochastic_scenario",
                 "stochastic_scenario"
             ],
-            "Defines the master stochastic direct acyclic graph, meaning how the `stochastic_scenarios` are related to each other.",
+            "A parent-child relationship between two `stochastic_scenario`s defining the master stochastic direct acyclic graph.",
             null
         ],
         [
@@ -604,7 +604,46 @@
                 "report",
                 "output"
             ],
-            "Output object related to a report object are returned to the output database (if they appear in the model as variables)",
+            "An `output` that should be included in a `report`.",
+            null
+        ],
+        [
+            "stage__child_stage",
+            [
+                "stage",
+                "stage"
+            ],
+            "A parent-child relationship between two `stage`s (EXPERIMENTAL).",
+            null
+        ],
+        [
+            "stage__output__connection",
+            [
+                "stage",
+                "output",
+                "connection"
+            ],
+            "An `output` that should be fixed by a `stage` for a `connection` in all its children (EXPERIMENTAL).",
+            null
+        ],
+        [
+            "stage__output__node",
+            [
+                "stage",
+                "output",
+                "node"
+            ],
+            "An `output` that should be fixed by a `stage` for a `node` in all its children (EXPERIMENTAL).",
+            null
+        ],
+        [
+            "stage__output__unit",
+            [
+                "stage",
+                "output",
+                "unit"
+            ],
+            "An `output` that should be fixed by a `stage` for a `unit` in all its children (EXPERIMENTAL).",
             null
         ],
         [
@@ -613,7 +652,7 @@
                 "stochastic_structure",
                 "stochastic_scenario"
             ],
-            "Defines which `stochastic_scenarios` are included in which `stochastic_structure`, and holds the parameters required for realizing the structure in combination with the `temporal_blocks`.",
+            "A `stochastic_scenarios` that belongs in a `stochastic_structure`.",
             null
         ],
         [
@@ -631,7 +670,7 @@
                 "unit",
                 "node"
             ],
-            "Defines the `nodes` the `unit` can take input from, and holds most `unit_flow` variable specific parameters.",
+            "A flow on a `unit` from a `node`.",
             281470681805657
         ],
         [
@@ -641,7 +680,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which unit capacities are included in the capacity invested available of an investment group",
+            "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -651,7 +690,7 @@
                 "node",
                 "user_constraint"
             ],
-            "Defines which input `unit_flows` are included in the `user_constraint`, and holds their parameters.",
+            "A flow on a `unit` from a `node` constrained by a `user_constraint`.",
             null
         ],
         [
@@ -660,7 +699,7 @@
                 "unit",
                 "investment_group"
             ],
-            "Indicates that a `unit` belongs in an `investment_group`.",
+            "A `unit` that belongs in an `investment_group`.",
             null
         ],
         [
@@ -669,7 +708,7 @@
                 "unit",
                 "stochastic_structure"
             ],
-            "Sets the stochastic structure for investment decisions - overrides `model__default_investment_stochastic_structure`.",
+            "The `stochastic_structure` of a `unit` investment.",
             null
         ],
         [
@@ -678,7 +717,7 @@
                 "unit",
                 "temporal_block"
             ],
-            "Sets the temporal resolution of investment decisions - overrides `model__default_investment_temporal_block`",
+            "The `temporal_block` of a `unit` investment.",
             null
         ],
         [
@@ -688,7 +727,7 @@
                 "node",
                 "node"
             ],
-            "Holds parameters spanning multiple `unit_flow` variables to and from multiple `nodes`.",
+            "A `unit` acting over two `node`s.",
             null
         ],
         [
@@ -697,7 +736,7 @@
                 "unit",
                 "node"
             ],
-            "Defines the `nodes` the `unit` can output to, and holds most `unit_flow` variable specific parameters.",
+            "A flow on a `unit` to a `node`.",
             281470681805658
         ],
         [
@@ -707,7 +746,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which unit capacities are included in the capacity invested available of an investment group",
+            "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -717,7 +756,7 @@
                 "node",
                 "user_constraint"
             ],
-            "Defines which output `unit_flows` are included in the `user_constraint`, and holds their parameters.",
+            "A flow on a `unit` to a `node` constrained by a `user_constraint`.",
             null
         ],
         [
@@ -726,7 +765,7 @@
                 "unit",
                 "user_constraint"
             ],
-            "Defines which `units_on` variables are included in the `user_constraint`, and holds their parameters.",
+            "A `unit` commitment constrained by a `user_constraint`.",
             null
         ],
         [
@@ -735,7 +774,7 @@
                 "unit",
                 "stochastic_structure"
             ],
-            "Defines which specific `stochastic_structure` is used for the `units_on` variable of the `unit`. Only one `stochastic_structure` is permitted per `unit`.",
+            "The `stochastic_structure` of a `unit` commitment. Only one `stochastic_structure` is permitted per `unit`.",
             null
         ],
         [
@@ -744,7 +783,7 @@
                 "unit",
                 "temporal_block"
             ],
-            "Defines which specific `temporal_blocks` are used by the `units_on` variable of the `unit`.",
+            "The `temporal_block` of a `unit` commitment.",
             null
         ]
     ],
@@ -843,8 +882,8 @@
         [
             "connection",
             "connection_investment_variable_type",
-            "variable_type_integer",
-            "variable_type_list",
+            "connection_investment_variable_type_integer",
+            "connection_investment_variable_type_list",
             "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"
         ],
         [
@@ -958,6 +997,13 @@
             true,
             "boolean_value_list",
             "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "connection",
+            "number_of_connections",
+            1,
+            null,
+            "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."
         ],
         [
             "investment_group",
@@ -1098,7 +1144,7 @@
                             "data": [
                                 [
                                     "mip_rel_gap",
-                                    1e-6
+                                    0.01
                                 ],
                                 [
                                     "presolve",
@@ -1205,7 +1251,14 @@
             "roll_forward",
             null,
             null,
-            "Defines how much the model moves ahead in time between solves in a rolling optimization. Without this parameter, everything is solved in as a single optimization."
+            "Defines how much the model moves ahead in time between solves in a rolling optimization. If null, everything is solved in as a single optimization."
+        ],
+        [
+            "model",
+            "use_connection_intact_flow",
+            true,
+            "boolean_value_list",
+            "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
         ],
         [
             "model",
@@ -1240,14 +1293,14 @@
             "write_ptdf_file",
             false,
             "boolean_value_list",
-            "A boolean flag for whether the LODF values should be written to a results file."
+            "A boolean flag for whether the PTDF values should be written to a results file."
         ],
         [
             "node",
             "balance_type",
             "balance_type_node",
             "balance_type_list",
-            "A selector for how the `:nodal_balance` constraint should be handled."
+            "A selector for how the `nodal_balance` constraint should be handled."
         ],
         [
             "node",
@@ -1426,6 +1479,20 @@
         ],
         [
             "node",
+            "min_capacity_margin",
+            null,
+            null,
+            "minimum capacity margin applying to the `node` or `node_group`"
+        ],
+        [
+            "node",
+            "min_capacity_margin_penalty",
+            null,
+            null,
+            "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"
+        ],
+        [
+            "node",
             "min_node_pressure",
             null,
             null,
@@ -1482,10 +1549,17 @@
         ],
         [
             "node",
+            "number_of_storages",
+            1,
+            null,
+            "Denotes the number of 'sub storages' aggregated to form the modelled `node`."
+        ],
+        [
+            "node",
             "state_coeff",
             1,
             null,
-            "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `:node_injection` constraint."
+            "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `node_injection` constraint."
         ],
         [
             "node",
@@ -1504,8 +1578,8 @@
         [
             "node",
             "storage_investment_variable_type",
-            "variable_type_integer",
-            "variable_type_list",
+            "storage_investment_variable_type_integer",
+            "storage_investment_variable_type_list",
             "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"
         ],
         [
@@ -1588,9 +1662,23 @@
         [
             "settings",
             "version",
-            11,
+            12,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
+        ],
+        [
+            "stage",
+            "is_active",
+            true,
+            "boolean_value_list",
+            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "stage",
+            "stage_scenario",
+            null,
+            null,
+            "The scenario that this `stage` should run (EXPERIMENTAL)."
         ],
         [
             "stochastic_scenario",
@@ -2431,6 +2519,27 @@
             "Whether or not results from further windows should overwrite results from previous ones."
         ],
         [
+            "stage__output__connection",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
+            "stage__output__node",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
+            "stage__output__unit",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
             "stochastic_structure__stochastic_scenario",
             "stochastic_scenario_end",
             null,
@@ -2694,14 +2803,14 @@
             "shut_down_limit",
             null,
             null,
-            "Max. downward ramp for units shutting down"
+            "Maximum ramp-down during shutdowns"
         ],
         [
             "unit__from_node",
             "start_up_limit",
             null,
             null,
-            "Maximum ramp-up during startups."
+            "Maximum ramp-up during startups"
         ],
         [
             "unit__from_node",
@@ -3690,6 +3799,14 @@
             "node_opf_type_reference"
         ],
         [
+            "storage_investment_variable_type_list",
+            "storage_investment_variable_type_continuous"
+        ],
+        [
+            "storage_investment_variable_type_list",
+            "storage_investment_variable_type_integer"
+        ],
+        [
             "unit_investment_variable_type_list",
             "unit_investment_variable_type_continuous"
         ],
@@ -4111,7 +4228,7 @@
         ],
         [
             "output",
-            "A variable name from SpineOpt that can be included in a report.",
+            "A variable name from SpineOpt whose value can be included in a report.",
             280743406202948
         ],
         [
@@ -4123,6 +4240,11 @@
             "settings",
             "Internal SpineOpt settings. We kindly advise not to mess with this one.",
             280375465144798
+        ],
+        [
+            "stage",
+            "An additional stage in the optimisation problem (EXPERIMENTAL)",
+            281107035649533
         ],
         [
             "stochastic_scenario",
