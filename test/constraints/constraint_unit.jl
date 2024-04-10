@@ -2065,6 +2065,57 @@ function test_unit_online_variable_type_none()
     end
 end
 
+function test_unit_history_parameters()
+    @testset "unit_history_parameters" begin
+        min_up_minutes = 120
+        min_down_minutes = 180
+        scheduled_outage_duration_minutes = 60
+        lifetime_minutes = 240
+        candidate_units = 3
+        
+        url_in = _test_constraint_unit_setup()
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
+        min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
+        scheduled_outage_duration = Dict("type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m"))
+        unit_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        object_parameter_values = [
+            ["unit", "unit_ab", "min_up_time", min_up_time],
+            ["unit", "unit_ab", "min_down_time", min_down_time],
+            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
+            ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "unit_investment_lifetime", unit_investment_lifetime],
+            ["model", "instance", "model_end", model_end],
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        SpineInterface.import_data(
+            url_in; relationships=relationships, object_parameter_values=object_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+        var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
+        var_units_out_of_service = m.ext[:spineopt].variables[:units_out_of_service]
+        var_units_taken_out_of_service = m.ext[:spineopt].variables[:units_taken_out_of_service]
+        var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+        var_units_invested = m.ext[:spineopt].variables[:units_invested]
+        
+        @test length(var_units_on) == 8
+        @test length(var_units_started_up) == 7
+        @test length(var_units_shut_down) == 8
+        @test length(var_units_out_of_service) == 6
+        @test length(var_units_taken_out_of_service) == 6
+        @test length(var_units_invested_available) == 9
+        @test length(var_units_invested) == 9
+
+    end
+end
+
 @testset "unit-based constraints" begin
     test_initial_units_on()
     test_constraint_units_on()
@@ -2102,4 +2153,5 @@ end
     test_constraint_pw_unit_heat_rate_simple()
     test_constraint_pw_unit_heat_rate_simple2()
     test_unit_online_variable_type_none()
+    test_unit_history_parameters()
 end
