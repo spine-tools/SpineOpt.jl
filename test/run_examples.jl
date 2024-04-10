@@ -3,7 +3,8 @@ objective_function_reference_values = Dict(
     "6_unit_system.json" => 6.966879153985747e6,
     "reserves.json" => 175971.42857142858,
     "simple_system.json" => 160714.28571428574,
-    "unit_commitment.json" => 98637.42857142858
+    "unit_commitment.json" => 98637.42857142858,
+    "rolling_horizon.json" => 65164.8571429,
 )
 
 @testset for path in readdir(joinpath(dirname(@__DIR__), "examples"); join=true)
