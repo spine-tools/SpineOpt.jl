@@ -39,7 +39,7 @@ function add_constraint_units_available!(m::Model)
             m,
             + sum(
                 + units_available[u, s, t] 
-                + units_out_of_service[u, s, t]
+                + get(units_out_of_service, (u, s, t), 0)
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )

@@ -263,20 +263,23 @@ function generate_stochastic_structure!(m::Model)
 end
 
 """
-    active_stochastic_paths(m; stochastic_structure, t)
+    active_stochastic_paths(
+        m; stochastic_structure::Union{Object,Vector{Object}}, t::Union{TimeSlice,Vector{TimeSlice}}
+    )
 
-An `Array` where each element is itself an `Array` of `stochastic_scenario` `Object`s,
-corresponding to a path (i.e., a branch) of the stochastic DAG associated to model `m`.
+An `Array` of stochastic paths, where each path is itself an `Array` of `stochastic_scenario` `Object`s.
 
-# Arguments
-- `stochastic_structure::Union{Object,Vector{Object}}`: only return paths of `stochastic_scenario`s within these structures.
-- `t::Union{TimeSlice,Vector{TimeSlice}}`: only return paths covering these `TimeSlice`s.
+The paths are obtained as follows.
+
+1. Start with the stochastic DAG associated to model `m`.
+2. Remove all the scenarios that are not in the given `stochastic_structure`.
+3. Remove scenarios that don't overlap the given `t`.
+4. Return all the paths from root to leaf in the remaining sub-DAG.
 """
-function active_stochastic_paths(m; stochastic_structure, t)
+function active_stochastic_paths(m, stochastic_structure, t)
     scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]
     active_stochastic_paths(
-        m,
-        scen for ss in stochastic_structure for t_ in t for scen in scenario_lookup[ss, t_]
+        m, [scen for ss in stochastic_structure for t_ in t for scen in get(scenario_lookup, (ss, t_), ())]
     )
 end
 function active_stochastic_paths(m, indices)

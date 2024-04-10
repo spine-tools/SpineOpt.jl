@@ -69,26 +69,18 @@ function add_constraint_node_injection!(m::Model)
         (node=n, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + sum(
-                + node_injection[n, s, t]
-                + demand[
-                    (node=n, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))
-                ]
-                # node slack
-                - get(node_slack_pos, (n, s, t), 0) + get(node_slack_neg, (n, s, t), 0)
-                for (n, s, t) in node_injection_indices(
-                    m; node=n, stochastic_scenario=s_path, t=t_after, temporal_block=anything
-                );
-                init=0,
-            )
-            + sum(
-                fractional_demand[
-                    (node=n, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))
-                ]
-                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))]
-                for (n, s, t) in node_injection_indices(
-                    m; node=n, stochastic_scenario=s_path, t=t_after, temporal_block=anything
+                + node_injection[n, s, t_after]
+                + demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t_after))]
+                + sum(
+                    + fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t_after))]
+                    * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t_after))]
+                    for ng in groups(n);
+                    init=0,
                 )
-                for ng in groups(n);
+                # node slack
+                - get(node_slack_pos, (n, s, t_after), 0) + get(node_slack_neg, (n, s, t_after), 0)
+                for s in s_path
+                if haskey(node_injection, (n, s, t_after));
                 init=0,
             )
             ==            
@@ -123,28 +115,20 @@ function add_constraint_node_injection!(m::Model)
             )
             # Commodity flows from units
             + sum(
-                unit_flow[u, n, d, s, t_short]
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    m;
-                    node=n,
-                    direction=direction(:to_node),
-                    stochastic_scenario=s_path,
-                    t=t_in_t(m; t_long=t_after),
-                    temporal_block=anything,
-                );
+                get(unit_flow, (u, n1, d, s, t_short), 0)
+                for n1 in members(n)
+                for (u, d) in unit__to_node(node=n1)
+                for s in s_path
+                for t_short in t_in_t(m; t_long=t_after);
                 init=0,
             )
             # Commodity flows to units
             - sum(
-                unit_flow[u, n, d, s, t_short]
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    m;
-                    node=n,
-                    direction=direction(:from_node),
-                    stochastic_scenario=s_path,
-                    t=t_in_t(m; t_long=t_after),
-                    temporal_block=anything,
-                );
+                get(unit_flow, (u, n1, d, s, t_short), 0)
+                for n1 in members(n)
+                for (u, d) in unit__from_node(node=n1)
+                for s in s_path
+                for t_short in t_in_t(m; t_long=t_after);
                 init=0,
             )
         )
@@ -152,8 +136,6 @@ function add_constraint_node_injection!(m::Model)
     )
 end
 
-# TODO: can we find an easier way to define the constraint indices?
-# I feel that for unexperienced uses it gets more an more complicated to understand our code
 function constraint_node_injection_indices(m::Model)
     (
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
@@ -170,6 +152,8 @@ function constraint_node_injection_indices(m::Model)
         )
     )
 end
+
+_first_repr_t(m, t) = first(representative_time_slice(m, t))
 
 """
     constraint_node_injection_indices_filtered(m::Model; filtering_options...)

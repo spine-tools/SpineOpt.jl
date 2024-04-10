@@ -79,6 +79,10 @@ function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:Relationshi
     Base.getindex(d, NamedTuple{J}(key))
 end
 
+function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
+    Base.haskey(d, NamedTuple{J}(key))
+end
+
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
 

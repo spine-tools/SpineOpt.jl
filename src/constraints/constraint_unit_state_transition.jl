@@ -36,18 +36,15 @@ function add_constraint_unit_state_transition!(m::Model)
         (unit=u, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
             m,
             sum(
-                + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
-                for (u, s, t_after) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_after, temporal_block=anything,
-                );
+                + get(units_on, (u, s, t_after), 0)
+                - get(units_started_up, (u, s, t_after), 0)
+                + get(units_shut_down, (u, s, t_after), 0)
+                for s in s_path;
                 init=0,
             )
             ==
             sum(
-                + units_on[u, s, t_before]
-                for (u, s, t_before) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_before, temporal_block=anything,
-                );
+                get(units_on, (u, s, t_before), 0) for s in s_path;
                 init=0,
             )
         )
@@ -59,9 +56,7 @@ function constraint_unit_state_transition_indices(m::Model)
     (
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, t_before, t_after) in unit_dynamic_time_indices(m)
-        for path in active_stochastic_paths(
-            m, units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
-        )
+        for path in active_stochastic_paths(m, units_on_indices(m; unit=u, t=[t_before, t_after]))
     )
 end
 

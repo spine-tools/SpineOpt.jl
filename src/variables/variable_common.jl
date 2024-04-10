@@ -89,6 +89,7 @@ function add_variable!(
     isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
         var, _representative_periods_mapping(m, var, indices)
     )
+    var
 end
 
 _nothing_if_empty(p::Parameter) = isempty(indices(p)) ? nothing : p

@@ -71,27 +71,29 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
         (unit=u, node1=ng1, node2=ng2, stochastic_path=s_path, t=t) => sense_constraint(
             m,
             + sum(
-                unit_flow[u, n1, d1, s, t_short] * duration(t_short)
-                for (u, n1, d1, s, t_short) in unit_flow_indices(
-                    m; unit=u, node=ng1, direction=d1, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                );
+                get(unit_flow, (u, n1, d1, s, t_short), 0)
+                * duration(t_short)
+                for n1 in members(ng1)
+                for s in s_path
+                for t_short in t_in_t(m; t_long=t);
                 init=0,
             ),
             sense,
             + sum(
-                unit_flow[u, n2, d2, s, t_short]
+                get(unit_flow, (u, n2, d2, s, t_short), 0)
                 * duration(t_short)
                 * ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, n2, d2, s, t_short) in unit_flow_indices(
-                    m; unit=u, node=ng2, direction=d2, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                );
+                for n2 in members(ng2)
+                for s in s_path
+                for t_short in t_in_t(m; t_long=t);
                 init=0,
             )
             + sum(
-                units_on[u, s, t1]
+                get(units_on, (u, s, t1), 0)
                 * min(duration(t1), duration(t))
                 * units_on_coefficient[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+                for s in s_path
+                for t1 in t_overlaps_t(m; t=t);
                 init=0,
             )
         )

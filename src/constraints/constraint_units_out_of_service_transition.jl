@@ -34,20 +34,16 @@ function add_constraint_units_out_of_service_transition!(m::Model)
         (unit=u, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
             m,
             sum(
-                + units_out_of_service[u, s, t_after]
-                - units_taken_out_of_service[u, s, t_after]
-                + units_returned_to_service[u, s, t_after]
-                for (u, s, t_after) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_after, temporal_block=anything,
-                );
+                + get(units_out_of_service, (u, s, t_after), 0)
+                - get(units_taken_out_of_service, (u, s, t_after), 0)
+                + get(units_returned_to_service, (u, s, t_after), 0)
+                for s in s_path;
                 init=0,
             )
             ==
             sum(
-                units_out_of_service[u, s, t_before]
-                for (u, s, t_before) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_before, temporal_block=anything,
-                );
+                + get(units_out_of_service, (u, s, t_before), 0)
+                for s in s_path;
                 init=0,
             )
         )
@@ -58,9 +54,8 @@ end
 function constraint_units_out_of_service_transition_indices(m::Model)
     (
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, t_before, t_after) in unit_dynamic_time_indices(m)
-        for path in active_stochastic_paths(
-            m, units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
-        )
+        for u in indices(scheduled_outage_duration)
+        for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)
+        for path in active_stochastic_paths(m, units_on_indices(m; unit=u, t=[t_before, t_after]))
     )
 end
