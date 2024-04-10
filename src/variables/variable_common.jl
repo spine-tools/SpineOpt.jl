@@ -53,6 +53,11 @@ function add_variable!(
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin
     )
+    lb = _nothing_if_empty(lb)
+    ub = _nothing_if_empty(ub)
+    initial_value = _nothing_if_empty(initial_value)
+    fix_value = _nothing_if_empty(fix_value)
+    internal_fix_value = _nothing_if_empty(internal_fix_value)
     var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(
             m,
@@ -81,8 +86,13 @@ function add_variable!(
             fix(v, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
         end
     end
-    merge!(var, _representative_periods_mapping(m, var, indices))
+    isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
+        var, _representative_periods_mapping(m, var, indices)
+    )
 end
+
+_nothing_if_empty(p::Parameter) = isempty(indices(p)) ? nothing : p
+_nothing_if_empty(x) = x
 
 """
     _representative_index(ind)

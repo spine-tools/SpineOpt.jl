@@ -825,6 +825,7 @@ function generate_internal_fix_investments()
             for obj in indices(candidates)
         )
         add_object_parameter_values!(class, pvals)
+        add_object_parameter_defaults!(class, Dict(pname => parameter_value(nothing)))
         @eval $pname = $parameter
     end
 end
