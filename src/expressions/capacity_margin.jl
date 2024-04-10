@@ -158,12 +158,13 @@ function expression_capacity_margin_indices(m::Model)
                     units_on_indices(
                         m;
                         unit=Iterators.filter(
-                            !is_storage_unit, indices(unit_capacity; node=n, direction=direction(:to_node))
+                            !is_storage_unit,
+                            (u for (u, n, d) in indices(unit_capacity; node=n, direction=direction(:to_node))),
                         ),
                         t=t_overlaps_t(m; t=t),
                     ),
                 )
-            )
+            ),
         )
     )
 end
