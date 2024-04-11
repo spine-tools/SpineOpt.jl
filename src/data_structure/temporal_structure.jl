@@ -108,9 +108,7 @@ The adjusted end of a `temporal_block`.
 """
 _adjusted_end(m, _blk_end::Nothing) = end_(current_window(m))
 _adjusted_end(m, blk_end::DateTime) = max(start(current_window(m)), blk_end)
-function _adjusted_end(m, blk_end::Union{Period,CompoundPeriod})
-    end_(current_window(m)) + max(Minute(0), blk_end - _model_window_duration(m))
-end
+_adjusted_end(m, blk_end::Union{Period,CompoundPeriod}) = end_(current_window(m)) + blk_end - _model_window_duration(m)
 
 """
     _blocks_by_time_interval(m::Model)

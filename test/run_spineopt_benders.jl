@@ -121,7 +121,7 @@ function _test_benders_unit()
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -232,7 +232,7 @@ function _test_benders_storage()
                 ["node", "node_b", "demand", dem],
                 ["node", "node_a", "node_slack_penalty", penalty],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -361,7 +361,7 @@ function _test_benders_unit_storage()
                 ["node", "node_b", "demand", dem],
                 ["node", "node_a", "node_slack_penalty", penalty],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -684,7 +684,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -800,7 +800,7 @@ function _test_benders_starting_units_invested()
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]

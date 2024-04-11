@@ -101,7 +101,7 @@ function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, k, win_weig
     vals = Dict(
         k => win_weight * realize(v)
         for (k, v) in m.ext[:spineopt].values[var_name]
-        if start(k.t) < end_(current_window(m))
+        if iscontained(k.t, current_window(m))
     )
     if _is_last_window(m, k)
         merge!(
