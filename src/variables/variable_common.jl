@@ -48,7 +48,6 @@ function add_variable!(
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
     required_history_period::Union{Period,Nothing}=nothing, 
 )
-    
     t_start_time_slice = start(first(time_slice(m)))
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     if isnothing(required_history_period)
@@ -57,7 +56,6 @@ function add_variable!(
         history_period = TimeSlice(t_start_time_slice - required_history_period, t_start_time_slice)
     end
     required_history = [t for t in history_time_slice(m) if overlaps(history_period, t)]
-
     m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Vector{TimeSlice},Nothing}}(
         :indices => indices,
         :bin => bin,
