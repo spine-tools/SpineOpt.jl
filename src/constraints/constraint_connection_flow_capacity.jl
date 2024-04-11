@@ -64,10 +64,10 @@ function add_constraint_connection_flow_capacity!(m::Model)
         (connection=conn, node=ng, direction=d, stochastic_path=s_path, t=t) => @constraint(
             m,
             + sum(
-                connection_flow[conn, n, d, s, t] * duration(t)
-                for (conn, n, d, s, t) in connection_flow_indices(
-                    m; connection=conn, direction=d, node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                );
+                get(connection_flow, (conn, n, d, s, t), 0) * duration(t)
+                for n in members(ng)
+                for s in s_path
+                for t in t_in_t(m; t_long=t);
                 init=0,
             )
             <=
@@ -81,10 +81,9 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 ]
                 * (
                     + sum(
-                        connections_invested_available[conn, s, t1]
-                        for (conn, s, t1) in connections_invested_available_indices(
-                            m; connection=conn, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
-                        );
+                        get(connections_invested_available, (conn, s, t1), 0)
+                        for s in s_path
+                        for t1 in t_in_t(m; t_short=t);
                         init=0,
                     )
                     + number_of_connections[(
@@ -95,9 +94,9 @@ function add_constraint_connection_flow_capacity!(m::Model)
                         _default=_default_number_of_connections(conn),
                     )]
                 )
-                for (conn, _n, d, s, t) in connection_flow_indices(
-                    m; connection=conn, direction=d, node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                );
+                for s in s_path
+                for t in t_in_t(m; t_long=t)
+                if any(haskey(connection_flow, (conn, n, d, s, t)) for n in members(ng));
                 init=0,
             )
             * duration(t)
