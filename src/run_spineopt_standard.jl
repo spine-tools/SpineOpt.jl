@@ -462,9 +462,10 @@ function _load_variable_values!(m::Model, values)
 end
 
 function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
+    var_history = m.ext[:spineopt].variables_definition[name][:required_history]
     m.ext[:spineopt].values[name] = Dict(
         ind => values[string(name)][string(ind)]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), temporal_block=anything)
+        for ind in indices(m; t=vcat(var_history, time_slice(m)), temporal_block=anything)
     )
 end
 
@@ -1063,9 +1064,10 @@ end
 function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
     for name in names   
         var = m.ext[:spineopt].variables[name]
+        var_history = m.ext[:spineopt].variables_definition[name][:required_history]
         # NOTE: only update names for the representative variables
         # This is achieved by using the indices function from the variable definition
-        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); history_time_slice(m)])
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); var_history])
             _set_name(var[ind], _base_name(name, ind))
         end
     end
@@ -1102,7 +1104,9 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         history_t = t_history_t(m; t=ind.t)
         history_t === nothing && continue
         for history_ind in indices(m; ind..., t=history_t)
-            _fix(var[history_ind], val[ind])
+            v = get(var, history_ind, nothing) # NOTE: only fix variables that have history
+            if v === nothing continue end
+            _fix(v, val[ind])
         end
     end
 end
@@ -1156,8 +1160,9 @@ end
 function unfix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
         var = m.ext[:spineopt].variables[name]
+        var_history = m.ext[:spineopt].variables_definition[name][:required_history]
         indices = definition[:indices]
-        for history_ind in indices(m; t=history_time_slice(m))
+        for history_ind in indices(m; t=var_history)
             _unfix(var[history_ind])
         end
     end

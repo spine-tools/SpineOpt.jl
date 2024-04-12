@@ -818,6 +818,7 @@ function test_constraint_storage_lifetime()
     @testset "constraint_storage_lifetime" begin
         candidate_storages = 1
         node_capacity = 500
+        expected_num_vars = Dict(30 => 6, 180 => 8, 240 => 9)
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
@@ -840,7 +841,9 @@ function test_constraint_storage_lifetime()
             var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
             var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
             constraint = m.ext[:spineopt].constraints[:storage_lifetime]
-
+            
+            @test length(var_storages_invested_available) == expected_num_vars[lifetime_minutes]
+            @test length(var_storages_invested) == expected_num_vars[lifetime_minutes]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),

@@ -23,7 +23,7 @@ the cyclic node state constraint can be used by setting the [cyclic\_condition](
 a [node\_\_temporal\_block](@ref) to `true`. This triggers the following constraint:
 
 ```math
-v^{node\_state}_{(n, s, start(tb))} \geq  v^{node\_state}_{(n, s, end(tb))}
+v^{node\_state}_{(n, s, start(tb))} \leq  v^{node\_state}_{(n, s, end(tb))}
 \qquad \forall (n,tb) \in indices(p^{cyclic\_condition}): p^{cyclic\_condition}_{(n,tb)}
 ```
 
