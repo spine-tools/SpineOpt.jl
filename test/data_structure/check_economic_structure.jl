@@ -206,10 +206,10 @@
             key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
             express = SpineOpt.unit_investment_costs(m, u_ts[1])
             express = SpineOpt.realize(express)
-            salvae_frac = 0.5705230510993654
+            salvage_frac = 0.370998336
             conv_to_disc_annuities = 0.613913254
             @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6  
-            @test salvae_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
+            @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test conv_to_disc_annuities*(1-salvae_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
          end
     end

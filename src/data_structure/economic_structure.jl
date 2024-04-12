@@ -298,42 +298,40 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
     param_name = set_salvage_fraction[obj_cls]
     
     for id in invest_temporal_block(temporal_block=anything)
-        if id in indices(econ_lifetime)
+        if id in indices(econ_lifetime) 
             stochastic_map_ind = []
             stochastic_map_val = []
             for s in unique([x.stochastic_scenario for x in investment_indices(m)])
                 timeseries_ind = []
                 timeseries_val = []
-                for vintage_t in time_slice(m; temporal_block = invest_temporal_block(;Dict(obj_cls.name=>id)...))
-                    p_elife = econ_lifetime(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
-                    p_lt = lead_time(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
+                for vintage_t in time_slice(m; temporal_block = invest_temporal_block(; Dict(obj_cls.name=>id)...))
+                    p_elife = econ_lifetime(; Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)..., t=vintage_t)
+                    p_lt = lead_time(; Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)..., t=vintage_t)
                     if isnothing(p_lt)
                         p_lt= Year(0)
                     end
-                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s,t=vintage_t) #TODO! scenario dependent and time
+                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s, t=vintage_t) 
                     vintage_t_start = start(vintage_t)
                     start_of_operation = vintage_t_start + p_lt
                     end_of_operation = vintage_t_start + p_lt + p_elife
-                    j1= p_eoh #+ Year(1) #numerator +1 or not?
+                    j1 = p_eoh + Year(1)
                     j2 = vintage_t_start
                     val1 = 0
                     val2 = 0
-                    while j1<= end_of_operation
-                        ## start_of_operation!
-                        val1+= payment_fraction(vintage_t_start, j1, p_elife, p_lt) *discount_factor(instance,discnt_rate,j1)
-                        j1+= Year(1)
+                    while j1 <= end_of_operation
+                        val1 += payment_fraction(vintage_t_start, j1, p_elife, p_lt) * discount_factor(instance, discnt_rate, j1)
+                        j1 += Year(1)
                     end
-                    while j2<= end_of_operation
-                        ## start_of_operation!
-                        val2+= payment_fraction(vintage_t_start, j2, p_elife, p_lt) *discount_factor(instance,discnt_rate,j2)
-                        j2+= Year(1)
+                    while j2 <= end_of_operation
+                        val2 += payment_fraction(vintage_t_start, j2, p_elife, p_lt) * discount_factor(instance, discnt_rate, j2)
+                        j2 += Year(1)
                     end
-                    val2 == 0 ? val=0 : val = max(val1/val2,0)
-                    push!(timeseries_ind,start(vintage_t))
-                    push!(timeseries_val,val)
+                    val2 == 0 ? val = 0 : val = max(val1/val2, 0)
+                    push!(timeseries_ind, start(vintage_t))
+                    push!(timeseries_val, val)
                 end
-                push!(stochastic_map_ind,s)
-                push!(stochastic_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
+                push!(stochastic_map_ind, s)
+                push!(stochastic_map_val, TimeSeries(timeseries_ind, timeseries_val, false, false))
             end
             obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stochastic_map_ind,stochastic_map_val))
         else
@@ -364,34 +362,31 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass)
     param_name = set_tech_discount_factor[obj_cls]
 
     for id in obj_cls()
-        if (!isnothing(discnt_rate_tech(;Dict(obj_cls.name => id)...))
-            && discnt_rate_tech(;Dict(obj_cls.name => id)...) != 0
-            && !isnothing(econ_lifetime(;Dict(obj_cls.name => id)...)))
+        if (!isnothing(discnt_rate_tech(; Dict(obj_cls.name => id)...))
+            && discnt_rate_tech(; Dict(obj_cls.name => id)...) != 0
+            && !isnothing(econ_lifetime(; Dict(obj_cls.name => id)...)))
             stoch_map_val = []
             stoch_map_ind = []
             for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name => id)...))
                 val = []
-                for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                    p_elife = econ_lifetime(;Dict(obj_cls.name => id, stochastic_scenario.name => s,)...,t=vintage_t)
-                    tech_discount_rate = discnt_rate_tech(;Dict(obj_cls.name => id, stochastic_scenario.name => s,)...,t=vintage_t)
-                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s,t=vintage_t) #TODO time and stoch dependent
-                    val = capital_recovery_factor(instance,tech_discount_rate,p_elife)/capital_recovery_factor(instance,discnt_rate,p_elife)
+                for (u, s,vintage_t) in investment_indices(m; Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
+                    p_elife = econ_lifetime(; Dict(obj_cls.name => id, stochastic_scenario.name => s,)..., t=vintage_t)
+                    tech_discount_rate = discnt_rate_tech(; Dict(obj_cls.name => id, stochastic_scenario.name => s,)..., t=vintage_t)
+                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s, t=vintage_t) 
+                    val = capital_recovery_factor(instance, tech_discount_rate, p_elife)/capital_recovery_factor(instance, discnt_rate, p_elife)
                 end
-                push!(stoch_map_val,val)
-                push!(stoch_map_ind,s)
+                push!(stoch_map_val, val)
+                push!(stoch_map_ind, s)
             end
             obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
         else
             obj_cls.parameter_values[id][param_name] = parameter_value(1)
         end
     end
-
     @eval begin
         $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
 end
-
-
 
 
 """
