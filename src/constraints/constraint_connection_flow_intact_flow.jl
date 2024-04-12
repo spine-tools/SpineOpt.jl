@@ -72,7 +72,8 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
             )
             ==
             + sum(
-                lodf(connection1=candidate_conn, connection2=conn) * (
+                + lodf(connection1=candidate_conn, connection2=conn)
+                * (
                     + connection_intact_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
                     - connection_intact_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
                     - connection_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)

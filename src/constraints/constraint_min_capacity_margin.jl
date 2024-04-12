@@ -54,7 +54,7 @@ function add_constraint_min_capacity_margin!(m::Model)
             )
             >=
             + sum(
-                min_capacity_margin[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+                min_capacity_margin(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
                 for (n, s, t) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s_path, t=t);
                 init=0,
             )

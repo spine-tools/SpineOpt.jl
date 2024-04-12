@@ -100,9 +100,9 @@ function add_constraint_minimum_operating_point!(m::Model)
                     )
                 )
                 * min(duration(t), duration(t_over))
-                * minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+                * unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+                * unit_conv_cap_to_flow(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
                 for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
                 init=0,
             )

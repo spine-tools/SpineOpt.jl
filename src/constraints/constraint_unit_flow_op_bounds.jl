@@ -65,16 +65,14 @@ function add_constraint_unit_flow_op_bounds!(m::Model)
                 unit_flow_op_active[u, n, d, op, s, t] : units_on[u, s, t]
             )
             * (
-                + operating_points[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)] 
+                + operating_points(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)
                 - (
-                    (op > 1) ? operating_points[
-                        (unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1)
-                    ] : 0
+                    (op > 1) ? operating_points(
+                        m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1
+                    ) : 0
                 )
             )
-            * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
         )
         for (u, n, d) in indices(unit_capacity)
         for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, node=n, direction=d)

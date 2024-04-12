@@ -29,7 +29,7 @@ function add_constraint_investment_group_minimum_entities_invested_available!(m:
             m,
             _group_entities_invested_available(m, ig, s, t)
             >=
-            minimum_entities_invested_available[(investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)]
+            minimum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
         )
         for ig in indices(minimum_entities_invested_available)
         for (s, t) in _entities_invested_available_s_t(m)
@@ -48,7 +48,7 @@ function add_constraint_investment_group_maximum_entities_invested_available!(m:
             m,
             _group_entities_invested_available(m, ig, s, t)
             <=
-            maximum_entities_invested_available[(investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)]
+            maximum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
         )
         for ig in indices(maximum_entities_invested_available)
         for (s, t) in _entities_invested_available_s_t(m)
@@ -82,7 +82,7 @@ function _group_entities_invested_available(m, ig, s, t)
             for (u, s, t) in units_invested_available_indices(
                 m; unit=unit__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
             );
-            init=0
+            init=0,
         )
         + sum(
             connections_invested_available[conn, s, t]
@@ -92,14 +92,14 @@ function _group_entities_invested_available(m, ig, s, t)
                 stochastic_scenario=s,
                 t=t_in_t(m; t_long=t)
             );
-            init=0
+            init=0,
         )
         + sum(
             storages_invested_available[n, s, t]
             for (n, s, t) in storages_invested_available_indices(
                 m; node=node__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
             );
-            init=0
+            init=0,
         )
     )
 end

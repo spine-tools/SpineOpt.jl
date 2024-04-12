@@ -163,11 +163,20 @@ function _variable(m, name, ind, bin, int, lb, ub, fix_value, internal_fix_value
     ind = (analysis_time=_analysis_time(m), ind...)
     bin !== nothing && bin(ind) && set_binary(var)
     int !== nothing && int(ind) && set_integer(var)
-    lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
-    ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
-    fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
-    internal_fix_value === nothing || fix(var, internal_fix_value[(; ind..., _strict=false)])
+    lb === nothing || set_lower_bound(var, lb(m; ind..., _strict=false))
+    ub === nothing || set_upper_bound(var, ub(m; ind..., _strict=false))
+    fix_value === nothing || _do_fix(var, fix_value(m; ind..., _strict=false); force=true)
+    internal_fix_value === nothing || _do_fix(var, internal_fix_value(m; ind..., _strict=false); force=true)
     var
+end
+
+_do_fix(var, x::Call; kwargs...) = fix(var, x)
+function _do_fix(var, x::Number; kwargs...)
+    if !isnan(x)
+        fix(var, x; kwargs...)
+    elseif is_fixed(var)
+        unfix(var)
+    end
 end
 
 """

@@ -39,8 +39,8 @@ function add_constraint_min_scheduled_outage_duration!(m::Model)
             >=
             + maximum(
                 (
-                    + scheduled_outage_duration[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    * number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+                    + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+                    * number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
                 ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
                 for s in s_path
             )

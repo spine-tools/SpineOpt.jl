@@ -41,7 +41,7 @@ function add_constraint_units_available!(m::Model)
             + get(units_out_of_service, (u, s, t), 0)
             - sum(get(units_invested_available, (u, s, t1), 0) for t1 in t_overlaps_t(m; t=t); init=0)            
             <=
-            number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+            number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
         )
         for (u, s, t) in constraint_units_available_indices(m)
     )

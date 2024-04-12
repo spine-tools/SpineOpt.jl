@@ -352,6 +352,15 @@ function _generate_representative_time_slice!(m::Model)
     end
 end
 
+function _generate_call_update!(m)
+    temp_struct = m.ext[:spineopt].temporal_structure
+    temp_struct[:call_update] = if temp_struct[:window_count] == 1
+        (x; kwargs...) -> x(; kwargs...)
+    else
+        (x; kwargs...) -> x[(kwargs)]
+    end
+end
+
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
 Used by `to_time_slice`.
@@ -387,6 +396,7 @@ function generate_time_slice!(m::Model)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
+    _generate_call_update!(m)
 end
 
 """
@@ -802,3 +812,5 @@ function _t_extreme_resolution_sets!(m, t_dict, kw)
     end
     t_dict
 end
+
+(x::Union{Parameter,Constant})(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:call_update](x; kwargs...)

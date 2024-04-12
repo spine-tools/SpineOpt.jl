@@ -67,9 +67,9 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
                 )
             )
             * sum(
-                connection_capacity[
-                    (connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1e6)
-                ]
+                connection_capacity(
+                    m; connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1e6
+                )
                 * duration(t)
                 for (conn, n, d, s, t) in connection_intact_flow_indices(
                     m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)

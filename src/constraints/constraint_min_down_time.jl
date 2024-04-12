@@ -43,7 +43,7 @@ function add_constraint_min_down_time!(m::Model)
         (unit=u, stochastic_path=s_path, t=t) => @constraint(
             m,
             + sum(
-                + number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                + number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
                 + sum(
                     units_invested_available[u, s, t1]
                     for (u, s, t1) in units_invested_available_indices(

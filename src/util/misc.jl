@@ -164,7 +164,9 @@ struct Constant
     value
 end
 
-Base.getindex(c::Constant, _x) = Call(c.value)
+(c::Constant)(; _kwargs...) = c.value
+
+Base.getindex(c::Constant, _key...) = Call(c.value)
 
 name_from_fn(fn) = split(split(string(fn), "add_")[2], "!")[1]
 
