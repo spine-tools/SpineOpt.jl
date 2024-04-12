@@ -41,7 +41,7 @@ function generate_economic_structure!(m::Model;log_level=3)
 end
 
 
-function _create_parameters_set()
+function _create_set_parameters_and_relationships()
     # defined outside this file
     # indices
     global set_investment_indices = Dict(unit => units_invested_available_indices, node => storages_invested_available_indices, connection => connections_invested_available_indices)
@@ -75,7 +75,7 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:spineopt].instance
     capacity_transfer_factor = Dict()
 
-    _create_parameters_set()
+    _create_set_parameters_and_relationships()
 
     investment_indices = set_investment_indices[obj_cls]
     lead_time = set_lead_time[obj_cls]
@@ -98,11 +98,14 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
                             :t => Iterators.flatten((history_time_slice(m), time_slice(m)))
                             )...
                         )
+                    
+                    # get lead time
                     p_lt = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     if isnothing(p_lt)
                         p_lt = Year(0)
                         #NOTE: In case p_lt is `none`, we will assume a duration of `0 Years`
                     end
+                    # get tech lifetime
                     p_tlife = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     if isnothing(p_tlife)
                         max(Year(last(time_slice(m)).start.x)-Year(first(time_slice(m)).end_.x),Year(1))
@@ -173,11 +176,11 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     conversion_to_discounted_annuities = Dict()
-    _create_parameters_set()
+    _create_set_parameters_and_relationships()
     investment_indices = set_investment_indices[obj_cls]
     lead_time = set_lead_time[obj_cls]
     econ_lifetime = set_econ_lifetime[obj_cls]
-    param_name = set_conversion_to_discounted_annuities[obj_cls]
+    param_name = set_conversion_to_discounted_annuities[obj_cls] # this is MARKUP^AN
     
     for id in obj_cls()
         if (discount_rate(model=model()[1]) == 0 || isnothing(discount_rate(model=model()[1])))
@@ -189,7 +192,7 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
                 timeseries_ind = []
                 timeseries_val = []
                 for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                    discnt_rate = discount_rate(model=instance, stichastic_scenario=s, t=vintage_t) #TODO time and stoch dependent
+                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s, t=vintage_t) #TODO time and stoch dependent
                     p_lt = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     if isnothing(p_lt)
                         p_lt = Year(0)
@@ -279,7 +282,7 @@ end
 """
     generate_salvage_fraction()
 
-Generate salvage fraction of units, which exonomic lifetime exceeds the modeling horizon.
+Generate salvage fraction of units, which economic lifetime exceeds the modeling horizon.
 """
 function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:spineopt].instance
@@ -287,7 +290,7 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
     p_eoh = model_end(model=instance)
     salvage_fraction = Dict()
 
-    _create_parameters_set()
+    _create_set_parameters_and_relationships()
     investment_indices = set_investment_indices[obj_cls]
     lead_time = set_lead_time[obj_cls]
     econ_lifetime = set_econ_lifetime[obj_cls]
@@ -352,7 +355,7 @@ Generate technology-specific discount factors for investments (e.g., for risky i
 function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:spineopt].instance
     
-    _create_parameters_set()
+    _create_set_parameters_and_relationships()
     
     investment_indices = set_investment_indices[obj_cls]
     econ_lifetime = set_econ_lifetime[obj_cls]
@@ -402,7 +405,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     discounted_duration = Dict()
-    _create_parameters_set()
+    _create_set_parameters_and_relationships()
     invest_stoch_struct = set_invest_stoch_struct[obj_cls]
     invest_temporal_block = set_invest_temporal_block[obj_cls]
     param_name = set_discounted_duration[obj_cls]
