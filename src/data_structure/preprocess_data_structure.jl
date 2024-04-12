@@ -43,6 +43,7 @@ function preprocess_data_structure()
     generate_benders_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
+    generate_unit_flow_capacity()
 end
 
 """
@@ -244,8 +245,8 @@ function generate_connection_has_ptdf()
     end
 
     add_object_parameter_values!(connection, Dict(conn => _new_connection_pvals(conn) for conn in connection()))
-    push!(has_ptdf.classes, connection)
-    push!(ptdf_duration.classes, connection)
+    push_class!(has_ptdf, connection)
+    push_class!(ptdf_duration, connection)
 end
 
 """
@@ -889,5 +890,27 @@ function generate_is_boundary()
         is_boundary_connection = $is_boundary_connection
         export is_boundary_node
         export is_boundary_connection
+    end
+end
+
+function generate_unit_flow_capacity()
+    for class in classes(unit_capacity)
+        new_pvals = Dict(
+            (u, n, d) => Dict(
+                :unit_flow_capacity => parameter_value(
+                    + unit_capacity(unit=u, node=n, direction=d)
+                    * unit_availability_factor(unit=u)
+                    * unit_conv_cap_to_flow(unit=u, node=n, direction=d)
+                )
+            )
+            for (u, n, d) in indices(unit_capacity, class)
+        )
+        add_relationship_parameter_values!(class, new_pvals)
+        add_relationship_parameter_defaults!(class, Dict(:unit_flow_capacity => parameter_value(nothing)))
+    end
+    unit_flow_capacity = Parameter(:unit_flow_capacity, classes(unit_capacity))
+    @eval begin
+        unit_flow_capacity = $unit_flow_capacity
+        export unit_flow_capacity
     end
 end

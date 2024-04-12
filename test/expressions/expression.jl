@@ -123,7 +123,7 @@ function test_expression_capacity_margin()
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
-        var_units_available = m.ext[:spineopt].variables[:units_available]
+        var_units_on = m.ext[:spineopt].variables[:units_on]
         
         expression = m.ext[:spineopt].expressions[:capacity_margin]
         @test length(expression) == 2
@@ -142,16 +142,16 @@ function test_expression_capacity_margin()
             unit_ab = unit(:unit_ab)
             d_f = direction(:from_node)
             d_t = direction(:to_node)
-            var_ua_b = var_units_available[unit_b, s, t]
-            var_ua_ab = var_units_available[unit_ab, s, t2]
+            var_uon_b = var_units_on[unit_b, s, t]
+            var_uon_ab = var_units_on[unit_ab, s, t2]
             var_uff_cb = var_unit_flow[unit_cb, n, d_f, s, t]
             var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]
      
             expected_expr = @expression(m,
                 + var_uft_cb
                 - var_uff_cb
-                + 0.4 * 30 * var_ua_b
-                + 75 * var_ua_ab
+                + 0.4 * 30 * var_uon_b
+                + 75 * var_uon_ab
                 - demand_b
                 - fractional_demand_b * group_demand_a
             )            

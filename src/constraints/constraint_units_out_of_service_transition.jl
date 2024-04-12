@@ -41,11 +41,7 @@ function add_constraint_units_out_of_service_transition!(m::Model)
                 init=0,
             )
             ==
-            sum(
-                + get(units_out_of_service, (u, s, t_before), 0)
-                for s in s_path;
-                init=0,
-            )
+            sum(get(units_out_of_service, (u, s, t_before), 0) for s in s_path; init=0)
         )
         for (u, s_path, t_before, t_after) in constraint_units_out_of_service_transition_indices(m)
     )

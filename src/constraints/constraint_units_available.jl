@@ -32,24 +32,14 @@ The aggregated available units are constrained by the parameter [number\_of\_uni
 See also [number\_of\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
-    @fetch units_available, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
+    @fetch units_on, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + sum(
-                + units_available[u, s, t] 
-                + get(units_out_of_service, (u, s, t), 0)
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
-                init=0,
-            )
-            - sum(
-                units_invested_available[u, s, t1]
-                for (u, s, t1) in units_invested_available_indices(
-                    m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
-                );
-                init=0,
-            )            
+            + get(units_on, (u, s, t), 0)
+            + get(units_out_of_service, (u, s, t), 0)
+            - sum(get(units_invested_available, (u, s, t1), 0) for t1 in t_overlaps_t(m; t=t); init=0)            
             <=
             number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
         )
@@ -70,11 +60,8 @@ function constraint_units_available_indices(m::Model)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
-                (
-                    units_on_indices(m; unit=u, t=t),
-                    units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t)),
-                )
-            )
+                (units_on_indices(m; unit=u, t=t), units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t)))
+            ),
         )
         for s in path
     )

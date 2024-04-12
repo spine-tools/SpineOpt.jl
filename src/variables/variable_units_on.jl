@@ -69,6 +69,36 @@ function units_switched_replacement_value(ind)
     end
 end
 
+function units_switched_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    units_on_indices(
+        m;
+        unit=intersect(unit, _unit_switched_iter()),
+        stochastic_scenario=stochastic_scenario,
+        t=t,
+        temporal_block=temporal_block,
+    )
+end
+
+function _unit_switched_iter()
+    Iterators.flatten(
+        (
+            indices(min_up_time),
+            indices(min_down_time),
+            indices(start_up_cost),
+            indices(shut_down_cost), 
+            (x.unit for x in indices(start_up_limit)),
+            (x.unit for x in indices(shut_down_limit)),
+            (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
+            (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+        )
+    )
+end
 
 """
     add_variable_units_on!(m::Model)

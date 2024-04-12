@@ -24,7 +24,7 @@ function units_out_of_service_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unit = Iterators.flatten(
+    unit_iter = Iterators.flatten(
         (
             indices(scheduled_outage_duration),
             (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0),
@@ -32,7 +32,7 @@ function units_out_of_service_indices(
     )
     units_on_indices(
         m;
-        unit=unit,
+        unit=intersect(unit, unit_iter),
         stochastic_scenario=stochastic_scenario,
         t=t,
         temporal_block=temporal_block,

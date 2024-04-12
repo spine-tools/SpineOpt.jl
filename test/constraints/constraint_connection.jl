@@ -73,6 +73,7 @@ function _test_constraint_connection_setup()
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "use_connection_intact_flow", true],
         ],
         :relationship_parameter_values => [
             [

@@ -112,7 +112,6 @@ function _add_variables!(m; log_level=3)
             add_variable_unit_flow!,
             add_variable_unit_flow_op!,
             add_variable_unit_flow_op_active!,
-            add_variable_units_available!,
             add_variable_units_invested!,
             add_variable_units_invested_available!,
             add_variable_units_mothballed!,
@@ -223,7 +222,6 @@ function _add_constraints!(m; log_level=3)
             add_constraint_units_available!,
             add_constraint_units_invested_available!,
             add_constraint_units_invested_transition!,
-            add_constraint_units_on!,
             add_constraint_units_out_of_service_contiguity!,
             add_constraint_units_out_of_service_transition!,
             add_constraint_user_constraint!,
@@ -255,7 +253,7 @@ function _create_objective_terms!(m)
     for term in objective_terms(
         m; operations=true, investments=model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
     )
-        func = eval(term)
+        func = getproperty(SpineOpt, term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
 end

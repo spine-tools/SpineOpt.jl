@@ -35,7 +35,7 @@ function fixed_om_costs(m, t_range)
                 + units_invested_available[u, s, t]
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            # This term is activated when there is a representative termporal block in those containing TimeSlice t.
+            # This term is activated when there is a representative temporal block that includes t.
             # We assume only one representative temporal structure available, of which the termporal blocks represent
             # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
             * duration(t) for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))

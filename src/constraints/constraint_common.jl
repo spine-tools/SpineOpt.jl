@@ -70,11 +70,7 @@ function _minimum_operating_point(u, ng, d, s, t0, t)
 end
 
 function _unit_flow_capacity(u, ng, d, s, t0, t)
-    (
-        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-        * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-        * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-    )
+    unit_flow_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
 end
 
 function _start_up_limit(u, ng, d, s, t0, t)
