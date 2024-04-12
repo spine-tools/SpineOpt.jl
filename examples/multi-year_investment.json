@@ -900,7 +900,7 @@
             "connection_investment_cost",
             null,
             null,
-            "The per unit investment cost for the connection over the `connection_investment_lifetime`"
+            "The per unit investment cost for the connection over the `connection_investment_tech_lifetime`"
         ],
         [
             "connection",
@@ -1715,13 +1715,6 @@
             null,
             null,
             "Economic lifetime for storage investment decisions."
-        ],
-        [
-            "node",
-            "storage_investment_lifetime",
-            null,
-            null,
-            "Minimum lifetime for storage investment decisions."
         ],
         [
             "node",

@@ -282,7 +282,7 @@ end
 """
     generate_salvage_fraction()
 
-Generate salvage fraction of units, which economic lifetime exceeds the modeling horizon.
+Generate salvage fraction of units, whose economic lifetime exceeds the modeling horizon.
 """
 function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:spineopt].instance

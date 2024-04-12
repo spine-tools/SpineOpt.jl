@@ -1712,11 +1712,11 @@ function test_connection_history_parameters()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
 
         url_in = _test_constraint_connection_setup()
-        connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         connection_flow_delay = Dict("type" => "duration", "data" => string(conn_flow_minutes_delay, "m"))
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
+            ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [
