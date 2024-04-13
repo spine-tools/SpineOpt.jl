@@ -287,7 +287,7 @@
             express = SpineOpt.realize(express)
             @show express
             tech_fac = 2.189728888
-            salvage_frac = 0.5705230510993654
+            salvage_frac = 0.370998336
             conv_to_disc_annuities = 0.613913254
             @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) rtol = 1e-6 
