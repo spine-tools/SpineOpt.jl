@@ -210,7 +210,7 @@
             conv_to_disc_annuities = 0.613913254
             @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6  
             @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
-            @test conv_to_disc_annuities*(1-salvae_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
+            @test conv_to_disc_annuities*(1-salvage_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
          end
     end
     @testset "test investment cost scaling" begin
@@ -287,12 +287,12 @@
             express = SpineOpt.realize(express)
             @show express
             tech_fac = 2.189728888
-            salvae_frac = 0.5705230510993654
+            salvage_frac = 0.5705230510993654
             conv_to_disc_annuities = 0.613913254
-            @test salvae_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
+            @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) rtol = 1e-6 
             @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6 
-            @test conv_to_disc_annuities*tech_fac*(1-salvae_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
+            @test conv_to_disc_annuities*tech_fac*(1-salvage_frac) ≈ coefficient(express,var_units_inv[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]]) rtol = 1e-6 
          end
     end
 end
