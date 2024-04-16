@@ -43,13 +43,15 @@ function add_constraint_units_out_of_service_contiguity!(m::Model)
             m,
             + sum(
                 + units_out_of_service[u, s, t]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything);
+                for (u, s, t) in units_out_of_service_indices(
+                    m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything
+                );
                 init=0,
             )           
             >=
             + sum(
                 units_taken_out_of_service[u, s_past, t_past]
-                for (u, s_past, t_past) in past_units_on_indices(m, u, s_path, t, scheduled_outage_duration)
+                for (u, s_past, t_past) in past_units_out_of_service_indices(m, u, s_path, t, scheduled_outage_duration)
             )
         )
         for (u, s_path, t) in constraint_units_out_of_service_contiguity_indices(m)
@@ -61,6 +63,8 @@ function constraint_units_out_of_service_contiguity_indices(m::Model)
         (unit=u, stochastic_path=path, t=t)
         for u in indices(scheduled_outage_duration)
         for (u, t) in unit_time_indices(m; unit=u)
-        for path in active_stochastic_paths(m, past_units_on_indices(m, u, anything, t, scheduled_outage_duration))
+        for path in active_stochastic_paths(
+            m, past_units_out_of_service_indices(m, u, anything, t, scheduled_outage_duration)
+        )
     )
 end

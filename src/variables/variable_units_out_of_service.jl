@@ -24,18 +24,20 @@ function units_out_of_service_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unit_iter = Iterators.flatten(
-        (
-            indices(scheduled_outage_duration),
-            (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0),
-        )
+    unit = intersect(unit, _deactivatable_unit())
+    unit_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block,
     )
-    units_on_indices(
-        m;
-        unit=intersect(unit, unit_iter),
-        stochastic_scenario=stochastic_scenario,
-        t=t,
-        temporal_block=temporal_block,
+end
+
+function _deactivatable_unit()
+    unique(
+        Iterators.flatten(
+            (
+                indices(scheduled_outage_duration),
+                (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0),
+            )
+        )
     )
 end
 
@@ -80,7 +82,7 @@ function add_variable_units_out_of_service!(m::Model)
         m,
         :units_out_of_service,
         units_out_of_service_indices;
-        lb=Constant(0),
+        lb=constant(0),
         bin=units_out_of_service_bin,
         int=units_out_of_service_int,
         fix_value=fix_units_out_of_service,

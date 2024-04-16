@@ -60,7 +60,7 @@ function add_variable_units_invested_available!(m::Model)
         m,
         :units_invested_available,
         units_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=units_invested_available_int,
         fix_value=fix_units_invested_available,
         internal_fix_value=internal_fix_units_invested_available,

@@ -65,7 +65,7 @@ See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
     # NOTE: that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second
     # <direction>!
-    @fetch unit_flow, units_on = m.ext[:spineopt].variables
+    @fetch unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[ratio.name] = Dict(
         (unit=u, node1=ng1, node2=ng2, stochastic_path=s_path, t=t) => sense_constraint(
@@ -85,10 +85,12 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                 init=0,
             )
             + sum(
-                get(units_on, (u, s, t1), 0)
+                _get_units_on(m, u, s, t1)
                 * min(duration(t1), duration(t))
                 * units_on_coefficient(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)
-                for s in s_path, t1 in t_overlaps_t(m; t=t);
+                for (u, s, t1) in unit_stochastic_time_indices(
+                    m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+                );
                 init=0,
             )
         )

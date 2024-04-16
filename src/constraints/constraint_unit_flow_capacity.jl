@@ -112,7 +112,7 @@ function _add_constraint_unit_flow_capacity_tight_compact!(m::Model)
                     * _unit_flow_capacity(m, u, ng, d, s, t0, t)
                     * units_shut_down[u, s, t_after]
                     * duration(t_after)
-                    for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
+                    for (u, s, t_after) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
                     init=0
                 )
                 + sum(
@@ -132,7 +132,9 @@ function _add_constraint_unit_flow_capacity_tight_compact!(m::Model)
                 + _startup_margin(m, u, ng, d, s, t0, t, case, part)
                 * _unit_flow_capacity(m, u, ng, d, s, t0, t)
                 * units_started_up[u, s, t_over]
-                for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+                for (u, s, t_over) in units_switched_indices(
+                    m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+                );
                 init=0
             )
         )
@@ -142,13 +144,13 @@ end
 
 function _add_constraint_unit_flow_capacity_simple!(m::Model)
     m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t, t_next=t_next, case=case, part=part) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t) => @constraint(
             m,
             + _term_unit_flow(m, u, ng, d, s_path, t)
             <=
             + _term_flow_capacity(m, u, ng, d, s_path, t)
         )
-        for (u, ng, d, s_path, t, t_next, case, part) in constraint_unit_flow_capacity_tight_compact_indices(m)
+        for (u, ng, d, s_path, t) in constraint_unit_flow_capacity_indices(m)
     )
 end
 
@@ -157,21 +159,18 @@ function _term_unit_flow(m, u, ng, d, s_path, t)
     sum(
         get(unit_flow, (u, n, d, s, t_over), 0) * overlap_duration(t_over, t)
         for n in members(ng), s in s_path, t_over in t_overlaps_t(m; t=t)
-        if !is_reserve_node(node=n) || (
-            is_reserve_node(node=n)
-            && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
-            && !is_non_spinning(node=n)
-        );
+        if _is_regular_node(n, d);
         init=0,
     )
 end
 
 function _term_flow_capacity(m, u, ng, d, s_path, t)
-    @fetch units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     sum(
-        _unit_flow_capacity(m, u, ng, d, s, t0, t) * get(units_on, (u, s, t_over), 0) * overlap_duration(t_over, t)
-        for s in s_path, t_over in t_overlaps_t(m; t=t);
+        _unit_flow_capacity(m, u, ng, d, s, t0, t) * _get_units_on(m, u, s, t_over) * overlap_duration(t_over, t)
+        for (u, s, t_over) in unit_stochastic_time_indices(
+            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+        );
         init=0,
     )
 end
@@ -236,7 +235,6 @@ function _t_next(m, u, t)
     end
 end
 
-
 """
     _unit_capacity_constraint_subpaths(path, u, t)
 
@@ -278,7 +276,8 @@ end
 function constraint_unit_flow_capacity_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(unit_capacity)
+        for (u, ng, d) in indices(unit_capacity; unit=_activatable_unit())
+        if members(ng) != [ng] && any(_is_regular_node(n, d) for n in members(ng))
         for t in t_highest_resolution(
             m,
             Iterators.flatten(
@@ -294,5 +293,13 @@ function constraint_unit_flow_capacity_indices(m::Model)
                 )
             )
         )
+    )
+end
+
+function _is_regular_node(n, d)
+    !is_reserve_node(node=n) || (
+        is_reserve_node(node=n)
+        && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
+        && !is_non_spinning(node=n)
     )
 end

@@ -38,8 +38,8 @@ function add_variable!(
     indices::Function;
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
-    lb::Union{Constant,Parameter,Nothing}=nothing,
-    ub::Union{Constant,Parameter,Nothing}=nothing,
+    lb::Union{FlexParameter,Parameter,Nothing}=nothing,
+    ub::Union{FlexParameter,Parameter,Nothing}=nothing,
     initial_value::Union{Parameter,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
     internal_fix_value::Union{Parameter,Nothing}=nothing,
@@ -152,24 +152,35 @@ end
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
 function _variable(m, name, ind, bin, int, lb, ub, fix_value, internal_fix_value, replacement_value)
+    ind_ = (analysis_time=_analysis_time(m), ind...)
     if replacement_value !== nothing
-        ind_ = (analysis_time=_analysis_time(m), ind...)
         value = replacement_value(ind_)
         if value !== nothing
             return value
         end
     end
     var = @variable(m, base_name = _base_name(name, ind))
-    ind = (analysis_time=_analysis_time(m), ind...)
-    bin !== nothing && bin(ind) && set_binary(var)
-    int !== nothing && int(ind) && set_integer(var)
-    lb === nothing || set_lower_bound(var, lb(m; ind..., _strict=false))
-    ub === nothing || set_upper_bound(var, ub(m; ind..., _strict=false))
-    fix_value === nothing || _do_fix(var, fix_value(m; ind..., _strict=false); force=true)
-    internal_fix_value === nothing || _do_fix(var, internal_fix_value(m; ind..., _strict=false); force=true)
+    if haskey(ind, :t)
+        add_roll_hook!(ind.t, (; var=var, name=name, ind=ind) -> set_name(var, _base_name(name, ind)))
+    end
+    bin !== nothing && bin(ind_) && set_binary(var)
+    int !== nothing && int(ind_) && set_integer(var)
+    lb === nothing || _do_set_lower_bound(var, lb(m; ind_..., _strict=false))
+    ub === nothing || _do_set_upper_bound(var, ub(m; ind_..., _strict=false))
+    fix_value === nothing || _do_fix(var, fix_value(m; ind_..., _strict=false); force=true)
+    internal_fix_value === nothing || _do_fix(var, internal_fix_value(m; ind_..., _strict=false); force=true)
     var
 end
 
+_do_set_lower_bound(_var, ::Nothing) = nothing
+_do_set_lower_bound(var, bound::Call) = set_lower_bound(var, bound)
+_do_set_lower_bound(var, bound::Number) = isnan(bound) || set_lower_bound(var, bound)
+
+_do_set_upper_bound(_var, ::Nothing) = nothing
+_do_set_upper_bound(var, bound::Call) = set_lower_bound(var, bound)
+_do_set_upper_bound(var, bound::Number) = isnan(bound) || set_upper_bound(var, bound)
+
+_do_fix(_var, ::Nothing; kwargs...) = nothing
 _do_fix(var, x::Call; kwargs...) = fix(var, x)
 function _do_fix(var, x::Number; kwargs...)
     if !isnan(x)

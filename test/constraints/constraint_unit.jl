@@ -73,6 +73,7 @@ function _test_constraint_unit_setup()
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["unit", "unit_ab", "units_on_cost", 1],  # Just to have units_on variables
         ],
         :relationship_parameter_values => [
             [
@@ -586,7 +587,7 @@ function test_constraint_operating_point_bounds()
         relationships = [["unit__to_node", ["unit_ab", "node_a"]]]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
         ]
         SpineInterface.import_data(
             url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values 

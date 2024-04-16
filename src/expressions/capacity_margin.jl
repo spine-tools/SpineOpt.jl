@@ -55,19 +55,15 @@ function add_expression_capacity_margin!(m::Model)
         (node=n, stochastic_path=s_path, t=t) => @expression(
             m,
             - sum(                
-                + demand[
-                    (node=n, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))
-                ]                
+                + demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 );
                 init=0,
             )
             - sum(
-                fractional_demand[
-                    (node=n, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))
-                ]
-                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))]
+                fractional_demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
+                * demand(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 )
@@ -104,28 +100,14 @@ function add_expression_capacity_margin!(m::Model)
             # Conventional and Renewable Capacity
             + sum(
                 + sum(
-                    + unit_capacity[(unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    * unit_conv_cap_to_flow[
-                        (unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-                    ]
-                    for (u, n_, d, s, t_short) in unit_flow_indices(
-                        m;
-                        unit=u,
-                        node=n_,
-                        stochastic_scenario=s_path,
-                        t=t,
-                    )
+                    unit_flow_capacity(m; unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+                    for (u, n_, d, s, t_short) in unit_flow_indices(m; unit=u, node=n_, stochastic_scenario=s_path, t=t)
                 )
                 * (                   
                     + sum(
-                        + units_on[u, s, t_ua]
-                        for (u, s, t_ua) in units_on_indices(
-                            m;
-                            unit=u,
-                            stochastic_scenario=s_path,
-                            t=t_overlaps_t(m; t=t),
-                            temporal_block=anything,
+                        + _get_units_on(m, u, s, t_uon)
+                        for (u, s, t_uon) in unit_stochastic_time_indices(
+                            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t), temporal_block=anything
                         );
                         init=0,
                     )                                           
@@ -154,7 +136,7 @@ function expression_capacity_margin_indices(m::Model)
             Iterators.flatten(
                 (
                     node_stochastic_time_indices(m; node=n, t=t),
-                    units_on_indices(
+                    unit_stochastic_time_indices(
                         m;
                         unit=Iterators.filter(
                             !is_storage_unit,

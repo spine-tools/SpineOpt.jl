@@ -153,8 +153,6 @@ function constraint_node_injection_indices(m::Model)
     )
 end
 
-_first_repr_t(m, t) = first(representative_time_slice(m, t))
-
 """
     constraint_node_injection_indices_filtered(m::Model; filtering_options...)
 

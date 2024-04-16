@@ -64,7 +64,7 @@ function add_variable_connections_invested_available!(m::Model)
         m,
         :connections_invested_available,
         connections_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=connections_invested_available_int,
         fix_value=fix_connections_invested_available,
         internal_fix_value=internal_fix_connections_invested_available,

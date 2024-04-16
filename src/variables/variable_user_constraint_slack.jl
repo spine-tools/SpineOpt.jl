@@ -41,12 +41,12 @@ end
     add_variable_user_constraint_slack_pos!(m::Model)
 """
 function add_variable_user_constraint_slack_pos!(m::Model)
-    add_variable!(m, :user_constraint_slack_pos, user_constraint_slack_indices; lb=Constant(0))
+    add_variable!(m, :user_constraint_slack_pos, user_constraint_slack_indices; lb=constant(0))
 end
 
 """
     add_variable_user_constraint_slack_neg!(m::Model)
 """
 function add_variable_user_constraint_slack_neg!(m::Model)
-    add_variable!(m, :user_constraint_slack_neg, user_constraint_slack_indices; lb=Constant(0))
+    add_variable!(m, :user_constraint_slack_neg, user_constraint_slack_indices; lb=constant(0))
 end

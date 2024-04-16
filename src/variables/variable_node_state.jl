@@ -33,6 +33,22 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
     )
 end
 
+function node_state_ub_as_number(; node, kwargs...)
+    node_state_cap(; node=node, kwargs..., _default=NaN) * (
+        + number_of_storages(; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + candidate_storages(; node=node, kwargs..., _default=0)
+    )
+end
+
+function node_state_ub_as_call(; node, kwargs...)
+    node_state_cap[(; node=node, kwargs..., _default=NaN)] * (
+        + number_of_storages[(; node=node, kwargs..., _default=_default_nb_of_storages(node))]
+        + candidate_storages[(; node=node, kwargs..., _default=0)]
+    )
+end
+
+_default_nb_of_storages(n) = is_candidate(node=n) ? 0 : 1
+
 """
     add_variable_node_state!(m::Model)
 
@@ -44,6 +60,7 @@ function add_variable_node_state!(m::Model)
         :node_state,
         node_state_indices;
         lb=node_state_min,
+        ub=FlexParameter(node_state_ub_as_number, node_state_ub_as_call),
         fix_value=fix_node_state,
         initial_value=initial_node_state,
     )

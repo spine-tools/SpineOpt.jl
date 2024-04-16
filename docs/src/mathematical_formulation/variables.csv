@@ -20,7 +20,6 @@ storages_invested_available,"(node=n, stochastic_scenario=s, t=t)",storages_inve
 unit_flow,"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",unit_flow_indices,Commodity flow associated with node ``n`` over the unit ``u`` in the direction ``d`` for the stochastic scenario ``s`` at timestep ``t``,
 unit_flow_op,"(unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)",unit_flow_op_indices,Contribution of the unit flow assocaited with operating point ``i``,
 unit_flow_op_active,"(unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)",unit_flow_op_indices,Control the activation of operating point ``i`` of units,
-units_available,"(unit=u, stochastic_scenario=s, t=t)",units_on_indices,Number of available units ``u`` for the stochastic scenario ``s`` at timestep ``t``,
 units_invested,"(unit=u, stochastic_scenario=s, t=t)",units_invested_available_indices,Number of units ``u`` for the stochastic scenario ``s``  invested in at timestep ``t``,
 units_invested_available,"(unit=u, stochastic_scenario=s, t=t)",units_invested_available_indices,Number of invested units ``u``  that are available still the stochastic scenario ``s`` at timestep ``t``,
 units_mothballed,"(unit=u, stochastic_scenario=s, t=t)",units_invested_available_indices,Number of units ``u`` for the stochastic scenariocenario ``s``  mothballed at timestep ``t``,

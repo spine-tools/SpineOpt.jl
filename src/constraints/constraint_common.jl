@@ -52,9 +52,13 @@ function _scens_by_t(indices)
     scens_by_t
 end
 
-function past_units_on_indices(m, u, s_path, t, min_time)
+past_units_on_indices(args...) = past_unit_indices(units_on_indices, args...)
+
+past_units_out_of_service_indices(args...) = past_unit_indices(units_out_of_service_indices, args...)
+
+function past_unit_indices(indices, m, u, s_path, t, min_time)
     t0 = _analysis_time(m)
-    units_on_indices(
+    indices(
         m;
         unit=u,
         stochastic_scenario=s_path,

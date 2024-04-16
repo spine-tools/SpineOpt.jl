@@ -53,7 +53,7 @@ See also
 [ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_unit_flow_op_bounds!(m::Model)
-    @fetch units_on, unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables
+    @fetch unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_op_bounds] = Dict(
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
@@ -62,7 +62,7 @@ function add_constraint_unit_flow_op_bounds!(m::Model)
             <=
             (
                 ordered_unit_flow_op(unit = u, node=n, direction=d, _default=false) ? 
-                unit_flow_op_active[u, n, d, op, s, t] : units_on[u, s, t]
+                unit_flow_op_active[u, n, d, op, s, t] : _get_units_on(m, u, s, t)
             )
             * (
                 + operating_points(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)

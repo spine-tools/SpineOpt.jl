@@ -27,7 +27,7 @@ function add_variable_units_started_up!(m::Model)
         m,
         :units_started_up,
         units_switched_indices;
-        lb=Constant(0),
+        lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
         replacement_value=units_switched_replacement_value,

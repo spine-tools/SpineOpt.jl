@@ -62,9 +62,39 @@ function _load_test_data_without_template(db_url, test_data)
     SpineInterface.import_data(db_url; test_data...)
 end
 
-function _is_constraint_equal(x, y)
-    x_terms, y_terms = x.func.terms, y.func.terms
-    x.set == y.set && keys(x_terms) == keys(y_terms) && all(isapprox(x_terms[k], y_terms[k]) for k in keys(x_terms))
+function _is_constraint_equal(left, right)
+    if !_is_constraint_equal_kernel(left, right)
+        @show left
+        @show right
+        false
+    else
+        true
+    end
+end
+
+function _is_constraint_equal_kernel(left, right)
+    if left.set != right.set
+        @error string(left.set, " != ", right.set)
+        return false
+    end
+    left_terms, right_terms = left.func.terms, right.func.terms
+    missing_in_right = setdiff(keys(left_terms), keys(right_terms))
+    if !isempty(missing_in_right)
+        @error string("missing in right constraint", missing_in_right)
+        return false
+    end
+    missing_in_left = setdiff(keys(right_terms), keys(left_terms))
+    if !isempty(missing_in_left)
+        @error string("missing in left constraint", missing_in_left)
+        return false
+    end
+    for k in keys(left_terms)
+        if !isapprox(left_terms[k], right_terms[k])
+            @error string(left_terms[k], " != ", right_terms[k])
+            return false
+        end
+    end
+    return true
 end
 
 function _is_expression_equal(x, y)

@@ -354,11 +354,7 @@ end
 
 function _generate_call_update!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
-    temp_struct[:call_update] = if temp_struct[:window_count] == 1
-        (x; kwargs...) -> x(; kwargs...)
-    else
-        (x; kwargs...) -> x[(kwargs)]
-    end
+    temp_struct[:call_update] = temp_struct[:window_count] == 1 ? as_number : as_call
 end
 
 """
@@ -619,6 +615,8 @@ t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_ov
 
 representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, [t])
 
+_first_repr_t(m, t) = first(representative_time_slice(m, t))
+
 function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 end
@@ -813,4 +811,6 @@ function _t_extreme_resolution_sets!(m, t_dict, kw)
     t_dict
 end
 
-(x::Union{Parameter,Constant})(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:call_update](x; kwargs...)
+function (x::Union{Parameter,FlexParameter})(m::Model; kwargs...)
+    m.ext[:spineopt].temporal_structure[:call_update](x; kwargs...)
+end

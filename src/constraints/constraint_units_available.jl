@@ -56,7 +56,7 @@ constraint generation.
 function constraint_units_available_indices(m::Model)
     (
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, t) in unit_time_indices(m)
+        for (u, t) in unit_time_indices(m; unit=_activatable_unit())
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

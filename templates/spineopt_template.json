@@ -484,7 +484,6 @@
         ["output", "unit_flow_op", null],
         ["output", "unit_flow_op_active", null],
         ["output", "unit_investment_costs", null],
-        ["output", "units_available", null],
         ["output", "units_invested", null],
         ["output", "units_invested_available", null],
         ["output", "units_mothballed", null],
