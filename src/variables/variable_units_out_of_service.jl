@@ -30,16 +30,12 @@ function units_out_of_service_indices(
     )
 end
 
-function _deactivatable_unit()
-    unique(
-        Iterators.flatten(
-            (
-                indices(scheduled_outage_duration),
-                (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0),
-            )
-        )
-    )
-end
+"""
+    _deactivatable_unit()
+
+An `Array` of units that need a `units_out_of_service` and friends variables.
+"""
+_deactivatable_unit() = unit(is_deactivatable=true)
 
 """
     units_out_of_service_bin(x)

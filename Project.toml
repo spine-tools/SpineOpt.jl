@@ -17,6 +17,6 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 
 [compat]
-SpineInterface = "0.13.1"
+SpineInterface = "0.13.3"
 julia = "^1.2"
 JuMP = "^1.20"

@@ -44,6 +44,7 @@ function preprocess_data_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
     generate_unit_flow_capacity()
+    generate_unit_commitment_parameters()
 end
 
 """
@@ -531,7 +532,9 @@ TODO What is the purpose of this function? It clearly generates a number of `Rel
 """
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
-    node_with_min_capacity_margin_penalty = ObjectClass(:node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty)))
+    node_with_min_capacity_margin_penalty = ObjectClass(
+        :node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty))
+    )
     unit__node__direction__temporal_block = RelationshipClass(
         :unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
@@ -912,5 +915,48 @@ function generate_unit_flow_capacity()
     @eval begin
         unit_flow_capacity = $unit_flow_capacity
         export unit_flow_capacity
+    end
+end
+
+function generate_unit_commitment_parameters()
+    _switchable_unit_iter = Iterators.flatten(
+        (
+            indices(min_up_time),
+            indices(min_down_time),
+            indices(start_up_cost),
+            indices(shut_down_cost), 
+            (x.unit for x in indices(start_up_limit)),
+            (x.unit for x in indices(shut_down_limit)),
+            (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
+            (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+        )
+    )
+    _activatable_unit_iter = Iterators.flatten(
+        (
+            _switchable_unit_iter,
+            indices(units_on_cost),
+            indices(units_on_non_anticipativity_time),
+            (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
+            (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
+        )
+    )
+    _deactivatable_unit_iter = Iterators.flatten(
+        (indices(scheduled_outage_duration), (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0))
+    )
+    for (pname, iter) in (
+        (:is_switchable, _switchable_unit_iter),
+        (:is_activatable, _activatable_unit_iter),
+        (:is_deactivatable, _deactivatable_unit_iter),
+    )
+        add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unique(iter)))
+        add_object_parameter_defaults!(unit, Dict(pname => parameter_value(false)))
+    end
+    @eval begin
+        is_switchable = Parameter(:is_switchable, [unit])
+        is_activatable = Parameter(:is_activatable, [unit])
+        is_deactivatable = Parameter(:is_deactivatable, [unit])
+        export is_switchable
+        export is_activatable
+        export is_deactivatable
     end
 end

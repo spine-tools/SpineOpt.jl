@@ -39,6 +39,11 @@ function units_on_indices(
     )
 end
 
+"""
+    units_switched_indices(m; <keyword arguments>)
+
+Indices for the `units_started_up` and `units_shut_down`.
+"""
 function units_switched_indices(
     m::Model;
     unit=anything,
@@ -55,36 +60,19 @@ function units_switched_indices(
     )
 end
 
-function _activatable_unit()
-    unique(
-        Iterators.flatten(
-            (
-                _switchable_unit(),
-                indices(units_on_cost),
-                indices(units_on_non_anticipativity_time),
-                (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
-                (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
-            )
-        )
-    )
-end
+"""
+    _activatable_unit()
 
-function _switchable_unit()
-    unique(
-        Iterators.flatten(
-            (
-                indices(min_up_time),
-                indices(min_down_time),
-                indices(start_up_cost),
-                indices(shut_down_cost), 
-                (x.unit for x in indices(start_up_limit)),
-                (x.unit for x in indices(shut_down_limit)),
-                (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
-                (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
-            )
-        )
-    )
-end
+An `Array` of units that need a `units_on` variable.
+"""
+_activatable_unit() = unit(is_activatable=true)
+
+"""
+    _switchable_unit()
+
+An `Array` of units that need a `units_started_up` and `units_shut_down` variables.
+"""
+_switchable_unit() = unit(is_switchable=true)
 
 """
     units_on_bin(x)

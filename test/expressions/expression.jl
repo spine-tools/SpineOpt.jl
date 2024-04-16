@@ -142,8 +142,8 @@ function test_expression_capacity_margin()
             unit_ab = unit(:unit_ab)
             d_f = direction(:from_node)
             d_t = direction(:to_node)
-            var_uon_b = var_units_on[unit_b, s, t]
-            var_uon_ab = var_units_on[unit_ab, s, t2]
+            var_uon_b = get(var_units_on, (unit_b, s, t), 1)
+            var_uon_ab = get(var_units_on, (unit_ab, s, t2), 1)
             var_uff_cb = var_unit_flow[unit_cb, n, d_f, s, t]
             var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]
      

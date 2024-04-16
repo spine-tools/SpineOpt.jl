@@ -29,21 +29,21 @@ The units on status is constrained by shutting down and starting up actions. Thi
 ```
 """
 function add_constraint_unit_state_transition!(m::Model)
-    @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
+    @fetch units_started_up, units_shut_down = m.ext[:spineopt].variables
     # TODO: add support for units that start_up over multiple timesteps?
     # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
     m.ext[:spineopt].constraints[:unit_state_transition] = Dict(
         (unit=u, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
             m,
             sum(
-                + get(units_on, (u, s, t_after), 0)
+                + _get_units_on(m, u, s, t_after)
                 - get(units_started_up, (u, s, t_after), 0)
                 + get(units_shut_down, (u, s, t_after), 0)
                 for s in s_path;
                 init=0,
             )
             ==
-            sum(get(units_on, (u, s, t_before), 0) for s in s_path; init=0)
+            sum(_get_units_on(m, u, s, t_before) for s in s_path; init=0)
         )
         for (u, s_path, t_before, t_after) in constraint_unit_state_transition_indices(m)
     )
