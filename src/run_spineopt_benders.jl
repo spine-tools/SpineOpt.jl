@@ -40,7 +40,7 @@ function run_spineopt_benders!(
 		@log log_level 0 "\nStarting Benders iteration $j"
         j == 2 && undo_force_starting_investments!()
         solve_model!(m_mp; log_level=log_level, rewind=false) || break
-        @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m, m_mp)
+        @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
         solve_model!(
             m;
             log_level=log_level,

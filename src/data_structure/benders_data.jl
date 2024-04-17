@@ -60,13 +60,13 @@ function _window_time_series(by_t)
     TimeSeries(inds, vals)
 end
 
-function process_master_problem_solution(m, m_mp)
-    _save_mp_values!(unit, m, m_mp, :units_invested_available)
-    _save_mp_values!(connection, m, m_mp, :connections_invested_available)
-    _save_mp_values!(node, m, m_mp, :storages_invested_available)
+function process_master_problem_solution(m_mp, m)
+    _save_mp_values!(unit, m_mp, m, :units_invested_available)
+    _save_mp_values!(connection, m_mp, m, :connections_invested_available)
+    _save_mp_values!(node, m_mp, m, :storages_invested_available)
 end
 
-function _save_mp_values!(obj_cls, m, m_mp, var_name)
+function _save_mp_values!(obj_cls, m_mp, m, var_name)
     benders_param_name = Symbol(:internal_fix_, var_name)
     pval_by_ent = _pval_by_entity(m_mp.ext[:spineopt].values[var_name])
     pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
