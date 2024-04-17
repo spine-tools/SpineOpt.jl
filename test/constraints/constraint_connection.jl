@@ -172,6 +172,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
         relationships = [
             ["connection__to_node", ["connection_ab", "node_a"]],
         ]
+        object_parameter_values = [["model", "instance", "use_tight_compact_formulations", true]]
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity_from_a],
             ["connection__to_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity_to_a],
@@ -179,6 +180,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
         SpineInterface.import_data(
             url_in;
             relationships=relationships,
+            object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -214,6 +216,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
         object_parameter_values = [
             ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
             ["connection", "connection_ab", "candidate_connections", 1],
+            ["model", "instance", "use_tight_compact_formulations", true],
         ]
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity_from_a],
