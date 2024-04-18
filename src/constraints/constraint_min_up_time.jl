@@ -65,7 +65,7 @@ function add_constraint_min_up_time!(m::Model)
 end
 
 function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
-    unique(
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_up_time)
         for (u, t) in unit_time_indices(m; unit=u)

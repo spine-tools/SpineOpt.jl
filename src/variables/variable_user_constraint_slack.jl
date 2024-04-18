@@ -27,15 +27,14 @@ function user_constraint_slack_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    inds = NamedTuple{(:user_constraint, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
+    (
         (user_constraint=uc, stochastic_scenario=ind.stochastic_scenario, t=ind.t)
         for uc in indices(user_constraint_slack_penalty; user_constraint=user_constraint)
         for inds in user_constraint_all_indices(
             m; user_constraint=uc, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
         )
         for ind in inds
-    ]
-    unique!(inds)
+    )
 end
 
 """

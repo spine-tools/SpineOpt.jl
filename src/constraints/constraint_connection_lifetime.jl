@@ -45,7 +45,7 @@ function add_constraint_connection_lifetime!(m::Model)
 end
 
 function constraint_connection_lifetime_indices(m::Model)
-    unique(
+    (
         (connection=conn, stochastic_path=path, t=t)
         for conn in indices(connection_investment_lifetime)
         for (conn, t) in connection_investment_time_indices(m; connection=conn)

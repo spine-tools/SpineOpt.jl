@@ -51,11 +51,7 @@ function add_constraint_min_node_pressure!(m::Model)
 end
 
 function constraint_min_node_pressure_indices(m::Model)
-    unique(
-        (node=ng, stochastic_path=path, t=t)
-        for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure))
-        for path in active_stochastic_paths(m, s)
-    )
+    ((node=ng, stochastic_path=[s], t=t) for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure)))
 end
 
 """

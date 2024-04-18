@@ -17,6 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+function units_out_of_service_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    unit_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block,
+    )
+end
+
 """
     units_out_of_service_bin(x)
 
@@ -57,7 +69,7 @@ function add_variable_units_out_of_service!(m::Model)
     add_variable!(
         m,
         :units_out_of_service,
-        units_on_indices;
+        units_out_of_service_indices;
         lb=constant(0),
         bin=units_out_of_service_bin,
         int=units_out_of_service_int,

@@ -102,7 +102,7 @@ function add_constraint_non_spinning_reserves_shut_down_upper_bound!(m::Model)
 end
 
 function constraint_non_spinning_reserves_bounds_indices(m::Model)
-    unique(
+    (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
         if any(is_reserve_node(node=n) && is_non_spinning(node=n) for n in members(ng))

@@ -112,9 +112,11 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
         if _check_ptdf_duration(m, t, conn)
         for path in active_stochastic_paths(
             m,
-            vcat(
-                connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
-                collect(node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t)),
+            Iterators.flatten(
+                (
+                    connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
+                    node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t),
+                )
             )
         )
     )

@@ -26,7 +26,7 @@ function add_variable_units_shut_down!(m::Model)
     add_variable!(
         m,
         :units_shut_down,
-        units_on_indices;
+        units_switched_indices;
         lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,

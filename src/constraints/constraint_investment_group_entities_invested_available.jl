@@ -56,18 +56,20 @@ function add_constraint_investment_group_maximum_entities_invested_available!(m:
 end
 
 function _entities_invested_available_s_t(m)
-    [
+    (
         (stochastic_scenario=s, t=t)
         for (t, path) in t_lowest_resolution_path(
             m,
-            vcat(
-                units_invested_available_indices(m),
-                connections_invested_available_indices(m),
-                storages_invested_available_indices(m)
+            Iterators.flatten(
+                (
+                    units_invested_available_indices(m),
+                    connections_invested_available_indices(m),
+                    storages_invested_available_indices(m),
+                )
             )
         )
         for s in path
-    ]
+    )
 end
 
 function _group_entities_invested_available(m, ig, s, t)
