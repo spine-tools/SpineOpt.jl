@@ -32,13 +32,13 @@ The aggregated available units are constrained by the parameter [number\_of\_uni
 See also [number\_of\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
-    @fetch units_available, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
+    @fetch units_on, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
             + sum(
-                + units_available[u, s, t] 
+                + units_on[u, s, t] 
                 + units_out_of_service[u, s, t]
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,

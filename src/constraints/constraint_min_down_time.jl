@@ -95,7 +95,7 @@ end
 Form the stochastic indexing Array for the `:min_down_time` constraint.
 
 Uses stochastic path indices due to potentially different stochastic structures between `units_on`,
-`units_available`, `units_shut_down`, and `nonspin_units_started_up` variables on past time slices.
+`units_shut_down`, and `nonspin_units_started_up` variables on past time slices.
 Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_min_down_time_indices_filtered(m::Model; unit=anything, stochastic_path=anything, t=anything)

@@ -10,7 +10,7 @@ objective_function_reference_values = Dict(
 @testset for path in readdir(joinpath(dirname(@__DIR__), "examples"); join=true)
     if splitext(path)[end] == ".json"
         input_data = JSON.parsefile(path)
-        m = run_spineopt(input_data, nothing; log_level=3)        
+        m = run_spineopt(input_data, nothing; log_level=0)        
         @test termination_status(m) == MOI.OPTIMAL
         if haskey(objective_function_reference_values, basename(path))
             mip_cases = ["6_unit_system.json", "unit_commitment.json"]
