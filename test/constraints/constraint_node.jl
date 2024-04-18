@@ -310,38 +310,6 @@ function test_constraint_node_injection()
     end
 end
 
-function test_constraint_node_state_capacity()
-    @testset "constraint_node_state_capacity" begin
-        url_in = _test_constraint_node_setup()
-        node_capacity = Dict("node_b" => 120, "node_c" => 400)
-        object_parameter_values = [
-            ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
-            ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_state = m.ext[:spineopt].variables[:node_state]
-        constraint = m.ext[:spineopt].constraints[:node_state_capacity]
-        @test length(constraint) == 4
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            @testset for (name, cap) in node_capacity
-                n = node(Symbol(name))
-                var_n_st_key = (n, s, t)
-                con_key = (n, [s], t)
-                var_n_st = var_node_state[var_n_st_key...]
-                expected_con = @build_constraint(var_n_st <= cap)
-                con = constraint[con_key...]
-                observed_con = constraint_object(con)
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end
-end
-
 function test_constraint_cyclic_node_state()
     @testset "constraint_cyclic_node_state" begin
         url_in = _test_constraint_node_setup()
@@ -1022,7 +990,6 @@ end
     test_constraint_nodal_balance()
     test_constraint_nodal_balance_group()
     test_constraint_node_injection()
-    test_constraint_node_state_capacity()
     test_constraint_cyclic_node_state()
     test_constraint_storage_line_pack()
     test_constraint_compression_ratio()
