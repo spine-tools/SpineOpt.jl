@@ -28,12 +28,12 @@ function add_constraint_non_spinning_reserves_lower_bound!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t) => @constraint(
             m,
             sum(
-                + minimum_operating_point[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=0)
-                ]
-                * unit_capacity[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over)
-                ]
+                + minimum_operating_point(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=0
+                )
+                * unit_capacity(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over
+                )
                 * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_over]
                 * min(duration(t), duration(t_over))
                 for (u, n, s, t_over) in _switch(
@@ -75,12 +75,12 @@ function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Par
             )
             <=
             sum(
-                + limit[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=1)
-                ]
-                * unit_capacity[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over)
-                ]
+                + limit(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over, _default=1
+                )
+                * unit_capacity(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_over
+                )
                 * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_over]
                 * min(duration(t), duration(t_over))
                 for (u, n, s, t_over) in _switch(

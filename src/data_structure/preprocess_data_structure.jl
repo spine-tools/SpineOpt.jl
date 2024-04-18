@@ -43,6 +43,7 @@ function preprocess_data_structure()
     generate_benders_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
+    generate_unit_flow_capacity()
 end
 
 """
@@ -530,7 +531,9 @@ TODO What is the purpose of this function? It clearly generates a number of `Rel
 """
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
-    node_with_min_capacity_margin_penalty = ObjectClass(:node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty)))
+    node_with_min_capacity_margin_penalty = ObjectClass(
+        :node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty))
+    )
     unit__node__direction__temporal_block = RelationshipClass(
         :unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
@@ -825,6 +828,7 @@ function generate_internal_fix_investments()
             for obj in indices(candidates)
         )
         add_object_parameter_values!(class, pvals)
+        add_object_parameter_defaults!(class, Dict(pname => parameter_value(nothing)))
         @eval $pname = $parameter
     end
 end
@@ -890,3 +894,26 @@ function generate_is_boundary()
         export is_boundary_connection
     end
 end
+
+function generate_unit_flow_capacity()
+    for class in classes(unit_capacity)
+        new_pvals = Dict(
+            (u, n, d) => Dict(
+                :unit_flow_capacity => parameter_value(
+                    + unit_capacity(unit=u, node=n, direction=d)
+                    * unit_availability_factor(unit=u)
+                    * unit_conv_cap_to_flow(unit=u, node=n, direction=d)
+                )
+            )
+            for (u, n, d) in indices(unit_capacity, class)
+        )
+        add_relationship_parameter_values!(class, new_pvals)
+        add_relationship_parameter_defaults!(class, Dict(:unit_flow_capacity => parameter_value(nothing)))
+    end
+    unit_flow_capacity = Parameter(:unit_flow_capacity, classes(unit_capacity))
+    @eval begin
+        unit_flow_capacity = $unit_flow_capacity
+        export unit_flow_capacity
+    end
+end
+

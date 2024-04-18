@@ -1071,7 +1071,6 @@ function test_constraint_min_scheduled_outage_duration()
     end
 end
 
-
 function test_constraint_min_up_time_with_non_spinning_reserves()
     @testset "constraint_min_up_time_with_non_spinning_reserves" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")

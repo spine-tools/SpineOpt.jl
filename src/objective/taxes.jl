@@ -30,7 +30,7 @@ function taxes(m::Model, t_range)
         + sum(
             + unit_flow[u, n, d, s, t]
             * duration(t)
-            * tax_net_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * tax_net_unit_flow(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (n,) in indices(tax_net_unit_flow)
@@ -40,7 +40,7 @@ function taxes(m::Model, t_range)
         - sum(
             + unit_flow[u, n, d, s, t]
             * duration(t)
-            * tax_net_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * tax_net_unit_flow(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (n,) in indices(tax_net_unit_flow)
@@ -50,7 +50,7 @@ function taxes(m::Model, t_range)
         + sum(
             + unit_flow[u, n, d, s, t]
             * duration(t)
-            * tax_out_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * tax_out_unit_flow(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (n,) in indices(tax_out_unit_flow)
@@ -60,7 +60,7 @@ function taxes(m::Model, t_range)
         + sum(
             unit_flow[u, n, d, s, t]
             * duration(t)
-            * tax_in_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * tax_in_unit_flow(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (n,) in indices(tax_in_unit_flow)

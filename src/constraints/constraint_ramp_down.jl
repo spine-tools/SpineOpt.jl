@@ -97,11 +97,11 @@ function add_constraint_ramp_down!(m::Model)
             + (
                 + sum(
                     + (
-                        + _shut_down_limit(u, ng, d, s, t0, t_after)
-                        - _minimum_operating_point(u, ng, d, s, t0, t_after)
-                        - _ramp_down_limit(u, ng, d, s, t0, t_after)
+                        + _shut_down_limit(m, u, ng, d, s, t0, t_after)
+                        - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
+                        - _ramp_down_limit(m, u, ng, d, s, t0, t_after)
                     )
-                    * _unit_flow_capacity(u, ng, d, s, t0, t_after)
+                    * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
                     * units_shut_down[u, s, t]
                     * duration(t)
                     - _minimum_operating_point(u, ng, d, s, t0, t_after)
@@ -109,15 +109,18 @@ function add_constraint_ramp_down!(m::Model)
                     * units_on[u, s, t]
                     * duration(t)
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
-                    init=0
+                    init=0,
                 )
                 + sum(
-                    + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_down_limit(u, ng, d, s, t0, t_after))
-                    * _unit_flow_capacity(u, ng, d, s, t0, t_after)
+                    + (
+                        + _minimum_operating_point(m, u, ng, d, s, t0, t_after)
+                        + _ramp_down_limit(m, u, ng, d, s, t0, t_after)
+                    )
+                    * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
                     * units_on[u, s, t]
                     * duration(t)
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
-                    init=0
+                    init=0,
                 )
             )
             * duration(t_after)
@@ -126,8 +129,8 @@ function add_constraint_ramp_down!(m::Model)
     )
 end
 
-function _ramp_down_limit(u, ng, d, s, t0, t)
-    ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
+function _ramp_down_limit(m, u, ng, d, s, t0, t)
+    ramp_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)
 end
 
 function constraint_ramp_down_indices(m::Model)

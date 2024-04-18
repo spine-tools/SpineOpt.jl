@@ -27,7 +27,7 @@ function add_variable_units_taken_out_of_service!(m::Model)
         m,
         :units_taken_out_of_service,
         units_on_indices;
-        lb=Constant(0),
+        lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
         replacement_value=units_out_of_service_switched_replacement_value,

@@ -34,6 +34,6 @@ Add `units_on` variables to model `m`.
 """
 function add_variable_mp_min_res_gen_to_demand_ratio_slack!(m::Model)
     add_variable!(
-        m, :mp_min_res_gen_to_demand_ratio_slack, mp_min_res_gen_to_demand_ratio_slack_indices; lb=Constant(0)
+        m, :mp_min_res_gen_to_demand_ratio_slack, mp_min_res_gen_to_demand_ratio_slack_indices; lb=constant(0)
     )
 end

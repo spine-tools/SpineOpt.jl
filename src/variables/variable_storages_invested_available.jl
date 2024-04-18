@@ -62,7 +62,7 @@ function add_variable_storages_invested_available!(m::Model)
         m,
         :storages_invested_available,
         storages_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=storages_invested_available_int,
         fix_value=fix_storages_invested_available,
         internal_fix_value=internal_fix_storages_invested_available,

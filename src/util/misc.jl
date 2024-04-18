@@ -70,21 +70,18 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
-function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
-    Base.get(d, NamedTuple{J}(key), default)
+struct FlexParameter
+    as_number
+    as_call
 end
 
-function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
-end
+as_number(p::Parameter; kwargs...) = p(; kwargs...)
+as_number(x::FlexParameter; kwargs...) = x.as_number(; kwargs...)
 
-_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
-_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+as_call(p::Parameter; kwargs...) = p[kwargs]
+as_call(x::FlexParameter; kwargs...) = x.as_call(; kwargs...)
 
-function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
-end
+constant(x::Number) = FlexParameter((; kwargs...) -> x, (; kwargs...) -> Call(x))
 
 """
     sense_constraint(m, lhs, sense::Symbol, rhs)
@@ -154,12 +151,6 @@ function get_module(module_name)
         end
     end
 end
-
-struct Constant
-    value
-end
-
-Base.getindex(c::Constant, _x) = Call(c.value)
 
 name_from_fn(fn) = split(split(string(fn), "add_")[2], "!")[1]
 
@@ -276,4 +267,25 @@ end
 
 function _call_event_handlers(m, event, args...; kwargs...)
     (fn -> fn(m, args...; kwargs...)).(m.ext[:spineopt].event_handlers[event])
+end
+
+# Base
+function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
+    Base.get(d, NamedTuple{J}(key), default)
+end
+function Base.get(f::Function, d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
+    Base.get(f, d, NamedTuple{J}(key))
+end
+
+Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
+
+function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
+    Base.haskey(d, NamedTuple{J}(key))
+end
+
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
+function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
+    Base.getindex(d, NamedTuple{J}(key))
 end

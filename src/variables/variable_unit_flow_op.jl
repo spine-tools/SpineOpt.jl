@@ -64,7 +64,7 @@ function add_variable_unit_flow_op!(m::Model)
         m,
         :unit_flow_op,
         unit_flow_op_indices;
-        lb=Constant(0),
+        lb=constant(0),
         fix_value=fix_unit_flow_op,
         initial_value=initial_unit_flow_op,
     )

@@ -51,7 +51,7 @@ function add_constraint_units_available!(m::Model)
                 init=0,
             )            
             <=
-            number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+            number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
         )
         for (u, s, t) in constraint_units_available_indices(m)
     )

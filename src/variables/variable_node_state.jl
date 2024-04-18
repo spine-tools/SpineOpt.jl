@@ -33,6 +33,8 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
     )
 end
 
+_default_nb_of_storages(n) = is_candidate(node=n) ? 0 : 1
+
 """
     add_variable_node_state!(m::Model)
 
