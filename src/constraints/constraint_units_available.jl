@@ -39,7 +39,7 @@ function add_constraint_units_available!(m::Model)
             m,
             + sum(
                 + units_on[u, s, t] 
-                + units_out_of_service[u, s, t]
+                + _get_units_out_of_service(m, u, s, t)
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
@@ -66,7 +66,7 @@ constraint generation.
 function constraint_units_available_indices(m::Model)
     (
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, t) in unit_time_indices(m)
+        for (u, t) in unit_time_indices(m; unit=_activatable_unit())
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

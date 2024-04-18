@@ -24,10 +24,18 @@ function units_out_of_service_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
+    unit = intersect(unit, _deactivatable_unit())
     unit_stochastic_time_indices(
         m; unit=unit, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block,
     )
 end
+
+"""
+    _deactivatable_unit()
+
+An `Array` of units that need a `units_out_of_service` and friends variables.
+"""
+_deactivatable_unit() = unit(is_deactivatable=true)
 
 """
     units_out_of_service_bin(x)
@@ -78,4 +86,10 @@ function add_variable_units_out_of_service!(m::Model)
         replacement_value=units_out_of_service_replacement_value,
         required_history_period=maximum_parameter_value(scheduled_outage_duration),        
     )
+end
+
+function _get_units_out_of_service(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do
+        units_unavailable(m; unit=u, stochastic_scenario=s, analysis_time=_analysis_time(m), t=t)
+    end
 end

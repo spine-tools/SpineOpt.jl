@@ -64,7 +64,7 @@ See also
 [unit\_conv\_cap\_to\_flow](@ref)
 """
 function add_constraint_minimum_operating_point!(m::Model)
-    @fetch unit_flow, units_on, nonspin_units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
+    @fetch unit_flow, nonspin_units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:minimum_operating_point] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t) => @constraint(
@@ -88,7 +88,7 @@ function add_constraint_minimum_operating_point!(m::Model)
             >=
             + sum(
                 (
-                    + units_on[u, s, t_over]
+                    + _get_units_on(m, u, s, t_over)
                     - sum(
                         _switch(
                             d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
@@ -103,7 +103,9 @@ function add_constraint_minimum_operating_point!(m::Model)
                 * minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
                 * unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
                 * unit_conv_cap_to_flow(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-                for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+                for (u, s, t_over) in unit_stochastic_time_indices(
+                    m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+                );
                 init=0,
             )
         )

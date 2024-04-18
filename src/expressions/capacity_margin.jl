@@ -106,13 +106,9 @@ function add_expression_capacity_margin!(m::Model)
                 )
                 * (
                     + sum(
-                        + units_on[u, s, t_ua]
-                        for (u, s, t_ua) in units_on_indices(
-                            m;
-                            unit=u,
-                            stochastic_scenario=s_path,
-                            t=t_overlaps_t(m; t=t),
-                            temporal_block=anything,
+                        + _get_units_on(m, u, s, t_uon)
+                        for (u, s, t_uon) in unit_stochastic_time_indices(
+                            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t), temporal_block=anything
                         );
                         init=0,
                     )
