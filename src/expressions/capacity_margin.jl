@@ -119,7 +119,7 @@ function add_expression_capacity_margin!(m::Model)
                 )
                 * (                   
                     + sum(
-                        + units_available[u, s, t_ua]
+                        + units_on[u, s, t_ua]
                         for (u, s, t_ua) in units_on_indices(
                             m;
                             unit=u,
