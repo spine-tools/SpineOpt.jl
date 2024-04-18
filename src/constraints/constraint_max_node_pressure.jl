@@ -39,7 +39,7 @@ function add_constraint_max_node_pressure!(m::Model)
             m,
             + sum(
                 + node_pressure[n, s, t]
-                - max_node_pressure[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+                - max_node_pressure(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
                 for (n, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t);
                 init=0,
             )

@@ -42,4 +42,4 @@ end
 
 Add `min_capacity_margin_slack` variables to model `m`.
 """
-add_variable_min_capacity_margin_slack!(m::Model) = add_variable!(m, :min_capacity_margin_slack, min_capacity_margin_slack_indices; lb=Constant(0))
+add_variable_min_capacity_margin_slack!(m::Model) = add_variable!(m, :min_capacity_margin_slack, min_capacity_margin_slack_indices; lb=constant(0))

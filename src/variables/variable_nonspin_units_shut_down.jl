@@ -51,7 +51,7 @@ function add_variable_nonspin_units_shut_down!(m::Model)
         m,
         :nonspin_units_shut_down,
         nonspin_units_shut_down_indices;
-        lb=Constant(0),
+        lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_nonspin_units_shut_down,

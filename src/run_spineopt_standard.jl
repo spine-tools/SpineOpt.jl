@@ -253,7 +253,7 @@ function _create_objective_terms!(m)
     for term in objective_terms(
         m; operations=true, investments=model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
     )
-        func = eval(term)
+        func = getproperty(SpineOpt, term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
 end

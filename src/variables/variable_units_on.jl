@@ -69,7 +69,6 @@ function units_switched_replacement_value(ind)
     end
 end
 
-
 """
     add_variable_units_on!(m::Model)
 
@@ -80,7 +79,7 @@ function add_variable_units_on!(m::Model)
         m,
         :units_on,
         units_on_indices;
-        lb=Constant(0),
+        lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_units_on,

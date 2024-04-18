@@ -952,7 +952,7 @@ function test_constraint_min_capacity_margin()
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:min_capacity_margin]

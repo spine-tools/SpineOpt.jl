@@ -42,7 +42,7 @@ function add_constraint_max_node_voltage_angle!(m::Model)
             m,
             + sum(
                 + node_voltage_angle[n, s, t]
-                - max_voltage_angle[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+                - max_voltage_angle(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
                 for (n, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s_path, t=t);
                 init=0,
             )

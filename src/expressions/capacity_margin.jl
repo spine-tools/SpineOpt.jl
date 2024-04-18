@@ -54,26 +54,22 @@ function add_expression_capacity_margin!(m::Model)
     m.ext[:spineopt].expressions[:capacity_margin] = Dict(
         (node=n, stochastic_path=s_path, t=t) => @expression(
             m,
-            - sum(                
-                + demand[
-                    (node=n, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))
-                ]                
+            - sum(
+                + demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 );
                 init=0,
             )
             - sum(
-                fractional_demand[
-                    (node=n, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))
-                ]
-                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=first(representative_time_slice(m, t)))]
+                fractional_demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
+                * demand(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 )
                 for ng in groups(n);
                 init=0,
-            )                                  
+            )
             # Commodity flows to storage units
             - sum(
                 unit_flow[u, n, d, s, t_short]
@@ -84,7 +80,8 @@ function add_expression_capacity_margin!(m::Model)
                     stochastic_scenario=s_path,
                     t=t,
                     temporal_block=anything,
-                ) if is_storage_unit(u);
+                )
+                if is_storage_unit(u);
                 init=0,
             )
             # Commodity flows from storage units
@@ -100,24 +97,14 @@ function add_expression_capacity_margin!(m::Model)
                 )
                 if is_storage_unit(u);
                 init=0,
-            )           
+            )
             # Conventional and Renewable Capacity
             + sum(
                 + sum(
-                    + unit_capacity[(unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    * unit_conv_cap_to_flow[
-                        (unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-                    ]
-                    for (u, n_, d, s, t_short) in unit_flow_indices(
-                        m;
-                        unit=u,
-                        node=n_,
-                        stochastic_scenario=s_path,
-                        t=t,
-                    )
+                    unit_flow_capacity(m; unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+                    for (u, n_, d, s, t_short) in unit_flow_indices(m; unit=u, node=n_, stochastic_scenario=s_path, t=t)
                 )
-                * (                   
+                * (
                     + sum(
                         + units_on[u, s, t_ua]
                         for (u, s, t_ua) in units_on_indices(
@@ -128,7 +115,7 @@ function add_expression_capacity_margin!(m::Model)
                             temporal_block=anything,
                         );
                         init=0,
-                    )                                           
+                    )
                 )
                 for (u, n_, d) in indices(unit_capacity; node=n, direction=direction(:to_node))
                 if !is_storage_unit(u)
@@ -167,14 +154,8 @@ end
 """
     is_storage_unit(u)
 
-    Determines whether the unit u is attached to a node with storage or not.
+Whether the unit u is attached to a node with storage or not.
 """
-
 function is_storage_unit(u)
-    for n in unit__from_node(unit=u, direction=direction(:from_node))
-        if has_state(node=n)
-            return true
-        end
-    end
-    false
+    any(has_state(node=n) for n in unit__from_node(unit=u, direction=direction(:from_node)))
 end

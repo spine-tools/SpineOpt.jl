@@ -178,9 +178,9 @@ function add_constraint_fix_node_pressure_point!(m::Model)
             <=
             + sum(
                 + node_pressure[n_orig, s, t]
-                * fixed_pressure_constant_1[
-                    (connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t),
-                ]
+                * fixed_pressure_constant_1(
+                    m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t
+                )
                 for (n_orig, s, t) in node_pressure_indices(
                     m; node=n_orig, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
                 );
@@ -188,9 +188,9 @@ function add_constraint_fix_node_pressure_point!(m::Model)
             )
             - sum(
                 + node_pressure[n_dest, s, t]
-                * fixed_pressure_constant_0[
-                    (connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t),
-                ]
+                * fixed_pressure_constant_0(
+                    m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t
+                )
                 for (n_dest, s, t) in node_pressure_indices(
                     m; node=n_dest, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
                 );
