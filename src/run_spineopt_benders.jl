@@ -26,8 +26,9 @@ function run_spineopt_benders!(
     write_as_roll,
     resume_file_path,
 )
+    add_event_handler!(process_subproblem_solution, m, :window_solved)
     add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
-    add_event_handler!(process_subproblem_solution!, m, :window_solved)
+    add_event_handler!(_save_sp_solution!, m, :window_solved)
     m_mp = master_model(m)
     _build_mp_model!(m_mp; log_level=log_level)
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]

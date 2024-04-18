@@ -78,13 +78,12 @@ function _save_mp_values!(obj_cls, m_mp, m, var_name)
     end
 end
 
-function process_subproblem_solution!(m, k; _kwargs...)
+function process_subproblem_solution(m, k)
     win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
     win_weight = win_weight !== nothing ? win_weight : 1.0
     _save_sp_marginal_values(m, k, win_weight)
     _save_sp_objective_value(m, k, win_weight)
     _save_sp_unit_flow(m)
-    _save_sp_solution!(m, k)
 end
 
 function _save_sp_marginal_values(m, k, win_weight)
