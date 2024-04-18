@@ -34,7 +34,7 @@ online units. This constraint is activated only when parameter [ordered\_unit\_f
 See also [operating\_points](@ref), [ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_operating_point_bounds!(m::Model)
-    @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
+    @fetch unit_flow_op_active = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
         (unit=u, node=n, direction=d, i=op, stochastic_path=s_path, t=t) => @constraint(
             m,
@@ -47,8 +47,10 @@ function add_constraint_operating_point_bounds!(m::Model)
             )
             <= 
             sum(
-                units_on[u, s, t]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_in_t(m; t_long=t));
+                _get_units_on(m, u, s, t)
+                for (u, s, t) in unit_stochastic_time_indices(
+                    m; unit=u, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+                );
                 init=0,
             )
         )

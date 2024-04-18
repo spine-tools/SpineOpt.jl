@@ -73,6 +73,7 @@ function _test_constraint_unit_setup()
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["unit", "unit_ab", "units_on_cost", 1],  # Just to have units_on variables
         ],
         :relationship_parameter_values => [
             [
@@ -216,7 +217,10 @@ end
 function test_constraint_unit_state_transition()
     @testset "constraint_unit_state_transition" begin
         url_in = _test_constraint_unit_setup()
-        object_parameter_values = [["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"]]
+        object_parameter_values = [
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "start_up_cost", 1],
+        ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]

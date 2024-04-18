@@ -890,7 +890,8 @@ function _test_only_linear_model_has_duals()
         objects = [["output", "bound_units_on"]]
         relationships = [["report__output", ["report_x", "bound_units_on"]]]
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"],
+            ["unit", "unit_ab", "units_on_cost", 1],  # To have units_on variables
         ]
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values

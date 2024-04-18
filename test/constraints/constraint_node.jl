@@ -945,6 +945,7 @@ function test_constraint_min_capacity_margin()
         object_parameter_values = [
             ["node", "node_b", "min_capacity_margin", margin_b],
             ["node", "node_b", "demand", demand_b],
+            ["unit", "unit_ab", "units_on_cost", 1],  # To have unis_on variables
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
