@@ -49,9 +49,8 @@ See also
 """
 
 function add_expression_capacity_margin!(m::Model)
-    @fetch unit_flow, units_available = m.ext[:spineopt].variables
+    @fetch unit_flow, units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    
     m.ext[:spineopt].expressions[:capacity_margin] = Dict(
         (node=n, stochastic_path=s_path, t=t) => @expression(
             m,
