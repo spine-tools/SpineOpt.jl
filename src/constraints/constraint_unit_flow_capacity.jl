@@ -167,6 +167,7 @@ function _term_unit_flow(m, u, ng, d, s_path, t)
 end
 
 function _term_flow_capacity(m, u, ng, d, s_path, t)
+    @fetch units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     sum(
         _unit_flow_capacity(m, u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
