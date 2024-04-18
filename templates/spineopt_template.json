@@ -187,6 +187,7 @@
         ["model", "model_type", "spineopt_standard", "model_type_list", "Used to identify model objects as relating to the master problem or operational sub problems (default)"],
         ["model", "roll_forward", null, null, "Defines how much the model moves ahead in time between solves in a rolling optimization. If null, everything is solved in as a single optimization."],
         ["model", "use_connection_intact_flow", true, "boolean_value_list", "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."],
+        ["model", "use_tight_compact_formulations", false, "boolean_value_list", "Whether to use tight and compact constraint formulations."],
         ["model", "window_duration", null, null, "The duration of the window in case it differs from roll_forward"],
         ["model", "window_weight", 1, null, "The weight of the window in the rolling subproblem"],
         ["model", "write_lodf_file", false, "boolean_value_list", "A boolean flag for whether the LODF values should be written to a results file."],

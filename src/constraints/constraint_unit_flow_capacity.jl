@@ -88,38 +88,31 @@ See also
 [shut\_down\_limit](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
+    if use_tight_compact_formulations(model=m.ext[:spineopt].instance, _default=false)
+        _add_constraint_unit_flow_capacity_tight_compact!(m)
+    else
+        _add_constraint_unit_flow_capacity_simple!(m)
+    end
+end
+
+function _add_constraint_unit_flow_capacity_tight_compact!(m::Model)
     @fetch (
-        unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_started_up, nonspin_units_shut_down
+        units_started_up, units_shut_down, nonspin_units_started_up, nonspin_units_shut_down
     ) = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t, t_next=t_next, case=case, part=part) => @constraint(
             m,
-            sum(
-                unit_flow[u, n, d, s, t_over] * overlap_duration(t_over, t)
-                for (u, n, d, s, t_over) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
-                ) 
-                if !is_reserve_node(node=n) || (
-                    is_reserve_node(node=n)
-                    && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
-                    && !is_non_spinning(node=n)
-                );
-                init=0,
-            )
+            + _term_unit_flow(m, u, ng, d, s_path, t)
             <=
-            + sum(
-                _unit_flow_capacity(m, u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
-                for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
-                init=0
-            )
+            + _term_flow_capacity(m, u, ng, d, s_path, t)
             - (
                 + sum(
                     + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
                     * _unit_flow_capacity(m, u, ng, d, s, t0, t)
                     * units_shut_down[u, s, t_after]
                     * duration(t_after)
-                    for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
+                    for (u, s, t_after) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
                     init=0
                 )
                 + sum(
@@ -145,7 +138,43 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 init=0
             )
         )
-        for (u, ng, d, s_path, t, t_next, case, part) in constraint_unit_flow_capacity_indices(m)
+        for (u, ng, d, s_path, t, t_next, case, part) in constraint_unit_flow_capacity_tight_compact_indices(m)
+    )
+end
+
+function _add_constraint_unit_flow_capacity_simple!(m::Model)
+    m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
+        (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t) => @constraint(
+            m,
+            + _term_unit_flow(m, u, ng, d, s_path, t)
+            <=
+            + _term_flow_capacity(m, u, ng, d, s_path, t)
+        )
+        for (u, ng, d, s_path, t) in constraint_unit_flow_capacity_indices(m)
+    )
+end
+
+function _term_unit_flow(m, u, ng, d, s_path, t)
+    @fetch unit_flow = m.ext[:spineopt].variables
+    sum(
+        unit_flow[u, n, d, s, t_over] * overlap_duration(t_over, t)
+        for (u, n, d, s, t_over) in unit_flow_indices(
+            m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+        )
+        if _is_regular_node(n, d);
+        init=0,
+    )
+end
+
+function _term_flow_capacity(m, u, ng, d, s_path, t)
+    @fetch units_on = m.ext[:spineopt].variables
+    t0 = _analysis_time(m)
+    sum(
+        _unit_flow_capacity(m, u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
+        for (u, s, t_over) in unit_stochastic_time_indices(
+            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+        );
+        init=0,
     )
 end
 
@@ -169,7 +198,7 @@ function _startup_margin(m, u, ng, d, s, t0, t, case, part)
     end
 end
 
-function constraint_unit_flow_capacity_indices(m::Model)
+function constraint_unit_flow_capacity_tight_compact_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
         for (u, ng, d) in indices(unit_capacity)
@@ -247,17 +276,32 @@ function _parts_by_case(last_mut_gt_dur)
     end
 end
 
-"""
-    constraint_unit_flow_capacity_indices_filtered(m::Model; filtering_options...)
+function constraint_unit_flow_capacity_indices(m::Model)
+    (
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(unit_capacity)
+        for t in t_highest_resolution(
+            m,
+            Iterators.flatten(
+                ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
+            )
+        )
+        for path in active_stochastic_paths(
+            m,
+            Iterators.flatten(
+                (
+                    units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t)),
+                    unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
+                )
+            )
+        )
+    )
+end
 
-Forms the stochastic indexing Array for the `:unit_flow_capacity` constraint.
-
-Uses stochastic path indices due to potentially different stochastic structures between `unit_flow` and `units_on`
-variables. Keyword arguments can be used to filter the resulting Array.
-"""
-function constraint_unit_flow_capacity_indices_filtered(
-    m::Model; unit=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
-)
-    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
-    filter(f, constraint_unit_flow_capacity_indices(m))
+function _is_regular_node(n, d)
+    !is_reserve_node(node=n) || (
+        is_reserve_node(node=n)
+        && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
+        && !is_non_spinning(node=n)
+    )
 end
