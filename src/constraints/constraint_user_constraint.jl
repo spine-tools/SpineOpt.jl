@@ -163,11 +163,11 @@ function add_constraint_user_constraint!(m::Model)
             + sum(
                 (   
                     + units_on[u, s, t1]
-                    * units_on_coefficient[(user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
+                    * units_on_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
                     + units_started_up[u, s, t1]
-                    * units_started_up_coefficient[
-                        (user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
-                    ]
+                    * units_started_up_coefficient(
+                        m; user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
+                    )
                 )
                 * min(duration(t1), duration(t))
                 for u in unit__user_constraint(user_constraint=uc)

@@ -104,8 +104,8 @@ function add_constraint_ramp_down!(m::Model)
                     * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
                     * units_shut_down[u, s, t]
                     * duration(t)
-                    - _minimum_operating_point(u, ng, d, s, t0, t_after)
-                    * _unit_flow_capacity(u, ng, d, s, t0, t_after)
+                    - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
+                    * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
                     * units_on[u, s, t]
                     * duration(t)
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
