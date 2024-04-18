@@ -167,7 +167,7 @@ end
     generate_conversion_to_discounted_annuities()
 
 The conversion_to_discounted_annuities factor translates the overnight costs of an investment
-into discounted (to the `dicount_year`) annual payments, distributed over the total
+into discounted (to the `discount_year`) annual payments, distributed over the total
 lifetime of the investment. Investment payments are assumed to increase linearly over the lead-time, and decrease
 linearly towards the end of the economic lifetime.
 
@@ -188,11 +188,11 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
         else
             stochastic_map_indices = []
             stochastic_map_vals = []
-            for s in unique([x.stochastic_scenario for x in investment_indices(m)]) #NOTE: this is specific to lifetimes in years
+            for s in unique([x.stochastic_scenario for x in investment_indices(m)]) 
                 timeseries_ind = []
                 timeseries_val = []
                 for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s, t=vintage_t) #TODO time and stoch dependent
+                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s, t=vintage_t) 
                     p_lt = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     if isnothing(p_lt)
                         p_lt = Year(0)
@@ -343,8 +343,6 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
     end
 end
 
-
-
 """
     generate_tech_discount_factor()
 
@@ -402,42 +400,39 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
     discounted_duration = Dict()
     _create_set_parameters_and_relationships()
     invest_stoch_struct = set_invest_stoch_struct[obj_cls]
-    invest_temporal_block = set_invest_temporal_block[obj_cls]
+    invest_temporal_block = set_invest_temporal_block[obj_cls] 
     param_name = set_discounted_duration[obj_cls]
 
-    
-    if use_milestone_years(model=instance)
+    if use_milestone_years(model=instance) 
         for id in obj_cls()
             if isempty(invest_temporal_block()) || isempty(invest_temporal_block(;Dict(obj_cls.name=>id,)...))
                 invest_temporal_block_ = model__default_investment_temporal_block(model=instance)
                 @warn "Using milestone year without investments is currently not supported; using default investment temporal block for $id"
             else
-                invest_temporal_block_ = invest_temporal_block(;Dict(obj_cls.name=>id,)...)
+                invest_temporal_block_ = invest_temporal_block(;Dict(obj_cls.name=>id,)...) # set specific investment temporal block
             end
-            if !isempty(invest_stoch_struct(;Dict(obj_cls.name=>id,)...))
+            if !isempty(invest_stoch_struct(;Dict(obj_cls.name=>id,)...)) 
                 stoch_map_val = []
                 stoch_map_ind = []
                 for s in invest_stoch_struct(;Dict(obj_cls.name=>id,)...)
-                    for (s_all,t) in stochastic_time_indices(m;temporal_block=invest_temporal_block_,stochastic_scenario=_find_children(s))
-                        timeseries_ind, timeseries_val = create_discounted_duration(m;stochastic_scenario=s, invest_temporal_block=t.block)
+                    for (s_all,t) in stochastic_time_indices(m; temporal_block=invest_temporal_block_, stochastic_scenario=_find_children(s))
+                        timeseries_ind, timeseries_val = create_discounted_duration(m; stochastic_scenario=s, invest_temporal_block= t.block)
                         push!(stoch_map_ind,s_all)
                         push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
                     end
                 end
                 obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
-            else
+            else 
                 timeseries_ind, timeseries_val = create_discounted_duration(m; invest_temporal_block=invest_temporal_block_)
                 obj_cls.parameter_values[id][param_name] = parameter_value(TimeSeries(timeseries_ind,timeseries_val,false,false))
             end
         end
-    else
+    else # if not using milestone years, we only need a discount rate for each year 
         for id in obj_cls()
             timeseries_ind = []
             timeseries_val = []
             for model_years in first(time_slice(m)).start.x:Year(1):last(time_slice(m)).end_.x+Year(1)
-                ### How to find overlapping stochastic scenarios?
-                ### TODO: should this be model start OR current_window?
-                discnt_rate = discount_rate(model=instance , t=model_years)
+                discnt_rate = discount_rate(model=instance, t=model_years)
                 val = discount_factor(instance,discnt_rate,model_years)
                 push!(timeseries_ind,model_years)
                 push!(timeseries_val,val)
@@ -450,6 +445,9 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
     end
 end
 """
+    Greate_discounted_duration()
+
+Create discounted duration of timeslices for each investment timeslice.
 """
 function create_discounted_duration(m;stochastic_scenario=nothing,invest_temporal_block=nothing)
     timeseries_ind = []
@@ -493,22 +491,21 @@ function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, 
     for id in indices(decom_cost)
         stochastic_map_indices = []
         stochastic_map_vals = []
-        for s in unique([x.stochastic_scenario for x in investment_indices(m)]) #NOTE: this is specific to lifetimes in years
+        for s in unique([x.stochastic_scenario for x in investment_indices(m)]) 
             timeseries_ind = []
             timeseries_val = []
-            for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                p_decom_t = decom_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+            for (u,s,vintage_t) in investment_indices(m; Dict(obj_cls.name=>id, :stochastic_scenario=>s)...)
+                p_decom_t = decom_time(; Dict(obj_cls.name=>id, :stochastic_scenario=>s, :t=>vintage_t)...)
                 if isnothing(p_decom_t)
                     p_decom_t = Year(0)
-                    #NOTE: if decom time not defined, assumed to be 0 years.
                 end
                 vintage_t_start = start(vintage_t)
                 end_of_decommissioning = vintage_t_start + p_decom_t
                 j = vintage_t_start
                 val = 0
-                discnt_rate = discount_rate(model=instance, stochastic_scenario=s) #TODO time and stoch dependent
+                discnt_rate = discount_rate(model=instance, stochastic_scenario=s) 
                 while j<= end_of_decommissioning
-                    val+= discount_factor(instance,discnt_rate,j) #payment_fraction would always be 1
+                    val+= discount_factor(instance,discnt_rate,j) 
                     j+= Year(1)
                 end
                 push!(timeseries_ind,start(vintage_t))
