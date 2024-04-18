@@ -58,6 +58,7 @@ function units_switched_indices(
     )
 end
 
+"""
     units_on_bin(x)
 
 Check if unit online variable type is defined as a binary.
