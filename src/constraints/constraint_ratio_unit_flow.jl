@@ -232,16 +232,18 @@ function add_constraint_min_ratio_in_out_unit_flow!(m::Model)
 end
 
 function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
-    unique(
+    (
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
         for (t, path) in t_lowest_resolution_path(
             m,
             unit_flow_indices(m; unit=u, node=[n1, n2]),
-            vcat(
-                unit_flow_indices(m; unit=u, node=n1, direction=d1),
-                unit_flow_indices(m; unit=u, node=n2, direction=d2),
-                units_on_indices(m; unit=u)
+            Iterators.flatten(
+                (
+                    unit_flow_indices(m; unit=u, node=n1, direction=d1),
+                    unit_flow_indices(m; unit=u, node=n2, direction=d2),
+                    units_on_indices(m; unit=u),
+                )
             ),
         )
     )

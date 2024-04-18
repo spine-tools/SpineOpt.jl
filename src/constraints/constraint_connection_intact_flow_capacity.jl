@@ -84,7 +84,7 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
 end
 
 function constraint_connection_intact_flow_capacity_indices(m::Model)
-    unique(
+    (
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity; connection=connection(has_ptdf=true))
         for (t, path) in t_lowest_resolution_path(

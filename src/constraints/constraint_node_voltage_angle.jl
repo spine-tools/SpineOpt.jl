@@ -83,7 +83,7 @@ function add_constraint_node_voltage_angle!(m::Model)
 end
 
 function constraint_node_voltage_angle_indices(m::Model)
-    unique(
+    (
         (connection=conn, node1=n_to, node2=n_from, stochastic_path=path, t=t)
         for conn in indices(connection_reactance)
         for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow; connection=conn)

@@ -61,7 +61,7 @@ function add_constraint_storages_invested_transition!(m::Model)
 end
 
 function constraint_storages_invested_transition_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, t_before, t_after) in node_investment_dynamic_time_indices(m)
         for path in active_stochastic_paths(m, storages_invested_available_indices(m; node=n, t=[t_before, t_after]))

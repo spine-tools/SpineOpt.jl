@@ -73,17 +73,18 @@ function add_constraint_min_down_time!(m::Model)
     )
 end
 
-# TODO: Does this require nonspin_units_started_up_indices() to be added here?
 function constraint_min_down_time_indices(m::Model)
-    unique(
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_down_time)
         for (u, t) in unit_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m, 
-            vcat(
-                past_units_on_indices(m, u, anything, t, min_down_time),
-                nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything)
+            Iterators.flatten(
+                (
+                    past_units_on_indices(m, u, anything, t, min_down_time),
+                    nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything),
+                )
             )
         )
     )

@@ -44,7 +44,7 @@ function add_constraint_storage_lifetime!(m::Model)
 end
 
 function constraint_storage_lifetime_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t=t)
         for n in indices(storage_investment_lifetime)
         for (n, t) in node_investment_time_indices(m; node=n)

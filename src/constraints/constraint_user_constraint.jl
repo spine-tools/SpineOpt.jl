@@ -173,7 +173,7 @@ function add_constraint_user_constraint!(m::Model)
                 for u in unit__user_constraint(user_constraint=uc)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=path, t=t_overlaps_t(m; t=t));
                 init=0,
-            )            
+            )
             + sum(
                 (   
                     + units_invested_available[u, s, t1]
@@ -317,7 +317,7 @@ function add_constraint_user_constraint!(m::Model)
 end
 
 function constraint_user_constraint_indices(m::Model)
-    unique(
+    (
         (user_constraint=uc, stochastic_path=path, t=t)
         for uc in user_constraint()
         for (t, path) in t_lowest_resolution_path(

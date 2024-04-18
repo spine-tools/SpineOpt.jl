@@ -148,18 +148,18 @@ function add_constraint_node_injection!(m::Model)
     )
 end
 
-# TODO: can we find an easier way to define the constraint indices?
-# I feel that for unexperienced uses it gets more an more complicated to understand our code
 function constraint_node_injection_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, t_before, t_after) in node_dynamic_time_indices(m)
         for path in active_stochastic_paths(
             m,
-            vcat(
-                collect(node_stochastic_time_indices(m; node=n, t=t_after)),
-                node_state_indices(m; node=n, t=t_before),
-                node_state_indices(m; node=[node__node(node2=n); node__node(node1=n)], t=t_after)
+            Iterators.flatten(
+                (
+                    node_stochastic_time_indices(m; node=n, t=t_after),
+                    node_state_indices(m; node=n, t=t_before),
+                    node_state_indices(m; node=[node__node(node2=n); node__node(node1=n)], t=t_after),
+                )
             )
         )
     )

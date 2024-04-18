@@ -155,7 +155,7 @@ function add_constraint_connection_flow_capacity_bidirectional!(m::Model)
 end
 
 function constraint_connection_flow_capacity_bidirectional_indices(m::Model)    
-    unique(
+    (
         (connection=conn, node=ng, direction=d, reverse_direction=_d_reverse(d), stochastic_path=path, t=t)
         for (conn, ng, d) in indices(connection_capacity)
         if connection_capacity(connection=conn, node=ng, direction=_d_reverse(d), _strict=false) !== nothing

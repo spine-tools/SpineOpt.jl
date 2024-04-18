@@ -29,27 +29,27 @@ function add_variable_unit_flow_op_active!(m::Model)
 end
 
 function unit_flow_op_active_indices(
-        m::Model;
-        unit=anything,
-        node=anything,
-        direction=anything,
-        i=anything,
-        stochastic_scenario=anything,
-        t=anything,
-        temporal_block=temporal_block(representative_periods_mapping=nothing),
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    i=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    (
+        (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
+        for (u, n, d, i, s, t) in unit_flow_op_indices(
+            m; 
+            unit=unit, 
+            node=node, 
+            direction=direction, 
+            i=i, 
+            stochastic_scenario=stochastic_scenario, 
+            t=t, 
+            temporal_block=temporal_block
+        )
+        if ordered_unit_flow_op(unit=u, node=n, direction=d, _default=false)
     )
-        [
-            (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
-            for (u, n, d, i, s, t) in unit_flow_op_indices(
-                m; 
-                unit=unit, 
-                node=node, 
-                direction=direction, 
-                i=i, 
-                stochastic_scenario=stochastic_scenario, 
-                t=t, 
-                temporal_block=temporal_block
-            )
-            if ordered_unit_flow_op(unit=u, node=n, direction=d, _default=false)
-        ]
 end

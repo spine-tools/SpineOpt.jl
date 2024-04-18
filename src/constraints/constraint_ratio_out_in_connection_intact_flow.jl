@@ -68,15 +68,17 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
 end
 
 function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
-    unique(
+    (
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (n_in, n_out) in connection__node__node(connection=conn)
         for (t, path) in t_lowest_resolution_path(
             m, 
-            vcat(
-                connection_intact_flow_indices(m; connection=conn, node=n_out, direction=direction(:to_node)),
-                connection_intact_flow_indices(m; connection=conn, node=n_in, direction=direction(:from_node))
+            Iterators.flatten(
+                (
+                    connection_intact_flow_indices(m; connection=conn, node=n_out, direction=direction(:to_node)),
+                    connection_intact_flow_indices(m; connection=conn, node=n_in, direction=direction(:from_node)),
+                )
             )
         )
     )

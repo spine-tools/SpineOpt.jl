@@ -168,7 +168,7 @@ function _startup_margin(m, u, ng, d, s, t0, t, case, part)
 end
 
 function constraint_unit_flow_capacity_indices(m::Model)
-    unique(
+    (
         (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
         for (u, ng, d) in indices(unit_capacity)
         for t in t_highest_resolution(
@@ -180,11 +180,15 @@ function constraint_unit_flow_capacity_indices(m::Model)
         for t_next in _t_next(m, u, t)
         for path in active_stochastic_paths(
             m,
-            [
-                units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_next]);
-                unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t));
-                nonspin_units_shut_down_indices(m; unit=u, t=t_overlaps_t(m; t=t))
-            ]
+            Iterators.flatten(
+                (
+                    units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_next]),
+                    unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
+                    _switch(
+                        d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
+                    )(m; unit=u, t=t_overlaps_t(m; t=t)),
+                )
+            )
         )
         for (subpath, parts_by_case) in _unit_capacity_constraint_subpaths(path, u, _analysis_time(m), t)
         for (case, parts) in parts_by_case

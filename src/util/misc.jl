@@ -102,6 +102,7 @@ sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
 sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
 
 function _avg(iter; init::Number)
+    iter = collect(iter)
     isempty(iter) ? init : sum(iter; init=init) / length(iter)
 end
 

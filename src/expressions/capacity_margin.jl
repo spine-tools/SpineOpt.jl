@@ -132,21 +132,25 @@ end
 """
 
 function expression_capacity_margin_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t=t)
         for n in indices(min_capacity_margin)
         for (n, t) in node_time_indices(m; node=n)
         for path in active_stochastic_paths(
             m,  
-            [
-                collect(node_stochastic_time_indices(m; node=n, t=t));
-                [
-                    (unit=u, stochastic_scenario=s, t=t2)
-                    for u in indices(unit_capacity; node=n, direction=direction(:to_node))
-                    if !is_storage_unit(u)
-                    for (u, s, t2) in units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t))
-                ];
-            ]
+            Iterators.flatten(
+                (
+                    node_stochastic_time_indices(m; node=n, t=t),
+                    unit_stochastic_time_indices(
+                        m;
+                        unit=Iterators.filter(
+                            !is_storage_unit,
+                            (u for (u, n, d) in indices(unit_capacity; node=n, direction=direction(:to_node))),
+                        ),
+                        t=t_overlaps_t(m; t=t),
+                    ),
+                )
+            ),
         )
     )
 end

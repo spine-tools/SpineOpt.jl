@@ -69,14 +69,16 @@ function add_constraint_node_state_capacity!(m::Model)
 end
 
 function constraint_node_state_capacity_indices(m::Model)
-    unique(
+    (
         (node=ng, stochastic_path=path, t=t)
         for (ng, t) in node_time_indices(m; node=indices(node_state_cap))
         for path in active_stochastic_paths(
             m,
-            vcat(
-                node_state_indices(m; node=ng, t=t),
-                storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t))
+            Iterators.flatten(
+                (
+                    node_state_indices(m; node=ng, t=t),
+                    storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
+                )
             )
         )
     )

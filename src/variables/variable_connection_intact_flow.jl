@@ -39,7 +39,7 @@ function connection_intact_flow_indices(
 )
     use_connection_intact_flow(model=m.ext[:spineopt].instance) || return ()
     node = members(node)
-    unique(
+    (
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d, tb) in connection__node__direction__temporal_block(
             connection=connection, node=node, direction=direction, temporal_block=temporal_block, _compact=false

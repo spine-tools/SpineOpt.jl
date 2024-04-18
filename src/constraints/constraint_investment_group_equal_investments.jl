@@ -78,10 +78,12 @@ function add_constraint_investment_group_equal_investments!(m::Model)
         for other_e in setdiff(entity_investment_group(ig), e)
         for (t, path) in t_lowest_resolution_path(
             m,
-            vcat(
-                units_invested_available_indices(m; unit=[e, other_e]),
-                connections_invested_available_indices(m; connection=[e, other_e]),
-                storages_invested_available_indices(m; node=[e, other_e])
+            Iterators.flatten(
+                (
+                    units_invested_available_indices(m; unit=[e, other_e]),
+                    connections_invested_available_indices(m; connection=[e, other_e]),
+                    storages_invested_available_indices(m; node=[e, other_e]),
+                )
             )
         )
         for s in path
