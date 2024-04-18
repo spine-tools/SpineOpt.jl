@@ -169,7 +169,7 @@ end
 function _term_flow_capacity(m, u, ng, d, s_path, t)
     t0 = _analysis_time(m)
     sum(
-        _unit_flow_capacity(m, u, ng, d, s, t0, t) * _get_units_on(m, u, s, t_over) * overlap_duration(t_over, t)
+        _unit_flow_capacity(m, u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
         for (u, s, t_over) in unit_stochastic_time_indices(
             m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
         );
