@@ -106,6 +106,10 @@ function add_constraint_ramp_up!(m::Model)
                     * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
                     * units_started_up[u, s, t]
                     * duration(t)
+                    for (u, s, t) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
+                    init=0,
+                )
+                + sum(
                     + (
                         + _minimum_operating_point(m, u, ng, d, s, t0, t_after)
                         + _ramp_up_limit(m, u, ng, d, s, t0, t_after)

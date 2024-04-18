@@ -139,7 +139,9 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 + _startup_margin(m, u, ng, d, s, t0, t, case, part)
                 * _unit_flow_capacity(m, u, ng, d, s, t0, t)
                 * units_started_up[u, s, t_over]
-                for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+                for (u, s, t_over) in units_switched_indices(
+                    m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+                );
                 init=0
             )
         )
