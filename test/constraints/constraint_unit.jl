@@ -305,6 +305,7 @@ function test_constraint_unit_flow_capacity()
                     ["unit", "unit_ab", "min_up_time", mup],
                     ["node", "reserves_a", "downward_reserve", dr],
                     ["node", "reserves_bc", "upward_reserve", ur],
+                    ["model", "instance", "use_tight_compact_formulations", true],
                 ]
                 SpineInterface.import_data(
                     url_in;
@@ -582,7 +583,7 @@ function test_constraint_operating_point_bounds()
         relationships = [["unit__to_node", ["unit_ab", "node_a"]]]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
         ]
         SpineInterface.import_data(
             url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values 
