@@ -109,22 +109,22 @@ function add_constraint_unit_flow_capacity!(m::Model)
             )
             <=
             + sum(
-                _unit_flow_capacity(u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
+                _unit_flow_capacity(m, u, ng, d, s, t0, t) * units_on[u, s, t_over] * overlap_duration(t_over, t)
                 for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
                 init=0
             )
             - (
                 + sum(
-                    + _shutdown_margin(u, ng, d, s, t0, t, case, part)
-                    * _unit_flow_capacity(u, ng, d, s, t0, t)
+                    + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
+                    * _unit_flow_capacity(m, u, ng, d, s, t0, t)
                     * units_shut_down[u, s, t_after]
                     * duration(t_after)
                     for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
                     init=0
                 )
                 + sum(
-                    + _shutdown_margin(u, ng, d, s, t0, t, case, part)
-                    * _unit_flow_capacity(u, ng, d, s, t0, t)
+                    + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
+                    * _unit_flow_capacity(m, u, ng, d, s, t0, t)
                     * _switch(
                         d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
                     )[u, n, s, t_over]
@@ -136,8 +136,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 )
             )
             - sum(
-                + _startup_margin(u, ng, d, s, t0, t, case, part)
-                * _unit_flow_capacity(u, ng, d, s, t0, t)
+                + _startup_margin(m, u, ng, d, s, t0, t, case, part)
+                * _unit_flow_capacity(m, u, ng, d, s, t0, t)
                 * units_started_up[u, s, t_over]
                 for (u, s, t_over) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
                 init=0
@@ -147,23 +147,23 @@ function add_constraint_unit_flow_capacity!(m::Model)
     )
 end
 
-function _shutdown_margin(u, ng, d, s, t0, t, case, part)
+function _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
     if part.name == :one
         # (F - SD)
-        1 - _shut_down_limit(u, ng, d, s, t0, t)
+        1 - _shut_down_limit(m, u, ng, d, s, t0, t)
     else
         # max(SU - SD, 0)
-        max(_start_up_limit(u, ng, d, s, t0, t) - _shut_down_limit(u, ng, d, s, t0, t), 0)
+        max(_start_up_limit(m, u, ng, d, s, t0, t) - _shut_down_limit(m, u, ng, d, s, t0, t), 0)
     end
 end
 
-function _startup_margin(u, ng, d, s, t0, t, case, part)
+function _startup_margin(m, u, ng, d, s, t0, t, case, part)
     if case.name == :min_up_time_le_time_step && part.name == :one
         # max(SD - SU, 0)
-        max(_shut_down_limit(u, ng, d, s, t0, t) - _start_up_limit(u, ng, d, s, t0, t), 0)
+        max(_shut_down_limit(m, u, ng, d, s, t0, t) - _start_up_limit(m, u, ng, d, s, t0, t), 0)
     else
         # (F - SU)
-        1 - _start_up_limit(u, ng, d, s, t0, t)
+        1 - _start_up_limit(m, u, ng, d, s, t0, t)
     end
 end
 
