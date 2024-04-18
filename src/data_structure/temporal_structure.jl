@@ -198,30 +198,41 @@ end
 function _history_time_slices!(instance, window_start, window_end, window_time_slices)
     window_duration = window_end - window_start
     required_history_duration = _required_history_duration(instance)
+    history_start = window_start - required_history_duration
     history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
-    blocks_by_history_interval = Dict()
+    time_slices_by_history_interval = Dict()
     for t in window_time_slices
         t_start, t_end = start(t), min(end_(t), window_end)
         t_start < t_end || continue
-        union!(get!(blocks_by_history_interval, (t_start, t_end), Set()), SpineInterface.blocks(t))
+        push!(get!(time_slices_by_history_interval, (t_start, t_end) .- window_duration, Set()), t)
     end
-    history_window_time_slices = [
-        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(instance))
-        for (interval, blocks) in blocks_by_history_interval
-    ]
+    history_t_by_interval = Dict(
+        (t_start, t_end) => TimeSlice(
+            t_start,
+            t_end,
+            unique(blk for t in time_slices for blk in blocks(t))...;
+            duration_unit=_model_duration_unit(instance),
+        )
+        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
+    )
+    t_history_t = Dict(
+        t => history_t_by_interval[t_start, t_end]
+        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
+        if t_end > history_start
+        for t in time_slices
+    )
+    history_window_time_slices = collect(values(history_t_by_interval))
     sort!(history_window_time_slices)
     history_time_slices = Array{TimeSlice,1}()
-    for k in 1:history_window_count
-        history_window_time_slices .-= window_duration
+    for k in Iterators.countfrom(1)
         prepend!(history_time_slices, history_window_time_slices)
+        k == history_window_count && break
+        history_window_time_slices .-= window_duration
     end
-    history_start = window_start - required_history_duration
     filter!(t -> end_(t) > history_start, history_time_slices)
-    t_history_t = Dict(
-        zip(history_time_slices .+ window_duration, history_time_slices)
-    )
     history_time_slices, t_history_t
 end
+
 """
     _generate_time_slice!(m::Model)
 
