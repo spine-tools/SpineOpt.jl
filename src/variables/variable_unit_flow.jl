@@ -51,16 +51,22 @@ function unit_flow_indices(
 end
 
 function unit_flow_ub_as_number(; unit, node, direction, kwargs...)
+    any(
+        unit_flow_capacity(unit=unit, node=ng, direction=direction) !== nothing for ng in groups(node)
+    ) && return nothing
     unit_flow_capacity(; unit=unit, node=node, direction=direction, kwargs..., _default=NaN) * (
         + number_of_units(; unit=unit, kwargs..., _default=1)
         + candidate_units(; unit=unit, kwargs..., _default=0)
     )
 end
 
-function unit_flow_ub_as_call(; kwargs...)
-    unit_flow_capacity[(; unit=unit, node=node, direction=direction, kwargs..., _default=NaN)] * (
-        + number_of_units[(; unit=unit, kwargs..., _default=1)]
-        + candidate_units[(; unit=unit, kwargs..., _default=0)]
+function unit_flow_ub_as_call(; unit, node, direction, kwargs...)
+    any(
+        unit_flow_capacity(unit=unit, node=ng, direction=direction) !== nothing for ng in groups(node)
+    ) && return nothing
+    unit_flow_capacity[(unit=unit, node=node, direction=direction, kwargs..., _default=NaN)] * (
+        + number_of_units[(unit=unit, kwargs..., _default=1)]
+        + candidate_units[(unit=unit, kwargs..., _default=0)]
     )
 end
 

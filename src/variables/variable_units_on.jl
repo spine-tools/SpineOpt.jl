@@ -30,7 +30,7 @@ function units_on_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unit = intersect(unit, _activatable_unit())
+    unit = intersect(unit, _unit_with_online_variable())
     (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, s, t) in unit_stochastic_time_indices(
@@ -51,7 +51,7 @@ function units_switched_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unit = intersect(unit, _switchable_unit())
+    unit = intersect(unit, _unit_with_switched_variable())
     (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, s, t) in unit_stochastic_time_indices(
@@ -61,18 +61,18 @@ function units_switched_indices(
 end
 
 """
-    _activatable_unit()
+    _unit_with_online_variable()
 
-An `Array` of units that need a `units_on` variable.
+An `Array` of units that need `units_on`.
 """
-_activatable_unit() = unit(is_activatable=true)
+_unit_with_online_variable() = unit(has_online_variable=true)
 
 """
-    _switchable_unit()
+    _unit_with_switched_variable()
 
-An `Array` of units that need a `units_started_up` and `units_shut_down` variables.
+An `Array` of units that need `units_started_up` and `units_shut_down`.
 """
-_switchable_unit() = unit(is_switchable=true)
+_unit_with_switched_variable() = unit(has_switched_variable=true)
 
 """
     units_on_bin(x)
