@@ -183,7 +183,7 @@
         decom_conv_to_disc_annuities = 0.899122663
         @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6  
         @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param..., t=u_ts[1]) rtol = 1e-6 
-        @test cpt = SpineOpt.unit_capacity_transfer_factor(;key_param..., vintage_t=start(u_ts[1]), t=start(u_ts[1]))
+        @test cpt == SpineOpt.unit_capacity_transfer_factor(;key_param..., vintage_t=start(u_ts[1]), t=start(u_ts[1])) 
         @test decom_conv_to_disc_annuities ≈ SpineOpt.unit_decommissioning_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6
     end
     
