@@ -66,10 +66,9 @@ function add_constraint_nodal_balance!(m::Model)
             + node_injection[n, s, t]
             # Commodity flows from connections
             + sum(
-                connection_flow[conn, n1, d, s, t]
-                for (conn, n1, d, s, t) in connection_flow_indices(
-                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
-                )
+                get(connection_flow, (conn, n1, d, s, t), 0)
+                for n1 in members(n)
+                for (conn, d) in connection__to_node(node=n1)
                 if !_issubset(
                     connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
                 );
@@ -77,10 +76,9 @@ function add_constraint_nodal_balance!(m::Model)
             )
             # Commodity flows to connections
             - sum(
-                connection_flow[conn, n1, d, s, t]
-                for (conn, n1, d, s, t) in connection_flow_indices(
-                    m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
-                )
+                get(connection_flow, (conn, n1, d, s, t), 0)
+                for n1 in members(n)
+                for (conn, d) in connection__from_node(node=n1)
                 if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
                 init=0,
             )
