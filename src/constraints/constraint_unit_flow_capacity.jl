@@ -157,10 +157,8 @@ end
 function _term_unit_flow(m, u, ng, d, s_path, t)
     @fetch unit_flow = m.ext[:spineopt].variables
     sum(
-        unit_flow[u, n, d, s, t_over] * overlap_duration(t_over, t)
-        for (u, n, d, s, t_over) in unit_flow_indices(
-            m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
-        )
+        get(unit_flow, (u, n, d, s, t_over), 0) * overlap_duration(t_over, t)
+        for n in members(ng), s in s_path, t_over in t_overlaps_t(m; t=t)
         if _is_regular_node(n, d);
         init=0,
     )
