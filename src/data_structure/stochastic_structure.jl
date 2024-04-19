@@ -26,26 +26,26 @@ function _find_children(parent_scenario::Union{Object,Anything})
 end
 
 """
-    _find_root_scenarios(m::Model)
+    _find_root_scenarios()
 
 Find the `stochastic_scenario` objects without parents.
 """
-_find_root_scenarios(m::Model) = _find_root_scenarios(m, anything)
-function _find_root_scenarios(m::Model, stochastic_structure)
+_find_root_scenarios() = _find_root_scenarios(anything)
+function _find_root_scenarios(stochastic_structure)
     all_scenarios = stochastic_structure__stochastic_scenario(stochastic_structure=stochastic_structure)
     setdiff(all_scenarios, _find_children(anything))
 end
 
 """
-    _stochastic_dag(m::Model, stochastic_structure::Object, window_start::DateTime, window_very_end::DateTime)
+    _stochastic_dag(stochastic_structure::Object, window_start::DateTime, window_very_end::DateTime)
 
 A `Dict` mapping `stochastic_scenario` objects to a `NamedTuple` of (start, end_, weight)
 for the given `stochastic_structure`.
 
 Aka dag, that is, a *realized* stochastic structure with all the parameter values in place.
 """
-function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::DateTime, window_very_end::DateTime)
-    scenarios = _find_root_scenarios(m, stochastic_structure)
+function _stochastic_dag(stochastic_structure::Object, window_start::DateTime, window_very_end::DateTime)
+    scenarios = _find_root_scenarios(stochastic_structure)
     scen_start = Dict(scen => window_start for scen in scenarios)
     scen_end = Dict()
     scen_weight = Dict(
@@ -96,7 +96,7 @@ A `Dict` mapping `stochastic_structure` objects to dags for the given `model`s.
 function _all_stochastic_dags(m::Model)
     window_start = start(current_window(m))
     window_very_end = end_(last(time_slice(m)))
-    Dict(ss => _stochastic_dag(m, ss, window_start, window_very_end) for ss in stochastic_structure())
+    Dict(ss => _stochastic_dag(ss, window_start, window_very_end) for ss in stochastic_structure())
 end
 
 """
@@ -110,17 +110,17 @@ function _time_slice_stochastic_scenarios(m::Model, stochastic_dag::Dict)
         t => [scen for (scen, spec) in stochastic_dag if spec.start <= start(t) < spec.end_] for t in time_slice(m)
     )
     # History `time_slices`
-    roots = _find_root_scenarios(m)
+    roots = _find_root_scenarios()
     history_scenario_mapping = Dict(t => roots for t in history_time_slice(m))
     merge!(scenario_mapping, history_scenario_mapping)
 end
 
 """
-    _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
+    _generate_stochastic_scenarios!(m::Model, all_stochastic_dags)
 
 Generate a mapping from stochastic structure to time slice to scenarios.
 """
-function _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
+function _generate_stochastic_scenarios!(m::Model, all_stochastic_dags)
     m.ext[:spineopt].stochastic_structure[:scenario_lookup] = Dict(
         (structure, t) => scens
         for (structure, dag) in all_stochastic_dags
@@ -134,11 +134,11 @@ function _stochastic_scenarios(m::Model, stoch_struct::Object, t::TimeSlice, sce
 end
 
 """
-    _generate_any_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+    _generate_any_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
 
 Generate the `any_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
-function _generate_any_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+function _generate_any_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
     any_stochastic_scenario_weight_values = Dict(
         scen => Dict(:any_stochastic_scenario_weight => parameter_value(spec.weight))
         for ss in stochastic_structure()
@@ -151,11 +151,11 @@ function _generate_any_stochastic_scenario_weight(m::Model, all_stochastic_dags:
 end
 
 """
-    _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+    _generate_node_stochastic_scenario_weight!(m, all_stochastic_dags::Dict)
 
 Generate the `node_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
-function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+function _generate_node_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
     node_stochastic_scenario_weight_values = Dict(
         (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(spec.weight))
         for (node, ss) in Iterators.flatten((node__stochastic_structure(), node__investment_stochastic_structure()))
@@ -173,11 +173,11 @@ function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags
 end
 
 """
-    _generate_unit_stochastic_scenario_weight(all_stochastic_dags::Dict, m...)
+    _generate_unit_stochastic_scenario_weight!(m, all_stochastic_dags::Dict, m...)
 
 Generate the `unit_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
-function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+function _generate_unit_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
         for (unit, ss) in Iterators.flatten((units_on__stochastic_structure(), unit__investment_stochastic_structure()))
@@ -195,11 +195,11 @@ function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags
 end
 
 """
-    _generate_connection_stochastic_scenario_weight(all_stochastic_dags::Dict, m...)
+    _generate_connection_stochastic_scenario_weight!(m, all_stochastic_dags::Dict, m...)
 
 Generate the `connection_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
-function _generate_connection_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
+function _generate_connection_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
     connection_stochastic_scenario_weight_values = Dict(
         (connection, scen) => Dict(:connection_stochastic_scenario_weight => parameter_value(param_vals.weight))
         for (connection, ss) in connection__investment_stochastic_structure()
@@ -217,13 +217,13 @@ function _generate_connection_stochastic_scenario_weight(m::Model, all_stochasti
 end
 
 """
-    _generate_active_stochastic_paths(m::Model)
+    _generate_active_stochastic_paths!(m::Model)
 
 Find all unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree
 and generate the `active_stochastic_paths` callable.
 """
-function _generate_active_stochastic_paths(m::Model)
-    paths = [[root] for root in _find_root_scenarios(m)]
+function _generate_active_stochastic_paths!(m::Model)
+    paths = [[root] for root in _find_root_scenarios()]
     full_path_indices = []
     for (i, path) in enumerate(paths)
         children = _find_children(path[end])
@@ -242,6 +242,23 @@ function _generate_active_stochastic_paths(m::Model)
     m.ext[:spineopt].stochastic_structure[:full_stochastic_paths] = paths[full_path_indices]
 end
 
+function _generate_stochastic_indices!(m)
+    stoch_struct = m.ext[:spineopt].stochastic_structure
+    if length(stochastic_scenario()) == 1
+        stoch_struct[:node_stochastic_indices] = _node_deterministic_indices
+        stoch_struct[:unit_stochastic_indices] = _unit_deterministic_indices
+        stoch_struct[:unit_investment_stochastic_indices] = _unit_investment_deterministic_indices
+        stoch_struct[:connection_investment_stochastic_indices] = _connection_investment_deterministic_indices
+        stoch_struct[:node_investment_stochastic_indices] = _node_investment_deterministic_indices
+    else
+        stoch_struct[:node_stochastic_indices] = _node_stochastic_indices
+        stoch_struct[:unit_stochastic_indices] = _unit_stochastic_indices
+        stoch_struct[:unit_investment_stochastic_indices] = _unit_investment_stochastic_indices
+        stoch_struct[:connection_investment_stochastic_indices] = _connection_investment_stochastic_indices
+        stoch_struct[:node_investment_stochastic_indices] = _node_investment_stochastic_indices
+    end
+end
+
 """
     generate_stochastic_structure(m::Model)
 
@@ -254,12 +271,13 @@ After this, you can call `active_stochastic_paths` to slice the generated struct
 """
 function generate_stochastic_structure!(m::Model)
     all_stochastic_dags = _all_stochastic_dags(m)
-    _generate_stochastic_scenarios(m, all_stochastic_dags)
-    _generate_node_stochastic_scenario_weight(m, all_stochastic_dags)
-    _generate_unit_stochastic_scenario_weight(m, all_stochastic_dags)
-    _generate_connection_stochastic_scenario_weight(m, all_stochastic_dags)
-    _generate_any_stochastic_scenario_weight(m, all_stochastic_dags)
-    _generate_active_stochastic_paths(m)
+    _generate_stochastic_scenarios!(m, all_stochastic_dags)
+    _generate_node_stochastic_scenario_weight!(m, all_stochastic_dags)
+    _generate_unit_stochastic_scenario_weight!(m, all_stochastic_dags)
+    _generate_connection_stochastic_scenario_weight!(m, all_stochastic_dags)
+    _generate_any_stochastic_scenario_weight!(m, all_stochastic_dags)
+    _generate_active_stochastic_paths!(m)
+    _generate_stochastic_indices!(m)
 end
 
 """
@@ -298,20 +316,88 @@ function _active_stochastic_paths(m, unique_active_scenarios)
     unique(intersect(path, unique_active_scenarios) for path in full_stochastic_paths)
 end
 
-function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything)
-    (
-        (node=n, stochastic_scenario=s)
-        for (n, ss) in node__stochastic_structure(node=node, _compact=false)
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)
+    m.ext[:spineopt].stochastic_structure[:node_stochastic_indices](m, node, stochastic_scenario, t)
+end
+
+function unit_stochastic_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
+    m.ext[:spineopt].stochastic_structure[:unit_stochastic_indices](m, unit, stochastic_scenario, t)
+end
+
+function unit_investment_stochastic_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
+    m.ext[:spineopt].stochastic_structure[:unit_investment_stochastic_indices](m, unit, stochastic_scenario, t)
+end
+
+function connection_investment_stochastic_indices(
+    m::Model; connection=anything, stochastic_scenario=anything, t=anything
+)
+    m.ext[:spineopt].stochastic_structure[:connection_investment_stochastic_indices](
+        m, connection, stochastic_scenario, t
     )
 end
 
-function unit_stochastic_indices(m::Model; unit=anything, stochastic_scenario=anything)
+function node_investment_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)
+    m.ext[:spineopt].stochastic_structure[:node_investment_stochastic_indices](m, node, stochastic_scenario, t)
+end
+
+function _node_stochastic_indices(m, node, stochastic_scenario, t)
+    (
+        (node=n, stochastic_scenario=s)
+        for (n, ss) in node__stochastic_structure(node=node, _compact=false)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+    )
+end
+
+function _unit_stochastic_indices(m, unit, stochastic_scenario, t)
     (
         (unit=u, stochastic_scenario=s)
         for (u, ss) in units_on__stochastic_structure(unit=unit, _compact=false)
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
+end
+
+function _unit_investment_stochastic_indices(m, unit, stochastic_scenario, t)
+    (
+        (unit=u, stochastic_scenario=s)
+        for (u, ss) in unit__investment_stochastic_structure(unit=unit, _compact=false)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+    )
+end
+
+function _connection_investment_stochastic_indices(m, connection, stochastic_scenario, t)
+    (
+        (connection=conn, stochastic_scenario=s)
+        for (conn, ss) in connection__investment_stochastic_structure(connection=connection, _compact=false)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+    )
+end
+
+function _node_investment_stochastic_indices(m, node, stochastic_scenario, t)
+    (
+        (node=n, stochastic_scenario=s)
+        for (n, ss) in node__investment_stochastic_structure(node=node, _compact=false)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+    )
+end
+
+function _node_deterministic_indices(_m, node, _stochastic_scenario, _t)
+    ((node=node, stochastic_scenario=only(stochastic_scenario())),)
+end
+
+function _unit_deterministic_indices(_m, unit, _stochastic_scenario, _t)
+    ((unit=unit, stochastic_scenario=only(stochastic_scenario())),)
+end
+
+function _unit_investment_deterministic_indices(_m, unit, _stochastic_scenario, _t)
+    ((unit=unit, stochastic_scenario=only(stochastic_scenario())),)
+end
+
+function _connection_investment_deterministic_indices(_m, connection, _stochastic_scenario, _t)
+    ((connection=connection, stochastic_scenario=only(stochastic_scenario())),)
+end
+
+function _node_investment_deterministic_indices(_m, node, _stochastic_scenario, _t)
+    ((node=node, stochastic_scenario=only(stochastic_scenario())),)
 end
 
 function stochastic_time_indices(
@@ -339,9 +425,8 @@ function node_stochastic_time_indices(
 )
     (
         (node=n, stochastic_scenario=s, t=t)
-        for (n, ss) in node__stochastic_structure(node=node, _compact=false)
-        for (n, t) in node_time_indices(m; node=n, temporal_block=temporal_block, t=t)
-        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+        for (n, t) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for (n, s) in node_stochastic_indices(m; node=n, stochastic_scenario=stochastic_scenario, t=t)
     )
 end
 
@@ -359,9 +444,8 @@ function unit_stochastic_time_indices(
 )
     (
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, ss) in units_on__stochastic_structure(unit=unit, _compact=false)
-        for (u, t) in unit_time_indices(m; unit=u, temporal_block=temporal_block, t=t)
-        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+        for (u, t) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for (u, s) in unit_stochastic_indices(m; unit=u, stochastic_scenario=stochastic_scenario, t=t)
     )
 end
 
@@ -379,9 +463,8 @@ function unit_investment_stochastic_time_indices(
 )
     (
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, ss) in unit__investment_stochastic_structure(unit=unit, _compact=false)
-        for (u, t) in unit_investment_time_indices(m; unit=u, temporal_block=temporal_block, t=t)
-        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+        for (u, t) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for (u, s) in unit_investment_stochastic_indices(m; unit=u, stochastic_scenario=stochastic_scenario, t=t)
     )
 end
 
@@ -399,9 +482,12 @@ function connection_investment_stochastic_time_indices(
 )
     (
         (connection=conn, stochastic_scenario=s, t=t)
-        for (conn, ss) in connection__investment_stochastic_structure(connection=connection, _compact=false)
-        for (conn, t) in connection_investment_time_indices(m; connection=conn, temporal_block=temporal_block, t=t)
-        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+        for (conn, t) in connection_investment_time_indices(
+            m; connection=connection, temporal_block=temporal_block, t=t
+        )
+        for (conn, s) in connection_investment_stochastic_indices(
+            m; connection=conn, stochastic_scenario=stochastic_scenario, t=t
+        )
     )
 end
 
@@ -419,9 +505,8 @@ function node_investment_stochastic_time_indices(
 )
     (
         (node=n, stochastic_scenario=s, t=t)
-        for (n, ss) in node__investment_stochastic_structure(node=node, _compact=false)
-        for (n, t) in node_investment_time_indices(m; node=n, temporal_block=temporal_block, t=t)
-        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+        for (n, t) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for (n, s) in node_investment_stochastic_indices(m; node=n, stochastic_scenario=stochastic_scenario, t=t)
     )
 end
 
