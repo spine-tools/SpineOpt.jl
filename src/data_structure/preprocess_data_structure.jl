@@ -73,7 +73,7 @@ function generate_is_candidate()
 end
 
 function update_use_connection_intact_flow()
-    if isempty(connection(is_candidate=true))
+    if isempty(connection(is_candidate=true)) && !isempty(model())
         instance = first(model())
         add_object_parameter_values!(
             model, Dict(instance => Dict(:use_connection_intact_flow => parameter_value(false)))
