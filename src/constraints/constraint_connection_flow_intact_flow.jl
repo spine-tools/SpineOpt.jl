@@ -104,8 +104,8 @@ function constraint_connection_flow_intact_flow_indices(m::Model)
         for (t, path) in t_lowest_resolution_path(
             m, 
             x
-            for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn)))
-            for x in connection_flow_indices(m; connection=conn_k, last(connection__from_node(connection=conn_k))...)
+            for conn_ in Iterators.flatten(((conn,), _candidate_connections(conn)))
+            for x in connection_flow_indices(m; connection=conn_, last(connection__from_node(connection=conn_))...)
         )
     )
 end
