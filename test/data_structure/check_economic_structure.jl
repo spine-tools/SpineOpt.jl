@@ -153,7 +153,7 @@
         @test 0.5846792890864373 ≈ SpineOpt.unit_discounted_duration(;key_param...,t=u_ts[1]) rtol = 1e-6
     end
 
-    @testset "test investment costs, salvage fraction, decommissioning" begin
+    @testset "test investment costs, salvage fraction, capacity transfer factor, decommissioning" begin
         _load_test_data(url_in, test_data)
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
@@ -179,8 +179,12 @@
         key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
         salvage_frac = 0.370998336
         conv_to_disc_annuities = 0.613913254
+        cpt = 0.5
+        decom_conv_to_disc_annuities = 0.899122663
         @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6  
-        @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
+        @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param..., t=u_ts[1]) rtol = 1e-6 
+        @test cpt = SpineOpt.unit_capacity_transfer_factor(;key_param..., vintage_t=start(u_ts[1]), t=start(u_ts[1]))
+        @test decom_conv_to_disc_annuities ≈ SpineOpt.unit_decommissioning_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6
     end
     
     @testset "test technological discount factor, investment costs, salvage fraction" begin

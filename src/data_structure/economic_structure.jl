@@ -98,7 +98,6 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
                             :t => Iterators.flatten((history_time_slice(m), time_slice(m)))
                             )...
                         )
-                    
                     # get lead time
                     p_lt = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     if isnothing(p_lt)
@@ -482,7 +481,7 @@ function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, 
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     decommissioning_conversion_to_discounted_annuities = Dict()
-
+    _create_set_parameters_and_relationships()
     investment_indices = set_investment_indices[obj_cls]
     decom_time = set_decom_time[obj_cls]
     decom_cost = set_decom_cost[obj_cls]
