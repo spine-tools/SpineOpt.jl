@@ -545,36 +545,17 @@ function generate_variable_indexing_support()
     node_with_min_capacity_margin_penalty = ObjectClass(
         :node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty))
     )
-    unit__node__direction__temporal_block = RelationshipClass(
-        :unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-            for tb in node__temporal_block(node=n)
-        ),
+    unit__node__direction = RelationshipClass(
+        :unit__node__direction, [:unit, :node, :direction], [unit__from_node(); unit__to_node()]
     )
-    connection__node__direction__temporal_block = RelationshipClass(
-        :connection__node__direction__temporal_block,
-        [:connection, :node, :direction, :temporal_block],
-        unique(
-            (conn, n, d, tb)
-            for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-            for tb in node__temporal_block(node=n)
-        ),
-    )
-    node_with_state__temporal_block = RelationshipClass(
-        :node_with_state__temporal_block,
-        [:node, :temporal_block],
-        unique((node=n, temporal_block=tb)
-        for n in node(has_state=true) for tb in node__temporal_block(node=n)),
+    connection__node__direction = RelationshipClass(
+        :connection__node__direction, [:connection, :node, :direction], [connection__from_node(); connection__to_node()]
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
         node_with_min_capacity_margin_penalty = $node_with_min_capacity_margin_penalty
-        unit__node__direction__temporal_block = $unit__node__direction__temporal_block
-        connection__node__direction__temporal_block = $connection__node__direction__temporal_block
-        node_with_state__temporal_block = $node_with_state__temporal_block
+        unit__node__direction = $unit__node__direction
+        connection__node__direction = $connection__node__direction
     end
 end
 
