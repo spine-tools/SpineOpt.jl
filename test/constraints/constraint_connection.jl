@@ -613,7 +613,7 @@ function test_constraint_connection_intact_flow_ptdf()
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt].variables[:connection_intact_flow]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
         constraint = m.ext[:spineopt].constraints[:connection_intact_flow_ptdf]
         @test length(constraint) == 5
