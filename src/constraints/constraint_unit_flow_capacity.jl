@@ -279,6 +279,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
+        if has_online_variable(unit=u) || members(ng) != [ng]
         for t in t_highest_resolution(
             m,
             Iterators.flatten(

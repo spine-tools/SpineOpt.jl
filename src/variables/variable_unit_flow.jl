@@ -50,6 +50,26 @@ function unit_flow_indices(
     )
 end
 
+function unit_flow_ub_as_number(; unit, node, direction, kwargs...)
+    any(
+        unit_flow_capacity(unit=unit, node=ng, direction=direction) !== nothing for ng in groups(node)
+    ) && return nothing
+    unit_flow_capacity(; unit=unit, node=node, direction=direction, kwargs..., _default=NaN) * (
+        + number_of_units(; unit=unit, kwargs..., _default=1)
+        + candidate_units(; unit=unit, kwargs..., _default=0)
+    )
+end
+
+function unit_flow_ub_as_call(; unit, node, direction, kwargs...)
+    any(
+        unit_flow_capacity(unit=unit, node=ng, direction=direction) !== nothing for ng in groups(node)
+    ) && return nothing
+    unit_flow_capacity[(unit=unit, node=node, direction=direction, kwargs..., _default=NaN)] * (
+        + number_of_units[(unit=unit, kwargs..., _default=1)]
+        + candidate_units[(unit=unit, kwargs..., _default=0)]
+    )
+end
+
 """
     add_variable_unit_flow!(m::Model)
 
@@ -61,6 +81,7 @@ function add_variable_unit_flow!(m::Model)
         :unit_flow,
         unit_flow_indices;
         lb=min_unit_flow,
+        ub=FlexParameter(unit_flow_ub_as_number, unit_flow_ub_as_call),
         fix_value=fix_unit_flow,
         initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,

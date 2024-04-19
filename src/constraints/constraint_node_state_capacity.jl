@@ -71,7 +71,7 @@ end
 function constraint_node_state_capacity_indices(m::Model)
     (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(m; node=indices(node_state_cap))
+        for (ng, t) in node_time_indices(m; node=intersect(indices(node_state_cap), indices(candidate_storages)))
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

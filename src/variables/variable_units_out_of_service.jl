@@ -24,18 +24,18 @@ function units_out_of_service_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unit = intersect(unit, _deactivatable_unit())
+    unit = intersect(unit, _unit_with_out_of_service_variable())
     unit_stochastic_time_indices(
         m; unit=unit, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block,
     )
 end
 
 """
-    _deactivatable_unit()
+    _unit_with_out_of_service_variable()
 
-An `Array` of units that need a `units_out_of_service` and friends variables.
+An `Array` of units that need `units_out_of_service`, `units_taken_out_of_service` and `units_returned_to_service`.
 """
-_deactivatable_unit() = unit(is_deactivatable=true)
+_unit_with_out_of_service_variable() = unit(has_out_of_service_variable=true)
 
 """
     units_out_of_service_bin(x)

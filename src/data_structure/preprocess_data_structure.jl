@@ -944,19 +944,19 @@ function generate_unit_commitment_parameters()
         (indices(scheduled_outage_duration), (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0))
     )
     for (pname, iter) in (
-        (:is_switchable, _switchable_unit_iter),
-        (:is_activatable, _activatable_unit_iter),
-        (:is_deactivatable, _deactivatable_unit_iter),
+        (:has_switched_variable, _switchable_unit_iter),
+        (:has_online_variable, _activatable_unit_iter),
+        (:has_out_of_service_variable, _deactivatable_unit_iter),
     )
         add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unique(iter)))
         add_object_parameter_defaults!(unit, Dict(pname => parameter_value(false)))
     end
     @eval begin
-        is_switchable = Parameter(:is_switchable, [unit])
-        is_activatable = Parameter(:is_activatable, [unit])
-        is_deactivatable = Parameter(:is_deactivatable, [unit])
-        export is_switchable
-        export is_activatable
-        export is_deactivatable
+        has_switched_variable = Parameter(:has_switched_variable, [unit])
+        has_online_variable = Parameter(:has_online_variable, [unit])
+        has_out_of_service_variable = Parameter(:has_out_of_service_variable, [unit])
+        export has_switched_variable
+        export has_online_variable
+        export has_out_of_service_variable
     end
 end
