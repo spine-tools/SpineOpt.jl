@@ -27,6 +27,10 @@ For each of these `t`s, the `path` also includes scenarios in `extra_indices` wh
 """
 function t_lowest_resolution_path(m, indices, extra_indices...)
     isempty(indices) && return ()
+    if length(stochastic_scenario()) == 1
+        s = only(stochastic_scenario())
+        return ((t, [s]) for t in t_lowest_resolution!(m, unique(x.t for x in indices)))
+    end
     scens_by_t = t_lowest_resolution_sets!(m, _scens_by_t(indices))
     extra_scens_by_t = _scens_by_t(Iterators.flatten(extra_indices))
     for (t, scens) in scens_by_t
