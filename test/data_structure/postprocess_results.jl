@@ -143,7 +143,7 @@ function test_save_connection_avg_throughflow()
             object_parameter_values=object_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0)
-        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
+        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
         key = (connection=connection(:connection_ab), node=node(:node_b))
