@@ -293,15 +293,15 @@ function create_model(mip_solver, lp_solver, use_direct_model)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    model_by_stage = OrderedDict()
-    for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
-        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver; stage=st)
-    end
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
         m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
         m_mp
+    end
+    model_by_stage = OrderedDict()
+    for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
+        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st)
     end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
     m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)
