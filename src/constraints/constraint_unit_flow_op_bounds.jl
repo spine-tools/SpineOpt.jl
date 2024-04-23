@@ -61,7 +61,7 @@ function add_constraint_unit_flow_op_bounds!(m::Model)
             + unit_flow_op[u, n, d, op, s, t]
             <=
             (
-                ordered_unit_flow_op(unit = u, node=n, direction=d, _default=false) ? 
+                ordered_unit_flow_op(unit=u, node=n, direction=d, _default=false) ? 
                 unit_flow_op_active[u, n, d, op, s, t] : _get_units_on(m, u, s, t)
             )
             * (

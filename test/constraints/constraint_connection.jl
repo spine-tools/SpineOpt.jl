@@ -184,19 +184,20 @@ function test_constraint_connection_flow_capacity_bidirectional()
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity_bidirectional]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key_from = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
             key_to = (connection(:connection_ab), node(:node_a), direction(:to_node), s, t)
-            lhs = 
-                connection_capacity_to_a * var_connection_flow[key_from...] + 
-                connection_capacity_from_a * var_connection_flow[key_to...]
-            rhs = connection_capacity_from_a * connection_capacity_to_a
+            lhs = (
+                + var_connection_flow[key_from...] / connection_capacity_from_a
+                + var_connection_flow[key_to...] / connection_capacity_to_a
+            )
+            rhs = 1
             expected_con = @build_constraint(lhs <= rhs)
-            con_key = (connection(:connection_ab), node(:node_a), [s], t)
+            con_key = (connection(:connection_ab), node(:node_a), direction(), [s], t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -231,7 +232,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity_bidirectional]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = [stochastic_scenario(:parent), stochastic_scenario(:child)]
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -242,12 +243,13 @@ function test_constraint_connection_flow_capacity_bidirectional()
             key_to = (connection(:connection_ab), node(:node_a), direction(:to_node), s, t)
             invest_key = (connection(:connection_ab), stochastic_scenario(:parent), daily_t)
             var_conn_invest_avail = var_connections_invested_available[invest_key...]
-            lhs = 
-                connection_capacity_to_a * var_connection_flow[key_from...] +
-                connection_capacity_from_a * var_connection_flow[key_to...]
-            rhs = connection_capacity_from_a * connection_capacity_to_a * var_conn_invest_avail
+            lhs = (
+                + var_connection_flow[key_from...] / connection_capacity_from_a
+                + var_connection_flow[key_to...] / connection_capacity_to_a
+            )
+            rhs = var_conn_invest_avail
             expected_con = @build_constraint(lhs <= rhs)
-            con_key = (connection(:connection_ab), node(:node_a), scenarios[1:k], t)
+            con_key = (connection(:connection_ab), node(:node_a), direction(), scenarios[1:k], t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
