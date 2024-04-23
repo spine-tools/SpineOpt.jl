@@ -795,15 +795,13 @@ t_lowest_resolution!(m, t_arr::Union{Vector,Dict}) = _t_extreme_resolution!(m, t
 
 function _t_extreme_resolution!(m, t_arr::Vector, kw)
     isempty(t_in_t_excl(m)) && return t_arr
-    to_delete = (other_t for t in t_arr for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...))
+    to_delete = t_in_t_excl(m; NamedTuple{(kw,)}((t_arr,))...)
     setdiff!(t_arr, to_delete)
 end
 function _t_extreme_resolution!(m, t_dict::Dict, kw)
     isempty(t_in_t_excl(m)) && return t_dict
-    for t in keys(t_dict)
-        for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...)
-            delete!(t_dict, other_t)
-        end
+    for t in t_in_t_excl(m; NamedTuple{(kw,)}((keys(t_dict),))...)
+        delete!(t_dict, t)
     end
     t_dict
 end
