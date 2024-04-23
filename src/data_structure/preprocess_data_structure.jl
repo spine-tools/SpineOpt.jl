@@ -45,6 +45,7 @@ function preprocess_data_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
     generate_unit_flow_capacity()
+    generate_connection_flow_capacity()
     generate_unit_commitment_parameters()
 end
 
@@ -906,6 +907,28 @@ function generate_unit_flow_capacity()
     @eval begin
         unit_flow_capacity = $unit_flow_capacity
         export unit_flow_capacity
+    end
+end
+
+function generate_connection_flow_capacity()
+    for class in classes(connection_capacity)
+        new_pvals = Dict(
+            (conn, n, d) => Dict(
+                :connection_flow_capacity => parameter_value(
+                    + connection_capacity(connection=conn, node=n, direction=d)
+                    * connection_availability_factor(connection=conn)
+                    * connection_conv_cap_to_flow(connection=conn, node=n, direction=d)
+                )
+            )
+            for (conn, n, d) in indices(connection_capacity, class)
+        )
+        add_relationship_parameter_values!(class, new_pvals)
+        add_relationship_parameter_defaults!(class, Dict(:connection_flow_capacity => parameter_value(nothing)))
+    end
+    connection_flow_capacity = Parameter(:connection_flow_capacity, classes(connection_capacity))
+    @eval begin
+        connection_flow_capacity = $connection_flow_capacity
+        export connection_flow_capacity
     end
 end
 

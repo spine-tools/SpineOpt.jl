@@ -151,7 +151,6 @@ function _add_constraints!(m; log_level=3)
             add_constraint_candidate_connection_flow_ub!,
             add_constraint_compression_ratio!,
             add_constraint_connection_flow_capacity!,
-            add_constraint_connection_flow_capacity_bidirectional!,
             add_constraint_connection_flow_gas_capacity!,
             add_constraint_connection_flow_intact_flow!,
             add_constraint_connection_flow_lodf!,
