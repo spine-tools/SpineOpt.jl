@@ -279,8 +279,8 @@ function _child_models(m, st)
     if isempty(child_models)
         child_models = [m]
     end
-    child_master_models = (master_model(child_m) for child_m in child_models)
-    append!(child_models, Iterators.filter(!isnothing, child_master_models))
+    child_master_models = [master_model(child_m) for child_m in child_models]
+    append!(child_models, filter(!isnothing, child_master_models))
     child_models
 end
 
@@ -315,6 +315,8 @@ function _init_downstream_outputs!(st, stage_m, child_models)
         end
         for (out_res, objs_by_class_name) in objs_by_class_name_by_res
             for child_m in child_models
+                var_def = get(child_m.ext[:spineopt].variables_definition, out_name, nothing)
+                var_def === nothing && continue
                 fix_points = _fix_points(out_res, child_m)
                 fix_indices_by_ent = Dict()
                 for ind in child_m.ext[:spineopt].variables_definition[out_name][:indices](child_m)
@@ -456,10 +458,10 @@ function _solve_standard_model!(
     true
 end
 
-function _solve_stage_models!(m; log_level, log_prefix)
+function _solve_stage_models!(m; log_level)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
         with_env(st.name) do
-            solve_model!(stage_m; log_level, log_prefix)
+            solve_model!(stage_m; log_level)
         end || return false
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
