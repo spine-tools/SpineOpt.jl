@@ -27,23 +27,14 @@ function run_spineopt_standard!(
     write_as_roll,
     resume_file_path,
 )
+    build_model!(m; log_level)
     optimize || return m
-    calculate_duals = any(
-        startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
-    )
     try
-        solve_model!(
-            m;
-            log_level=log_level,
-            update_names=update_names,
-            calculate_duals=calculate_duals,
-            write_as_roll=write_as_roll,
-            resume_file_path=resume_file_path,
-        )
+        solve_model!(m; log_level, update_names, write_as_roll, resume_file_path)
         if write_as_roll > 0
             _write_intermediate_results(m)
         else
-            write_report(m, url_out; alternative=alternative, log_level=log_level)
+            write_report(m, url_out; alternative, log_level)
         end
         m
     catch err
@@ -51,7 +42,7 @@ function run_spineopt_standard!(
         m
     finally
         if write_as_roll > 0
-            write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
+            write_report_from_intermediate_results(m, url_out; alternative, log_level)
         end
     end
 end
@@ -83,7 +74,14 @@ function build_model!(m; log_level)
     @timelog log_level 2 "Adding $model_name constraints...\n" _add_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
     _init_outputs!(m)
+    m_mp = master_model(m)
+    if m_mp !== nothing
+        _build_mp_model!(m_mp; log_level=log_level)
+        m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
+        _call_event_handlers(m_mp, :model_built)
+    end
     _build_stage_models!(m; log_level)
+    _call_event_handlers(m, :model_built)
 end
 
 """
@@ -281,6 +279,8 @@ function _child_models(m, st)
     if isempty(child_models)
         child_models = [m]
     end
+    child_master_models = (master_model(child_m) for child_m in child_models)
+    append!(child_models, Iterators.filter(!isnothing, child_master_models))
     child_models
 end
 
@@ -373,11 +373,58 @@ Solve given SpineOpt model and save outputs.
 - `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
    equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
    Also, save resume data to that same file as the model rolls and results are written to the output database.
-- `calculate_duals::Bool=false`: whether or not to calculate duals after the model solve.
-- `output_suffix::NamedTuple=(;)`: to add to the outputs.
-- `log_prefix::String`="": to prepend to log messages.
 """
-function solve_model!(
+function solve_model!(m; log_level=3, update_names=false, write_as_roll=0, resume_file_path=nothing)
+    _solve_stage_models!(m; log_level) || return false
+    m_mp = master_model(m)
+    if m_mp === nothing
+        calculate_duals = any(
+            startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
+        )
+        _solve_standard_model!(m; log_level, update_names, write_as_roll, resume_file_path, calculate_duals)
+    else   # Solve with Benders
+        add_event_handler!(process_subproblem_solution, m, :window_solved)
+        add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
+        add_event_handler!(_save_sp_solution!, m, :window_solved)
+        min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
+        max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+        undo_force_starting_investments! = _force_starting_investments!(m_mp)
+        for j in Iterators.countfrom(1)
+            @log log_level 0 "\nStarting Benders iteration $j"
+            j == 2 && undo_force_starting_investments!()
+            _solve_standard_model!(m_mp; log_level=log_level, rewind=false) || return false
+            @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
+            _solve_standard_model!(
+                m;
+                log_level=log_level,
+                update_names=update_names,
+                calculate_duals=true,
+                log_prefix="Benders iteration $j - ",
+            ) || return false
+            @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
+            @log log_level 1 "Benders iteration $j complete"
+            @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
+            @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
+            gap = last(m_mp.ext[:spineopt].benders_gaps)
+            @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
+            if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
+                @log log_level 1 "Benders tolerance satisfied, terminating..."
+                break
+            end
+            if j >= max_benders_iterations
+                @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
+                break
+            end
+            @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+            unfix_history!(m)
+            j += 1
+            global current_bi = add_benders_iteration(j)
+        end
+        true
+    end
+end
+
+function _solve_standard_model!(
     m;
     log_level=3,
     update_names=false,
@@ -390,7 +437,6 @@ function solve_model!(
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
     k === nothing && return m
-    _solve_stage_models!(m; log_level, log_prefix) || return false
     _call_event_handlers(m, :model_about_to_solve)
     model_name = string(log_prefix, _model_name(m))
     rewind && @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
@@ -411,8 +457,10 @@ function solve_model!(
 end
 
 function _solve_stage_models!(m; log_level, log_prefix)
-    for stage_m in values(m.ext[:spineopt].model_by_stage)
-        solve_model!(stage_m; log_level, log_prefix) || return false
+    for (st, stage_m) in m.ext[:spineopt].model_by_stage
+        with_env(st.name) do
+            solve_model!(stage_m; log_level, log_prefix)
+        end || return false
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
     end

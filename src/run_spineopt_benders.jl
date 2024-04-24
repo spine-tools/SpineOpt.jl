@@ -16,62 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-function run_spineopt_benders!(
-    m,
-    url_out;
-    log_level,
-    optimize,
-    update_names,
-    alternative,
-    write_as_roll,
-    resume_file_path,
-)
-    add_event_handler!(process_subproblem_solution, m, :window_solved)
-    add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
-    add_event_handler!(_save_sp_solution!, m, :window_solved)
-    m_mp = master_model(m)
-    _build_mp_model!(m_mp; log_level=log_level)
-    m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
-    undo_force_starting_investments! = _force_starting_investments!(m_mp)
-    _call_event_handlers(m_mp, :model_built)
-    min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
-    max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
-    j = 1
-    while optimize
-		@log log_level 0 "\nStarting Benders iteration $j"
-        j == 2 && undo_force_starting_investments!()
-        solve_model!(m_mp; log_level=log_level, rewind=false) || break
-        @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
-        solve_model!(
-            m;
-            log_level=log_level,
-            update_names=update_names,
-            calculate_duals=true,
-            log_prefix="Benders iteration $j - ",
-        ) || break
-        @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
-        @log log_level 1 "Benders iteration $j complete"
-        @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
-        @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
-        gap = last(m_mp.ext[:spineopt].benders_gaps)
-        @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
-        if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
-            @log log_level 1 "Benders tolerance satisfied, terminating..."
-            break
-        end
-        if j >= max_benders_iterations
-            @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
-            break
-        end
-        @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
-        unfix_history!(m)
-        j += 1
-        global current_bi = add_benders_iteration(j)
-    end
-    write_report(m_mp, url_out; alternative=alternative, log_level=log_level)
-    write_report(m, url_out; alternative=alternative, log_level=log_level)
-    m
-end
 
 """
 Initialize the given model for SpineOpt Master Problem: add variables, add constraints and set objective.

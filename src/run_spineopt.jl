@@ -128,8 +128,6 @@ function _run_spineopt(
     elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))
     @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     m
-    # FIXME: make sure use_direct_model this works with db solvers
-    # possibly adapt union? + allow for conflicts if direct model is used
 end
 
 """
@@ -263,12 +261,10 @@ function run_spineopt!(
     @log log_level 0 "Running SpineOpt..."
     do_run_spineopt! = Dict(
         :spineopt_standard => run_spineopt_standard!,
-        :spineopt_benders => run_spineopt_benders!,
+        :spineopt_benders => run_spineopt_standard!,
         :spineopt_mga => run_spineopt_mga!,
     )[model_type(model=m.ext[:spineopt].instance)]
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
-    Base.invokelatest(build_model!, m; log_level)
-    _call_event_handlers(m, :model_built)
     Base.invokelatest(        
         do_run_spineopt!,
         m,
@@ -289,22 +285,25 @@ A `JuMP.Model` extended to be used with SpineOpt.
 `mip_solver` and `lp_solver` are 'optimizer factories' to be passed to `JuMP.Model` or `JuMP.direct_model`;
 `use_direct_model` is a `Bool` indicating whether `JuMP.Model` or `JuMP.direct_model` should be used.
 """
-function create_model(mip_solver, lp_solver, use_direct_model)
+function create_model(mip_solver, lp_solver, use_direct_model; stage=nothing)
+    model_by_stage = OrderedDict()
+    if stage === nothing
+        for st in sort(SpineOpt.stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
+            with_env(st.name) do
+                model_by_stage[st] = create_model(mip_solver, lp_solver, use_direct_model; stage=st)
+            end
+        end
+    end
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-        m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
+        m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=stage)
         m_mp
     end
-    model_by_stage = OrderedDict()
-    for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
-        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st)
-    end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)
+    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage; stage=stage)
     m
 end
 

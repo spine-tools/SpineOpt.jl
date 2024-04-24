@@ -71,11 +71,6 @@ function _save_mp_values!(obj_cls, m_mp, m, var_name)
     pval_by_ent = _pval_by_entity(m_mp.ext[:spineopt].values[var_name])
     pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
-    for st in keys(m.ext[:spineopt].model_by_stage)
-        with_env(st.name) do
-            add_object_parameter_values!(obj_cls, pvals; merge_values=true)
-        end
-    end
 end
 
 function process_subproblem_solution(m, k)

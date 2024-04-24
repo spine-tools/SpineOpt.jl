@@ -27,6 +27,7 @@ function run_spineopt_mga!(
     write_as_roll,
     resume_file_path,
 )
+    build_model!(m; log_level)
     outputs = Dict()
     mga_iteration_count = 0
     max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
