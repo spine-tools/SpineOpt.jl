@@ -990,13 +990,13 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 - `log_level::Int=3`: an integer to control the log level.
 """
-function write_report(m, url_out; alternative="", log_level=3)
+function write_report(m, url_out; alternative="", log_level=3, output_suffix=(;))
     url_out === nothing && return
     m_mp = master_model(m)
     models = m_mp === nothing ? (m,) : (m_mp, m)
     for m_ in models
         values = _collect_output_values(m_)
-        write_report(m_.ext[:spineopt].reports_by_output, url_out, values; alternative, log_level)
+        write_report(m_.ext[:spineopt].reports_by_output, url_out, values; alternative, log_level, output_suffix)
     end
 end
 function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3, output_suffix=(;))
