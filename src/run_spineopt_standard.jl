@@ -26,9 +26,15 @@ function run_spineopt_standard!(
     alternative,
     write_as_roll,
     resume_file_path,
+    write_benders_iteration_report=true,
 )
     build_model!(m; log_level)
     optimize || return m
+    if write_benders_iteration_report && master_model(m) !== nothing
+        add_event_handler!(m, :model_solved) do m
+            write_report(m, url_out; alternative, log_level, output_suffix=(benders_iteration=current_bi,))
+        end
+    end
     try
         solve_model!(m; log_level, update_names, write_as_roll, resume_file_path)
         if write_as_roll > 0
@@ -993,7 +999,7 @@ function write_report(m, url_out; alternative="", log_level=3)
         write_report(m_.ext[:spineopt].reports_by_output, url_out, values; alternative, log_level)
     end
 end
-function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
+function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3, output_suffix=(;))
     vals_by_url_by_report = Dict()
     for ((output_name, overwrite), reports) in reports_by_output
         value = get(values, (output_name, overwrite), nothing)
@@ -1001,7 +1007,7 @@ function write_report(reports_by_output::Dict, url_out, values::Dict; alternativ
         if output_name in all_objective_terms
             output_name = Symbol(:objective_, output_name)
         end
-        output_val = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
+        output_val = Dict((; _flatten_stochastic_path(ent)..., output_suffix...) => val for (ent, val) in value)
         for (report_name, output_url) in reports
             if output_url === nothing
                 output_url = url_out
@@ -1074,7 +1080,7 @@ end
 function _flatten_stochastic_path(entity::NamedTuple)
     stoch_path = get(entity, :stochastic_path, nothing)
     stoch_path === nothing && return entity
-    flat_stoch_path = (; Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
+    flat_stoch_path = Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))
     (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
 end
 
