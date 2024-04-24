@@ -22,8 +22,9 @@
     generate_economic_structure!(m::Model)
 """
 function generate_economic_structure!(m::Model;log_level=3)
+    economic_parameters = _create_set_parameters_and_relationships()
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
-        @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(m::Model,obj)
+        @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(m::Model,obj,economic_parameters)
     end
     !isempty([
         model__default_investment_temporal_block();
@@ -32,36 +33,99 @@ function generate_economic_structure!(m::Model;log_level=3)
         connection__investment_temporal_block();
     ]) || return
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
-        @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" generate_capacity_transfer_factor!(m::Model,obj)
-        @timelog log_level 3 "- [Generated conversion to discounted investments of $(name)s]" generate_conversion_to_discounted_annuities!(m::Model,obj)
-        @timelog log_level 3 "- [Generated conversion for discounted decommissioning of $(name)s]" generate_decommissioning_conversion_to_discounted_annuities!(m::Model,obj)
-        @timelog log_level 3 "- [Generated salvage fraction for $(name)s]" generate_salvage_fraction!(m::Model,obj)
-        @timelog log_level 3 "- [Generated $(name) technology specific discount factors]" generate_tech_discount_factor!(m::Model,obj)
+        @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" generate_capacity_transfer_factor!(m::Model,obj,economic_parameters)
+        @timelog log_level 3 "- [Generated conversion to discounted investments of $(name)s]" generate_conversion_to_discounted_annuities!(m::Model,obj,economic_parameters)
+        @timelog log_level 3 "- [Generated conversion for discounted decommissioning of $(name)s]" generate_decommissioning_conversion_to_discounted_annuities!(m::Model,obj,economic_parameters)
+        @timelog log_level 3 "- [Generated salvage fraction for $(name)s]" generate_salvage_fraction!(m::Model,obj,economic_parameters)
+        @timelog log_level 3 "- [Generated $(name) technology specific discount factors]" generate_tech_discount_factor!(m::Model,obj,economic_parameters)
     end
 end
 
 
 function _create_set_parameters_and_relationships()
+    economic_parameters = Dict(
     # defined outside this file
     # indices
-    global set_investment_indices = Dict(unit => units_invested_available_indices, node => storages_invested_available_indices, connection => connections_invested_available_indices)
-    # relationships
-    global set_invest_temporal_block = Dict(unit => unit__investment_temporal_block, node => node__investment_temporal_block, connection => connection__investment_temporal_block)
-    global set_invest_stoch_struct = Dict(unit => unit__investment_stochastic_structure, node => node__investment_stochastic_structure, connection => connection__investment_stochastic_structure)
-    # parameters
-    global set_lead_time = Dict(unit => unit_lead_time, node => storage_lead_time, connection => connection_lead_time)
-    global set_tech_lifetime = Dict(unit => unit_investment_tech_lifetime, node => storage_investment_tech_lifetime, connection => connection_investment_tech_lifetime)
-    global set_econ_lifetime = Dict(unit => unit_investment_econ_lifetime, node => storage_investment_econ_lifetime, connection => connection_investment_econ_lifetime)
-    global set_discnt_rate_tech = Dict(unit => unit_discount_rate_technology_specific, node => storage_discount_rate_technology_specific, connection => connection_discount_rate_technology_specific)
-    global set_decom_time = Dict(unit => unit_decommissioning_time, node => storage_decommissioning_time, connection => connection_decommissioning_time)
-    global set_decom_cost = Dict(unit => unit_decommissioning_cost, node => storage_decommissioning_cost, connection => connection_decommissioning_cost)
-    # internally calculated parameters in this file
-    global set_capacity_transfer_factor = Dict(unit => :unit_capacity_transfer_factor, node => :storage_capacity_transfer_factor, connection => :connection_capacity_transfer_factor)
-    global set_conversion_to_discounted_annuities = Dict(unit => :unit_conversion_to_discounted_annuities, node => :storage_conversion_to_discounted_annuities, connection => :connection_conversion_to_discounted_annuities)
-    global set_salvage_fraction = Dict(unit => :unit_salvage_fraction, node => :storage_salvage_fraction, connection => :connection_salvage_fraction)
-    global set_tech_discount_factor = Dict(unit => :unit_tech_discount_factor, node => :storage_tech_discount_factor, connection => :connection_tech_discount_factor)
-    global set_discounted_duration = Dict(unit => :unit_discounted_duration, node => :storage_discounted_duration, connection => :connection_discounted_duration)
-    global set_decommissioning_conversion_to_discounted_annuities = Dict(unit => :unit_decommissioning_conversion_to_discounted_annuities, node => :storage_decommissioning_conversion_to_discounted_annuities, connection => :connection_decommissioning_conversion_to_discounted_annuities)
+        :set_investment_indices => Dict(
+            unit => units_invested_available_indices,
+            node => storages_invested_available_indices,
+            connection => connections_invested_available_indices
+        ),
+        # relationships
+        :set_invest_temporal_block => Dict(
+            unit => unit__investment_temporal_block,
+            node => node__investment_temporal_block,
+            connection => connection__investment_temporal_block
+        ),
+        :set_invest_stoch_struct => Dict(
+            unit => unit__investment_stochastic_structure,
+            node => node__investment_stochastic_structure,
+            connection => connection__investment_stochastic_structure
+        ),
+        # parameters
+        :set_lead_time => Dict(
+            unit => unit_lead_time,
+            node => storage_lead_time,
+            connection => connection_lead_time
+        ),
+        :set_tech_lifetime => Dict(
+            unit => unit_investment_tech_lifetime,
+            node => storage_investment_tech_lifetime,
+            connection => connection_investment_tech_lifetime
+        ),
+        :set_econ_lifetime => Dict(
+            unit => unit_investment_econ_lifetime,
+            node => storage_investment_econ_lifetime,
+            connection => connection_investment_econ_lifetime
+        ),
+        :set_discnt_rate_tech => Dict(
+            unit => unit_discount_rate_technology_specific,
+            node => storage_discount_rate_technology_specific,
+            connection => connection_discount_rate_technology_specific
+        ),
+        :set_decom_time => Dict(
+            unit => unit_decommissioning_time,
+            node => storage_decommissioning_time,
+            connection => connection_decommissioning_time
+        ),
+        :set_decom_cost => Dict(
+            unit => unit_decommissioning_cost,
+            node => storage_decommissioning_cost,
+            connection => connection_decommissioning_cost
+        ),
+        # internally calculated parameters in this file
+        :set_capacity_transfer_factor => Dict(
+            unit => :unit_capacity_transfer_factor,
+            node => :storage_capacity_transfer_factor,
+            connection => :connection_capacity_transfer_factor
+        ),
+        :set_conversion_to_discounted_annuities => Dict(
+            unit => :unit_conversion_to_discounted_annuities,
+            node => :storage_conversion_to_discounted_annuities,
+            connection => :connection_conversion_to_discounted_annuities
+        ),
+        :set_salvage_fraction => Dict(
+            unit => :unit_salvage_fraction,
+            node => :storage_salvage_fraction,
+            connection => :connection_salvage_fraction
+        ),
+        :set_tech_discount_factor => Dict(
+            unit => :unit_tech_discount_factor,
+            node => :storage_tech_discount_factor,
+            connection => :connection_tech_discount_factor
+        ),
+        :set_discounted_duration => Dict(
+            unit => :unit_discounted_duration,
+            node => :storage_discounted_duration,
+            connection => :connection_discounted_duration
+        ),
+        :set_decommissioning_conversion_to_discounted_annuities => Dict(
+            unit => :unit_decommissioning_conversion_to_discounted_annuities,
+            node => :storage_decommissioning_conversion_to_discounted_annuities,
+            connection => :connection_decommissioning_conversion_to_discounted_annuities
+        )
+    )
+    return economic_parameters
 end 
 
 """
@@ -71,17 +135,15 @@ Generate capacity_transfer_factor factors for units that can be invested in. The
 unit_capacity_transfer_factor is a Map parameter that holds the fraction of an investment during vintage
 year t_v in a unit u that is still available in the model year t.
 """
-function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
+function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
     capacity_transfer_factor = Dict()
 
-    _create_set_parameters_and_relationships()
-
-    investment_indices = set_investment_indices[obj_cls]
-    lead_time = set_lead_time[obj_cls]
-    tech_lifetime = set_tech_lifetime[obj_cls]
-    invest_temporal_block = set_invest_temporal_block[obj_cls]
-    param_name = set_capacity_transfer_factor[obj_cls]
+    investment_indices = economic_parameters[:set_investment_indices][obj_cls]
+    lead_time = economic_parameters[:set_lead_time][obj_cls]
+    tech_lifetime = economic_parameters[:set_tech_lifetime][obj_cls]
+    invest_temporal_block = economic_parameters[:set_invest_temporal_block][obj_cls]
+    param_name = economic_parameters[:set_capacity_transfer_factor][obj_cls]
 
     for id in invest_temporal_block(temporal_block=anything)
         if (!isnothing(tech_lifetime(;Dict(obj_cls.name=>id)...))
@@ -171,15 +233,15 @@ lifetime of the investment. Investment payments are assumed to increase linearly
 linearly towards the end of the economic lifetime.
 
 """
-function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass)
+function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     conversion_to_discounted_annuities = Dict()
-    _create_set_parameters_and_relationships()
-    investment_indices = set_investment_indices[obj_cls]
-    lead_time = set_lead_time[obj_cls]
-    econ_lifetime = set_econ_lifetime[obj_cls]
-    param_name = set_conversion_to_discounted_annuities[obj_cls] # this is MARKUP^AN
+    
+    investment_indices = economic_parameters[:set_investment_indices][obj_cls]
+    lead_time = economic_parameters[:set_lead_time][obj_cls]
+    econ_lifetime = economic_parameters[:set_econ_lifetime][obj_cls]
+    param_name = economic_parameters[:set_conversion_to_discounted_annuities][obj_cls] # this is MARKUP^AN
     
     for id in obj_cls()
         if (discount_rate(model=model()[1]) == 0 || isnothing(discount_rate(model=model()[1])))
@@ -283,18 +345,17 @@ end
 
 Generate salvage fraction of units, whose economic lifetime exceeds the modeling horizon.
 """
-function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
+function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     p_eoh = model_end(model=instance)
     salvage_fraction = Dict()
 
-    _create_set_parameters_and_relationships()
-    investment_indices = set_investment_indices[obj_cls]
-    lead_time = set_lead_time[obj_cls]
-    econ_lifetime = set_econ_lifetime[obj_cls]
-    invest_temporal_block = set_invest_temporal_block[obj_cls]
-    param_name = set_salvage_fraction[obj_cls]
+    investment_indices = economic_parameters[:set_investment_indices][obj_cls]
+    lead_time = economic_parameters[:set_lead_time][obj_cls]
+    econ_lifetime = economic_parameters[:set_econ_lifetime][obj_cls]
+    invest_temporal_block = economic_parameters[:set_invest_temporal_block][obj_cls]
+    param_name = economic_parameters[:set_salvage_fraction][obj_cls]
     
     for id in invest_temporal_block(temporal_block=anything)
         if id in indices(econ_lifetime) 
@@ -347,16 +408,14 @@ end
 
 Generate technology-specific discount factors for investments (e.g., for risky investments).
 """
-function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass)
+function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
     
-    _create_set_parameters_and_relationships()
-    
-    investment_indices = set_investment_indices[obj_cls]
-    econ_lifetime = set_econ_lifetime[obj_cls]
-    discnt_rate_tech = set_discnt_rate_tech[obj_cls]
-    invest_stoch_struct = set_invest_stoch_struct[obj_cls]
-    param_name = set_tech_discount_factor[obj_cls]
+    investment_indices = economic_parameters[:set_investment_indices][obj_cls]
+    econ_lifetime = economic_parameters[:set_econ_lifetime][obj_cls]
+    discnt_rate_tech = economic_parameters[:set_discnt_rate_tech][obj_cls]
+    invest_stoch_struct = economic_parameters[:set_invest_stoch_struct][obj_cls]
+    param_name = economic_parameters[:set_tech_discount_factor][obj_cls]
 
     for id in obj_cls()
         if (!isnothing(discnt_rate_tech(; Dict(obj_cls.name => id)...))
@@ -393,14 +452,14 @@ Generate discounted duration of timeslices for each investment timeslice.
 This is used to scale and translate operational blocks according to their associated investment period, and
 discount them to the models `discount_year`.
 """
-function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
+function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     discounted_duration = Dict()
-    _create_set_parameters_and_relationships()
-    invest_stoch_struct = set_invest_stoch_struct[obj_cls]
-    invest_temporal_block = set_invest_temporal_block[obj_cls] 
-    param_name = set_discounted_duration[obj_cls]
+
+    invest_stoch_struct = economic_parameters[:set_invest_stoch_struct][obj_cls]
+    invest_temporal_block = economic_parameters[:set_invest_temporal_block][obj_cls] 
+    param_name = economic_parameters[:set_discounted_duration][obj_cls]
 
     if use_milestone_years(model=instance) 
         for id in obj_cls()
@@ -477,15 +536,15 @@ into discounted (to the `dicount_year`) annual payments, distributed over the de
 Investment payments are assumed to be constant over the decommissioning time.
 
 """
-function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass)
+function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
     discnt_year = discount_year(model=instance)
     decommissioning_conversion_to_discounted_annuities = Dict()
-    _create_set_parameters_and_relationships()
-    investment_indices = set_investment_indices[obj_cls]
-    decom_time = set_decom_time[obj_cls]
-    decom_cost = set_decom_cost[obj_cls]
-    param_name = set_decommissioning_conversion_to_discounted_annuities[obj_cls]
+    
+    investment_indices = economic_parameters[:set_investment_indices][obj_cls]
+    decom_time = economic_parameters[:set_decom_time][obj_cls]
+    decom_cost = economic_parameters[:set_decom_cost][obj_cls]
+    param_name = economic_parameters[:set_decommissioning_conversion_to_discounted_annuities][obj_cls]
     
     for id in indices(decom_cost)
         stochastic_map_indices = []

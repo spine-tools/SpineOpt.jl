@@ -18,7 +18,7 @@
 #############################################################################
 
 
-@testset "algorithm structure" begin
+@testset "economic structure" begin
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
