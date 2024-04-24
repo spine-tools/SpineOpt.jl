@@ -986,11 +986,12 @@ A new Spine database is created at `url_out` if one doesn't exist.
 """
 function write_report(m, url_out; alternative="", log_level=3)
     url_out === nothing && return
-    values = _collect_output_values(m)
-    write_report(m, url_out, values; alternative=alternative, log_level=log_level)
-end
-function write_report(m, url_out, values::Dict; alternative="", log_level=3)
-    write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
+    m_mp = master_model(m)
+    models = m_mp === nothing ? (m) : (m_mp, m)
+    for m_ in models
+        values = _collect_output_values(m_)
+        write_report(m_.ext[:spineopt].reports_by_output, url_out, values; alternative, log_level)
+    end
 end
 function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
     vals_by_url_by_report = Dict()
