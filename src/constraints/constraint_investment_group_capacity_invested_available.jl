@@ -23,14 +23,26 @@
 Force capacity invested available in a group to be greater than the minimum.
 """
 function add_constraint_investment_group_minimum_capacity_invested_available!(m::Model)
+    _add_constraint!(
+        m,
+        :investment_group_minimum_capacity_invested_available,
+        constraint_investment_group_minimum_capacity_invested_available_indices,
+        _build_constraint_investment_group_minimum_capacity_invested_available,
+    )
+end
+
+function _build_constraint_investment_group_minimum_capacity_invested_available(m::Model, ig, s, t)
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:investment_group_minimum_capacity_invested_available] = Dict(
-        (investment_group=ig, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            _group_capacity_invested_available(m, ig, s, t)
-            >=
-            minimum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
-        )
+    @build_constraint(
+        _group_capacity_invested_available(m, ig, s, t)
+        >=
+        minimum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
+    )
+end
+
+function constraint_investment_group_minimum_capacity_invested_available_indices(m::Model)
+    (
+        (investment_group=ig, stochastic_scenario=s, t=t)
         for ig in indices(minimum_capacity_invested_available)
         for (s, t) in _capacity_entities_invested_available_s_t(m)
     )
@@ -42,14 +54,26 @@ end
 Force capacity invested available in a group to be lower than the maximum.
 """
 function add_constraint_investment_group_maximum_capacity_invested_available!(m::Model)
+    _add_constraint!(
+        m,
+        :investment_group_maximum_capacity_invested_available,
+        constraint_investment_group_maximum_capacity_invested_available_indices,
+        _build_constraint_investment_group_maximum_capacity_invested_available,
+    )
+end
+
+function _build_constraint_investment_group_maximum_capacity_invested_available(m::Model, ig, s, t)
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:investment_group_maximum_capacity_invested_available] = Dict(
-        (investment_group=ig, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            _group_capacity_invested_available(m, ig, s, t)
-            <=
-            maximum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
-        )
+    @build_constraint(
+        _group_capacity_invested_available(m, ig, s, t)
+        <=
+        maximum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
+    )
+end
+
+function constraint_investment_group_maximum_capacity_invested_available_indices(m::Model)
+    (
+        (investment_group=ig, stochastic_scenario=s, t=t)
         for ig in indices(maximum_capacity_invested_available)
         for (s, t) in _capacity_entities_invested_available_s_t(m)
     )

@@ -36,21 +36,23 @@ in order to impose a lower limit on the aggregated [node\_voltage\_angle](@ref) 
 See also [min\_voltage\_angle](@ref).
 """
 function add_constraint_min_node_voltage_angle!(m::Model)
+    _add_constraint!(
+        m, :min_node_voltage_angle, constraint_min_node_voltage_angle_indices, _build_constraint_min_node_voltage_angle
+    )
+end
+
+function _build_constraint_min_node_voltage_angle(m::Model, ng, s_path, t)
     @fetch node_voltage_angle = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_node_voltage_angle] = Dict(
-        (node=ng, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            + sum(
-                + node_voltage_angle[ng, s, t]
-                - min_voltage_angle(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
-                for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s_path, t=t);
-                init=0,
-            )
-            >=
-            0
+    @build_constraint(
+        sum(
+            + node_voltage_angle[ng, s, t]
+            - min_voltage_angle(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
+            for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (ng, s_path, t) in constraint_min_node_voltage_angle_indices(m)
+        >=
+        0
     )
 end
 

@@ -37,39 +37,39 @@ v^{units\_shut\_down}_{(u,s,t')} \\
 See also [number\_of\_units](@ref), [min\_down\_time](@ref).
 """
 function add_constraint_min_down_time!(m::Model)
+    _add_constraint!(m, :min_down_time, constraint_min_down_time_indices, _build_constraint_min_down_time)
+end
+
+function _build_constraint_min_down_time(m::Model, u, s_path, t)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_down_time] = Dict(
-        (unit=u, stochastic_path=s_path, t=t) => @constraint(
-            m,
+    @build_constraint(
+        + sum(
+            + number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
             + sum(
-                + number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
-                + sum(
-                    units_invested_available[u, s, t1]
-                    for (u, s, t1) in units_invested_available_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_short=t)
-                    );
-                    init=0,
-                )
-                - units_on[u, s, t]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t);
-                init=0,
-            )
-            >=
-            + sum(
-                units_shut_down[u, s_past, t_past]
-                for (u, s_past, t_past) in past_units_on_indices(m, u, s_path, t, min_down_time);
-                init=0,
-            )
-            + sum(
-                nonspin_units_started_up[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_started_up_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything
+                units_invested_available[u, s, t1]
+                for (u, s, t1) in units_invested_available_indices(
+                    m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_short=t)
                 );
                 init=0,
             )
+            - units_on[u, s, t]
+            for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (u, s_path, t) in constraint_min_down_time_indices(m)
+        >=
+        + sum(
+            units_shut_down[u, s_past, t_past]
+            for (u, s_past, t_past) in past_units_on_indices(m, u, s_path, t, min_down_time);
+            init=0,
+        )
+        + sum(
+            nonspin_units_started_up[u, n, s, t]
+            for (u, n, s, t) in nonspin_units_started_up_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything
+            );
+            init=0,
+        )
     )
 end
 

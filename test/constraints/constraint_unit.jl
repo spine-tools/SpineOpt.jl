@@ -887,13 +887,11 @@ function test_constraint_ratio_unit_flow()
             var_u_on_a1 = var_units_on[var_u_on_a1_key...]
             var_u_on_a2 = var_units_on[var_u_on_a2_key...]
             con_key = (unit(:unit_ab), node(:node_a), node(:node_b), path, t_long)
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 var_u_flow_a1 + var_u_flow_a2,
                 sense,
                 2 * flow_ratio * var_u_flow_b + units_on_coeff * (var_u_on_a1 + var_u_on_a2),
             )
-            expected_con = constraint_object(expected_con_ref)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -912,7 +910,7 @@ function test_constraint_total_cumulated_unit_flow()
             ("max", "to_node"),
         )
             url_in = _test_constraint_unit_setup()
-            cumulated = join([p,"total" , "cumulated", "unit_flow",a], "_")
+            cumulated = join([p,"total" , "cumulated", "unit_flow", a], "_")
             relationships = [
                 [classes_by_prefix[a], ["unit_ab", "node_a"]],
             ]
@@ -937,14 +935,12 @@ function test_constraint_total_cumulated_unit_flow()
             var_u_flow_a2_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:child), t_short2)
             var_u_flow_a1 = var_unit_flow[var_u_flow_a1_key...]
             var_u_flow_a2 = var_unit_flow[var_u_flow_a2_key...]
-            con_key = (unit(:unit_ab), node(:node_a), path)
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            con_key = (unit(:unit_ab), node(:node_a), d_a, path)
+            expected_con = SpineOpt.build_sense_constraint(
                 var_u_flow_a1 + var_u_flow_a2,
                 sense,
                 total_cumulated_flow_bound
             )
-            expected_con = constraint_object(expected_con_ref)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -1770,8 +1766,7 @@ function test_constraint_user_constraint()
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 + unit_flow_coefficient_a
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
                 2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h] +
@@ -1784,7 +1779,6 @@ function test_constraint_user_constraint()
                 Symbol(sense),
                 2 * rhs,
             )
-            expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1839,8 +1833,7 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 + unit_flow_coefficient_a * sum(
                     var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
                     for i in 1:3
@@ -1855,7 +1848,6 @@ function test_constraint_user_constraint_with_unit_operating_segments()
                 Symbol(sense),
                 2 * rhs,
             )
-            expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)

@@ -40,25 +40,25 @@ See also
 [min\_capacity\_margin\_penalty](@ref)
 """
 function add_constraint_min_capacity_margin!(m::Model)
+    _add_constraint!(m, :min_capacity_margin, expression_capacity_margin_indices, _build_constraint_min_capacity_margin)
+end
+
+function _build_constraint_min_capacity_margin(m::Model, n, s_path, t)
     @fetch min_capacity_margin_slack = m.ext[:spineopt].variables
     @fetch capacity_margin = m.ext[:spineopt].expressions    
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_capacity_margin] = Dict(
-        (node=n, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            + capacity_margin[n, s_path, t]
-            + sum(
-                min_capacity_margin_slack[n, s, t]
-                for (n, s, t) in min_capacity_margin_slack_indices(m; node=n, stochastic_scenario=s_path, t=t);
-                init=0,
-            )
-            >=
-            + sum(
-                min_capacity_margin(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
-                for (n, s, t) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s_path, t=t);
-                init=0,
-            )
+    @build_constraint(
+        + capacity_margin[n, s_path, t]
+        + sum(
+            min_capacity_margin_slack[n, s, t]
+            for (n, s, t) in min_capacity_margin_slack_indices(m; node=n, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (n, s_path, t) in expression_capacity_margin_indices(m)
+        >=
+        + sum(
+            min_capacity_margin(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
+            for (n, s, t) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s_path, t=t);
+            init=0,
+        )
     )
 end

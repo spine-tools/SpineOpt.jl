@@ -44,44 +44,49 @@ exist for the other two cases.
 See also [fix\_ratio\_out\_in\_connection\_flow](@ref).
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
+    _add_constraint!(
+        m,
+        ratio_out_in.name,
+        m -> constraint_ratio_out_in_connection_flow_indices(m, ratio_out_in),
+        (m, ind...) -> _build_constraint_ratio_out_in_connection_flow(m, ind..., ratio_out_in, sense),
+    )
+end
+
+function _build_constraint_ratio_out_in_connection_flow(m::Model, conn, ng_out, ng_in, s_path, t, ratio_out_in, sense)
     # NOTE: the `<sense>_ratio_<directions>_connection_flow` parameter uses the stochastic dimensions
     # of the second <direction>!
     @fetch connection_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[ratio_out_in.name] = Dict(
-        (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s_path, t=t) => sense_constraint(
-            m,
-            + sum(
-                + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
-                for (conn, n_out, d, s, t_short) in connection_flow_indices(
-                    m;
-                    connection=conn,
-                    node=ng_out,
-                    direction=direction(:to_node),
-                    stochastic_scenario=s_path,
-                    t=t_in_t(m; t_long=t),
-                );
-                init=0,
-            ),
-            sense,
-            + sum(
-                + connection_flow[conn, n_in, d, s, t_short]
-                * ratio_out_in(
-                    m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t_short
-                )
-                * overlap_duration(t_short, _delayed_t(conn, ng_out, ng_in, t0, s, t))
-                for (conn, n_in, d, s, t_short) in connection_flow_indices(
-                    m;
-                    connection=conn,
-                    node=ng_in,
-                    direction=direction(:from_node),
-                    stochastic_scenario=s_path,
-                    t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s_path, t)
-                );
-                init=0,
-            ),
-        )
-        for (conn, ng_out, ng_in, s_path, t) in constraint_ratio_out_in_connection_flow_indices(m, ratio_out_in)
+    build_sense_constraint(
+        + sum(
+            + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
+            for (conn, n_out, d, s, t_short) in connection_flow_indices(
+                m;
+                connection=conn,
+                node=ng_out,
+                direction=direction(:to_node),
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
+        ),
+        sense,
+        + sum(
+            + connection_flow[conn, n_in, d, s, t_short]
+            * ratio_out_in(
+                m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t_short
+            )
+            * overlap_duration(t_short, _delayed_t(conn, ng_out, ng_in, t0, s, t))
+            for (conn, n_in, d, s, t_short) in connection_flow_indices(
+                m;
+                connection=conn,
+                node=ng_in,
+                direction=direction(:from_node),
+                stochastic_scenario=s_path,
+                t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s_path, t)
+            );
+            init=0,
+        ),
     )
 end
 

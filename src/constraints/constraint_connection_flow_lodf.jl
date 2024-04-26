@@ -51,22 +51,24 @@ function add_constraint_connection_flow_lodf!(m::Model)
         @info "skipping constraint connection_flow_lodf - instead will report contingency_is_binding in $rpts"
         return
     end
+    _add_constraint!(
+        m, :connection_flow_lodf, constraint_connection_flow_lodf_indices, _build_constraint_connection_flow_lodf
+    )
+end
+
+function _build_constraint_connection_flow_lodf(m::Model, conn_cont, conn_mon, s_path, t)
     t0 = _analysis_time(m)
     @fetch connection_flow = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:connection_flow_lodf] = Dict(
-        (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            - connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
-            <=
-            + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s_path, t, sum)
-            * maximum(
-                connection_availability_factor(m; connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)
-                for s in s_path
-            )
-            <=
-            + connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
+    @build_constraint(
+        - connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
+        <=
+        + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s_path, t, sum)
+        * maximum(
+            connection_availability_factor(m; connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)
+            for s in s_path
         )
-        for (conn_cont, conn_mon, s_path, t) in constraint_connection_flow_lodf_indices(m)
+        <=
+        + connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
     )
 end
 

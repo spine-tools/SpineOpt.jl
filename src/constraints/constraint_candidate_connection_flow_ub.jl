@@ -34,13 +34,19 @@ v^{connection\_intact\_flow}_{(c, n, d, s, t)} \\
 """
 function add_constraint_candidate_connection_flow_ub!(m::Model)
     use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
-    @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:candidate_connection_flow_ub] = Dict(
-        (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
-            m, connection_flow[conn, ng, d, s, t] <= connection_intact_flow[conn, ng, d, s, t]
-        )
-        for conn in connection(is_candidate=true, has_ptdf=true)
-        for (conn, ng, d, s, t) in connection_flow_indices(m; connection=conn)
+    _add_constraint!(
+        m,
+        :candidate_connection_flow_ub,
+        constraint_candidate_connection_flow_ub_indices,
+        _build_constraint_candidate_connection_flow_ub,
     )
+end
+
+function _build_constraint_candidate_connection_flow_ub(m, conn, ng, d, s, t)
+    @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
+    @build_constraint(connection_flow[conn, ng, d, s, t] <= connection_intact_flow[conn, ng, d, s, t])
+end
+
+function constraint_candidate_connection_flow_ub_indices(m)
+    connection_flow_indices(m; connection=connection(is_candidate=true, has_ptdf=true))
 end

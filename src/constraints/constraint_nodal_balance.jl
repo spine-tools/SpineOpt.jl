@@ -58,34 +58,40 @@ See also
 [balance\_type](@ref) and [nodal\_balance\_sense](@ref).
 """
 function add_constraint_nodal_balance!(m::Model)
+    _add_constraint!(m, :nodal_balance, constraint_nodal_balance_indices, _build_constraint_nodal_balance)
+end
+
+function _build_constraint_nodal_balance(m, n, s, t)
     @fetch connection_flow, node_injection = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:nodal_balance] = Dict(
-        (node=n, stochastic_scenario=s, t=t) => sense_constraint(
-            m,
-            # Net injection
-            + node_injection[n, s, t]
-            # Commodity flows from connections
-            + sum(
-                get(connection_flow, (conn, n1, d, s, t), 0)
-                for n1 in members(n)
-                for (conn, d) in connection__to_node(node=n1)
-                if !_issubset(
-                    connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
-                );
-                init=0,
-            )
-            # Commodity flows to connections
-            - sum(
-                get(connection_flow, (conn, n1, d, s, t), 0)
-                for n1 in members(n)
-                for (conn, d) in connection__from_node(node=n1)
-                if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
-                init=0,
-            )
-            ,
-            eval(nodal_balance_sense(node=n)),
-            0,
+    build_sense_constraint(
+        # Net injection
+        + node_injection[n, s, t]
+        # Commodity flows from connections
+        + sum(
+            get(connection_flow, (conn, n1, d, s, t), 0)
+            for n1 in members(n)
+            for (conn, d) in connection__to_node(node=n1)
+            if !_issubset(
+                connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
+            );
+            init=0,
         )
+        # Commodity flows to connections
+        - sum(
+            get(connection_flow, (conn, n1, d, s, t), 0)
+            for n1 in members(n)
+            for (conn, d) in connection__from_node(node=n1)
+            if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
+            init=0,
+        ),
+        eval(nodal_balance_sense(node=n)),
+        0,
+    )
+end
+
+function constraint_nodal_balance_indices(m)
+    (
+        (node=n, stochastic_scenario=s, t=t)
         for n in node()
         if balance_type(node=n) !== :balance_type_none
         && !any(balance_type(node=ng) === :balance_type_group for ng in groups(n))

@@ -21,32 +21,38 @@
 The unit must be taken out of service for maintenance for a duration equal to scheduled_outage_duration:
 
 ```math
-\sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t \geq scheduled\_outage\_duration_{(u,s,t)}number\_of\_units_u \quad \forall u \in unit, \, \forall (s,t)
+\sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t
+\geq scheduled\_outage\_duration_{(u,s,t)}number\_of\_units_u \quad \forall u \in unit, \, \forall (s,t)
 ```
 
 """
 function add_constraint_min_scheduled_outage_duration!(m::Model)
+    _add_constraint!(
+        m,
+        :min_scheduled_outage_duration,
+        constraint_min_scheduled_outage_duration_indices,
+        _build_constraint_min_scheduled_outage_duration,
+    )
+end
+
+function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
     @fetch units_out_of_service = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_scheduled_outage_duration] = Dict(
-        (unit=u, stochastic_path=s_path, t=t) => @constraint(
-            m, 
-            + sum(
-                + units_out_of_service[u, s, t] * duration(t)
-                for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s_path);
-                init=0,
-            )
-            >=
-            + maximum(
-                (
-                    + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
-                    * number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
-                ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
-                for s in s_path;
-                init=0,
-            )
+    @build_constraint(
+        + sum(
+            + units_out_of_service[u, s, t] * duration(t)
+            for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s_path);
+            init=0,
         )
-        for (u, s_path, t) in constraint_min_scheduled_outage_duration_indices(m)
+        >=
+        + maximum(
+            (
+                + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+                * number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+            ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
+            for s in s_path;
+            init=0,
+        )
     )
 end
 

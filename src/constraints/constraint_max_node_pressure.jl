@@ -32,21 +32,21 @@ in order to impose an upper limit on the aggregated [node\_pressure](@ref) withi
 See also [max\_node\_pressure](@ref).
 """
 function add_constraint_max_node_pressure!(m::Model)
+    _add_constraint!(m, :max_node_pressure, constraint_max_node_pressure_indices, _build_constraint_max_node_pressure)
+end
+
+function _build_constraint_max_node_pressure(m::Model, ng, s_path, t)
     @fetch node_pressure = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:max_node_pressure] = Dict(
-        (node=ng, stochastic_scenario=s_path, t=t) => @constraint(
-            m,
-            + sum(
-                + node_pressure[n, s, t]
-                - max_node_pressure(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
-                for (n, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t);
-                init=0,
-            )
-            <=
-            0
+    @build_constraint(
+        sum(
+            + node_pressure[n, s, t]
+            - max_node_pressure(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
+            for (n, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (ng, s_path, t) in constraint_max_node_pressure_indices(m)
+        <=
+        0
     )
 end
 

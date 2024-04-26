@@ -29,29 +29,31 @@ The units on status is constrained by shutting down and starting up actions. Thi
 ```
 """
 function add_constraint_unit_state_transition!(m::Model)
+    _add_constraint!(
+        m, :unit_state_transition, constraint_unit_state_transition_indices, _build_constraint_unit_state_transition
+    )
+end
+
+function _build_constraint_unit_state_transition(m::Model, u, s_path, t_before, t_after)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
     # TODO: add support for units that start_up over multiple timesteps?
     # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
-    m.ext[:spineopt].constraints[:unit_state_transition] = Dict(
-        (unit=u, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
-            m,
-            sum(
-                + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
-                for (u, s, t_after) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_after, temporal_block=anything,
-                );
-                init=0,
-            )
-            ==
-            sum(
-                + units_on[u, s, t_before]
-                for (u, s, t_before) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_before, temporal_block=anything,
-                );
-                init=0,
-            )
+    @build_constraint(
+        sum(
+            + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
+            for (u, s, t_after) in units_on_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t_after, temporal_block=anything,
+            );
+            init=0,
         )
-        for (u, s_path, t_before, t_after) in constraint_unit_state_transition_indices(m)
+        ==
+        sum(
+            + units_on[u, s, t_before]
+            for (u, s, t_before) in units_on_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t_before, temporal_block=anything,
+            );
+            init=0,
+        )
     )
 end
 

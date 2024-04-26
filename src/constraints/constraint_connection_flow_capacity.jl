@@ -58,24 +58,23 @@ See also
 
 """
 function add_constraint_connection_flow_capacity!(m::Model)
-    m.ext[:spineopt].constraints[:connection_flow_capacity] = Dict(
-        (
-            connection=conn, node=ng, direction=d, stochastic_path=s_path, t=t
-        ) => _add_constraint_connection_flow_capacity!(m, conn, ng, d, s_path, t)
-        for (conn, ng, d, s_path, t) in constraint_connection_flow_capacity_indices(m)
+    _add_constraint!(
+        m,
+        :connection_flow_capacity,
+        constraint_connection_flow_capacity_indices,
+        _build_constraint_connection_flow_capacity,
     )
 end
 
-function _add_constraint_connection_flow_capacity!(m, conn, ng, d, s_path, t)
-    _add_constraint_connection_flow_capacity_simple!(m, conn, ng, d, s_path, t)
+function _build_constraint_connection_flow_capacity(m, conn, ng, d, s_path, t)
+    _build_constraint_connection_flow_capacity_simple(m, conn, ng, d, s_path, t)
 end
-function _add_constraint_connection_flow_capacity!(m, conn, ng, ::Vector, s_path, t)
-    _add_constraint_connection_flow_capacity_bidirectional!(m, conn, ng, s_path, t)
+function _build_constraint_connection_flow_capacity(m, conn, ng, ::Vector, s_path, t)
+    _build_constraint_connection_flow_capacity_bidirectional(m, conn, ng, s_path, t)
 end
 
-function _add_constraint_connection_flow_capacity_simple!(m, conn, ng, d, s_path, t)
-    @constraint(
-        m,
+function _build_constraint_connection_flow_capacity_simple(m, conn, ng, d, s_path, t)
+    @build_constraint(
         + _term_connection_flow(m, conn, ng, d, s_path, t)
         <=
         + _term_total_number_of_connections(m, conn, ng, d, s_path, t)
@@ -83,9 +82,8 @@ function _add_constraint_connection_flow_capacity_simple!(m, conn, ng, d, s_path
     )
 end
 
-function _add_constraint_connection_flow_capacity_bidirectional!(m, conn, ng, s_path, t)
-    @constraint(
-        m,
+function _build_constraint_connection_flow_capacity_bidirectional(m, conn, ng, s_path, t)
+    @build_constraint(
         sum(
             + _term_connection_flow(m, conn, ng, d, s_path, t)
             / _term_connection_flow_capacity(m, conn, ng, d, s_path, t)

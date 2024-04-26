@@ -62,74 +62,74 @@ See also
 [minimum\_operating\_point](@ref).
 """
 function add_constraint_ramp_down!(m::Model)
+    _add_constraint!(m, :ramp_down, constraint_ramp_down_indices, _build_constraint_ramp_down)
+end
+
+function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_after)
     @fetch units_on, units_shut_down, unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:ramp_down] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s_path, t_before=t_before, t_after=t_after) => @constraint(
-            m,
-            + sum(
-                + unit_flow[u, n, d, s, t] * overlap_duration(t_before, t)
-                for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_before)
-                )
-                if !is_reserve_node(node=n);
-                init=0,
+    @build_constraint(
+        + sum(
+            + unit_flow[u, n, d, s, t] * overlap_duration(t_before, t)
+            for (u, n, d, s, t) in unit_flow_indices(
+                m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_before)
             )
-            - sum(
-                + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
-                for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
-                )
-                if !is_reserve_node(node=n);
-                init=0,
-            )
-            + sum(
-                + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
-                for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
-                )
-                if is_reserve_node(node=n)
-                && _switch(d; to_node=downward_reserve, from_node=upward_reserve)(node=n)
-                && !is_non_spinning(node=n);
-                init=0,
-            )
-            <=
-            + (
-                + sum(
-                    + (
-                        + _shut_down_limit(m, u, ng, d, s, t0, t_after)
-                        - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
-                        - _ramp_down_limit(m, u, ng, d, s, t0, t_after)
-                    )
-                    * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
-                    * units_shut_down[u, s, t]
-                    * duration(t)
-                    for (u, s, t) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
-                    init=0,
-                )
-                + sum(
-                    - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
-                    * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
-                    * units_on[u, s, t]
-                    * duration(t)
-                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
-                    init=0,
-                )
-                + sum(
-                    + (
-                        + _minimum_operating_point(m, u, ng, d, s, t0, t_after)
-                        + _ramp_down_limit(m, u, ng, d, s, t0, t_after)
-                    )
-                    * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
-                    * units_on[u, s, t]
-                    * duration(t)
-                    for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
-                    init=0,
-                )
-            )
-            * duration(t_after)
+            if !is_reserve_node(node=n);
+            init=0,
         )
-        for (u, ng, d, s_path, t_before, t_after) in constraint_ramp_down_indices(m)
+        - sum(
+            + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
+            for (u, n, d, s, t) in unit_flow_indices(
+                m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
+            )
+            if !is_reserve_node(node=n);
+            init=0,
+        )
+        + sum(
+            + unit_flow[u, n, d, s, t] * overlap_duration(t_after, t)
+            for (u, n, d, s, t) in unit_flow_indices(
+                m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
+            )
+            if is_reserve_node(node=n)
+            && _switch(d; to_node=downward_reserve, from_node=upward_reserve)(node=n)
+            && !is_non_spinning(node=n);
+            init=0,
+        )
+        <=
+        + (
+            + sum(
+                + (
+                    + _shut_down_limit(m, u, ng, d, s, t0, t_after)
+                    - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
+                    - _ramp_down_limit(m, u, ng, d, s, t0, t_after)
+                )
+                * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
+                * units_shut_down[u, s, t]
+                * duration(t)
+                for (u, s, t) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
+                init=0,
+            )
+            + sum(
+                - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
+                * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
+                * units_on[u, s, t]
+                * duration(t)
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
+                init=0,
+            )
+            + sum(
+                + (
+                    + _minimum_operating_point(m, u, ng, d, s, t0, t_after)
+                    + _ramp_down_limit(m, u, ng, d, s, t0, t_after)
+                )
+                * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
+                * units_on[u, s, t]
+                * duration(t)
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
+                init=0,
+            )
+        )
+        * duration(t_after)
     )
 end
 

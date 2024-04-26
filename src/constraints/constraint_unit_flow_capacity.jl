@@ -96,62 +96,65 @@ function add_constraint_unit_flow_capacity!(m::Model)
 end
 
 function _add_constraint_unit_flow_capacity_tight_compact!(m::Model)
+    _add_constraint!(
+        m,
+        :unit_flow_capacity,
+        constraint_unit_flow_capacity_tight_compact_indices,
+        _build_constraint_unit_flow_capacity_tight_compact,
+    )
+end
+
+function _build_constraint_unit_flow_capacity_tight_compact(m::Model, u, ng, d, s_path, t, t_next, case, part)
     @fetch (
         units_started_up, units_shut_down, nonspin_units_started_up, nonspin_units_shut_down
     ) = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t, t_next=t_next, case=case, part=part) => @constraint(
-            m,
-            + _term_unit_flow(m, u, ng, d, s_path, t)
-            <=
-            + _term_flow_capacity(m, u, ng, d, s_path, t)
-            - (
-                + sum(
-                    + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
-                    * _unit_flow_capacity(m, u, ng, d, s, t0, t)
-                    * units_shut_down[u, s, t_after]
-                    * duration(t_after)
-                    for (u, s, t_after) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
-                    init=0
-                )
-                + sum(
-                    + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
-                    * _unit_flow_capacity(m, u, ng, d, s, t0, t)
-                    * _switch(
-                        d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
-                    )[u, n, s, t_over]
-                    * overlap_duration(t_over, t)
-                    for (u, n, s, t_over) in _switch(
-                        d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
-                    )(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
-                    init=0
-                )
-            )
-            - sum(
-                + _startup_margin(m, u, ng, d, s, t0, t, case, part)
+    @build_constraint(
+        + _term_unit_flow(m, u, ng, d, s_path, t)
+        <=
+        + _term_flow_capacity(m, u, ng, d, s_path, t)
+        - (
+            + sum(
+                + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
                 * _unit_flow_capacity(m, u, ng, d, s, t0, t)
-                * units_started_up[u, s, t_over]
-                for (u, s, t_over) in units_switched_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
-                );
-                init=0
+                * units_shut_down[u, s, t_after]
+                * duration(t_after)
+                for (u, s, t_after) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
+                init=0,
+            )
+            + sum(
+                + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
+                * _unit_flow_capacity(m, u, ng, d, s, t0, t)
+                * _switch(
+                    d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
+                )[u, n, s, t_over]
+                * overlap_duration(t_over, t)
+                for (u, n, s, t_over) in _switch(
+                    d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
+                )(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+                init=0,
             )
         )
-        for (u, ng, d, s_path, t, t_next, case, part) in constraint_unit_flow_capacity_tight_compact_indices(m)
+        - sum(
+            + _startup_margin(m, u, ng, d, s, t0, t, case, part)
+            * _unit_flow_capacity(m, u, ng, d, s, t0, t)
+            * units_started_up[u, s, t_over]
+            for (u, s, t_over) in units_switched_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+            );
+            init=0,
+        )
     )
 end
 
 function _add_constraint_unit_flow_capacity_simple!(m::Model)
-    m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
-        (unit=u, node=ng, direction=d, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            + _term_unit_flow(m, u, ng, d, s_path, t)
-            <=
-            + _term_flow_capacity(m, u, ng, d, s_path, t)
-        )
-        for (u, ng, d, s_path, t) in constraint_unit_flow_capacity_indices(m)
+    _add_constraint!(
+        m, :unit_flow_capacity, constraint_unit_flow_capacity_indices, _build_constraint_unit_flow_capacity
     )
+end
+
+function _build_constraint_unit_flow_capacity(m::Model, u, ng, d, s_path, t)
+    @build_constraint(_term_unit_flow(m, u, ng, d, s_path, t) <= _term_flow_capacity(m, u, ng, d, s_path, t))
 end
 
 function _term_unit_flow(m, u, ng, d, s_path, t)

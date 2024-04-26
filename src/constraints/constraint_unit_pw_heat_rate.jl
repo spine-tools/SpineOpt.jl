@@ -40,72 +40,72 @@ See also
 [unit\_start\_flow](@ref).
 """
 function add_constraint_unit_pw_heat_rate!(m::Model)
+    _add_constraint!(m, :unit_pw_heat_rate, constraint_unit_pw_heat_rate_indices, _build_constraint_unit_pw_heat_rate)
+end
+
+function _build_constraint_unit_pw_heat_rate(m::Model, u, n_from, n_to, s_path, t)
     @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:unit_pw_heat_rate] = Dict(
-        (unit=u, node1=n_from, node2=n_to, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            sum(
-                + unit_flow[u, n, d, s, t_short] * duration(t_short)
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    m;
-                    unit=u,
-                    node=n_from,
-                    direction=direction(:from_node),
-                    stochastic_scenario=s_path,
-                    t=t_in_t(m; t_long=t),
-                );
-                init=0,
-            )
-            ==
-            + sum(
-                + unit_flow_op[u, n, d, op, s, t_short]
-                * unit_incremental_heat_rate(
-                    m; unit=u, node1=n_from, node2=n, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short
-                )
-                * duration(t_short)
-                for (u, n, d, op, s, t_short) in unit_flow_op_indices(
-                    m;
-                    unit=u,
-                    node=n_to,
-                    direction=direction(:to_node),
-                    stochastic_scenario=s_path,
-                    t=t_in_t(m; t_long=t),
-                );
-                init=0,
-            )
-            + sum(
-                + unit_flow[u, n, d, s, t_short]
-                * unit_incremental_heat_rate(
-                    m; unit=u, node1=n_from, node2=n, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short
-                )
-                * duration(t_short)
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    m;
-                    unit=u,
-                    node=n_to,
-                    direction=direction(:to_node),
-                    stochastic_scenario=s_path,
-                    t=t_in_t(m; t_long=t),
-                )
-                if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
-                init=0,
-            )
-            + sum(
-                + units_on[u, s, t1]
-                * min(duration(t1), duration(t))
-                * unit_idle_heat_rate(
-                   m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
-                )
-                + units_started_up[u, s, t1]
-                * unit_start_flow(
-                    m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
-                )
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
-                init=0,
-            )
+    @build_constraint(
+        sum(
+            + unit_flow[u, n, d, s, t_short] * duration(t_short)
+            for (u, n, d, s, t_short) in unit_flow_indices(
+                m;
+                unit=u,
+                node=n_from,
+                direction=direction(:from_node),
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
         )
-        for (u, n_from, n_to, s_path, t) in constraint_unit_pw_heat_rate_indices(m)
+        ==
+        + sum(
+            + unit_flow_op[u, n, d, op, s, t_short]
+            * unit_incremental_heat_rate(
+                m; unit=u, node1=n_from, node2=n, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short
+            )
+            * duration(t_short)
+            for (u, n, d, op, s, t_short) in unit_flow_op_indices(
+                m;
+                unit=u,
+                node=n_to,
+                direction=direction(:to_node),
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
+        )
+        + sum(
+            + unit_flow[u, n, d, s, t_short]
+            * unit_incremental_heat_rate(
+                m; unit=u, node1=n_from, node2=n, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short
+            )
+            * duration(t_short)
+            for (u, n, d, s, t_short) in unit_flow_indices(
+                m;
+                unit=u,
+                node=n_to,
+                direction=direction(:to_node),
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            )
+            if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
+            init=0,
+        )
+        + sum(
+            + units_on[u, s, t1]
+            * min(duration(t1), duration(t))
+            * unit_idle_heat_rate(
+               m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
+            )
+            + units_started_up[u, s, t1]
+            * unit_start_flow(
+                m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
+            )
+            for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+            init=0,
+        )
     )
 end
 
