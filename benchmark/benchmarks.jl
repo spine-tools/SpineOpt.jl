@@ -9,6 +9,8 @@ const SUITE = BenchmarkGroup()
 # To run this:
 #
 # - activate this env
+# - dev ../
+# - instantiate
 # - include("benchmarks.jl") 
 # - results = run(SUITE, verbose=true)
 =#
@@ -33,6 +35,7 @@ function setup(; number_of_weeks=1)
     objs = [
         ["model", "instance"],
         ["temporal_block", "hourly"],
+        # ["temporal_block", "two_year"], # to create economic parameters
         ["stochastic_structure", "deterministic"],
         ["stochastic_scenario", "parent"],
         ["commodity", "electricity"],
@@ -41,6 +44,7 @@ function setup(; number_of_weeks=1)
     append!(objs, (["node", n] for n in nodes))
     append!(objs, (["connection", c] for c in conns))
     rels = [
+        # ["model__default_investment_temporal_block", ["instance", "two_year"]], # to create economic parameters
         ["model__default_temporal_block", ["instance", "hourly"]],
         ["model__default_stochastic_structure", ["instance", "deterministic"]],
         ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
@@ -53,6 +57,7 @@ function setup(; number_of_weeks=1)
         ["model", "instance", "model_start", unparse_db_value(DateTime(2000))],
         ["model", "instance", "model_end", unparse_db_value(DateTime(2000) + t_count * Hour(1))],
         ["model", "instance", "duration_unit", "hour"],
+        ["model", "instance", "model_type", "spineopt_standard"],
         ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
         ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
         ["node", nodes[1], "node_opf_type", "node_opf_type_reference"],
@@ -83,4 +88,4 @@ SUITE["main"] = BenchmarkGroup()
 url_in, url_out = setup(number_of_weeks=3)
 
 SUITE["main"]["run_spineopt"] =
-    @benchmarkable run_spineopt($url_in, $url_out; log_level=0, optimize=false) samples = 3 evals = 1 seconds = Inf
+    @benchmarkable run_spineopt($url_in, $url_out; log_level=3, optimize=false) samples = 3 evals = 1 seconds = Inf
