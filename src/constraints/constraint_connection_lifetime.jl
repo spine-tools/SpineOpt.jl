@@ -23,24 +23,26 @@
 Constrain connections_invested_available by the investment lifetime of a connection.
 """
 function add_constraint_connection_lifetime!(m::Model)
+    _add_constraint!(
+        m, :connection_lifetime, constraint_connection_lifetime_indices, _build_constraint_connection_lifetime
+    )
+end
+
+function _build_constraint_connection_lifetime(m::Model, conn, s_path, t)
     @fetch connections_invested_available, connections_invested = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:connection_lifetime] = Dict(
-        (connection=conn, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            sum(
-                connections_invested_available[conn, s, t]
-                for (conn, s, t) in connections_invested_available_indices(
-                    m; connection=conn, stochastic_scenario=s_path, t=t
-                );
-                init=0,
-            )
-            >=
-            sum(
-                connections_invested[conn, s_past, t_past]
-                for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, s_path, t)
-            )
+    @build_constraint(
+        sum(
+            connections_invested_available[conn, s, t]
+            for (conn, s, t) in connections_invested_available_indices(
+                m; connection=conn, stochastic_scenario=s_path, t=t
+            );
+            init=0,
         )
-        for (conn, s_path, t) in constraint_connection_lifetime_indices(m)
+        >=
+        sum(
+            connections_invested[conn, s_past, t_past]
+            for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, s_path, t)
+        )
     )
 end
 

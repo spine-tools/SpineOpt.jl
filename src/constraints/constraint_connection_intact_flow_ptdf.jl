@@ -47,57 +47,62 @@ where
 
 """
 function add_constraint_connection_intact_flow_ptdf!(m::Model)
+    _add_constraint!(
+        m,
+        :connection_intact_flow_ptdf,
+        constraint_connection_intact_flow_ptdf_indices,
+        _build_constraint_connection_intact_flow_ptdf,
+    )
+end
+
+function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_path, t)
     @fetch connection_intact_flow, node_injection, connection_flow = m.ext[:spineopt].variables
     if !use_connection_intact_flow(model=m.ext[:spineopt].instance)
         connection_intact_flow = connection_flow
     end
-    m.ext[:spineopt].constraints[:connection_intact_flow_ptdf] = Dict(
-        (connection=conn, node=n_to, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            + sum(
-                + get(connection_intact_flow, (conn, n_to, direction(:to_node), s, t), 0)
-                - get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0)
-                for s in s_path;
-                init=0
-            )
-            ==
-            + sum(
-                ptdf(m; connection=conn, node=n, t=t)
-                * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
-                * node_injection[n, s, t]
-                for n in ptdf_connection__node(connection=conn)
-                if node_opf_type(node=n) != :node_opf_type_reference
-                for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s_path, t=t);
-                init=0
-            )
-            + sum(
-                ptdf(m; connection=conn, node=n, t=t)
-                * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
-                * connection_flow[conn1, n1, d, s, t]
-                for n in node(is_boundary_node=true)
-                if n in ptdf_connection__node(connection=conn)
-                && node_opf_type(node=n) != :node_opf_type_reference
-                for (conn1, n1, d, s, t) in connection_flow_indices(
-                    m; node=n, direction=direction(:to_node), stochastic_scenario=s_path, t=t
-                )
-                if is_boundary_connection(connection=conn1);
-                init=0
-            )
-            - sum(
-                ptdf(m; connection=conn, node=n, t=t)
-                * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
-                * connection_flow[conn1, n1, d, s, t]
-                for n in node(is_boundary_node=true)
-                if n in ptdf_connection__node(connection=conn)
-                && node_opf_type(node=n) != :node_opf_type_reference
-                for (conn1, n1, d, s, t) in connection_flow_indices(
-                    m; node=n, direction=direction(:from_node), stochastic_scenario=s_path, t=t
-                )
-                if is_boundary_connection(connection=conn1);
-                init=0
-            )
+    @build_constraint(
+        + sum(
+            + get(connection_intact_flow, (conn, n_to, direction(:to_node), s, t), 0)
+            - get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0)
+            for s in s_path;
+            init=0
         )
-        for (conn, n_to, s_path, t) in constraint_connection_intact_flow_ptdf_indices(m)
+        ==
+        + sum(
+            ptdf(m; connection=conn, node=n, t=t)
+            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * node_injection[n, s, t]
+            for n in ptdf_connection__node(connection=conn)
+            if node_opf_type(node=n) != :node_opf_type_reference
+            for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s_path, t=t);
+            init=0
+        )
+        + sum(
+            ptdf(m; connection=conn, node=n, t=t)
+            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * connection_flow[conn1, n1, d, s, t]
+            for n in node(is_boundary_node=true)
+            if n in ptdf_connection__node(connection=conn)
+            && node_opf_type(node=n) != :node_opf_type_reference
+            for (conn1, n1, d, s, t) in connection_flow_indices(
+                m; node=n, direction=direction(:to_node), stochastic_scenario=s_path, t=t
+            )
+            if is_boundary_connection(connection=conn1);
+            init=0
+        )
+        - sum(
+            ptdf(m; connection=conn, node=n, t=t)
+            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * connection_flow[conn1, n1, d, s, t]
+            for n in node(is_boundary_node=true)
+            if n in ptdf_connection__node(connection=conn)
+            && node_opf_type(node=n) != :node_opf_type_reference
+            for (conn1, n1, d, s, t) in connection_flow_indices(
+                m; node=n, direction=direction(:from_node), stochastic_scenario=s_path, t=t
+            )
+            if is_boundary_connection(connection=conn1);
+            init=0
+        )
     )
 end
 

@@ -36,48 +36,53 @@ equals [connection\_intact\_flow](@ref) otherwise.
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
     use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    _add_constraint!(
+        m,
+        :candidate_connection_flow_lb,
+        constraint_candidate_connection_flow_lb_indices,
+        _build_constraint_candidate_connection_flow_lb,
+    )
+end
+
+function _build_constraint_candidate_connection_flow_lb(m::Model, conn, n, d, s_path, t)
     @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:candidate_connection_flow_lb] = Dict(
-        (connection=conn, node=n, direction=d, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            + sum(
-                connection_flow[conn, n, d, s, t] * duration(t)
-                for (conn, n, d, s, t) in connection_flow_indices(
-                    m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                );
-                init=0,
-            )
-            >=
-            + sum(
-                connection_intact_flow[conn, n, d, s, t] * duration(t)
-                for (conn, n, d, s, t) in connection_intact_flow_indices(
-                    m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                );
-                init=0,
-            )
-            - (
-                + candidate_connections(connection=conn)
-                - sum(
-                    connections_invested_available[conn, s, t1]
-                    for (conn, s, t1) in connections_invested_available_indices(
-                        m; connection=conn, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                    );
-                    init=0,
-                )
-            )
-            * sum(
-                connection_capacity(
-                    m; connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1e6
-                )
-                * duration(t)
-                for (conn, n, d, s, t) in connection_intact_flow_indices(
-                    m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+    @build_constraint(
+        + sum(
+            connection_flow[conn, n, d, s, t] * duration(t)
+            for (conn, n, d, s, t) in connection_flow_indices(
+                m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+        >=
+        + sum(
+            connection_intact_flow[conn, n, d, s, t] * duration(t)
+            for (conn, n, d, s, t) in connection_intact_flow_indices(
+                m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+        - (
+            + candidate_connections(connection=conn)
+            - sum(
+                connections_invested_available[conn, s, t1]
+                for (conn, s, t1) in connections_invested_available_indices(
+                    m; connection=conn, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
         )
-        for (conn, n, d, s_path, t) in constraint_candidate_connection_flow_lb_indices(m)
+        * sum(
+            connection_capacity(
+                m; connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1e6
+            )
+            * duration(t)
+            for (conn, n, d, s, t) in connection_intact_flow_indices(
+                m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
     )
 end
 

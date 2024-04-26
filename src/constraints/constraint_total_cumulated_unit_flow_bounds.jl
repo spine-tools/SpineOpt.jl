@@ -48,23 +48,28 @@ See also
 [min\_total\_cumulated\_unit\_flow\_to\_node](@ref).
 """
 function add_constraint_total_cumulated_unit_flow!(m::Model, bound, sense)
+    _add_constraint!(
+        m,
+        bound.name,
+        m -> constraint_total_cumulated_unit_flow_indices(m, bound),
+        (m, ind...) -> _build_constraint_total_cumulated_unit_flow(m, ind..., bound, sense),
+    )
+end
+
+function _build_constraint_total_cumulated_unit_flow(m::Model, ug, ng, d, s_path, bound, sense)
     # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
     @fetch unit_flow = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[bound.name] = Dict(
-        (unit=ug, node=ng, stochastic_path=s_path) => sense_constraint(
-            m,
-            + sum(
-                unit_flow[u, n, d, s, t] * duration(t) # * node_stochastic_weight[(node=n, stochastic_scenario=s)]
-                for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=ug, node = ng, direction=d, stochastic_scenario=s_path
-                );
-                init = 0
-            ),
-            sense,
-            + bound(unit=ug, node=ng, direction=d)
-            # TODO Should this be time-varying, and stochastical?
-        )
-        for (ug, ng, d, s_path) in constraint_total_cumulated_unit_flow_indices(m, bound)
+    build_sense_constraint(
+        + sum(
+            unit_flow[u, n, d, s, t] * duration(t) # * node_stochastic_weight(m; node=n, stochastic_scenario=s)
+            for (u, n, d, s, t) in unit_flow_indices(
+                m; unit=ug, node = ng, direction=d, stochastic_scenario=s_path
+            );
+            init = 0
+        ),
+        sense,
+        + bound(m; unit=ug, node=ng, direction=d)
+        # TODO Should this be time-varying, and stochastical?
     )
 end
 

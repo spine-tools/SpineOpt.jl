@@ -53,27 +53,36 @@ See also
 [ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_unit_flow_op_bounds!(m::Model)
+    _add_constraint!(
+        m, :unit_flow_op_bounds, constraint_unit_flow_op_bounds_indices, _build_constraint_unit_flow_op_bounds
+    )
+end
+
+function _build_constraint_unit_flow_op_bounds(m::Model, u, n, d, op, s, t)
     @fetch unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:unit_flow_op_bounds] = Dict(
-        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + unit_flow_op[u, n, d, op, s, t]
-            <=
-            (
-                ordered_unit_flow_op(unit=u, node=n, direction=d, _default=false) ? 
-                unit_flow_op_active[u, n, d, op, s, t] : _get_units_on(m, u, s, t)
-            )
-            * (
-                + operating_points(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)
-                - (
-                    (op > 1) ? operating_points(
-                        m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1
-                    ) : 0
-                )
-            )
-            * unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+    @build_constraint(
+        + unit_flow_op[u, n, d, op, s, t]
+        <=
+        (
+            ordered_unit_flow_op(unit=u, node=n, direction=d, _default=false) ? 
+            unit_flow_op_active[u, n, d, op, s, t] : _get_units_on(m, u, s, t)
         )
+        * (
+            + operating_points(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)
+            - (
+                (op > 1) ? operating_points(
+                    m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1
+                ) : 0
+            )
+        )
+        * unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+    )
+end
+
+function constraint_unit_flow_op_bounds_indices(m::Model)
+    (
+        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t)
         for (u, n, d) in indices(unit_capacity)
         for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, node=n, direction=d)
     )

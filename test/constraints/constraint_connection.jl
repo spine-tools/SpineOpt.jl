@@ -936,13 +936,11 @@ function test_constraint_ratio_out_in_connection_flow()
                         for (s_from, t_from) in zip(s_set, t_set)
                     )
                     var_conn_flow_to = var_connection_flow[conn, n_to, d_to, s_to, t_to]
-                    expected_con_ref = SpineOpt.sense_constraint(
-                        m,
+                    expected_con = SpineOpt.build_sense_constraint(
                         2 * var_conn_flow_to,
                         sense,
                         flow_ratio * sum(c * v for (c, v) in zip(coeffs, vars_conn_flow_from)),
                     )
-                    expected_con = constraint_object(expected_con_ref)
                     path = reverse(unique(s_set))
                     con_key = (conn, n_to, n_from, path, t_to)
                     observed_con = constraint_object(constraint[con_key...])
@@ -1258,8 +1256,7 @@ function test_constraint_user_constraint_node_connection()
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 + unit_flow_coefficient
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2])
                 + 2 * connection_flow_coefficient * var_connection_flow[key_b..., s_parent, t2h]
@@ -1274,7 +1271,6 @@ function test_constraint_user_constraint_node_connection()
                 Symbol(sense),
                 2 * rhs,
             )
-            expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)

@@ -84,22 +84,14 @@ as_call(x::FlexParameter; kwargs...) = x.as_call(; kwargs...)
 constant(x::Number) = FlexParameter((; kwargs...) -> x, (; kwargs...) -> Call(x))
 
 """
-    sense_constraint(m, lhs, sense::Symbol, rhs)
+    build_sense_constraint(lhs, sense::Symbol, rhs)
 
-Create a JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
+A JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
 """
-function sense_constraint(m, lhs, sense::Symbol, rhs)
-    if sense == :>=
-        @constraint(m, lhs >= rhs)
-    elseif sense == :<=
-        @constraint(m, lhs <= rhs)
-    else
-        @constraint(m, lhs == rhs)
-    end
-end
-sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
-sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
-sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
+build_sense_constraint(lhs, sense::Symbol, rhs) = build_sense_constraint(lhs, getproperty(Base, sense), rhs)
+build_sense_constraint(lhs, sense::typeof(<=), rhs) = @build_constraint(lhs <= rhs)
+build_sense_constraint(lhs, sense::typeof(==), rhs) = @build_constraint(lhs == rhs)
+build_sense_constraint(lhs, sense::typeof(>=), rhs) = @build_constraint(lhs >= rhs)
 
 function _avg(iter; init::Number)
     iter = collect(iter)

@@ -33,14 +33,19 @@ if previous operating point `i-1` is also active. The first segment does not nee
 See also [operating\_points](@ref), [ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_operating_point_rank!(m::Model)
+    _add_constraint!(
+        m, :operating_point_rank, constraint_operating_point_rank_indices, _build_constraint_operating_point_rank
+    )
+end
+
+function _build_constraint_operating_point_rank(m::Model, u, n, d, op, s, t)
     @fetch unit_flow_op_active = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:operating_point_rank] = Dict(
-        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            unit_flow_op_active[u, n, d, op, s, t] 
-            <=
-            unit_flow_op_active[u, n, d, op - 1, s, t]
-        )
+    @build_constraint(unit_flow_op_active[u, n, d, op, s, t] <= unit_flow_op_active[u, n, d, op - 1, s, t])
+end
+
+function constraint_operating_point_rank_indices(m::Model)
+    (
+        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t)
         for (u, n, d, op, s, t) in unit_flow_op_active_indices(m)
         if (op > 1)
     )

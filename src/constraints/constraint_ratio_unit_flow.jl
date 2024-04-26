@@ -63,38 +63,43 @@ exist for the other 11 cases described above.
 See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_out\_in](@ref).
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
+    _add_constraint!(
+        m,
+        ratio.name,
+        m -> constraint_ratio_unit_flow_indices(m, ratio, d1, d2),
+        (m, ind...) -> _build_constraint_ratio_unit_flow(m, ind..., ratio, units_on_coefficient, sense, d1, d2),
+    )
+end
+
+function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, ratio, units_on_coefficient, sense, d1, d2)
     # NOTE: that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second
     # <direction>!
     @fetch unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[ratio.name] = Dict(
-        (unit=u, node1=ng1, node2=ng2, stochastic_path=s_path, t=t) => sense_constraint(
-            m,
-            + sum(
-                get(unit_flow, (u, n1, d1, s, t_short), 0)
-                * duration(t_short)
-                for n1 in members(ng1), s in s_path, t_short in t_in_t(m; t_long=t);
-                init=0,
-            ),
-            sense,
-            + sum(
-                get(unit_flow, (u, n2, d2, s, t_short), 0)
-                * duration(t_short)
-                * ratio(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)
-                for n2 in members(ng2), s in s_path, t_short in t_in_t(m; t_long=t);
-                init=0,
-            )
-            + sum(
-                _get_units_on(m, u, s, t1)
-                * min(duration(t1), duration(t))
-                * units_on_coefficient(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)
-                for (u, s, t1) in unit_stochastic_time_indices(
-                    m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
-                );
-                init=0,
-            )
+    build_sense_constraint(
+        + sum(
+            get(unit_flow, (u, n1, d1, s, t_short), 0)
+            * duration(t_short)
+            for n1 in members(ng1), s in s_path, t_short in t_in_t(m; t_long=t);
+            init=0,
+        ),
+        sense,
+        + sum(
+            get(unit_flow, (u, n2, d2, s, t_short), 0)
+            * duration(t_short)
+            * ratio(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)
+            for n2 in members(ng2), s in s_path, t_short in t_in_t(m; t_long=t);
+            init=0,
         )
-        for (u, ng1, ng2, s_path, t) in constraint_ratio_unit_flow_indices(m, ratio, d1, d2)
+        + sum(
+            _get_units_on(m, u, s, t1)
+            * min(duration(t1), duration(t))
+            * units_on_coefficient(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)
+            for (u, s, t1) in unit_stochastic_time_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
+            );
+            init=0,
+        )
     )
 end
 

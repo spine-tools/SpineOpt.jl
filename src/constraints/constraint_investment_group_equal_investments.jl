@@ -23,56 +23,68 @@
 Force investment variables for first entity in the group and all other entities in the group to be equal.
 """
 function add_constraint_investment_group_equal_investments!(m::Model)
+    _add_constraint!(
+        m,
+        :investment_group_equal_investments,
+        constraint_investment_group_equal_investments_indices,
+        _build_constraint_investment_group_equal_investments,
+    )
+end
+
+function _build_constraint_investment_group_equal_investments(m::Model, ig, e, other_e, s, t)
     @fetch (
         units_invested_available, connections_invested_available, storages_invested_available
     ) = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:investment_group_equal_investments] = Dict(
-        (investment_group=ig, entity1=e, entity2=other_e, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + sum(
-                units_invested_available[e, s, t]
-                for (e, s, t) in units_invested_available_indices(
-                    m; unit=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                );
-                init=0
-            )
-            + sum(
-                connections_invested_available[e, s, t]
-                for (e, s, t) in connections_invested_available_indices(
-                    m; connection=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                );
-                init=0
-            )
-            + sum(
-                storages_invested_available[e, s, t]
-                for (e, s, t) in storages_invested_available_indices(
-                    m; node=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                );
-                init=0
-            )
-            ==
-            + sum(
-                units_invested_available[other_e, s, t]
-                for (other_e, s, t) in units_invested_available_indices(
-                    m; unit=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                );
-                init=0
-            )
-            + sum(
-                connections_invested_available[other_e, s, t]
-                for (other_e, s, t) in connections_invested_available_indices(
-                    m; connection=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                );
-                init=0
-            )
-            + sum(
-                storages_invested_available[other_e, s, t]
-                for (other_e, s, t) in storages_invested_available_indices(
-                    m; node=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                );
-                init=0
-            )
+    @build_constraint(
+        + sum(
+            units_invested_available[e, s, t]
+            for (e, s, t) in units_invested_available_indices(
+                m; unit=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0,
         )
+        + sum(
+            connections_invested_available[e, s, t]
+            for (e, s, t) in connections_invested_available_indices(
+                m; connection=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+        + sum(
+            storages_invested_available[e, s, t]
+            for (e, s, t) in storages_invested_available_indices(
+                m; node=e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+        ==
+        + sum(
+            units_invested_available[other_e, s, t]
+            for (other_e, s, t) in units_invested_available_indices(
+                m; unit=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+        + sum(
+            connections_invested_available[other_e, s, t]
+            for (other_e, s, t) in connections_invested_available_indices(
+                m; connection=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+        + sum(
+            storages_invested_available[other_e, s, t]
+            for (other_e, s, t) in storages_invested_available_indices(
+                m; node=other_e, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+    )
+end
+
+function constraint_investment_group_equal_investments_indices(m::Model)
+    (
+        (investment_group=ig, entity1=e, entity2=other_e, stochastic_scenario=s, t=t)
         for ig in investment_group(equal_investments=true)
         for e in _first_entity_investment_group(ig)
         for other_e in setdiff(entity_investment_group(ig), e)

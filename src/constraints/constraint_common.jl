@@ -17,6 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
+    inds = collect(indices(m))
+    cons = Any[nothing for i in 1:length(inds)]
+    Threads.@threads for i in 1:length(inds)
+        ind = inds[i]
+        cons[i] = build_constraint(m, ind...)
+    end
+    m.ext[:spineopt].constraints[name] = Dict(zip(inds, add_constraint.(m, cons)))
+end
+
 """
     t_lowest_resolution_path(m, indices...)
 
