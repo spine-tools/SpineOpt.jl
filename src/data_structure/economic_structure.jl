@@ -484,8 +484,7 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, economic
             stoch_map_ind = []
             sizehint!(stoch_map_ind, length(stoch_map_vector))
             for s in stoch_map_vector
-                val = []
-                sizehint!(val, 1)
+                val = 0
                 for (u, s, vintage_t) in investment_indices(m; Dict(obj_cls.name => id, :stochastic_scenario => s)...)
                     p_elife = econ_lifetime(; Dict(obj_cls.name => id, stochastic_scenario.name => s)..., t=vintage_t)
                     tech_discount_rate =
