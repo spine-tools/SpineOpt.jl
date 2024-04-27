@@ -31,6 +31,7 @@ using HiGHS
 using Arrow
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
+import LibGit2
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.

@@ -119,6 +119,10 @@ end
 function _run_spineopt(
     f, url_in, url_out; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level, kwargs...
 )
+    so_ver, so_git_hash = _version_and_git_hash(SpineOpt)
+    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)
+    @log log_level 0 "SpineOpt version $so_ver (git hash: $so_git_hash)"
+    @log log_level 0 "SpineInterface version $si_ver (git hash: $si_git_hash)"
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
     m = prepare_spineopt(url_in; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level)

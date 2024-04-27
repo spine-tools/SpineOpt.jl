@@ -174,7 +174,6 @@ window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
 window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
 window_sum(x::Number, window; init=0) = x + init
 
-
 """
     align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead::Bool=true)
 
@@ -260,6 +259,13 @@ end
 
 function _call_event_handlers(m, event, args...; kwargs...)
     (fn -> fn(m, args...; kwargs...)).(m.ext[:spineopt].event_handlers[event])
+end
+
+function _version_and_git_hash(pkg)
+    version = pkgversion(pkg)
+    repo = LibGit2.GitRepo(dirname(dirname(pathof(pkg))))
+    git_hash = LibGit2.head_oid(repo)
+    version, git_hash
 end
 
 # Base
