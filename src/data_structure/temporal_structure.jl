@@ -51,12 +51,12 @@ struct TOverlapsT
     overlapping_time_slices::Dict{TimeSlice,Array{TimeSlice,1}}
 end
 
-(h::TimeSliceSet)(; temporal_block=anything, t=anything) = h(temporal_block, t)
+(h::TimeSliceSet)(; temporal_block=anything, t=anything)::Vector{TimeSlice} = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, t) = t
-(h::TimeSliceSet)(temporal_block::Object, t) = (s for s in t if temporal_block in blocks(s))
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, t) where {T} = (s for blk in temporal_blocks for s in h(blk, t))
+(h::TimeSliceSet)(temporal_block::Object, t) = [s for s in t if temporal_block in blocks(s)]
+(h::TimeSliceSet)(temporal_blocks::Array{T,1}, t) where {T} = unique(s for blk in temporal_blocks for s in h(blk, t))
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
