@@ -74,8 +74,8 @@ with the availability factor due to forced outages.
 
     using SpineOpt
     m = generate_forced_availability_factor(
-        raw"sqlite:///C:\\path\\to\\your\\inputputdb.sqlite", 
-        raw"sqlite:///C:\\path\\to\\your\\outputdb.sqlite"
+        raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite", 
+        raw"sqlite:///C:\\path\\to\\your\\output_db.sqlite"
     )
 
 """

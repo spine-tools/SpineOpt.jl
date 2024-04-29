@@ -24,8 +24,9 @@ Preprocess input data structure for SpineOpt.
 
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
-function preprocess_data_structure(; log_level=3)
+function preprocess_data_structure()
     generate_is_candidate()
+    update_use_connection_intact_flow()
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
@@ -43,6 +44,9 @@ function preprocess_data_structure(; log_level=3)
     generate_benders_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
+    generate_unit_flow_capacity()
+    generate_connection_flow_capacity()
+    generate_unit_commitment_parameters()
 end
 
 """
@@ -66,6 +70,15 @@ function generate_is_candidate()
     add_object_parameter_defaults!(node, Dict(:is_candidate => parameter_value(false)))
     @eval begin
         is_candidate = $is_candidate
+    end
+end
+
+function update_use_connection_intact_flow()
+    if isempty(connection(is_candidate=true)) && !isempty(model())
+        instance = first(model())
+        add_object_parameter_values!(
+            model, Dict(instance => Dict(:use_connection_intact_flow => parameter_value(false)))
+        )
     end
 end
 
@@ -244,8 +257,8 @@ function generate_connection_has_ptdf()
     end
 
     add_object_parameter_values!(connection, Dict(conn => _new_connection_pvals(conn) for conn in connection()))
-    push!(has_ptdf.classes, connection)
-    push!(ptdf_duration.classes, connection)
+    push_class!(has_ptdf, connection)
+    push_class!(ptdf_duration, connection)
 end
 
 """
@@ -287,6 +300,7 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     inv_X = zeros(Float64, conn_count, conn_count)
     for (ix, conn) in enumerate(connections)
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
+        # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the ptdf calculation
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[n_from], ix] = 1
         A[node_numbers[n_to], ix] = -1
@@ -468,6 +482,8 @@ function generate_lodf()
     Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
     function _lodf_fn(conn_cont)
+        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
+        # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the lodf calculation
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         denom = 1 - (
             ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to)
@@ -512,9 +528,12 @@ function generate_ptdf_lodf()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
-    # write_ptdf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_ptdfs()
-    # write_lodf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_lodfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_ptdf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_ptdfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_lodf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_lodfs()
 end
 
 """
@@ -524,35 +543,20 @@ TODO What is the purpose of this function? It clearly generates a number of `Rel
 """
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
-    unit__node__direction__temporal_block = RelationshipClass(
-        :unit__node__direction__temporal_block,
-        [:unit, :node, :direction, :temporal_block],
-        unique(
-            (u, n, d, tb)
-            for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-            for tb in node__temporal_block(node=n)
-        ),
+    node_with_min_capacity_margin_penalty = ObjectClass(
+        :node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty))
     )
-    connection__node__direction__temporal_block = RelationshipClass(
-        :connection__node__direction__temporal_block,
-        [:connection, :node, :direction, :temporal_block],
-        unique(
-            (conn, n, d, tb)
-            for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-            for tb in node__temporal_block(node=n)
-        ),
+    unit__node__direction = RelationshipClass(
+        :unit__node__direction, [:unit, :node, :direction], [unit__from_node(); unit__to_node()]
     )
-    node_with_state__temporal_block = RelationshipClass(
-        :node_with_state__temporal_block,
-        [:node, :temporal_block],
-        unique((node=n, temporal_block=tb)
-        for n in node(has_state=true) for tb in node__temporal_block(node=n)),
+    connection__node__direction = RelationshipClass(
+        :connection__node__direction, [:connection, :node, :direction], [connection__from_node(); connection__to_node()]
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
-        unit__node__direction__temporal_block = $unit__node__direction__temporal_block
-        connection__node__direction__temporal_block = $connection__node__direction__temporal_block
-        node_with_state__temporal_block = $node_with_state__temporal_block
+        node_with_min_capacity_margin_penalty = $node_with_min_capacity_margin_penalty
+        unit__node__direction = $unit__node__direction
+        connection__node__direction = $connection__node__direction
     end
 end
 
@@ -705,7 +709,10 @@ relationship between report and output exists.
 """
 function generate_report__output()
     isempty(report__output()) || return
-    add_relationships!(report__output, [(r, out) for r in report() for out in output()])
+    add_relationships!(
+        report__output, [(r, out) for r in report() for out in output() if out.name != :contingency_is_binding]
+        # FIXME: Add a parameter like is_default for output
+    )
 end
 
 """
@@ -814,6 +821,7 @@ function generate_internal_fix_investments()
             for obj in indices(candidates)
         )
         add_object_parameter_values!(class, pvals)
+        add_object_parameter_defaults!(class, Dict(pname => parameter_value(nothing)))
         @eval $pname = $parameter
     end
 end
@@ -877,5 +885,93 @@ function generate_is_boundary()
         is_boundary_connection = $is_boundary_connection
         export is_boundary_node
         export is_boundary_connection
+    end
+end
+
+function generate_unit_flow_capacity()
+    for class in classes(unit_capacity)
+        new_pvals = Dict(
+            (u, n, d) => Dict(
+                :unit_flow_capacity => parameter_value(
+                    + unit_capacity(unit=u, node=n, direction=d)
+                    * unit_availability_factor(unit=u)
+                    * unit_conv_cap_to_flow(unit=u, node=n, direction=d)
+                )
+            )
+            for (u, n, d) in indices(unit_capacity, class)
+        )
+        add_relationship_parameter_values!(class, new_pvals)
+        add_relationship_parameter_defaults!(class, Dict(:unit_flow_capacity => parameter_value(nothing)))
+    end
+    unit_flow_capacity = Parameter(:unit_flow_capacity, classes(unit_capacity))
+    @eval begin
+        unit_flow_capacity = $unit_flow_capacity
+        export unit_flow_capacity
+    end
+end
+
+function generate_connection_flow_capacity()
+    for class in classes(connection_capacity)
+        new_pvals = Dict(
+            (conn, n, d) => Dict(
+                :connection_flow_capacity => parameter_value(
+                    + connection_capacity(connection=conn, node=n, direction=d)
+                    * connection_availability_factor(connection=conn)
+                    * connection_conv_cap_to_flow(connection=conn, node=n, direction=d)
+                )
+            )
+            for (conn, n, d) in indices(connection_capacity, class)
+        )
+        add_relationship_parameter_values!(class, new_pvals)
+        add_relationship_parameter_defaults!(class, Dict(:connection_flow_capacity => parameter_value(nothing)))
+    end
+    connection_flow_capacity = Parameter(:connection_flow_capacity, classes(connection_capacity))
+    @eval begin
+        connection_flow_capacity = $connection_flow_capacity
+        export connection_flow_capacity
+    end
+end
+
+function generate_unit_commitment_parameters()
+    _switchable_unit_iter = Iterators.flatten(
+        (
+            indices(min_up_time),
+            indices(min_down_time),
+            indices(start_up_cost),
+            indices(shut_down_cost), 
+            (x.unit for x in indices(start_up_limit)),
+            (x.unit for x in indices(shut_down_limit)),
+            (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
+            (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+        )
+    )
+    _activatable_unit_iter = Iterators.flatten(
+        (
+            _switchable_unit_iter,
+            indices(units_on_cost),
+            indices(units_on_non_anticipativity_time),
+            (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
+            (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
+            (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
+        )
+    )
+    _deactivatable_unit_iter = Iterators.flatten(
+        (indices(scheduled_outage_duration), (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0))
+    )
+    for (pname, iter) in (
+        (:has_switched_variable, _switchable_unit_iter),
+        (:has_online_variable, _activatable_unit_iter),
+        (:has_out_of_service_variable, _deactivatable_unit_iter),
+    )
+        add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unique(iter)))
+        add_object_parameter_defaults!(unit, Dict(pname => parameter_value(false)))
+    end
+    @eval begin
+        has_switched_variable = Parameter(:has_switched_variable, [unit])
+        has_online_variable = Parameter(:has_online_variable, [unit])
+        has_out_of_service_variable = Parameter(:has_out_of_service_variable, [unit])
+        export has_switched_variable
+        export has_online_variable
+        export has_out_of_service_variable
     end
 end

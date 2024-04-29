@@ -39,11 +39,11 @@ Check the conditional `cond` and throws a warning with a message `warn_msg` if `
 _check_warn(cond, msg_parts...) = cond || @warn string(msg_parts...)
 
 """
-    check_data_structure(log_level::Int64)
+    check_data_structure()
 
 Check if the data structure provided from the db results in a valid model.
 """
-function check_data_structure(; log_level=3)
+function check_data_structure()
     check_model_object()
     check_temporal_block_object()
     check_node_object()
@@ -201,7 +201,7 @@ end
 
 function check_model_start_smaller_than_end()
     for m in indices(model_start)
-        _check(model_start(model=m) <= model_end(model=m), "The model start for $(mod) is greater than the model end")
+        _check(model_start(model=m) <= model_end(model=m), "The model start for $m is greater than the model end")
     end
 end
 

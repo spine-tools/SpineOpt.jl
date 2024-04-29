@@ -40,33 +40,33 @@ triggered by the parameter [connection\_linepack\_constant](@ref):
 See also [connection\_linepack\_constant](@ref)
 """
 function add_constraint_storage_line_pack!(m::Model)
+    _add_constraint!(m, :storage_line_pack, constraint_storage_line_pack_indices, _build_constraint_storage_line_pack)
+end
+
+function _build_constraint_storage_line_pack(m::Model, conn, stor, ng, s_path, t)
     @fetch node_state, node_pressure = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:storage_line_pack] = Dict(
-        (connection=conn, node1=stor, node2=ng, stochastic_path=s, t=t) => @constraint(
-            m,
-            sum(
-                node_state[stor, s, t] * duration(t)
-                for (stor, s, t) in node_state_indices(m; node=stor, stochastic_scenario=s, t=t_in_t(m; t_long=t))
-            )
-            ==
-            connection_linepack_constant(connection=conn, node1=stor, node2=ng)
-            * 0.5
-            * sum( # summing up the partial pressure of each component for both sides
-                node_pressure[ng, s, t] * duration(t)
-                for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t))
-            )
+    @build_constraint(
+        sum(
+            node_state[stor, s, t] * duration(t)
+            for (stor, s, t) in node_state_indices(m; node=stor, stochastic_scenario=s_path, t=t_in_t(m; t_long=t))
         )
-        for (conn, stor, ng, s, t) in constraint_storage_line_pack_indices(m)
+        ==
+        + connection_linepack_constant(connection=conn, node1=stor, node2=ng)
+        * 0.5
+        * sum(  # summing up the partial pressure of each component for both sides
+            node_pressure[ng, s, t] * duration(t)
+            for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_long=t))
+        )
     )
 end
 
 function constraint_storage_line_pack_indices(m::Model)
-    unique(
+    (
         (connection=conn, node1=n_stor, node2=ng, stochastic_path=path, t=t)
         for (conn, n_stor, ng) in indices(connection_linepack_constant)
         for (t, path) in t_lowest_resolution_path(
-            m, vcat(node_state_indices(m; node=n_stor), node_pressure_indices(m; node=ng))
+            m, Iterators.flatten((node_state_indices(m; node=n_stor), node_pressure_indices(m; node=ng)))
         )
     )
 end

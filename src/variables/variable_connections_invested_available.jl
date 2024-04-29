@@ -31,7 +31,7 @@ function connections_invested_available_indices(
     temporal_block=anything,
 )
     connection = members(connection)
-    unique(
+    (
         (connection=conn, stochastic_scenario=s, t=t)
         for (conn, tb) in connection__investment_temporal_block(
             connection=intersect(indices(candidate_connections), connection),
@@ -51,7 +51,7 @@ Check if conneciton investment variable type is defined to be an integer.
 """
 
 function connections_invested_available_int(x)
-    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+    connection_investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
 end
 
 """
@@ -60,15 +60,15 @@ end
 Add `connections_invested_available` variables to model `m`.
 """
 function add_variable_connections_invested_available!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connections_invested_available,
         connections_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=connections_invested_available_int,
         fix_value=fix_connections_invested_available,
         internal_fix_value=internal_fix_connections_invested_available,
-        initial_value=initial_connections_invested_available
+        initial_value=initial_connections_invested_available,
+        required_history_period=maximum_parameter_value(connection_investment_lifetime),
     )
 end

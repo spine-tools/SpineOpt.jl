@@ -18,18 +18,27 @@
 #############################################################################
 
 """
-    add_variable_units_available!(m::Model)
-
-Add `units_available` variables to model `m`.
+    create indices for the `min_capacity_margin_slack` variable
 """
-function add_variable_units_available!(m::Model)
-    add_variable!(
-        m,
-        :units_available,
-        units_on_indices;
-        lb=Constant(0),
-        bin=units_on_bin,
-        int=units_on_int,
-        replacement_value=units_on_replacement_value,
+function min_capacity_margin_slack_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    (
+        (node=n, stochastic_scenario=s, t=t)
+        for n in intersect(node_with_min_capacity_margin_penalty(), node)
+        for (n, s, t) in node_stochastic_time_indices(
+            m; node=n, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
+        )
     )
 end
+
+"""
+    add_variable_min_capacity_margin_slack!(m::Model)
+
+Add `min_capacity_margin_slack` variables to model `m`.
+"""
+add_variable_min_capacity_margin_slack!(m::Model) = add_variable!(m, :min_capacity_margin_slack, min_capacity_margin_slack_indices; lb=constant(0))

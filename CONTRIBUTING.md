@@ -4,7 +4,7 @@ Thanks for taking the plunge!
 
 * It's always good to start with a quick search for an existing issue to post on, or related issues for context, before opening a new issue
 * Including minimal examples is greatly appreciated
-* If it's a bug, or unexpected behavior, reproducing on the latest development version (`Pkg.checkout("SpineOpt")`) is a good gut check and can streamline the process, along with including the first two lines of output from `versioninfo()`
+* If it's a bug, or unexpected behavior, reproducing on the latest development version (`Pkg.checkout("SpineOpt")`) is a good check and can streamline the process, along with including the first two lines of output from `versioninfo()`
 
 ## Contributing
 
@@ -31,6 +31,34 @@ Thanks for taking the plunge!
 * Don't explicitly parameterize types unless it's necessary
 * Never leave things without type qualifications. Use an explicit `::Any`.
 * Order method definitions from most specific to least specific type constraints
+
+## Releases
+Releases are discussed among the developers first. After that you can make the release. Below is an example of the steps to go through when there is a major release in Spine Toolbox.
+
+Before Toolbox has been upgraded to v0.8:
+
+SpineOpt:
+* new release (and tag) 0.7.2
+* update project.toml, version: 0.7.2 & SpineInterface 0.13.5
+
+SpineInterface:
+* new release (and tag) SpineInterface 0.13.5
+* update project.toml, version: 0.13.5
+* 
+After Toolbox master has been upgraded to v0.8:
+
+SpineOpt:
+* merge SpineOpt 0.8-dev to SpineOpt master
+* new release (and tag) 0.8.0
+* update project.toml, version: 0.8.0 & SpineInterface 0.14.0
+* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
+
+SpineInterface:
+* merge SpineInterface 0.8-dev to SpineInterface master
+* new release (and tag) SpineInterface 0.14.0
+* update project.toml, version: 0.14.0
+* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
+
 
 ## Further questions
 * For developers there is some additional information in the implementation details (e.g. how to write a constraint).

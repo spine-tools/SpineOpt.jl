@@ -18,6 +18,7 @@
 #############################################################################
 using CSV
 using DataFrames
+import DataStructures: OrderedDict
 
 function write_sets_and_variables(mathpath)
     variables = DataFrame(CSV.File(joinpath(mathpath, "variables.csv")))
@@ -47,179 +48,84 @@ function write_sets_and_variables(mathpath)
 end
 
 """
-    initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
+    concept_dictionary(template::Dict; translation::Dict=Dict())
 
-Gathers information from `spineopt_template.json` and forms a `Dict` for the concepts according to `translation`.
+A `Dict` mapping keys from the template ("object_classes", "relationship_classes", etc.)
+to another `Dict` mapping 'concept' names ("unit", "node", "unit__from_node", "unit_capacity" etc.)
+to a third `Dict` containing information to document that concept.
 
-Unfortunately, the template is not uniform when it comes to the location of the `name` of each concept, their related
-concepts, or the `description`.
+Unfortunately, the template is not uniform when it comes to the location of the name of each concept, their related
+concepts, or the description.
 Thus, we have to map things somewhat manually here.
-The optional `translation` keyword can be used to aggregate and translate the output using the
-`translate_and_aggregate_concept_dictionary()` function.
+The optional `translation` keyword can be used to aggregate and translate the output.
 """
-function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
+function concept_dictionary(template::Dict; translation::Dict=Dict())
     # Define mapping of template entries, where each attribute of interest is.
     template_mapping = Dict(
-        "object_classes" => Dict(:name_index => 1, :description_index => 2),
+        "object_classes" => Dict(:name => 1, :description => 2),
         "relationship_classes" => Dict(
-            :name_index => 1,
-            :description_index => 3,
-            :related_concept_index => 2,
+            :name => 1,
+            :description => 3,
+            :related_concept => 2,
             :related_concept_type => "object_classes",
         ),
-        "parameter_value_lists" => Dict(:name_index => 1, :possible_values_index => 2),
+        "parameter_value_lists" => Dict(:name => 1, :possible_values => 2),
         "object_parameters" => Dict(
-            :name_index => 2,
-            :description_index => 5,
-            :related_concept_index => 1,
+            :name => 2,
+            :parameter_description => 5,
+            :related_concept => 1,
             :related_concept_type => "object_classes",
-            :default_value_index => 3,
-            :parameter_value_list_index => 4,
+            :default_value => 3,
+            :parameter_value_list => 4,
         ),
         "relationship_parameters" => Dict(
-            :name_index => 2,
-            :description_index => 5,
-            :related_concept_index => 1,
+            :name => 2,
+            :parameter_description => 5,
+            :related_concept => 1,
             :related_concept_type => "relationship_classes",
-            :default_value_index => 3,
-            :parameter_value_list_index => 4,
-        ),
-        "tools" => Dict(:name_index => 1, :description_index => 2),
-        "features" => Dict(
-            :name_index => 2,
-            :related_concept_index => 1,
-            :related_concept_type => "object_classes",
-            :default_value_index => 3,
-            :parameter_value_list_index => 4,
-        ),
-        "tool_features" => Dict(
-            :name_index => 1,
-            :related_concept_index => 2,
-            :related_concept_type => "object_classes",
-            :default_value_index => 4,
-            :feature_index => 4,
+            :default_value => 3,
+            :parameter_value_list => 4,
         ),
     )
-    # Initialize the concept dictionary based on the template (only preserves the last entry, if overlaps)
-    concept_dictionary = Dict(
-        key => Dict(
-            entry[indices[:name_index]] => Dict(
-                :description => get(entry, get(indices, :description_index, -1), nothing),
-                :default_value => get(entry, get(indices, :default_value_index, -1), nothing),
-                :parameter_value_list => get(entry, get(indices, :parameter_value_list_index, -1), nothing),
-                :possible_values => if haskey(indices, :possible_values_index)
-                    [entry[indices[:possible_values_index]]]
-                else
-                    nothing
-                end,
-                :feature => get(entry, get(indices, :feature_index, -1), nothing),
-                :related_concepts => if haskey(indices, :related_concept_index)
-                    Dict(
-                        indices[:related_concept_type] => if entry[indices[:related_concept_index]] isa Array
-                            unique(entry[indices[:related_concept_index]])
-                        else
-                            [entry[indices[:related_concept_index]]]
-                        end
-                    )
-                else
-                    Dict()
-                end
-            )
-            for entry in template[key] 
-        )
-        for (key, indices) in template_mapping
-    )
-    # Perform a second pass to cover overlapping entries and throw warnings for conflicts
+    # Initialize the concept dictionary based on the template (accumulates entries if overlaps)
+    concept_dictionary = Dict()
     for (key, indices) in template_mapping
+        translated_key = get(translation, key, key)
+        concept_dict_for_key = get!(concept_dictionary, translated_key, Dict())
         for entry in template[key]
-            concept = concept_dictionary[key][entry[indices[:name_index]]]
-            # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`
-            if !isnothing(concept[:description]) && concept[:description] != entry[indices[:description_index]]
-                @warn(
-                    "`$(entry[indices[:name_index]])` has conflicting `description` across duplicate template entries"
-                )
-            end
-            if !isnothing(concept[:default_value]) && concept[:default_value] != entry[indices[:default_value_index]]
-                @warn(
-                    "`$(entry[indices[:name_index]])` has conflicting `default_value` across duplicate template entries"
-                )
-            end
-            if (
-                    !isnothing(concept[:parameter_value_list])
-                    && concept[:parameter_value_list] != entry[indices[:parameter_value_list_index]]
-                )
-                @warn(
-                    "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` ",
-                    "across duplicate template entries"
-                )
-            end
-            if !isnothing(concept[:possible_values]) && !isnothing(entry[indices[:possible_values_index]])
-                unique!(push!(concept[:possible_values], entry[indices[:possible_values_index]]))
-            end                
-            if !isnothing(concept[:feature]) && concept[:feature] != entry[indices[:feature_index]]
-                @warn(
-                    "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` ",
-                    "across duplicate template entries"
-                )
-            end
-            # Include all unique `concepts` into `related concepts`
-            if !isempty(concept[:related_concepts])
-                related_concepts = if entry[indices[:related_concept_index]] isa Array
-                    unique([entry[indices[:related_concept_index]]...])
-                else
-                    [entry[indices[:related_concept_index]]]
+            name = entry[indices[:name]]
+            concept_dict_for_name = get!(concept_dict_for_key, name, Dict())
+            for field in (:description, :parameter_description, :default_value, :parameter_value_list, :possible_values)
+                index = get(indices, field, nothing)
+                index === nothing && continue
+                value = entry[index]
+                if field == :default_value
+                    value = replace(string(value), "_" => "\\_")
                 end
-                unique!(append!(concept[:related_concepts][indices[:related_concept_type]], related_concepts))
+                value === nothing && continue
+                if field in (:parameter_description, :default_value, :parameter_value_list)
+                    class = "`$(entry[indices[:related_concept]])`"
+                    classes_by_value = get!(concept_dict_for_name, field, OrderedDict())
+                    push!(get!(classes_by_value, value, []), class)
+                elseif field == :possible_values
+                    push!(get!(concept_dict_for_name, field, []), value)
+                else  # :description
+                    concept_dict_for_name[field] = value
+                end
+            end
+            related_concepts = get!(concept_dict_for_name, :related_concepts, Dict())
+            related_concept_type = get(indices, :related_concept_type, nothing)
+            if related_concept_type != nothing
+                related_concept_type = get(translation, related_concept_type, related_concept_type)
+                related_concept = entry[indices[:related_concept]]
+                if !(related_concept isa Array)
+                    related_concept = [related_concept]
+                end
+                append!(get!(related_concepts, related_concept_type, []), related_concept)
             end
         end
     end
-    # If translation and aggregation is defined, do that.
-    if !isempty(translation)
-        concept_dictionary = translate_and_aggregate_concept_dictionary(concept_dictionary, translation)
-    end
-    concept_dictionary
-end
-
-"""
-    _unique_merge!(value1, value2)
-
-Merges two values together provided it's possible depending on the type.
-"""
-unique_merge!(value1::Dict, value2::Dict) = merge!(value1, value2)
-unique_merge!(value1::String, value2::String) = value1
-unique_merge!(value1::Bool, value2::Bool) = value1
-unique_merge!(value1::Array, value2::Array) = unique!(append!(value1, value2))
-unique_merge!(value1::Nothing, value2::Nothing) = nothing
-
-"""
-    translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
-
-Translates and aggregates the concept types of the initialized `concept_dictionary` according to `translation`.
-
-`translation` needs to be a `Dict` with arrays of `String`s corresponding to the template sections mapped to
-a `String` corresponding to the translated section name.
-If multiple template section names are mapped to a single `String`, the entries are aggregated under that title.
-"""
-function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
-    initial_translation = Dict(
-        translation[key] => merge((d1, d2) -> merge(unique_merge!, d1, d2), [concept_dictionary[k] for k in key]...)
-        for key in keys(translation)
-    )
-    translated_concept_dictionary = deepcopy(initial_translation)
-    for concept_type in keys(initial_translation)
-        for concept in keys(initial_translation[concept_type])
-            translated_concept_dictionary[concept_type][concept][:related_concepts] = Dict(
-                translation[key] => vcat(
-                    [
-                        initial_translation[concept_type][concept][:related_concepts][k]
-                        for k in key if k in keys(initial_translation[concept_type][concept][:related_concepts])
-                    ]...,
-                )
-                for key in keys(translation)
-            )
-        end
-    end
-    translated_concept_dictionary
+    add_cross_references!(concept_dictionary)
 end
 
 """
@@ -229,13 +135,12 @@ Loops over the `concept_dictionary` and cross-references all `:related_concepts`
 """
 function add_cross_references!(concept_dictionary::Dict)
     # Loop over the concept dictionary and cross-reference all related concepts.
-    for class in keys(concept_dictionary)
-        for concept in keys(concept_dictionary[class])
-            for related_concept_class in keys(concept_dictionary[class][concept][:related_concepts])
-                for related_concept in concept_dictionary[class][concept][:related_concepts][related_concept_class]
-                    related_concepts = concept_dictionary[related_concept_class][related_concept][:related_concepts]
-                    concepts = get!(related_concepts, class, [])
-                    concept in concepts || push!(concepts, concept)
+    for (key, concept_dict_for_key) in concept_dictionary
+        for (name, concept_dict_for_name) in concept_dict_for_key
+            for (related_concept_type, related_concepts) in concept_dict_for_name[:related_concepts]
+                for related_concept in related_concepts
+                    other_related_concepts = concept_dictionary[related_concept_type][related_concept][:related_concepts]
+                    push!(get!(other_related_concepts, key, []), name)
                 end
             end
         end
@@ -244,95 +149,94 @@ function add_cross_references!(concept_dictionary::Dict)
 end
 
 """
-    write_concept_reference_files(
-        concept_dictionary::Dict,
-        makedocs_path::String
-    )
+    write_concept_reference_files(concept_dictionary::Dict, makedocs_path::String)
 
-Automatically writes markdown files for the `Concept Reference` chapter based on the `concept_dictionary`.
+Write markdown files for the `Concept Reference` chapter based on the `concept_dictionary`.
 
 Each file is pieced together from two parts: the preamble automatically generated using the
 `concept_dictionary`, and a separate description assumed to be found under `docs/src/concept_reference/<name>.md`.
 """
 function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::String)
-    error_count = 0
-    for filename in keys(concept_dictionary)
-        system_string = ["# $(filename)\n\n"]
+    for (key, concept_dict_for_key) in concept_dictionary
+        system_string = ["# $(key)\n\n"]
         # Loop over the unique names and write their information into the filename under a dedicated section.
-        for concept in unique!(sort!(collect(keys(concept_dictionary[filename]))))
-            section = "## `$(concept)`\n\n"
+        for name in unique!(sort!(collect(keys(concept_dict_for_key))))
+            concept_dict_for_name = concept_dict_for_key[name]
+            section = "## `$name`\n\n"
             # If description is defined, include it into the preamble.
-            if !isnothing(concept_dictionary[filename][concept][:description])
-                section *= ">$(concept_dictionary[filename][concept][:description])\n\n"
+            description = get(concept_dict_for_name, :description, nothing)
+            if description !== nothing
+                section *= "> $description\n\n"
+            end
+            # If parameter descriptions are defined, include those into the preamble
+            classes_by_description = get(concept_dict_for_name, :parameter_description, Dict())
+            if length(classes_by_description) == 1
+                description = first(collect(keys(classes_by_description)))
+                section *= "> $description\n\n"
+            elseif !isempty(classes_by_description)
+                description = join(
+                    ["> - For $(join(classes, ", ")): $desc" for (desc, classes) in classes_by_description], "\n"
+                )
+                section *= "$description\n\n"
             end
             # If default values are defined, include those into the preamble
-            if !isnothing(concept_dictionary[filename][concept][:default_value])
-                if concept_dictionary[filename][concept][:default_value] isa String
-                    str = replace(concept_dictionary[filename][concept][:default_value], "_" => "\\_")
-                else
-                    str = concept_dictionary[filename][concept][:default_value]
-                end
-                section *= ">**Default value:** $(str)\n\n"
+            classes_by_default_value = get(concept_dict_for_name, :default_value, Dict())
+            if length(classes_by_default_value) == 1
+                default_value = first(collect(keys(classes_by_default_value)))
+                section *= ">**Default value**: $default_value\n\n"
+            elseif !isempty(classes_by_default_value)
+                default_value = join(
+                    ["> - For $(join(classes, ", ")): $val" for (val, classes) in classes_by_default_value], "\n"
+                )
+                section *= ">**Default value**:\n$default_value\n\n"
             end
             # If parameter value lists are defined, include those into the preamble
-            if !isnothing(concept_dictionary[filename][concept][:parameter_value_list])
-                refstring = string(
-                    "[$(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"))]",
-                    "(@ref)"
+            classes_by_parameter_value_list = get(concept_dict_for_name, :parameter_value_list, Dict())
+            if length(classes_by_parameter_value_list) == 1
+                parameter_value_list = first(collect(keys(classes_by_parameter_value_list)))
+                refstring = string("[$(replace(parameter_value_list, "_" => "\\_"))]", "(@ref)")
+                section *= ">**Uses [Parameter Value Lists](@ref):** $refstring\n\n"
+            elseif !isempty(classes_by_parameter_value_list)
+                parameter_value_list = join(
+                    ["> - For $(join(classes, ", ")): $(string("[$(replace(pv_list, "_" => "\\_"))]", "(@ref)"))"
+                    for (pv_list, classes) in classes_by_parameter_value_list], "\n"
                 )
-                section *= ">**Uses [Parameter Value Lists](@ref):** $(refstring)\n\n"
+                section *= ">**Uses [Parameter Value Lists](@ref):**:\n$parameter_value_list\n\n"
             end
             # If possible parameter values are defined, include those into the preamble
-            if !isnothing(concept_dictionary[filename][concept][:possible_values])
-                strings = [
-                    "`$(c)`" for c in concept_dictionary[filename][concept][:possible_values]
-                ]
+            possible_values = unique!(get(concept_dict_for_name, :possible_values, []))
+            if !isempty(possible_values)
+                strings = ["`$(c)`" for c in possible_values]
                 section *= ">**Possible values:** $(join(sort!(strings), ", ", " and ")) \n\n"
             end
             # If related concepts are defined, include those into the preamble
-            if !isempty(concept_dictionary[filename][concept][:related_concepts])
-                for related_concept_type in keys(concept_dictionary[filename][concept][:related_concepts])
-                    if !isempty(concept_dictionary[filename][concept][:related_concepts][related_concept_type])
-                        refstrings = [
-                            "[$(replace(c, "_" => "\\_"))](@ref)"
-                            for c in concept_dictionary[filename][concept][:related_concepts][related_concept_type]
-                        ]
-                        section *= string(
-                            ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** ",
-                            "$(join(sort!(refstrings), ", ", " and "))\n\n"
-                        )
-                    end
+            for (related_concept_type, related_concepts) in concept_dict_for_name[:related_concepts]
+                if !isempty(related_concepts)
+                    refstrings = ["[$(replace(c, "_" => "\\_"))](@ref)" for c in unique(related_concepts)]
+                    section *= string(
+                        ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** ",
+                        "$(join(sort!(refstrings), ", ", " and "))\n\n"
+                    )
                 end
             end
-            # If features are defined, include those into the preamble
-            #=
-            if !isnothing(concept_dictionary[filename][concept][:feature])
-                section *= string(
-                    "Uses [Features](@ref): ",
-                    "$(join(replace(concept_dictionary[filename][concept][:feature], "_" => "\\_"), ", ", " and "))\n\n"
-                )
-            end
-            =#
             # Try to fetch the description from the corresponding .md filename.
-            description_path = joinpath(makedocs_path, "src", "concept_reference", "$(concept).md")
-            try
-                description = open(f -> read(f, String), description_path, "r")
+            description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
+            description = try
+                open(f -> read(f, String), description_path, "r")
                 while description[(end - 1):end] != "\n\n"
                     description *= "\n"
                 end
-                push!(system_string, section * description)
+                description
             catch
-                @warn("Description for `$(concept)` not found! Please add a description to `$(description_path)`.")
-                error_count += 1
-                push!(system_string, section * "TODO\n\n")
+                @warn "extended description for `$name` not found! consider adding one to `$description_path`."
+                ""
             end
+            push!(system_string, section * description)
         end
-        system_string = join(system_string)
-        open(joinpath(makedocs_path, "src", "concept_reference", "$(filename).md"), "w") do file
-            write(file, system_string)
+        open(joinpath(makedocs_path, "src", "concept_reference", "$(key).md"), "w") do file
+            write(file, join(system_string))
         end
     end
-    return error_count
 end
 
 """
@@ -342,7 +246,7 @@ Expand `pages` in-place so that empty chapters are populated with the entire lis
 in the associated folder.
 
 The code assumes a specific structure.
-+ All chapters and corresponding markdownfiles are in the "docs/src folder".
++ All chapters and corresponding markdown files are in the "docs/src folder".
 + folder names need to be lowercase with underscores because folder names are derived from the page names
 + markdown file names can have uppercases and can have underscores but don't need to
   because the page names are derived from file names

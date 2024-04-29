@@ -34,29 +34,38 @@ and [units\_mothballed](@ref) in adjacent timeslices.
 ```
 """
 function add_constraint_units_invested_transition!(m::Model)
+    _add_constraint!(
+        m,
+        :units_invested_transition,
+        constraint_units_invested_transition_indices,
+        _build_constraint_units_invested_transition,
+    )
+end
+
+function _build_constraint_units_invested_transition(m::Model, u, s_path, t_before, t_after)
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:units_invested_transition] = Dict(
-        (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
-            m,
-            expr_sum(
-                + units_invested_available[u, s, t_after] - units_invested[u, s, t_after]
-                + units_mothballed[u, s, t_after]
-                for (u, s, t_after) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_after);
-                init=0,
-            )
-            ==
-            expr_sum(
-                + units_invested_available[u, s, t_before]
-                for (u, s, t_before) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_before);
-                init=0,
-            )
+    @build_constraint(
+        sum(
+            + units_invested_available[u, s, t_after] - units_invested[u, s, t_after]
+            + units_mothballed[u, s, t_after]
+            for (u, s, t_after) in units_invested_available_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t_after
+            );
+            init=0,
         )
-        for (u, s, t_before, t_after) in constraint_units_invested_transition_indices(m)
+        ==
+        sum(
+            + units_invested_available[u, s, t_before]
+            for (u, s, t_before) in units_invested_available_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t_before
+            );
+            init=0,
+        )
     )
 end
 
 function constraint_units_invested_transition_indices(m::Model)
-    unique(
+    (
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, t_before, t_after) in unit_investment_dynamic_time_indices(m)
         for path in active_stochastic_paths(m, units_invested_available_indices(m; unit=u, t=[t_before, t_after]))

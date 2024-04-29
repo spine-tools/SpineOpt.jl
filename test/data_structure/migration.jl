@@ -209,10 +209,46 @@ function _test_remove_model_tb_ss()
 	end
 end
 
+function _test_update_investment_variable_type()
+	@testset "update_investment_variable_type" begin
+		url = "sqlite://"
+		to_rm_ec_names = ("model__temporal_block", "model__stochastic_structure")
+		data = Dict(
+			:object_classes => ["connection", "node"],
+			:object_parameters => [
+				("connection", "connection_investment_variable_type", "variable_type_integer", "variable_type_list"),
+				("node", "storage_investment_variable_type", "variable_type_integer", "variable_type_list"),
+			],
+			:parameter_value_lists => [
+				("connection_investment_variable_type_list", "connection_investment_variable_type_continuous"),
+				("connection_investment_variable_type_list", "connection_investment_variable_type_integer"),
+			],
+			:objects => [("connection", "conn"), ("node", "n")],
+			:object_parameter_values => [
+				("connection", "conn", "connection_investment_variable_type", "variable_type_continuous"),
+				("node", "n", "storage_investment_variable_type", "variable_type_continuous")
+			],
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test Y.connection_investment_variable_type(connection=Y.connection(:conn)) == :variable_type_continuous
+		@test Y.storage_investment_variable_type(node=Y.node(:n)) == :variable_type_continuous
+		@test SpineOpt.update_investment_variable_type(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "update_investment_variable_type"))
+		using_spinedb(url, Y)
+		@test Y.connection_investment_variable_type(
+			connection=Y.connection(:conn)
+		) == :connection_investment_variable_type_continuous
+		@test Y.storage_investment_variable_type(node=Y.node(:n)) == :storage_investment_variable_type_continuous
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
 	_test_rename_model_types()
 	_test_translate_ramp_parameters()
 	_test_remove_model_tb_ss()
+	_test_update_investment_variable_type()
 end

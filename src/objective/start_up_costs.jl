@@ -27,9 +27,9 @@ function start_up_costs(m::Model, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        expr_sum(
+        sum(
             + units_started_up[u, s, t]
-            * start_up_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * start_up_cost(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
             for (u, s, t) in units_on_indices(m; unit=indices(start_up_cost), t=t_range);

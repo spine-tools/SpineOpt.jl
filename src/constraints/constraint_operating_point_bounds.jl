@@ -34,29 +34,34 @@ online units. This constraint is activated only when parameter [ordered\_unit\_f
 See also [operating\_points](@ref), [ordered\_unit\_flow\_op](@ref).
 """
 function add_constraint_operating_point_bounds!(m::Model)
-    @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
-        (unit=u, node=n, direction=d, i=op, stochastic_path=s, t=t) => @constraint(
-            m,
-            expr_sum(
-                unit_flow_op_active[u, n, d, op, s, t]
-                for (u, n, d, op, s, t) in unit_flow_op_active_indices(
-                    m; unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                ); init=0
-            )
-            <= 
-            expr_sum(
-                units_on[u, s, t] for (u, s, t) in units_on_indices(
-                    m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                ); init=0
-            )
+    _add_constraint!(
+        m, :operating_point_bounds, constraint_operating_point_bounds_indices, _build_constraint_operating_point_bounds
+    )
+end
+
+function _build_constraint_operating_point_bounds(m::Model, u, n, d, op, s_path, t)
+    @fetch unit_flow_op_active = m.ext[:spineopt].variables
+    @build_constraint(
+        sum(
+            unit_flow_op_active[u, n, d, op, s, t]
+            for (u, n, d, op, s, t) in unit_flow_op_active_indices(
+                m; unit=u, node=n, direction=d, i=op, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
         )
-        for (u, n, d, op, s, t) in constraint_operating_point_bounds_indices(m)
+        <= 
+        sum(
+            _get_units_on(m, u, s, t)
+            for (u, s, t) in unit_stochastic_time_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
     )
 end
 
 function constraint_operating_point_bounds_indices(m::Model)
-    unique(
+    (
         (unit=u, node=ng, direction=d, i=i, stochastic_path=path, t=t)
         # NOTE: a stochastic_path is an array consisting of stochastic scenarios, e.g. [s1, s2]
         for (u, ng, d, i, _s, _t) in unit_flow_op_active_indices(m)

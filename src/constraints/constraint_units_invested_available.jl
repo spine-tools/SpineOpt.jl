@@ -29,15 +29,15 @@ The number of available invested-in units at any point in time is less than the 
 ```
 """
 function add_constraint_units_invested_available!(m::Model)
+    _add_constraint!(
+        m, :units_invested_available, units_invested_available_indices, _build_constraint_units_invested_available
+    )
+end
+
+function _build_constraint_units_invested_available(m::Model, u, s, t)
     @fetch units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:units_invested_available] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + units_invested_available[u, s, t]
-            <=
-            + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
-        for (u, s, t) in units_invested_available_indices(m)
+    @build_constraint(
+        units_invested_available[u, s, t] <= candidate_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
     )
 end

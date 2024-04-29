@@ -27,15 +27,15 @@ function fixed_om_costs(m, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
-        expr_sum(
-            + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+        sum(
+            + unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+            * fom_cost(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
             * (
-                + number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                + number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
                 + units_invested_available[u, s, t]
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            # This term is activated when there is a representative termporal block in those containing TimeSlice t.
+            # This term is activated when there is a representative temporal block that includes t.
             # We assume only one representative temporal structure available, of which the termporal blocks represent
             # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
             * duration(t) for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))

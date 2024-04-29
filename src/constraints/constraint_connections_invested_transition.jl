@@ -34,33 +34,39 @@ This constraint enforces the relationship between [connections\_invested](@ref),
 ```
 """
 function add_constraint_connections_invested_transition!(m::Model)
+    _add_constraint!(
+        m,
+        :connections_invested_transition,
+        constraint_connections_invested_transition_indices,
+        _build_constraint_connections_invested_transition,
+    )
+end
+
+function _build_constraint_connections_invested_transition(m::Model, conn, s_path, t_before, t_after)
     @fetch connections_invested_available, connections_invested, connections_decommissioned = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:connections_invested_transition] = Dict(
-        (connection=conn, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
-            m,
-            expr_sum(
-                + connections_invested_available[conn, s, t_after] - connections_invested[conn, s, t_after]
-                + connections_decommissioned[conn, s, t_after]
-                for (conn, s, t_after) in connections_invested_available_indices(
-                    m; connection=conn, stochastic_scenario=s, t=t_after
-                );
-                init=0,
-            )
-            ==
-            expr_sum(
-                + connections_invested_available[conn, s, t_before]
-                for (conn, s, t_before) in connections_invested_available_indices(
-                    m; connection=conn, stochastic_scenario=s, t=t_before
-                );
-                init=0,
-            )
+    @build_constraint(
+        sum(
+            + connections_invested_available[conn, s, t_after]
+            - connections_invested[conn, s, t_after]
+            + connections_decommissioned[conn, s, t_after]
+            for (conn, s, t_after) in connections_invested_available_indices(
+                m; connection=conn, stochastic_scenario=s_path, t=t_after
+            );
+            init=0,
         )
-        for (conn, s, t_before, t_after) in constraint_connections_invested_transition_indices(m)
+        ==
+        sum(
+            + connections_invested_available[conn, s, t_before]
+            for (conn, s, t_before) in connections_invested_available_indices(
+                m; connection=conn, stochastic_scenario=s_path, t=t_before
+            );
+            init=0,
+        )
     )
 end
 
 function constraint_connections_invested_transition_indices(m::Model)
-    unique(
+    (
         (connection=conn, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (conn, t_before, t_after) in connection_investment_dynamic_time_indices(m)
         for path in active_stochastic_paths(

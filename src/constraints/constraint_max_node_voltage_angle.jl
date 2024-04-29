@@ -35,28 +35,33 @@ See also [max\_voltage\_angle](@ref).
 
 """
 function add_constraint_max_node_voltage_angle!(m::Model)
+    _add_constraint!(
+        m,
+        :max_node_voltage_angle,
+        constraint_max_node_voltage_angle_indices,
+        _build_constraint_max_node_voltage_angle,
+    )
+end
+
+function _build_constraint_max_node_voltage_angle(m::Model, ng, s_path, t)
     @fetch node_voltage_angle = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:max_node_voltage_angle] = Dict(
-        (node=ng, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + expr_sum(
-                + node_voltage_angle[ng, s, t]
-                for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s, t=t);
-                init=0,
-            )
-            <=
-            + max_voltage_angle[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+    @build_constraint(
+        sum(
+            + node_voltage_angle[n, s, t]
+            - max_voltage_angle(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
+            for (n, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (ng, s, t) in constraint_max_node_voltage_angle_indices(m)
+        <=
+        0
     )
 end
 
 function constraint_max_node_voltage_angle_indices(m::Model)
-    unique(
-        (node=ng, stochastic_path=path, t=t)
+    (
+        (node=ng, stochastic_path=[s], t=t)
         for (ng, s, t) in node_voltage_angle_indices(m; node=indices(max_voltage_angle))
-        for path in active_stochastic_paths(m, s)
     )
 end
 

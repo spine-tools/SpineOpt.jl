@@ -36,7 +36,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
                 + sum(
                     window_sum_duration(m, sp_unit_flow(unit=u, node=n, direction=d, stochastic_scenario=s), window)
                     for window in m.ext[:spineopt].temporal_structure[:sp_windows]
-                    for (u, s) in unit_stochastic_indices(m; unit=unit(is_renewable=true))
+                    for (u, s) in _unit_scenario(unit(is_renewable=true))
                     for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
                     init=0
                 )
@@ -57,7 +57,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
                         window
                     )
                     for window in m.ext[:spineopt].temporal_structure[:sp_windows]
-                    for (u, s) in unit_stochastic_indices(m; unit=unit(is_renewable=true)) 
+                    for (u, s) in _unit_scenario(unit(is_renewable=true)) 
                     for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
                     init=0,
                 )
@@ -68,9 +68,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
                     sum(
                         window_sum_duration(m, demand(node=n, stochastic_scenario=s), window)
                         for window in m.ext[:spineopt].temporal_structure[:sp_windows]
-                        for (n, s) in node_stochastic_indices(
-                            m; node=intersect(indices(demand), node__commodity(commodity=comm))
-                        );
+                        for (n, s) in _node_scenario(intersect(indices(demand), node__commodity(commodity=comm)));
                         init=0
                     )
                     + sum(
@@ -80,8 +78,8 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
                             window
                         )
                         for window in m.ext[:spineopt].temporal_structure[:sp_windows]
-                        for (n, s) in node_stochastic_indices(
-                            m; node=intersect(indices(fractional_demand), node__commodity(commodity=comm))
+                        for (n, s) in _node_scenario(
+                            intersect(indices(fractional_demand), node__commodity(commodity=comm))
                         )
                         for ng in groups(n);
                         init=0
@@ -91,5 +89,21 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
             for bi in last(benders_iteration())
             for comm in indices(mp_min_res_gen_to_demand_ratio)
         )
+    )
+end
+
+function _node_scenario(node)
+    (
+        (node=n, stochastic_scenario=s)
+        for (n, ss) in node__stochastic_structure(node=node, _compact=false)
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+    )
+end
+
+function _unit_scenario(unit)
+    (
+        (unit=u, stochastic_scenario=s)
+        for (u, ss) in units_on__stochastic_structure(unit=unit, _compact=false)
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
     )
 end

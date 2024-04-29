@@ -23,14 +23,14 @@
 Add `storages_invested` variables to model `m`.
 """
 function add_variable_storages_invested!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :storages_invested,
         storages_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=storages_invested_available_int,
         fix_value=fix_storages_invested,
-        initial_value=initial_storages_invested
+        initial_value=initial_storages_invested,
+        required_history_period=maximum_parameter_value(storage_investment_lifetime),
     )
 end

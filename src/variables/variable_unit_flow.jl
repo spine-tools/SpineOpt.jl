@@ -39,33 +39,32 @@ function unit_flow_indices(
 )
     unit = members(unit)
     node = members(node)
-    unique(
+    (
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in unit__node__direction__temporal_block(
-            unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
-        )
+        for (u, n, d) in unit__node__direction(unit=unit, node=node, direction=direction, _compact=false)
         for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
     )
 end
 
-function unit_flow_time_indices(
-    m::Model;
-    unit=anything,
-    node=anything,
-    direction=anything,
-    t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
-)
-    unit = members(unit)
-    node = members(node)
-    unique(
-        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in unit__node__direction__temporal_block(
-            unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
-        )
-        for (n, t) in node_time_indices(m; node=n, temporal_block=tb, t=t)
+function unit_flow_ub_as_number(; unit, node, direction, kwargs...)
+    any(
+        unit_flow_capacity(; unit=unit, node=ng, direction=direction, kwargs...) !== nothing for ng in groups(node)
+    ) && return nothing
+    unit_flow_capacity(; unit=unit, node=node, direction=direction, kwargs..., _default=NaN) * (
+        + number_of_units(; unit=unit, kwargs..., _default=1)
+        + candidate_units(; unit=unit, kwargs..., _default=0)
+    )
+end
+
+function unit_flow_ub_as_call(; unit, node, direction, kwargs...)
+    any(
+        unit_flow_capacity(; unit=unit, node=ng, direction=direction, kwargs...) !== nothing for ng in groups(node)
+    ) && return nothing
+    unit_flow_capacity[(unit=unit, node=node, direction=direction, kwargs..., _default=NaN)] * (
+        + number_of_units[(unit=unit, kwargs..., _default=1)]
+        + candidate_units[(unit=unit, kwargs..., _default=0)]
     )
 end
 
@@ -75,12 +74,12 @@ end
 Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :unit_flow,
         unit_flow_indices;
         lb=min_unit_flow,
+        ub=FlexParameter(unit_flow_ub_as_number, unit_flow_ub_as_call),
         fix_value=fix_unit_flow,
         initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,

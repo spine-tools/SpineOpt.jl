@@ -38,13 +38,13 @@ function connection_flow_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     node = members(node)
-    unique(
+    (
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d, tb) in connection__node__direction__temporal_block(
-            connection=connection, node=node, direction=direction, temporal_block=temporal_block, _compact=false,
+        for (conn, n, d) in connection__node__direction(
+            connection=connection, node=node, direction=direction, _compact=false
         )
         for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
     )
 end
@@ -55,15 +55,15 @@ end
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_connection_flow!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connection_flow,
         connection_flow_indices;
-        lb=Constant(0),
+        lb=constant(0),
         fix_value=fix_connection_flow,
         initial_value=initial_connection_flow,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
+        required_history_period=maximum_parameter_value(connection_flow_delay),
     )
 end

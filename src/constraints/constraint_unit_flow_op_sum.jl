@@ -31,17 +31,21 @@
 See also [operating\_points](@ref).
 """
 function add_constraint_unit_flow_op_sum!(m::Model)
+    _add_constraint!(m, :unit_flow_op_sum, constraint_unit_flow_op_sum_indices, _build_constraint_unit_flow_op_sum)
+end
+
+function _build_constraint_unit_flow_op_sum(m::Model, u, n, d, s, t)
     @fetch unit_flow_op, unit_flow = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:unit_flow_op_sum] = Dict(
-        (unit=u, node=n, direction=d, stochastic_scenmario=s, t=t) => @constraint(
-            m,
-            + unit_flow[u, n, d, s, t]
-            ==
-            + expr_sum(
-                unit_flow_op[u, n, d, op, s, t] for op in 1:length(operating_points(unit=u, node=n, direction=d));
-                init=0,
-            )
-        )
+    @build_constraint(
+        + unit_flow[u, n, d, s, t]
+        ==
+        + sum(unit_flow_op[u, n, d, op, s, t] for op in 1:length(operating_points(unit=u, node=n, direction=d)); init=0)
+    )
+end
+
+function constraint_unit_flow_op_sum_indices(m::Model)
+    (
+        (unit=u, node=n, direction=d, stochastic_scenmario=s, t=t)
         for (u, n, d) in indices(operating_points)
         for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=d)
     )

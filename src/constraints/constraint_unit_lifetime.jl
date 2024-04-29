@@ -23,29 +23,29 @@
 Constrain units_invested_available by the investment lifetime of a unit.
 """
 function add_constraint_unit_lifetime!(m::Model)
+    _add_constraint!(m, :unit_lifetime, constraint_unit_lifetime_indices, _build_constraint_unit_lifetime)
+end
+
+function _build_constraint_unit_lifetime(m::Model, u, s_path, t)
     @fetch units_invested_available, units_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:unit_lifetime] = Dict(
-        (unit=u, stochastic_path=s, t=t) => @constraint(
-            m,
-            expr_sum(
-                units_invested_available[u, s, t]
-                for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t);
-                init=0,
-            )
-            >=
-            sum(
-                units_invested[u, s_past, t_past]
-                for (u, s_past, t_past) in _past_units_invested_available_indices(m, u, s, t)
-            )
+    @build_constraint(
+        sum(
+            units_invested_available[u, s, t]
+            for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (u, s, t) in constraint_unit_lifetime_indices(m)
+        >=
+        sum(
+            units_invested[u, s_past, t_past]
+            for (u, s_past, t_past) in _past_units_invested_available_indices(m, u, s_path, t)
+        )
     )
 end
 
 function constraint_unit_lifetime_indices(m::Model)
     t0 = _analysis_time(m)
-    unique(
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(unit_investment_lifetime)
         for (u, t) in unit_investment_time_indices(m; unit=u)
@@ -53,16 +53,16 @@ function constraint_unit_lifetime_indices(m::Model)
     )
 end
 
-function _past_units_invested_available_indices(m, u, s, t)
+function _past_units_invested_available_indices(m, u, s_path, t)
     t0 = _analysis_time(m)
     units_invested_available_indices(
         m;
         unit=u,
-        stochastic_scenario=s,
+        stochastic_scenario=s_path,
         t=to_time_slice(
             m;
             t=TimeSlice(
-                end_(t) - unit_investment_lifetime(unit=u, analysis_time=t0, stochastic_scenario=s, t=t), end_(t)
+                end_(t) - unit_investment_lifetime(unit=u, analysis_time=t0, stochastic_scenario=s_path, t=t), end_(t)
             )
         )
     )

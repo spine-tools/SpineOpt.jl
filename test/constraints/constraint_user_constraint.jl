@@ -170,8 +170,7 @@
             t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
             t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 + 4 * units_invested_coefficient * var_units_invested[unit(:unit_ab), s_parent, t4h1]
                 + 4 * units_invested_available_coefficient
                     * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
@@ -224,7 +223,6 @@
                 Symbol(sense),
                 4 * rhs,
             )
-            expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
@@ -267,15 +265,13 @@
             node_c = node(:node_c)
             for (t2h, t1h_arr) in t1h_arr_by_t2h
                 obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t2h)])
-                expected_con_ref = SpineOpt.sense_constraint(
-                    m,
+                exp_con = SpineOpt.build_sense_constraint(
                     node_state_coefficient * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
                     + var_uc_slack_pos[ucx, parent, t2h] - var_uc_slack_neg[ucx, parent, t2h]
                     ,
                     Symbol(sense),
                     2 * rhs,
                 )
-                exp_con = constraint_object(expected_con_ref)
                 @test _is_constraint_equal(obs_con, exp_con)
             end
         end

@@ -49,61 +49,68 @@ from investment connections that are not invested in.
 ```
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
+    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    _add_constraint!(
+        m,
+        :connection_flow_intact_flow,
+        constraint_connection_flow_intact_flow_indices,
+        _build_constraint_connection_flow_intact_flow,
+    )
+end
+
+function _build_constraint_connection_flow_intact_flow(m, conn, ng, s_path, t)
     @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:connection_flow_intact_flow] = Dict(
-        (connection=conn, node=ng, stochastic_path=s, t=t) => @constraint(
-            m,
-            + expr_sum(
-                + connection_flow[conn, n, direction(:from_node), s, t] * duration(t)
-                - connection_flow[conn, n, direction(:to_node), s, t] * duration(t)
-                - connection_intact_flow[conn, n, direction(:from_node), s, t] * duration(t)
-                + connection_intact_flow[conn, n, direction(:to_node), s, t] * duration(t)
-                for (conn, n, d, s, t) in connection_flow_indices(
-                    m;
-                    connection=conn,
-                    direction=direction(:from_node),
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
-                );
-                init=0,
-            )
-            ==
-            + expr_sum(
-                lodf(connection1=candidate_conn, connection2=conn) * (
-                    + connection_intact_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
-                    - connection_intact_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
-                    - connection_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
-                    + connection_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
-                )
-                for candidate_conn in _candidate_connections(conn)
-                for n in last(connection__from_node(connection=candidate_conn))
-                for (candidate_conn, n, d, s, t) in connection_flow_indices(
-                    m;
-                    connection=candidate_conn,
-                    node=n,
-                    direction=direction(:from_node),
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
-                );
-                init=0,
-            )
+    @build_constraint(
+        + sum(
+            + connection_flow[conn, n, direction(:from_node), s, t] * duration(t)
+            - connection_flow[conn, n, direction(:to_node), s, t] * duration(t)
+            - connection_intact_flow[conn, n, direction(:from_node), s, t] * duration(t)
+            + connection_intact_flow[conn, n, direction(:to_node), s, t] * duration(t)
+            for (conn, n, d, s, t) in connection_flow_indices(
+                m;
+                connection=conn,
+                direction=direction(:from_node),
+                node=ng,
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
         )
-        for (conn, ng, s, t) in constraint_connection_flow_intact_flow_indices(m)
+        ==
+        + sum(
+            + lodf(connection1=candidate_conn, connection2=conn)
+            * (
+                + connection_intact_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
+                - connection_intact_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
+                - connection_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
+                + connection_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
+            )
+            for candidate_conn in _candidate_connections(conn)
+            for n in last(connection__from_node(connection=candidate_conn))
+            for (candidate_conn, n, d, s, t) in connection_flow_indices(
+                m;
+                connection=candidate_conn,
+                node=n,
+                direction=direction(:from_node),
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
+        )
     )
 end
 
 function constraint_connection_flow_intact_flow_indices(m::Model)
-    unique(
+    (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true, is_candidate=false)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (t, path) in t_lowest_resolution_path(
             m, 
             x
-            for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn)))
-            for x in connection_flow_indices(m; connection=conn_k, last(connection__from_node(connection=conn_k))...)
+            for conn_ in Iterators.flatten(((conn,), _candidate_connections(conn)))
+            for x in connection_flow_indices(m; connection=conn_, last(connection__from_node(connection=conn_))...)
         )
     )
 end

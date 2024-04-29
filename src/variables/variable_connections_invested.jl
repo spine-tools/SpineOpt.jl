@@ -23,14 +23,14 @@
 Add `connections_invested` variables to model `m`.
 """
 function add_variable_connections_invested!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connections_invested,
         connections_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         fix_value=fix_connections_invested,
         initial_value=initial_connections_invested,
         int=connections_invested_available_int,
+        required_history_period=maximum_parameter_value(connection_investment_lifetime),
     )
 end

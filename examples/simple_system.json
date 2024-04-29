@@ -334,7 +334,7 @@
                 "connection",
                 "node"
             ],
-            "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters.",
+            "A flow on a `connection` from a `node`.",
             280378317271897
         ],
         [
@@ -344,7 +344,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which connection capacities are included in the capacity invested available of an investment group",
+            "A flow on a `connection` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -354,7 +354,7 @@
                 "node",
                 "user_constraint"
             ],
-            "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint",
+            "A flow on a `connection` from a `node` constrained by a `user_constraint`.",
             null
         ],
         [
@@ -363,7 +363,7 @@
                 "connection",
                 "investment_group"
             ],
-            "Indicates that a `connection` belongs in an `investment_group`.",
+            "A `connection` that belongs in an `investment_group`.",
             null
         ],
         [
@@ -372,7 +372,7 @@
                 "connection",
                 "stochastic_structure"
             ],
-            "Defines the stochastic structure of the connections investments variable",
+            "The `stochastic_structure` of a `connection` investment.",
             null
         ],
         [
@@ -381,7 +381,7 @@
                 "connection",
                 "temporal_block"
             ],
-            "Defines the temporal resolution of the connections investments variable",
+            "The `temporal_block` of a `connection` investment.",
             null
         ],
         [
@@ -391,7 +391,7 @@
                 "node",
                 "node"
             ],
-            "Holds parameters spanning multiple `connection_flow` variables to and from multiple `nodes`.",
+            "A `connection` acting over two `node`s.",
             null
         ],
         [
@@ -400,7 +400,7 @@
                 "connection",
                 "node"
             ],
-            "Defines the `nodes` the `connection` can output to, and holds most `connection_flow` variable specific parameters.",
+            "A flow on a `connection` to a `node` .",
             280378317271898
         ],
         [
@@ -410,7 +410,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which connection capacities are included in the capacity invested available of an investment group",
+            "A flow on a `connection` to a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -420,7 +420,7 @@
                 "node",
                 "user_constraint"
             ],
-            "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint",
+            "A flow on a `connection` to a `node` constrained by a `user_constraint",
             null
         ],
         [
@@ -429,7 +429,7 @@
                 "connection",
                 "user_constraint"
             ],
-            "Relationship required to involve a connections investment variables in a user_constraint",
+            "A `connection` investment constrained by a `user_constraint`.",
             null
         ],
         [
@@ -438,7 +438,7 @@
                 "model",
                 "stochastic_structure"
             ],
-            "Defines the default stochastic structure used for investment variables, which will be replaced by more specific definitions",
+            "The default `stochastic_structure` of all investments in the `model`.",
             null
         ],
         [
@@ -447,7 +447,7 @@
                 "model",
                 "temporal_block"
             ],
-            "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions",
+            "The default `temporal_block` of all investments in the `model`.",
             null
         ],
         [
@@ -456,7 +456,7 @@
                 "model",
                 "stochastic_structure"
             ],
-            "Defines the default stochastic structure used for model variables, which will be replaced by more specific definitions",
+            "The default `stochastic_structure` of the `model.",
             null
         ],
         [
@@ -465,7 +465,7 @@
                 "model",
                 "temporal_block"
             ],
-            "Defines the default temporal block used for model variables, which will be replaced by more specific definitions",
+            "The default `temporal_block` of the `model`.",
             null
         ],
         [
@@ -474,7 +474,7 @@
                 "model",
                 "report"
             ],
-            "Determines which reports are written for each model and in turn, which outputs are written for each model",
+            "A `report` that should be written for the `model`.",
             null
         ],
         [
@@ -501,7 +501,7 @@
                 "node",
                 "commodity"
             ],
-            "Define a `commodity` for a `node`. Only a single `commodity` is permitted per `node`",
+            "A `commodity` for a `node`. Only a single `commodity` is permitted per `node`.",
             null
         ],
         [
@@ -510,7 +510,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates that a `node` belongs in a `investment_group`.",
+            "A `node` that belongs in an `investment_group`.",
             null
         ],
         [
@@ -519,7 +519,7 @@
                 "node",
                 "stochastic_structure"
             ],
-            "defines the stochastic structure for node related investments, currently only storages",
+            "The `stochastic_structure` of a `node` storage investment.",
             null
         ],
         [
@@ -528,7 +528,7 @@
                 "node",
                 "temporal_block"
             ],
-            "defines the temporal resolution for node related investments, currently only storages",
+            "The `temporal_block` of a `node` storage investment.",
             null
         ],
         [
@@ -537,7 +537,7 @@
                 "node",
                 "node"
             ],
-            "Holds parameters for direct interactions between two `nodes`, e.g. `node_state` diffusion coefficients.",
+            "An interaction between two `node`s.",
             null
         ],
         [
@@ -546,7 +546,7 @@
                 "node",
                 "stochastic_structure"
             ],
-            "Defines which specific `stochastic_structure` is used by the `node` and all `flow` variables associated with it. Only one `stochastic_structure` is permitted per `node`.",
+            "The `stochastic_structure` of a `node`. Only one `stochastic_structure` is permitted per `node`.",
             null
         ],
         [
@@ -555,7 +555,7 @@
                 "node",
                 "temporal_block"
             ],
-            "Defines the `temporal_blocks` used by the `node` and all the `flow` variables associated with it.",
+            "The `temporal_block` of a `node` and the corresponding `flow` variables.",
             null
         ],
         [
@@ -564,7 +564,7 @@
                 "node",
                 "user_constraint"
             ],
-            "specifying this relationship allows a node's demand or node_state to be included in the specified user constraint",
+            "A `node` state constrained by a `user_constraint`, or a `node` demand included in a `user_constraint`.",
             null
         ],
         [
@@ -573,7 +573,7 @@
                 "stochastic_scenario",
                 "stochastic_scenario"
             ],
-            "Defines the master stochastic direct acyclic graph, meaning how the `stochastic_scenarios` are related to each other.",
+            "A parent-child relationship between two `stochastic_scenario`s defining the master stochastic direct acyclic graph.",
             null
         ],
         [
@@ -582,7 +582,46 @@
                 "report",
                 "output"
             ],
-            "Output object related to a report object are returned to the output database (if they appear in the model as variables)",
+            "An `output` that should be included in a `report`.",
+            null
+        ],
+        [
+            "stage__child_stage",
+            [
+                "stage",
+                "stage"
+            ],
+            "A parent-child relationship between two `stage`s (EXPERIMENTAL).",
+            null
+        ],
+        [
+            "stage__output__connection",
+            [
+                "stage",
+                "output",
+                "connection"
+            ],
+            "An `output` that should be fixed by a `stage` for a `connection` in all its children (EXPERIMENTAL).",
+            null
+        ],
+        [
+            "stage__output__node",
+            [
+                "stage",
+                "output",
+                "node"
+            ],
+            "An `output` that should be fixed by a `stage` for a `node` in all its children (EXPERIMENTAL).",
+            null
+        ],
+        [
+            "stage__output__unit",
+            [
+                "stage",
+                "output",
+                "unit"
+            ],
+            "An `output` that should be fixed by a `stage` for a `unit` in all its children (EXPERIMENTAL).",
             null
         ],
         [
@@ -591,7 +630,7 @@
                 "stochastic_structure",
                 "stochastic_scenario"
             ],
-            "Defines which `stochastic_scenarios` are included in which `stochastic_structure`, and holds the parameters required for realizing the structure in combination with the `temporal_blocks`.",
+            "A `stochastic_scenarios` that belongs in a `stochastic_structure`.",
             null
         ],
         [
@@ -609,7 +648,7 @@
                 "unit",
                 "node"
             ],
-            "Defines the `nodes` the `unit` can take input from, and holds most `unit_flow` variable specific parameters.",
+            "A flow on a `unit` from a `node`.",
             281470681805657
         ],
         [
@@ -619,7 +658,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which unit capacities are included in the capacity invested available of an investment group",
+            "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -629,7 +668,7 @@
                 "node",
                 "user_constraint"
             ],
-            "Defines which input `unit_flows` are included in the `user_constraint`, and holds their parameters.",
+            "A flow on a `unit` from a `node` constrained by a `user_constraint`.",
             null
         ],
         [
@@ -638,7 +677,7 @@
                 "unit",
                 "investment_group"
             ],
-            "Indicates that a `unit` belongs in an `investment_group`.",
+            "A `unit` that belongs in an `investment_group`.",
             null
         ],
         [
@@ -647,7 +686,7 @@
                 "unit",
                 "stochastic_structure"
             ],
-            "Sets the stochastic structure for investment decisions - overrides `model__default_investment_stochastic_structure`.",
+            "The `stochastic_structure` of a `unit` investment.",
             null
         ],
         [
@@ -656,7 +695,7 @@
                 "unit",
                 "temporal_block"
             ],
-            "Sets the temporal resolution of investment decisions - overrides `model__default_investment_temporal_block`",
+            "The `temporal_block` of a `unit` investment.",
             null
         ],
         [
@@ -666,7 +705,7 @@
                 "node",
                 "node"
             ],
-            "Holds parameters spanning multiple `unit_flow` variables to and from multiple `nodes`.",
+            "A `unit` acting over two `node`s.",
             null
         ],
         [
@@ -675,7 +714,7 @@
                 "unit",
                 "node"
             ],
-            "Defines the `nodes` the `unit` can output to, and holds most `unit_flow` variable specific parameters.",
+            "A flow on a `unit` to a `node`.",
             281470681805658
         ],
         [
@@ -685,7 +724,7 @@
                 "node",
                 "investment_group"
             ],
-            "Indicates which unit capacities are included in the capacity invested available of an investment group",
+            "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
             null
         ],
         [
@@ -695,7 +734,7 @@
                 "node",
                 "user_constraint"
             ],
-            "Defines which output `unit_flows` are included in the `user_constraint`, and holds their parameters.",
+            "A flow on a `unit` to a `node` constrained by a `user_constraint`.",
             null
         ],
         [
@@ -704,7 +743,7 @@
                 "unit",
                 "user_constraint"
             ],
-            "Defines which `units_on` variables are included in the `user_constraint`, and holds their parameters.",
+            "A `unit` commitment constrained by a `user_constraint`.",
             null
         ],
         [
@@ -713,7 +752,7 @@
                 "unit",
                 "stochastic_structure"
             ],
-            "Defines which specific `stochastic_structure` is used for the `units_on` variable of the `unit`. Only one `stochastic_structure` is permitted per `unit`.",
+            "The `stochastic_structure` of a `unit` commitment. Only one `stochastic_structure` is permitted per `unit`.",
             null
         ],
         [
@@ -722,7 +761,7 @@
                 "unit",
                 "temporal_block"
             ],
-            "Defines which specific `temporal_blocks` are used by the `units_on` variable of the `unit`.",
+            "The `temporal_block` of a `unit` commitment.",
             null
         ]
     ],
@@ -821,8 +860,8 @@
         [
             "connection",
             "connection_investment_variable_type",
-            "variable_type_integer",
-            "variable_type_list",
+            "connection_investment_variable_type_integer",
+            "connection_investment_variable_type_list",
             "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"
         ],
         [
@@ -936,6 +975,13 @@
             true,
             "boolean_value_list",
             "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "connection",
+            "number_of_connections",
+            1,
+            null,
+            "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."
         ],
         [
             "investment_group",
@@ -1183,7 +1229,14 @@
             "roll_forward",
             null,
             null,
-            "Defines how much the model moves ahead in time between solves in a rolling optimization. Without this parameter, everything is solved in as a single optimization."
+            "Defines how much the model moves ahead in time between solves in a rolling optimization. If null, everything is solved in as a single optimization."
+        ],
+        [
+            "model",
+            "use_connection_intact_flow",
+            true,
+            "boolean_value_list",
+            "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
         ],
         [
             "model",
@@ -1218,14 +1271,14 @@
             "write_ptdf_file",
             false,
             "boolean_value_list",
-            "A boolean flag for whether the LODF values should be written to a results file."
+            "A boolean flag for whether the PTDF values should be written to a results file."
         ],
         [
             "node",
             "balance_type",
             "balance_type_node",
             "balance_type_list",
-            "A selector for how the `:nodal_balance` constraint should be handled."
+            "A selector for how the `nodal_balance` constraint should be handled."
         ],
         [
             "node",
@@ -1404,6 +1457,20 @@
         ],
         [
             "node",
+            "min_capacity_margin",
+            null,
+            null,
+            "minimum capacity margin applying to the `node` or `node_group`"
+        ],
+        [
+            "node",
+            "min_capacity_margin_penalty",
+            null,
+            null,
+            "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"
+        ],
+        [
+            "node",
             "min_node_pressure",
             null,
             null,
@@ -1460,10 +1527,17 @@
         ],
         [
             "node",
+            "number_of_storages",
+            1,
+            null,
+            "Denotes the number of 'sub storages' aggregated to form the modelled `node`."
+        ],
+        [
+            "node",
             "state_coeff",
             1,
             null,
-            "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `:node_injection` constraint."
+            "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `node_injection` constraint."
         ],
         [
             "node",
@@ -1482,8 +1556,8 @@
         [
             "node",
             "storage_investment_variable_type",
-            "variable_type_integer",
-            "variable_type_list",
+            "storage_investment_variable_type_integer",
+            "storage_investment_variable_type_list",
             "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"
         ],
         [
@@ -1566,9 +1640,23 @@
         [
             "settings",
             "version",
-            10,
+            12,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
+        ],
+        [
+            "stage",
+            "is_active",
+            true,
+            "boolean_value_list",
+            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "stage",
+            "stage_scenario",
+            null,
+            null,
+            "The scenario that this `stage` should run (EXPERIMENTAL)."
         ],
         [
             "stochastic_scenario",
@@ -1673,6 +1761,13 @@
         ],
         [
             "unit",
+            "fix_units_out_of_service",
+            null,
+            null,
+            "Fix the value of the `units_out_of_service` variable."
+        ],
+        [
+            "unit",
             "fom_cost",
             null,
             null,
@@ -1715,6 +1810,13 @@
         ],
         [
             "unit",
+            "initial_units_out_of_service",
+            null,
+            null,
+            "Initialize the value of the `units_out_of_service` variable."
+        ],
+        [
+            "unit",
             "is_active",
             true,
             "boolean_value_list",
@@ -1754,6 +1856,20 @@
             "unit_online_variable_type_linear",
             "unit_online_variable_type_list",
             "A selector for how the `units_on` variable is represented within the model."
+        ],
+        [
+            "unit",
+            "outage_variable_type",
+            "unit_online_variable_type_none",
+            "unit_online_variable_type_list",
+            "Determines whether the outage variable is integer or continuous or none(no optimisation of maintenance outages)."
+        ],
+        [
+            "unit",
+            "scheduled_outage_duration",
+            null,
+            null,
+            "Specifies the amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window"
         ],
         [
             "unit",
@@ -1838,6 +1954,13 @@
             null,
             null,
             "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "unit",
+            "units_unavailable",
+            0,
+            null,
+            "Represents the number of units out of service"
         ],
         [
             "user_constraint",
@@ -2294,6 +2417,27 @@
             "Whether or not results from further windows should overwrite results from previous ones."
         ],
         [
+            "stage__output__connection",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
+            "stage__output__node",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
+            "stage__output__unit",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
             "stochastic_structure__stochastic_scenario",
             "stochastic_scenario_end",
             null,
@@ -2557,14 +2701,14 @@
             "shut_down_limit",
             null,
             null,
-            "Max. downward ramp for units shutting down"
+            "Maximum ramp-down during shutdowns"
         ],
         [
             "unit__from_node",
             "start_up_limit",
             null,
             null,
-            "Maximum ramp-up during startups."
+            "Maximum ramp-up during startups"
         ],
         [
             "unit__from_node",
@@ -3185,1943 +3329,393 @@
             "object_activity_control",
             "commodity",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "connection",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "model",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "node",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "node__stochastic_structure",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "node__temporal_block",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "output",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "report",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "stochastic_scenario",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "stochastic_structure",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "temporal_block",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "unit",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "unit__from_node",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "unit__to_node",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "units_on__stochastic_structure",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "units_on__temporal_block",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "object_activity_control",
             "user_constraint",
             "is_active",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ]
     ],
     "parameter_value_lists": [
         [
             "balance_type_list",
-            [
-                [
-                    34,
-                    98,
-                    97,
-                    108,
-                    97,
-                    110,
-                    99,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    103,
-                    114,
-                    111,
-                    117,
-                    112,
-                    34
-                ],
-                null
-            ]
+            "balance_type_group"
         ],
         [
             "balance_type_list",
-            [
-                [
-                    34,
-                    98,
-                    97,
-                    108,
-                    97,
-                    110,
-                    99,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    110,
-                    111,
-                    100,
-                    101,
-                    34
-                ],
-                null
-            ]
+            "balance_type_node"
         ],
         [
             "balance_type_list",
-            [
-                [
-                    34,
-                    98,
-                    97,
-                    108,
-                    97,
-                    110,
-                    99,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    110,
-                    111,
-                    110,
-                    101,
-                    34
-                ],
-                null
-            ]
+            "balance_type_none"
         ],
         [
             "boolean_value_list",
-            [
-                [
-                    102,
-                    97,
-                    108,
-                    115,
-                    101
-                ],
-                null
-            ]
+            false
         ],
         [
             "boolean_value_list",
-            [
-                [
-                    116,
-                    114,
-                    117,
-                    101
-                ],
-                null
-            ]
+            true
         ],
         [
             "commodity_physics_list",
-            [
-                [
-                    34,
-                    99,
-                    111,
-                    109,
-                    109,
-                    111,
-                    100,
-                    105,
-                    116,
-                    121,
-                    95,
-                    112,
-                    104,
-                    121,
-                    115,
-                    105,
-                    99,
-                    115,
-                    95,
-                    108,
-                    111,
-                    100,
-                    102,
-                    34
-                ],
-                null
-            ]
+            "commodity_physics_lodf"
         ],
         [
             "commodity_physics_list",
-            [
-                [
-                    34,
-                    99,
-                    111,
-                    109,
-                    109,
-                    111,
-                    100,
-                    105,
-                    116,
-                    121,
-                    95,
-                    112,
-                    104,
-                    121,
-                    115,
-                    105,
-                    99,
-                    115,
-                    95,
-                    110,
-                    111,
-                    110,
-                    101,
-                    34
-                ],
-                null
-            ]
+            "commodity_physics_none"
         ],
         [
             "commodity_physics_list",
-            [
-                [
-                    34,
-                    99,
-                    111,
-                    109,
-                    109,
-                    111,
-                    100,
-                    105,
-                    116,
-                    121,
-                    95,
-                    112,
-                    104,
-                    121,
-                    115,
-                    105,
-                    99,
-                    115,
-                    95,
-                    112,
-                    116,
-                    100,
-                    102,
-                    34
-                ],
-                null
-            ]
+            "commodity_physics_ptdf"
         ],
         [
             "connection_investment_variable_type_list",
-            [
-                [
-                    34,
-                    99,
-                    111,
-                    110,
-                    110,
-                    101,
-                    99,
-                    116,
-                    105,
-                    111,
-                    110,
-                    95,
-                    105,
-                    110,
-                    118,
-                    101,
-                    115,
-                    116,
-                    109,
-                    101,
-                    110,
-                    116,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    99,
-                    111,
-                    110,
-                    116,
-                    105,
-                    110,
-                    117,
-                    111,
-                    117,
-                    115,
-                    34
-                ],
-                null
-            ]
+            "connection_investment_variable_type_continuous"
         ],
         [
             "connection_investment_variable_type_list",
-            [
-                [
-                    34,
-                    99,
-                    111,
-                    110,
-                    110,
-                    101,
-                    99,
-                    116,
-                    105,
-                    111,
-                    110,
-                    95,
-                    105,
-                    110,
-                    118,
-                    101,
-                    115,
-                    116,
-                    109,
-                    101,
-                    110,
-                    116,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    105,
-                    110,
-                    116,
-                    101,
-                    103,
-                    101,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "connection_investment_variable_type_integer"
         ],
         [
             "connection_type_list",
-            [
-                [
-                    34,
-                    99,
-                    111,
-                    110,
-                    110,
-                    101,
-                    99,
-                    116,
-                    105,
-                    111,
-                    110,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    108,
-                    111,
-                    115,
-                    115,
-                    108,
-                    101,
-                    115,
-                    115,
-                    95,
-                    98,
-                    105,
-                    100,
-                    105,
-                    114,
-                    101,
-                    99,
-                    116,
-                    105,
-                    111,
-                    110,
-                    97,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "connection_type_lossless_bidirectional"
         ],
         [
             "connection_type_list",
-            [
-                [
-                    34,
-                    99,
-                    111,
-                    110,
-                    110,
-                    101,
-                    99,
-                    116,
-                    105,
-                    111,
-                    110,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    110,
-                    111,
-                    114,
-                    109,
-                    97,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "connection_type_normal"
         ],
         [
             "constraint_sense_list",
-            [
-                [
-                    34,
-                    60,
-                    61,
-                    34
-                ],
-                null
-            ]
+            "<="
         ],
         [
             "constraint_sense_list",
-            [
-                [
-                    34,
-                    61,
-                    61,
-                    34
-                ],
-                null
-            ]
+            "=="
         ],
         [
             "constraint_sense_list",
-            [
-                [
-                    34,
-                    62,
-                    61,
-                    34
-                ],
-                null
-            ]
+            ">="
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    75,
-                    78,
-                    73,
-                    84,
-                    82,
-                    79,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "KNITRO.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    68,
-                    67,
-                    83,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "CDCS.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    68,
-                    68,
-                    76,
-                    105,
-                    98,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "CDDLib.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    108,
-                    112,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Clp.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    79,
-                    83,
-                    77,
-                    79,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "COSMO.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    80,
-                    76,
-                    69,
-                    88,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "CPLEX.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    83,
-                    68,
-                    80,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "CSDP.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    69,
-                    67,
-                    79,
-                    83,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "ECOS.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    88,
-                    112,
-                    114,
-                    101,
-                    115,
-                    115,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Xpress.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    71,
-                    76,
-                    80,
-                    75,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "GLPK.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    71,
-                    117,
-                    114,
-                    111,
-                    98,
-                    105,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Gurobi.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    72,
-                    105,
-                    71,
-                    72,
-                    83,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "HiGHS.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    72,
-                    121,
-                    112,
-                    97,
-                    116,
-                    105,
-                    97,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Hypatia.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    73,
-                    112,
-                    111,
-                    112,
-                    116,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Ipopt.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    77,
-                    97,
-                    100,
-                    78,
-                    76,
-                    80,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "MadNLP.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    77,
-                    111,
-                    115,
-                    101,
-                    107,
-                    84,
-                    111,
-                    111,
-                    108,
-                    115,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "MosekTools.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    78,
-                    76,
-                    111,
-                    112,
-                    116,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "NLopt.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    79,
-                    83,
-                    81,
-                    80,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "OSQP.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    80,
-                    114,
-                    111,
-                    120,
-                    83,
-                    68,
-                    80,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "ProxSDP.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    83,
-                    67,
-                    73,
-                    80,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "SCIP.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    83,
-                    67,
-                    83,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "SCS.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    83,
-                    68,
-                    80,
-                    65,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "SDPA.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    83,
-                    68,
-                    80,
-                    78,
-                    65,
-                    76,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "SDPNAL.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    83,
-                    68,
-                    80,
-                    84,
-                    51,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "SDPT3.jl"
         ],
         [
             "db_lp_solver_list",
-            [
-                [
-                    34,
-                    83,
-                    101,
-                    68,
-                    117,
-                    77,
-                    105,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "SeDuMi.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    75,
-                    78,
-                    73,
-                    84,
-                    82,
-                    79,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "KNITRO.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    98,
-                    99,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Cbc.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    67,
-                    80,
-                    76,
-                    69,
-                    88,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "CPLEX.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    72,
-                    105,
-                    71,
-                    72,
-                    83,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "HiGHS.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    88,
-                    112,
-                    114,
-                    101,
-                    115,
-                    115,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Xpress.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    71,
-                    76,
-                    80,
-                    75,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "GLPK.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    71,
-                    117,
-                    114,
-                    111,
-                    98,
-                    105,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Gurobi.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    74,
-                    117,
-                    110,
-                    105,
-                    112,
-                    101,
-                    114,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "Juniper.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    77,
-                    111,
-                    115,
-                    101,
-                    107,
-                    84,
-                    111,
-                    111,
-                    108,
-                    115,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "MosekTools.jl"
         ],
         [
             "db_mip_solver_list",
-            [
-                [
-                    34,
-                    83,
-                    67,
-                    73,
-                    80,
-                    46,
-                    106,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "SCIP.jl"
         ],
         [
             "duration_unit_list",
-            [
-                [
-                    34,
-                    104,
-                    111,
-                    117,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "hour"
         ],
         [
             "duration_unit_list",
-            [
-                [
-                    34,
-                    109,
-                    105,
-                    110,
-                    117,
-                    116,
-                    101,
-                    34
-                ],
-                null
-            ]
+            "minute"
         ],
         [
             "model_type_list",
-            [
-                [
-                    34,
-                    115,
-                    112,
-                    105,
-                    110,
-                    101,
-                    111,
-                    112,
-                    116,
-                    95,
-                    98,
-                    101,
-                    110,
-                    100,
-                    101,
-                    114,
-                    115,
-                    34
-                ],
-                null
-            ]
+            "spineopt_benders"
         ],
         [
             "model_type_list",
-            [
-                [
-                    34,
-                    115,
-                    112,
-                    105,
-                    110,
-                    101,
-                    111,
-                    112,
-                    116,
-                    95,
-                    115,
-                    116,
-                    97,
-                    110,
-                    100,
-                    97,
-                    114,
-                    100,
-                    34
-                ],
-                null
-            ]
+            "spineopt_standard"
         ],
         [
             "model_type_list",
-            [
-                [
-                    34,
-                    115,
-                    112,
-                    105,
-                    110,
-                    101,
-                    111,
-                    112,
-                    116,
-                    95,
-                    111,
-                    116,
-                    104,
-                    101,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "spineopt_other"
         ],
         [
             "model_type_list",
-            [
-                [
-                    34,
-                    115,
-                    112,
-                    105,
-                    110,
-                    101,
-                    111,
-                    112,
-                    116,
-                    95,
-                    109,
-                    103,
-                    97,
-                    34
-                ],
-                null
-            ]
+            "spineopt_mga"
         ],
         [
             "node_opf_type_list",
-            [
-                [
-                    34,
-                    110,
-                    111,
-                    100,
-                    101,
-                    95,
-                    111,
-                    112,
-                    102,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    110,
-                    111,
-                    114,
-                    109,
-                    97,
-                    108,
-                    34
-                ],
-                null
-            ]
+            "node_opf_type_normal"
         ],
         [
             "node_opf_type_list",
-            [
-                [
-                    34,
-                    110,
-                    111,
-                    100,
-                    101,
-                    95,
-                    111,
-                    112,
-                    102,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    114,
-                    101,
-                    102,
-                    101,
-                    114,
-                    101,
-                    110,
-                    99,
-                    101,
-                    34
-                ],
-                null
-            ]
+            "node_opf_type_reference"
+        ],
+        [
+            "storage_investment_variable_type_list",
+            "storage_investment_variable_type_continuous"
+        ],
+        [
+            "storage_investment_variable_type_list",
+            "storage_investment_variable_type_integer"
         ],
         [
             "unit_investment_variable_type_list",
-            [
-                [
-                    34,
-                    117,
-                    110,
-                    105,
-                    116,
-                    95,
-                    105,
-                    110,
-                    118,
-                    101,
-                    115,
-                    116,
-                    109,
-                    101,
-                    110,
-                    116,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    99,
-                    111,
-                    110,
-                    116,
-                    105,
-                    110,
-                    117,
-                    111,
-                    117,
-                    115,
-                    34
-                ],
-                null
-            ]
+            "unit_investment_variable_type_continuous"
         ],
         [
             "unit_investment_variable_type_list",
-            [
-                [
-                    34,
-                    117,
-                    110,
-                    105,
-                    116,
-                    95,
-                    105,
-                    110,
-                    118,
-                    101,
-                    115,
-                    116,
-                    109,
-                    101,
-                    110,
-                    116,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    105,
-                    110,
-                    116,
-                    101,
-                    103,
-                    101,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "unit_investment_variable_type_integer"
         ],
         [
             "unit_online_variable_type_list",
-            [
-                [
-                    34,
-                    117,
-                    110,
-                    105,
-                    116,
-                    95,
-                    111,
-                    110,
-                    108,
-                    105,
-                    110,
-                    101,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    98,
-                    105,
-                    110,
-                    97,
-                    114,
-                    121,
-                    34
-                ],
-                null
-            ]
+            "unit_online_variable_type_binary"
         ],
         [
             "unit_online_variable_type_list",
-            [
-                [
-                    34,
-                    117,
-                    110,
-                    105,
-                    116,
-                    95,
-                    111,
-                    110,
-                    108,
-                    105,
-                    110,
-                    101,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    105,
-                    110,
-                    116,
-                    101,
-                    103,
-                    101,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "unit_online_variable_type_integer"
         ],
         [
             "unit_online_variable_type_list",
-            [
-                [
-                    34,
-                    117,
-                    110,
-                    105,
-                    116,
-                    95,
-                    111,
-                    110,
-                    108,
-                    105,
-                    110,
-                    101,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    108,
-                    105,
-                    110,
-                    101,
-                    97,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "unit_online_variable_type_linear"
         ],
         [
             "unit_online_variable_type_list",
-            [
-                [
-                    34,
-                    117,
-                    110,
-                    105,
-                    116,
-                    95,
-                    111,
-                    110,
-                    108,
-                    105,
-                    110,
-                    101,
-                    95,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    110,
-                    111,
-                    110,
-                    101,
-                    34
-                ],
-                null
-            ]
+            "unit_online_variable_type_none"
         ],
         [
             "variable_type_list",
-            [
-                [
-                    34,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    98,
-                    105,
-                    110,
-                    97,
-                    114,
-                    121,
-                    34
-                ],
-                null
-            ]
+            "variable_type_binary"
         ],
         [
             "variable_type_list",
-            [
-                [
-                    34,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    99,
-                    111,
-                    110,
-                    116,
-                    105,
-                    110,
-                    117,
-                    111,
-                    117,
-                    115,
-                    34
-                ],
-                null
-            ]
+            "variable_type_continuous"
         ],
         [
             "variable_type_list",
-            [
-                [
-                    34,
-                    118,
-                    97,
-                    114,
-                    105,
-                    97,
-                    98,
-                    108,
-                    101,
-                    95,
-                    116,
-                    121,
-                    112,
-                    101,
-                    95,
-                    105,
-                    110,
-                    116,
-                    101,
-                    103,
-                    101,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "variable_type_integer"
         ],
         [
             "write_mps_file_list",
-            [
-                [
-                    34,
-                    119,
-                    114,
-                    105,
-                    116,
-                    101,
-                    95,
-                    109,
-                    112,
-                    115,
-                    95,
-                    97,
-                    108,
-                    119,
-                    97,
-                    121,
-                    115,
-                    34
-                ],
-                null
-            ]
+            "write_mps_always"
         ],
         [
             "write_mps_file_list",
-            [
-                [
-                    34,
-                    119,
-                    114,
-                    105,
-                    116,
-                    101,
-                    95,
-                    109,
-                    112,
-                    115,
-                    95,
-                    110,
-                    101,
-                    118,
-                    101,
-                    114,
-                    34
-                ],
-                null
-            ]
+            "write_mps_never"
         ],
         [
             "write_mps_file_list",
-            [
-                [
-                    34,
-                    119,
-                    114,
-                    105,
-                    116,
-                    101,
-                    95,
-                    109,
-                    112,
-                    115,
-                    95,
-                    111,
-                    110,
-                    95,
-                    110,
-                    111,
-                    95,
-                    115,
-                    111,
-                    108,
-                    118,
-                    101,
-                    34
-                ],
-                null
-            ]
+            "write_mps_on_no_solve"
         ]
     ],
     "relationships": [
@@ -5455,7 +4049,7 @@
         ],
         [
             "output",
-            "A variable name from SpineOpt that can be included in a report.",
+            "A variable name from SpineOpt whose value can be included in a report.",
             280743406202948
         ],
         [
@@ -5467,6 +4061,11 @@
             "settings",
             "Internal SpineOpt settings. We kindly advise not to mess with this one.",
             280375465144798
+        ],
+        [
+            "stage",
+            "An additional stage in the optimisation problem (EXPERIMENTAL)",
+            281107035649533
         ],
         [
             "stochastic_scenario",

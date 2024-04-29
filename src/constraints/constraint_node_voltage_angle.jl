@@ -41,45 +41,51 @@ See also
 [fix\_ratio\_out\_in\_connection\_flow](@ref).
 """
 function add_constraint_node_voltage_angle!(m::Model)
+    _add_constraint!(
+        m, :node_voltage_angle, constraint_node_voltage_angle_indices, _build_constraint_node_voltage_angle
+    )
+end
+
+function _build_constraint_node_voltage_angle(m::Model, conn, n_to, n_from, s_path, t)
     @fetch node_voltage_angle, connection_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:node_voltage_angle] = Dict(
-        (connection=conn, node1=n_to, node2=n_from, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            sum(
-                connection_flow[conn, n_from, d_from, s, t]
-                for (conn, n_from, d_from, s, t) in connection_flow_indices(
-                    m; connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t
-                )
-            )
-            - sum(
-                connection_flow[conn, n_to, d_from, s, t]
-                for (conn, n_from, d_from, s, t) in connection_flow_indices(
-                    m; connection=conn, node=n_to, direction=direction(:from_node), stochastic_scenario=s, t=t
-                )
-            )
-            ==
-            (
-                connection_reactance_base[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-                / connection_reactance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-            )
-            * (
-                sum(
-                    node_voltage_angle[n_from, s, t]
-                    for (n_from, s, t) in node_voltage_angle_indices(m; node=n_from, stochastic_scenario=s, t=t)
-                )
-                - sum(
-                    node_voltage_angle[n_to, s, t]
-                    for (n_to, s, t) in node_voltage_angle_indices(m; node=n_to, stochastic_scenario=s, t=t)
-                )
+    @build_constraint(
+        sum(
+            connection_flow[conn, n_from, d_from, s, t]
+            for (conn, n_from, d_from, s, t) in connection_flow_indices(
+                m; connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s_path, t=t
             )
         )
-        for (conn, n_to, n_from, s, t) in constraint_node_voltage_angle_indices(m)
+        - sum(
+            connection_flow[conn, n_to, d_from, s, t]
+            for (conn, n_from, d_from, s, t) in connection_flow_indices(
+                m; connection=conn, node=n_to, direction=direction(:from_node), stochastic_scenario=s_path, t=t
+            )
+        )
+        ==
+        sum(
+            (
+                + connection_reactance_base(m; connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)
+                / connection_reactance(m; connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)
+            )
+            for s in s_path
+        )
+        / length(s_path)
+        * (
+            sum(
+                node_voltage_angle[n_from, s, t]
+                for (n_from, s, t) in node_voltage_angle_indices(m; node=n_from, stochastic_scenario=s_path, t=t)
+            )
+            - sum(
+                node_voltage_angle[n_to, s, t]
+                for (n_to, s, t) in node_voltage_angle_indices(m; node=n_to, stochastic_scenario=s_path, t=t)
+            )
+        )
     )
 end
 
 function constraint_node_voltage_angle_indices(m::Model)
-    unique(
+    (
         (connection=conn, node1=n_to, node2=n_from, stochastic_path=path, t=t)
         for conn in indices(connection_reactance)
         for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow; connection=conn)

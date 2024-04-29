@@ -37,53 +37,54 @@ v^{units\_shut\_down}_{(u,s,t')} \\
 See also [number\_of\_units](@ref), [min\_down\_time](@ref).
 """
 function add_constraint_min_down_time!(m::Model)
+    _add_constraint!(m, :min_down_time, constraint_min_down_time_indices, _build_constraint_min_down_time)
+end
+
+function _build_constraint_min_down_time(m::Model, u, s_path, t)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_down_time] = Dict(
-        (unit=u, stochastic_path=s, t=t) => @constraint(
-            m,
-            + expr_sum(
-                + number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
-                + expr_sum(
-                    units_invested_available[u, s, t1]
-                    for (u, s, t1) in units_invested_available_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_short=t)
-                    );
-                    init=0,
-                )
-                - units_on[u, s, t]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
-                init=0,
-            )
-            >=
-            + expr_sum(
-                units_shut_down[u, s_past, t_past]
-                for (u, s_past, t_past) in past_units_on_indices(m, u, s, t, min_down_time);
-                init=0,
-            )
-            + expr_sum(
-                nonspin_units_started_up[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_started_up_indices(
-                    m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything
+    @build_constraint(
+        + sum(
+            + number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+            + sum(
+                units_invested_available[u, s, t1]
+                for (u, s, t1) in units_invested_available_indices(
+                    m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_short=t)
                 );
                 init=0,
             )
+            - units_on[u, s, t]
+            for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (u, s, t) in constraint_min_down_time_indices(m)
+        >=
+        + sum(
+            units_shut_down[u, s_past, t_past]
+            for (u, s_past, t_past) in past_units_on_indices(m, u, s_path, t, min_down_time);
+            init=0,
+        )
+        + sum(
+            nonspin_units_started_up[u, n, s, t]
+            for (u, n, s, t) in nonspin_units_started_up_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything
+            );
+            init=0,
+        )
     )
 end
 
-# TODO: Does this require nonspin_units_started_up_indices() to be added here?
 function constraint_min_down_time_indices(m::Model)
-    unique(
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_down_time)
         for (u, t) in unit_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m, 
-            vcat(
-                past_units_on_indices(m, u, anything, t, min_down_time),
-                nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything)
+            Iterators.flatten(
+                (
+                    past_units_on_indices(m, u, anything, t, min_down_time),
+                    nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything),
+                )
             )
         )
     )
@@ -95,7 +96,7 @@ end
 Form the stochastic indexing Array for the `:min_down_time` constraint.
 
 Uses stochastic path indices due to potentially different stochastic structures between `units_on`,
-`units_available`, `units_shut_down`, and `nonspin_units_started_up` variables on past time slices.
+`units_shut_down`, and `nonspin_units_started_up` variables on past time slices.
 Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_min_down_time_indices_filtered(m::Model; unit=anything, stochastic_path=anything, t=anything)

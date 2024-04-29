@@ -36,6 +36,12 @@ include("versions/add_mga_weight_factors.jl")
 include("versions/rename_benders_master_to_just_benders.jl")
 include("versions/translate_ramp_parameters.jl")
 include("versions/remove_model_tb_ss.jl")
+include("versions/update_investment_variable_type.jl")
+
+function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	true
+end
 
 _upgrade_functions = [
 	rename_unit_constraint_to_user_constraint,
@@ -47,6 +53,8 @@ _upgrade_functions = [
 	rename_benders_master_to_just_benders,
 	translate_ramp_parameters,
 	remove_model_tb_ss,
+	add_units_out_of_service_and_min_capacity_margin,
+	update_investment_variable_type,
 ]
 
 """
@@ -112,6 +120,8 @@ function find_version(url)
 	version = parse_db_value(pdefs[j]["default_value"], pdefs[j]["default_type"])
 	_parse_version(version)
 end
+
+
 
 _parse_version(version::String) = _parse_version(parse(Float64, version))
 _parse_version(version::Float64) = _parse_version(round(Int, version))

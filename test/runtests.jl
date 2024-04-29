@@ -44,9 +44,7 @@ import SpineOpt:
     node_dynamic_time_indices,
     node_stochastic_time_indices,
     unit_stochastic_time_indices,
-    node_investment_dynamic_time_indices,
-    rerun_spineopt
-    run_spineopt
+    node_investment_dynamic_time_indices
 
 # Test code uses legacy syntax for `import_data`, so interpret here
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, "testing"; kwargs...)
@@ -54,7 +52,7 @@ SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_da
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
-    merge!(data, test_data)
+    merge!(append!, data, test_data)
     _load_test_data_without_template(db_url, data)
 end
 
@@ -64,9 +62,44 @@ function _load_test_data_without_template(db_url, test_data)
     SpineInterface.import_data(db_url; test_data...)
 end
 
-function _is_constraint_equal(x, y)
-    x_terms, y_terms = x.func.terms, y.func.terms
-    x.set == y.set && keys(x_terms) == keys(y_terms) && all(isapprox(x_terms[k], y_terms[k]) for k in keys(x_terms))
+function _is_constraint_equal(left, right)
+    if !_is_constraint_equal_kernel(left, right)
+        @show left
+        @show right
+        false
+    else
+        true
+    end
+end
+
+function _is_constraint_equal_kernel(left, right)
+    if left.set != right.set
+        @error string(left.set, " != ", right.set)
+        return false
+    end
+    left_terms, right_terms = left.func.terms, right.func.terms
+    missing_in_right = setdiff(keys(left_terms), keys(right_terms))
+    if !isempty(missing_in_right)
+        @error string("missing in right constraint", missing_in_right)
+        return false
+    end
+    missing_in_left = setdiff(keys(right_terms), keys(left_terms))
+    if !isempty(missing_in_left)
+        @error string("missing in left constraint", missing_in_left)
+        return false
+    end
+    for k in keys(left_terms)
+        if !isapprox(left_terms[k], right_terms[k])
+            @error string(left_terms[k], " != ", right_terms[k])
+            return false
+        end
+    end
+    return true
+end
+
+function _is_expression_equal(x, y)
+    x_terms, y_terms = x.terms, y.terms
+    keys(x_terms) == keys(y_terms) && all(isapprox(realize(x_terms[k]), realize(y_terms[k])) for k in keys(x_terms))
 end
 
 """
@@ -104,6 +137,7 @@ end
     include("data_structure/stochastic_structure.jl")
     include("data_structure/algorithm_mga_structure.jl")
     include("data_structure/postprocess_results.jl")
+    include("expressions/expression.jl")
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
@@ -113,5 +147,7 @@ end
     include("util/misc.jl")
     include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
+    include("run_spineopt_multi_stage.jl")
+    include("run_spineopt_investments.jl")
     include("run_examples.jl")
 end
