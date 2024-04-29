@@ -49,12 +49,28 @@ function connection_flow_indices(
     )
 end
 
+function _is_delayless_lossless(conn, n_to, n_from)
+    (
+        fix_ratio_out_in_connection_flow(connection=conn, node1=n_to, node2=n_from) == 1
+        && iszero(connection_flow_delay(connection=conn, node1=n_to, node2=n_from))
+        && node__temporal_block(node=n_to) == node__temporal_block(node=n_from)
+    )
+end
+
 """
     add_variable_connection_flow!(m::Model)
 
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_connection_flow!(m::Model)
+    ind_map = Dict(
+        (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => (
+            connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t
+        )
+        for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow)
+        if _is_delayless_lossless(conn, n_to, n_from)
+        for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
+    )
     add_variable!(
         m,
         :connection_flow,
@@ -65,5 +81,6 @@ function add_variable_connection_flow!(m::Model)
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
         required_history_period=maximum_parameter_value(connection_flow_delay),
+        ind_map=ind_map,
     )
 end

@@ -46,7 +46,8 @@ function add_variable!(
     replacement_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
-    required_history_period::Union{Period,Nothing}=nothing, 
+    required_history_period::Union{Period,Nothing}=nothing,
+    ind_map=Dict(),
 )
     t_start_time_slice = start(first(time_slice(m)))
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
@@ -62,7 +63,7 @@ function add_variable!(
         :int => int,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
-        :required_history => required_history
+        :required_history => required_history,
     )
     lb = _nothing_if_empty(lb)
     ub = _nothing_if_empty(ub)
@@ -72,9 +73,13 @@ function add_variable!(
     vars = m.ext[:spineopt].variables[name] = Dict(
         ind => _add_variable!(m, name, ind, replacement_value)
         for ind in indices(m; t=vcat(required_history, time_slice(m)))
+        if !haskey(ind_map, ind)
     )
     Threads.@threads for ind in collect(keys(vars))
         _finalize_variable!(vars[ind], ind, bin, int, lb, ub, fix_value, internal_fix_value)
+    end
+    for (dst_ind, src_ind) in ind_map
+        vars[dst_ind] = vars[src_ind]
     end
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
