@@ -264,7 +264,7 @@ end
 function _pkgversion(pkg)
     isdefined(Base, :pkgversion) && return pkgversion(pkg)
     project_filepath = joinpath(pkgdir(pkg), "Project.toml")
-    parsed_contents = TOML.parsefile(project_file)
+    parsed_contents = TOML.parsefile(project_filepath)
     parsed_contents["version"]
 end
 

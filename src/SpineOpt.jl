@@ -29,6 +29,7 @@ using Requires
 using JuMP
 using HiGHS
 using Arrow
+import TOML
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LibGit2
