@@ -261,10 +261,22 @@ function _call_event_handlers(m, event, args...; kwargs...)
     (fn -> fn(m, args...; kwargs...)).(m.ext[:spineopt].event_handlers[event])
 end
 
+function _pkgversion(pkg)
+    isdefined(Base, :pkgversion) && return pkgversion(pkg)
+    project_filepath = joinpath(pkgdir(pkg), "Project.toml")
+    parsed_contents = TOML.parsefile(project_file)
+    parsed_contents["version"]
+end
+
 function _version_and_git_hash(pkg)
-    version = pkgversion(pkg)
-    repo = LibGit2.GitRepo(dirname(dirname(pathof(pkg))))
-    git_hash = LibGit2.head_oid(repo)
+    version = _pkgversion(pkg)
+    git_hash = try
+        repo = LibGit2.GitRepo(pkgdir(pkg))
+        LibGit2.head_oid(repo)
+    catch err
+        err isa LibGit2.GitError || rethrow()
+        "N/A"
+    end
     version, git_hash
 end
 
