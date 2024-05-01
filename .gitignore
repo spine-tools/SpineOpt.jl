@@ -39,3 +39,5 @@ test/Manifest.toml
 Manifest.toml
 
 .vscode/
+
+debugging/
