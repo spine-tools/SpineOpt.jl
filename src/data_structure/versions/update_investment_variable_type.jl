@@ -51,7 +51,7 @@ function update_investment_variable_type(db_url, log_level)
 	if !isempty(pvals_to_add)
 		# Remove pvals before updating value list in pdef, otherwise it complains
 		pval_ids_to_rm = [x["id"] for x in pvals_to_add]
-		run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:parameter_value => pval_ids_to_rm))
+		run_request(db_url, "call_method", ("remove_items", "parameter_value", pval_ids_to_rm...))
 	end
 	import_data(
 		db_url,
@@ -76,7 +76,7 @@ function update_investment_variable_type(db_url, log_level)
 		],
 	)
 	if !isempty(pvals_to_add)
-		run_request(db_url, "call_method", ("add_parameter_values", pvals_to_add...))
+		run_request(db_url, "call_method", ("add_items", "parameter_value", pvals_to_add...))
 	end
 	true
 end

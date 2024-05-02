@@ -192,13 +192,19 @@ function prepare_spineopt(
     create_model(mip_solver, lp_solver, use_direct_model)
 end
 
+function _url_from_data(data)
+    temp_db_url = "sqlite:///$(tempname())"
+    import_data(temp_db_url, data, "No comment")
+    temp_db_url
+end
+
 function _init_data_from_db(url_in, log_level, upgrade, templates, filters, st=nothing)
     st_name = st !== nothing ? st : "base"
     @timelog log_level 2 "Initializing $st_name data structure from db..." begin
         template = SpineOpt.template()
-        using_spinedb(template, @__MODULE__; extend=false)
+        using_spinedb(_url_from_data(template), @__MODULE__; extend=false)
         for template in templates
-            using_spinedb(template, @__MODULE__; extend=true)
+            using_spinedb(_url_from_data(template), @__MODULE__; extend=true)
         end
         data = _data(url_in; upgrade, filters)
         using_spinedb(data, @__MODULE__; extend=true)
