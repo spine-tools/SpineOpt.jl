@@ -22,8 +22,8 @@ jobs:
           - windows-latest
         arch:
           - x64
-        python-version: ["3.11"]
           # - x86  # FIXME: We don't support x86 because we type-annotate with Int64 and Float64 sparingly
+        python-version: ["3.11"]
         exclude:
           # Test 32-bit only on Linux
           - os: macOS-latest
@@ -58,6 +58,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11' 
       - name: Install dependencies
         run: |
           julia ./.install_spinedb_api.jl          
