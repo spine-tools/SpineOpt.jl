@@ -281,6 +281,9 @@ function _version_and_git_hash(pkg)
 end
 
 # Base
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
 function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
     Base.get(d, NamedTuple{J}(key), default)
 end
@@ -288,15 +291,11 @@ function Base.get(f::Function, d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) whe
     Base.get(f, d, NamedTuple{J}(key))
 end
 
-Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
-
 function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
     Base.haskey(d, NamedTuple{J}(key))
 end
 
-_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
-_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
-
+Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
 function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
     Base.getindex(d, NamedTuple{J}(key))
 end

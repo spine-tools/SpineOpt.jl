@@ -68,12 +68,42 @@ function unit_flow_ub_as_call(; unit, node, direction, kwargs...)
     )
 end
 
+function _fix_unit_flow_ratio(conn, n1, n2, fix_ratio)
+    fix_ratio in (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow) || return nothing
+    ratio = fix_ratio(connection=conn, node1=n1, node2=n2, _strict=false)
+    ratio isa Number || return nothing
+    if node__temporal_block(node=n1) == node__temporal_block(node=n2)
+        return fix_ratio == fix_ratio_out_in_unit_flow ? ratio : 1 / ratio
+    end
+    nothing
+end
+
 """
     add_variable_unit_flow!(m::Model)
 
 Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
+    ind_map = Dict(
+        (unit=u, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => (
+            var -> ratio * var,
+            (unit=u, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t),
+        )
+        for (u, n_to, n_from, ratio) in Iterators.flatten(
+            (
+                (
+                    (u, n_to, n_from, _fix_unit_flow_ratio(u, n_to, n_from, fix_ratio_out_in_unit_flow))
+                    for (u, n_to, n_from) in indices(fix_ratio_out_in_unit_flow)
+                ),
+                (
+                    (u, n_to, n_from, _fix_unit_flow_ratio(u, n_from, n_to, fix_ratio_in_out_unit_flow))
+                    for (u, n_from, n_to) in indices(fix_ratio_in_out_unit_flow)
+                ),
+            )
+        )
+        if ratio !== nothing
+        for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
+    )
     add_variable!(
         m,
         :unit_flow,
@@ -84,5 +114,6 @@ function add_variable_unit_flow!(m::Model)
         initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,
         non_anticipativity_margin=unit_flow_non_anticipativity_margin,
+        ind_map=ind_map,
     )
 end

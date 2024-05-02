@@ -70,17 +70,16 @@ function add_variable!(
     initial_value = _nothing_if_empty(initial_value)
     fix_value = _nothing_if_empty(fix_value)
     internal_fix_value = _nothing_if_empty(internal_fix_value)
-    vars = m.ext[:spineopt].variables[name] = Dict(
-        ind => _add_variable!(m, name, ind, replacement_value)
-        for ind in indices(m; t=vcat(required_history, time_slice(m)))
-        if !haskey(ind_map, ind)
+    t = vcat(required_history, time_slice(m))
+    first_ind = iterate(indices(m; t=t))
+    K = first_ind === nothing ? Any : typeof(first_ind[1])
+    vars = m.ext[:spineopt].variables[name] = Dict{K,Union{VariableRef,AffExpr}}(
+        ind => _add_variable!(m, name, ind, replacement_value) for ind in indices(m; t=t) if !haskey(ind_map, ind)
     )
     Threads.@threads for ind in collect(keys(vars))
         _finalize_variable!(vars[ind], ind, bin, int, lb, ub, fix_value, internal_fix_value)
     end
-    for (dst_ind, src_ind) in ind_map
-        vars[dst_ind] = vars[src_ind]
-    end
+    merge!(vars, Dict(dst_ind => f(vars[src_ind]) for (dst_ind, (f, src_ind)) in ind_map))
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
@@ -159,8 +158,8 @@ function _add_variable!(m, name, ind, replacement_value)
     @variable(m, base_name=_base_name(name, ind))
 end
 
-_finalize_variable!(var::Call, args...) = nothing
-function _finalize_variable!(var, ind, bin, int, lb, ub, fix_value, internal_fix_value)
+_finalize_variable!(var, args...) = nothing
+function _finalize_variable!(var::VariableRef, ind, bin, int, lb, ub, fix_value, internal_fix_value)
     m = owner_model(var)
     ind_ = (analysis_time=_analysis_time(m), ind...)
     bin !== nothing && bin(ind_) && set_binary(var)

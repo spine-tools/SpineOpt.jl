@@ -554,6 +554,7 @@ end
 The value of a JuMP variable, rounded if necessary.
 """
 _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
+_variable_value(e::AffExpr) = value(e)
 _variable_value(x::Call) = realize(x)
 
 """
