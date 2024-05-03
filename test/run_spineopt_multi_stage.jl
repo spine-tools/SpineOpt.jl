@@ -54,7 +54,6 @@ function _ref_setup(storage_count)
             ("model", "test_model", "model_end", unparse_db_value(m_end)),
             ("model", "test_model", "max_iterations", 20),
             ("temporal_block", "flat", "resolution", unparse_db_value(res)),
-            ("temporal_block", "flat", "cyclic_condition", true),
             ("node", "demand_node", "demand", unparse_db_value(demand_ts)),
             ("node", "demand_node", "node_slack_penalty", 10000),
         ],
@@ -125,7 +124,7 @@ function _ref_investments_setup(storage_count)
                 ("node", n, "candidate_storages", 4),
                 ("node", n, "benders_starting_storages_invested", 0.01),
                 ("node", n, "storage_investment_cost", 100),
-                ("node", n, "storage_investment_variable_type", "variable_type_continuous"),
+                ("node", n, "storage_investment_variable_type", "storage_investment_variable_type_continuous"),
             )
         )
     end
@@ -183,17 +182,8 @@ function _lt_storage_investments_setup(storage_count)
         ],
     )
     merge!(append!, lt_storage_data, lt_storage_investments_data)
-    @show import_data(url_in, "Add lt storage investments data"; lt_storage_data...)
+    import_data(url_in, "Add lt storage investments data"; lt_storage_data...)
     url_in, url_out
-end
-
-function _test_run_spineopt_lt_storage_basic()
-    storage_count = 1
-    url_in, url_out = _lt_storage_setup(storage_count)
-    m = run_spineopt_lt_storage_stage(url_in, url_out; log_level=3, update_names=true)
-    O = Module()
-    using_spinedb(url_out, O)
-    # TODO: test something
 end
 
 function _test_run_spineopt_lt_storage_benders_storage_investment()
@@ -209,7 +199,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
         for out_name in (:node_state, :storages_invested_available) 
     )
     url_in, url_out = _lt_storage_investments_setup(storage_count)
-    m = run_spineopt(url_in, url_out; log_level=3, filters=Dict("scenario" => "base")) do m
+    m = run_spineopt(url_in, url_out; log_level=0, filters=Dict("scenario" => "base")) do m
         add_event_handler!(m, :window_about_to_solve) do m, k
             @testset for out_name in keys(out_pv_by_node_by_name)
                 out_pv_by_node = out_pv_by_node_by_name[out_name]
@@ -226,6 +216,5 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
 end
 
 @testset "lt_storage" begin
-    # _test_run_spineopt_lt_storage_basic()
     _test_run_spineopt_lt_storage_benders_storage_investment()
 end
