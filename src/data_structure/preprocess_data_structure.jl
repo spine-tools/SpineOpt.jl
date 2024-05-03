@@ -893,9 +893,11 @@ function generate_unit_flow_capacity()
         new_pvals = Dict(
             (u, n, d) => Dict(
                 :unit_flow_capacity => parameter_value(
-                    + unit_capacity(unit=u, node=n, direction=d)
-                    * unit_availability_factor(unit=u)
-                    * unit_conv_cap_to_flow(unit=u, node=n, direction=d)
+                    *(
+                        unit_capacity(unit=u, node=n, direction=d),
+                        unit_availability_factor(unit=u),
+                        unit_conv_cap_to_flow(unit=u, node=n, direction=d),
+                    )
                 )
             )
             for (u, n, d) in indices(unit_capacity, class)
@@ -915,9 +917,11 @@ function generate_connection_flow_capacity()
         new_pvals = Dict(
             (conn, n, d) => Dict(
                 :connection_flow_capacity => parameter_value(
-                    + connection_capacity(connection=conn, node=n, direction=d)
-                    * connection_availability_factor(connection=conn)
-                    * connection_conv_cap_to_flow(connection=conn, node=n, direction=d)
+                    *(
+                        connection_capacity(connection=conn, node=n, direction=d),
+                        connection_availability_factor(connection=conn),
+                        connection_conv_cap_to_flow(connection=conn, node=n, direction=d),
+                    )
                 )
             )
             for (conn, n, d) in indices(connection_capacity, class)
