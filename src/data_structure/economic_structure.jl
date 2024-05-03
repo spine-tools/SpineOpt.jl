@@ -186,9 +186,13 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, econ
                     )...,
                 )
                 map_indices = []
-                sizehint!(map_indices, length(investment_indices_vector))
+                count = 0 # count the element; this is to avoid using collect
+                for _ in investment_indices_vector
+                    count += 1
+                end
+                sizehint!(map_indices, count)
                 timeseries_array = []
-                sizehint!(timeseries_array, length(investment_indices_vector))
+                sizehint!(timeseries_array, count)
                 for (u, s, vintage_t) in investment_indices_vector
                     # get lead time
                     p_lt = lead_time(; Dict(obj_cls.name => id, :stochastic_scenario => s, :t => vintage_t)...)
@@ -288,9 +292,13 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
             for s in stochastic_map_vector
                 time_series_vector = investment_indices(m; Dict(obj_cls.name => id, :stochastic_scenario => s)...)
                 timeseries_ind = []
-                sizehint!(timeseries_ind, length(time_series_vector))
+                count = 0 # count the element; this is to avoid using collect
+                for _ in time_series_vector
+                    count += 1
+                end
+                sizehint!(timeseries_ind, count)
                 timeseries_val = []
-                sizehint!(timeseries_val, length(time_series_vector))
+                sizehint!(timeseries_val, count)
                 for (u, s, vintage_t) in time_series_vector
                     discnt_rate = discount_rate(model=instance, stochastic_scenario=s, t=vintage_t)
                     p_lt = lead_time(; Dict(obj_cls.name => id, :stochastic_scenario => s, :t => vintage_t)...)
@@ -587,14 +595,14 @@ function create_discounted_duration(m; stochastic_scenario=nothing, invest_tempo
         time_slice(m; temporal_block=invest_temporal_block),
         TimeSlice(last_timestep, last_timestep),
     ))
-    length = 0 # count the element; this is to avoid using collect
+    count = 0 # count the element; this is to avoid using collect
     for _ in timeseries_vector
-        length += 1
+        count += 1
     end
     timeseries_ind = []
-    sizehint!(timeseries_ind, length)
+    sizehint!(timeseries_ind, count)
     timeseries_val = []
-    sizehint!(timeseries_val, length)
+    sizehint!(timeseries_val, count)
     for t in timeseries_vector
         discnt_rate = discount_rate(model=instance, stochastic_scenario=stochastic_scenario, t=t)
         t_start = start(t)
@@ -640,9 +648,13 @@ function generate_decommissioning_conversion_to_discounted_annuities!(
         for s in stochastic_map_vector
             timeseries_vector = investment_indices(m; Dict(obj_cls.name => id, :stochastic_scenario => s)...)
             timeseries_ind = []
-            sizehint!(timeseries_ind, length(timeseries_vector))
+            count = 0 # count the element; this is to avoid using collect
+            for _ in timeseries_vector
+                count += 1
+            end            
+            sizehint!(timeseries_ind, count)
             timeseries_val = []
-            sizehint!(timeseries_val, length(timeseries_vector))
+            sizehint!(timeseries_val, count)
             for (u, s, vintage_t) in timeseries_vector
                 p_decom_t = decom_time(; Dict(obj_cls.name => id, :stochastic_scenario => s, :t => vintage_t)...)
                 if isnothing(p_decom_t)
