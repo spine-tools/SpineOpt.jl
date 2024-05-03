@@ -86,6 +86,7 @@ function setup(; number_of_weeks=1, if_investment=false)
     )
     local_load_test_data(url_in, test_data)
     rm(file_path_out; force=true)
+    
     return url_in, url_out
 end
 
