@@ -67,7 +67,7 @@ function move_connection_flow_cost(db_url, log_level)
 	old_conn_flow_costs = [x for x in pdefs if x["name"] == "connection_flow_cost"]
 	if !isempty(old_conn_flow_costs)
 		id_ = first(old_conn_flow_costs)["id"]
-		run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:parameter_definition => [id_]))
+		run_request(db_url, "call_method", ("remove_items", "parameter_definition", id_))
 	end
 	# Add new data
 	run_request(db_url, "import_data", (new_data, ""))

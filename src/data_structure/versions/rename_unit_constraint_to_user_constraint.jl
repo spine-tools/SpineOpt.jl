@@ -30,7 +30,7 @@ function rename_unit_constraint_to_user_constraint(db_url, log_level)
 	for x in Iterators.flatten((obj_classes, rel_classes))
 		x["name"] = replace(x["name"], "unit_constraint" => "user_constraint")
 	end
-	run_request(db_url, "call_method", ("update_object_classes", obj_classes...))
-	run_request(db_url, "call_method", ("update_wide_relationship_classes", rel_classes...))
+	run_request(db_url, "call_method", ("update_items", "entity_class", obj_classes...))
+	run_request(db_url, "call_method", ("update_items", "entity_class", rel_classes...))
 	true
 end

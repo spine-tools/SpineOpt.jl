@@ -44,18 +44,14 @@ function translate_ramp_parameters(db_url, log_level)
 	pid_by_name = Dict(x["name"] => x["id"] for x in pdefs)
 	to_rm_pdef_ids = unique(pid_by_name[name] for name in intersect(to_rm_pnames, keys(pid_by_name)))
 	to_upd_pdefs = [
-		Dict(
-			"id" => pid_by_name[old_name],
-			"name" => new_name_by_old_name[old_name],
-			"parameter_value_list_id" => nothing  # Work around bug in spinedb_api v0.7
-		)
+		Dict("id" => pid_by_name[old_name], "name" => new_name_by_old_name[old_name])
 		for old_name in intersect(keys(new_name_by_old_name), keys(pid_by_name))
 	]
 	if !isempty(to_rm_pdef_ids)
-		run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:parameter_definition => to_rm_pdef_ids))
+		run_request(db_url, "call_method", ("remove_items", "parameter_definition", to_rm_pdef_ids...))
 	end
 	if !isempty(to_upd_pdefs)
-		run_request(db_url, "call_method", ("update_parameter_definitions", to_upd_pdefs...))
+		run_request(db_url, "call_method", ("update_items", "parameter_definition", to_upd_pdefs...))
 	end
 	true
 end
