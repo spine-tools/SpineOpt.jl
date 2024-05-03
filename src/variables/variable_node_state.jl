@@ -43,7 +43,7 @@ end
 function node_state_ub_as_call(; node, kwargs...)
     node_state_cap[(node=node, kwargs..., _default=NaN)] * (
         + number_of_storages[(node=node, kwargs..., _default=_default_nb_of_storages(node))]
-        + candidate_storages[(node=node, kwargs..., _default=0)]
+        + Call(something, [candidate_storages[(node=node, kwargs..., _default=0)], 0])
     )
 end
 

@@ -212,7 +212,6 @@ end
 function _test_update_investment_variable_type()
 	@testset "update_investment_variable_type" begin
 		url = "sqlite://"
-		to_rm_ec_names = ("model__temporal_block", "model__stochastic_structure")
 		data = Dict(
 			:object_classes => ["connection", "node"],
 			:object_parameters => [
@@ -220,6 +219,8 @@ function _test_update_investment_variable_type()
 				("node", "storage_investment_variable_type", "variable_type_integer", "variable_type_list"),
 			],
 			:parameter_value_lists => [
+				("variable_type_list", "variable_type_integer"),
+				("variable_type_list", "variable_type_continuous"),
 				("connection_investment_variable_type_list", "connection_investment_variable_type_continuous"),
 				("connection_investment_variable_type_list", "connection_investment_variable_type_integer"),
 			],

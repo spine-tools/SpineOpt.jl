@@ -64,7 +64,7 @@ function unit_flow_ub_as_call(; unit, node, direction, kwargs...)
     ) && return nothing
     unit_flow_capacity[(unit=unit, node=node, direction=direction, kwargs..., _default=NaN)] * (
         + number_of_units[(unit=unit, kwargs..., _default=1)]
-        + candidate_units[(unit=unit, kwargs..., _default=0)]
+        + Call(something, [candidate_units[(unit=unit, kwargs..., _default=0)], 0])
     )
 end
 
