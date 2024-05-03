@@ -21,7 +21,7 @@ function local_load_test_data(url_in, test_data)
     SpineInterface.import_data(url_in, "testing"; data...)
 end
 
-function setup(; number_of_weeks=1)
+function setup(; number_of_weeks=1, if_investment=false)
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
@@ -60,6 +60,18 @@ function setup(; number_of_weeks=1)
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes))
     append!(obj_pvs, (["connection", c, "connection_type", "connection_type_lossless_bidirectional"] for c in conns))
     append!(obj_pvs, (["connection", c, "connection_reactance", 0.1] for c in conns))
+    if if_investment
+        # add investment temporal block
+        append!(objs, [["temporal_block", "two_year"]])
+        append!(obj_pvs, [["temporal_block", "two_year", "resolution", unparse_db_value(Year(2))]]) 
+        append!(rels, [["model__default_investment_temporal_block", ["instance", "two_year"]]])
+        # add investment candidates
+        append!(obj_pvs, (["unit", u, "candidate_units", 1] for u in units))
+        append!(obj_pvs, (["connection", c, "candidate_connections", 1] for c in conns))
+        append!(obj_pvs, (["node", n, "candidate_storages", 1] for n in nodes))
+        # add investment stochastic structure
+        append!(rels, [["model__default_investment_stochastic_structure", ["instance", "deterministic"]]])
+    end    
     rel_pvs = []
     append!(rel_pvs, (["unit__to_node", (u, n), "unit_capacity", 1] for (u, n) in zip(units, nodes)))
     append!(
@@ -74,7 +86,6 @@ function setup(; number_of_weeks=1)
     )
     local_load_test_data(url_in, test_data)
     rm(file_path_out; force=true)
-
     return url_in, url_out
 end
 
