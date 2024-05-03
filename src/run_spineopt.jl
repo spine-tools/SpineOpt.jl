@@ -119,6 +119,10 @@ end
 function _run_spineopt(
     f, url_in, url_out; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level, kwargs...
 )
+    so_ver, so_git_hash = _version_and_git_hash(SpineOpt)
+    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)
+    @log log_level 0 "SpineOpt version $so_ver (git hash: $so_git_hash)"
+    @log log_level 0 "SpineInterface version $si_ver (git hash: $si_git_hash)"
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
     m = prepare_spineopt(url_in; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level)
@@ -293,15 +297,15 @@ function create_model(mip_solver, lp_solver, use_direct_model)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    model_by_stage = OrderedDict()
-    for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
-        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver; stage=st)
-    end
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
         m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
         m_mp
+    end
+    model_by_stage = OrderedDict()
+    for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
+        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st)
     end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
     m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)

@@ -38,15 +38,14 @@ function connection_intact_flow_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     use_connection_intact_flow(model=m.ext[:spineopt].instance) || return ()
-    node = members(node)
-    unique(
-        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d, tb) in connection__node__direction__temporal_block(
-            connection=connection, node=node, direction=direction, temporal_block=temporal_block, _compact=false
-        )
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+    connection_flow_indices(
+        m;
+        connection=connection,
+        node=node,
+        direction=direction,
+        stochastic_scenario=stochastic_scenario,
+        t=t,
+        temporal_block=temporal_block,
     )
 end
 
@@ -60,7 +59,7 @@ function add_variable_connection_intact_flow!(m::Model)
         m,
         :connection_intact_flow,
         connection_intact_flow_indices;
-        lb=Constant(0),
+        lb=constant(0),
         fix_value=fix_connection_intact_flow,
         initial_value=initial_connection_intact_flow,
         non_anticipativity_time=connection_intact_flow_non_anticipativity_time,

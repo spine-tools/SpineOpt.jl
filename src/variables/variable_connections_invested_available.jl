@@ -31,7 +31,7 @@ function connections_invested_available_indices(
     temporal_block=anything,
 )
     connection = members(connection)
-    unique(
+    (
         (connection=conn, stochastic_scenario=s, t=t)
         for (conn, tb) in connection__investment_temporal_block(
             connection=intersect(indices(candidate_connections), connection),
@@ -64,7 +64,7 @@ function add_variable_connections_invested_available!(m::Model)
         m,
         :connections_invested_available,
         connections_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=connections_invested_available_int,
         fix_value=fix_connections_invested_available,
         internal_fix_value=internal_fix_connections_invested_available,

@@ -51,12 +51,12 @@ struct TOverlapsT
     overlapping_time_slices::Dict{TimeSlice,Array{TimeSlice,1}}
 end
 
-(h::TimeSliceSet)(; temporal_block=anything, t=anything) = h(temporal_block, t)
+(h::TimeSliceSet)(; temporal_block=anything, t=anything)::Vector{TimeSlice} = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, t) = t
-(h::TimeSliceSet)(temporal_block::Object, t) = TimeSlice[s for s in t if temporal_block in blocks(s)]
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, t) where {T} = TimeSlice[s for blk in temporal_blocks for s in h(blk, t)]
+(h::TimeSliceSet)(temporal_block::Object, t) = [s for s in t if temporal_block in blocks(s)]
+(h::TimeSliceSet)(temporal_blocks::Array{T,1}, t) where {T} = unique(s for blk in temporal_blocks for s in h(blk, t))
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -198,30 +198,41 @@ end
 function _history_time_slices!(instance, window_start, window_end, window_time_slices)
     window_duration = window_end - window_start
     required_history_duration = _required_history_duration(instance)
+    history_start = window_start - required_history_duration
     history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
-    blocks_by_history_interval = Dict()
+    time_slices_by_history_interval = Dict()
     for t in window_time_slices
         t_start, t_end = start(t), min(end_(t), window_end)
         t_start < t_end || continue
-        union!(get!(blocks_by_history_interval, (t_start, t_end), Set()), SpineInterface.blocks(t))
+        push!(get!(time_slices_by_history_interval, (t_start, t_end) .- window_duration, Set()), t)
     end
-    history_window_time_slices = [
-        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(instance))
-        for (interval, blocks) in blocks_by_history_interval
-    ]
+    history_t_by_interval = Dict(
+        (t_start, t_end) => TimeSlice(
+            t_start,
+            t_end,
+            unique(blk for t in time_slices for blk in blocks(t))...;
+            duration_unit=_model_duration_unit(instance),
+        )
+        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
+    )
+    t_history_t = Dict(
+        t => history_t_by_interval[t_start, t_end]
+        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
+        if t_end > history_start
+        for t in time_slices
+    )
+    history_window_time_slices = collect(values(history_t_by_interval))
     sort!(history_window_time_slices)
     history_time_slices = Array{TimeSlice,1}()
-    for k in 1:history_window_count
-        history_window_time_slices .-= window_duration
+    for k in Iterators.countfrom(1)
         prepend!(history_time_slices, history_window_time_slices)
+        k == history_window_count && break
+        history_window_time_slices .-= window_duration
     end
-    history_start = window_start - required_history_duration
     filter!(t -> end_(t) > history_start, history_time_slices)
-    t_history_t = Dict(
-        zip(history_time_slices .+ window_duration, history_time_slices)
-    )
     history_time_slices, t_history_t
 end
+
 """
     _generate_time_slice!(m::Model)
 
@@ -352,6 +363,11 @@ function _generate_representative_time_slice!(m::Model)
     end
 end
 
+function _generate_call_update!(m)
+    temp_struct = m.ext[:spineopt].temporal_structure
+    temp_struct[:call_update] = master_model(m) in (nothing, m) && temp_struct[:window_count] == 1 ? as_number : as_call
+end
+
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
 Used by `to_time_slice`.
@@ -387,6 +403,7 @@ function generate_time_slice!(m::Model)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
+    _generate_call_update!(m)
 end
 
 """
@@ -609,6 +626,8 @@ t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_ov
 
 representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, [t])
 
+_first_repr_t(m, t) = first(representative_time_slice(m, t))
+
 function output_time_slices(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
 end
@@ -776,15 +795,13 @@ t_lowest_resolution!(m, t_arr::Union{Vector,Dict}) = _t_extreme_resolution!(m, t
 
 function _t_extreme_resolution!(m, t_arr::Vector, kw)
     isempty(t_in_t_excl(m)) && return t_arr
-    to_delete = (other_t for t in t_arr for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...))
+    to_delete = t_in_t_excl(m; NamedTuple{(kw,)}((t_arr,))...)
     setdiff!(t_arr, to_delete)
 end
 function _t_extreme_resolution!(m, t_dict::Dict, kw)
     isempty(t_in_t_excl(m)) && return t_dict
-    for t in keys(t_dict)
-        for other_t in t_in_t_excl(m; NamedTuple{(kw,)}((t,))...)
-            delete!(t_dict, other_t)
-        end
+    for t in t_in_t_excl(m; NamedTuple{(kw,)}((keys(t_dict),))...)
+        delete!(t_dict, t)
     end
     t_dict
 end
@@ -801,4 +818,8 @@ function _t_extreme_resolution_sets!(m, t_dict, kw)
         end
     end
     t_dict
+end
+
+function (x::Union{Parameter,FlexParameter})(m::Model; kwargs...)
+    m.ext[:spineopt].temporal_structure[:call_update](x; kwargs...)
 end

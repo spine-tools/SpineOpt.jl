@@ -73,6 +73,7 @@ function _test_constraint_unit_setup()
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["unit", "unit_ab", "units_on_cost", 1],  # Just to have units_on variables
         ],
         :relationship_parameter_values => [
             [
@@ -140,33 +141,6 @@ function test_initial_units_on()
     end
 end
 
-function test_constraint_units_on()
-    @testset "constraint_units_on" begin
-        url_in = _test_constraint_unit_setup()
-        unit_availability_factor = 0.5
-        object_parameter_values = [
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        var_units_available = m.ext[:spineopt].variables[:units_available]
-        constraint = m.ext[:spineopt].constraints[:units_on]
-        @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            key = (unit(:unit_ab), s, t)
-            var_u_on = var_units_on[key...]
-            var_u_av = var_units_available[key...]
-            expected_con = @build_constraint(var_u_on <= var_u_av)
-            con_u_on = constraint[key...]
-            observed_con = constraint_object(con_u_on)
-            @test _is_constraint_equal(observed_con, expected_con)
-        end
-    end
-end
-
 function test_constraint_units_available()
     @testset "constraint_units_available" begin
         url_in = _test_constraint_unit_setup()
@@ -184,7 +158,7 @@ function test_constraint_units_available()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_units_available = m.ext[:spineopt].variables[:units_available]
+        var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         constraint = m.ext[:spineopt].constraints[:units_available]
         @test length(constraint) == 2
@@ -192,9 +166,9 @@ function test_constraint_units_available()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
-            var_u_av = var_units_available[key...]
+            var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_av <= number_of_units + var_u_inv_av)
+            expected_con = @build_constraint(var_u_on <= number_of_units + var_u_inv_av)
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
@@ -221,7 +195,7 @@ function test_constraint_units_available_units_unavailable()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_units_available = m.ext[:spineopt].variables[:units_available]
+        var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         constraint = m.ext[:spineopt].constraints[:units_available]
         @test length(constraint) == 2
@@ -229,9 +203,9 @@ function test_constraint_units_available_units_unavailable()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
-            var_u_av = var_units_available[key...]
+            var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_av <= number_of_units + var_u_inv_av - units_unavailable)
+            expected_con = @build_constraint(var_u_on <= number_of_units + var_u_inv_av - units_unavailable)
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
@@ -243,7 +217,10 @@ end
 function test_constraint_unit_state_transition()
     @testset "constraint_unit_state_transition" begin
         url_in = _test_constraint_unit_setup()
-        object_parameter_values = [["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"]]
+        object_parameter_values = [
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "start_up_cost", 1],
+        ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -332,6 +309,7 @@ function test_constraint_unit_flow_capacity()
                     ["unit", "unit_ab", "min_up_time", mup],
                     ["node", "reserves_a", "downward_reserve", dr],
                     ["node", "reserves_bc", "upward_reserve", ur],
+                    ["model", "instance", "use_tight_compact_formulations", true],
                 ]
                 SpineInterface.import_data(
                     url_in;
@@ -609,7 +587,7 @@ function test_constraint_operating_point_bounds()
         relationships = [["unit__to_node", ["unit_ab", "node_a"]]]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
         ]
         SpineInterface.import_data(
             url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values 
@@ -909,13 +887,11 @@ function test_constraint_ratio_unit_flow()
             var_u_on_a1 = var_units_on[var_u_on_a1_key...]
             var_u_on_a2 = var_units_on[var_u_on_a2_key...]
             con_key = (unit(:unit_ab), node(:node_a), node(:node_b), path, t_long)
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 var_u_flow_a1 + var_u_flow_a2,
                 sense,
                 2 * flow_ratio * var_u_flow_b + units_on_coeff * (var_u_on_a1 + var_u_on_a2),
             )
-            expected_con = constraint_object(expected_con_ref)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -934,7 +910,7 @@ function test_constraint_total_cumulated_unit_flow()
             ("max", "to_node"),
         )
             url_in = _test_constraint_unit_setup()
-            cumulated = join([p,"total" , "cumulated", "unit_flow",a], "_")
+            cumulated = join([p,"total" , "cumulated", "unit_flow", a], "_")
             relationships = [
                 [classes_by_prefix[a], ["unit_ab", "node_a"]],
             ]
@@ -959,14 +935,12 @@ function test_constraint_total_cumulated_unit_flow()
             var_u_flow_a2_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:child), t_short2)
             var_u_flow_a1 = var_unit_flow[var_u_flow_a1_key...]
             var_u_flow_a2 = var_unit_flow[var_u_flow_a2_key...]
-            con_key = (unit(:unit_ab), node(:node_a), path)
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            con_key = (unit(:unit_ab), node(:node_a), d_a, path)
+            expected_con = SpineOpt.build_sense_constraint(
                 var_u_flow_a1 + var_u_flow_a2,
                 sense,
                 total_cumulated_flow_bound
             )
-            expected_con = constraint_object(expected_con_ref)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -1097,7 +1071,6 @@ function test_constraint_min_scheduled_outage_duration()
         end
     end
 end
-
 
 function test_constraint_min_up_time_with_non_spinning_reserves()
     @testset "constraint_min_up_time_with_non_spinning_reserves" begin
@@ -1793,8 +1766,7 @@ function test_constraint_user_constraint()
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 + unit_flow_coefficient_a
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
                 2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h] +
@@ -1807,7 +1779,6 @@ function test_constraint_user_constraint()
                 Symbol(sense),
                 2 * rhs,
             )
-            expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1862,8 +1833,7 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
+            expected_con = SpineOpt.build_sense_constraint(
                 + unit_flow_coefficient_a * sum(
                     var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
                     for i in 1:3
@@ -1878,7 +1848,6 @@ function test_constraint_user_constraint_with_unit_operating_segments()
                 Symbol(sense),
                 2 * rhs,
             )
-            expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
@@ -2045,22 +2014,15 @@ function test_unit_online_variable_type_none()
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=true)
         var_units_on = m.ext[:spineopt].variables[:units_on]
-        var_units_available = m.ext[:spineopt].variables[:units_available]
-        constraint_u_on = m.ext[:spineopt].constraints[:units_on]
         constraint_u_avail = m.ext[:spineopt].constraints[:units_available]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
-            var_u_avail = var_units_available[key...]
-            con_u_on = constraint_u_on[key...]
             con_u_avail = constraint_u_avail[key...]
             @test var_u_on isa Call
-            @test var_u_avail isa Call
             @test realize(var_u_on) == 1
-            @test realize(var_u_avail) == 1
-            @test con_u_on === nothing
             @test con_u_avail === nothing
         end
     end
@@ -2119,7 +2081,6 @@ end
 
 @testset "unit-based constraints" begin
     test_initial_units_on()
-    test_constraint_units_on()
     test_constraint_units_available()
     test_constraint_units_available_units_unavailable()
     test_constraint_unit_state_transition()

@@ -31,7 +31,7 @@ function storages_invested_available_indices(
     temporal_block=anything,
 )
     node=members(node)
-    unique(
+    (
         (node=n, stochastic_scenario=s, t=t)
         for (n, tb) in node__investment_temporal_block(
             node=intersect(indices(candidate_storages), node), temporal_block=temporal_block, _compact=false
@@ -62,7 +62,7 @@ function add_variable_storages_invested_available!(m::Model)
         m,
         :storages_invested_available,
         storages_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=storages_invested_available_int,
         fix_value=fix_storages_invested_available,
         internal_fix_value=internal_fix_storages_invested_available,

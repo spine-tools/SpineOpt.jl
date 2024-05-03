@@ -24,14 +24,30 @@ A set of tuples for indexing the `node_state` variable where filtering options c
 for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
-    unique(
+    node = intersect(node, SpineOpt.node(has_state=true))
+    (
         (node=n, stochastic_scenario=s, t=t)
-        for (n, tb) in node_with_state__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
         for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
     )
 end
+
+function node_state_ub_as_number(; node, kwargs...)
+    node_state_cap(; node=node, kwargs..., _default=NaN) * (
+        + number_of_storages(; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + candidate_storages(; node=node, kwargs..., _default=0)
+    )
+end
+
+function node_state_ub_as_call(; node, kwargs...)
+    node_state_cap[(node=node, kwargs..., _default=NaN)] * (
+        + number_of_storages[(node=node, kwargs..., _default=_default_nb_of_storages(node))]
+        + candidate_storages[(node=node, kwargs..., _default=0)]
+    )
+end
+
+_default_nb_of_storages(n) = is_candidate(node=n) ? 0 : 1
 
 """
     add_variable_node_state!(m::Model)
@@ -44,6 +60,7 @@ function add_variable_node_state!(m::Model)
         :node_state,
         node_state_indices;
         lb=node_state_min,
+        ub=FlexParameter(node_state_ub_as_number, node_state_ub_as_call),
         fix_value=fix_node_state,
         initial_value=initial_node_state,
     )

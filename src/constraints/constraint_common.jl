@@ -17,6 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
+    inds = collect(indices(m))
+    cons = Any[nothing for i in 1:length(inds)]
+    Threads.@threads for i in 1:length(inds)
+        ind = inds[i]
+        cons[i] = build_constraint(m, ind...)
+    end
+    m.ext[:spineopt].constraints[name] = Dict(zip(inds, add_constraint.(m, cons)))
+end
+
 """
     t_lowest_resolution_path(m, indices...)
 
@@ -27,6 +37,10 @@ For each of these `t`s, the `path` also includes scenarios in `extra_indices` wh
 """
 function t_lowest_resolution_path(m, indices, extra_indices...)
     isempty(indices) && return ()
+    if length(stochastic_scenario()) == 1
+        s = only(stochastic_scenario())
+        return ((t, [s]) for t in t_lowest_resolution!(m, unique(x.t for x in indices)))
+    end
     scens_by_t = t_lowest_resolution_sets!(m, _scens_by_t(indices))
     extra_scens_by_t = _scens_by_t(Iterators.flatten(extra_indices))
     for (t, scens) in scens_by_t
@@ -52,9 +66,13 @@ function _scens_by_t(indices)
     scens_by_t
 end
 
-function past_units_on_indices(m, u, s_path, t, min_time)
+past_units_on_indices(args...) = past_unit_indices(units_on_indices, args...)
+
+past_units_out_of_service_indices(args...) = past_unit_indices(units_out_of_service_indices, args...)
+
+function past_unit_indices(indices, m, u, s_path, t, min_time)
     t0 = _analysis_time(m)
-    units_on_indices(
+    indices(
         m;
         unit=u,
         stochastic_scenario=s_path,
@@ -65,24 +83,20 @@ function past_units_on_indices(m, u, s_path, t, min_time)
     )    
 end
 
-function _minimum_operating_point(u, ng, d, s, t0, t)
-    minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=0)]
+function _minimum_operating_point(m, u, ng, d, s, t0, t)
+    minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=0)
 end
 
-function _unit_flow_capacity(u, ng, d, s, t0, t)
-    (
-        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-        * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-        * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-    )
+function _unit_flow_capacity(m, u, ng, d, s, t0, t)
+    unit_flow_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
 end
 
-function _start_up_limit(u, ng, d, s, t0, t)
-    start_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
+function _start_up_limit(m, u, ng, d, s, t0, t)
+    start_up_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)
 end
 
-function _shut_down_limit(u, ng, d, s, t0, t)
-    shut_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
+function _shut_down_limit(m, u, ng, d, s, t0, t)
+    shut_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)
 end
 
 """

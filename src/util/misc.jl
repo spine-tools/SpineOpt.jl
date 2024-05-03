@@ -70,41 +70,31 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
-function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
-    Base.get(d, NamedTuple{J}(key), default)
+struct FlexParameter
+    as_number
+    as_call
 end
 
-function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
-end
+as_number(p::Parameter; kwargs...) = p(; kwargs...)
+as_number(x::FlexParameter; kwargs...) = x.as_number(; kwargs...)
 
-_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
-_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+as_call(p::Parameter; kwargs...) = p[kwargs]
+as_call(x::FlexParameter; kwargs...) = x.as_call(; kwargs...)
 
-function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
-end
+constant(x::Number) = FlexParameter((; kwargs...) -> x, (; kwargs...) -> Call(x))
 
 """
-    sense_constraint(m, lhs, sense::Symbol, rhs)
+    build_sense_constraint(lhs, sense::Symbol, rhs)
 
-Create a JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
+A JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
 """
-function sense_constraint(m, lhs, sense::Symbol, rhs)
-    if sense == :>=
-        @constraint(m, lhs >= rhs)
-    elseif sense == :<=
-        @constraint(m, lhs <= rhs)
-    else
-        @constraint(m, lhs == rhs)
-    end
-end
-sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
-sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
-sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
+build_sense_constraint(lhs, sense::Symbol, rhs) = build_sense_constraint(lhs, getproperty(Base, sense), rhs)
+build_sense_constraint(lhs, sense::typeof(<=), rhs) = @build_constraint(lhs <= rhs)
+build_sense_constraint(lhs, sense::typeof(==), rhs) = @build_constraint(lhs == rhs)
+build_sense_constraint(lhs, sense::typeof(>=), rhs) = @build_constraint(lhs >= rhs)
 
 function _avg(iter; init::Number)
+    iter = collect(iter)
     isempty(iter) ? init : sum(iter; init=init) / length(iter)
 end
 
@@ -155,12 +145,6 @@ function get_module(module_name)
     end
 end
 
-struct Constant
-    value
-end
-
-Base.getindex(c::Constant, _x) = Call(c.value)
-
 name_from_fn(fn) = split(split(string(fn), "add_")[2], "!")[1]
 
 function print_model_and_solution(m, variable_patterns...)
@@ -189,7 +173,6 @@ window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
 
 window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
 window_sum(x::Number, window; init=0) = x + init
-
 
 """
     align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead::Bool=true)
@@ -276,4 +259,44 @@ end
 
 function _call_event_handlers(m, event, args...; kwargs...)
     (fn -> fn(m, args...; kwargs...)).(m.ext[:spineopt].event_handlers[event])
+end
+
+function _pkgversion(pkg)
+    isdefined(Base, :pkgversion) && return pkgversion(pkg)
+    project_filepath = joinpath(pkgdir(pkg), "Project.toml")
+    parsed_contents = TOML.parsefile(project_filepath)
+    parsed_contents["version"]
+end
+
+function _version_and_git_hash(pkg)
+    version = _pkgversion(pkg)
+    git_hash = try
+        repo = LibGit2.GitRepo(pkgdir(pkg))
+        LibGit2.head_oid(repo)
+    catch err
+        err isa LibGit2.GitError || rethrow()
+        "N/A"
+    end
+    version, git_hash
+end
+
+# Base
+function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
+    Base.get(d, NamedTuple{J}(key), default)
+end
+function Base.get(f::Function, d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
+    Base.get(f, d, NamedTuple{J}(key))
+end
+
+Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
+
+function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
+    Base.haskey(d, NamedTuple{J}(key))
+end
+
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
+function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
+    Base.getindex(d, NamedTuple{J}(key))
 end

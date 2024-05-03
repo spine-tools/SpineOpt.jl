@@ -30,14 +30,49 @@ function units_on_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unique(
+    unit = intersect(unit, _unit_with_online_variable())
+    (
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for (u, s, t) in unit_stochastic_time_indices(
-            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
     )
 end
+
+"""
+    units_switched_indices(m; <keyword arguments>)
+
+Indices for the `units_started_up` and `units_shut_down`.
+"""
+function units_switched_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    unit = intersect(unit, _unit_with_switched_variable())
+    (
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, s, t) in unit_stochastic_time_indices(
+            m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+        )
+    )
+end
+
+"""
+    _unit_with_online_variable()
+
+An `Array` of units that need `units_on`.
+"""
+_unit_with_online_variable() = unit(has_online_variable=true)
+
+"""
+    _unit_with_switched_variable()
+
+An `Array` of units that need `units_started_up` and `units_shut_down`.
+"""
+_unit_with_switched_variable() = unit(has_switched_variable=true)
 
 """
     units_on_bin(x)
@@ -69,7 +104,6 @@ function units_switched_replacement_value(ind)
     end
 end
 
-
 """
     add_variable_units_on!(m::Model)
 
@@ -80,7 +114,7 @@ function add_variable_units_on!(m::Model)
         m,
         :units_on,
         units_on_indices;
-        lb=Constant(0),
+        lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_units_on,
@@ -90,4 +124,10 @@ function add_variable_units_on!(m::Model)
         non_anticipativity_margin=units_on_non_anticipativity_margin,
         required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),
     )
+end
+
+function _get_units_on(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
+        number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=_analysis_time(m), t=t)
+    end
 end

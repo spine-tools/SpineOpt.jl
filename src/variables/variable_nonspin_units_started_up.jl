@@ -31,12 +31,12 @@ function nonspin_units_started_up_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    unique(
+    node = intersect(SpineOpt.node(is_reserve_node=true, is_non_spinning=true), members(node))
+    (
         (unit=u, node=n, stochastic_scenario=s, t=t)
         for (u, n, d, s, t) in unit_flow_indices(
             m; unit=unit, node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
         )
-        if is_reserve_node(node=n) && is_non_spinning(node=n)
     )
 end
 
@@ -50,7 +50,7 @@ function add_variable_nonspin_units_started_up!(m::Model)
         m,
         :nonspin_units_started_up,
         nonspin_units_started_up_indices;
-        lb=Constant(0),
+        lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_nonspin_units_started_up,

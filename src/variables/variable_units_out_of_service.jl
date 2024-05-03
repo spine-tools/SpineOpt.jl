@@ -17,6 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+function units_out_of_service_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    unit = intersect(unit, _unit_with_out_of_service_variable())
+    unit_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block,
+    )
+end
+
+"""
+    _unit_with_out_of_service_variable()
+
+An `Array` of units that need `units_out_of_service`, `units_taken_out_of_service` and `units_returned_to_service`.
+"""
+_unit_with_out_of_service_variable() = unit(has_out_of_service_variable=true)
+
 """
     units_out_of_service_bin(x)
 
@@ -57,8 +77,8 @@ function add_variable_units_out_of_service!(m::Model)
     add_variable!(
         m,
         :units_out_of_service,
-        units_on_indices;
-        lb=Constant(0),
+        units_out_of_service_indices;
+        lb=constant(0),
         bin=units_out_of_service_bin,
         int=units_out_of_service_int,
         fix_value=fix_units_out_of_service,
@@ -66,4 +86,10 @@ function add_variable_units_out_of_service!(m::Model)
         replacement_value=units_out_of_service_replacement_value,
         required_history_period=maximum_parameter_value(scheduled_outage_duration),        
     )
+end
+
+function _get_units_out_of_service(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do
+        units_unavailable(m; unit=u, stochastic_scenario=s, analysis_time=_analysis_time(m), t=t)
+    end
 end

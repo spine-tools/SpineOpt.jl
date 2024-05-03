@@ -36,37 +36,37 @@ The existence of this parameter will trigger the following constraint:
 See also [compression\_factor](@ref).
 """
 function add_constraint_compression_ratio!(m::Model)
+    _add_constraint!(m, :compression_ratio, constraint_compression_ratio_indices, _build_constraint_compression_ratio)
+end
+
+function _build_constraint_compression_ratio(m::Model, conn, n_orig, n_dest, s_path, t)
     @fetch node_pressure = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:compression_ratio] = Dict(
-        (connection=conn, node1=n_orig, node2=n_dest, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            + sum(
-                node_pressure[n_dest, s, t] * duration(t)
-                for (n_dest, s, t) in node_pressure_indices(
-                    m; node=n_dest, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-                );
-                init=0,
-            )
-            <=
-            + sum(
-                node_pressure[n_orig, s, t]
-                * compression_factor[
-                    (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, analysis_time=t0, t=t),
-                ]
-                * duration(t)
-                for (n_orig, s, t) in node_pressure_indices(
-                    m; node=n_orig, stochastic_scenario=s_path, t=t_in_t(m; t_long=t),
-                );
-                init=0,
-            )
+    @build_constraint(
+        + sum(
+            node_pressure[n_dest, s, t] * duration(t)
+            for (n_dest, s, t) in node_pressure_indices(
+                m; node=n_dest, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
         )
-        for (conn, n_orig, n_dest, s_path, t) in constraint_compression_ratio_indices(m)
+        <=
+        + sum(
+            node_pressure[n_orig, s, t]
+            * compression_factor(
+                m; connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, analysis_time=t0, t=t
+            )
+            * duration(t)
+            for (n_orig, s, t) in node_pressure_indices(
+                m; node=n_orig, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
     )
 end
 
 function constraint_compression_ratio_indices(m::Model)
-    unique(
+    (
         (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (conn, n1, n2) in indices(compression_factor)
         for (t, path) in t_lowest_resolution_path(m, node_pressure_indices(m; node=[n1, n2]))

@@ -27,14 +27,13 @@ function min_capacity_margin_slack_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
+    (
         (node=n, stochastic_scenario=s, t=t)
         for n in intersect(node_with_min_capacity_margin_penalty(), node)
         for (n, s, t) in node_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
         )
-    ]
-    unique!(inds)
+    )
 end
 
 """
@@ -42,4 +41,4 @@ end
 
 Add `min_capacity_margin_slack` variables to model `m`.
 """
-add_variable_min_capacity_margin_slack!(m::Model) = add_variable!(m, :min_capacity_margin_slack, min_capacity_margin_slack_indices; lb=Constant(0))
+add_variable_min_capacity_margin_slack!(m::Model) = add_variable!(m, :min_capacity_margin_slack, min_capacity_margin_slack_indices; lb=constant(0))

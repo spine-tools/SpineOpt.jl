@@ -38,8 +38,8 @@ function add_variable!(
     indices::Function;
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
-    lb::Union{Constant,Parameter,Nothing}=nothing,
-    ub::Union{Constant,Parameter,Nothing}=nothing,
+    lb::Union{FlexParameter,Parameter,Nothing}=nothing,
+    ub::Union{FlexParameter,Parameter,Nothing}=nothing,
     initial_value::Union{Parameter,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
     internal_fix_value::Union{Parameter,Nothing}=nothing,
@@ -48,7 +48,6 @@ function add_variable!(
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
     required_history_period::Union{Period,Nothing}=nothing, 
 )
-    
     t_start_time_slice = start(first(time_slice(m)))
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     if isnothing(required_history_period)
@@ -57,7 +56,6 @@ function add_variable!(
         history_period = TimeSlice(t_start_time_slice - required_history_period, t_start_time_slice)
     end
     required_history = [t for t in history_time_slice(m) if overlaps(history_period, t)]
-
     m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Vector{TimeSlice},Nothing}}(
         :indices => indices,
         :bin => bin,
@@ -66,35 +64,38 @@ function add_variable!(
         :non_anticipativity_margin => non_anticipativity_margin,
         :required_history => required_history
     )
-    var = m.ext[:spineopt].variables[name] = Dict(
-        ind => _variable(
-            m,
-            name,
-            ind,
-            bin,
-            int,
-            lb,
-            ub,
-            fix_value,
-            internal_fix_value,
-            replacement_value
-        )
+    lb = _nothing_if_empty(lb)
+    ub = _nothing_if_empty(ub)
+    initial_value = _nothing_if_empty(initial_value)
+    fix_value = _nothing_if_empty(fix_value)
+    internal_fix_value = _nothing_if_empty(internal_fix_value)
+    vars = m.ext[:spineopt].variables[name] = Dict(
+        ind => _add_variable!(m, name, ind, replacement_value)
         for ind in indices(m; t=vcat(required_history, time_slice(m)))
     )
+    Threads.@threads for ind in collect(keys(vars))
+        _finalize_variable!(vars[ind], ind, bin, int, lb, ub, fix_value, internal_fix_value)
+    end
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
         t0 = model_start(model=m.ext[:spineopt].instance)
-        for (ind, v) in var
+        for (ind, var) in vars
             overlaps(ind.t, last_history_t) || continue
             val = initial_value(; ind..., _strict=false)
             val === nothing && continue
             initial_value_ts = parameter_value(TimeSeries([t0 - dur_unit(1), t0], [val, NaN]))
-            fix(v, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
+            fix(var, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
         end
     end
-    merge!(var, _representative_periods_mapping(m, var, indices))
+    isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
+        vars, _representative_periods_mapping(m, vars, indices)
+    )
+    vars
 end
+
+_nothing_if_empty(p::Parameter) = isempty(indices(p)) ? nothing : p
+_nothing_if_empty(x) = x
 
 """
     _representative_index(ind)
@@ -128,7 +129,7 @@ end
 
 A `Dict` mapping non representative indices to the variable for the representative index.
 """
-function _representative_periods_mapping(m::Model, var::Dict, indices::Function)
+function _representative_periods_mapping(m::Model, vars::Dict, indices::Function)
     # By default, `indices` skips represented time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
     # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
@@ -137,12 +138,12 @@ function _representative_periods_mapping(m::Model, var::Dict, indices::Function)
     representative_indices = indices(m)
     all_indices = indices(m, temporal_block=anything)
     represented_indices = setdiff(all_indices, representative_indices)
-    Dict(ind => var[_representative_index(m, ind, indices)] for ind in represented_indices)
+    Dict(ind => vars[_representative_index(m, ind, indices)] for ind in represented_indices)
 end
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
-function _variable(m, name, ind, bin, int, lb, ub, fix_value, internal_fix_value, replacement_value)
+function _add_variable!(m, name, ind, replacement_value)
     if replacement_value !== nothing
         ind_ = (analysis_time=_analysis_time(m), ind...)
         value = replacement_value(ind_)
@@ -150,15 +151,37 @@ function _variable(m, name, ind, bin, int, lb, ub, fix_value, internal_fix_value
             return value
         end
     end
-    var = @variable(m, base_name = _base_name(name, ind))
-    ind = (analysis_time=_analysis_time(m), ind...)
-    bin !== nothing && bin(ind) && set_binary(var)
-    int !== nothing && int(ind) && set_integer(var)
-    lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
-    ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
-    fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
-    internal_fix_value === nothing || fix(var, internal_fix_value[(; ind..., _strict=false)])
-    var
+    @variable(m, base_name=_base_name(name, ind))
+end
+
+_finalize_variable!(var::Call, args...) = nothing
+function _finalize_variable!(var, ind, bin, int, lb, ub, fix_value, internal_fix_value)
+    m = owner_model(var)
+    ind_ = (analysis_time=_analysis_time(m), ind...)
+    bin !== nothing && bin(ind_) && set_binary(var)
+    int !== nothing && int(ind_) && set_integer(var)
+    lb === nothing || _do_set_lower_bound(var, lb(m; ind_..., _strict=false))
+    ub === nothing || _do_set_upper_bound(var, ub(m; ind_..., _strict=false))
+    fix_value === nothing || _do_fix(var, fix_value(m; ind_..., _strict=false); force=true)
+    internal_fix_value === nothing || _do_fix(var, internal_fix_value(m; ind_..., _strict=false); force=true)
+end
+
+_do_set_lower_bound(_var, ::Nothing) = nothing
+_do_set_lower_bound(var, bound::Call) = set_lower_bound(var, bound)
+_do_set_lower_bound(var, bound::Number) = isnan(bound) || set_lower_bound(var, bound)
+
+_do_set_upper_bound(_var, ::Nothing) = nothing
+_do_set_upper_bound(var, bound::Call) = set_upper_bound(var, bound)
+_do_set_upper_bound(var, bound::Number) = isnan(bound) || set_upper_bound(var, bound)
+
+_do_fix(_var, ::Nothing; kwargs...) = nothing
+_do_fix(var, x::Call; kwargs...) = fix(var, x)
+function _do_fix(var, x::Number; kwargs...)
+    if !isnan(x)
+        fix(var, x; kwargs...)
+    elseif is_fixed(var)
+        unfix(var)
+    end
 end
 
 """

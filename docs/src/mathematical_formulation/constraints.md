@@ -66,10 +66,6 @@ parameters):
 
 @@add_constraint_units_available!
 
-##### [Bound on online units](@id constraint_units_on)
-
-@@add_constraint_units_on!
-
 ##### [Unit state transition](@id constraint_unit_state_transition)
 
 @@add_constraint_unit_state_transition!

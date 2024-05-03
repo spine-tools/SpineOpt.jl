@@ -26,8 +26,9 @@ function run_spineopt_benders!(
     write_as_roll,
     resume_file_path,
 )
+    add_event_handler!(process_subproblem_solution, m, :window_solved)
     add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
-    add_event_handler!(process_subproblem_solution!, m, :window_solved)
+    add_event_handler!(_save_sp_solution!, m, :window_solved)
     m_mp = master_model(m)
     _build_mp_model!(m_mp; log_level=log_level)
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
@@ -40,7 +41,7 @@ function run_spineopt_benders!(
 		@log log_level 0 "\nStarting Benders iteration $j"
         j == 2 && undo_force_starting_investments!()
         solve_model!(m_mp; log_level=log_level, rewind=false) || break
-        @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution!(m_mp)
+        @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
         solve_model!(
             m;
             log_level=log_level,

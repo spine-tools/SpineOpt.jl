@@ -23,28 +23,28 @@
 Constrain storages_invested_available by the investment lifetime of a storage.
 """
 function add_constraint_storage_lifetime!(m::Model)
+    _add_constraint!(m, :storage_lifetime, constraint_storage_lifetime_indices, _build_constraint_storage_lifetime)
+end
+
+function _build_constraint_storage_lifetime(m::Model, n, s_path, t)
     @fetch storages_invested_available, storages_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:storage_lifetime] = Dict(
-        (node=n, stochastic_path=s_path, t=t) => @constraint(
-            m,
-            sum(
-                storages_invested_available[n, s, t]
-                for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s_path, t=t);
-                init=0,
-            )
-            >=
-            sum(
-                storages_invested[n, s_past, t_past]
-                for (n, s_past, t_past) in _past_storages_invested_available_indices(m, n, s_path, t)
-            )
+    @build_constraint(
+        sum(
+            storages_invested_available[n, s, t]
+            for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (n, s_path, t) in constraint_storage_lifetime_indices(m)
+        >=
+        sum(
+            storages_invested[n, s_past, t_past]
+            for (n, s_past, t_past) in _past_storages_invested_available_indices(m, n, s_path, t)
+        )
     )
 end
 
 function constraint_storage_lifetime_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t=t)
         for n in indices(storage_investment_tech_lifetime)
         for (n, t) in node_investment_time_indices(m; node=n)
