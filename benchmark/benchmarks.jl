@@ -91,7 +91,7 @@ end
 
 SUITE["main"] = BenchmarkGroup()
 
-url_in, url_out = setup(number_of_weeks=1, n_count=2, add_investment=true)
+url_in, url_out = setup(number_of_weeks=3, n_count=10, add_investment=true)
 
 SUITE["main"]["run_spineopt"] =
     @benchmarkable run_spineopt($url_in, $url_out; log_level=0, optimize=false) samples = 3 evals = 1 seconds = Inf
