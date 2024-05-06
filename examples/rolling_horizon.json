@@ -1256,8 +1256,8 @@
             "model",
             "model_end",
             {
-                "data": "2000-01-02T00:00:00.0",
-                "type": "date_time"
+                "type": "date_time",
+                "data": "2000-01-02T00:00:00"
             },
             null,
             "Defines the last timestamp to be modelled. Rolling optimization terminates after passing this point."
@@ -1266,8 +1266,8 @@
             "model",
             "model_start",
             {
-                "data": "2000-01-01T00:00:00.0",
-                "type": "date_time"
+                "type": "date_time",
+                "data": "2000-01-01T00:00:00"
             },
             null,
             "Defines the first timestamp to be modelled. Relative `temporal_blocks` refer to this value for their start and end."

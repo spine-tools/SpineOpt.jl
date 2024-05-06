@@ -36,6 +36,6 @@ function rename_benders_master_to_just_benders(db_url, log_level)
 	length(benders_master_ids) == 1 || return true
 	benders_master_id = only(benders_master_ids)
 	new_list_val = Dict("id" => benders_master_id, "value" => unparse_db_value("spineopt_benders")[1])
-	run_request(db_url, "call_method", ("update_list_values", new_list_val))
+	run_request(db_url, "call_method", ("update_items", "list_value", new_list_val))
 	true
 end

@@ -16,8 +16,10 @@ for path in readdir(@__DIR__; join=true)
         new_data = export_data(db_url)
         for (index, keys) in (
             2 => ("parameter_value_lists",),
-            3 => ("object_parameters", "relationship_parameters"),
-            4 => ("object_parameter_values", "relationship_parameter_values", "tool_feature_methods"),
+            3 => ("object_parameters", "relationship_parameters", "parameter_definitions"),
+            4 => (
+                "object_parameter_values", "relationship_parameter_values", "tool_feature_methods", "parameter_values"
+            ),
         )
             for key in keys
                 for x in get(new_data, key, ())

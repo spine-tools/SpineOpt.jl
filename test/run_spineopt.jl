@@ -782,7 +782,7 @@ function _test_fix_unit_flow_with_rolling()
             relationship_parameter_values=relationship_parameter_values
         )
         rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out)
+        m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         @testset for ind in indices(Y.unit_flow)
             @testset for (t, v) in Y.unit_flow(; ind...)
