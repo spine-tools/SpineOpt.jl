@@ -21,12 +21,11 @@ function local_load_test_data(url_in, test_data)
     SpineInterface.import_data(url_in, "testing"; data...)
 end
 
-function setup(; number_of_weeks=1, if_investment=false)
+function setup(; number_of_weeks=1, n_count=50, add_investment=false)
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     t_count = 24 * 7 * number_of_weeks
-    n_count = 50
     units = ["unit_$k" for k in 1:n_count]
     nodes = ["node_$k" for k in 1:n_count]
     conns = ["conn_$(k)_to_$(k + 1)" for k in 1:(n_count - 1)]
@@ -60,7 +59,7 @@ function setup(; number_of_weeks=1, if_investment=false)
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes))
     append!(obj_pvs, (["connection", c, "connection_type", "connection_type_lossless_bidirectional"] for c in conns))
     append!(obj_pvs, (["connection", c, "connection_reactance", 0.1] for c in conns))
-    if if_investment
+    if add_investment
         # add investment temporal block
         append!(objs, [["temporal_block", "two_year"]])
         append!(obj_pvs, [["temporal_block", "two_year", "resolution", unparse_db_value(Year(2))]]) 
@@ -92,7 +91,7 @@ end
 
 SUITE["main"] = BenchmarkGroup()
 
-url_in, url_out = setup(number_of_weeks=3)
+url_in, url_out = setup(number_of_weeks=1, n_count=2, add_investment=true)
 
 SUITE["main"]["run_spineopt"] =
     @benchmarkable run_spineopt($url_in, $url_out; log_level=0, optimize=false) samples = 3 evals = 1 seconds = Inf
