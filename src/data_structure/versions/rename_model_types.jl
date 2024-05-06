@@ -44,6 +44,6 @@ function rename_model_types(db_url, log_level)
 		push!(new_list_vals, Dict("id" => spineopt_operations_id, "value" => unparse_db_value("spineopt_standard")[1]))
 	end
 	isempty(new_list_vals) && return true
-	run_request(db_url, "call_method", ("update_list_values", new_list_vals...))
+	run_request(db_url, "call_method", ("update_items", "list_value", new_list_vals...))
 	true
 end

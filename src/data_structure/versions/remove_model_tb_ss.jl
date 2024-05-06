@@ -30,7 +30,7 @@ function remove_model_tb_ss(db_url, log_level)
 	ec_id_by_name = Dict(x["name"] => x["id"] for x in ecs)
 	to_rm_ec_ids = unique(ec_id_by_name[name] for name in intersect(to_rm_ec_names, keys(ec_id_by_name)))
 	if !isempty(to_rm_ec_ids)
-		run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:entity_class => to_rm_ec_ids))
+		run_request(db_url, "call_method", ("remove_items", "entity_class", to_rm_ec_ids...))
 	end
 	true
 end
