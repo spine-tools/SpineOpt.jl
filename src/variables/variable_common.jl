@@ -49,41 +49,52 @@ function add_variable!(
     required_history_period::Union{Period,Nothing}=nothing,
     ind_map=Dict(),
 )
-    t_start_time_slice = start(first(time_slice(m)))
-    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-    if isnothing(required_history_period)
-        history_period = TimeSlice(t_start_time_slice - dur_unit(1), t_start_time_slice)
-    else
-        history_period = TimeSlice(t_start_time_slice - required_history_period, t_start_time_slice)
+    if required_history_period === nothing
+        required_history_period = _model_duration_unit(m.ext[:spineopt].instance)(1)
     end
-    required_history = [t for t in history_time_slice(m) if overlaps(history_period, t)]
+    t_start = start(first(time_slice(m)))
+    t_history = TimeSlice(t_start - required_history_period, t_start)
+    history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
     m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Vector{TimeSlice},Nothing}}(
         :indices => indices,
         :bin => bin,
         :int => int,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
-        :required_history => required_history,
+        :history_time_slices => history_time_slices,
     )
     lb = _nothing_if_empty(lb)
     ub = _nothing_if_empty(ub)
     initial_value = _nothing_if_empty(initial_value)
     fix_value = _nothing_if_empty(fix_value)
     internal_fix_value = _nothing_if_empty(internal_fix_value)
-    t = vcat(required_history, time_slice(m))
+    t = vcat(history_time_slices, time_slice(m))
     first_ind = iterate(indices(m; t=t))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
-    vars = m.ext[:spineopt].variables[name] = Dict{K,Union{VariableRef,AffExpr}}(
+    vars = m.ext[:spineopt].variables[name] = Dict{K,Union{VariableRef,AffExpr,Call}}(
         ind => _add_variable!(m, name, ind, replacement_value) for ind in indices(m; t=t) if !haskey(ind_map, ind)
     )
+    inverse_ind_map = Dict(ref_ind => (ind, 1 / coeff) for (ind, (ref_ind, coeff)) in ind_map)
     Threads.@threads for ind in collect(keys(vars))
-        _finalize_variable!(vars[ind], ind, bin, int, lb, ub, fix_value, internal_fix_value)
+        # Resolve bin, int, lb, ub, fix_value and internal_fix_value for ind.
+        # If we have an ind_map, then we need to combine any values given for the ind and its referrer.
+        # For example, for the lower bound we need to take the maximum between the lower bound for ind,
+        # and the lower bound for the referrer scaled by the appropriate factor.
+        other_ind_and_factor = get(inverse_ind_map, ind, ())
+        res_bin = _resolve(bin, ind, other_ind_and_factor...; default=false, reducer=any)
+        res_int = _resolve(int, ind, other_ind_and_factor...; default=false, reducer=any)
+        res_lb = _resolve(lb, m, ind, other_ind_and_factor...; reducer=max)
+        res_ub = _resolve(ub, m, ind, other_ind_and_factor...; reducer=min)
+        res_fix_value = _resolve(fix_value, m, ind, other_ind_and_factor...; reducer=_check_unique)
+        res_internal_fix_value = _resolve(internal_fix_value, m, ind, other_ind_and_factor...; reducer=_check_unique)
+        _finalize_variable!(vars[ind], res_bin, res_int, res_lb, res_ub, res_fix_value, res_internal_fix_value)
     end
-    merge!(vars, Dict(dst_ind => f(vars[src_ind]) for (dst_ind, (f, src_ind)) in ind_map))
+    merge!(vars, Dict(ind => coeff * vars[ref_ind] for (ind, (ref_ind, coeff)) in ind_map))
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
         t0 = model_start(model=m.ext[:spineopt].instance)
+        dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
         for (ind, var) in vars
             overlaps(ind.t, last_history_t) || continue
             val = initial_value(; ind..., _strict=false)
@@ -100,6 +111,76 @@ end
 
 _nothing_if_empty(p::Parameter) = isempty(indices(p)) ? nothing : p
 _nothing_if_empty(x) = x
+
+_base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
+
+function _add_variable!(m, name, ind, replacement_value)
+    if replacement_value !== nothing
+        ind_ = (analysis_time=_analysis_time(m), ind...)
+        value = replacement_value(ind_)
+        if value !== nothing
+            return value
+        end
+    end
+    @variable(m, base_name=_base_name(name, ind))
+end
+
+_check_unique(x, y) = x == y ? x : error("$x != $y")
+
+_resolve(::Nothing, args...; default=nothing, kwargs...) = default
+_resolve(f, ind; kwargs...) = f(ind)
+_resolve(f, m, ind; kwargs...) = f(m; ind..., analysis_time=_analysis_time(m))
+_resolve(f, ind, other_ind, _factor; reducer, kwargs...) = _apply(reducer, f(ind), f(other_ind))
+function _resolve(f, m, ind, other_ind, factor; reducer, kwargs...)
+    t0 = _analysis_time(m)
+    _apply(reducer, f(m; ind..., analysis_time=t0), _mul(factor, f(m; other_ind..., analysis_time=t0)))
+end
+
+_mul(_factor, ::Nothing) = nothing
+_mul(factor, x) = factor * x
+
+_apply(reducer, x, ::Nothing) = x
+_apply(reducer, ::Nothing, y) = y
+_apply(reducer, ::Nothing, ::Nothing) = nothing
+function _apply(reducer, x::Number, y::Number)
+    if isnan(x)
+        y
+    elseif isnan(y)
+        x
+    else
+        reducer(x, y)
+    end
+end
+_apply(reducer, x::Call, y::Call) = Call(_apply, [reducer, x, y])
+
+_finalize_variable!(x, args...) = nothing
+function _finalize_variable!(var::VariableRef, bin, int, lb, ub, fix_value, internal_fix_value)
+    m = owner_model(var)
+    bin && set_binary(var)
+    int && set_integer(var)
+    _do_set_lower_bound(var, lb)
+    _do_set_upper_bound(var, ub)
+    _do_fix(var, fix_value; force=true)
+    _do_fix(var, internal_fix_value; force=true)
+end
+
+_do_set_lower_bound(_var, ::Nothing) = nothing
+_do_set_lower_bound(var, bound::Call) = set_lower_bound(var, bound)
+_do_set_lower_bound(var, bound::Number) = isnan(bound) || set_lower_bound(var, bound)
+
+_do_set_upper_bound(_var, ::Nothing) = nothing
+_do_set_upper_bound(var, bound::Call) = set_upper_bound(var, bound)
+_do_set_upper_bound(var, bound::Number) = isnan(bound) || set_upper_bound(var, bound)
+
+_do_fix(_var, ::Nothing; kwargs...) = nothing
+_do_fix(var, x::Call; kwargs...) = fix(var, x)
+function _do_fix(var, x::Number; kwargs...)
+    if !isnan(x)
+        fix(var, x; kwargs...)
+    elseif is_fixed(var)
+        unfix(var)
+    end
+end
 
 """
     _representative_index(ind)
@@ -143,58 +224,4 @@ function _representative_periods_mapping(m::Model, vars::Dict, indices::Function
     all_indices = indices(m, temporal_block=anything)
     represented_indices = setdiff(all_indices, representative_indices)
     Dict(ind => vars[_representative_index(m, ind, indices)] for ind in represented_indices)
-end
-
-_base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
-
-function _add_variable!(m, name, ind, replacement_value)
-    if replacement_value !== nothing
-        ind_ = (analysis_time=_analysis_time(m), ind...)
-        value = replacement_value(ind_)
-        if value !== nothing
-            return value
-        end
-    end
-    @variable(m, base_name=_base_name(name, ind))
-end
-
-_finalize_variable!(var, args...) = nothing
-function _finalize_variable!(var::VariableRef, ind, bin, int, lb, ub, fix_value, internal_fix_value)
-    m = owner_model(var)
-    ind_ = (analysis_time=_analysis_time(m), ind...)
-    bin !== nothing && bin(ind_) && set_binary(var)
-    int !== nothing && int(ind_) && set_integer(var)
-    lb === nothing || _do_set_lower_bound(var, lb(m; ind_..., _strict=false))
-    ub === nothing || _do_set_upper_bound(var, ub(m; ind_..., _strict=false))
-    fix_value === nothing || _do_fix(var, fix_value(m; ind_..., _strict=false); force=true)
-    internal_fix_value === nothing || _do_fix(var, internal_fix_value(m; ind_..., _strict=false); force=true)
-end
-
-_do_set_lower_bound(_var, ::Nothing) = nothing
-_do_set_lower_bound(var, bound::Call) = set_lower_bound(var, bound)
-_do_set_lower_bound(var, bound::Number) = isnan(bound) || set_lower_bound(var, bound)
-
-_do_set_upper_bound(_var, ::Nothing) = nothing
-_do_set_upper_bound(var, bound::Call) = set_upper_bound(var, bound)
-_do_set_upper_bound(var, bound::Number) = isnan(bound) || set_upper_bound(var, bound)
-
-_do_fix(_var, ::Nothing; kwargs...) = nothing
-_do_fix(var, x::Call; kwargs...) = fix(var, x)
-function _do_fix(var, x::Number; kwargs...)
-    if !isnan(x)
-        fix(var, x; kwargs...)
-    elseif is_fixed(var)
-        unfix(var)
-    end
-end
-
-"""
-    _get_max_duration(m::Model, lookback_params::Vector{Parameter})
-
-A function to get the maximum duration from a list of parameters.
-"""
-function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
-    max_vals = (maximum_parameter_value(p) for p in lookback_params)
-    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-    reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
 end

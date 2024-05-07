@@ -14,7 +14,7 @@ objective_function_reference_values = Dict(
         SpineInterface.close_connection(db_url)
         SpineInterface.open_connection(db_url)
         import_data(db_url, input_data, "No comment")
-        m = run_spineopt(db_url, nothing; log_level=0)        
+        m = run_spineopt(db_url, nothing; log_level=0)
         @test termination_status(m) == MOI.OPTIMAL
         obj_fn_val = get(objective_function_reference_values, basename(path), nothing)
         if obj_fn_val !== nothing

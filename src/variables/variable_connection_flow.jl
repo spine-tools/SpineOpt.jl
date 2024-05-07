@@ -49,12 +49,13 @@ function connection_flow_indices(
     )
 end
 
-function _fix_connection_flow_ratio(conn, n_to, n_from)
+function _fix_ratio_out_in_connection_flow_simple(conn, n_to, n_from)
+    (
+        _similar(n_to, n_from)
+        && iszero(connection_flow_delay(connection=conn, node1=n_to, node2=n_from, _default=Hour(0)))
+    ) || return nothing
     ratio = fix_ratio_out_in_connection_flow(connection=conn, node1=n_to, node2=n_from, _strict=false)
-    ratio isa Number || return nothing
-    delay = connection_flow_delay(connection=conn, node1=n_to, node2=n_from)
-    iszero(delay) && node__temporal_block(node=n_to) == node__temporal_block(node=n_from) && return ratio
-    nothing
+    ratio isa Number && return ratio
 end
 
 """
@@ -65,11 +66,10 @@ Add `connection_flow` variables to model `m`.
 function add_variable_connection_flow!(m::Model)
     ind_map = Dict(
         (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => (
-            var -> ratio * var,
-            (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t),
+            (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t), ratio
         )
         for (conn, n_to, n_from, ratio) in (
-            (x..., _fix_connection_flow_ratio(x...)) for x in indices(fix_ratio_out_in_connection_flow)
+            (x..., _fix_ratio_out_in_connection_flow_simple(x...)) for x in indices(fix_ratio_out_in_connection_flow)
         )
         if ratio !== nothing
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)

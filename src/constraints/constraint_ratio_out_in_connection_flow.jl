@@ -121,7 +121,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
     (
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=path, t=t)
         for (conn, ng_out, ng_in) in indices(ratio_out_in)
-        if _fix_connection_flow_ratio(conn, ng_out, ng_in) === nothing
+        if _fix_ratio_out_in_connection_flow_simple(conn, ng_out, ng_in) === nothing
         for (t, path_out) in t_lowest_resolution_path(
             m, connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))
         )

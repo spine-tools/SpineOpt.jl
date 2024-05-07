@@ -280,6 +280,32 @@ function _version_and_git_hash(pkg)
     version, git_hash
 end
 
+"""
+    _similar(node1, node2)
+
+A Boolean indicating whether or not two nodes are 'similar', in the sense they are single nodes
+(i.e. not groups) with the same temporal and stochastic structure.
+"""
+function _similar(node1, node2)
+    (
+        members(node1) == [node1]
+        && members(node2) == [node2]
+        && node__temporal_block(node=node1) == node__temporal_block(node=node2)
+        && node__stochastic_structure(node=node1) == node__stochastic_structure(node=node2)
+    )
+end
+
+"""
+    _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+
+The maximum duration from a list of parameters.
+"""
+function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+    max_vals = (maximum_parameter_value(p) for p in lookback_params)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
+end
+
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
