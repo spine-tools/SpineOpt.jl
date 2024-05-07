@@ -153,8 +153,10 @@ function _run_spineopt(
         ],
         [so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string],
     )
-    vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
-    write_parameters(vals, url_out; alternative=alternative, on_conflict="replace")
+    if url_out !== nothing
+        vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
+        write_parameters(vals, url_out; alternative=alternative, on_conflict="replace")
+    end
     m
     # FIXME: make sure use_direct_model this works with db solvers
     # possibly adapt union? + allow for conflicts if direct model is used
