@@ -1,77 +1,103 @@
 {
-    "object_classes": [
+    "entity_classes": [
         [
             "commodity",
+            [],
             "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...",
-            281473533932880
+            281473533932880,
+            false
         ],
         [
             "connection",
+            [],
             "A transfer of commodities between nodes. E.g. electricity line, gas pipeline...",
-            280378317271233
+            280378317271233,
+            false
         ],
         [
             "investment_group",
+            [],
             "A group of investments that need to be done together.",
-            281105609585860
+            281105609585860,
+            false
         ],
         [
             "model",
+            [],
             "An instance of SpineOpt, that specifies general parameters such as the temporal horizon.",
-            281107035648412
+            281107035648412,
+            false
         ],
         [
             "node",
+            [],
             "A universal aggregator of commodify flows over units and connections, with storage capabilities.",
-            280740554077951
+            280740554077951,
+            false
         ],
         [
             "output",
+            [],
             "A variable name from SpineOpt whose value can be included in a report.",
-            280743406202948
+            280743406202948,
+            false
         ],
         [
             "report",
+            [],
             "A results report from a particular SpineOpt run, including the value of specific variables.",
-            281108461711708
+            281108461711708,
+            false
         ],
         [
             "settings",
+            [],
             "Internal SpineOpt settings. We kindly advise not to mess with this one.",
-            280375465144798
+            280375465144798,
+            false
         ],
         [
             "stage",
+            [],
             "An additional stage in the optimisation problem (EXPERIMENTAL)",
-            281107035649533
+            281107035649533,
+            false
         ],
         [
             "stochastic_scenario",
+            [],
             "A scenario for stochastic optimisation in SpineOpt.",
-            280743389491710
+            280743389491710,
+            false
         ],
         [
             "stochastic_structure",
+            [],
             "A group of stochastic scenarios that represent a structure.",
-            281470681806146
+            281470681806146,
+            false
         ],
         [
             "temporal_block",
+            [],
             "A length of time with a particular resolution.",
-            280376891207703
+            280376891207703,
+            false
         ],
         [
             "unit",
+            [],
             "A conversion of one/many comodities between nodes.",
-            281470681805429
+            281470681805429,
+            false
         ],
         [
             "user_constraint",
+            [],
             "A generic data-driven custom constraint.",
-            281473533931636
-        ]
-    ],
-    "relationship_classes": [
+            281473533931636,
+            false
+        ],
         [
             "connection__from_node",
             [
@@ -79,7 +105,338 @@
                 "node"
             ],
             "A flow on a `connection` from a `node`.",
-            280378317271897
+            280378317271897,
+            true
+        ],
+        [
+            "connection__investment_group",
+            [
+                "connection",
+                "investment_group"
+            ],
+            "A `connection` that belongs in an `investment_group`.",
+            null,
+            true
+        ],
+        [
+            "connection__investment_stochastic_structure",
+            [
+                "connection",
+                "stochastic_structure"
+            ],
+            "The `stochastic_structure` of a `connection` investment.",
+            null,
+            true
+        ],
+        [
+            "connection__investment_temporal_block",
+            [
+                "connection",
+                "temporal_block"
+            ],
+            "The `temporal_block` of a `connection` investment.",
+            null,
+            true
+        ],
+        [
+            "connection__to_node",
+            [
+                "connection",
+                "node"
+            ],
+            "A flow on a `connection` to a `node` .",
+            280378317271898,
+            true
+        ],
+        [
+            "connection__user_constraint",
+            [
+                "connection",
+                "user_constraint"
+            ],
+            "A `connection` investment constrained by a `user_constraint`.",
+            null,
+            true
+        ],
+        [
+            "model__default_investment_stochastic_structure",
+            [
+                "model",
+                "stochastic_structure"
+            ],
+            "The default `stochastic_structure` of all investments in the `model`.",
+            null,
+            true
+        ],
+        [
+            "model__default_investment_temporal_block",
+            [
+                "model",
+                "temporal_block"
+            ],
+            "The default `temporal_block` of all investments in the `model`.",
+            null,
+            true
+        ],
+        [
+            "model__default_stochastic_structure",
+            [
+                "model",
+                "stochastic_structure"
+            ],
+            "The default `stochastic_structure` of the `model.",
+            null,
+            true
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "model",
+                "temporal_block"
+            ],
+            "The default `temporal_block` of the `model`.",
+            null,
+            true
+        ],
+        [
+            "model__report",
+            [
+                "model",
+                "report"
+            ],
+            "A `report` that should be written for the `model`.",
+            null,
+            true
+        ],
+        [
+            "model__stochastic_structure",
+            [
+                "model",
+                "stochastic_structure"
+            ],
+            "Defines which `stochastic_structure`s are included in which `model`s.",
+            null,
+            true
+        ],
+        [
+            "model__temporal_block",
+            [
+                "model",
+                "temporal_block"
+            ],
+            "Defines which `temporal_block`s are included in which `model`s.",
+            null,
+            true
+        ],
+        [
+            "node__commodity",
+            [
+                "node",
+                "commodity"
+            ],
+            "A `commodity` for a `node`. Only a single `commodity` is permitted per `node`.",
+            null,
+            true
+        ],
+        [
+            "node__investment_group",
+            [
+                "node",
+                "investment_group"
+            ],
+            "A `node` that belongs in an `investment_group`.",
+            null,
+            true
+        ],
+        [
+            "node__investment_stochastic_structure",
+            [
+                "node",
+                "stochastic_structure"
+            ],
+            "The `stochastic_structure` of a `node` storage investment.",
+            null,
+            true
+        ],
+        [
+            "node__investment_temporal_block",
+            [
+                "node",
+                "temporal_block"
+            ],
+            "The `temporal_block` of a `node` storage investment.",
+            null,
+            true
+        ],
+        [
+            "node__node",
+            [
+                "node",
+                "node"
+            ],
+            "An interaction between two `node`s.",
+            null,
+            true
+        ],
+        [
+            "node__stochastic_structure",
+            [
+                "node",
+                "stochastic_structure"
+            ],
+            "The `stochastic_structure` of a `node`. Only one `stochastic_structure` is permitted per `node`.",
+            null,
+            true
+        ],
+        [
+            "node__temporal_block",
+            [
+                "node",
+                "temporal_block"
+            ],
+            "The `temporal_block` of a `node` and the corresponding `flow` variables.",
+            null,
+            true
+        ],
+        [
+            "node__user_constraint",
+            [
+                "node",
+                "user_constraint"
+            ],
+            "A `node` state constrained by a `user_constraint`, or a `node` demand included in a `user_constraint`.",
+            null,
+            true
+        ],
+        [
+            "parent_stochastic_scenario__child_stochastic_scenario",
+            [
+                "stochastic_scenario",
+                "stochastic_scenario"
+            ],
+            "A parent-child relationship between two `stochastic_scenario`s defining the master stochastic direct acyclic graph.",
+            null,
+            true
+        ],
+        [
+            "report__output",
+            [
+                "report",
+                "output"
+            ],
+            "An `output` that should be included in a `report`.",
+            null,
+            true
+        ],
+        [
+            "stage__child_stage",
+            [
+                "stage",
+                "stage"
+            ],
+            "A parent-child relationship between two `stage`s (EXPERIMENTAL).",
+            null,
+            true
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            [
+                "stochastic_structure",
+                "stochastic_scenario"
+            ],
+            "A `stochastic_scenarios` that belongs in a `stochastic_structure`.",
+            null,
+            true
+        ],
+        [
+            "unit__commodity",
+            [
+                "unit",
+                "commodity"
+            ],
+            "Holds parameters for `commodities` used by the `unit`.",
+            null,
+            true
+        ],
+        [
+            "unit__from_node",
+            [
+                "unit",
+                "node"
+            ],
+            "A flow on a `unit` from a `node`.",
+            281470681805657,
+            true
+        ],
+        [
+            "unit__investment_group",
+            [
+                "unit",
+                "investment_group"
+            ],
+            "A `unit` that belongs in an `investment_group`.",
+            null,
+            true
+        ],
+        [
+            "unit__investment_stochastic_structure",
+            [
+                "unit",
+                "stochastic_structure"
+            ],
+            "The `stochastic_structure` of a `unit` investment.",
+            null,
+            true
+        ],
+        [
+            "unit__investment_temporal_block",
+            [
+                "unit",
+                "temporal_block"
+            ],
+            "The `temporal_block` of a `unit` investment.",
+            null,
+            true
+        ],
+        [
+            "unit__to_node",
+            [
+                "unit",
+                "node"
+            ],
+            "A flow on a `unit` to a `node`.",
+            281470681805658,
+            true
+        ],
+        [
+            "unit__user_constraint",
+            [
+                "unit",
+                "user_constraint"
+            ],
+            "A `unit` commitment constrained by a `user_constraint`.",
+            null,
+            true
+        ],
+        [
+            "units_on__stochastic_structure",
+            [
+                "unit",
+                "stochastic_structure"
+            ],
+            "The `stochastic_structure` of a `unit` commitment. Only one `stochastic_structure` is permitted per `unit`.",
+            null,
+            true
+        ],
+        [
+            "units_on__temporal_block",
+            [
+                "unit",
+                "temporal_block"
+            ],
+            "The `temporal_block` of a `unit` commitment.",
+            null,
+            true
         ],
         [
             "connection__from_node__investment_group",
@@ -89,7 +446,8 @@
                 "investment_group"
             ],
             "A flow on a `connection` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
-            null
+            null,
+            true
         ],
         [
             "connection__from_node__user_constraint",
@@ -99,34 +457,8 @@
                 "user_constraint"
             ],
             "A flow on a `connection` from a `node` constrained by a `user_constraint`.",
-            null
-        ],
-        [
-            "connection__investment_group",
-            [
-                "connection",
-                "investment_group"
-            ],
-            "A `connection` that belongs in an `investment_group`.",
-            null
-        ],
-        [
-            "connection__investment_stochastic_structure",
-            [
-                "connection",
-                "stochastic_structure"
-            ],
-            "The `stochastic_structure` of a `connection` investment.",
-            null
-        ],
-        [
-            "connection__investment_temporal_block",
-            [
-                "connection",
-                "temporal_block"
-            ],
-            "The `temporal_block` of a `connection` investment.",
-            null
+            null,
+            true
         ],
         [
             "connection__node__node",
@@ -136,16 +468,8 @@
                 "node"
             ],
             "A `connection` acting over two `node`s.",
-            null
-        ],
-        [
-            "connection__to_node",
-            [
-                "connection",
-                "node"
-            ],
-            "A flow on a `connection` to a `node` .",
-            280378317271898
+            null,
+            true
         ],
         [
             "connection__to_node__investment_group",
@@ -155,7 +479,8 @@
                 "investment_group"
             ],
             "A flow on a `connection` to a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
-            null
+            null,
+            true
         ],
         [
             "connection__to_node__user_constraint",
@@ -165,178 +490,8 @@
                 "user_constraint"
             ],
             "A flow on a `connection` to a `node` constrained by a `user_constraint",
-            null
-        ],
-        [
-            "connection__user_constraint",
-            [
-                "connection",
-                "user_constraint"
-            ],
-            "A `connection` investment constrained by a `user_constraint`.",
-            null
-        ],
-        [
-            "model__default_investment_stochastic_structure",
-            [
-                "model",
-                "stochastic_structure"
-            ],
-            "The default `stochastic_structure` of all investments in the `model`.",
-            null
-        ],
-        [
-            "model__default_investment_temporal_block",
-            [
-                "model",
-                "temporal_block"
-            ],
-            "The default `temporal_block` of all investments in the `model`.",
-            null
-        ],
-        [
-            "model__default_stochastic_structure",
-            [
-                "model",
-                "stochastic_structure"
-            ],
-            "The default `stochastic_structure` of the `model.",
-            null
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "model",
-                "temporal_block"
-            ],
-            "The default `temporal_block` of the `model`.",
-            null
-        ],
-        [
-            "model__report",
-            [
-                "model",
-                "report"
-            ],
-            "A `report` that should be written for the `model`.",
-            null
-        ],
-        [
-            "model__stochastic_structure",
-            [
-                "model",
-                "stochastic_structure"
-            ],
-            "Defines which `stochastic_structure`s are included in which `model`s.",
-            null
-        ],
-        [
-            "model__temporal_block",
-            [
-                "model",
-                "temporal_block"
-            ],
-            "Defines which `temporal_block`s are included in which `model`s.",
-            null
-        ],
-        [
-            "node__commodity",
-            [
-                "node",
-                "commodity"
-            ],
-            "A `commodity` for a `node`. Only a single `commodity` is permitted per `node`.",
-            null
-        ],
-        [
-            "node__investment_group",
-            [
-                "node",
-                "investment_group"
-            ],
-            "A `node` that belongs in an `investment_group`.",
-            null
-        ],
-        [
-            "node__investment_stochastic_structure",
-            [
-                "node",
-                "stochastic_structure"
-            ],
-            "The `stochastic_structure` of a `node` storage investment.",
-            null
-        ],
-        [
-            "node__investment_temporal_block",
-            [
-                "node",
-                "temporal_block"
-            ],
-            "The `temporal_block` of a `node` storage investment.",
-            null
-        ],
-        [
-            "node__node",
-            [
-                "node",
-                "node"
-            ],
-            "An interaction between two `node`s.",
-            null
-        ],
-        [
-            "node__stochastic_structure",
-            [
-                "node",
-                "stochastic_structure"
-            ],
-            "The `stochastic_structure` of a `node`. Only one `stochastic_structure` is permitted per `node`.",
-            null
-        ],
-        [
-            "node__temporal_block",
-            [
-                "node",
-                "temporal_block"
-            ],
-            "The `temporal_block` of a `node` and the corresponding `flow` variables.",
-            null
-        ],
-        [
-            "node__user_constraint",
-            [
-                "node",
-                "user_constraint"
-            ],
-            "A `node` state constrained by a `user_constraint`, or a `node` demand included in a `user_constraint`.",
-            null
-        ],
-        [
-            "parent_stochastic_scenario__child_stochastic_scenario",
-            [
-                "stochastic_scenario",
-                "stochastic_scenario"
-            ],
-            "A parent-child relationship between two `stochastic_scenario`s defining the master stochastic direct acyclic graph.",
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report",
-                "output"
-            ],
-            "An `output` that should be included in a `report`.",
-            null
-        ],
-        [
-            "stage__child_stage",
-            [
-                "stage",
-                "stage"
-            ],
-            "A parent-child relationship between two `stage`s (EXPERIMENTAL).",
-            null
+            null,
+            true
         ],
         [
             "stage__output__connection",
@@ -346,7 +501,8 @@
                 "connection"
             ],
             "An `output` that should be fixed by a `stage` for a `connection` in all its children (EXPERIMENTAL).",
-            null
+            null,
+            true
         ],
         [
             "stage__output__node",
@@ -356,7 +512,8 @@
                 "node"
             ],
             "An `output` that should be fixed by a `stage` for a `node` in all its children (EXPERIMENTAL).",
-            null
+            null,
+            true
         ],
         [
             "stage__output__unit",
@@ -366,34 +523,8 @@
                 "unit"
             ],
             "An `output` that should be fixed by a `stage` for a `unit` in all its children (EXPERIMENTAL).",
-            null
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            [
-                "stochastic_structure",
-                "stochastic_scenario"
-            ],
-            "A `stochastic_scenarios` that belongs in a `stochastic_structure`.",
-            null
-        ],
-        [
-            "unit__commodity",
-            [
-                "unit",
-                "commodity"
-            ],
-            "Holds parameters for `commodities` used by the `unit`.",
-            null
-        ],
-        [
-            "unit__from_node",
-            [
-                "unit",
-                "node"
-            ],
-            "A flow on a `unit` from a `node`.",
-            281470681805657
+            null,
+            true
         ],
         [
             "unit__from_node__investment_group",
@@ -403,7 +534,8 @@
                 "investment_group"
             ],
             "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
-            null
+            null,
+            true
         ],
         [
             "unit__from_node__user_constraint",
@@ -413,34 +545,8 @@
                 "user_constraint"
             ],
             "A flow on a `unit` from a `node` constrained by a `user_constraint`.",
-            null
-        ],
-        [
-            "unit__investment_group",
-            [
-                "unit",
-                "investment_group"
-            ],
-            "A `unit` that belongs in an `investment_group`.",
-            null
-        ],
-        [
-            "unit__investment_stochastic_structure",
-            [
-                "unit",
-                "stochastic_structure"
-            ],
-            "The `stochastic_structure` of a `unit` investment.",
-            null
-        ],
-        [
-            "unit__investment_temporal_block",
-            [
-                "unit",
-                "temporal_block"
-            ],
-            "The `temporal_block` of a `unit` investment.",
-            null
+            null,
+            true
         ],
         [
             "unit__node__node",
@@ -450,16 +556,8 @@
                 "node"
             ],
             "A `unit` acting over two `node`s.",
-            null
-        ],
-        [
-            "unit__to_node",
-            [
-                "unit",
-                "node"
-            ],
-            "A flow on a `unit` to a `node`.",
-            281470681805658
+            null,
+            true
         ],
         [
             "unit__to_node__investment_group",
@@ -469,7 +567,8 @@
                 "investment_group"
             ],
             "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
-            null
+            null,
+            true
         ],
         [
             "unit__to_node__user_constraint",
@@ -479,33 +578,515 @@
                 "user_constraint"
             ],
             "A flow on a `unit` to a `node` constrained by a `user_constraint`.",
+            null,
+            true
+        ]
+    ],
+    "entities": [
+        [
+            "model",
+            "simple",
             null
         ],
         [
-            "unit__user_constraint",
-            [
-                "unit",
-                "user_constraint"
-            ],
-            "A `unit` commitment constrained by a `user_constraint`.",
+            "node",
+            "electricity_node",
             null
         ],
         [
-            "units_on__stochastic_structure",
-            [
-                "unit",
-                "stochastic_structure"
-            ],
-            "The `stochastic_structure` of a `unit` commitment. Only one `stochastic_structure` is permitted per `unit`.",
+            "node",
+            "fuel_node",
             null
         ],
         [
-            "units_on__temporal_block",
+            "output",
+            "binary_gas_connection_flow",
+            null
+        ],
+        [
+            "output",
+            "connection_avg_intact_throughflow",
+            null
+        ],
+        [
+            "output",
+            "connection_avg_throughflow",
+            null
+        ],
+        [
+            "output",
+            "connection_flow",
+            null
+        ],
+        [
+            "output",
+            "connection_flow_costs",
+            null
+        ],
+        [
+            "output",
+            "connection_intact_flow",
+            null
+        ],
+        [
+            "output",
+            "connection_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "connections_decommissioned",
+            null
+        ],
+        [
+            "output",
+            "connections_invested",
+            null
+        ],
+        [
+            "output",
+            "connections_invested_available",
+            null
+        ],
+        [
+            "output",
+            "contingency_is_binding",
+            null
+        ],
+        [
+            "output",
+            "fixed_om_costs",
+            null
+        ],
+        [
+            "output",
+            "fuel_costs",
+            null
+        ],
+        [
+            "output",
+            "mga_objective",
+            null
+        ],
+        [
+            "output",
+            "mp_objective_lowerbound",
+            null
+        ],
+        [
+            "output",
+            "node_injection",
+            null
+        ],
+        [
+            "output",
+            "node_pressure",
+            null
+        ],
+        [
+            "output",
+            "node_slack_neg",
+            null
+        ],
+        [
+            "output",
+            "node_slack_pos",
+            null
+        ],
+        [
+            "output",
+            "node_state",
+            null
+        ],
+        [
+            "output",
+            "node_voltage_angle",
+            null
+        ],
+        [
+            "output",
+            "nonspin_ramp_down_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "nonspin_ramp_up_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "nonspin_units_shut_down",
+            null
+        ],
+        [
+            "output",
+            "nonspin_units_started_up",
+            null
+        ],
+        [
+            "output",
+            "objective_penalties",
+            null
+        ],
+        [
+            "output",
+            "ramp_costs",
+            null
+        ],
+        [
+            "output",
+            "ramp_down_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "ramp_up_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "relative_optimality_gap",
+            null
+        ],
+        [
+            "output",
+            "renewable_curtailment_costs",
+            null
+        ],
+        [
+            "output",
+            "res_proc_costs",
+            null
+        ],
+        [
+            "output",
+            "shut_down_costs",
+            null
+        ],
+        [
+            "output",
+            "shut_down_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "start_up_costs",
+            null
+        ],
+        [
+            "output",
+            "start_up_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "storage_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "storages_decommissioned",
+            null
+        ],
+        [
+            "output",
+            "storages_invested",
+            null
+        ],
+        [
+            "output",
+            "storages_invested_available",
+            null
+        ],
+        [
+            "output",
+            "taxes",
+            null
+        ],
+        [
+            "output",
+            "total_costs",
+            null
+        ],
+        [
+            "output",
+            "unit_flow",
+            null
+        ],
+        [
+            "output",
+            "unit_flow_op",
+            null
+        ],
+        [
+            "output",
+            "unit_flow_op_active",
+            null
+        ],
+        [
+            "output",
+            "unit_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "units_available",
+            null
+        ],
+        [
+            "output",
+            "units_invested",
+            null
+        ],
+        [
+            "output",
+            "units_invested_available",
+            null
+        ],
+        [
+            "output",
+            "units_mothballed",
+            null
+        ],
+        [
+            "output",
+            "units_on",
+            null
+        ],
+        [
+            "output",
+            "units_on_costs",
+            null
+        ],
+        [
+            "output",
+            "units_shut_down",
+            null
+        ],
+        [
+            "output",
+            "units_started_up",
+            null
+        ],
+        [
+            "output",
+            "variable_om_costs",
+            null
+        ],
+        [
+            "report",
+            "report1",
+            null
+        ],
+        [
+            "stochastic_scenario",
+            "realization",
+            null
+        ],
+        [
+            "stochastic_structure",
+            "deterministic",
+            null
+        ],
+        [
+            "temporal_block",
+            "flat",
+            null
+        ],
+        [
+            "unit",
+            "power_plant_a",
+            null
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            null
+        ],
+        [
+            "model__default_stochastic_structure",
             [
-                "unit",
-                "temporal_block"
+                "simple",
+                "deterministic"
             ],
-            "The `temporal_block` of a `unit` commitment.",
+            null
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "flat"
+            ],
+            null
+        ],
+        [
+            "model__report",
+            [
+                "simple",
+                "report1"
+            ],
+            null
+        ],
+        [
+            "model__stochastic_structure",
+            [
+                "simple",
+                "deterministic"
+            ],
+            null
+        ],
+        [
+            "model__temporal_block",
+            [
+                "simple",
+                "flat"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "node_injection"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "node_state"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "shut_down_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "start_up_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "total_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_flow"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_on"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_on_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_shut_down"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_started_up"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "variable_om_costs"
+            ],
+            null
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            [
+                "deterministic",
+                "realization"
+            ],
+            null
+        ],
+        [
+            "unit__from_node",
+            [
+                "power_plant_a",
+                "fuel_node"
+            ],
+            null
+        ],
+        [
+            "unit__from_node",
+            [
+                "power_plant_b",
+                "fuel_node"
+            ],
+            null
+        ],
+        [
+            "unit__to_node",
+            [
+                "power_plant_a",
+                "electricity_node"
+            ],
+            null
+        ],
+        [
+            "unit__to_node",
+            [
+                "power_plant_b",
+                "electricity_node"
+            ],
+            null
+        ],
+        [
+            "unit__node__node",
+            [
+                "power_plant_a",
+                "electricity_node",
+                "fuel_node"
+            ],
+            null
+        ],
+        [
+            "unit__node__node",
+            [
+                "power_plant_b",
+                "electricity_node",
+                "fuel_node"
+            ],
             null
         ]
     ],
@@ -799,7 +1380,7 @@
             "write_mps_on_no_solve"
         ]
     ],
-    "object_parameters": [
+    "parameter_definitions": [
         [
             "commodity",
             "commodity_lodf_tolerance",
@@ -1016,6 +1597,303 @@
             1,
             null,
             "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."
+        ],
+        [
+            "connection__from_node",
+            "connection_capacity",
+            null,
+            null,
+            "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
+        ],
+        [
+            "connection__from_node",
+            "connection_conv_cap_to_flow",
+            1,
+            null,
+            "Optional coefficient for `connection_capacity` unit conversions in the case that the `connection_capacity` value is incompatible with the desired `connection_flow` units."
+        ],
+        [
+            "connection__from_node",
+            "connection_emergency_capacity",
+            null,
+            null,
+            "Post contingency flow capacity of a `connection`. Sometimes referred to as emergency rating"
+        ],
+        [
+            "connection__from_node",
+            "connection_flow_cost",
+            null,
+            null,
+            "Variable costs of a flow through a `connection`. E.g. EUR/MWh of energy throughput."
+        ],
+        [
+            "connection__from_node",
+            "connection_flow_non_anticipativity_margin",
+            null,
+            null,
+            "Margin by which `connection_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
+        ],
+        [
+            "connection__from_node",
+            "connection_flow_non_anticipativity_time",
+            null,
+            null,
+            "Period of time where the value of the `connection_flow` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "connection__from_node",
+            "connection_intact_flow_non_anticipativity_margin",
+            null,
+            null,
+            "Margin by which `connection_intact_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
+        ],
+        [
+            "connection__from_node",
+            "connection_intact_flow_non_anticipativity_time",
+            null,
+            null,
+            "Period of time where the value of the `connection_intact_flow` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "connection__from_node",
+            "fix_binary_gas_connection_flow",
+            null,
+            null,
+            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__from_node",
+            "fix_connection_flow",
+            null,
+            null,
+            "Fix the value of the `connection_flow` variable."
+        ],
+        [
+            "connection__from_node",
+            "fix_connection_intact_flow",
+            null,
+            null,
+            "Fix the value of the `connection_intact_flow` variable."
+        ],
+        [
+            "connection__from_node",
+            "graph_view_position",
+            null,
+            null,
+            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
+        ],
+        [
+            "connection__from_node",
+            "initial_binary_gas_connection_flow",
+            null,
+            null,
+            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__from_node",
+            "initial_connection_flow",
+            null,
+            null,
+            "Initialize the value of the `connection_flow` variable."
+        ],
+        [
+            "connection__from_node",
+            "initial_connection_intact_flow",
+            null,
+            null,
+            "Initialize the value of the `connection_intact_flow` variable."
+        ],
+        [
+            "connection__from_node__user_constraint",
+            "connection_flow_coefficient",
+            0,
+            null,
+            "defines the user constraint coefficient on the connection flow variable in the from direction"
+        ],
+        [
+            "connection__node__node",
+            "compression_factor",
+            null,
+            null,
+            "The compression factor establishes a compression from an origin node to a receiving node, which are connected through a connection. The first node corresponds to the origin node, the second to the (compressed) destination node. Typically the value is >=1."
+        ],
+        [
+            "connection__node__node",
+            "connection_flow_delay",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            null,
+            "Delays the `connection_flows` associated with the latter `node` in respect to the `connection_flows` associated with the first `node`."
+        ],
+        [
+            "connection__node__node",
+            "connection_linepack_constant",
+            null,
+            null,
+            "The linepack constant is a property of gas pipelines and relates the linepack to the pressure of the adjacent nodes."
+        ],
+        [
+            "connection__node__node",
+            "fix_ratio_out_in_connection_flow",
+            null,
+            null,
+            "Fix the ratio between an outgoing `connection_flow` to the first `node` and an incoming `connection_flow` from the second `node`."
+        ],
+        [
+            "connection__node__node",
+            "fixed_pressure_constant_0",
+            null,
+            null,
+            "Fixed pressure points for pipelines for the outer approximation of the Weymouth approximation. The direction of flow is the first node in the relationship to the second node in the relationship."
+        ],
+        [
+            "connection__node__node",
+            "fixed_pressure_constant_1",
+            null,
+            null,
+            "Fixed pressure points for pipelines for the outer approximation of the Weymouth approximation. The direction of flow is the first node in the relationship to the second node in the relationship."
+        ],
+        [
+            "connection__node__node",
+            "max_ratio_out_in_connection_flow",
+            null,
+            null,
+            "Maximum ratio between an outgoing `connection_flow` to the first `node` and an incoming `connection_flow` from the second `node`."
+        ],
+        [
+            "connection__node__node",
+            "min_ratio_out_in_connection_flow",
+            null,
+            null,
+            "Minimum ratio between an outgoing `connection_flow` to the first `node` and an incoming `connection_flow` from the second `node`."
+        ],
+        [
+            "connection__to_node",
+            "connection_capacity",
+            null,
+            null,
+            "Limits the `connection_flow` variable to the `to_node`. `to_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
+        ],
+        [
+            "connection__to_node",
+            "connection_conv_cap_to_flow",
+            1,
+            null,
+            "Optional coefficient for `connection_capacity` unit conversions in the case the `connection_capacity` value is incompatible with the desired `connection_flow` units."
+        ],
+        [
+            "connection__to_node",
+            "connection_emergency_capacity",
+            null,
+            null,
+            "The maximum post-contingency flow on a monitored `connection`."
+        ],
+        [
+            "connection__to_node",
+            "connection_flow_cost",
+            null,
+            null,
+            "Variable costs of a flow through a `connection`. E.g. EUR/MWh of energy throughput."
+        ],
+        [
+            "connection__to_node",
+            "connection_flow_non_anticipativity_margin",
+            null,
+            null,
+            "Margin by which `connection_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
+        ],
+        [
+            "connection__to_node",
+            "connection_flow_non_anticipativity_time",
+            null,
+            null,
+            "Period of time where the value of the `connection_flow` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "connection__to_node",
+            "connection_intact_flow_non_anticipativity_margin",
+            null,
+            null,
+            "Margin by which `connection_intact_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
+        ],
+        [
+            "connection__to_node",
+            "connection_intact_flow_non_anticipativity_time",
+            null,
+            null,
+            "Period of time where the value of the `connection_intact_flow` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "connection__to_node",
+            "fix_binary_gas_connection_flow",
+            null,
+            null,
+            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__to_node",
+            "fix_connection_flow",
+            null,
+            null,
+            "Fix the value of the `connection_flow` variable."
+        ],
+        [
+            "connection__to_node",
+            "fix_connection_intact_flow",
+            null,
+            null,
+            "Fix the value of the `connection_intact_flow` variable."
+        ],
+        [
+            "connection__to_node",
+            "graph_view_position",
+            null,
+            null,
+            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
+        ],
+        [
+            "connection__to_node",
+            "initial_binary_gas_connection_flow",
+            null,
+            null,
+            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__to_node",
+            "initial_connection_flow",
+            null,
+            null,
+            "Initialize the value of the `connection_flow` variable."
+        ],
+        [
+            "connection__to_node",
+            "initial_connection_intact_flow",
+            null,
+            null,
+            "Initialize the value of the `connection_intact_flow` variable."
+        ],
+        [
+            "connection__to_node__user_constraint",
+            "connection_flow_coefficient",
+            0,
+            null,
+            "defines the user constraint coefficient on the connection flow variable in the to direction"
+        ],
+        [
+            "connection__user_constraint",
+            "connections_invested_available_coefficient",
+            0,
+            null,
+            "coefficient of `connections_invested_available` in the specific `user_constraint`"
+        ],
+        [
+            "connection__user_constraint",
+            "connections_invested_coefficient",
+            0,
+            null,
+            "coefficient of `connections_invested` in the specific `user_constraint`"
         ],
         [
             "investment_group",
@@ -1644,6 +2522,62 @@
             "Identifier for `node`s providing upward reserves"
         ],
         [
+            "node__node",
+            "diff_coeff",
+            0,
+            null,
+            "Commodity diffusion coefficient between two `nodes`. Effectively, denotes the *diffusion power per unit of state* from the first `node` to the second."
+        ],
+        [
+            "node__stochastic_structure",
+            "is_active",
+            true,
+            "boolean_value_list",
+            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "node__temporal_block",
+            "cyclic_condition",
+            false,
+            "boolean_value_list",
+            "If the cyclic condition is set to true for a storage node, the `node_state` at the end of the optimization window has to be larger than or equal to the initial storage state."
+        ],
+        [
+            "node__temporal_block",
+            "is_active",
+            true,
+            "boolean_value_list",
+            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "node__user_constraint",
+            "demand_coefficient",
+            0,
+            null,
+            "coefficient of the specified node's demand in the specified user constraint"
+        ],
+        [
+            "node__user_constraint",
+            "node_state_coefficient",
+            0,
+            null,
+            "Coefficient of the specified node's state variable in the specified user constraint."
+        ],
+        [
+            "node__user_constraint",
+            "storages_invested_available_coefficient",
+            0,
+            null,
+            "Coefficient of the specified node's storages invested available variable in the specified user constraint."
+        ],
+        [
+            "node__user_constraint",
+            "storages_invested_coefficient",
+            0,
+            null,
+            "Coefficient of the specified node's storage investment variable in the specified user constraint."
+        ],
+        [
             "output",
             "is_active",
             true,
@@ -1672,6 +2606,13 @@
             "Database url for SpineOpt output."
         ],
         [
+            "report__output",
+            "overwrite_results_on_rolling",
+            true,
+            null,
+            "Whether or not results from further windows should overwrite results from previous ones."
+        ],
+        [
             "settings",
             "version",
             12,
@@ -1693,6 +2634,27 @@
             "The scenario that this `stage` should run (EXPERIMENTAL)."
         ],
         [
+            "stage__output__connection",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
+            "stage__output__node",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
+            "stage__output__unit",
+            "output_resolution",
+            null,
+            null,
+            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
+        ],
+        [
             "stochastic_scenario",
             "is_active",
             true,
@@ -1705,6 +2667,20 @@
             true,
             "boolean_value_list",
             "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            "stochastic_scenario_end",
+            null,
+            null,
+            "A `Duration` for when a `stochastic_scenario` ends and its `child_stochastic_scenarios` start. Values are interpreted relative to the start of the current solve, and if no value is given, the `stochastic_scenario` is assumed to continue indefinitely."
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            "weight_relative_to_parents",
+            1,
+            null,
+            "The weight of the `stochastic_scenario` in the objective function relative to its parents."
         ],
         [
             "temporal_block",
@@ -1995,431 +2971,6 @@
             0,
             null,
             "Represents the number of units out of service"
-        ],
-        [
-            "user_constraint",
-            "constraint_sense",
-            "==",
-            "constraint_sense_list",
-            "A selector for the sense of the `user_constraint`."
-        ],
-        [
-            "user_constraint",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "user_constraint",
-            "right_hand_side",
-            0,
-            null,
-            "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."
-        ],
-        [
-            "user_constraint",
-            "user_constraint_slack_penalty",
-            null,
-            null,
-            "A penalty for violating a user constraint."
-        ]
-    ],
-    "relationship_parameters": [
-        [
-            "connection__from_node",
-            "connection_capacity",
-            null,
-            null,
-            "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
-        ],
-        [
-            "connection__from_node",
-            "connection_conv_cap_to_flow",
-            1,
-            null,
-            "Optional coefficient for `connection_capacity` unit conversions in the case that the `connection_capacity` value is incompatible with the desired `connection_flow` units."
-        ],
-        [
-            "connection__from_node",
-            "connection_emergency_capacity",
-            null,
-            null,
-            "Post contingency flow capacity of a `connection`. Sometimes referred to as emergency rating"
-        ],
-        [
-            "connection__from_node",
-            "connection_flow_cost",
-            null,
-            null,
-            "Variable costs of a flow through a `connection`. E.g. EUR/MWh of energy throughput."
-        ],
-        [
-            "connection__from_node",
-            "connection_flow_non_anticipativity_margin",
-            null,
-            null,
-            "Margin by which `connection_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
-        ],
-        [
-            "connection__from_node",
-            "connection_flow_non_anticipativity_time",
-            null,
-            null,
-            "Period of time where the value of the `connection_flow` variable has to be fixed to the result from the previous window."
-        ],
-        [
-            "connection__from_node",
-            "connection_intact_flow_non_anticipativity_margin",
-            null,
-            null,
-            "Margin by which `connection_intact_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
-        ],
-        [
-            "connection__from_node",
-            "connection_intact_flow_non_anticipativity_time",
-            null,
-            null,
-            "Period of time where the value of the `connection_intact_flow` variable has to be fixed to the result from the previous window."
-        ],
-        [
-            "connection__from_node",
-            "fix_binary_gas_connection_flow",
-            null,
-            null,
-            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__from_node",
-            "fix_connection_flow",
-            null,
-            null,
-            "Fix the value of the `connection_flow` variable."
-        ],
-        [
-            "connection__from_node",
-            "fix_connection_intact_flow",
-            null,
-            null,
-            "Fix the value of the `connection_intact_flow` variable."
-        ],
-        [
-            "connection__from_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "connection__from_node",
-            "initial_binary_gas_connection_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__from_node",
-            "initial_connection_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_flow` variable."
-        ],
-        [
-            "connection__from_node",
-            "initial_connection_intact_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_intact_flow` variable."
-        ],
-        [
-            "connection__from_node__user_constraint",
-            "connection_flow_coefficient",
-            0,
-            null,
-            "defines the user constraint coefficient on the connection flow variable in the from direction"
-        ],
-        [
-            "connection__node__node",
-            "compression_factor",
-            null,
-            null,
-            "The compression factor establishes a compression from an origin node to a receiving node, which are connected through a connection. The first node corresponds to the origin node, the second to the (compressed) destination node. Typically the value is >=1."
-        ],
-        [
-            "connection__node__node",
-            "connection_flow_delay",
-            {
-                "type": "duration",
-                "data": "0h"
-            },
-            null,
-            "Delays the `connection_flows` associated with the latter `node` in respect to the `connection_flows` associated with the first `node`."
-        ],
-        [
-            "connection__node__node",
-            "connection_linepack_constant",
-            null,
-            null,
-            "The linepack constant is a property of gas pipelines and relates the linepack to the pressure of the adjacent nodes."
-        ],
-        [
-            "connection__node__node",
-            "fix_ratio_out_in_connection_flow",
-            null,
-            null,
-            "Fix the ratio between an outgoing `connection_flow` to the first `node` and an incoming `connection_flow` from the second `node`."
-        ],
-        [
-            "connection__node__node",
-            "fixed_pressure_constant_0",
-            null,
-            null,
-            "Fixed pressure points for pipelines for the outer approximation of the Weymouth approximation. The direction of flow is the first node in the relationship to the second node in the relationship."
-        ],
-        [
-            "connection__node__node",
-            "fixed_pressure_constant_1",
-            null,
-            null,
-            "Fixed pressure points for pipelines for the outer approximation of the Weymouth approximation. The direction of flow is the first node in the relationship to the second node in the relationship."
-        ],
-        [
-            "connection__node__node",
-            "max_ratio_out_in_connection_flow",
-            null,
-            null,
-            "Maximum ratio between an outgoing `connection_flow` to the first `node` and an incoming `connection_flow` from the second `node`."
-        ],
-        [
-            "connection__node__node",
-            "min_ratio_out_in_connection_flow",
-            null,
-            null,
-            "Minimum ratio between an outgoing `connection_flow` to the first `node` and an incoming `connection_flow` from the second `node`."
-        ],
-        [
-            "connection__to_node",
-            "connection_capacity",
-            null,
-            null,
-            "Limits the `connection_flow` variable to the `to_node`. `to_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
-        ],
-        [
-            "connection__to_node",
-            "connection_conv_cap_to_flow",
-            1,
-            null,
-            "Optional coefficient for `connection_capacity` unit conversions in the case the `connection_capacity` value is incompatible with the desired `connection_flow` units."
-        ],
-        [
-            "connection__to_node",
-            "connection_emergency_capacity",
-            null,
-            null,
-            "The maximum post-contingency flow on a monitored `connection`."
-        ],
-        [
-            "connection__to_node",
-            "connection_flow_cost",
-            null,
-            null,
-            "Variable costs of a flow through a `connection`. E.g. EUR/MWh of energy throughput."
-        ],
-        [
-            "connection__to_node",
-            "connection_flow_non_anticipativity_margin",
-            null,
-            null,
-            "Margin by which `connection_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
-        ],
-        [
-            "connection__to_node",
-            "connection_flow_non_anticipativity_time",
-            null,
-            null,
-            "Period of time where the value of the `connection_flow` variable has to be fixed to the result from the previous window."
-        ],
-        [
-            "connection__to_node",
-            "connection_intact_flow_non_anticipativity_margin",
-            null,
-            null,
-            "Margin by which `connection_intact_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
-        ],
-        [
-            "connection__to_node",
-            "connection_intact_flow_non_anticipativity_time",
-            null,
-            null,
-            "Period of time where the value of the `connection_intact_flow` variable has to be fixed to the result from the previous window."
-        ],
-        [
-            "connection__to_node",
-            "fix_binary_gas_connection_flow",
-            null,
-            null,
-            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__to_node",
-            "fix_connection_flow",
-            null,
-            null,
-            "Fix the value of the `connection_flow` variable."
-        ],
-        [
-            "connection__to_node",
-            "fix_connection_intact_flow",
-            null,
-            null,
-            "Fix the value of the `connection_intact_flow` variable."
-        ],
-        [
-            "connection__to_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "connection__to_node",
-            "initial_binary_gas_connection_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__to_node",
-            "initial_connection_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_flow` variable."
-        ],
-        [
-            "connection__to_node",
-            "initial_connection_intact_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_intact_flow` variable."
-        ],
-        [
-            "connection__to_node__user_constraint",
-            "connection_flow_coefficient",
-            0,
-            null,
-            "defines the user constraint coefficient on the connection flow variable in the to direction"
-        ],
-        [
-            "connection__user_constraint",
-            "connections_invested_available_coefficient",
-            0,
-            null,
-            "coefficient of `connections_invested_available` in the specific `user_constraint`"
-        ],
-        [
-            "connection__user_constraint",
-            "connections_invested_coefficient",
-            0,
-            null,
-            "coefficient of `connections_invested` in the specific `user_constraint`"
-        ],
-        [
-            "node__node",
-            "diff_coeff",
-            0,
-            null,
-            "Commodity diffusion coefficient between two `nodes`. Effectively, denotes the *diffusion power per unit of state* from the first `node` to the second."
-        ],
-        [
-            "node__stochastic_structure",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "node__temporal_block",
-            "cyclic_condition",
-            false,
-            "boolean_value_list",
-            "If the cyclic condition is set to true for a storage node, the `node_state` at the end of the optimization window has to be larger than or equal to the initial storage state."
-        ],
-        [
-            "node__temporal_block",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "node__user_constraint",
-            "demand_coefficient",
-            0,
-            null,
-            "coefficient of the specified node's demand in the specified user constraint"
-        ],
-        [
-            "node__user_constraint",
-            "node_state_coefficient",
-            0,
-            null,
-            "Coefficient of the specified node's state variable in the specified user constraint."
-        ],
-        [
-            "node__user_constraint",
-            "storages_invested_available_coefficient",
-            0,
-            null,
-            "Coefficient of the specified node's storages invested available variable in the specified user constraint."
-        ],
-        [
-            "node__user_constraint",
-            "storages_invested_coefficient",
-            0,
-            null,
-            "Coefficient of the specified node's storage investment variable in the specified user constraint."
-        ],
-        [
-            "report__output",
-            "overwrite_results_on_rolling",
-            true,
-            null,
-            "Whether or not results from further windows should overwrite results from previous ones."
-        ],
-        [
-            "stage__output__connection",
-            "output_resolution",
-            null,
-            null,
-            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
-        ],
-        [
-            "stage__output__node",
-            "output_resolution",
-            null,
-            null,
-            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
-        ],
-        [
-            "stage__output__unit",
-            "output_resolution",
-            null,
-            null,
-            "A duration or array of durations indicating the points in time where the output of this stage should be fixed in the children. If not specified, then the output is fixed at the end of each child's roling window (EXPERIMENTAL)."
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            "stochastic_scenario_end",
-            null,
-            null,
-            "A `Duration` for when a `stochastic_scenario` ends and its `child_stochastic_scenarios` start. Values are interpreted relative to the start of the current solve, and if no value is given, the `stochastic_scenario` is assumed to continue indefinitely."
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            "weight_relative_to_parents",
-            1,
-            null,
-            "The weight of the `stochastic_scenario` in the objective function relative to its parents."
         ],
         [
             "unit__commodity",
@@ -3260,496 +3811,37 @@
             true,
             "boolean_value_list",
             "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "user_constraint",
+            "constraint_sense",
+            "==",
+            "constraint_sense_list",
+            "A selector for the sense of the `user_constraint`."
+        ],
+        [
+            "user_constraint",
+            "is_active",
+            true,
+            "boolean_value_list",
+            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+        ],
+        [
+            "user_constraint",
+            "right_hand_side",
+            0,
+            null,
+            "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."
+        ],
+        [
+            "user_constraint",
+            "user_constraint_slack_penalty",
+            null,
+            null,
+            "A penalty for violating a user constraint."
         ]
     ],
-    "objects": [
-        [
-            "model",
-            "simple",
-            null
-        ],
-        [
-            "node",
-            "electricity_node",
-            null
-        ],
-        [
-            "node",
-            "fuel_node",
-            null
-        ],
-        [
-            "output",
-            "binary_gas_connection_flow",
-            null
-        ],
-        [
-            "output",
-            "connection_avg_intact_throughflow",
-            null
-        ],
-        [
-            "output",
-            "connection_avg_throughflow",
-            null
-        ],
-        [
-            "output",
-            "connection_flow",
-            null
-        ],
-        [
-            "output",
-            "connection_flow_costs",
-            null
-        ],
-        [
-            "output",
-            "connection_intact_flow",
-            null
-        ],
-        [
-            "output",
-            "connection_investment_costs",
-            null
-        ],
-        [
-            "output",
-            "connections_decommissioned",
-            null
-        ],
-        [
-            "output",
-            "connections_invested",
-            null
-        ],
-        [
-            "output",
-            "connections_invested_available",
-            null
-        ],
-        [
-            "output",
-            "contingency_is_binding",
-            null
-        ],
-        [
-            "output",
-            "fixed_om_costs",
-            null
-        ],
-        [
-            "output",
-            "fuel_costs",
-            null
-        ],
-        [
-            "output",
-            "mga_objective",
-            null
-        ],
-        [
-            "output",
-            "mp_objective_lowerbound",
-            null
-        ],
-        [
-            "output",
-            "node_injection",
-            null
-        ],
-        [
-            "output",
-            "node_pressure",
-            null
-        ],
-        [
-            "output",
-            "node_slack_neg",
-            null
-        ],
-        [
-            "output",
-            "node_slack_pos",
-            null
-        ],
-        [
-            "output",
-            "node_state",
-            null
-        ],
-        [
-            "output",
-            "node_voltage_angle",
-            null
-        ],
-        [
-            "output",
-            "nonspin_ramp_down_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "nonspin_ramp_up_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "nonspin_units_shut_down",
-            null
-        ],
-        [
-            "output",
-            "nonspin_units_started_up",
-            null
-        ],
-        [
-            "output",
-            "objective_penalties",
-            null
-        ],
-        [
-            "output",
-            "ramp_costs",
-            null
-        ],
-        [
-            "output",
-            "ramp_down_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "ramp_up_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "relative_optimality_gap",
-            null
-        ],
-        [
-            "output",
-            "renewable_curtailment_costs",
-            null
-        ],
-        [
-            "output",
-            "res_proc_costs",
-            null
-        ],
-        [
-            "output",
-            "shut_down_costs",
-            null
-        ],
-        [
-            "output",
-            "shut_down_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "start_up_costs",
-            null
-        ],
-        [
-            "output",
-            "start_up_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "storage_investment_costs",
-            null
-        ],
-        [
-            "output",
-            "storages_decommissioned",
-            null
-        ],
-        [
-            "output",
-            "storages_invested",
-            null
-        ],
-        [
-            "output",
-            "storages_invested_available",
-            null
-        ],
-        [
-            "output",
-            "taxes",
-            null
-        ],
-        [
-            "output",
-            "total_costs",
-            null
-        ],
-        [
-            "output",
-            "unit_flow",
-            null
-        ],
-        [
-            "output",
-            "unit_flow_op",
-            null
-        ],
-        [
-            "output",
-            "unit_flow_op_active",
-            null
-        ],
-        [
-            "output",
-            "unit_investment_costs",
-            null
-        ],
-        [
-            "output",
-            "units_available",
-            null
-        ],
-        [
-            "output",
-            "units_invested",
-            null
-        ],
-        [
-            "output",
-            "units_invested_available",
-            null
-        ],
-        [
-            "output",
-            "units_mothballed",
-            null
-        ],
-        [
-            "output",
-            "units_on",
-            null
-        ],
-        [
-            "output",
-            "units_on_costs",
-            null
-        ],
-        [
-            "output",
-            "units_shut_down",
-            null
-        ],
-        [
-            "output",
-            "units_started_up",
-            null
-        ],
-        [
-            "output",
-            "variable_om_costs",
-            null
-        ],
-        [
-            "report",
-            "report1",
-            null
-        ],
-        [
-            "stochastic_scenario",
-            "realization",
-            null
-        ],
-        [
-            "stochastic_structure",
-            "deterministic",
-            null
-        ],
-        [
-            "temporal_block",
-            "flat",
-            null
-        ],
-        [
-            "unit",
-            "power_plant_a",
-            null
-        ],
-        [
-            "unit",
-            "power_plant_b",
-            null
-        ]
-    ],
-    "relationships": [
-        [
-            "model__default_stochastic_structure",
-            [
-                "simple",
-                "deterministic"
-            ]
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "simple",
-                "flat"
-            ]
-        ],
-        [
-            "model__report",
-            [
-                "simple",
-                "report1"
-            ]
-        ],
-        [
-            "model__stochastic_structure",
-            [
-                "simple",
-                "deterministic"
-            ]
-        ],
-        [
-            "model__temporal_block",
-            [
-                "simple",
-                "flat"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "node_injection"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "node_state"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "shut_down_costs"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "start_up_costs"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "total_costs"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_flow"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "units_on"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "units_on_costs"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "units_shut_down"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "units_started_up"
-            ]
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "variable_om_costs"
-            ]
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            [
-                "deterministic",
-                "realization"
-            ]
-        ],
-        [
-            "unit__from_node",
-            [
-                "power_plant_a",
-                "fuel_node"
-            ]
-        ],
-        [
-            "unit__from_node",
-            [
-                "power_plant_b",
-                "fuel_node"
-            ]
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant_a",
-                "electricity_node",
-                "fuel_node"
-            ]
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant_b",
-                "electricity_node",
-                "fuel_node"
-            ]
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant_a",
-                "electricity_node"
-            ]
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant_b",
-                "electricity_node"
-            ]
-        ]
-    ],
-    "object_parameter_values": [
+    "parameter_values": [
         [
             "model",
             "simple",
@@ -4071,9 +4163,7 @@
             "units_on_cost",
             3,
             "Base"
-        ]
-    ],
-    "relationship_parameter_values": [
+        ],
         [
             "unit__from_node",
             [
@@ -4151,324 +4241,6 @@
         [
             "Base",
             "Base alternative"
-        ]
-    ],
-    "tools": [
-        [
-            "object_activity_control",
-            ""
-        ]
-    ],
-    "features": [
-        [
-            "commodity",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "connection",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "model",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "node",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "node__stochastic_structure",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "node__temporal_block",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "output",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "report",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "stochastic_scenario",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "stochastic_structure",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "temporal_block",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "unit",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "unit__from_node",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "unit__to_node",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "units_on__stochastic_structure",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "units_on__temporal_block",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ],
-        [
-            "user_constraint",
-            "is_active",
-            "boolean_value_list",
-            "boolean_value_list"
-        ]
-    ],
-    "tool_features": [
-        [
-            "object_activity_control",
-            "commodity",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "connection",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "model",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "node",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "node__stochastic_structure",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "node__temporal_block",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "output",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "report",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "stochastic_scenario",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "stochastic_structure",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "temporal_block",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "unit",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "unit__from_node",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "unit__to_node",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "units_on__stochastic_structure",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "units_on__temporal_block",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "user_constraint",
-            "is_active",
-            false
-        ]
-    ],
-    "tool_feature_methods": [
-        [
-            "object_activity_control",
-            "commodity",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "connection",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "model",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "node",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "node__stochastic_structure",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "node__temporal_block",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "output",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "report",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "stochastic_scenario",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "stochastic_structure",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "temporal_block",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "unit",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "unit__from_node",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "unit__to_node",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "units_on__stochastic_structure",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "units_on__temporal_block",
-            "is_active",
-            true
-        ],
-        [
-            "object_activity_control",
-            "user_constraint",
-            "is_active",
-            true
         ]
     ]
 }
