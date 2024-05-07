@@ -458,10 +458,10 @@ function _load_variable_values!(m::Model, values)
 end
 
 function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
-    var_history = m.ext[:spineopt].variables_definition[name][:required_history]
+    history_time_slices = m.ext[:spineopt].variables_definition[name][:history_time_slices]
     m.ext[:spineopt].values[name] = Dict(
         ind => values[string(name)][string(ind)]
-        for ind in indices(m; t=vcat(var_history, time_slice(m)), temporal_block=anything)
+        for ind in indices(m; t=vcat(history_time_slices, time_slice(m)), temporal_block=anything)
     )
 end
 
@@ -554,6 +554,7 @@ end
 The value of a JuMP variable, rounded if necessary.
 """
 _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
+_variable_value(e::AffExpr) = value(e)
 _variable_value(x::Call) = realize(x)
 
 """
@@ -907,17 +908,18 @@ end
 
 function _prepare_for_deletion(path::AbstractString)
     # Nothing to do for non-directories
-    if !isdir(path)
-        return
+    isdir(path) || return
+    try
+        chmod(path, filemode(path) | 0o333)
+    catch;
     end
-
-    try chmod(path, filemode(path) | 0o333)
-    catch; end
     for (root, dirs, files) in walkdir(path; onerror=x->())
         for dir in dirs
             dpath = joinpath(root, dir)
-            try chmod(dpath, filemode(dpath) | 0o333)
-            catch; end
+            try
+                chmod(dpath, filemode(dpath) | 0o333)
+            catch;
+            end
         end
     end
 end
@@ -937,9 +939,6 @@ A new Spine database is created at `url_out` if one doesn't exist.
 function write_report(m, url_out; alternative="", log_level=3)
     url_out === nothing && return
     values = _collect_output_values(m)
-    write_report(m, url_out, values; alternative=alternative, log_level=log_level)
-end
-function write_report(m, url_out, values::Dict; alternative="", log_level=3)
     write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end
 function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
@@ -1060,10 +1059,10 @@ end
 function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
     for name in names   
         var = m.ext[:spineopt].variables[name]
-        var_history = m.ext[:spineopt].variables_definition[name][:required_history]
+        history_time_slices = m.ext[:spineopt].variables_definition[name][:history_time_slices]
         # NOTE: only update names for the representative variables
         # This is achieved by using the indices function from the variable definition
-        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); var_history])
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m; t=[time_slice(m); history_time_slices])
             _set_name(var[ind], _base_name(name, ind))
         end
     end
@@ -1085,7 +1084,7 @@ function _sanitize_constraint_name(constraint_name)
 end
 
 _set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)
-_set_name(::Union{Call,Nothing}, name) = nothing
+_set_name(::Union{Call,AffExpr,Nothing}, name) = nothing
 
 function _fix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
@@ -1156,9 +1155,9 @@ end
 function unfix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
         var = m.ext[:spineopt].variables[name]
-        var_history = m.ext[:spineopt].variables_definition[name][:required_history]
+        history_time_slices = m.ext[:spineopt].variables_definition[name][:history_time_slices]
         indices = definition[:indices]
-        for history_ind in indices(m; t=var_history)
+        for history_ind in indices(m; t=history_time_slices)
             _unfix(var[history_ind])
         end
     end

@@ -269,10 +269,10 @@ function _pkgversion(pkg)
 end
 
 function _version_and_git_hash(pkg)
-    version = _pkgversion(pkg)
+    version = string(_pkgversion(pkg))
     git_hash = try
         repo = LibGit2.GitRepo(pkgdir(pkg))
-        LibGit2.head_oid(repo)
+        string(LibGit2.head_oid(repo))
     catch err
         err isa LibGit2.GitError || rethrow()
         "N/A"
@@ -280,7 +280,36 @@ function _version_and_git_hash(pkg)
     version, git_hash
 end
 
+"""
+    _similar(node1, node2)
+
+A Boolean indicating whether or not two nodes are 'similar', in the sense they are single nodes
+(i.e. not groups) with the same temporal and stochastic structure.
+"""
+function _similar(node1, node2)
+    (
+        members(node1) == [node1]
+        && members(node2) == [node2]
+        && node__temporal_block(node=node1) == node__temporal_block(node=node2)
+        && node__stochastic_structure(node=node1) == node__stochastic_structure(node=node2)
+    )
+end
+
+"""
+    _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+
+The maximum duration from a list of parameters.
+"""
+function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+    max_vals = (maximum_parameter_value(p) for p in lookback_params)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
+end
+
 # Base
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
 function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
     Base.get(d, NamedTuple{J}(key), default)
 end
@@ -288,15 +317,11 @@ function Base.get(f::Function, d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) whe
     Base.get(f, d, NamedTuple{J}(key))
 end
 
-Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
-
 function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
     Base.haskey(d, NamedTuple{J}(key))
 end
 
-_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
-_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
-
+Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
 function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
     Base.getindex(d, NamedTuple{J}(key))
 end

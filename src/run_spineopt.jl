@@ -117,20 +117,46 @@ function run_spineopt(
 end
 
 function _run_spineopt(
-    f, url_in, url_out; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level, kwargs...
+    f,
+    url_in,
+    url_out;
+    upgrade,
+    filters,
+    templates,
+    mip_solver,
+    lp_solver,
+    use_direct_model,
+    log_level,
+    alternative,
+    kwargs...,
 )
+    @log log_level 0 "\nRunning SpineOpt..."
     so_ver, so_git_hash = _version_and_git_hash(SpineOpt)
-    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)
-    @log log_level 0 "SpineOpt version $so_ver (git hash: $so_git_hash)"
-    @log log_level 0 "SpineInterface version $si_ver (git hash: $si_git_hash)"
+    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)    
+    println("[SpineOpt version $so_ver (git hash: $so_git_hash)]")
+    println("[SpineInterface version $si_ver (git hash: $si_git_hash)]")
     t_start = now()
-    @log log_level 1 "\nExecution started at $t_start"
+    @log log_level 1 "Execution started at $t_start"
     m = prepare_spineopt(url_in; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level)
     f(m)
-    run_spineopt!(m, url_out; log_level=log_level, kwargs...)
+    run_spineopt!(m, url_out; log_level, alternative, kwargs...)
     t_end = now()
-    elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))
-    @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
+    elapsed_time_string = string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
+    @log log_level 1 "Execution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
+    stats = Map(
+        [
+            :SpineOpt_version,
+            :SpineOpt_git_hash,
+            :SpineInterface_version,
+            :SpineInterface_git_hash,
+            :elapsed_time,
+        ],
+        [so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string],
+    )
+    if url_out !== nothing
+        vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
+        write_parameters(vals, url_out; alternative=alternative, on_conflict="replace")
+    end
     m
     # FIXME: make sure use_direct_model this works with db solvers
     # possibly adapt union? + allow for conflicts if direct model is used
@@ -165,7 +191,7 @@ function prepare_spineopt(
     lp_solver=nothing,
     use_direct_model=false,
 )
-    @log log_level 0 "Preparing SpineOpt for $(_real_url(url_in))..."
+    @log log_level 0 "Reading input data from $(_real_url(url_in))..."
     _check_version(url_in; log_level, upgrade)
     template, data = _init_data_from_db(url_in, log_level, upgrade, templates, filters)
     missing_items = difference(template, data)
@@ -270,7 +296,6 @@ function run_spineopt!(
     write_as_roll=0,
     resume_file_path=nothing,
 )
-    @log log_level 0 "Running SpineOpt..."
     do_run_spineopt! = Dict(
         :spineopt_standard => run_spineopt_standard!,
         :spineopt_benders => run_spineopt_benders!,
