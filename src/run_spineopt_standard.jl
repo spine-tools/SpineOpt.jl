@@ -908,17 +908,18 @@ end
 
 function _prepare_for_deletion(path::AbstractString)
     # Nothing to do for non-directories
-    if !isdir(path)
-        return
+    isdir(path) || return
+    try
+        chmod(path, filemode(path) | 0o333)
+    catch;
     end
-
-    try chmod(path, filemode(path) | 0o333)
-    catch; end
     for (root, dirs, files) in walkdir(path; onerror=x->())
         for dir in dirs
             dpath = joinpath(root, dir)
-            try chmod(dpath, filemode(dpath) | 0o333)
-            catch; end
+            try
+                chmod(dpath, filemode(dpath) | 0o333)
+            catch;
+            end
         end
     end
 end
@@ -938,9 +939,6 @@ A new Spine database is created at `url_out` if one doesn't exist.
 function write_report(m, url_out; alternative="", log_level=3)
     url_out === nothing && return
     values = _collect_output_values(m)
-    write_report(m, url_out, values; alternative=alternative, log_level=log_level)
-end
-function write_report(m, url_out, values::Dict; alternative="", log_level=3)
     write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end
 function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
