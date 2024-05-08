@@ -142,8 +142,13 @@ function _test_benders_unit()
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
-                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    exp_total_costs = if should_invest
+                        t == DateTime(2000, 1, 1) ? u_inv_cost + 60 : 60
+                    else
+                        120
+                    end
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
                 end
             end
             @testset "unit_investment_costs" begin
@@ -252,8 +257,13 @@ function _test_benders_storage()
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
-                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 0 : 6000.0)
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    exp_total_costs = if should_invest
+                        t == DateTime(2000, 1, 1) ? s_inv_cost : 0
+                    else
+                        6000
+                    end
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
                 end
             end
             @testset "invested" begin
@@ -382,8 +392,13 @@ function _test_benders_unit_storage()
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
-                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 0 : 4800.0)
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    exp_total_costs = if should_invest
+                        t == DateTime(2000, 1, 1) ? s_inv_cost : 0
+                    else
+                        4800
+                    end
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
                 end
             end
             @testset "units_invested" begin
@@ -517,8 +532,13 @@ function _test_benders_rolling_representative_periods()
             m_mp = master_model(m)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
-                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 12)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 90 : 180)
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 12)
+                    exp_total_costs = if should_invest
+                        t in (DateTime(2000, 1, 1), DateTime(2000, 1, 1, 6)) ? u_inv_cost + 90 : 90
+                    else
+                        180
+                    end
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
                 end
             end
             @testset "invested" begin
@@ -720,8 +740,13 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
             @test _is_constraint_equal(observed_con, expected_con)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
-                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    exp_total_costs = if should_invest
+                        t == DateTime(2000, 1, 1) ? u_inv_cost + 60 : 60
+                    else
+                        120
+                    end
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
                 end
             end
             @testset "invested" begin
@@ -821,8 +846,12 @@ function _test_benders_starting_units_invested()
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
-                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    exp_total_costs = if should_invest
+                        t == DateTime(2000, 1, 1) ? u_inv_cost + 60 : 60
+                    else
+                        120
+                    end
                 end
             end
             @testset "unit_investment_costs" begin
