@@ -68,7 +68,6 @@ function run_spineopt_benders!(
         j += 1
         global current_bi = add_benders_iteration(j)
     end
-    write_report(m_mp, url_out; alternative=alternative, log_level=log_level)
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
 end

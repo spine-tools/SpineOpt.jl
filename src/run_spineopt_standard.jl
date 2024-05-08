@@ -938,7 +938,25 @@ A new Spine database is created at `url_out` if one doesn't exist.
 """
 function write_report(m, url_out; alternative="", log_level=3)
     url_out === nothing && return
-    values = _collect_output_values(m)
+    m_mp = master_model(m)
+    values = if m_mp === nothing
+        _collect_output_values(m)
+    else
+        values_mp = _collect_output_values(m_mp)
+        values = _collect_output_values(m)
+        total_costs_keys = (k for k in keys(values_mp) if k[1] == :total_costs)
+        total_costs_key = isempty(total_costs_keys) ? nothing : first(total_costs_keys)
+        total_costs_mp = pop!(values_mp, total_costs_key, Dict())
+        total_costs = pop!(values, total_costs_key, nothing)
+        mergewith!(merge!, values_mp, values)
+        if total_costs !== nothing
+            _merge(x, y) = timedata_operation(x, y) do x, y
+                sum(Iterators.filter(!isnan, (x, y)); init=0)
+            end
+            values_mp[total_costs_key] = merge!(_merge, total_costs_mp, total_costs)
+        end
+        values_mp
+    end
     write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end
 function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
@@ -1007,13 +1025,13 @@ end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
     by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time_sorted) for (t, val) in by_time_stamp)
-    TimeSeries(first.(by_time_stamp), last.(by_time_stamp); merge_ok=true)
+    TimeSeries(first.(by_time_stamp), collect(Float64, last.(by_time_stamp)); merge_ok=true)
 end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
         [
-            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)))
+            TimeSeries(collect(keys(by_time_stamp)), collect(Float64, values(by_time_stamp)))
             for by_time_stamp in values(by_analysis_time)
         ]
     )
