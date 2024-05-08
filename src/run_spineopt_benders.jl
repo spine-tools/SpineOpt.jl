@@ -42,12 +42,18 @@ function run_spineopt_benders!(
         j == 2 && undo_force_starting_investments!()
         solve_model!(m_mp; log_level=log_level, rewind=false) || break
         @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
+        current_gap_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
+            ""
+        else
+            gap = last(m_mp.ext[:spineopt].benders_gaps)
+            "(current gap: $(@sprintf("%1.4f", gap * 100))%) "
+        end
         solve_model!(
             m;
             log_level=log_level,
             update_names=update_names,
             calculate_duals=true,
-            log_prefix="Benders iteration $j - ",
+            log_prefix="Benders iteration $j $current_gap_str- ",
         ) || break
         @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
         @log log_level 1 "Benders iteration $j complete"
