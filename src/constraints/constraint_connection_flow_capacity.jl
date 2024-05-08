@@ -153,6 +153,7 @@ function constraint_connection_flow_capacity_indices(m::Model)
     (
         (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
         for (conn, ng, d) in _connection_node_direction(m)
+        if members(ng) != [ng]
         for (t, path) in t_lowest_resolution_path(
             m,
             connection_flow_indices(m; connection=conn, node=ng, direction=d),
