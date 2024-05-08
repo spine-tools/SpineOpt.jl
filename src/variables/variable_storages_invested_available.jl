@@ -30,7 +30,7 @@ function storages_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    node=members(node)
+    node = members(node)
     (
         (node=n, stochastic_scenario=s, t=t)
         for (n, tb) in node__investment_temporal_block(
