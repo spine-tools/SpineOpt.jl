@@ -123,7 +123,7 @@ function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::
     model_name = _model_name(m)
     isempty(model_blocks) && error("model $model_name doesn't have any temporal_blocks")
     window_very_end = maximum(
-        _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false)) for tb in model_blocks
+        _adjusted_end(window_start, window_end, block_end(temporal_block=tb, _strict=false)) for tb in model_blocks
     )
     for block in model_blocks
         adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
