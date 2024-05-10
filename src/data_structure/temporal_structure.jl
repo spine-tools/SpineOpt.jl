@@ -122,9 +122,12 @@ function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::
     model_blocks = members(temporal_block())
     model_name = _model_name(m)
     isempty(model_blocks) && error("model $model_name doesn't have any temporal_blocks")
+    window_very_end = maximum(
+        _adjusted_end(window_start, window_end, block_end(temporal_block=tb, _strict=false)) for tb in model_blocks
+    )
     for block in model_blocks
         adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
-        adjusted_end = _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
+        adjusted_end = _adjusted_end(window_start, window_very_end, block_end(temporal_block=block, _strict=false))
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
@@ -160,7 +163,7 @@ function _window_time_slices(m::Model, window_start::DateTime, window_end::DateT
     sort!(window_time_slices)
 end
 
-function _add_padding_time_slice!(instance, window_end, window_time_slices)
+function _add_padding_time_slice!(window_time_slices, instance, window_end)
     last_t = window_time_slices[argmax(end_.(window_time_slices))]
     temp_struct_end = end_(last_t)
     if temp_struct_end < window_end
@@ -195,7 +198,7 @@ function _required_history_duration(instance::Object)
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
-function _history_time_slices!(instance, window_start, window_end, window_time_slices)
+function _history_time_slices(instance, window_start, window_end, window_time_slices)
     window_duration = window_end - window_start
     required_history_duration = _required_history_duration(instance)
     history_start = window_start - required_history_duration
@@ -246,8 +249,8 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(m, window_start, window_end)
-    _add_padding_time_slice!(instance, window_end, window_time_slices)
-    history_time_slices, t_history_t = _history_time_slices!(instance, window_start, window_end, window_time_slices)
+    _add_padding_time_slice!(window_time_slices, instance, window_end)
+    history_time_slices, t_history_t = _history_time_slices(instance, window_start, window_end, window_time_slices)
     dur_unit = _model_duration_unit(instance)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)

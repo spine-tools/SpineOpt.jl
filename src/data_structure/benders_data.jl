@@ -27,13 +27,17 @@ The keys in the result are the keys of the input, without the stochastic_scenari
 The values are `ParameterValue{Map}`s mapping the `stochastic_scenario` of the variable key,
 to a `TimeSeries` mapping the `t` of the key, to the 'realized' variable value.
 """
-function _pval_by_entity(vals)
+function _pval_by_entity(vals, t_end=nothing)
     by_ent = Dict()
     for (ind, val) in vals
         ent = _drop_key(ind, :stochastic_scenario, :t)
         by_s = get!(by_ent, ent, Dict())
         by_t = get!(by_s, ind.stochastic_scenario, Dict())
-        by_t[ind.t] = realize(val)
+        realized_val = realize(val)
+        if t_end !== nothing
+            realized_val *= (t_end - start(ind.t)) / (end_(ind.t) - start(ind.t))
+        end
+        by_t[ind.t] = realized_val
     end
     Dict(
         ent => parameter_value(Map(collect(keys(by_s)), [_window_time_series(by_t) for by_t in values(by_s)]))
@@ -115,7 +119,7 @@ function _save_sp_marginal_values!(obj_cls, m, var_name, param_name, k, win_weig
             )
         )
     end
-    pval_by_ent = _pval_by_entity(vals)
+    pval_by_ent = _pval_by_entity(vals, _is_last_window(m, k) ? nothing : end_(current_window(m)))
     pvals = Dict(only(ent) => Dict(param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
