@@ -120,7 +120,7 @@ function _term_connection_flow_capacity(m, conn, ng, d, s_path, t)
 end
 
 function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
-    @fetch connections_invested_available = m.ext[:spineopt].variables
+    @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     (
         + sum(
@@ -139,9 +139,8 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
                     _default=_default_number_of_connections(conn),
                 )
             )
-            for (conn, _n, _d, s, t) in connection_flow_indices(
-                m; connection=conn, node=ng, direction=d, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
-            );
+            for s in s_path, t in t_in_t(m; t_long=t)
+            if any(haskey(connection_flow, (conn, n, d, s, t)) for n in members(ng));
             init=0,
         )
     )
@@ -153,6 +152,7 @@ function constraint_connection_flow_capacity_indices(m::Model)
     (
         (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
         for (conn, ng, d) in _connection_node_direction(m)
+        if members(ng) != [ng] || is_candidate(connection=conn)
         for (t, path) in t_lowest_resolution_path(
             m,
             connection_flow_indices(m; connection=conn, node=ng, direction=d),
