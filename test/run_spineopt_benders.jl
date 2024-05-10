@@ -43,8 +43,6 @@ function _test_run_spineopt_benders_setup()
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
-            ["model__temporal_block", ["instance", "hourly"]],
-            ["model__stochastic_structure", ["instance", "deterministic"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
@@ -580,7 +578,6 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
         ]
         append!(objects, [["unit", c] for c in candidates])
         relationships = [
-            ["model__temporal_block", ["instance", "investments_yearly"]],
             ["model__default_investment_temporal_block", ["instance", "investments_yearly"]],
             ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
             ["report__output", ["report_x", "units_invested_available"]],
@@ -598,7 +595,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             ["model", "instance", "roll_forward", unparse_db_value([Day(14) for k in 1:23])],
             ["model", "instance", "window_weight", unparse_db_value([14.0 for k in 1:24])],
             ["model", "instance", "model_type", "spineopt_benders"],
-            ["model", "instance", "max_iterations", 10],
+            ["model", "instance", "max_iterations", 100],
             ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
             ["node", "node_b", "demand", dem],
             ["node", "node_b", "node_slack_penalty", 10000],
