@@ -65,6 +65,6 @@ function add_variable_binary_gas_connection_flow!(m::Model)
         binary_gas_connection_flow_indices;
         bin=set_bin,
         fix_value=fix_binary_gas_connection_flow,
-        initial_value=initial_binary_gas_connection_flow
+        initial_value=initial_binary_gas_connection_flow,
     )
 end
