@@ -954,7 +954,6 @@ function generate_unit_commitment_parameters()
             _switchable_unit_iter,
             indices(units_on_cost),
             indices(units_on_non_anticipativity_time),
-            (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
             (x.unit for x in indices(ramp_up_limit)),
             (x.unit for x in indices(ramp_down_limit)),
             (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
