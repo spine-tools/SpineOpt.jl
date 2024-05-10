@@ -595,7 +595,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             ["model", "instance", "roll_forward", unparse_db_value([Day(14) for k in 1:23])],
             ["model", "instance", "window_weight", unparse_db_value([14.0 for k in 1:24])],
             ["model", "instance", "model_type", "spineopt_benders"],
-            ["model", "instance", "max_iterations", 100],
+            ["model", "instance", "max_iterations", 10],
             ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
             ["node", "node_b", "demand", dem],
             ["node", "node_b", "node_slack_penalty", 10000],
