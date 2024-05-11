@@ -120,7 +120,6 @@ function _test_benders_unit()
                 ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
-                ["unit", "unit_ab_alt", "units_on_cost", 0], # Just to have units_on variables
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
                 ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],

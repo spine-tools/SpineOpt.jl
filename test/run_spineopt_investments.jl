@@ -95,6 +95,7 @@ function _test_capacity_investments()
         url_in, url_out, file_path_out = _test_run_spineopt_investments_setup()
         object_parameter_values = [
             ["model", "instance", "use_connection_intact_flow", false],
+            ["unit", "unit_a", "units_on_cost", 0], # Just to have units_on variables
             ["unit", "unit_a", "number_of_units", 10],
             ["unit", "unit_a", "candidate_units", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],
