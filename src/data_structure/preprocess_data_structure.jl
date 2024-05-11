@@ -954,6 +954,7 @@ function generate_unit_commitment_parameters()
             _switchable_unit_iter,
             indices(units_on_cost),
             indices(units_on_non_anticipativity_time),
+            (x for x in indices(online_variable_type) if online_variable_type(; x...) != :online_variable_type_none),
             (x.unit for x in indices(ramp_up_limit)),
             (x.unit for x in indices(ramp_down_limit)),
             (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
