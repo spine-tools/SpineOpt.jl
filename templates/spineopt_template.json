@@ -275,7 +275,7 @@
         ["unit", "min_down_time", null, null, "Minimum downtime of a `unit` after it shuts down."],
         ["unit", "min_up_time", null, null, "Minimum uptime of a `unit` after it starts up."],
         ["unit", "number_of_units", 1.0, null, "Denotes the number of 'sub units' aggregated to form the modelled `unit`."],
-        ["unit", "online_variable_type", "unit_online_variable_type_linear", "unit_online_variable_type_list", "A selector for how the `units_on` variable is represented within the model."],
+        ["unit", "online_variable_type", "unit_online_variable_type_none", "unit_online_variable_type_list", "A selector for how the `units_on` variable is represented within the model."],
         ["unit", "outage_variable_type", "unit_online_variable_type_none", "unit_online_variable_type_list", "Determines whether the outage variable is integer or continuous or none(no optimisation of maintenance outages)."],
         ["unit", "scheduled_outage_duration", null, null, "Specifies the amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window"],
         ["unit", "shut_down_cost", null, null, "Costs of shutting down a 'sub unit', e.g. EUR/shutdown."],
