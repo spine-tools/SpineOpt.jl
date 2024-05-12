@@ -101,7 +101,9 @@ function add_variable_unit_flow!(m::Model)
             )
         )
         if ratio !== nothing
-        for (_n, s, t) in node_stochastic_time_indices(m; node=n1)
+        for (_n, s, t) in node_stochastic_time_indices(
+            m; node=n1, temporal_block=temporal_block(representative_periods_mapping=nothing)
+        )
     )
     add_variable!(
         m,
