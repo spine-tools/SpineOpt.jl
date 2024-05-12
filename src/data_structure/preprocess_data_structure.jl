@@ -954,11 +954,18 @@ function generate_unit_commitment_parameters()
             _switchable_unit_iter,
             indices(units_on_cost),
             indices(units_on_non_anticipativity_time),
-            (u for u in indices(online_variable_type) if online_variable_type(; unit=u) != :online_variable_type_none),
             (x.unit for x in indices(ramp_up_limit)),
             (x.unit for x in indices(ramp_down_limit)),
             (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
             (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
+            # The variable units_on is by default linear (defined in the template) in cases where it is used.
+            # Moreover, when the user explicitly set this variable to binary or integer, 
+            # we believe the user means to use it as well.
+            (
+                u for u in indices(online_variable_type) if online_variable_type(unit=u) in [
+                    :unit_online_variable_type_binary, :unit_online_variable_type_integer
+                ]
+            ),
         )
     )
     _deactivatable_unit_iter = Iterators.flatten(
