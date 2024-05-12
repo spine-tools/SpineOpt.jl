@@ -99,11 +99,15 @@ function _build_constraint_unit_pw_heat_rate(m::Model, u, n_from, n_to, s_path, 
             * unit_idle_heat_rate(
                m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
             )
+            for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+            init=0,
+        )
+        + sum(
             + units_started_up[u, s, t1]
             * unit_start_flow(
                 m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
             )
-            for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
+            for (u, s, t1) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
             init=0,
         )
     )
