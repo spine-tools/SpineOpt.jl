@@ -682,7 +682,15 @@ function unit_time_indices(
     (
         (unit=u, t=t1)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+        # The constraint_unit_state_transition needs the variable units_on with the dynamic time indices
+        # FIXME: there might be a more efficient to implement this
+        for t1 in Set(Iterators.flatten(
+                (
+                    time_slice(m; temporal_block=members(tb), t=t), 
+                    (t_before for (t_before, _t_after) in dynamic_time_indices(m, members(tb); t_before=t)),
+                )
+            )
+        )
     )
 end
 
