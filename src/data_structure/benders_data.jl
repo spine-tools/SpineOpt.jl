@@ -34,7 +34,7 @@ function _pval_by_entity(vals, t_end=nothing)
         by_s = get!(by_ent, ent, Dict())
         by_t = get!(by_s, ind.stochastic_scenario, Dict())
         realized_val = realize(val)
-        if t_end !== nothing
+        if t_end !== nothing && t_end < end_(ind.t)
             realized_val *= (t_end - start(ind.t)) / (end_(ind.t) - start(ind.t))
         end
         by_t[ind.t] = realized_val
