@@ -143,17 +143,33 @@ function _run_spineopt(
     t_end = now()
     elapsed_time_string = string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
     @log log_level 1 "Execution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
-    stats = Map(
-        [
-            :SpineOpt_version,
-            :SpineOpt_git_hash,
-            :SpineInterface_version,
-            :SpineInterface_git_hash,
-            :elapsed_time,
-        ],
-        [so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string],
-    )
     if url_out !== nothing
+        stat_keys = [
+            :SpineOpt_version, :SpineOpt_git_hash, :SpineInterface_version, :SpineInterface_git_hash, :elapsed_time
+        ]
+        stat_values = Any[so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string]
+        m_mp = master_model(m)
+        if m_mp !== nothing
+            append!(
+                stat_keys,
+                [
+                    :benders_objective_lower_bound,
+                    :benders_objective_upper_bound,
+                    :benders_gap,
+                    :benders_iteration_count,
+                ],
+            )
+            append!(
+                stat_values,
+                [
+                    @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[]),
+                    @sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[]),
+                    string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%"),
+                    length(m_mp.ext[:spineopt].benders_gaps),
+                ]
+            )
+        end
+        stats = Map(stat_keys, string.(stat_values))
         vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
         write_parameters(vals, url_out; alternative=alternative, on_conflict="replace")
     end
