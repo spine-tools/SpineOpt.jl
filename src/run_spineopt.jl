@@ -159,13 +159,14 @@ function _run_spineopt(
                     :benders_iteration_count,
                 ],
             )
+            gaps = m_mp.ext[:spineopt].benders_gaps
             append!(
                 stat_values,
                 [
                     @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[]),
                     @sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[]),
-                    string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%"),
-                    length(m_mp.ext[:spineopt].benders_gaps),
+                    isempty(gaps) ? "N/A" : string(@sprintf("%1.4f", last(gaps) * 100), "%"),
+                    length(gaps),
                 ]
             )
         end
