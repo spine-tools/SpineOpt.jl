@@ -89,9 +89,9 @@ function add_variable!(
         res_internal_fix_value = _resolve(internal_fix_value, m, ind, other_ind_and_factor...; reducer=_check_unique)
         _finalize_variable!(vars[ind], res_bin, res_int, res_lb, res_ub, res_fix_value, res_internal_fix_value)
     end
-    # TODO: some ref_ind may not be in keys(vars) unless the ind_map is carefully designed 
-    # in the specific variable creating function. There may need a warning or check to avoid unexpected errors.
-    merge!(vars, Dict(ind => coeff * vars[ref_ind] for (ind, (ref_ind, coeff)) in ind_map))
+    # A ref_ind may not be covered by keys(vars) unless 
+    # the ind_map is carefully designed in specific variable adding functions.
+    merge!(vars, Dict(ind => coeff * vars[ref_ind] for (ind, (ref_ind, coeff)) in ind_map if haskey(vars, ref_ind)))
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))

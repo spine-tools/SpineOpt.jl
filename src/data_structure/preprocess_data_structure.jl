@@ -47,6 +47,7 @@ function preprocess_data_structure()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
     generate_unit_commitment_parameters()
+    generate_representative_temporal_block_label()
 end
 
 """
@@ -989,5 +990,22 @@ function generate_unit_commitment_parameters()
         export has_switched_variable
         export has_online_variable
         export has_out_of_service_variable
+    end
+end
+
+function generate_representative_temporal_block_label()
+    _repr_temporal_block_iter = Iterators.flatten(
+        representative_periods_mapping(temporal_block=tb).values 
+        for tb in indices(representative_periods_mapping)
+    )
+    pname = :is_representative_temporal_block
+    add_object_parameter_values!(
+        temporal_block, 
+        Dict(tb => Dict(pname => parameter_value(true)) for tb in Set(_repr_temporal_block_iter))
+    )
+    add_object_parameter_defaults!(temporal_block, Dict(pname => parameter_value(false)))
+    @eval begin
+        is_representative_temporal_block = Parameter(:is_representative_temporal_block, [temporal_block])
+        export is_representative_temporal_block
     end
 end
