@@ -72,9 +72,7 @@ function add_variable_connection_flow!(m::Model)
             (x..., _fix_ratio_out_in_connection_flow_simple(x...)) for x in indices(fix_ratio_out_in_connection_flow)
         )
         if ratio !== nothing
-        for (_n, s, t) in node_stochastic_time_indices(
-            m; node=n_to, temporal_block=temporal_block(representative_periods_mapping=nothing)
-        )
+        for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
     )
     add_variable!(
         m,
