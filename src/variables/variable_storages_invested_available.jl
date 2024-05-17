@@ -31,6 +31,9 @@ function storages_invested_available_indices(
     temporal_block=anything,
 )
     node = intersect(indices(candidate_storages), members(node))
+    if _is_benders_master(m)
+        filter!(n -> decompose_investment_decision(node=n), node)
+    end
     node_investment_stochastic_time_indices(
         m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )

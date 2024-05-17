@@ -31,6 +31,9 @@ function units_invested_available_indices(
     temporal_block=anything,
 )
     unit = intersect(indices(candidate_units), members(unit))
+    if _is_benders_master(m)
+        filter!(u -> decompose_investment_decision(unit=u), unit)
+    end
     unit_investment_stochastic_time_indices(
         m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )

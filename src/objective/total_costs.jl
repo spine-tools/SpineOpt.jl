@@ -21,6 +21,9 @@ const mp_terms = [
     :unit_investment_costs, :connection_investment_costs, :storage_investment_costs, :mp_objective_penalties
 ]
 const sp_terms = [
+    :unit_investment_costs,
+    :connection_investment_costs,
+    :storage_investment_costs,
     :variable_om_costs,
     :fixed_om_costs,
     :taxes,

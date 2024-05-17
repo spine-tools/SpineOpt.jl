@@ -31,6 +31,9 @@ function connections_invested_available_indices(
     temporal_block=anything,
 )
     connection = intersect(indices(candidate_connections), members(connection))
+    if _is_benders_master(m)
+        filter!(c -> decompose_investment_decision(connection=c), connection)
+    end
     connection_investment_stochastic_time_indices(
         m; connection=connection, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )

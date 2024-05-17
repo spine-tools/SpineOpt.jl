@@ -26,6 +26,9 @@ function storage_investment_costs(m::Model, t_range)
     @fetch storages_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     node = indices(storage_investment_cost)
+    if _is_benders_subproblem(m)
+        node = Iterators.filter(n -> !decompose_investment_decision(node=n), node)
+    end
     @expression(
         m,
         + sum(
