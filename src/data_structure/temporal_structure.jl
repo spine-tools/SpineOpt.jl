@@ -699,14 +699,17 @@ end
 
 Generate a `Set` of all representative temporal blocks.
 """
-function _all_representative_temporal_blocks()
-    Set(
-        Iterators.flatten(
-            representative_periods_mapping(temporal_block=tb).values 
-            for tb in indices(representative_periods_mapping)
-        )
+_all_representative_temporal_blocks() = Iterators.flatten(
+    (
+        indices(representative_periods_mapping),
+        Set(
+            Iterators.flatten(
+                temporal_block.(representative_periods_mapping(temporal_block=tb).values) 
+                for tb in indices(representative_periods_mapping)
+            )
+        ),
     )
-end
+)
 
 """
     unit_dynamic_time_indices(m::Model;<keyword arguments>)
@@ -723,12 +726,9 @@ function unit_dynamic_time_indices(
         (unit=u, t_before=tb, t_after=ta)
         for (u, blk) in units_on__temporal_block(unit=unit, _compact=false)
         for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)    
-        if !(is_representative_temporal_block(temporal_block=members(blk))) || tb in time_slice(
+        if tb in time_slice(
             m; temporal_block=members(blk)
-        ) 
-        # if !(members(blk) in _all_representative_temporal_blocks()) || tb in time_slice(
-        # m; temporal_block=members(blk)
-        # ) 
+        ) || @show isempty(intersect(members(blk), _all_representative_temporal_blocks()))
     )
 end
 
