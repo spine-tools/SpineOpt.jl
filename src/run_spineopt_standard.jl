@@ -249,7 +249,7 @@ function _create_objective_terms!(m)
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in in_window), beyond_window)
-    for term in objective_terms(m; benders_master=false)
+    for term in objective_terms(m; benders_master=!_is_benders_subproblem(m))
         func = getproperty(SpineOpt, term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
