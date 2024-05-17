@@ -368,7 +368,7 @@ end
 
 function _generate_call_update!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
-    temp_struct[:call_update] = master_model(m) in (nothing, m) && temp_struct[:window_count] == 1 ? as_number : as_call
+    temp_struct[:call_update] = _is_benders_subproblem(m) || temp_struct[:window_count] > 1 ? as_call : as_number
 end
 
 """

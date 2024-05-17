@@ -31,11 +31,8 @@ function units_on_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     unit = intersect(unit, _unit_with_online_variable())
-    (
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, s, t) in unit_stochastic_time_indices(
-            m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
-        )
+    unit_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 

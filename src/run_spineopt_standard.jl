@@ -249,9 +249,7 @@ function _create_objective_terms!(m)
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in in_window), beyond_window)
-    for term in objective_terms(
-        m; operations=true, investments=model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
-    )
+    for term in objective_terms(m; benders_master=false)
         func = getproperty(SpineOpt, term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
@@ -944,18 +942,19 @@ function write_report(m, url_out; alternative="", log_level=3)
     else
         values_mp = _collect_output_values(m_mp)
         values = _collect_output_values(m)
-        total_costs_keys = (k for k in keys(values_mp) if k[1] == :total_costs)
-        total_costs_key = isempty(total_costs_keys) ? nothing : first(total_costs_keys)
-        total_costs_mp = pop!(values_mp, total_costs_key, Dict())
-        total_costs = pop!(values, total_costs_key, nothing)
-        mergewith!(merge!, values_mp, values)
-        if total_costs !== nothing
-            _merge(x, y) = timedata_operation(x, y) do x, y
-                sum(Iterators.filter(!isnan, (x, y)); init=0)
+        for key in (:total_costs, intersect(mp_terms, sp_terms)...)
+            costs_keys = (k for k in keys(values_mp) if k[1] == key)
+            costs_key = isempty(costs_keys) ? nothing : first(costs_keys)
+            costs_mp = pop!(values_mp, costs_key, Dict())
+            costs = pop!(values, costs_key, nothing)
+            if costs !== nothing
+                _merge(x, y) = timedata_operation(x, y) do x, y
+                    sum(Iterators.filter(!isnan, (x, y)); init=0)
+                end
+                values_mp[costs_key] = merge!(_merge, costs_mp, costs)
             end
-            values_mp[total_costs_key] = merge!(_merge, total_costs_mp, total_costs)
         end
-        values_mp
+        mergewith!(merge!, values_mp, values)
     end
     write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end

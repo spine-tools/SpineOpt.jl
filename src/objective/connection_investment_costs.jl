@@ -25,6 +25,7 @@ Create and expression for connection investment costs.
 function connection_investment_costs(m::Model, t_range)
     @fetch connections_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
+    connection = indices(connection_investment_cost)
     @expression(
         m,
         + sum(
@@ -32,9 +33,7 @@ function connection_investment_costs(m::Model, t_range)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_investment_cost(m; connection=c, stochastic_scenario=s, analysis_time=t0, t=t)
             * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
-            for (c, s, t) in connections_invested_available_indices(
-                m; connection=indices(connection_investment_cost), t=t_range
-            );
+            for (c, s, t) in connections_invested_available_indices(m; connection=connection, t=t_range);
             init=0,
         )
     )

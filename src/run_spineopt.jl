@@ -515,7 +515,7 @@ function _model_name(m)
     st = m.ext[:spineopt].stage
     st !== nothing && return string(st.name, " stage")
     name = string(m.ext[:spineopt].instance.name)
-    master_model(m) === m && return string(name, " master")
+    _is_benders_master(m) && return string(name, " master")
     name
 end
 
@@ -529,6 +529,10 @@ JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::Abs
 The Benders master model for given model.
 """
 master_model(m) = m.ext[:spineopt].master_model
+
+_is_benders_master(m) = master_model(m) === m
+
+_is_benders_subproblem(m) = !(master_model(m) in (m, nothing))
 
 """
     stage_model(m, stage_name)

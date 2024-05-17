@@ -165,8 +165,8 @@ function _set_mp_objective!(m::Model)
 end
 
 function _create_mp_objective_terms!(m)
-    for term in objective_terms(m; operations=false)
-        func = eval(term)
+    for term in objective_terms(m; benders_subproblem=false)
+        func = getproperty(SpineOpt, term)
         m.ext[:spineopt].objective_terms[term] = (func(m, anything), 0)
     end
 end

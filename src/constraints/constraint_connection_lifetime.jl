@@ -49,8 +49,7 @@ end
 function constraint_connection_lifetime_indices(m::Model)
     (
         (connection=conn, stochastic_path=path, t=t)
-        for conn in indices(connection_investment_lifetime)
-        for (conn, t) in connection_investment_time_indices(m; connection=conn)
+        for (conn, t) in connection_investment_time_indices(m; connection=indices(connection_investment_lifetime))
         for path in active_stochastic_paths(m, _past_connections_invested_available_indices(m, conn, anything, t))
     )
 end
