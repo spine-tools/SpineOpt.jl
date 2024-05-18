@@ -682,34 +682,9 @@ function unit_time_indices(
     (
         (unit=u, t=t1)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        # The constraint_unit_state_transition needs the variable units_on with the dynamic time indices
-        # FIXME: there might be a more efficient to implement this
-        for t1 in Set(Iterators.flatten(
-                (
-                    time_slice(m; temporal_block=members(tb), t=t), 
-                    (t_before for (t_before, _t_after) in dynamic_time_indices(m, members(tb); t_before=t)),
-                )
-            )
-        )
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
-
-"""
-    _all_representative_temporal_blocks()
-
-Generate a `Set` of all representative temporal blocks.
-"""
-_all_representative_temporal_blocks() = Iterators.flatten(
-    (
-        indices(representative_periods_mapping),
-        Set(
-            Iterators.flatten(
-                temporal_block.(representative_periods_mapping(temporal_block=tb).values) 
-                for tb in indices(representative_periods_mapping)
-            )
-        ),
-    )
-)
 
 """
     unit_dynamic_time_indices(m::Model;<keyword arguments>)
@@ -725,10 +700,15 @@ function unit_dynamic_time_indices(
     (
         (unit=u, t_before=tb, t_after=ta)
         for (u, blk) in units_on__temporal_block(unit=unit, _compact=false)
-        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)    
-        if tb in time_slice(
+        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after) 
+        # When representative temporal structure is used, the dynamic time indices of a unit must stay within the 
+        # represented temporal blocks, including the corresponding representing blocks in case any of them leads to
+        # time slices outside the represented blocks. The reason is that the constraints about unit state transition 
+        # may use variables (e.g. units_on) with time indices only inside the represented temporal blocks, otherwise 
+        # the model can't find a mapping to representative blocks for the outside time indices.
+        if !(explicit_representative_temporal_block(temporal_block=blk)) || tb in time_slice(
             m; temporal_block=members(blk)
-        ) || @show isempty(intersect(members(blk), _all_representative_temporal_blocks()))
+        )
     )
 end
 
