@@ -34,8 +34,7 @@ function run_spineopt_benders!(
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
     undo_force_starting_investments! = _force_starting_investments!(m_mp)
     _call_event_handlers(m_mp, :model_built)
-    warmup_stages = model__benders_warmup_stage(model=m.ext[:spineopt].instance)
-    length(warmup_stages) == 1 && _benders_warmup(m, m_mp, first(warmup_stages); log_level)
+    warmup_benders(model=m.ext[:spineopt].instance) && _benders_warmup(m, m_mp; log_level)
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     j = 1
@@ -80,9 +79,19 @@ function run_spineopt_benders!(
     m
 end
 
-function _benders_warmup(m, m_mp, warmup_stage; log_level)
-    solve_model!(m; log_level=log_level, calculate_duals=true, log_prefix="Benders warmup - ",)
-    process_master_problem_solution(m.ext[:spineopt].model_by_stage[warmup_stage], m)
+function _set_model_type!(instance, type)
+    add_object_parameter_values!(model, Dict(instance => Dict(:model_type => parameter_value(type))))
+end
+
+function _benders_warmup(m, m_mp; log_level)
+    instance = m.ext[:spineopt].instance
+    _set_model_type!(instance, :spineopt_standard)
+    m_wu = create_model(nothing, nothing, false)
+    _set_model_type!(instance, :spineopt_benders)
+    build_model!(m_wu; log_level=0)
+    add_event_handler!(process_subproblem_solution, m_wu, :window_solved)
+    solve_model!(m_wu; log_level=log_level, calculate_duals=true, log_prefix="Benders warmup - ")
+    process_master_problem_solution(only(values(m_wu.ext[:spineopt].model_by_stage)), m_wu)
     _add_mp_cuts!(m_mp; log_level)
 end
 
