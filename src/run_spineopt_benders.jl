@@ -34,6 +34,8 @@ function run_spineopt_benders!(
     m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
     undo_force_starting_investments! = _force_starting_investments!(m_mp)
     _call_event_handlers(m_mp, :model_built)
+    warmup_stages = model__benders_warmup_stage(model=m.ext[:spineopt].instance)
+    length(warmup_stages) == 1 && _benders_warmup(m, m_mp, first(warmup_stages); log_level)
     min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     j = 1
@@ -76,6 +78,12 @@ function run_spineopt_benders!(
     end
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
+end
+
+function _benders_warmup(m, m_mp, warmup_stage; log_level)
+    solve_model!(m; log_level=log_level, calculate_duals=true, log_prefix="Benders warmup - ",)
+    process_master_problem_solution(m.ext[:spineopt].model_by_stage[warmup_stage], m)
+    _add_mp_cuts!(m_mp; log_level)
 end
 
 """
