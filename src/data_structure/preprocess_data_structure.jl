@@ -989,25 +989,11 @@ based on k_constant, number_of_pressure_points, min_pressure and max_pressure
 
 Must exectute before generate_direction
 """
-new_connection__node__node_parameter_values = Dict()
 function generate_fixed_pressure_point_constants()
 
     for conn in indices(number_of_pressure_points)
-        n_orig = first(
-            [
-                n
-                for n in connection__from_node(connection=conn)
-                if has_pressure(node=n) == true
-            ]
-        )
-
-        n_dest = first(
-            [
-                n
-                for n in connection__to_node(connection=conn)
-                if (has_pressure(node=n) == true) && n != n_orig
-            ]
-        )
+        n_orig = first([n for n in connection__from_node(connection=conn) if has_pressure(node=n)])
+        n_dest = first([n for n in connection__to_node(connection=conn) if has_pressure(node=n) && n != n_orig])
 
         pmax_dest = max_node_pressure(node=n_dest)
         pmax_orig = max_node_pressure(node=n_orig)
@@ -1017,11 +1003,11 @@ function generate_fixed_pressure_point_constants()
 
         n_points = number_of_pressure_points(connection=conn)
 
-        p_increment = (pmax_orig - pmin_orig) / (n_points-1)
-        p_points_1 = [pmin_orig + p_increment * (i - 1) for i in 1 : n_points]
+        p_increment = (pmax_orig - pmin_orig) / (n_points - 1)
+        p_points_1 = [pmin_orig + p_increment * (i - 1) for i in 1:n_points]
 
-        p_increment = (pmax_dest - pmin_dest) / (n_points-1)
-        p_points_2 = [pmin_dest + p_increment * (i - 1) for i in 1 : n_points]
+        p_increment = (pmax_dest - pmin_dest) / (n_points - 1)
+        p_points_2 = [pmin_dest + p_increment * (i - 1) for i in 1:n_points]
 
         n1 = n_orig
         n2 = n_dest
@@ -1039,15 +1025,15 @@ function generate_fixed_pressure_point_constants()
                     push!(fpc_0_n1_n2, 0)
                     push!(fpc_1_n1_n2, 0)
                 elseif p1 > p2
-                    push!(fpc_0_n2_n1, (p2 * k) / sqrt(p1^2-p2^2))
-                    push!(fpc_1_n2_n1, (p1 * k) / sqrt(p1^2-p2^2))
+                    push!(fpc_0_n2_n1, (p2 * k) / sqrt(p1 ^ 2 - p2 ^ 2))
+                    push!(fpc_1_n2_n1, (p1 * k) / sqrt(p1 ^ 2 - p2 ^ 2))
                     push!(fpc_0_n1_n2, 0)
                     push!(fpc_1_n1_n2, 0)
                 else
                     push!(fpc_0_n2_n1, 0)
                     push!(fpc_1_n2_n1, 0)
-                    push!(fpc_0_n1_n2, (p1 * k) / sqrt(p2^2-p1^2))
-                    push!(fpc_1_n1_n2, (p2 * k) / sqrt(p2^2-p1^2))
+                    push!(fpc_0_n1_n2, (p1 * k) / sqrt(p2 ^ 2 - p1 ^ 2))
+                    push!(fpc_1_n1_n2, (p2 * k) / sqrt(p2 ^ 2 - p1 ^ 2))
                 end
             end
         end
@@ -1055,11 +1041,11 @@ function generate_fixed_pressure_point_constants()
         new_connection__node__node_parameter_values = Dict(
             (conn, n1, n2) => Dict(
                 :fixed_pressure_constant_0 => parameter_value(fpc_0_n1_n2),
-                :fixed_pressure_constant_1 => parameter_value(fpc_1_n1_n2)
+                :fixed_pressure_constant_1 => parameter_value(fpc_1_n1_n2),
             ),
             (conn, n2, n1) => Dict(
                 :fixed_pressure_constant_0 => parameter_value(fpc_0_n2_n1),
-                :fixed_pressure_constant_1 => parameter_value(fpc_1_n2_n1)
+                :fixed_pressure_constant_1 => parameter_value(fpc_1_n2_n1),
             )
         )
         add_relationship_parameter_values!(connection__node__node, new_connection__node__node_parameter_values)    
