@@ -166,6 +166,8 @@
         ["connection", "initial_connections_invested_available", null, null, "Setting a value fixes the connections_invested_available variable at the beginning"],
         ["connection", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["connection", "number_of_connections", 1.0, null, "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."],
+        ["connection", "number_of_pressure_points", null, null, "If specified, this will trigger the automatic creation of fixed_pressure_constant_0 and fixed_pressure_constant_1 based on k_constant, min_pressure and max_pressure. Must be 2 or greater"],
+        ["connection", "k_constant", null, null, "Used in the automatic creation of fixed_pressure_constant_0 and fixed_pressure_constant_1 in conjunction with min_pressure and max_pressure and number_of_pressure_points."],
         ["investment_group", "equal_investments", false, "boolean_value_list", "Whether all entities in the group must have the same investment decision."],
         ["investment_group", "maximum_capacity_invested_available", null, null, "Upper bound on the capacity invested available in the group at any point in time."],
         ["investment_group", "maximum_entities_invested_available", null, null, "Upper bound on the number of entities invested available in the group at any point in time."],
