@@ -68,6 +68,8 @@ function add_variable!(
     initial_value = _nothing_if_empty(initial_value)
     fix_value = _nothing_if_empty(fix_value)
     internal_fix_value = _nothing_if_empty(internal_fix_value)
+    # The syntax below will add one extra time slice ahead the defined time indices to ensure mathcing 
+    # the dynamic time indices at the beginning of model horizon.
     t = vcat(history_time_slices, time_slice(m))
     first_ind = iterate(indices(m; t=t))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
@@ -91,7 +93,8 @@ function add_variable!(
     end
     # A ref_ind may not be covered by keys(vars) unless 
     # the ind_map is carefully designed in specific variable adding functions.
-    merge!(vars, Dict(ind => coeff * vars[ref_ind] for (ind, (ref_ind, coeff)) in ind_map if haskey(vars, ref_ind)))
+    filtered_ind_map = Dict(ind => (ref_ind, coeff) for (ind, (ref_ind, coeff)) in ind_map if haskey(vars, ref_ind))
+    merge!(vars, Dict(ind => coeff * vars[ref_ind] for (ind, (ref_ind, coeff)) in filtered_ind_map))
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
@@ -106,6 +109,9 @@ function add_variable!(
         end
     end
     isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
+        # When a representative termporal structure is used, the syntax will generate representative periods mapping
+        # only for the given indices, which miss the head time slice internally generated above to match the dynamic
+        # time indices at the beginning of model horizon.
         vars, _representative_periods_mapping(m, vars, indices)
     )
     vars
