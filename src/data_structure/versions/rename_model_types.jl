@@ -19,7 +19,7 @@
 """
 	rename_model_types(db_url)
 
-Renaming `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`
+Rename `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`
 """
 function rename_model_types(db_url, log_level)
 	@log log_level 0 string(
@@ -38,7 +38,9 @@ function rename_model_types(db_url, log_level)
 	spineopt_operations_id = get(list_value_ids, "spineopt_operations", nothing)
 	new_list_vals = []
 	if spineopt_master_id !== nothing
-		push!(new_list_vals, Dict("id" => spineopt_master_id, "value" => unparse_db_value("spineopt_benders_master")[1]))
+		push!(
+			new_list_vals, Dict("id" => spineopt_master_id, "value" => unparse_db_value("spineopt_benders_master")[1])
+		)
 	end
 	if spineopt_operations_id !== nothing
 		push!(new_list_vals, Dict("id" => spineopt_operations_id, "value" => unparse_db_value("spineopt_standard")[1]))

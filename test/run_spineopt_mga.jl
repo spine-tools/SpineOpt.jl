@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function _test_algorithm_strucutre_setup()
+function _test_algorithm_structure_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -103,7 +103,7 @@ function _test_algorithm_strucutre_setup()
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
-            ["model", "instance", "model_type", "spineopt_mga"],
+            ["model", "instance", "model_algorithm", "mga_algorithm"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
@@ -131,7 +131,7 @@ end
 
 function _test_test_mga_algorithm()
     @testset "test mga algorithm" begin
-        url_in = _test_algorithm_strucutre_setup()
+        url_in = _test_algorithm_structure_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -164,7 +164,7 @@ function _test_test_mga_algorithm()
             ["node", "node_group_bc", "storages_invested_mga", true],
             ["node", "node_group_bc", "storages_invested_big_m_mga", storages_invested_big_m_mga],
             ["node", "node_group_bc", "storages_invested_mga_weight", 1],
-            ["model", "instance", "model_type", "spineopt_mga"],
+            ["model", "instance", "model_algorithm", "mga_algorithm"],
             ["model", "instance", "max_mga_slack", mga_slack],
             ["model", "instance", "max_mga_iterations", 2],
             # ["node", "node_a", "demand", 1],
@@ -488,7 +488,7 @@ end
 
 function _test_test_mga_algorithm_2()
     @testset "test mga algorithm 2" begin
-        url_in = _test_algorithm_strucutre_setup()
+        url_in = _test_algorithm_structure_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -529,7 +529,7 @@ function _test_test_mga_algorithm_2()
             ["node", "node_c", "node_state_cap", 0],
             ["node", "node_group_bc", "storages_invested_mga", true],
             ["node", "node_group_bc","storages_invested_mga_weight", mga_weights_1],
-            ["model", "instance", "model_type", "spineopt_mga"],
+            ["model", "instance", "model_algorithm", "mga_algorithm"],
             ["model", "instance", "max_mga_slack", mga_slack],
             ["node", "node_b", "demand", 1],
             ["node", "node_c", "demand", 1],
@@ -601,7 +601,7 @@ function _test_test_mga_algorithm_2()
     end
 end
 
-@testset "algorithm strucutre" begin
+@testset "algorithm structure" begin
     _test_test_mga_algorithm()
     _test_test_mga_algorithm_2()
 end
