@@ -135,7 +135,6 @@ end
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
-    include("data_structure/algorithm_mga_structure.jl")
     include("data_structure/postprocess_results.jl")
     include("expressions/expression.jl")
     include("constraints/constraint_unit.jl")
@@ -149,5 +148,6 @@ end
     include("run_spineopt_benders.jl")
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
+    include("run_spineopt_mga.jl")
     include("run_examples.jl")
 end

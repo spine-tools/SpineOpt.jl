@@ -307,18 +307,13 @@ function run_spineopt!(
     write_as_roll=0,
     resume_file_path=nothing,
 )
-    do_run_spineopt! = Dict(
-        :spineopt_standard => run_spineopt_standard!,
-        :spineopt_benders => run_spineopt_benders!,
-        :spineopt_mga => run_spineopt_mga!,
-    )[model_type(model=m.ext[:spineopt].instance)]
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
     Base.invokelatest(build_model!, m; log_level)
-    _call_event_handlers(m, :model_built)
     Base.invokelatest(        
         do_run_spineopt!,
         m,
-        url_out;
+        url_out,
+        Val(model_algorithm(model=m.ext[:spineopt].instance));
         log_level=log_level,
         optimize=optimize,
         update_names=update_names,

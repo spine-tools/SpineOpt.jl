@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function run_spineopt_standard!(
+function do_run_spineopt!(
     m,
-    url_out;
+    url_out,
+    ::Val{:basic_algorithm};
     log_level,
     optimize,
     update_names,
@@ -28,22 +29,12 @@ function run_spineopt_standard!(
     resume_file_path,
 )
     optimize || return m
-    calculate_duals = any(
-        startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
-    )
     try
-        solve_model!(
-            m;
-            log_level=log_level,
-            update_names=update_names,
-            calculate_duals=calculate_duals,
-            write_as_roll=write_as_roll,
-            resume_file_path=resume_file_path,
-        )
+        solve_model!(m; log_level, update_names, write_as_roll, resume_file_path)
         if write_as_roll > 0
             _write_intermediate_results(m)
         else
-            write_report(m, url_out; alternative=alternative, log_level=log_level)
+            write_report(m, url_out; alternative, log_level)
         end
         m
     catch err
@@ -51,7 +42,7 @@ function run_spineopt_standard!(
         m
     finally
         if write_as_roll > 0
-            write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
+            write_report_from_intermediate_results(m, url_out; alternative, log_level)
         end
     end
 end
@@ -84,6 +75,9 @@ function build_model!(m; log_level)
     @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
     _init_outputs!(m)
     _build_stage_models!(m; log_level)
+    _call_event_handlers(m, :model_built)
+    m_mp = master_model(m)
+    m_mp === nothing || _build_mp_model!(m_mp; log_level=log_level)
 end
 
 """
@@ -381,9 +375,77 @@ function solve_model!(
     update_names=false,
     write_as_roll=0,
     resume_file_path=nothing,
-    calculate_duals=false,
+    output_suffix=(;),
+)
+    m_mp = master_model(m)
+    if m_mp === nothing
+        # Standard solution method
+        calculate_duals = any(
+            startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
+        )
+        _do_solve_model!(m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, calculate_duals)
+    else
+        # Benders solution method
+        add_event_handler!(process_subproblem_solution, m, :window_solved)
+        add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
+        add_event_handler!(_save_sp_solution!, m, :window_solved)
+        m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
+        undo_force_starting_investments! = _force_starting_investments!(m_mp)
+        min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
+        max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+        for j in Iterators.countfrom(1)
+            @log log_level 0 "\nStarting Benders iteration $j"
+            j == 2 && undo_force_starting_investments!()
+            _do_solve_model!(m_mp; log_level, update_names, output_suffix, rewind=false) || break
+            @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
+            current_gap_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
+                ""
+            else
+                gap = last(m_mp.ext[:spineopt].benders_gaps)
+                "(current gap: $(@sprintf("%1.4f", gap * 100))%) "
+            end
+            _do_solve_model!(
+                m;
+                log_level,
+                update_names,
+                write_as_roll,
+                resume_file_path,
+                output_suffix,
+                calculate_duals=true,
+                log_prefix="Benders iteration $j $current_gap_str- ",
+            ) || break
+            @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
+            @log log_level 1 "Benders iteration $j complete"
+            @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
+            @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
+            gap = last(m_mp.ext[:spineopt].benders_gaps)
+            @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
+            if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
+                @log log_level 1 "Benders tolerance satisfied, terminating..."
+                break
+            end
+            if j >= max_benders_iterations
+                @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
+                break
+            end
+            @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+            unfix_history!(m)
+            j += 1
+            global current_bi = add_benders_iteration(j)
+        end
+        m
+    end
+end
+
+function _do_solve_model!(
+    m;
+    log_level=3,
+    update_names=false,
+    write_as_roll=0,
+    resume_file_path=nothing,
     output_suffix=(;),
     log_prefix="",
+    calculate_duals=false,
     rewind=true,
 )
     k = _resume_run!(m, resume_file_path; log_level, update_names)
@@ -410,7 +472,7 @@ end
 
 function _solve_stage_models!(m; log_level, log_prefix)
     for stage_m in values(m.ext[:spineopt].model_by_stage)
-        solve_model!(stage_m; log_level, log_prefix) || return false
+        _do_solve_model!(stage_m; log_level, log_prefix) || return false
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
     end
@@ -585,13 +647,13 @@ function _calculate_duals(m; log_level=3)
     if has_duals(m)
         _save_marginal_values!(m)
         _save_bound_marginal_values!(m)
-    elseif model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
+    elseif _is_benders_subproblem(m)
+        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
+        _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
+    else
         @log log_level 1 "Obtaining duals for $model_name..."
         _calculate_duals_cplex(m; log_level=log_level) && return
         _calculate_duals_fallback(m; log_level=log_level)
-    else
-        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
-        _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
     end
 end
 
