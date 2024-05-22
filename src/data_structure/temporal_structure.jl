@@ -701,14 +701,6 @@ function unit_dynamic_time_indices(
         (unit=u, t_before=tb, t_after=ta)
         for (u, blk) in units_on__temporal_block(unit=unit, _compact=false)
         for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after) 
-        # When representative temporal structure is used, the dynamic time indices of a unit must stay within the 
-        # represented temporal blocks, including the corresponding representing blocks in case any of them leads to
-        # time slices outside the represented blocks. The reason is that the constraints about unit state transition 
-        # may use variables (e.g. units_on) with time indices only inside the represented temporal blocks, otherwise 
-        # the model can't find a mapping to representative blocks for the outside time indices.
-        if !(explicit_representative_temporal_block(temporal_block=blk)) || tb in time_slice(
-            m; temporal_block=members(blk)
-        )
     )
 end
 
