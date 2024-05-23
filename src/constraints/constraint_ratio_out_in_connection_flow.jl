@@ -56,7 +56,6 @@ function _build_constraint_ratio_out_in_connection_flow(m::Model, conn, ng_out, 
     # NOTE: the `<sense>_ratio_<directions>_connection_flow` parameter uses the stochastic dimensions
     # of the second <direction>!
     @fetch connection_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     build_sense_constraint(
         + sum(
             + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
@@ -73,10 +72,8 @@ function _build_constraint_ratio_out_in_connection_flow(m::Model, conn, ng_out, 
         sense,
         + sum(
             + connection_flow[conn, n_in, d, s, t_short]
-            * ratio_out_in(
-                m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t_short
-            )
-            * overlap_duration(t_short, _delayed_t(conn, ng_out, ng_in, t0, s, t))
+            * ratio_out_in(m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t_short)
+            * overlap_duration(t_short, _delayed_t(conn, ng_out, ng_in, s, t))
             for (conn, n_in, d, s, t_short) in connection_flow_indices(
                 m;
                 connection=conn,
@@ -148,12 +145,11 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
 end
 
 function _to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
-    t0 = _analysis_time(m)
-    to_time_slice(m; t=_delayed_t(conn, ng_out, ng_in, t0, s, t))
+    to_time_slice(m; t=_delayed_t(conn, ng_out, ng_in, s, t))
 end
 
-function _delayed_t(conn, ng_out, ng_in, t0, s, t)
-    t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, analysis_time=t0, stochastic_scenario=s, t=t)
+function _delayed_t(conn, ng_out, ng_in, s, t)
+    t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)
 end
 
 """

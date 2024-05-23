@@ -47,7 +47,6 @@ end
 Add `node_pressure` variables to model `m`.
 """
 function add_variable_node_pressure!(m::Model)
-    t0 = start(current_window(m))
     add_variable!(
         m,
         :node_pressure,

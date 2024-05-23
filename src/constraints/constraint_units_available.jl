@@ -37,7 +37,6 @@ end
 
 function _build_constraint_units_available(m, u, s, t)
     @fetch units_on, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + units_on[u, s, t] 
@@ -53,7 +52,7 @@ function _build_constraint_units_available(m, u, s, t)
             init=0,
         )
         <=
-        number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+        number_of_units(m; unit=u, stochastic_scenario=s, t=t)
     )
 end
 

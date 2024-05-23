@@ -24,14 +24,13 @@ Create an expression for fixed operation costs of units.
 """
 function fixed_om_costs(m, t_range)
     @fetch units_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @expression(
         m,
         sum(
-            + unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            * fom_cost(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+            + unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
             * (
-                + number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+                + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
                 + units_invested_available[u, s, t]
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))

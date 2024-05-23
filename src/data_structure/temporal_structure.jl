@@ -830,5 +830,6 @@ function _t_extreme_resolution_sets!(m, t_dict, kw)
 end
 
 function (x::Parameter)(m::Model; kwargs...)
-    m.ext[:spineopt].temporal_structure[:call_update](x; kwargs...)
+    t0 = _analysis_time(m)
+    m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, kwargs...)
 end

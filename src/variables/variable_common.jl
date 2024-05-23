@@ -129,11 +129,10 @@ _check_unique(x, y) = x == y ? x : error("$x != $y")
 
 _resolve(::Nothing, args...; default=nothing, kwargs...) = default
 _resolve(f, ind; kwargs...) = f(ind)
-_resolve(f, m, ind; kwargs...) = f(m; ind..., analysis_time=_analysis_time(m))
+_resolve(f, m, ind; kwargs...) = f(m; ind...)
 _resolve(f, ind, other_ind, _factor; reducer, kwargs...) = _apply(reducer, f(ind), f(other_ind))
 function _resolve(f, m, ind, other_ind, factor; reducer, kwargs...)
-    t0 = _analysis_time(m)
-    _apply(reducer, f(m; ind..., analysis_time=t0), _mul(factor, f(m; other_ind..., analysis_time=t0)))
+    _apply(reducer, f(m; ind...), _mul(factor, f(m; other_ind...)))
 end
 
 _mul(_factor, ::Nothing) = nothing

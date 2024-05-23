@@ -105,12 +105,9 @@ end
 
 function _term_connection_flow_capacity(m, conn, ng, d, s_path, t)
     @fetch connection_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     (
         sum(
-            connection_flow_capacity(
-                m; connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t
-            )
+            connection_flow_capacity(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
             for s in s_path, t in t_in_t(m; t_long=t)
             if any(haskey(connection_flow, (conn, n, d, s, t)) for n in members(ng));
             init=0,
@@ -121,7 +118,6 @@ end
 
 function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
     @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     (
         + sum(
             + (
@@ -131,12 +127,7 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
                     init=0,
                 )
                 + number_of_connections(
-                    m;
-                    connection=conn,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t,
-                    _default=_default_number_of_connections(conn),
+                    m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
                 )
             )
             for s in s_path, t in t_in_t(m; t_long=t)
@@ -146,7 +137,7 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
     )
 end
 
-_default_number_of_connections(conn) = is_candidate(connection=conn) ? 0 : 1
+_default_nb_of_conns(conn) = is_candidate(connection=conn) ? 0 : 1
 
 function constraint_connection_flow_capacity_indices(m::Model)    
     (

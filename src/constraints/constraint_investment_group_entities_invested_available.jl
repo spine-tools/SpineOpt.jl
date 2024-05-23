@@ -32,11 +32,10 @@ function add_constraint_investment_group_minimum_entities_invested_available!(m:
 end
 
 function _build_constraint_investment_group_minimum_entities_invested_available(m::Model, ig, s, t)
-    t0 = _analysis_time(m)
     @build_constraint(
         _group_entities_invested_available(m, ig, s, t)
         >=
-        minimum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
+        minimum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
     )
 end
 
@@ -63,11 +62,10 @@ function add_constraint_investment_group_maximum_entities_invested_available!(m:
 end
 
 function _build_constraint_investment_group_maximum_entities_invested_available(m::Model, ig, s, t)
-    t0 = _analysis_time(m)
     @build_constraint(
         _group_entities_invested_available(m, ig, s, t)
         <=
-        maximum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
+        maximum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
     )
 end
 

@@ -108,23 +108,22 @@ function _build_constraint_unit_flow_capacity_tight_compact(m::Model, u, ng, d, 
     @fetch (
         units_started_up, units_shut_down, nonspin_units_started_up, nonspin_units_shut_down
     ) = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + _term_unit_flow(m, u, ng, d, s_path, t)
         <=
         + _term_flow_capacity(m, u, ng, d, s_path, t)
         - (
             + sum(
-                + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
-                * _unit_flow_capacity(m, u, ng, d, s, t0, t)
+                + _shutdown_margin(m, u, ng, d, s, t, case, part)
+                * _unit_flow_capacity(m, u, ng, d, s, t)
                 * units_shut_down[u, s, t_after]
                 * duration(t_after)
                 for (u, s, t_after) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_next);
                 init=0,
             )
             + sum(
-                + _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
-                * _unit_flow_capacity(m, u, ng, d, s, t0, t)
+                + _shutdown_margin(m, u, ng, d, s, t, case, part)
+                * _unit_flow_capacity(m, u, ng, d, s, t)
                 * _switch(
                     d; from_node=nonspin_units_started_up, to_node=nonspin_units_shut_down
                 )[u, n, s, t_over]
@@ -136,8 +135,8 @@ function _build_constraint_unit_flow_capacity_tight_compact(m::Model, u, ng, d, 
             )
         )
         - sum(
-            + _startup_margin(m, u, ng, d, s, t0, t, case, part)
-            * _unit_flow_capacity(m, u, ng, d, s, t0, t)
+            + _startup_margin(m, u, ng, d, s, t, case, part)
+            * _unit_flow_capacity(m, u, ng, d, s, t)
             * units_started_up[u, s, t_over]
             for (u, s, t_over) in units_switched_indices(
                 m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
@@ -168,9 +167,8 @@ function _term_unit_flow(m, u, ng, d, s_path, t)
 end
 
 function _term_flow_capacity(m, u, ng, d, s_path, t)
-    t0 = _analysis_time(m)
     sum(
-        _unit_flow_capacity(m, u, ng, d, s, t0, t) * _get_units_on(m, u, s, t_over) * overlap_duration(t_over, t)
+        _unit_flow_capacity(m, u, ng, d, s, t) * _get_units_on(m, u, s, t_over) * overlap_duration(t_over, t)
         for (u, s, t_over) in unit_stochastic_time_indices(
             m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
         );
@@ -178,23 +176,23 @@ function _term_flow_capacity(m, u, ng, d, s_path, t)
     )
 end
 
-function _shutdown_margin(m, u, ng, d, s, t0, t, case, part)
+function _shutdown_margin(m, u, ng, d, s, t, case, part)
     if part.name == :one
         # (F - SD)
-        1 - _shut_down_limit(m, u, ng, d, s, t0, t)
+        1 - _shut_down_limit(m, u, ng, d, s, t)
     else
         # max(SU - SD, 0)
-        max(_start_up_limit(m, u, ng, d, s, t0, t) - _shut_down_limit(m, u, ng, d, s, t0, t), 0)
+        max(_start_up_limit(m, u, ng, d, s, t) - _shut_down_limit(m, u, ng, d, s, t), 0)
     end
 end
 
-function _startup_margin(m, u, ng, d, s, t0, t, case, part)
+function _startup_margin(m, u, ng, d, s, t, case, part)
     if case.name == :min_up_time_le_time_step && part.name == :one
         # max(SD - SU, 0)
-        max(_shut_down_limit(m, u, ng, d, s, t0, t) - _start_up_limit(m, u, ng, d, s, t0, t), 0)
+        max(_shut_down_limit(m, u, ng, d, s, t) - _start_up_limit(m, u, ng, d, s, t), 0)
     else
         # (F - SU)
-        1 - _start_up_limit(m, u, ng, d, s, t0, t)
+        1 - _start_up_limit(m, u, ng, d, s, t)
     end
 end
 
@@ -244,14 +242,14 @@ end
 Split the given stochastic path into subpaths of successive scenarios where the outcome
 of min_up_time(...) > duration(t) is the same.
 """
-function _unit_capacity_constraint_subpaths(path, u, t0, t)
+function _unit_capacity_constraint_subpaths(path, u, t)
     isempty(path) && return ()
     all_subpaths = []
     current_subpath = []
     last_mut_gt_dur = nothing
     t_flow_duration = end_(t) - start(t)
     for s in path
-        mut = min_up_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t, _default=nothing)
+        mut = min_up_time(unit=u, stochastic_scenario=s, t=t, _default=nothing)
         mut = align_variable_duration_unit(mut, start(t))
         mut_gt_dur = mut === nothing || mut > t_flow_duration
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
