@@ -42,7 +42,6 @@ end
 
 function _build_constraint_min_up_time(m::Model, u, s_path, t)
     @fetch units_on, units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + units_on[u, s, t]

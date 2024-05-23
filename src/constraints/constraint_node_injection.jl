@@ -67,14 +67,13 @@ end
 
 function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after)
     @fetch node_injection, node_state, unit_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + node_injection[n, s, t_after]
-            + demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t_after))
+            + demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
             + sum(
-                + fractional_demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t_after))
-                * demand(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t_after))
+                + fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
+                * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t_after))
                 for ng in groups(n);
                 init=0,
             )
@@ -88,20 +87,20 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         + sum(
             (
                 + get(node_state, (n, s, t_before), 0)
-                * state_coeff(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t_before)
+                * state_coeff(m; node=n, stochastic_scenario=s, t=t_before)
                 - get(node_state, (n, s, t_after), 0)
-                * state_coeff(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)
+                * state_coeff(m; node=n, stochastic_scenario=s, t=t_after)
             ) / duration(t_after)
             # Self-discharge commodity losses
             - get(node_state, (n, s, t_after), 0)
-            * frac_state_loss(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)
+            * frac_state_loss(m; node=n, stochastic_scenario=s, t=t_after)
             for s in s_path;
             init=0,
         )
         # Diffusion of commodity from other nodes to this one
         + sum(
             get(node_state, (other_node, s, t_after), 0)
-            * diff_coeff(m; node1=other_node, node2=n, stochastic_scenario=s, analysis_time=t0, t=t_after)
+            * diff_coeff(m; node1=other_node, node2=n, stochastic_scenario=s, t=t_after)
             for other_node in node__node(node2=n)
             for s in s_path;
             init=0,
@@ -109,7 +108,7 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         # Diffusion of commodity from this node to other nodes
         - sum(
             get(node_state, (n, s, t_after), 0)
-            * diff_coeff(m; node1=n, node2=other_node, stochastic_scenario=s, analysis_time=t0, t=t_after)
+            * diff_coeff(m; node1=n, node2=other_node, stochastic_scenario=s, t=t_after)
             for other_node in node__node(node1=n)
             for s in s_path;
             init=0,

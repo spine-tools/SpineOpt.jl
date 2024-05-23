@@ -24,13 +24,12 @@ Create and expression for unit investment costs.
 """
 function unit_investment_costs(m::Model, t_range)
     @fetch units_invested = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     unit = indices(unit_investment_cost)
     @expression(
         m,
         + sum(
             + units_invested[u, s, t]
-            * unit_investment_cost(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+            * unit_investment_cost(m; unit=u, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             # This term is activated when there is a representative temporal block in those containing TimeSlice t.
             # We assume only one representative temporal structure available, of which the temporal blocks represent

@@ -40,10 +40,9 @@ end
 
 function _build_constraint_connections_invested_available(m::Model, conn, s, t)
     @fetch connections_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + connections_invested_available[conn, s, t]
         <=
-        + candidate_connections(m; connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)
+        + candidate_connections(m; connection=conn, stochastic_scenario=s, t=t)
     )
 end

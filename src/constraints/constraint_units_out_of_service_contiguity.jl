@@ -46,7 +46,6 @@ end
 
 function _build_constraint_units_out_of_service_contiguity(m::Model, u, s_path, t)
     @fetch units_out_of_service, units_taken_out_of_service, units_returned_to_service = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + units_out_of_service[u, s, t]
