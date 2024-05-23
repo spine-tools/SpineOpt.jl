@@ -38,8 +38,8 @@ function add_variable!(
     indices::Function;
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
-    lb::Union{FlexParameter,Parameter,Nothing}=nothing,
-    ub::Union{FlexParameter,Parameter,Nothing}=nothing,
+    lb::Union{Parameter,Function,Nothing}=nothing,
+    ub::Union{Parameter,Function,Nothing}=nothing,
     initial_value::Union{Parameter,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
     internal_fix_value::Union{Parameter,Nothing}=nothing,
