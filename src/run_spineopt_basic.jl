@@ -28,6 +28,7 @@ function do_run_spineopt!(
     write_as_roll,
     resume_file_path,
 )
+    build_model!(m; log_level)
     optimize || return m
     try
         solve_model!(m; log_level, update_names, write_as_roll, resume_file_path)

@@ -368,7 +368,14 @@ end
 
 function _generate_call_update!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
-    temp_struct[:call_update] = _is_benders_subproblem(m) || temp_struct[:window_count] > 1 ? as_call : as_number
+    algo = model_algorithm(model=m.ext[:spineopt].instance)
+    temp_struct[:call_update] = if (
+            force_auto_update(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
+        )
+        as_call
+    else
+        as_number
+    end
 end
 
 """
@@ -831,5 +838,10 @@ end
 
 function (x::Parameter)(m::Model; kwargs...)
     t0 = _analysis_time(m)
-    m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, kwargs...)
+    algo = model_algorithm(model=m.ext[:spineopt].instance)
+    m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, algo_kwargs(Val(algo))..., kwargs...)
 end
+
+algo_kwargs(algo) = (;)
+
+force_auto_update(algo) = false
