@@ -829,6 +829,6 @@ function _t_extreme_resolution_sets!(m, t_dict, kw)
     t_dict
 end
 
-function (x::Union{Parameter,FlexParameter})(m::Model; kwargs...)
+function (x::Parameter)(m::Model; kwargs...)
     m.ext[:spineopt].temporal_structure[:call_update](x; kwargs...)
 end

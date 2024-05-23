@@ -376,6 +376,7 @@ function solve_model!(
     write_as_roll=0,
     resume_file_path=nothing,
     output_suffix=(;),
+    log_prefix="",
 )
     m_mp = master_model(m)
     if m_mp === nothing
@@ -383,7 +384,9 @@ function solve_model!(
         calculate_duals = any(
             startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
         )
-        _do_solve_model!(m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, calculate_duals)
+        _do_solve_model!(
+            m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix,  calculate_duals
+        )
     else
         # Benders solution method
         add_event_handler!(process_subproblem_solution, m, :window_solved)
@@ -396,7 +399,7 @@ function solve_model!(
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
-            _do_solve_model!(m_mp; log_level, update_names, output_suffix, rewind=false) || break
+            _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false) || break
             @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
             current_gap_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
                 ""
@@ -412,7 +415,7 @@ function solve_model!(
                 resume_file_path,
                 output_suffix,
                 calculate_duals=true,
-                log_prefix="Benders iteration $j $current_gap_str- ",
+                log_prefix="$log_prefix Benders iteration $j $current_gap_str- ",
             ) || break
             @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
             @log log_level 1 "Benders iteration $j complete"

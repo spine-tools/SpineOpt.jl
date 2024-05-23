@@ -70,18 +70,11 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-struct FlexParameter
-    as_number
-    as_call
-end
-
 as_number(p::Parameter; kwargs...) = p(; kwargs...)
-as_number(x::FlexParameter; kwargs...) = x.as_number(; kwargs...)
 
 as_call(p::Parameter; kwargs...) = p[kwargs]
-as_call(x::FlexParameter; kwargs...) = x.as_call(; kwargs...)
 
-constant(x::Number) = FlexParameter((; kwargs...) -> x, (; kwargs...) -> Call(x))
+constant(x::Number) = (m; kwargs...) -> x
 
 """
     build_sense_constraint(lhs, sense::Symbol, rhs)
