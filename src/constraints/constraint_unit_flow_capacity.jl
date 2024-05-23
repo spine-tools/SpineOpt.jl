@@ -219,7 +219,7 @@ function constraint_unit_flow_capacity_tight_compact_indices(m::Model)
                 )
             )
         )
-        for (subpath, parts_by_case) in _unit_capacity_constraint_subpaths(path, u, _analysis_time(m), t)
+        for (subpath, parts_by_case) in _unit_capacity_constraint_subpaths(path, u, t)
         for (case, parts) in parts_by_case
         for part in parts
     )
