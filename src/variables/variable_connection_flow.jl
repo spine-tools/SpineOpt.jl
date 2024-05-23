@@ -49,29 +49,16 @@ function connection_flow_indices(
     )
 end
 
-function connection_flow_ub_as_number(; connection, node, direction, kwargs...)
+function connection_flow_ub(m; connection, node, direction, kwargs...)
     any(
         connection_flow_capacity(
             ; connection=connection, node=ng, direction=direction, kwargs..., _strict=false
         ) !== nothing
         for ng in groups(node)
     ) && return nothing
-    connection_flow_capacity(; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
-        + number_of_connections(; connection=connection, kwargs..., _default=1)
-        + candidate_connections(; connection=connection, kwargs..., _default=0)
-    )
-end
-
-function connection_flow_ub_as_call(; connection, node, direction, kwargs...)
-    any(
-        connection_flow_capacity(
-            ; connection=connection, node=ng, direction=direction, kwargs..., _strict=false
-        ) !== nothing
-        for ng in groups(node)
-    ) && return nothing
-    connection_flow_capacity[(connection=connection, node=node, direction=direction, kwargs..., _default=NaN)] * (
-        + number_of_connections[(connection=connection, kwargs..., _default=1)]
-        + Call(something, [candidate_connections[(connection=connection, kwargs..., _default=0)], 0])
+    connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
+        + number_of_connections(m; connection=connection, kwargs..., _default=1)
+        + candidate_connections(m; connection=connection, kwargs..., _default=0)
     )
 end
 
@@ -105,7 +92,7 @@ function add_variable_connection_flow!(m::Model)
         :connection_flow,
         connection_flow_indices;
         lb=constant(0),
-        ub=FlexParameter(connection_flow_ub_as_number, connection_flow_ub_as_call),
+        ub=connection_flow_ub,
         fix_value=fix_connection_flow,
         initial_value=initial_connection_flow,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
