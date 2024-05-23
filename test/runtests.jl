@@ -149,5 +149,6 @@ end
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
     include("run_spineopt_mga.jl")
+    include("run_spineopt_monte_carlo.jl")
     include("run_examples.jl")
 end
