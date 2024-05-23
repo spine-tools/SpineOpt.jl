@@ -308,7 +308,6 @@ function run_spineopt!(
     resume_file_path=nothing,
 )
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
-    Base.invokelatest(build_model!, m; log_level)
     Base.invokelatest(        
         do_run_spineopt!,
         m,
