@@ -28,7 +28,6 @@ end
 
 function _build_constraint_unit_lifetime(m::Model, u, s_path, t)
     @fetch units_invested_available, units_invested = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         sum(
             units_invested_available[u, s, t]
@@ -44,7 +43,6 @@ function _build_constraint_unit_lifetime(m::Model, u, s_path, t)
 end
 
 function constraint_unit_lifetime_indices(m::Model)
-    t0 = _analysis_time(m)
     (
         (unit=u, stochastic_path=path, t=t)
         for (u, t) in unit_investment_time_indices(m; unit=indices(unit_investment_lifetime))
@@ -53,16 +51,12 @@ function constraint_unit_lifetime_indices(m::Model)
 end
 
 function _past_units_invested_available_indices(m, u, s_path, t)
-    t0 = _analysis_time(m)
     units_invested_available_indices(
         m;
         unit=u,
         stochastic_scenario=s_path,
         t=to_time_slice(
-            m;
-            t=TimeSlice(
-                end_(t) - unit_investment_lifetime(unit=u, analysis_time=t0, stochastic_scenario=s_path, t=t), end_(t)
-            )
+            m; t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s_path, t=t), end_(t))
         )
     )
 end

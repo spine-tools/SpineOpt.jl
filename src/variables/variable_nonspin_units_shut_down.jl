@@ -46,7 +46,6 @@ end
 Add `nonspin_units_shut_down` variables to model `m`.
 """
 function add_variable_nonspin_units_shut_down!(m::Model)
-    t0 = start(current_window(m))
     add_variable!(
         m,
         :nonspin_units_shut_down,

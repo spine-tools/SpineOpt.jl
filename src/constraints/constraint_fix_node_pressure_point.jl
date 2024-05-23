@@ -155,7 +155,6 @@ end
 
 function _build_constraint_fix_node_pressure_point(m::Model, conn, n_orig, n_dest, s_path, t, j)
     @fetch node_pressure, connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         (
             sum(
@@ -187,9 +186,7 @@ function _build_constraint_fix_node_pressure_point(m::Model, conn, n_orig, n_des
         <=
         + sum(
             + node_pressure[n_orig, s, t]
-            * fixed_pressure_constant_1(
-                m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t
-            )
+            * fixed_pressure_constant_1(m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, t=t)
             for (n_orig, s, t) in node_pressure_indices(
                 m; node=n_orig, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
             );
@@ -197,9 +194,7 @@ function _build_constraint_fix_node_pressure_point(m::Model, conn, n_orig, n_des
         )
         - sum(
             + node_pressure[n_dest, s, t]
-            * fixed_pressure_constant_0(
-                m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t
-            )
+            * fixed_pressure_constant_0(m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, t=t)
             for (n_dest, s, t) in node_pressure_indices(
                 m; node=n_dest, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
             );

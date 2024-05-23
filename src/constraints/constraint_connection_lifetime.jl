@@ -55,7 +55,6 @@ function constraint_connection_lifetime_indices(m::Model)
 end
 
 function _past_connections_invested_available_indices(m, conn, s_path, t)
-    t0 = _analysis_time(m)
     connections_invested_available_indices(
         m;
         connection=conn,
@@ -63,10 +62,7 @@ function _past_connections_invested_available_indices(m, conn, s_path, t)
         t=to_time_slice(
             m;
             t=TimeSlice(
-                end_(t) - connection_investment_lifetime(
-                    connection=conn, analysis_time=t0, stochastic_scenario=s_path, t=t
-                ),
-                end_(t)
+                end_(t) - connection_investment_lifetime(connection=conn, stochastic_scenario=s_path, t=t), end_(t)
             )
         )
     )

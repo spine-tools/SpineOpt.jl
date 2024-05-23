@@ -75,7 +75,6 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
     # NOTE: that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second
     # <direction>!
     @fetch unit_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     build_sense_constraint(
         + sum(
             get(unit_flow, (u, n1, d1, s, t_short), 0)
@@ -87,14 +86,14 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
         + sum(
             get(unit_flow, (u, n2, d2, s, t_short), 0)
             * duration(t_short)
-            * ratio(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)
+            * ratio(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
             for n2 in members(ng2), s in s_path, t_short in t_in_t(m; t_long=t);
             init=0,
         )
         + sum(
             _get_units_on(m, u, s, t1)
             * min(duration(t1), duration(t))
-            * units_on_coefficient(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)
+            * units_on_coefficient(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
             for (u, s, t1) in unit_stochastic_time_indices(
                 m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
             );

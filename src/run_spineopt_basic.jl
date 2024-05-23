@@ -318,7 +318,7 @@ function _init_downstream_outputs!(st, stage_m, child_models)
                 for (ent, fix_indices) in fix_indices_by_ent
                     input = downstream_outputs[ent]
                     for ind in fix_indices
-                        call_kwargs = (analysis_time=startref(current_window(child_m)), t=ind.t)
+                        call_kwargs = (analysis_time=_analysis_time(child_m), t=ind.t)
                         call = Call(input, call_kwargs, (Symbol(st.name, :_, out_name), call_kwargs))
                         fix(child_m.ext[:spineopt].variables[out_name][ind], call)
                     end

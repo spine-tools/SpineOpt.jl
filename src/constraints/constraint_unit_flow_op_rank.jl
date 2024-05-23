@@ -49,19 +49,14 @@ end
 
 function _build_constraint_unit_flow_op_rank(m::Model, u, n, d, op, s, t)
     @fetch unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + unit_flow_op[u, n, d, op, s, t]
         >=
         (
-            + operating_points(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)
-            - (
-                (op > 1) ? operating_points(
-                    m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1
-                ) : 0
-            )
+            + operating_points(m; unit=u, node=n, direction=d, stochastic_scenario=s, i=op)
+            - ((op > 1) ? operating_points(m; unit=u, node=n, direction=d, stochastic_scenario=s, i=(op - 1)) : 0)
         )
-        * unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+        * unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         * unit_flow_op_active[u, n, d, op + 1, s, t]
     )
 end

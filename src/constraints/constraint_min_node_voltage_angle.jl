@@ -43,11 +43,10 @@ end
 
 function _build_constraint_min_node_voltage_angle(m::Model, ng, s_path, t)
     @fetch node_voltage_angle = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         sum(
             + node_voltage_angle[ng, s, t]
-            - min_voltage_angle(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=t)
+            - min_voltage_angle(m; node=ng, stochastic_scenario=s, t=t)
             for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s_path, t=t);
             init=0,
         )

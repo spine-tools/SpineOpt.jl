@@ -50,20 +50,19 @@ See also
 
 function add_expression_capacity_margin!(m::Model)
     @fetch unit_flow, units_on = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     m.ext[:spineopt].expressions[:capacity_margin] = Dict(
         (node=n, stochastic_path=s_path, t=t) => @expression(
             m,
             - sum(
-                + demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
+                + demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 );
                 init=0,
             )
             - sum(
-                fractional_demand(m; node=n, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
-                * demand(m; node=ng, stochastic_scenario=s, analysis_time=t0, t=_first_repr_t(m, t))
+                fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
+                * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
                 )
@@ -101,7 +100,7 @@ function add_expression_capacity_margin!(m::Model)
             # Conventional and Renewable Capacity
             + sum(
                 + sum(
-                    unit_flow_capacity(m; unit=u, node=n_, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+                    unit_flow_capacity(m; unit=u, node=n_, direction=d, stochastic_scenario=s, t=t)
                     for (u, n_, d, s, t_short) in unit_flow_indices(m; unit=u, node=n_, stochastic_scenario=s_path, t=t)
                 )
                 * (

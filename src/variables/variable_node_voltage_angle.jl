@@ -44,7 +44,6 @@ end
 Add `node_voltage_angle` variables to model `m`.
 """
 function add_variable_node_voltage_angle!(m::Model)
-    t0 = start(current_window(m))
     add_variable!(
         m,
         :node_voltage_angle,

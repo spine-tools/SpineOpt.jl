@@ -45,7 +45,6 @@ end
 
 function _build_constraint_storage_line_pack(m::Model, conn, stor, ng, s_path, t)
     @fetch node_state, node_pressure = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         sum(
             node_state[stor, s, t] * duration(t)

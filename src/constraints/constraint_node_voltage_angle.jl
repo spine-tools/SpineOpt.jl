@@ -48,7 +48,6 @@ end
 
 function _build_constraint_node_voltage_angle(m::Model, conn, n_to, n_from, s_path, t)
     @fetch node_voltage_angle, connection_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         sum(
             connection_flow[conn, n_from, d_from, s, t]
@@ -65,8 +64,8 @@ function _build_constraint_node_voltage_angle(m::Model, conn, n_to, n_from, s_pa
         ==
         sum(
             (
-                + connection_reactance_base(m; connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)
-                / connection_reactance(m; connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)
+                + connection_reactance_base(m; connection=conn, stochastic_scenario=s, t=t)
+                / connection_reactance(m; connection=conn, stochastic_scenario=s, t=t)
             )
             for s in s_path
         )

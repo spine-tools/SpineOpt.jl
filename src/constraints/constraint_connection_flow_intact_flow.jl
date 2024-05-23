@@ -60,7 +60,6 @@ end
 
 function _build_constraint_connection_flow_intact_flow(m, conn, ng, s_path, t)
     @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + connection_flow[conn, n, direction(:from_node), s, t] * duration(t)

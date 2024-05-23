@@ -37,7 +37,6 @@ end
 
 function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
     @fetch units_out_of_service = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + units_out_of_service[u, s, t] * duration(t)
@@ -47,8 +46,8 @@ function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
         >=
         + maximum(
             (
-                + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
-                * number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+                + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
+                * number_of_units(m; unit=u, stochastic_scenario=s, t=t)
             ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
             for s in s_path;
             init=0,
