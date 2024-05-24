@@ -1050,7 +1050,9 @@ function test_constraint_min_scheduled_outage_duration()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for scheduled_outage_duration_minutes in (60, 120, 210)
             url_in = _test_constraint_unit_setup()
-            scheduled_outage_duration = Dict("type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m"))
+            scheduled_outage_duration = Dict(
+                "type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m")
+            )
             object_parameter_values = [
                 ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
                 ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
