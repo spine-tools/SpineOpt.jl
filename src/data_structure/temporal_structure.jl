@@ -370,7 +370,7 @@ function _generate_call_update!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
     algo = model_algorithm(model=m.ext[:spineopt].instance)
     temp_struct[:call_update] = if (
-            force_auto_update(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
+            needs_auto_updating(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
         )
         as_call
     else
@@ -520,7 +520,7 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     !rev && any(
         x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
     ) && return false
-    roll!(current_window, rf; refresh=false)
+    roll!(current_window, rf)
     _roll_time_slice_set!(temp_struct[:time_slice], rf)
     _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
     true
@@ -539,6 +539,7 @@ function rewind_temporal_structure!(m::Model)
         _update_variable_names!(m)
         _update_constraint_names!(m)
     else
+        refresh!(temp_struct[:current_window])
         _refresh_time_slice_set!(temp_struct[:time_slice])
         _refresh_time_slice_set!(temp_struct[:history_time_slice])
     end
@@ -839,9 +840,9 @@ end
 function (x::Parameter)(m::Model; kwargs...)
     t0 = _analysis_time(m)
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, algo_kwargs(Val(algo))..., kwargs...)
+    m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
 end
 
-algo_kwargs(algo) = (;)
+algo_kwargs(m, algo) = (;)
 
-force_auto_update(algo) = false
+needs_auto_updating(algo) = false
