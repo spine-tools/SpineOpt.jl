@@ -81,7 +81,7 @@ function past_unit_indices(indices, m, u, s_path, t, min_time)
                 end_(t) - maximum(realize(min_time(m; unit=u, stochastic_scenario=s, t=t)) for s in s_path), end_(t)
             ),
         ),
-        temporal_block=anything
+        temporal_block=anything,
     )    
 end
 

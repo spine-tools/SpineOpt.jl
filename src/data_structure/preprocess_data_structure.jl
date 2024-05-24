@@ -949,18 +949,19 @@ function generate_unit_commitment_parameters()
             (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
         )
     )
+    _deactivatable_unit_iter = Iterators.flatten(
+        (indices(scheduled_outage_duration), (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0))
+    )
     _activatable_unit_iter = Iterators.flatten(
         (
             _switchable_unit_iter,
+            _deactivatable_unit_iter,
             indices(units_on_cost),
             indices(units_on_non_anticipativity_time),
             (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
             (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
             (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
         )
-    )
-    _deactivatable_unit_iter = Iterators.flatten(
-        (indices(scheduled_outage_duration), (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0))
     )
     for (pname, iter) in (
         (:has_switched_variable, _switchable_unit_iter),
