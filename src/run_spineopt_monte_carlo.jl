@@ -75,6 +75,6 @@ function _set_monte_carlo_scenario(scen_id)
 	end
 end
 
-force_auto_update(::Val{:monte_carlo_algorithm}) = true
+needs_auto_updating(::Val{:monte_carlo_algorithm}) = true
 
-algo_kwargs(::Val{:monte_carlo_algorithm}) = _monte_carlo_scenario
+algo_kwargs(m, ::Val{:monte_carlo_algorithm}) = Dict(k => (current_window(m) => v) for (k, v) in _monte_carlo_scenario)
