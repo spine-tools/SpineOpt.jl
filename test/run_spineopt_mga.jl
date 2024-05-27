@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function _test_algorithm_structure_setup()
+function _test_run_spineopt_mga_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -129,9 +129,9 @@ function _test_algorithm_structure_setup()
     url_in
 end
 
-function _test_test_mga_algorithm()
-    @testset "test mga algorithm" begin
-        url_in = _test_algorithm_structure_setup()
+function _test_run_spineopt_mga()
+    @testset "run_spineopt_mga" begin
+        url_in = _test_run_spineopt_mga_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -486,9 +486,9 @@ function _test_test_mga_algorithm()
     end
 end
 
-function _test_test_mga_algorithm_2()
-    @testset "test mga algorithm 2" begin
-        url_in = _test_algorithm_structure_setup()
+function _test_run_spineopt_mga_2()
+    @testset "run_spineopt_mga_2" begin
+        url_in = _test_run_spineopt_mga_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -601,7 +601,7 @@ function _test_test_mga_algorithm_2()
     end
 end
 
-@testset "algorithm structure" begin
-    _test_test_mga_algorithm()
-    _test_test_mga_algorithm_2()
+@testset "run_spineopt_mga" begin
+    _test_run_spineopt_mga()
+    _test_run_spineopt_mga_2()
 end

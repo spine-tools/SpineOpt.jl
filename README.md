@@ -22,7 +22,7 @@ Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when refer
 
 ### Compatibility
 
-This package requires [Julia](https://julialang.org/) 1.6 or higher.
+This package requires [Julia](https://julialang.org/) 1.8 or higher.
 
 ### Installation
 

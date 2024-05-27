@@ -80,12 +80,12 @@ function _is_constraint_equal_kernel(left, right)
     left_terms, right_terms = left.func.terms, right.func.terms
     missing_in_right = setdiff(keys(left_terms), keys(right_terms))
     if !isempty(missing_in_right)
-        @error string("missing in right constraint", missing_in_right)
+        @error string("missing in right constraint: ", missing_in_right)
         return false
     end
     missing_in_left = setdiff(keys(right_terms), keys(left_terms))
     if !isempty(missing_in_left)
-        @error string("missing in left constraint", missing_in_left)
+        @error string("missing in left constraint: ", missing_in_left)
         return false
     end
     for k in keys(left_terms)

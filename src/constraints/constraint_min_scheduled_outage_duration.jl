@@ -43,7 +43,7 @@ function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
             for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s_path);
             init=0,
         )
-        >=
+        ==
         + maximum(
             (
                 + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
