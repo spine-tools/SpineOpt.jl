@@ -160,15 +160,7 @@ function _run_spineopt(
                 ],
             )
             gaps = m_mp.ext[:spineopt].benders_gaps
-            append!(
-                stat_values,
-                [
-                    @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[]),
-                    @sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[]),
-                    isempty(gaps) ? "N/A" : string(@sprintf("%1.4f", last(gaps) * 100), "%"),
-                    length(gaps),
-                ]
-            )
+            append!(stat_values, [_lb_str(m_mp), _ub_str(m_mp), isempty(gaps) ? "N/A" : _gap_str(m_mp), length(gaps)])
         end
         stats = Map(stat_keys, string.(stat_values))
         vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
@@ -178,6 +170,12 @@ function _run_spineopt(
     # FIXME: make sure use_direct_model this works with db solvers
     # possibly adapt union? + allow for conflicts if direct model is used
 end
+
+_gap_str(m_mp) = string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%")
+
+_lb_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])
+
+_ub_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])
 
 """
     prepare_spineopt(url_in; <keyword arguments>)

@@ -402,11 +402,10 @@ function solve_model!(
             j == 2 && undo_force_starting_investments!()
             _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false) || break
             @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
-            current_gap_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
+            current_solution_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
                 ""
             else
-                gap = last(m_mp.ext[:spineopt].benders_gaps)
-                "(current gap: $(@sprintf("%1.4f", gap * 100))%) "
+                "(lower bound: $(_lb_str(m_mp)); upper bound: $(_ub_str(m_mp)); gap: $(_gap_str(m_mp))) "
             end
             _do_solve_model!(
                 m;
@@ -416,14 +415,14 @@ function solve_model!(
                 resume_file_path,
                 output_suffix,
                 calculate_duals=true,
-                log_prefix="$log_prefix Benders iteration $j $current_gap_str- ",
+                log_prefix="$log_prefix Benders iteration $j $current_solution_str - ",
             ) || break
             @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
             @log log_level 1 "Benders iteration $j complete"
-            @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
-            @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
+            @log log_level 1 "Objective lower bound: $(_lb_str(m_mp))); "
+            @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))); "
+            @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
-            @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
             if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
                 @log log_level 1 "Benders tolerance satisfied, terminating..."
                 break
@@ -458,7 +457,7 @@ function _do_solve_model!(
     model_name = string(log_prefix, _model_name(m))
     rewind && @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     while true
-        @log log_level 1 "\n$model_name - Window $k: $(current_window(m))"
+        @log log_level 1 "\n$model_name - Window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
         optimize_model!(m; log_level, calculate_duals, output_suffix) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
