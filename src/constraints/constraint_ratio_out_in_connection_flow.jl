@@ -71,16 +71,11 @@ function _build_constraint_ratio_out_in_connection_flow(m::Model, conn, ng_out, 
         ),
         sense,
         + sum(
-            + connection_flow[conn, n_in, d, s, t_short]
-            * ratio_out_in(m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t_short)
-            * overlap_duration(t_short, _delayed_t(conn, ng_out, ng_in, s, t))
-            for (conn, n_in, d, s, t_short) in connection_flow_indices(
-                m;
-                connection=conn,
-                node=ng_in,
-                direction=direction(:from_node),
-                stochastic_scenario=s_path,
-                t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s_path, t)
+            + connection_flow[conn, n_in, d, s_past, t_past]
+            * ratio_out_in(m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s_past, t=t_past)
+            * weight
+            for (conn, n_in, d, s_past, t_past, weight) in _past_connection_input_flow_indices(
+                m, conn, ng_out, ng_in, s_path, t
             );
             init=0,
         ),
@@ -135,7 +130,8 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                             connection=conn,
                             node=ng_in,
                             direction=direction(:from_node),
-                            t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
+                            t=to_time_slice(m; t=_t_look_behind(conn, ng_out, ng_in, (s,), t)),
+                            temporal_block=anything,
                         )
                     ),
                 )
@@ -144,12 +140,34 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
     )
 end
 
-function _to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
-    to_time_slice(m; t=_delayed_t(conn, ng_out, ng_in, s, t))
+function _past_connection_input_flow_indices(m, conn, ng_out, ng_in, s_path, t)
+    t_look_behind = _t_look_behind(conn, ng_out, ng_in, s_path, t)
+    (
+        (; ind..., weight=overlap_duration(ind.t, t_look_behind))
+        for ind in connection_flow_indices(
+            m;
+            connection=conn,
+            node=ng_in,
+            direction=direction(:from_node),
+            stochastic_scenario=s_path,
+            t=to_time_slice(m; t=t_look_behind),
+            temporal_block=anything,
+        )    
+    )
 end
 
-function _delayed_t(conn, ng_out, ng_in, s, t)
-    t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)
+function _t_look_behind(conn, ng_out, ng_in, s_path, t)
+    look_behind = maximum(
+        maximum_parameter_value(_connection_flow_delay(conn, ng_out, ng_in, s, t)) for s in s_path; init=Hour(0)
+    )
+    t - look_behind
+end
+
+function _connection_flow_delay(conn, ng_out, ng_in, s, t)
+    connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)
+end
+function _connection_flow_delay(m, conn, ng_out, ng_in, s, t)
+    connection_flow_delay(m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)
 end
 
 """
