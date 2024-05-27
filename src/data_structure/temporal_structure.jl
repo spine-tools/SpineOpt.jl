@@ -578,6 +578,8 @@ A `TimeSlice` corresponding to the current window of given model.
 """
 current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
 
+window_count(m::Model) = m.ext[:spineopt].temporal_structure[:window_count]
+
 """
     time_slice(m; temporal_block=anything, t=anything)
 
