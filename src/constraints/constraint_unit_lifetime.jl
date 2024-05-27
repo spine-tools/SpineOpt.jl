@@ -36,8 +36,8 @@ function _build_constraint_unit_lifetime(m::Model, u, s_path, t)
         )
         >=
         sum(
-            units_invested[u, s_past, t_past]
-            for (u, s_past, t_past) in _past_units_invested_available_indices(m, u, s_path, t)
+            units_invested[u, s_past, t_past] * weight
+            for (u, s_past, t_past, weight) in _past_units_invested_available_indices(m, u, s_path, t)
         )
     )
 end
@@ -51,14 +51,7 @@ function constraint_unit_lifetime_indices(m::Model)
 end
 
 function _past_units_invested_available_indices(m, u, s_path, t)
-    units_invested_available_indices(
-        m;
-        unit=u,
-        stochastic_scenario=s_path,
-        t=to_time_slice(
-            m; t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s_path, t=t), end_(t))
-        )
-    )
+    _past_indices(m, units_invested_available_indices, unit_investment_lifetime, s_path, t; unit=u)
 end
 
 """

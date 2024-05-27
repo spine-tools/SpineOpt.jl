@@ -36,8 +36,8 @@ function _build_constraint_storage_lifetime(m::Model, n, s_path, t)
         )
         >=
         sum(
-            storages_invested[n, s_past, t_past]
-            for (n, s_past, t_past) in _past_storages_invested_available_indices(m, n, s_path, t)
+            storages_invested[n, s_past, t_past] * weight
+            for (n, s_past, t_past, weight) in _past_storages_invested_available_indices(m, n, s_path, t)
         )
     )
 end
@@ -51,14 +51,7 @@ function constraint_storage_lifetime_indices(m::Model)
 end
 
 function _past_storages_invested_available_indices(m, n, s_path, t)
-    storages_invested_available_indices(
-        m;
-        node=n,
-        stochastic_scenario=s_path,
-        t=to_time_slice(
-            m; t=TimeSlice(end_(t) - storage_investment_lifetime(node=n, stochastic_scenario=s_path, t=t), end_(t))
-        )
-    )
+    _past_indices(m, storages_invested_available_indices, storage_investment_lifetime, s_path, t; node=n)
 end
 
 """

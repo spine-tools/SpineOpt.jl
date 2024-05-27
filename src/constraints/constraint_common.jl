@@ -66,23 +66,25 @@ function _scens_by_t(indices)
     scens_by_t
 end
 
-past_units_on_indices(args...) = past_unit_indices(units_on_indices, args...)
+past_units_on_indices(m, param, u, s_path, t) = _past_indices(m, units_on_indices, param, s_path, t; unit=u)
 
-past_units_out_of_service_indices(args...) = past_unit_indices(units_out_of_service_indices, args...)
-
-function past_unit_indices(indices, m, u, s_path, t, min_time)
-    indices(
-        m;
-        unit=u,
-        stochastic_scenario=s_path,
-        t=to_time_slice(
-            m;
-            t=TimeSlice(
-                end_(t) - maximum(realize(min_time(m; unit=u, stochastic_scenario=s, t=t)) for s in s_path), end_(t)
+function _past_indices(m, indices, param, s_path, t; kwargs...)
+    look_behind = maximum(maximum_parameter_value(param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
+    (
+        (;
+            ind...,
+            weight=ifelse(
+                end_(t) - end_(ind.t) < param(m; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), 1, 0
             ),
-        ),
-        temporal_block=anything,
-    )    
+        )
+        for ind in indices(
+            m;
+            kwargs...,
+            stochastic_scenario=s_path,
+            t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
+            temporal_block=anything,
+        )    
+    )
 end
 
 function _minimum_operating_point(m, u, ng, d, s, t)
