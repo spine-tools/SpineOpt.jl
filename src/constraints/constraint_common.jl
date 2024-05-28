@@ -69,7 +69,7 @@ end
 past_units_on_indices(m, param, u, s_path, t) = _past_indices(m, units_on_indices, param, s_path, t; unit=u)
 
 function _past_indices(m, indices, param, s_path, t; kwargs...)
-    look_behind = maximum(maximum_parameter_value(param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
+    look_behind = maximum(maximum_parameter_value(m, param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
     (
         (;
             ind...,

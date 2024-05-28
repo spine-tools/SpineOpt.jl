@@ -30,6 +30,6 @@ function add_variable_units_shut_down!(m::Model)
         lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        required_history_period=maximum_parameter_value(min_down_time),
+        required_history_period=maximum_parameter_value(m, min_down_time),
     )
 end

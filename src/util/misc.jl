@@ -302,7 +302,7 @@ end
 The maximum duration from a list of parameters.
 """
 function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
-    max_vals = (maximum_parameter_value(p) for p in lookback_params)
+    max_vals = (maximum_parameter_value(m, p) for p in lookback_params)
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
 end

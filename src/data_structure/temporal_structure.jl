@@ -194,7 +194,7 @@ function _required_history_duration(m)
         connection_investment_lifetime,
         storage_investment_lifetime,
     )
-    max_vals = (maximum_parameter_value(p) for p in lookback_params)
+    max_vals = (maximum_parameter_value(m, p) for p in lookback_params)
     init = _model_duration_unit(m)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
@@ -376,6 +376,12 @@ function _generate_as_number_or_call!(m)
     end
 end
 
+function _generate_translate_value!(m)
+    temp_struct = m.ext[:spineopt].temporal_structure
+    vals = shared_values(model=m.ext[:spineopt].instance, _strict=false)
+    temp_struct[:translate_value] = vals === nothing ? nothing : (v -> parameter_value(get(vals, v, v)))
+end
+
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
 Used by `to_time_slice`.
@@ -409,6 +415,7 @@ end
 
 function generate_time_slice!(m::Model)
     _generate_as_number_or_call!(m)
+    _generate_translate_value!(m)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
@@ -837,8 +844,15 @@ end
 function (x::Union{Parameter,ParameterFunction})(m::Model; kwargs...)
     t0 = _analysis_time(m)
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    @fetch as_number_or_call = m.ext[:spineopt].temporal_structure
-    as_number_or_call(x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
+    @fetch as_number_or_call, translate_value = m.ext[:spineopt].temporal_structure
+    as_number_or_call(
+        x; translate_value=translate_value, analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...
+    )
+end
+
+function SpineInterface.maximum_parameter_value(m::Model, x)
+    @fetch translate_value = m.ext[:spineopt].temporal_structure
+    maximum_parameter_value(x; translate_value=translate_value)
 end
 
 algo_kwargs(m, algo) = (;)

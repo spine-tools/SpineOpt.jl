@@ -66,7 +66,7 @@ function add_variable_units_out_of_service!(m::Model)
         int=units_out_of_service_int,
         fix_value=fix_units_out_of_service,
         initial_value=initial_units_out_of_service,
-        required_history_period=maximum_parameter_value(scheduled_outage_duration),        
+        required_history_period=maximum_parameter_value(m, scheduled_outage_duration),        
     )
 end
 
