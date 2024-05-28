@@ -467,7 +467,6 @@ function _test_unfeasible()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in, url_out; log_level=0)
         @test termination_status(m) != MOI.OPTIMAL
     end
