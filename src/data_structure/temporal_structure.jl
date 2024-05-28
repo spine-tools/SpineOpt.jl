@@ -364,10 +364,10 @@ function _generate_representative_time_slice!(m::Model)
     end
 end
 
-function _generate_call_update!(m)
+function _generate_as_number_or_call!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    temp_struct[:call_update] = if (
+    temp_struct[:as_number_or_call] = if (
             needs_auto_updating(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
         )
         as_call
@@ -408,7 +408,7 @@ function _refresh_time_slice_set!(t_set::TimeSliceSet)
 end
 
 function generate_time_slice!(m::Model)
-    _generate_call_update!(m)
+    _generate_as_number_or_call!(m)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
@@ -837,7 +837,8 @@ end
 function (x::Union{Parameter,ParameterFunction})(m::Model; kwargs...)
     t0 = _analysis_time(m)
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
+    @fetch as_number_or_call = m.ext[:spineopt].temporal_structure
+    as_number_or_call(x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
 end
 
 algo_kwargs(m, algo) = (;)
