@@ -828,14 +828,14 @@ end
 
 function apply_forced_availability_factor()
     function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
-        _product_or_nothing(x::TimeSeries, y::Nothing) = x
-        _product_or_nothing(x::TimeSeries, y) = x * y
+        _prod(x::TimeSeries, y::Nothing) = x
+        _prod(x::TimeSeries, y) = x * y
 
         function _new_pvals(class, x)
             forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
             forced_af === nothing && return Dict()
             af = availability_factor(; (class.name => x,)..., _strict=false)
-            Dict(availability_factor.name => parameter_value(_product_or_nothing(forced_af, af)))
+            Dict(availability_factor.name => parameter_value(_prod(forced_af, af)))
         end
 
         add_object_parameter_values!(class, Dict(x => _new_pvals(class, x) for x in class()))
@@ -889,23 +889,15 @@ function generate_is_boundary()
 end
 
 function generate_unit_flow_capacity()
-    for class in classes(unit_capacity)
-        new_pvals = Dict(
-            (u, n, d) => Dict(
-                :unit_flow_capacity => parameter_value(
-                    *(
-                        unit_capacity(unit=u, node=n, direction=d),
-                        unit_availability_factor(unit=u),
-                        unit_conv_cap_to_flow(unit=u, node=n, direction=d),
-                    )
-                )
-            )
-            for (u, n, d) in indices(unit_capacity, class)
+    function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
+        _prod_or_nothing(
+            f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
+            f(unit_availability_factor; unit=unit, kwargs...),
+            f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
         )
-        add_relationship_parameter_values!(class, new_pvals)
-        add_relationship_parameter_defaults!(class, Dict(:unit_flow_capacity => parameter_value(nothing)))
     end
-    unit_flow_capacity = Parameter(:unit_flow_capacity, classes(unit_capacity))
+
+    unit_flow_capacity = ParameterFunction(_unit_flow_capacity)
     @eval begin
         unit_flow_capacity = $unit_flow_capacity
         export unit_flow_capacity
@@ -913,28 +905,24 @@ function generate_unit_flow_capacity()
 end
 
 function generate_connection_flow_capacity()
-    for class in classes(connection_capacity)
-        new_pvals = Dict(
-            (conn, n, d) => Dict(
-                :connection_flow_capacity => parameter_value(
-                    *(
-                        connection_capacity(connection=conn, node=n, direction=d),
-                        connection_availability_factor(connection=conn),
-                        connection_conv_cap_to_flow(connection=conn, node=n, direction=d),
-                    )
-                )
-            )
-            for (conn, n, d) in indices(connection_capacity, class)
+    function _connection_flow_capacity(
+        f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
+    )
+        _prod_or_nothing(
+            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+            f(connection_availability_factor; connection=connection, kwargs...),
+            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
         )
-        add_relationship_parameter_values!(class, new_pvals)
-        add_relationship_parameter_defaults!(class, Dict(:connection_flow_capacity => parameter_value(nothing)))
     end
-    connection_flow_capacity = Parameter(:connection_flow_capacity, classes(connection_capacity))
+
+    connection_flow_capacity = ParameterFunction(_connection_flow_capacity)
     @eval begin
         connection_flow_capacity = $connection_flow_capacity
         export connection_flow_capacity
     end
 end
+
+_prod_or_nothing(args...) = any(isnothing.(args)) ? nothing : *(args...)
 
 function generate_unit_commitment_parameters()
     _switchable_unit_iter = Iterators.flatten(
