@@ -299,6 +299,22 @@ function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
     reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
 end
 
+function unit_flow_capacity(args...; unit=unit, node=node, direction=direction, kwargs...)
+    *(
+        unit_capacity(args...; unit=unit, node=node, direction=direction, kwargs...),
+        unit_availability_factor(args...; unit=unit, kwargs...),
+        unit_conv_cap_to_flow(args...; unit=unit, node=node, direction=direction, kwargs...),
+    )
+end
+
+function connection_flow_capacity(args...; connection=connection, node=node, direction=direction, kwargs...)
+    *(
+        connection_capacity(args...; connection=connection, node=node, direction=direction, kwargs...),
+        connection_availability_factor(args...; connection=connection, kwargs...),
+        connection_conv_cap_to_flow(args...; connection=connection, node=node, direction=direction, kwargs...),
+    )
+end
+
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
