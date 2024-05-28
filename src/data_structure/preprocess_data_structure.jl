@@ -889,9 +889,9 @@ function generate_is_boundary()
 end
 
 function generate_unit_flow_capacity()
-    function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=NaN, kwargs...)
+    function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
         _prod_or_nothing(
-            f(unit_capacity; unit=unit, node=node, direction=direction, kwargs...),
+            f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
             f(unit_availability_factor; unit=unit, kwargs...),
             f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
         )
@@ -906,10 +906,10 @@ end
 
 function generate_connection_flow_capacity()
     function _connection_flow_capacity(
-        f; connection=connection, node=node, direction=direction, _default=NaN, kwargs...
+        f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
     )
         _prod_or_nothing(
-            f(connection_capacity; connection=connection, node=node, direction=direction, _default=NaN, kwargs...),
+            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
             f(connection_availability_factor; connection=connection, kwargs...),
             f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
         )
