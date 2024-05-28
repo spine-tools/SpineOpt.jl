@@ -43,7 +43,6 @@ function add_variable!(
     initial_value::Union{Parameter,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
     internal_fix_value::Union{Parameter,Nothing}=nothing,
-    replacement_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
     required_history_period::Union{Period,Nothing}=nothing,
@@ -72,7 +71,7 @@ function add_variable!(
     first_ind = iterate(indices(m; t=t))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     vars = m.ext[:spineopt].variables[name] = Dict{K,Union{VariableRef,AffExpr,Call}}(
-        ind => _add_variable!(m, name, ind, replacement_value) for ind in indices(m; t=t) if !haskey(ind_map, ind)
+        ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(ind_map, ind)
     )
     inverse_ind_map = Dict(ref_ind => (ind, 1 / coeff) for (ind, (ref_ind, coeff)) in ind_map)
     Threads.@threads for ind in collect(keys(vars))
@@ -114,14 +113,7 @@ _nothing_if_empty(x) = x
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
-function _add_variable!(m, name, ind, replacement_value)
-    if replacement_value !== nothing
-        ind_ = (analysis_time=_analysis_time(m), ind...)
-        value = replacement_value(ind_)
-        if value !== nothing
-            return value
-        end
-    end
+function _add_variable!(m, name, ind)
     @variable(m, base_name=_base_name(name, ind))
 end
 
