@@ -2023,11 +2023,8 @@ function test_unit_online_variable_type_none()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
-            var_u_on = var_units_on[key...]
-            con_u_avail = constraint_u_avail[key...]
-            @test var_u_on isa Call
-            @test realize(var_u_on) == 1
-            @test con_u_avail === nothing
+            @test_throws KeyError var_units_on[key...]
+            @test_throws KeyError constraint_u_avail[key...]
         end
     end
 end
