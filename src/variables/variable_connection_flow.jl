@@ -97,7 +97,7 @@ function add_variable_connection_flow!(m::Model)
         initial_value=initial_connection_flow,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
-        required_history_period=maximum_parameter_value(connection_flow_delay),
+        required_history_period=maximum_parameter_value(m, connection_flow_delay),
         ind_map=ind_map,
     )
 end
