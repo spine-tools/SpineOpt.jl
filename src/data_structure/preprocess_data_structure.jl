@@ -44,6 +44,8 @@ function preprocess_data_structure()
     generate_benders_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
+    generate_unit_flow_capacity()
+    generate_connection_flow_capacity()
     generate_unit_commitment_parameters()
 end
 
@@ -826,14 +828,14 @@ end
 
 function apply_forced_availability_factor()
     function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
-        _product_or_nothing(x::TimeSeries, y::Nothing) = x
-        _product_or_nothing(x::TimeSeries, y) = x * y
+        _prod(x::TimeSeries, y::Nothing) = x
+        _prod(x::TimeSeries, y) = x * y
 
         function _new_pvals(class, x)
             forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
             forced_af === nothing && return Dict()
             af = availability_factor(; (class.name => x,)..., _strict=false)
-            Dict(availability_factor.name => parameter_value(_product_or_nothing(forced_af, af)))
+            Dict(availability_factor.name => parameter_value(_prod(forced_af, af)))
         end
 
         add_object_parameter_values!(class, Dict(x => _new_pvals(class, x) for x in class()))
@@ -885,6 +887,42 @@ function generate_is_boundary()
         export is_boundary_connection
     end
 end
+
+function generate_unit_flow_capacity()
+    function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=NaN, kwargs...)
+        _prod_or_nothing(
+            f(unit_capacity; unit=unit, node=node, direction=direction, kwargs...),
+            f(unit_availability_factor; unit=unit, kwargs...),
+            f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
+        )
+    end
+
+    unit_flow_capacity = ParameterFunction(_unit_flow_capacity)
+    @eval begin
+        unit_flow_capacity = $unit_flow_capacity
+        export unit_flow_capacity
+    end
+end
+
+function generate_connection_flow_capacity()
+    function _connection_flow_capacity(
+        f; connection=connection, node=node, direction=direction, _default=NaN, kwargs...
+    )
+        _prod_or_nothing(
+            f(connection_capacity; connection=connection, node=node, direction=direction, _default=NaN, kwargs...),
+            f(connection_availability_factor; connection=connection, kwargs...),
+            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
+        )
+    end
+
+    connection_flow_capacity = ParameterFunction(_connection_flow_capacity)
+    @eval begin
+        connection_flow_capacity = $connection_flow_capacity
+        export connection_flow_capacity
+    end
+end
+
+_prod_or_nothing(args...) = any(isnothing.(args)) ? nothing : *(args...)
 
 function generate_unit_commitment_parameters()
     _switchable_unit_iter = Iterators.flatten(

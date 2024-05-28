@@ -832,7 +832,7 @@ function _t_extreme_resolution_sets!(m, t_dict, kw)
     t_dict
 end
 
-function (x::Parameter)(m::Model; kwargs...)
+function (x::Union{Parameter,ParameterFunction})(m::Model; kwargs...)
     t0 = _analysis_time(m)
     algo = model_algorithm(model=m.ext[:spineopt].instance)
     m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)

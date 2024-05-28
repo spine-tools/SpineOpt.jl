@@ -70,9 +70,17 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
+struct ParameterFunction
+    fn
+end
+
+(pf::ParameterFunction)(; kwargs...) = as_number(pf; kwargs...)
+
 as_number(p::Parameter; kwargs...) = p(; kwargs...)
+as_number(pf::ParameterFunction; kwargs...) = pf.fn(as_number; kwargs...)
 
 as_call(p::Parameter; kwargs...) = p[kwargs]
+as_call(pf::ParameterFunction; kwargs...) = pf.fn(as_call; kwargs...)
 
 constant(x::Number) = (m; kwargs...) -> x
 
@@ -297,22 +305,6 @@ function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
     max_vals = (maximum_parameter_value(p) for p in lookback_params)
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
-end
-
-function unit_flow_capacity(args...; unit=unit, node=node, direction=direction, kwargs...)
-    *(
-        unit_capacity(args...; unit=unit, node=node, direction=direction, kwargs...),
-        unit_availability_factor(args...; unit=unit, kwargs...),
-        unit_conv_cap_to_flow(args...; unit=unit, node=node, direction=direction, kwargs...),
-    )
-end
-
-function connection_flow_capacity(args...; connection=connection, node=node, direction=direction, kwargs...)
-    *(
-        connection_capacity(args...; connection=connection, node=node, direction=direction, kwargs...),
-        connection_availability_factor(args...; connection=connection, kwargs...),
-        connection_conv_cap_to_flow(args...; connection=connection, node=node, direction=direction, kwargs...),
-    )
 end
 
 # Base
