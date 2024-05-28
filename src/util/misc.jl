@@ -70,9 +70,17 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
+struct ParameterFunction
+    fn
+end
+
+(pf::ParameterFunction)(; kwargs...) = as_number(pf; kwargs...)
+
 as_number(p::Parameter; kwargs...) = p(; kwargs...)
+as_number(pf::ParameterFunction; kwargs...) = pf.fn(as_number; kwargs...)
 
 as_call(p::Parameter; kwargs...) = p[kwargs]
+as_call(pf::ParameterFunction; kwargs...) = pf.fn(as_call; kwargs...)
 
 constant(x::Number) = (m; kwargs...) -> x
 

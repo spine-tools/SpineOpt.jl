@@ -72,6 +72,7 @@ end
 
 Fetch the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
 """
+_model_duration_unit(m::Model) = _model_duration_unit(m.ext[:spineopt].instance)
 function _model_duration_unit(instance::Object)
     get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute)
 end
@@ -157,18 +158,18 @@ A sorted `Array` of `TimeSlices` in the given window.
 """
 function _window_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
     window_time_slices = [
-        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m.ext[:spineopt].instance))
+        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
         for (interval, blocks) in _blocks_by_time_interval(m, window_start, window_end)
     ]
     sort!(window_time_slices)
 end
 
-function _add_padding_time_slice!(window_time_slices, instance, window_end)
+function _add_padding_time_slice!(window_time_slices, m, window_end)
     last_t = window_time_slices[argmax(end_.(window_time_slices))]
     temp_struct_end = end_(last_t)
     if temp_struct_end < window_end
         padding_t = TimeSlice(
-            temp_struct_end, window_end, blocks(last_t)...; duration_unit=_model_duration_unit(instance)
+            temp_struct_end, window_end, blocks(last_t)...; duration_unit=_model_duration_unit(m)
         )
         push!(window_time_slices, padding_t)
         @info string(
@@ -183,7 +184,7 @@ end
 
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
-function _required_history_duration(instance::Object)
+function _required_history_duration(m)
     lookback_params = (
         min_up_time,
         min_down_time,
@@ -191,16 +192,16 @@ function _required_history_duration(instance::Object)
         connection_flow_delay,
         unit_investment_lifetime,
         connection_investment_lifetime,
-        storage_investment_lifetime
+        storage_investment_lifetime,
     )
     max_vals = (maximum_parameter_value(p) for p in lookback_params)
-    init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
+    init = _model_duration_unit(m)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
-function _history_time_slices(instance, window_start, window_end, window_time_slices)
+function _history_time_slices(m, window_start, window_end, window_time_slices)
     window_duration = window_end - window_start
-    required_history_duration = _required_history_duration(instance)
+    required_history_duration = _required_history_duration(m)
     history_start = window_start - required_history_duration
     history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
     time_slices_by_history_interval = Dict()
@@ -214,7 +215,7 @@ function _history_time_slices(instance, window_start, window_end, window_time_sl
             t_start,
             t_end,
             unique(blk for t in time_slices for blk in blocks(t))...;
-            duration_unit=_model_duration_unit(instance),
+            duration_unit=_model_duration_unit(m),
         )
         for ((t_start, t_end), time_slices) in time_slices_by_history_interval
     )
@@ -244,14 +245,13 @@ Create a `TimeSliceSet` containing `TimeSlice`s in the current window.
 See [@TimeSliceSet()](@ref).
 """
 function _generate_time_slice!(m::Model)
-    instance = m.ext[:spineopt].instance
     window = current_window(m)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(m, window_start, window_end)
-    _add_padding_time_slice!(window_time_slices, instance, window_end)
-    history_time_slices, t_history_t = _history_time_slices(instance, window_start, window_end, window_time_slices)
-    dur_unit = _model_duration_unit(instance)
+    _add_padding_time_slice!(window_time_slices, m, window_end)
+    history_time_slices, t_history_t = _history_time_slices(m, window_start, window_end, window_time_slices)
+    dur_unit = _model_duration_unit(m)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
@@ -279,8 +279,7 @@ function _output_time_slices(m::Model, window_start::DateTime, window_end::DateT
                 time_slice_end = window_end
                 @warn("the last time slice of output $out has been cut to fit within the optimisation window")
             end
-            instance = m.ext[:spineopt].instance
-            push!(arr, TimeSlice(time_slice_start, time_slice_end; duration_unit=_model_duration_unit(instance)))
+            push!(arr, TimeSlice(time_slice_start, time_slice_end; duration_unit=_model_duration_unit(m)))
             iszero(duration) && break
             time_slice_start = time_slice_end
             i += 1
@@ -307,9 +306,8 @@ end
 E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships!(m::Model)
-    instance = m.ext[:spineopt].instance
     all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
-    duration_unit = _model_duration_unit(instance)
+    duration_unit = _model_duration_unit(m)
     succeeding_time_slices = Dict(
         t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
     )
@@ -366,10 +364,10 @@ function _generate_representative_time_slice!(m::Model)
     end
 end
 
-function _generate_call_update!(m)
+function _generate_as_number_or_call!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    temp_struct[:call_update] = if (
+    temp_struct[:as_number_or_call] = if (
             needs_auto_updating(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
         )
         as_call
@@ -410,10 +408,10 @@ function _refresh_time_slice_set!(t_set::TimeSliceSet)
 end
 
 function generate_time_slice!(m::Model)
+    _generate_as_number_or_call!(m)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
-    _generate_call_update!(m)
 end
 
 """
@@ -422,29 +420,27 @@ end
 Generate the current window TimeSlice for given model.
 """
 function _generate_current_window!(m::Model)
-    instance = m.ext[:spineopt].instance
-    w_start = model_start(model=instance)
+    w_start = model_start(model=m.ext[:spineopt].instance)
     w_end = w_start + _model_window_duration(m)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        w_start, w_end; duration_unit=_model_duration_unit(instance)
+        w_start, w_end; duration_unit=_model_duration_unit(m)
     )
 end
 
 function _generate_windows_and_window_count!(m::Model)
-    instance = m.ext[:spineopt].instance
-    w_start = model_start(model=instance)
+    w_start = model_start(model=m.ext[:spineopt].instance)
     w_duration = _model_window_duration(m)
     w_end = w_start + w_duration
     m.ext[:spineopt].temporal_structure[:windows] = windows = []
-    push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
+    push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(m)))
     i = 1
     while true
-        rf = roll_forward(model=instance, i=i, _strict=false)
-        (rf in (nothing, Minute(0)) || w_end >= model_end(model=instance)) && break
+        rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
+        (rf in (nothing, Minute(0)) || w_end >= model_end(model=m.ext[:spineopt].instance)) && break
         w_start += rf
-        w_start >= model_end(model=instance) && break
+        w_start >= model_end(model=m.ext[:spineopt].instance) && break
         w_end += rf
-        push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
+        push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(m)))
         i += 1
     end
     m.ext[:spineopt].temporal_structure[:window_count] = i
@@ -471,11 +467,10 @@ function generate_temporal_structure!(m::Model)
 end
 
 function _generate_master_window!(m_mp::Model)
-    instance = m_mp.ext[:spineopt].instance
-    mp_start = model_start(model=instance)
-    mp_end = model_end(model=instance)
+    mp_start = model_start(model=m_mp.ext[:spineopt].instance)
+    mp_end = model_end(model=m_mp.ext[:spineopt].instance)
     m_mp.ext[:spineopt].temporal_structure[:current_window] = current_window = TimeSlice(
-        mp_start, mp_end, duration_unit=_model_duration_unit(instance)
+        mp_start, mp_end, duration_unit=_model_duration_unit(m_mp)
     )
     m_mp.ext[:spineopt].temporal_structure[:windows] = [current_window]
     m_mp.ext[:spineopt].temporal_structure[:window_count] = 1
@@ -839,10 +834,11 @@ function _t_extreme_resolution_sets!(m, t_dict, kw)
     t_dict
 end
 
-function (x::Parameter)(m::Model; kwargs...)
+function (x::Union{Parameter,ParameterFunction})(m::Model; kwargs...)
     t0 = _analysis_time(m)
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    m.ext[:spineopt].temporal_structure[:call_update](x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
+    @fetch as_number_or_call = m.ext[:spineopt].temporal_structure
+    as_number_or_call(x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
 end
 
 algo_kwargs(m, algo) = (;)
