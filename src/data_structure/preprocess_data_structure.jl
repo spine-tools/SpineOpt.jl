@@ -925,38 +925,56 @@ end
 _prod_or_nothing(args...) = any(isnothing.(args)) ? nothing : *(args...)
 
 function generate_unit_commitment_parameters()
-    _switchable_unit_iter = Iterators.flatten(
-        (
-            indices(min_up_time),
-            indices(min_down_time),
-            indices(start_up_cost),
-            indices(shut_down_cost), 
-            (x.unit for x in indices(start_up_limit)),
-            (x.unit for x in indices(shut_down_limit)),
-            (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
-            (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+    unit_with_switched_variable_set = unique(
+        Iterators.flatten(
+            (
+                indices(min_up_time),
+                indices(min_down_time),
+                indices(start_up_cost),
+                indices(shut_down_cost), 
+                (x.unit for x in indices(start_up_limit)),
+                (x.unit for x in indices(shut_down_limit)),
+                (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
+                (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+            )
         )
     )
-    _deactivatable_unit_iter = Iterators.flatten(
-        (indices(scheduled_outage_duration), (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0))
-    )
-    _activatable_unit_iter = Iterators.flatten(
-        (
-            _switchable_unit_iter,
-            _deactivatable_unit_iter,
-            indices(units_on_cost),
-            indices(units_on_non_anticipativity_time),
-            (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
-            (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
-            (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
+    unit_with_out_of_service_variable_set = unique(
+        Iterators.flatten(
+            (
+                indices(scheduled_outage_duration),
+                (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0),
+            )
         )
     )
-    for (pname, iter) in (
-        (:has_switched_variable, _switchable_unit_iter),
-        (:has_online_variable, _activatable_unit_iter),
-        (:has_out_of_service_variable, _deactivatable_unit_iter),
+    unit_with_online_variable_set = unique(
+        Iterators.flatten(
+            (
+                unit_with_switched_variable_set,
+                unit_with_out_of_service_variable_set,
+                indices(units_on_cost),
+                indices(units_on_non_anticipativity_time),
+                (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
+                (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
+                (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
+            )
+        )
     )
-        add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unique(iter)))
+    unit_without_online_variable_iter = (
+        u for u in unit() if online_variable_type(unit=u) == :unit_online_variable_type_none
+    )
+    unit_without_out_of_service_variable_iter = (
+        u for u in unit() if outage_variable_type(unit=u) == :unit_online_variable_type_none
+    )
+    setdiff!(unit_with_switched_variable_set, unit_without_online_variable_iter)
+    setdiff!(unit_with_out_of_service_variable_set, unit_without_out_of_service_variable_iter)
+    setdiff!(unit_with_online_variable_set, unit_without_online_variable_iter)
+    for (pname, unit_set) in (
+        (:has_switched_variable, unit_with_switched_variable_set),
+        (:has_out_of_service_variable, unit_with_out_of_service_variable_set),
+        (:has_online_variable, unit_with_online_variable_set),
+    )
+        add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unit_set))
         add_object_parameter_defaults!(unit, Dict(pname => parameter_value(false)))
     end
     @eval begin
