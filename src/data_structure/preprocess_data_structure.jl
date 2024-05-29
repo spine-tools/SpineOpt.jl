@@ -936,6 +936,7 @@ function generate_unit_commitment_parameters()
                 (x.unit for x in indices(shut_down_limit)),
                 (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
                 (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+                (u for (st, out, u) in stage__output__unit() if out.name in (:units_started_up, :units_shut_down)),
             )
         )
     )
@@ -944,6 +945,7 @@ function generate_unit_commitment_parameters()
             (
                 indices(scheduled_outage_duration),
                 (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0),
+                (u for (st, out, u) in stage__output__unit() if out.name == :units_out_of_service),
             )
         )
     )
@@ -957,6 +959,7 @@ function generate_unit_commitment_parameters()
                 (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
+                (u for (st, out, u) in stage__output__unit() if out.name == :units_on),
             )
         )
     )
