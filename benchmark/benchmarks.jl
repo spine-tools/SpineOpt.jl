@@ -35,6 +35,8 @@ function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rollin
         ["stochastic_structure", "deterministic"],
         ["stochastic_scenario", "parent"],
         ["commodity", "electricity"],
+        ["node", "reserve"],
+        ["node", "node_group_reserve"],
     ]
     append!(objs, (["unit", u] for u in units))
     append!(objs, (["node", n] for n in nodes))
@@ -45,6 +47,7 @@ function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rollin
         ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
     ]
     append!(rels, (["unit__to_node", (u, n)] for (u, n) in zip(units, nodes)))
+    append!(rels, (["unit__from_node", (u, "reserve")] for u in units))
     append!(rels, (["node__commodity", (n, "electricity")] for n in nodes))
     append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, nodes[1:(end - 1)])))
     append!(rels, (["connection__to_node", (c, n)] for (c, n) in zip(conns, nodes[2:end])))
@@ -55,10 +58,16 @@ function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rollin
         ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
         ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
         ["node", nodes[1], "node_opf_type", "node_opf_type_reference"],
+        ["node", "reserve", "is_reserve_node", true],
+        ["node", "reserve", "upward_reserve", true],
     ]
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes))
+    append!(obj_pvs, (["node", n, "node_state_cap", 10] for n in nodes))
+    append!(obj_pvs, (["node", n, "has_state", true] for n in nodes))
     append!(obj_pvs, (["connection", c, "connection_type", "connection_type_lossless_bidirectional"] for c in conns))
     append!(obj_pvs, (["connection", c, "connection_reactance", 0.1] for c in conns))
+    append!(obj_pvs,(["unit", u, "min_up_time", Dict("type" => "duration", "data" => "8h")] for u in units))
+    append!(obj_pvs,(["unit", u, "min_down_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     if add_investment
         # add investment temporal block
         append!(objs, [["temporal_block", "two_year"]])
@@ -78,15 +87,21 @@ function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rollin
     end
     rel_pvs = []
     append!(rel_pvs, (["unit__to_node", (u, n), "unit_capacity", 1] for (u, n) in zip(units, nodes)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_up_limit", 0.9] for (u, n) in zip(units, nodes)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_down_limit", 0.9] for (u, n) in zip(units, nodes)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "minimum_operating_point", 0.2] for (u, n) in zip(units, nodes))) 
+    append!(rel_pvs, (["unit__to_node", [u, "node_group_reserve"], "unit_capacity", 0.1] for u in units)) 
     append!(
         rel_pvs,
         (["connection__from_node", (c, n), "connection_capacity", 1] for (c, n) in zip(conns, nodes[1:(end - 1)])),
     )
+    obj_grp = [["node", "node_group_reserve", "reserve"],]
     test_data = Dict(
         :objects => objs,
         :relationships => rels,
         :object_parameter_values => obj_pvs,
         :relationship_parameter_values => rel_pvs,
+        :object_groups => obj_grp,
     )
     local_load_test_data(url_in, test_data)
     rm(file_path_out; force=true)
@@ -97,15 +112,15 @@ end
 SUITE["main"] = BenchmarkGroup()
 
 url_in_basic, url_out_basic = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=false)
-url_in_invest, url_out_invest = setup(number_of_weeks=3, n_count=10, add_investment=true, add_rolling=false)
-url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
+# url_in_invest, url_out_invest = setup(number_of_weeks=3, n_count=10, add_investment=true, add_rolling=false)
+# url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
 
 SUITE["main", "run_spineopt", "basic"] =
     @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
         Inf
-SUITE["main", "run_spineopt", "investment"] =
-    @benchmarkable run_spineopt($url_in_invest, $url_out_invest; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
-        Inf
-SUITE["main", "run_spineopt", "roll"] =
-    @benchmarkable run_spineopt($url_in_roll, $url_out_roll; log_level=3, optimize=true) samples = 3 evals = 1 seconds =
-        Inf
+# SUITE["main", "run_spineopt", "investment"] =
+#     @benchmarkable run_spineopt($url_in_invest, $url_out_invest; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
+#         Inf
+# SUITE["main", "run_spineopt", "roll"] =
+#     @benchmarkable run_spineopt($url_in_roll, $url_out_roll; log_level=3, optimize=true) samples = 3 evals = 1 seconds =
+#         Inf
