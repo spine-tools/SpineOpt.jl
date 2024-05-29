@@ -577,6 +577,7 @@ Save a model results: first postprocess results, then save variables and objecti
 """
 function _save_model_results!(m)
     _save_variable_values!(m)
+    _save_expression_values!(m)
     _save_constraint_values!(m)
     _save_objective_values!(m)
     _save_other_values!(m)
@@ -588,6 +589,13 @@ Save the value of all variables in a model.
 function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
         m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
+    end
+end
+
+function _save_expression_values!(m::Model)
+    for (name, expr) in m.ext[:spineopt].expressions
+        name in keys(m.ext[:spineopt].outputs) || continue
+        m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(e) for (ind, e) in expr)
     end
 end
 
