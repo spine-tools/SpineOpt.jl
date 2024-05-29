@@ -53,7 +53,7 @@ function _build_constraint_units_out_of_service_contiguity(m::Model, u, s_path, 
                 m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything
             );
             init=0,
-        )           
+        )
         ==
         + sum(
             units_taken_out_of_service[u, s_past, t_past] * weight

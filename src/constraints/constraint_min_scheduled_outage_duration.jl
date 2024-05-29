@@ -43,11 +43,14 @@ function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
             for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s_path);
             init=0,
         )
-        ==
+        >=
         + maximum(
             (
                 + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
-                * number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+                * (
+                    + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+                    + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
+                )
             ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
             for s in s_path;
             init=0,
