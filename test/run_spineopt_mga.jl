@@ -193,7 +193,7 @@ function _test_run_spineopt_mga()
         var_mga_aux_objective = m.ext[:spineopt].variables[:mga_objective]
         mga_results = m.ext[:spineopt].outputs
         t0 = start(SpineOpt.current_window(m))
-        @testset "test mga_diff_ub1" begin
+        @testset "mga_diff_ub1" begin
             constraint = m.ext[:spineopt].constraints[:mga_diff_ub1]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent),)
@@ -254,7 +254,7 @@ function _test_run_spineopt_mga()
             end
             # FIXME: add for connection and node
         end
-        @testset "test mga_diff_ub2" begin
+        @testset "mga_diff_ub2" begin
             constraint = m.ext[:spineopt].constraints[:mga_diff_ub2]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
@@ -319,7 +319,7 @@ function _test_run_spineopt_mga()
             end
             # FIXME: add for connection and node
         end
-        @testset "test mga_diff_lb1" begin
+        @testset "mga_diff_lb1" begin
             constraint = m.ext[:spineopt].constraints[:mga_diff_lb1]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent),)
@@ -379,7 +379,7 @@ function _test_run_spineopt_mga()
             end
             # FIXME: add for connection and node
         end
-        @testset "test mga_diff_lb2" begin
+        @testset "mga_diff_lb2" begin
             constraint = m.ext[:spineopt].constraints[:mga_diff_lb2]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
@@ -439,7 +439,7 @@ function _test_run_spineopt_mga()
             end
             # FIXME: add for connection and node
         end
-        @testset "test mga_slack_constraint" begin
+        @testset "mga_slack_constraint" begin
             constraint = m.ext[:spineopt].constraints[:mga_slack_constraint]
             @test length(constraint) == 1
             scenarios = (stochastic_scenario(:parent),)
@@ -463,7 +463,7 @@ function _test_run_spineopt_mga()
             end
             # FIXME: add for connection and node
         end
-        @testset "test mga_objective_ub" begin
+        @testset "mga_objective_ub" begin
             constraint = m.ext[:spineopt].constraints[:mga_objective_ub]
             @test length(constraint) == 1
             scenarios = (stochastic_scenario(:parent),)
