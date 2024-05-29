@@ -419,8 +419,8 @@ function solve_model!(
             ) || break
             @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
             @log log_level 1 "Benders iteration $j complete"
-            @log log_level 1 "Objective lower bound: $(_lb_str(m_mp))); "
-            @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))); "
+            @log log_level 1 "Objective lower bound: $(_lb_str(m_mp))"
+            @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))"
             @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
             if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
