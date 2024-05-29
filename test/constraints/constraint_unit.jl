@@ -1035,7 +1035,7 @@ function test_constraint_units_out_of_service_contiguity()
                 var_u_oos_key = (unit(:unit_ab), s, t)
                 var_u_oos = var_units_out_of_service[var_u_oos_key...]
                 vars_u_toos = [var_units_taken_out_of_service[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_u_oos == sum(vars_u_toos))
+                expected_con = @build_constraint(var_u_oos >= sum(vars_u_toos))
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
