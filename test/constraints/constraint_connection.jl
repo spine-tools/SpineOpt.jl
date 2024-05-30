@@ -381,8 +381,8 @@ function test_constraint_fix_node_pressure_point()
                     var_bin = var_binary_flow[var_conn_flow_key2...]
                     var_pr1 = var_node_pressure[var_node_pr_keys1...]
                     var_pr2 = var_node_pressure[var_node_pr_keys2...]
-                    @testset for i in length(fixed_pressure_constant_1_raw)
-                            if fixed_pressure_constant_1_raw[i] != 0
+                    @testset for i in eachindex(fixed_pressure_constant_1_raw)
+                        if fixed_pressure_constant_1_raw[i] != 0
                             con_key = (conn, n_from, n_to, [s], t, i)
                             expected_con = @build_constraint(
                                 (var_conn1 + var_conn2) / 2

@@ -495,10 +495,10 @@ function _test_test_mga_algorithm_2()
         fuel_cost = 5
         mga_slack = 0.05
         points = [0, -0.5, -1, 1, 0.5, 0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
+        deltas = [points[1]; [points[i] - points[i - 1] for i in drop(eachindex(points), 1)]]
         mga_weights_1 = Dict("type" => "array", "value_type" => "float", "data" => points)
         points = [0, -0.5, -1, 1, 0.5, 0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
+        deltas = [points[1]; [points[i] - points[i - 1] for i in drop(eachindex(points), 1)]]
         mga_weights_2 = Dict("type" => "array", "value_type" => "float", "data" => points)
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
