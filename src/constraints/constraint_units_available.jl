@@ -52,7 +52,8 @@ function _build_constraint_units_available(m, u, s, t)
             init=0,
         )
         <=
-        number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+        + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+        - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
     )
 end
 
