@@ -44,8 +44,8 @@ function forced_outage_time_series(t_start, t_end, mttf, mttr; seed=nothing, res
     indices = [t_start]
     values = [0]
     for (failure_time, repair_time) in _forced_outages(t_start, t_end, mttf, mttr; resolution)
-        append!(indices, [failure_time, repair_time - resolution(1), repair_time])
-        append!(values, [1, 1, 0])
+        append!(indices, [failure_time, repair_time])
+        append!(values, [1, 0])
     end
     push!(indices, t_end)
     push!(values, 0)
@@ -55,15 +55,14 @@ end
 """
     generate_forced_outages(url_in, url_out; <keyword arguments>)
 
-Generate forced availability factors (due to outages) from the contents of `url_in` and write them to `url_out`.
+Generate forced outages from the contents of `url_in` and write them to `url_out`.
 At least `url_in` must point to a valid Spine database.
 A new Spine database is created at `url_out` if one doesn't exist.
 
-To generate forced availability factors for a unit, specify `mean_time_to_failure` and optionally
+To generate forced outages for a unit, specify `mean_time_to_failure` and optionally
 `mean_time_to_repair` for that unit as a duration in the input DB.
 
-Parameter `units_unavailable` will be written for those units in the output DB, holding a time series
-with the availability factor due to forced outages.
+Parameter `units_unavailable` will be written for those units in the output DB holding a time series.
 
 # Arguments
 
