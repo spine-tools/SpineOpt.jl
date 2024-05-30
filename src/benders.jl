@@ -294,16 +294,16 @@ function _save_sp_unit_flow(m)
     add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
 
-function _save_sp_solution!(m, k)
-    m.ext[:spineopt].sp_values[k] = Dict(
+function _save_solution!(m, k; filter_accepts_variable=(x -> true))
+    m.ext[:spineopt].solution[k] = Dict(
         name => copy(m.ext[:spineopt].values[name])
         for name in keys(m.ext[:spineopt].variables)
-        if !occursin("invested", string(name))
+        if filter_accepts_variable(name)
     )
 end
 
-function _set_sp_solution!(m, k; _kwargs...)
-    for (name, vals) in get(m.ext[:spineopt].sp_values, k, ())
+function _set_solution!(m, k; _kwargs...)
+    for (name, vals) in get(m.ext[:spineopt].solution, k, ())
         var = m.ext[:spineopt].variables[name]
         for (ind, val) in vals
             var[ind] isa VariableRef && set_start_value(var[ind], val)
