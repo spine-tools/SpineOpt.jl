@@ -71,7 +71,5 @@ function add_variable_units_out_of_service!(m::Model)
 end
 
 function _get_units_out_of_service(m, u, s, t)
-    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do
-        units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
-    end
+    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t), 0)
 end
