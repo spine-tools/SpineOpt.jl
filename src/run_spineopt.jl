@@ -431,7 +431,7 @@ struct SpineOptExt
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
-    sp_values::Dict{Int64,Dict}
+    solution::Dict{Int64,Dict}
     constraints::Dict{Symbol,Dict}
     expressions::Dict{Symbol,Dict}
     objective_terms::Dict{Symbol,Any}
@@ -467,11 +467,11 @@ struct SpineOptExt
             )
         end
         event_handlers = Dict(
-            :model_built => [],
-            :model_about_to_solve => [],
-            :model_solved => [],
-            :window_about_to_solve => [],
-            :window_solved => [],
+            :model_built => Set(),
+            :model_about_to_solve => Set(),
+            :model_solved => Set(),
+            :window_about_to_solve => Set(),
+            :window_solved => Set(),
         )
         new(
             instance,
@@ -484,7 +484,7 @@ struct SpineOptExt
             Dict{Symbol,Dict}(),  # variables
             Dict{Symbol,Dict}(),  # variables_definition
             Dict{Symbol,Dict}(),  # values
-            Dict{Int64,Dict}(),  # sp_values
+            Dict{Int64,Dict}(),  # solution
             Dict{Symbol,Dict}(),  # constraints
             Dict{Symbol,Dict}(),  # expressions
             Dict{Symbol,Any}(),  # objective_terms

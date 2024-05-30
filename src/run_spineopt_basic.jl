@@ -391,8 +391,10 @@ function solve_model!(
     else
         # Benders solution method
         add_event_handler!(process_subproblem_solution, m, :window_solved)
-        add_event_handler!(_set_sp_solution!, m, :window_about_to_solve)
-        add_event_handler!(_save_sp_solution!, m, :window_solved)
+        add_event_handler!(_set_solution!, m, :window_about_to_solve)
+        add_event_handler!(m, :window_solved) do m, k
+            _save_solution!(m, k; filter_accepts_variable=(name -> !occursin("invested", string(name))))
+        end
         m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
         undo_force_starting_investments! = _force_starting_investments!(m_mp)
         min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
