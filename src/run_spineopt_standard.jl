@@ -1132,12 +1132,12 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
             else
                 non_anticipativity_margin(; ind..., _strict=false)
             end
-            if non_ant_time != nothing && start(ind.t) < w_start + non_ant_time
+            if !isnothing(non_ant_time) && start(ind.t) < w_start + non_ant_time
                 next_t = to_time_slice(m; t=ind.t + w_length)
                 next_inds = indices(m; ind..., t=next_t)
                 if !isempty(next_inds)
                     next_ind = first(next_inds)
-                    if non_ant_margin != nothing
+                    if !isnothing(non_ant_margin)
                         lb = val[next_ind] - non_ant_margin
                         (lb < 0) && (lb = 0)
                         set_lower_bound(var[ind], lb)
