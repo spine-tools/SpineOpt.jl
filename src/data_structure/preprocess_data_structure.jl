@@ -42,7 +42,6 @@ function preprocess_data_structure()
     generate_variable_indexing_support()
     generate_internal_fix_investments()
     generate_benders_structure()
-    apply_forced_availability_factor()
     generate_is_boundary()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
@@ -826,28 +825,6 @@ function generate_internal_fix_investments()
     end
 end
 
-function apply_forced_availability_factor()
-    function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
-        _prod(x::TimeSeries, y::Nothing) = x
-        _prod(x::TimeSeries, y) = x * y
-
-        function _new_pvals(class, x)
-            forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
-            forced_af === nothing && return Dict()
-            af = availability_factor(; (class.name => x,)..., _strict=false)
-            Dict(availability_factor.name => parameter_value(_prod(forced_af, af)))
-        end
-
-        add_object_parameter_values!(class, Dict(x => _new_pvals(class, x) for x in class()))
-    end
-
-    isempty(model()) && return
-    m_start = minimum(model_start(model=m) for m in model())
-    m_end = maximum(model_end(model=m) for m in model())
-    _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
-    _apply_forced_availability_factor(m_start, m_end, connection, connection_availability_factor)
-end
-
 """
     generate_is_boundary()
 
@@ -931,7 +908,7 @@ function generate_unit_commitment_parameters()
                 indices(min_up_time),
                 indices(min_down_time),
                 indices(start_up_cost),
-                indices(shut_down_cost), 
+                indices(shut_down_cost),
                 (x.unit for x in indices(start_up_limit)),
                 (x.unit for x in indices(shut_down_limit)),
                 (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
@@ -944,6 +921,7 @@ function generate_unit_commitment_parameters()
         Iterators.flatten(
             (
                 indices(scheduled_outage_duration),
+                indices(fix_units_out_of_service),
                 (u for (st, out, u) in stage__output__unit() if out.name == :units_out_of_service),
             )
         )
@@ -955,6 +933,7 @@ function generate_unit_commitment_parameters()
                 unit_with_out_of_service_variable_set,
                 indices(units_on_cost),
                 indices(units_on_non_anticipativity_time),
+                indices(fix_units_on),
                 (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
