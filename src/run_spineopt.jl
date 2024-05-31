@@ -431,7 +431,7 @@ struct SpineOptExt
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
-    solution::Dict{Int64,Dict}
+    results::Dict{Any,Dict}
     constraints::Dict{Symbol,Dict}
     expressions::Dict{Symbol,Dict}
     objective_terms::Dict{Symbol,Any}
@@ -484,7 +484,7 @@ struct SpineOptExt
             Dict{Symbol,Dict}(),  # variables
             Dict{Symbol,Dict}(),  # variables_definition
             Dict{Symbol,Dict}(),  # values
-            Dict{Int64,Dict}(),  # solution
+            Dict{Any,Dict}(),  # results
             Dict{Symbol,Dict}(),  # constraints
             Dict{Symbol,Dict}(),  # expressions
             Dict{Symbol,Any}(),  # objective_terms
@@ -576,4 +576,34 @@ function add_event_handler!(fn, m, event)
         "invalid event $event - must be one of $(join(keys(event_handlers), ", "))"
     )
     push!(listeners, fn)
+end
+
+function _save_result!(m, k; filter_accepts_variable=(x -> true))
+    m.ext[:spineopt].results[k] = Dict(
+        name => copy(m.ext[:spineopt].values[name])
+        for name in keys(m.ext[:spineopt].variables)
+        if filter_accepts_variable(name)
+    )
+end
+
+function _set_result!(m, k)
+    result = get(m.ext[:spineopt].results, k, nothing)
+    result === nothing && return
+    @info "reusing solution for $(_model_name(m)) - $k"
+    for (name, variable_result) in result
+        val = m.ext[:spineopt].values[name]
+        for (ind, r) in variable_result
+            val[ind] = r
+        end
+    end
+    m.ext[:spineopt].has_results[] = true
+end
+
+function _set_starting_point!(m, k)
+    for (name, variable_result) in get(m.ext[:spineopt].results, k, ())
+        var = m.ext[:spineopt].variables[name]
+        for (ind, r) in variable_result
+            var[ind] isa VariableRef && set_start_value(var[ind], r)
+        end
+    end
 end

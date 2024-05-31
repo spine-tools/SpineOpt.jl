@@ -294,23 +294,6 @@ function _save_sp_unit_flow(m)
     add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
 
-function _save_solution!(m, k; filter_accepts_variable=(x -> true))
-    m.ext[:spineopt].solution[k] = Dict(
-        name => copy(m.ext[:spineopt].values[name])
-        for name in keys(m.ext[:spineopt].variables)
-        if filter_accepts_variable(name)
-    )
-end
-
-function _set_solution!(m, k; _kwargs...)
-    for (name, vals) in get(m.ext[:spineopt].solution, k, ())
-        var = m.ext[:spineopt].variables[name]
-        for (ind, val) in vals
-            var[ind] isa VariableRef && set_start_value(var[ind], val)
-        end
-    end
-end
-
 function save_mp_objective_bounds_and_gap!(m_mp)
     obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = objective_value(m_mp)
     sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
