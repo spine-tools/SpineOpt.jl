@@ -710,7 +710,7 @@ end
 
 function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     @timelog log_level 1 "Copying model..." (m_dual_lp, ref_map) = copy_model(m)
-    set_optimizer(m_dual_lp, lp_solver)
+    set_optimizer(m_dual_lp, m.ext[:spineopt].lp_solver)
     @log log_level 1 "Set LP solver $(solver_name(m_dual_lp)) for the copy."
     if for_benders
         @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map)
