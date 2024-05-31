@@ -77,9 +77,11 @@ _check_monte_carlo_scenarios(mc_scens::Map{Symbol,V}) where {V<:Vector} = nothin
 Add event handlers to given model so that results of different Monte Carlo iterations
 with same input data are reused instead of recomputed.
 
-It may happen that a model doesn't have any parameter values that depend on some Monte Carlo scenario keys.
-In this case the model will be the same when those keys change, so we don't need to recompute the results
-in case we've already solved it.
+It may happen that a model (or stage) doesn't have any parameter values that depend
+on some of the Monte Carlo scenario keys.
+In this case the model will be the same in all iterations where only those keys change.
+This function ensures that we solve the model only in the first of those iterations,
+and reuse the result in the rest.
 """
 function _setup_result_reuse!(m, mc_scens)
 	mc_scen_keys = _monte_carlo_scenario_keys(mc_scens)
