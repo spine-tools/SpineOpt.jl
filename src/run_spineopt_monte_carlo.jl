@@ -48,13 +48,15 @@ function do_run_spineopt!(
 )
 	mc_scens = monte_carlo_scenarios(model=m.ext[:spineopt].instance, _strict=false)
 	_check_monte_carlo_scenarios(mc_scens)
-	for stage_m in values(m.ext[:spineopt].model_by_stage)
-        add_event_handler!(_set_solution!, stage_m, :window_about_to_solve)
-        add_event_handler!(_save_solution!, stage_m, :window_solved)
-    end
+	_setup_result_reuse!(m, mc_scens)
+	for (st, stage_m) in m.ext[:spineopt].model_by_stage
+        with_env(st.name) do
+        	_setup_result_reuse!(stage_m, mc_scens)
+        end
+	end
 	scenario_keys = keys(mc_scens)
-	for (k, scenario_values) in enumerate(Iterators.product(values(mc_scens)...))
-		scen_id = (; zip(scenario_keys, scenario_values)...)
+	for (k, scenario_value_tuple) in enumerate(Iterators.product(values(mc_scens)...))
+		scen_id = (; zip(scenario_keys, scenario_value_tuple)...)
 		_set_monte_carlo_scenario(scen_id)
 		k == 1 && build_model!(m; log_level)
 		solve_model!(
@@ -68,6 +70,45 @@ _check_monte_carlo_scenarios(_mc_scens) = error(
 	"`monte_carlo_scenarios` must be a map from scenario key, to array of scenario values"
 )
 _check_monte_carlo_scenarios(mc_scens::Map{Symbol,V}) where {V<:Vector} = nothing
+
+"""
+	_setup_result_reuse!(m, mc_scens)
+
+Add event handlers to given model so that results of different Monte Carlo iterations
+with same input data are reused instead of recomputed.
+
+It may happen that a model doesn't have any parameter values that depend on some Monte Carlo scenario keys.
+In this case the model will be the same when those keys change, so we don't need to recompute the results
+in case we've already solved it.
+"""
+function _setup_result_reuse!(m, mc_scens)
+	mc_scen_keys = _monte_carlo_scenario_keys(mc_scens)
+    add_event_handler!(m, :window_about_to_solve) do m, window_nb
+    	result_key = (; window_nb=window_nb, Dict(k => _monte_carlo_scenario[k][] for k in mc_scen_keys)...)
+    	_set_result!(m, result_key)
+    end
+    add_event_handler!(m, :window_solved) do m, window_nb
+    	result_key = (; window_nb=window_nb, Dict(k => _monte_carlo_scenario[k][] for k in mc_scen_keys)...)
+    	_save_result!(m, result_key)
+    end
+end
+
+function _monte_carlo_scenario_keys(mc_scens)
+	pval_key_iter = (
+		key
+		for p in parameters(SpineOpt)
+		for ind in indices_as_tuples(p)
+		for key in _map_keys(p(; ind..., _strict=false))
+	)
+	[
+		scenario_key
+		for (scenario_key, scenario_values) in mc_scens
+		if any(!isdisjoint(key, Symbol.(scenario_values)) for key in pval_key_iter)
+	]
+end
+
+_map_keys(map::Map) = keys(indexed_values(map))
+_map_keys(map) = ()
 
 function _set_monte_carlo_scenario(scen_id)
 	for (k, v) in pairs(scen_id)
