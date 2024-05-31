@@ -49,8 +49,8 @@ function do_run_spineopt!(
 	mc_scens = monte_carlo_scenarios(model=m.ext[:spineopt].instance, _strict=false)
 	_check_monte_carlo_scenarios(mc_scens)
 	for stage_m in values(m.ext[:spineopt].model_by_stage)
-        add_event_handler!(_set_sp_solution!, stage_m, :window_about_to_solve)
-        add_event_handler!(_save_sp_solution!, stage_m, :window_solved)
+        add_event_handler!(_set_solution!, stage_m, :window_about_to_solve)
+        add_event_handler!(_save_solution!, stage_m, :window_solved)
     end
 	scenario_keys = keys(mc_scens)
 	for (k, scenario_values) in enumerate(Iterators.product(values(mc_scens)...))
