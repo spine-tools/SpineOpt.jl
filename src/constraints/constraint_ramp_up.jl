@@ -98,9 +98,9 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
             init=0,
         )
         <=
-        + (
+        (
             + sum(
-                + (
+                (
                     + _start_up_limit(m, u, ng, d, s, t0, t_after)
                     - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
                     - _ramp_up_limit(m, u, ng, d, s, t0, t_after)
@@ -112,7 +112,7 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
                 init=0,
             )
             + sum(
-                + (
+                (
                     + _minimum_operating_point(m, u, ng, d, s, t0, t_after)
                     + _ramp_up_limit(m, u, ng, d, s, t0, t_after)
                 )

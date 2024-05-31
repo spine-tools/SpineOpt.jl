@@ -123,8 +123,8 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
     @fetch connections_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     (
-        + sum(
-            + (
+        sum(
+            (
                 + sum(
                     get(connections_invested_available, (conn, s, t1), 0)
                     for s in s_path, t1 in t_in_t(m; t_short=t);
