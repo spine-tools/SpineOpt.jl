@@ -391,9 +391,9 @@ function solve_model!(
     else
         # Benders solution method
         add_event_handler!(process_subproblem_solution, m, :window_solved)
-        add_event_handler!(_set_solution!, m, :window_about_to_solve)
+        add_event_handler!(_set_starting_point!, m, :window_about_to_solve)
         add_event_handler!(m, :window_solved) do m, k
-            _save_solution!(m, k; filter_accepts_variable=(name -> !occursin("invested", string(name))))
+            _save_result!(m, k; filter_accepts_variable=(name -> !occursin("invested", string(name))))
         end
         m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
         undo_force_starting_investments! = _force_starting_investments!(m_mp)
@@ -452,13 +452,14 @@ function _do_solve_model!(
     calculate_duals=false,
     rewind=true,
 )
-    k = _resume_run!(m, resume_file_path; log_level, update_names)
-    k === nothing && return m
+    k0 = _resume_run!(m, resume_file_path; log_level, update_names)
+    k0 === nothing && return m
     _solve_stage_models!(m; log_level, log_prefix) || return false
+    m.ext[:spineopt].has_results[] = false
     _call_event_handlers(m, :model_about_to_solve)
     model_name = string(log_prefix, _model_name(m))
     rewind && @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
-    while true
+    for k in Iterators.countfrom(k0)
         @log log_level 1 "\n$model_name - Window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
         optimize_model!(m; log_level, calculate_duals, output_suffix) || return false
@@ -468,7 +469,7 @@ function _do_solve_model!(
             @timelog log_level 2 "$model_name ... Rolling complete\n" break
         end
         update_model!(m; log_level=log_level, update_names=update_names)
-        k += 1
+        m.ext[:spineopt].has_results[] = false
     end
     _call_event_handlers(m, :model_solved)
     true
@@ -537,6 +538,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
+    m.ext[:spineopt].has_results[] && return true
     model_name = _model_name(m)
     @timelog log_level 0 "Optimizing $model_name..." optimize!(m)
     termination_st = termination_status(m)
@@ -556,7 +558,10 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
         true
     elseif termination_st == MOI.INFEASIBLE
         printstyled(
-            "model $model_name is infeasible - if conflicting constraints can be identified, they will be reported below\n";
+            string(
+                "model $model_name is infeasible - ",
+                "if conflicting constraints can be identified, they will be reported below\n",
+            );
             bold=true,
         )
         try
@@ -704,9 +709,9 @@ function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
 end
 
 function _calculate_duals_fallback(m; log_level=3, for_benders=false)
-    @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
-    lp_solver = m.ext[:spineopt].lp_solver
-    @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
+    @timelog log_level 1 "Copying model..." (m_dual_lp, ref_map) = copy_model(m)
+    set_optimizer(m_dual_lp, lp_solver)
+    @log log_level 1 "Set LP solver $(solver_name(m_dual_lp)) for the copy."
     if for_benders
         @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map)
     else
