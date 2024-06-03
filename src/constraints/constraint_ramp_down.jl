@@ -95,7 +95,7 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
             init=0,
         )
         <=
-        + (
+        (
             + sum(
                 + (
                     + _shut_down_limit(m, u, ng, d, s, t_after)

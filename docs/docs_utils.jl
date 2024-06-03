@@ -115,7 +115,7 @@ function concept_dictionary(template::Dict; translation::Dict=Dict())
             end
             related_concepts = get!(concept_dict_for_name, :related_concepts, Dict())
             related_concept_type = get(indices, :related_concept_type, nothing)
-            if related_concept_type != nothing
+            if !isnothing(related_concept_type)
                 related_concept_type = get(translation, related_concept_type, related_concept_type)
                 related_concept = entry[indices[:related_concept]]
                 if !(related_concept isa Array)

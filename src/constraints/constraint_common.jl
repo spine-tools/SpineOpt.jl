@@ -19,8 +19,8 @@
 
 function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
     inds = collect(indices(m))
-    cons = Any[nothing for i in 1:length(inds)]
-    Threads.@threads for i in 1:length(inds)
+    cons = Any[nothing for i in eachindex(inds)]
+    Threads.@threads for i in eachindex(inds)
         ind = inds[i]
         cons[i] = build_constraint(m, ind...)
     end

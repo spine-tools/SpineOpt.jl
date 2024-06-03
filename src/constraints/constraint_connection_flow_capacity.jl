@@ -118,22 +118,20 @@ end
 
 function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
     @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables
-    (
-        + sum(
-            + (
-                + sum(
-                    get(connections_invested_available, (conn, s, t1), 0)
-                    for s in s_path, t1 in t_in_t(m; t_short=t);
-                    init=0,
-                )
-                + number_of_connections(
-                    m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
-                )
+    sum(
+        (
+            + sum(
+                get(connections_invested_available, (conn, s, t1), 0)
+                for s in s_path, t1 in t_in_t(m; t_short=t);
+                init=0,
             )
-            for s in s_path, t in t_in_t(m; t_long=t)
-            if any(haskey(connection_flow, (conn, n, d, s, t)) for n in members(ng));
-            init=0,
+            + number_of_connections(
+                m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
+            )
         )
+        for s in s_path, t in t_in_t(m; t_long=t)
+        if any(haskey(connection_flow, (conn, n, d, s, t)) for n in members(ng));
+        init=0,
     )
 end
 

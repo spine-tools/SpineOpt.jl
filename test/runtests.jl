@@ -46,7 +46,7 @@ import SpineOpt:
     unit_stochastic_time_indices,
     node_investment_dynamic_time_indices
 
-# Test code uses legacy syntax for `import_data`, so interpret here
+# Test code uses legacy syntax for `import_data`, so interpret here.
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, "testing"; kwargs...)
 
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
