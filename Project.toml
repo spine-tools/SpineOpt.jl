@@ -1,7 +1,7 @@
 name = "SpineOpt"
 uuid = "0d8fc150-4032-4b6e-9540-20efcb304861"
 authors = ["Spine Project consortium <spine_info@vtt.fi>"]
-version = "0.8.2"
+version = "0.7.2"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
