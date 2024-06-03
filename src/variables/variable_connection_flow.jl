@@ -62,7 +62,7 @@ function connection_flow_ub(m; connection, node, direction, kwargs...)
     )
 end
 
-function _fix_ratio_out_in_connection_flow_simple(conn, n_to, n_from)
+function _simple_fix_connection_flow_ratio_out_in(conn, n_to, n_from)
     (
         _similar(n_to, n_from)
         && iszero(connection_flow_delay(connection=conn, node1=n_to, node2=n_from, _default=Hour(0)))
@@ -83,7 +83,7 @@ function add_variable_connection_flow!(m::Model)
             )
         )
         for (conn, n_to, n_from, ratio) in (
-            (x..., _fix_ratio_out_in_connection_flow_simple(x...)) for x in indices(fix_ratio_out_in_connection_flow)
+            (x..., _simple_fix_connection_flow_ratio_out_in(x...)) for x in indices(fix_ratio_out_in_connection_flow)
         )
         if ratio !== nothing
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)

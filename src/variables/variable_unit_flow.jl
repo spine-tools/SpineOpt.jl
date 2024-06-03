@@ -59,10 +59,14 @@ function unit_flow_ub(m; unit, node, direction, kwargs...)
     )
 end
 
-function _fix_ratio_out_in_unit_flow_simple(u, n1, n2, fix_ratio)
-    fix_ratio in (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow) || return nothing
-    _similar(n1, n2) || return nothing
-    fix_ratio(unit=u, node1=n1, node2=n2, _strict=false)
+function _simple_fix_unit_flow_ratio_and_units_on_coeff(u, n1, n2, fix_ratio)
+    fix_ratio in (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow) || return (nothing, nothing)
+    _similar(n1, n2) || return (nothing, nothing)
+    units_on_coeff = Dict(
+        fix_ratio_out_in_unit_flow => fix_units_on_coefficient_out_in,
+        fix_ratio_in_out_unit_flow => fix_units_on_coefficient_in_out,
+    )[fix_ratio]
+    fix_ratio(unit=u, node1=n1, node2=n2, _strict=false), units_on_coeff(unit=u, node1=n1, node2=n2, _default=0)
 end
 
 """
@@ -75,18 +79,30 @@ function add_variable_unit_flow!(m::Model)
     replacement_expressions = Dict(
         (unit=u, node=n1, direction=d1, stochastic_scenario=s, t=t) => Dict(
             :unit_flow => ((unit=u, node=n2, direction=d2, stochastic_scenario=s, t=t), ratio),
-            :units_on => (
-                (unit=u, stochastic_scenario=s, t=t), units_on_coefficient(unit=u, node1=n1, node2=n2, _default=0)
-            ),
+            :units_on => ((unit=u, stochastic_scenario=s, t=t), units_on_coeff),
         )
-        for (u, n1, d1, n2, d2, ratio) in Iterators.flatten(
+        for (u, n1, d1, n2, d2, (ratio, units_on_coeff)) in Iterators.flatten(
             (
                 (
-                    (u, n1, d_to, n2, d_from, _fix_ratio_out_in_unit_flow_simple(u, n1, n2, fix_ratio_out_in_unit_flow))
+                    (
+                        u,
+                        n1,
+                        d_to,
+                        n2,
+                        d_from,
+                        _simple_fix_unit_flow_ratio_and_units_on_coeff(u, n1, n2, fix_ratio_out_in_unit_flow),
+                    )
                     for (u, n1, n2) in indices(fix_ratio_out_in_unit_flow)
                 ),
                 (
-                    (u, n1, d_from, n2, d_to, _fix_ratio_out_in_unit_flow_simple(u, n1, n2, fix_ratio_in_out_unit_flow))
+                    (
+                        u,
+                        n1,
+                        d_from,
+                        n2,
+                        d_to,
+                        _simple_fix_unit_flow_ratio_and_units_on_coeff(u, n1, n2, fix_ratio_in_out_unit_flow),
+                    )
                     for (u, n1, n2) in indices(fix_ratio_in_out_unit_flow)
                 ),
             )

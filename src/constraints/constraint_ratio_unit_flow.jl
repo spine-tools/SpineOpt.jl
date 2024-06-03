@@ -62,16 +62,16 @@ exist for the other 11 cases described above.
 
 See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_out\_in](@ref).
 """
-function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
+function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coeff, sense, d1, d2)
     _add_constraint!(
         m,
         ratio.name,
         m -> constraint_ratio_unit_flow_indices(m, ratio, d1, d2),
-        (m, ind...) -> _build_constraint_ratio_unit_flow(m, ind..., ratio, units_on_coefficient, sense, d1, d2),
+        (m, ind...) -> _build_constraint_ratio_unit_flow(m, ind..., ratio, units_on_coeff, sense, d1, d2),
     )
 end
 
-function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, ratio, units_on_coefficient, sense, d1, d2)
+function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, ratio, units_on_coeff, sense, d1, d2)
     # NOTE: that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second
     # <direction>!
     @fetch unit_flow = m.ext[:spineopt].variables
@@ -93,7 +93,7 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
         + sum(
             _get_units_on(m, u, s, t1)
             * min(duration(t1), duration(t))
-            * units_on_coefficient(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
+            * units_on_coeff(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
             for (u, s, t1) in unit_stochastic_time_indices(
                 m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
             );
@@ -238,7 +238,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
     (
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
-        if _fix_ratio_out_in_unit_flow_simple(u, n1, n2, ratio) === nothing
+        if _simple_fix_unit_flow_ratio_and_units_on_coeff(u, n1, n2, ratio) === (nothing, nothing)
         for (t, path) in t_lowest_resolution_path(
             m,
             unit_flow_indices(m; unit=u, node=[n1, n2]),

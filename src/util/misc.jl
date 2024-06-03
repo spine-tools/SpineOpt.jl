@@ -311,7 +311,7 @@ function _get_var_with_replacement(m, var_name, ind)
     get(m.ext[:spineopt].variables[var_name], ind) do
         replacement_fn_by_var = Dict(:units_on => number_of_units, :units_out_of_service => (m; kwargs...) -> 0)
         replacement_fn = get(replacement_fn_by_var, var_name, nothing)
-        isnothing(replacement_fn) && throw(KeyError, ind)  # FIXME
+        isnothing(replacement_fn) && throw(KeyError(ind))
         replacement_fn(m; ind...)
     end
 end

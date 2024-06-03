@@ -37,12 +37,6 @@ function _test_variable_unit_setup()
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
-            ["model__temporal_block", ["instance", "hourly"]],
-            ["model__temporal_block", ["instance", "investments_hourly"]],
-            ["model__temporal_block", ["instance", "two_hourly"]],
-            ["model__stochastic_structure", ["instance", "deterministic"]],
-            ["model__stochastic_structure", ["instance", "investments_deterministic"]],
-            ["model__stochastic_structure", ["instance", "stochastic"]],
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
@@ -294,10 +288,68 @@ function test_connection_history_parameters()
         @test length(var_connections_invested) == 9
     end
 end
+ 
+function test_fix_ratio_out_in_unit_flow_simple()
+    @testset "fix_ratio_out_in_unit_flow_simple" begin
+        url_in = "sqlite://"
+        froiuf = 0.8
+        uoc = 1.25
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = DateTime(2000, 1, 1, 2)
+        test_data = Dict(
+            :objects => [
+                ["model", "instance"],
+                ["temporal_block", "hourly"],
+                ["stochastic_structure", "deterministic"],
+                ["unit", "unit_ab"],
+                ["node", "node_a"],
+                ["node", "node_b"],
+                ["stochastic_scenario", "parent"],
+            ],
+            :relationships => [
+                ["model__default_temporal_block", ["instance", "hourly"]],
+                ["model__default_stochastic_structure", ["instance", "deterministic"]],
+                ["unit__from_node", ["unit_ab", "node_a"]],
+                ["unit__to_node", ["unit_ab", "node_b"]],
+                ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
+            ],
+            :object_parameter_values => [
+                ["model", "instance", "model_start", unparse_db_value(m_start)],
+                ["model", "instance", "model_end", unparse_db_value(m_end)],
+                ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
+                ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+                ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+                ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ],
+            :relationship_parameter_values => [
+                ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", froiuf],
+                ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_units_on_coefficient_out_in", uoc],
+            ],
+        )
+        _load_test_data(url_in, test_data)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        for (key, var) in var_unit_flow
+            start(key.t) >= m_start || continue
+            if key.direction.name == :from_node
+                @test var isa VariableRef
+            else
+                @test key.node.name == :node_b
+                @test var isa GenericAffExpr
+                uf_key = (key.unit, node(:node_a), direction(:from_node), key.stochastic_scenario, key.t)
+                uo_key = (key.unit, key.stochastic_scenario, key.t)
+                @test var == froiuf * var_unit_flow[uf_key...] + uoc * var_units_on[uo_key...]
+            end
+        end
+    end
+end
 
 @testset "unit-based constraints" begin
     test_initial_units_on()
+    test_fix_ratio_out_in_unit_flow_simple()
     test_unit_online_variable_type_none()
     test_unit_history_parameters()
     test_connection_history_parameters()
+    test_fix_ratio_out_in_unit_flow_simple()
 end
