@@ -122,6 +122,21 @@ function _add_variables!(m; log_level=3)
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
+    _expand_replacement_expressions!(m)
+end
+
+function _expand_replacement_expressions!(m)
+    for (name, def) in m.ext[:spineopt].variables_definition
+        replacement_expressions = def[:replacement_expressions]
+        isempty(replacement_expressions) && continue
+        merge!(
+            m.ext[:spineopt].variables[name],
+            Dict(
+                ind => sum(coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in expr)
+                for (ind, expr) in replacement_expressions
+            ),
+        )
+    end
 end
 
 """
@@ -632,7 +647,7 @@ The value of a JuMP variable, rounded if necessary.
 """
 _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
 _variable_value(e::AffExpr) = value(e)
-_variable_value(x::Call) = realize(x)
+_variable_value(x::GenericAffExpr{Call,VariableRef}) = value(realize(x))
 
 """
 Save the value of the objective terms in a model.
@@ -1180,7 +1195,7 @@ function _sanitize_constraint_name(constraint_name)
 end
 
 _set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)
-_set_name(::Union{Call,AffExpr,Nothing}, name) = nothing
+_set_name(x, name) = nothing
 
 function _fix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition

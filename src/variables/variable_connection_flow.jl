@@ -67,8 +67,7 @@ function _fix_ratio_out_in_connection_flow_simple(conn, n_to, n_from)
         _similar(n_to, n_from)
         && iszero(connection_flow_delay(connection=conn, node1=n_to, node2=n_from, _default=Hour(0)))
     ) || return nothing
-    ratio = fix_ratio_out_in_connection_flow(connection=conn, node1=n_to, node2=n_from, _strict=false)
-    ratio isa Number && return ratio
+    fix_ratio_out_in_connection_flow(connection=conn, node1=n_to, node2=n_from, _strict=false)
 end
 
 """
@@ -77,9 +76,11 @@ end
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_connection_flow!(m::Model)
-    ind_map = Dict(
-        (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => (
-            (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t), ratio
+    replacement_expressions = Dict(
+        (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => Dict(
+            :connection_flow => (
+                (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t), ratio
+            )
         )
         for (conn, n_to, n_from, ratio) in (
             (x..., _fix_ratio_out_in_connection_flow_simple(x...)) for x in indices(fix_ratio_out_in_connection_flow)
@@ -98,6 +99,6 @@ function add_variable_connection_flow!(m::Model)
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
         required_history_period=maximum_parameter_value(connection_flow_delay),
-        ind_map=ind_map,
+        replacement_expressions=replacement_expressions,
     )
 end

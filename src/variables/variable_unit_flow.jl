@@ -61,9 +61,8 @@ end
 
 function _fix_ratio_out_in_unit_flow_simple(u, n1, n2, fix_ratio)
     fix_ratio in (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow) || return nothing
-    (_similar(n1, n2) && iszero(units_on_coefficient(unit=u, node1=n1, node2=n2, _default=0))) || return nothing
-    ratio = fix_ratio(unit=u, node1=n1, node2=n2, _strict=false)
-    ratio isa Number && return ratio
+    _similar(n1, n2) || return nothing
+    fix_ratio(unit=u, node1=n1, node2=n2, _strict=false)
 end
 
 """
@@ -73,9 +72,12 @@ Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
     d_to, d_from = direction(:to_node), direction(:from_node)
-    ind_map = Dict(
-        (unit=u, node=n1, direction=d1, stochastic_scenario=s, t=t) => (
-            (unit=u, node=n2, direction=d2, stochastic_scenario=s, t=t), ratio
+    replacement_expressions = Dict(
+        (unit=u, node=n1, direction=d1, stochastic_scenario=s, t=t) => Dict(
+            :unit_flow => ((unit=u, node=n2, direction=d2, stochastic_scenario=s, t=t), ratio),
+            :units_on => (
+                (unit=u, stochastic_scenario=s, t=t), units_on_coefficient(unit=u, node1=n1, node2=n2, _default=0)
+            ),
         )
         for (u, n1, d1, n2, d2, ratio) in Iterators.flatten(
             (
@@ -102,6 +104,6 @@ function add_variable_unit_flow!(m::Model)
         initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,
         non_anticipativity_margin=unit_flow_non_anticipativity_margin,
-        ind_map=ind_map,
+        replacement_expressions=replacement_expressions,
     )
 end
