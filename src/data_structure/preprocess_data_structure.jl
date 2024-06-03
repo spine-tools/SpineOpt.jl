@@ -937,7 +937,16 @@ function generate_unit_commitment_parameters()
                 (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
+                (x.unit for x in indices(ramp_up_limit)),
+                (x.unit for x in indices(ramp_down_limit)),
                 (u for (st, out, u) in stage__output__unit() if out.name == :units_on),
+                (
+                    u
+                    for u in indices(online_variable_type)
+                    if online_variable_type(unit=u) in (
+                        :unit_online_variable_type_binary, :unit_online_variable_type_integer
+                    )
+                ),
             )
         )
     )
