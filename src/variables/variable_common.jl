@@ -153,6 +153,8 @@ function _apply(reducer, x::Number, y::Number)
         reducer(x, y)
     end
 end
+_apply(reducer, x::Call, y) = Call(_apply, [reducer, x, y])
+_apply(reducer, x, y::Call) = Call(_apply, [reducer, x, y])
 _apply(reducer, x::Call, y::Call) = Call(_apply, [reducer, x, y])
 
 _finalize_variable!(x, args...) = nothing

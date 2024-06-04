@@ -101,7 +101,6 @@ function add_variable_unit_flow!(m::Model)
                 _simple_fix_ratio_unit_flow_and_units_on_coeff_indices(m, d_from, d_to, fix_ratio_in_out_unit_flow),
             )
         )
-        if fix_flow_ratio !== nothing
     )
     add_variable!(
         m,

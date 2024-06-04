@@ -69,12 +69,6 @@ function _has_simple_fix_ratio_out_in_connection_flow(conn, n_to, n_from)
     )
 end
 
-function _fix_ratio_out_in_connection_flow(m, conn, n_to, n_from, s, t)
-    fix_ratio_out_in_connection_flow(
-        connection=conn, node1=n_to, node2=n_from, stochastic_scenario=s, t=t, _strict=false
-    )
-end
-
 """
     add_variable_connection_flow!(m::Model)
 
@@ -85,16 +79,14 @@ function add_variable_connection_flow!(m::Model)
         (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => Dict(
             :connection_flow => (
                 (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t),
-                fix_flow_ratio,
+                fix_ratio_out_in_connection_flow(
+                    m; connection=conn, node1=n_to, node2=n_from, stochastic_scenario=s, t=t, _strict=false
+                ),
             )
         )
-        for (conn, n_to, n_from, s, t, fix_flow_ratio) in (
-            (conn, n_to, n_from, s, t, _fix_ratio_out_in_connection_flow(m, conn, n_to, n_from, s, t))
-            for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow)
-            if _has_simple_fix_ratio_out_in_connection_flow(conn, n_to, n_from)
-            for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
-        )
-        if fix_flow_ratio !== nothing
+        for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow)
+        if _has_simple_fix_ratio_out_in_connection_flow(conn, n_to, n_from)
+        for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
     )
     add_variable!(
         m,

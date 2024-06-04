@@ -394,9 +394,7 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
         stamps = [m_start, m_start + Hour(1)]
         fruf = unparse_db_value(TimeSeries(stamps, fruf_values))
         fuoc = unparse_db_value(TimeSeries(stamps, fuoc_values))
-        url_in = test_fix_ratio_unit_flow_simple_setup(
-            m_start, m_end, ("fix_ratio_out_in_unit_flow", fruf), ("fix_units_on_coefficient_out_in", fuoc)
-        )
+        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [("model", "instance", "roll_forward", unparse_db_value(Hour(1)))]
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
@@ -432,6 +430,113 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
         end
     end
 end
+ 
+function test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+    url_in = "sqlite://"
+    test_data = Dict(
+        :objects => [
+            ["model", "instance"],
+            ["temporal_block", "hourly"],
+            ["stochastic_structure", "deterministic"],
+            ["connection", "conn_ab"],
+            ["node", "node_a"],
+            ["node", "node_b"],
+            ["stochastic_scenario", "parent"],
+        ],
+        :relationships => [
+            ["model__default_temporal_block", ["instance", "hourly"]],
+            ["model__default_stochastic_structure", ["instance", "deterministic"]],
+            ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
+            ["connection__from_node", ["conn_ab", "node_a"]],
+            ["connection__to_node", ["conn_ab", "node_b"]],
+            ["connection__node__node", ["conn_ab", "node_b", "node_a"]],
+            ["connection__node__node", ["conn_ab", "node_a", "node_b"]],
+        ],
+        :object_parameter_values => [
+            ["model", "instance", "model_start", unparse_db_value(m_start)],
+            ["model", "instance", "model_end", unparse_db_value(m_end)],
+            ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
+            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+        ],
+    )
+    _load_test_data(url_in, test_data)
+    url_in = "sqlite://"
+end
+
+function test_fix_ratio_out_in_connection_flow_simple()
+    @testset "fix_ratio_out_in_connection_flow_simple" begin
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = m_start + Hour(2)
+        frcf = 0.8
+        url_in = test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+        rel_pvals = [
+            ["connection__node__node", ["conn_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", frcf],
+        ]
+        import_data(url_in; relationship_parameter_values=rel_pvals)
+        m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
+        var_conn_flow = m.ext[:spineopt].variables[:connection_flow]
+        @testset for key in keys(var_conn_flow)
+            var = var_conn_flow[key]
+            start(key.t) >= m_start || continue
+            if key.direction.name == :from_node
+                @test var isa VariableRef
+            elseif key.direction.name == :to_node
+                @test key.node.name == :node_b
+                @test var isa GenericAffExpr
+                cf_key = (key.connection, node(:node_a), direction(:from_node), key.stochastic_scenario, key.t)
+                @test var == frcf * var_conn_flow[cf_key...]
+            end
+        end
+    end
+end
+
+function test_fix_ratio_out_in_connection_flow_simple_rolling()
+    @testset "fix_ratio_out_in_connection_flow_simple_rolling" begin
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = m_start + Hour(2)
+        frcf_values = [0.8, 0.9]
+        stamps = [m_start, m_start + Hour(1)]
+        frcf = unparse_db_value(TimeSeries(stamps, frcf_values))
+        url_in = test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+        obj_pvals = [("model", "instance", "roll_forward", unparse_db_value(Hour(1)))]
+        rel_pvals = [
+            ["connection__node__node", ["conn_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", frcf],
+        ]
+        import_data(url_in; object_parameter_values=obj_pvals, relationship_parameter_values=rel_pvals)
+        m = run_spineopt(url_in, nothing; log_level=0, optimize=true, update_names=true) do m
+            add_event_handler!(m, :window_about_to_solve) do m, k
+                @fetch connection_flow, node_injection = m.ext[:spineopt].variables
+                tail = (stochastic_scenario(:parent), only(time_slice(m)))
+                frcf_val = frcf_values[k]
+                @testset for key in keys(m.ext[:spineopt].constraints[:nodal_balance])
+                    con = m.ext[:spineopt].constraints[:nodal_balance][key]
+                    @show obs_con = constraint_object(con)
+                    exp_con = if key.node.name == :node_b
+                        @build_constraint(
+                            + node_injection[node(:node_b), tail...]
+                            + frcf_val * connection_flow[
+                                connection(:conn_ab), node(:node_a), direction(:from_node), tail...
+                            ]
+                            ==
+                            0
+                        )
+                    elseif key.node.name == :node_a
+                        @build_constraint(
+                            + node_injection[node(:node_a), tail...]
+                            - connection_flow[
+                                connection(:conn_ab), node(:node_a), direction(:from_node), tail...
+                            ]
+                            ==
+                            0
+                        )
+                    end
+                    @test _is_constraint_equal(obs_con, exp_con)
+                end
+            end
+        end
+    end
+end
 
 @testset "unit-based constraints" begin
     test_initial_units_on()
@@ -442,4 +547,6 @@ end
     test_fix_ratio_out_in_unit_flow_simple()
     test_fix_ratio_in_out_unit_flow_simple()
     test_fix_ratio_out_in_unit_flow_simple_rolling()
+    test_fix_ratio_out_in_connection_flow_simple()
+    test_fix_ratio_out_in_connection_flow_simple_rolling()
 end
