@@ -307,6 +307,15 @@ function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
     reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
 end
 
+function _get_var_with_replacement(m, var_name, ind)
+    get(m.ext[:spineopt].variables[var_name], ind) do
+        replacement_fn_by_var = Dict(:units_on => number_of_units, :units_out_of_service => (m; kwargs...) -> 0)
+        replacement_fn = get(replacement_fn_by_var, var_name, nothing)
+        isnothing(replacement_fn) && throw(KeyError(ind))
+        replacement_fn(m; ind...)
+    end
+end
+
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}

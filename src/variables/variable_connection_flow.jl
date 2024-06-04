@@ -62,13 +62,11 @@ function connection_flow_ub(m; connection, node, direction, kwargs...)
     )
 end
 
-function _fix_ratio_out_in_connection_flow_simple(conn, n_to, n_from)
+function _has_simple_fix_ratio_out_in_connection_flow(conn, n_to, n_from)
     (
         _similar(n_to, n_from)
         && iszero(connection_flow_delay(connection=conn, node1=n_to, node2=n_from, _default=Hour(0)))
-    ) || return nothing
-    ratio = fix_ratio_out_in_connection_flow(connection=conn, node1=n_to, node2=n_from, _strict=false)
-    ratio isa Number && return ratio
+    )
 end
 
 """
@@ -77,14 +75,17 @@ end
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_connection_flow!(m::Model)
-    ind_map = Dict(
-        (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => (
-            (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t), ratio
+    replacement_expressions = Dict(
+        (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => Dict(
+            :connection_flow => (
+                (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t),
+                fix_ratio_out_in_connection_flow(
+                    m; connection=conn, node1=n_to, node2=n_from, stochastic_scenario=s, t=t, _strict=false
+                ),
+            )
         )
-        for (conn, n_to, n_from, ratio) in (
-            (x..., _fix_ratio_out_in_connection_flow_simple(x...)) for x in indices(fix_ratio_out_in_connection_flow)
-        )
-        if ratio !== nothing
+        for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow)
+        if _has_simple_fix_ratio_out_in_connection_flow(conn, n_to, n_from)
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
     )
     add_variable!(
@@ -98,6 +99,6 @@ function add_variable_connection_flow!(m::Model)
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
         required_history_period=maximum_parameter_value(connection_flow_delay),
-        ind_map=ind_map,
+        replacement_expressions=replacement_expressions,
     )
 end
