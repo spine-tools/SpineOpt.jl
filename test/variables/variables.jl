@@ -538,7 +538,7 @@ function test_fix_ratio_out_in_connection_flow_simple_rolling()
     end
 end
 
-@testset "unit-based constraints" begin
+@testset "variables" begin
     test_initial_units_on()
     test_fix_ratio_out_in_unit_flow_simple()
     test_unit_online_variable_type_none()
