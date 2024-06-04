@@ -140,10 +140,16 @@ end
 
 _mul(_factor, ::Nothing) = nothing
 _mul(factor, x) = factor * x
+_mul(factor::Call, x) = Call(_mul, [factor, x])
+_mul(factor, x::Call) = Call(_mul, [factor, x])
+_mul(factor::Call, x::Call) = Call(_mul, [factor, x])
 
 _apply(reducer, x, ::Nothing) = x
 _apply(reducer, ::Nothing, y) = y
 _apply(reducer, ::Nothing, ::Nothing) = nothing
+_apply(reducer, x::Call, y) = Call(_apply, [reducer, x, y])
+_apply(reducer, x, y::Call) = Call(_apply, [reducer, x, y])
+_apply(reducer, x::Call, y::Call) = Call(_apply, [reducer, x, y])
 function _apply(reducer, x::Number, y::Number)
     if isnan(x)
         y
@@ -153,9 +159,6 @@ function _apply(reducer, x::Number, y::Number)
         reducer(x, y)
     end
 end
-_apply(reducer, x::Call, y) = Call(_apply, [reducer, x, y])
-_apply(reducer, x, y::Call) = Call(_apply, [reducer, x, y])
-_apply(reducer, x::Call, y::Call) = Call(_apply, [reducer, x, y])
 
 _finalize_variable!(x, args...) = nothing
 function _finalize_variable!(var::VariableRef, bin, int, lb, ub, fix_value, internal_fix_value)
