@@ -132,7 +132,9 @@ function _expand_replacement_expressions!(m)
         merge!(
             m.ext[:spineopt].variables[name],
             Dict(
-                ind => sum(coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in expr)
+                ind => sum(
+                    coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in expr
+                )
                 for (ind, expr) in replacement_expressions
             ),
         )

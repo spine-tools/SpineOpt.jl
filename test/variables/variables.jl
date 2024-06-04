@@ -289,7 +289,7 @@ function test_connection_history_parameters()
     end
 end
  
-function test_fix_ratio_out_in_unit_flow_simple_setup(m_start, m_end, fix_ratio_flow, fix_units_on_coeff)
+function test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -308,6 +308,7 @@ function test_fix_ratio_out_in_unit_flow_simple_setup(m_start, m_end, fix_ratio_
             ["unit__from_node", ["unit_ab", "node_a"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"]],
         ],
         :object_parameter_values => [
             ["model", "instance", "model_start", unparse_db_value(m_start)],
@@ -316,10 +317,6 @@ function test_fix_ratio_out_in_unit_flow_simple_setup(m_start, m_end, fix_ratio_
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
-        ],
-        :relationship_parameter_values => [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], fix_ratio_flow...],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], fix_units_on_coeff...],
         ],
     )
     _load_test_data(url_in, test_data)
@@ -332,13 +329,17 @@ function test_fix_ratio_out_in_unit_flow_simple()
         m_end = m_start + Hour(2)
         fruf = 0.8
         fuoc = 1.25
-        url_in = test_fix_ratio_out_in_unit_flow_simple_setup(
-            m_start, m_end, ("fix_ratio_out_in_unit_flow", fruf), ("fix_units_on_coefficient_out_in", fuoc)
-        )
+        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        rel_pvals = [
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_units_on_coefficient_out_in", fuoc],
+        ]
+        import_data(url_in; relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
-        for (key, var) in var_unit_flow
+        @testset for key in keys(var_unit_flow)
+            var = var_unit_flow[key]
             start(key.t) >= m_start || continue
             if key.direction.name == :from_node
                 @test var isa VariableRef
@@ -346,6 +347,37 @@ function test_fix_ratio_out_in_unit_flow_simple()
                 @test key.node.name == :node_b
                 @test var isa GenericAffExpr
                 uf_key = (key.unit, node(:node_a), direction(:from_node), key.stochastic_scenario, key.t)
+                uo_key = (key.unit, key.stochastic_scenario, key.t)
+                @test var == fruf * var_unit_flow[uf_key...] + fuoc * var_units_on[uo_key...]
+            end
+        end
+    end
+end
+
+function test_fix_ratio_in_out_unit_flow_simple()
+    @testset "fix_ratio_in_out_unit_flow_simple" begin
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = m_start + Hour(2)
+        fruf = 0.8
+        fuoc = 1.25
+        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        rel_pvals = [
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_in_out_unit_flow", fruf],
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_units_on_coefficient_in_out", fuoc],
+        ]
+        import_data(url_in; relationship_parameter_values=rel_pvals)
+        m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        @testset for key in keys(var_unit_flow)
+            var = var_unit_flow[key]
+            start(key.t) >= m_start || continue
+            if key.direction.name == :to_node
+                @test var isa VariableRef
+            elseif key.direction.name == :from_node
+                @test key.node.name == :node_a
+                @test var isa GenericAffExpr
+                uf_key = (key.unit, node(:node_b), direction(:to_node), key.stochastic_scenario, key.t)
                 uo_key = (key.unit, key.stochastic_scenario, key.t)
                 @test var == fruf * var_unit_flow[uf_key...] + fuoc * var_units_on[uo_key...]
             end
@@ -362,18 +394,23 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
         stamps = [m_start, m_start + Hour(1)]
         fruf = unparse_db_value(TimeSeries(stamps, fruf_values))
         fuoc = unparse_db_value(TimeSeries(stamps, fuoc_values))
-        url_in = test_fix_ratio_out_in_unit_flow_simple_setup(
+        url_in = test_fix_ratio_unit_flow_simple_setup(
             m_start, m_end, ("fix_ratio_out_in_unit_flow", fruf), ("fix_units_on_coefficient_out_in", fuoc)
         )
         obj_pvals = [("model", "instance", "roll_forward", unparse_db_value(Hour(1)))]
-        import_data(url_in; object_parameter_values=obj_pvals)
+        rel_pvals = [
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_units_on_coefficient_out_in", fuoc],
+        ]
+        import_data(url_in; object_parameter_values=obj_pvals, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=true, update_names=true) do m
             add_event_handler!(m, :window_about_to_solve) do m, k
                 @fetch units_on, unit_flow, node_injection = m.ext[:spineopt].variables
                 tail = (stochastic_scenario(:parent), only(time_slice(m)))
                 fruf_val = fruf_values[k]
                 fuoc_val = fuoc_values[k]
-                for (key, con) in m.ext[:spineopt].constraints[:node_injection]
+                @testset for key in keys(m.ext[:spineopt].constraints[:node_injection])
+                    con = m.ext[:spineopt].constraints[:node_injection][key]
                     obs_con = constraint_object(con)
                     exp_con = if key.node.name == :node_b
                         @build_constraint(
@@ -403,5 +440,6 @@ end
     test_unit_history_parameters()
     test_connection_history_parameters()
     test_fix_ratio_out_in_unit_flow_simple()
+    test_fix_ratio_in_out_unit_flow_simple()
     test_fix_ratio_out_in_unit_flow_simple_rolling()
 end
