@@ -51,6 +51,7 @@ function _add_mp_variables!(m; log_level=3)
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
+    _expand_replacement_expressions!(m)
 end
 
 """
