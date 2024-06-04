@@ -238,7 +238,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
     (
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
-        if _simple_fix_unit_flow_ratio_and_units_on_coeff(u, n1, n2, ratio) === (nothing, nothing)
+        if !_has_simple_fix_ratio_unit_flow(n1, n2, ratio)
         for (t, path) in t_lowest_resolution_path(
             m,
             unit_flow_indices(m; unit=u, node=[n1, n2]),
