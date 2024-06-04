@@ -89,7 +89,7 @@ function add_variable_connection_flow!(m::Model)
             )
         )
         for (conn, n_to, n_from, s, t, fix_flow_ratio) in (
-            (conn, n_to, n_from, _fix_ratio_out_in_connection_flow(m, conn, n_to, n_from, s, t))
+            (conn, n_to, n_from, s, t, _fix_ratio_out_in_connection_flow(m, conn, n_to, n_from, s, t))
             for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow)
             if _has_simple_fix_ratio_out_in_connection_flow(conn, n_to, n_from)
             for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
