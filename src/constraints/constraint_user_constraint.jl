@@ -62,6 +62,17 @@ function add_constraint_user_constraint!(m::Model)
 end
 
 function _build_constraint_user_constraint(m::Model, uc, path, t)
+    build_sense_constraint(
+        + _operations_term(m, uc, path, t)
+        + _investment_term(m, uc, path, t),
+        constraint_sense(user_constraint=uc),
+        + sum(right_hand_side(m; user_constraint=uc, stochastic_scenario=s, t=t) for s in path; init=0)
+        * duration(t)
+        / length(path),
+    )
+end
+
+function _operations_term(m, uc, path, t)
     @fetch (
         unit_flow_op,
         unit_flow,
@@ -69,16 +80,10 @@ function _build_constraint_user_constraint(m::Model, uc, path, t)
         units_started_up,
         connection_flow,
         node_state,
-        units_invested,
-        units_invested_available,
-        storages_invested,
-        storages_invested_available,
-        connections_invested,
-        connections_invested_available,
         user_constraint_slack_pos,
         user_constraint_slack_neg
     ) = m.ext[:spineopt].variables
-    build_sense_constraint(
+    (
         + sum(
             + unit_flow_op[u, n, d, op, s, t_short]
             * unit_flow_coefficient(
@@ -146,50 +151,6 @@ function _build_constraint_user_constraint(m::Model, uc, path, t)
             init=0,
         )
         + sum(
-            (   
-                + units_invested_available[u, s, t1]
-                * units_invested_available_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
-                + units_invested[u, s, t1]
-                * units_invested_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
-            )
-            * min(duration(t1), duration(t))
-            for u in unit__user_constraint(user_constraint=uc)
-            for (u, s, t1) in units_invested_available_indices(
-                m; unit=u, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
-            );
-            init=0,
-        )
-        + sum(
-            (   
-                + connections_invested_available[c, s, t1]
-                * connections_invested_available_coefficient(
-                    m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1
-                )
-                + connections_invested[c, s, t1]
-                * connections_invested_coefficient(m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1)
-            )
-            * min(duration(t1), duration(t))
-            for c in connection__user_constraint(user_constraint=uc)
-            for (c, s, t1) in connections_invested_available_indices(
-                m; connection=c, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
-            );
-            init=0,
-        )
-        + sum(
-            (   
-                + storages_invested_available[n, s, t1]
-                * storages_invested_available_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
-                + storages_invested[n, s, t1]
-                * storages_invested_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
-            )
-            * min(duration(t1), duration(t))
-            for n in node__user_constraint(user_constraint=uc)
-            for (n, s, t1) in storages_invested_available_indices(
-                m; node=n, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
-            );
-            init=0,
-        )                        
-        + sum(
             + connection_flow[c, n, d, s, t_short]
             * connection_flow_coefficient(
                 m; connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, t=t_short
@@ -248,11 +209,63 @@ function _build_constraint_user_constraint(m::Model, uc, path, t)
             for (uc, s, t) in user_constraint_slack_indices(m; user_constraint=uc, stochastic_scenario=path, t=t);
             init=0,
         )
-        ,
-        constraint_sense(user_constraint=uc),
-        + sum(right_hand_side(m; user_constraint=uc, stochastic_scenario=s, t=t) for s in path; init=0)
-        * duration(t)
-        / length(path),
+    )
+end
+
+function _investment_term(m, uc, path, t)
+    @fetch (
+        units_invested,
+        units_invested_available,
+        storages_invested,
+        storages_invested_available,
+        connections_invested,
+        connections_invested_available,
+    ) = m.ext[:spineopt].variables
+    (
+        + sum(
+            (
+                + units_invested_available[u, s, t1]
+                * units_invested_available_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
+                + units_invested[u, s, t1]
+                * units_invested_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
+            )
+            * min(duration(t1), duration(t))
+            for u in unit__user_constraint(user_constraint=uc)
+            for (u, s, t1) in units_invested_available_indices(
+                m; unit=u, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
+            );
+            init=0,
+        )
+        + sum(
+            (
+                + connections_invested_available[c, s, t1]
+                * connections_invested_available_coefficient(
+                    m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1
+                )
+                + connections_invested[c, s, t1]
+                * connections_invested_coefficient(m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1)
+            )
+            * min(duration(t1), duration(t))
+            for c in connection__user_constraint(user_constraint=uc)
+            for (c, s, t1) in connections_invested_available_indices(
+                m; connection=c, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
+            );
+            init=0,
+        )
+        + sum(
+            (
+                + storages_invested_available[n, s, t1]
+                * storages_invested_available_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
+                + storages_invested[n, s, t1]
+                * storages_invested_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
+            )
+            * min(duration(t1), duration(t))
+            for n in node__user_constraint(user_constraint=uc)
+            for (n, s, t1) in storages_invested_available_indices(
+                m; node=n, stochastic_scenario=path, t=t_overlaps_t(m; t=t)
+            );
+            init=0,
+        )
     )
 end
 
