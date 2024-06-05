@@ -301,6 +301,7 @@
         ["unit", "units_on_non_anticipativity_time", null, null, "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."],
         ["unit", "units_unavailable", 0, null, "Represents the number of units out of service"],
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
+        ["user_constraint", "for_benders_master", false, "boolean_value_list", "Whether the constraint should be added to the master or to the subproblem in benders."],
         ["user_constraint", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."],
         ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."]

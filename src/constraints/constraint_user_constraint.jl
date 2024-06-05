@@ -63,7 +63,7 @@ end
 
 function _build_constraint_user_constraint(m::Model, uc, path, t)
     build_sense_constraint(
-        + _operations_term(m, uc, path, t)
+        + (_is_benders_master(m) ? 0 : _operations_term(m, uc, path, t))
         + _investment_term(m, uc, path, t),
         constraint_sense(user_constraint=uc),
         + sum(right_hand_side(m; user_constraint=uc, stochastic_scenario=s, t=t) for s in path; init=0)
@@ -270,9 +270,16 @@ function _investment_term(m, uc, path, t)
 end
 
 function constraint_user_constraint_indices(m::Model)
+    user_constraints = if _is_benders_master(m)
+        user_constraint(for_benders_master=true)
+    elseif _is_benders_subproblem(m)
+        user_constraint(for_benders_master=false)
+    else
+        user_constraint()
+    end
     (
         (user_constraint=uc, stochastic_path=path, t=t)
-        for uc in user_constraint()
+        for uc in user_constraints
         for (t, path) in t_lowest_resolution_path(
             m, Iterators.flatten(user_constraint_all_indices(m; user_constraint=uc))
         )
