@@ -225,9 +225,11 @@ function prepare_spineopt(
     for st in stage()
         scenario = stage_scenario(stage=st, _strict=false)
         scenario isa Symbol || error("invalid scenario $scenario for stage $st")
-        filters = merge(filters, Dict("scenario" => string(scenario)))
-        with_env(st.name) do
-            _init_data_from_db(url_in, log_level, upgrade, templates, filters, st)
+        without_filters(url_in) do clean_url_in
+            filters = merge(filters, Dict("scenario" => string(scenario)))
+            with_env(st.name) do
+                _init_data_from_db(clean_url_in, log_level, upgrade, templates, filters, st)
+            end
         end
     end
     create_model(mip_solver, lp_solver, use_direct_model)
@@ -274,7 +276,7 @@ function _do_upgrade_db(url_in, version; log_level)
     @log log_level 0 "Done!"
 end
 
-_data(url_in::String; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
+_data(url_in; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
 _data(data::Dict; kwargs...) = data
 
 """
