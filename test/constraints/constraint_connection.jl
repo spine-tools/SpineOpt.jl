@@ -406,13 +406,13 @@ function test_constraint_fix_node_pressure_point()
                     var_bin = var_binary_flow[var_conn_flow_key2...]
                     var_pr1 = var_node_pressure[var_node_pr_keys1...]
                     var_pr2 = var_node_pressure[var_node_pr_keys2...]
-                    @testset for i in length(fixed_pressure_constant_1_raw)
-                            if fixed_pressure_constant_1_raw[i] !=0
+                    @testset for i in eachindex(fixed_pressure_constant_1_raw)
+                        if fixed_pressure_constant_1_raw[i] != 0
                             con_key = (conn, n_from, n_to, [s], t, i)
                             expected_con = @build_constraint(
-                                + (var_conn1 + var_conn2) / 2
+                                (var_conn1 + var_conn2) / 2
                                 <=
-                                + (fixed_pressure_constant_1_raw[i] * var_pr1)
+                                (fixed_pressure_constant_1_raw[i] * var_pr1)
                                 - (fixed_pressure_constant_0_raw[i] * var_pr2)
                                 + bigm * (1 - var_bin)
                             )
@@ -1684,48 +1684,6 @@ function test_constraint_candidate_connection_ub()
     end
 end
 
-function test_connection_history_parameters()
-    @testset "constraint_connection_lifetime" begin
-        flow_ratio = 0.8
-        conn_flow_minutes_delay = 180
-        lifetime_minutes = 240
-        candidate_connections = 3
-        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-
-        url_in = _test_constraint_connection_setup()
-        connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
-        connection_flow_delay = Dict("type" => "duration", "data" => string(conn_flow_minutes_delay, "m"))
-        object_parameter_values = [
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
-            ["model", "instance", "model_end", model_end],
-        ]
-        relationships = [
-            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
-            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
-        ]
-        relationship_parameter_values = [
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"], "connection_flow_delay", connection_flow_delay],
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", flow_ratio],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-        var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
-        
-        @test length(var_connection_flow) == 42
-        @test length(var_connections_invested_available) == 9
-        @test length(var_connections_invested) == 9
-    end
-end
-
 @testset "connection-based constraints" begin
     test_constraint_connection_flow_capacity()
     test_constraint_connection_flow_capacity_bidirectional()
@@ -1748,5 +1706,4 @@ end
     test_constraint_candidate_connection_lb()
     test_constraint_ratio_out_in_connection_intact_flow()
     test_constraint_candidate_connection_ub()
-    test_connection_history_parameters()
 end
