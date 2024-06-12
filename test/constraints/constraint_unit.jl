@@ -812,6 +812,7 @@ function test_constraint_ratio_unit_flow()
     @testset "constraint_ratio_unit_flow" begin
         flow_ratio = 0.8
         units_on_coeff = 0.2
+        start_flow = 1.3
         class = "unit__node__node"
         relationship = ["unit_ab", "node_a", "node_b"]
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
@@ -838,8 +839,11 @@ function test_constraint_ratio_unit_flow()
                 [classes_by_prefix[b], ["unit_ab", "node_b"]],
                 [class, relationship],
             ]
-            relationship_parameter_values =
-                [[class, relationship, ratio, flow_ratio], [class, relationship, coeff, units_on_coeff]]
+            relationship_parameter_values =[
+                [class, relationship, ratio, flow_ratio],
+                [class, relationship, coeff, units_on_coeff],
+                [class, relationship, "unit_start_flow", start_flow],
+            ]
             sense = senses_by_prefix[p]
             SpineInterface.import_data(
                 url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values
@@ -847,6 +851,7 @@ function test_constraint_ratio_unit_flow()
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
             var_units_on = m.ext[:spineopt].variables[:units_on]
+            var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
             constraint = m.ext[:spineopt].constraints[Symbol(ratio)]
             @test length(constraint) == 1
             path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
@@ -865,11 +870,26 @@ function test_constraint_ratio_unit_flow()
             var_u_flow_a2 = var_unit_flow[var_u_flow_a2_key...]
             var_u_on_a1 = var_units_on[var_u_on_a1_key...]
             var_u_on_a2 = var_units_on[var_u_on_a2_key...]
+            var_u_su_a1 = var_units_started_up[var_u_on_a1_key...]
+            var_u_su_a2 = var_units_started_up[var_u_on_a2_key...]
             con_key = (unit(:unit_ab), node(:node_a), node(:node_b), path, t_long)
+            sf_sign = if p == "fix"
+                if a == "in" && b == "out"
+                    1
+                elseif a == "out" && b == "in"
+                    -1
+                else
+                    0
+                end
+            else
+                0
+            end
             expected_con = SpineOpt.build_sense_constraint(
                 var_u_flow_a1 + var_u_flow_a2,
                 sense,
-                2 * flow_ratio * var_u_flow_b + units_on_coeff * (var_u_on_a1 + var_u_on_a2),
+                + 2 * flow_ratio * var_u_flow_b
+                + units_on_coeff * (var_u_on_a1 + var_u_on_a2)
+                + sf_sign * start_flow * (var_u_su_a1 + var_u_su_a2),
             )
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)

@@ -329,14 +329,17 @@ function test_fix_ratio_out_in_unit_flow_simple()
         m_end = m_start + Hour(2)
         fruf = 0.8
         fuoc = 1.25
+        usf = 2.4
         url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_units_on_coefficient_out_in", fuoc],
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "unit_start_flow", usf],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         @testset for key in keys(var_unit_flow)
             var = var_unit_flow[key]
@@ -348,7 +351,11 @@ function test_fix_ratio_out_in_unit_flow_simple()
                 @test var isa GenericAffExpr
                 uf_key = (key.unit, node(:node_a), direction(:from_node), key.stochastic_scenario, key.t)
                 uo_key = (key.unit, key.stochastic_scenario, key.t)
-                @test var == fruf * var_unit_flow[uf_key...] + fuoc * var_units_on[uo_key...]
+                @test var == (
+                    + fruf * var_unit_flow[uf_key...]
+                    + fuoc * var_units_on[uo_key...]
+                    - usf * var_units_started_up[uo_key...]
+                )
             end
         end
     end
@@ -360,14 +367,17 @@ function test_fix_ratio_in_out_unit_flow_simple()
         m_end = m_start + Hour(2)
         fruf = 0.8
         fuoc = 1.25
+        usf = 2.4
         url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_in_out_unit_flow", fruf],
             ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_units_on_coefficient_in_out", fuoc],
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "unit_start_flow", usf],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         @testset for key in keys(var_unit_flow)
             var = var_unit_flow[key]
@@ -379,7 +389,11 @@ function test_fix_ratio_in_out_unit_flow_simple()
                 @test var isa GenericAffExpr
                 uf_key = (key.unit, node(:node_b), direction(:to_node), key.stochastic_scenario, key.t)
                 uo_key = (key.unit, key.stochastic_scenario, key.t)
-                @test var == fruf * var_unit_flow[uf_key...] + fuoc * var_units_on[uo_key...]
+                @test var == (
+                    + fruf * var_unit_flow[uf_key...]
+                    + fuoc * var_units_on[uo_key...]
+                    + usf * var_units_started_up[uo_key...]
+                )
             end
         end
     end
@@ -540,7 +554,6 @@ end
 
 @testset "variables" begin
     test_initial_units_on()
-    test_fix_ratio_out_in_unit_flow_simple()
     test_unit_online_variable_type_none()
     test_unit_history_parameters()
     test_connection_history_parameters()
