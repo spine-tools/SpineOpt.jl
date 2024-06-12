@@ -2,6 +2,8 @@ using BenchmarkTools
 using Dates
 using SpineInterface
 using SpineOpt
+using Graphs
+using Random
 
 const SUITE = BenchmarkGroup()
 
@@ -21,7 +23,30 @@ function local_load_test_data(url_in, test_data)
     SpineInterface.import_data(url_in, "testing"; data...)
 end
 
-function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rolling=false)
+function create_meshed_network(nodes_to, n_count; max_num_connections=3)
+    Random.seed!(1)
+    g = SimpleGraph(n_count)
+    added_edges = Set{Tuple{Int,Int}}()
+    for start_node in 1:n_count
+        potential_end_nodes = setdiff(1:n_count, start_node)
+        num_connections = rand(1:min(max_num_connections, length(potential_end_nodes)))
+        shuffle!(potential_end_nodes)
+        end_nodes = potential_end_nodes[1:num_connections]
+        for end_node in end_nodes
+            edge = (min(start_node, end_node), max(start_node, end_node))
+            if !in(edge, added_edges)
+                add_edge!(g, start_node, end_node)
+                push!(added_edges, edge)
+            end
+        end
+    end
+    conns = ["conn_$(src(e))_to_$(dst(e))" for e in edges(g)]
+    conns_from = [nodes_to[src(e)] for e in edges(g)]
+    conns_to = [nodes_to[dst(e)] for e in edges(g)]
+    return conns, conns_from, conns_to
+end
+
+function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_investment=false, add_rolling=false)
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
@@ -29,7 +54,13 @@ function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rollin
     units = ["unit_$k" for k in 1:n_count]
     nodes_to = ["node_to_$k" for k in 1:n_count]
     nodes_from = ["node_from_$k" for k in 1:n_count]
-    conns = ["conn_$(k)_to_$(k + 1)" for k in 1:(n_count - 1)]
+    if add_meshed_network
+        conns, conns_from, conns_to = create_meshed_network(nodes_to, n_count; max_num_connections=3)
+    else
+        conns = ["conn_$(k)_to_$(k + 1)" for k in 1:(n_count - 1)]
+        conns_from = nodes_to[1:(end - 1)]
+        conns_to = nodes_to[2:end]
+    end
     objs = [
         ["model", "instance"],
         ["temporal_block", "hourly"],
@@ -53,12 +84,10 @@ function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rollin
     append!(rels, (["unit__node__node", (u, n1, n2)] for (u, n1, n2) in zip(units, nodes_to, nodes_from)))
     append!(rels, (["unit__from_node", (u, "reserve")] for u in units))
     append!(rels, (["node__commodity", (n, "electricity")] for n in nodes_to))
-    append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, nodes_to[1:(end - 1)])))
-    append!(rels, (["connection__to_node", (c, n)] for (c, n) in zip(conns, nodes_to[2:end])))
-    append!(
-        rels,
-        (["connection__node__node", (c, n1, n2)] for (c, n1, n2) in zip(conns, nodes_to[1:(end - 1)], nodes_to[2:end])),
-    )
+    append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, conns_from)))
+    append!(rels, (["connection__to_node", (c, n)] for (c, n) in zip(conns, conns_to)))
+    append!(rels, (["connection__node__node", (c, n1, n2)] for (c, n1, n2) in zip(conns, conns_to, conns_from)))
+
     obj_pvs = [
         ["model", "instance", "model_start", unparse_db_value(DateTime(2000))],
         ["model", "instance", "model_end", unparse_db_value(DateTime(2000) + t_count * Hour(1))],
@@ -110,13 +139,10 @@ function setup(; number_of_weeks=1, n_count=50, add_investment=false, add_rollin
         rel_pvs,
         (
             ["connection__node__node", (c, n1, n2), "fix_ratio_out_in_connection_flow", 2] for
-            (c, n1, n2) in zip(conns, nodes_to[1:(end - 1)], nodes_to[2:end])
+            (c, n1, n2) in zip(conns, conns_to, conns_from)
         ),
     )
-    append!(
-        rel_pvs,
-        (["connection__from_node", (c, n), "connection_capacity", 1] for (c, n) in zip(conns, nodes_to[1:(end - 1)])),
-    )
+    append!(rel_pvs, (["connection__from_node", (c, n), "connection_capacity", 1] for (c, n) in zip(conns, conns_from)))
     obj_grp = [["node", "node_group_reserve", "reserve"]]
     test_data = Dict(
         :objects => objs,
@@ -133,7 +159,8 @@ end
 
 SUITE["main"] = BenchmarkGroup()
 
-url_in_basic, url_out_basic = setup(number_of_weeks=1, n_count=2, add_investment=false, add_rolling=false)
+url_in_basic, url_out_basic =
+    setup(number_of_weeks=1, n_count=2, add_meshed_network=true, add_investment=false, add_rolling=false)
 # url_in_invest, url_out_invest = setup(number_of_weeks=3, n_count=10, add_investment=true, add_rolling=false)
 # url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
 
