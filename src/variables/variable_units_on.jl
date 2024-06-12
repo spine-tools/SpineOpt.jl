@@ -111,3 +111,7 @@ function _get_units_on(m, u, s, t)
         number_of_units(m; unit=u, stochastic_scenario=s, t=t)
     end
 end
+
+function _get_units_started_up(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_started_up], (u, s, t), 0)
+end
