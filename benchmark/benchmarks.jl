@@ -142,6 +142,13 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
             (c, n1, n2) in zip(conns, conns_to, conns_from)
         ),
     )
+    append!(
+        rel_pvs,
+        (
+            ["connection__node__node", (c, n1, n2), "connection_flow_delay", Dict("type" => "duration", "data" => "1h")] for
+            (c, n1, n2) in zip(conns, conns_to, conns_from)
+        ),
+    )
     append!(rel_pvs, (["connection__from_node", (c, n), "connection_capacity", 1] for (c, n) in zip(conns, conns_from)))
     obj_grp = [["node", "node_group_reserve", "reserve"]]
     test_data = Dict(
@@ -165,7 +172,7 @@ url_in_basic, url_out_basic =
 # url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
 
 SUITE["main", "run_spineopt", "basic"] =
-    @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=true) samples = 3 evals = 1 seconds =
+    @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
         Inf
 # SUITE["main", "run_spineopt", "investment"] =
 #     @benchmarkable run_spineopt($url_in_invest, $url_out_invest; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
