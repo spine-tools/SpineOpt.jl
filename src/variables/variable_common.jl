@@ -167,8 +167,8 @@ function _finalize_variable!(var::VariableRef, bin, int, lb, ub, fix_value, inte
     int && set_integer(var)
     _do_set_lower_bound(var, lb)
     _do_set_upper_bound(var, ub)
-    _do_fix(var, fix_value; force=true)
     _do_fix(var, internal_fix_value; force=true)
+    _do_fix(var, fix_value; force=true)
 end
 
 _do_set_lower_bound(_var, ::Nothing) = nothing
