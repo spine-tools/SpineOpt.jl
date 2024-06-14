@@ -403,7 +403,7 @@ function solve_model!(
             startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
         )
         _do_solve_model!(
-            m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix,  calculate_duals
+            m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix, calculate_duals
         )
     else
         # Benders solution method
@@ -752,22 +752,22 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
 end
 
 function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
-    for (name, var) in m.ext[:spineopt].variables
+    for (name, var_by_ind) in m.ext[:spineopt].variables
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && continue
-        for v in values(var)
-            v isa VariableRef || continue
-            ref_v = ref_map[v]
-            if is_binary(ref_v)
-                unset_binary(ref_v)
-            elseif is_integer(ref_v)
-                unset_integer(ref_v)
+        for var in values(var_by_ind)
+            var isa VariableRef || continue
+            ref_var = ref_map[var]
+            if is_binary(ref_var)
+                unset_binary(ref_var)
+            elseif is_integer(ref_var)
+                unset_integer(ref_var)
             else
                 continue
             end
             if and_fix
-                val = _variable_value(v)
-                fix(ref_v, val; force=true)
+                val = _variable_value(var)
+                fix(ref_var, val; force=true)
             end
         end
     end
