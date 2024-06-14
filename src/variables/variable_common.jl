@@ -71,8 +71,12 @@ function add_variable!(
     t = vcat(history_time_slices, time_slice(m))
     first_ind = iterate(indices(m; t=t))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
+    # Some indices functions may use as default the temporal_blocks that exclude the history_time_slices.
+    # This could cause trouble for variables in some constraints (e.g. units_on in constraint_unit_state_transition) 
+    # when using representiative temporal structure.
+    _iter_indices = Iterators.flatten((indices(m; t=t), indices(m; temporal_block=anything, t=history_time_slices)))
     vars = m.ext[:spineopt].variables[name] = Dict{K,Union{VariableRef,AffExpr,Call}}(
-        ind => _add_variable!(m, name, ind, replacement_value) for ind in indices(m; t=t) if !haskey(ind_map, ind)
+        ind => _add_variable!(m, name, ind, replacement_value) for ind in Set(_iter_indices) if !haskey(ind_map, ind)
     )
     inverse_ind_map = Dict(ref_ind => (ind, 1 / coeff) for (ind, (ref_ind, coeff)) in ind_map)
     Threads.@threads for ind in collect(keys(vars))
@@ -89,7 +93,10 @@ function add_variable!(
         res_internal_fix_value = _resolve(internal_fix_value, m, ind, other_ind_and_factor...; reducer=_check_unique)
         _finalize_variable!(vars[ind], res_bin, res_int, res_lb, res_ub, res_fix_value, res_internal_fix_value)
     end
-    merge!(vars, Dict(ind => coeff * vars[ref_ind] for (ind, (ref_ind, coeff)) in ind_map))
+    # A ref_ind may not be covered by keys(vars) unless 
+    # the ind_map is carefully designed in specific variable adding functions.
+    filtered_ind_map = Dict(ind => (ref_ind, coeff) for (ind, (ref_ind, coeff)) in ind_map if haskey(vars, ref_ind))
+    merge!(vars, Dict(ind => coeff * vars[ref_ind] for (ind, (ref_ind, coeff)) in filtered_ind_map))
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
@@ -104,6 +111,8 @@ function add_variable!(
         end
     end
     isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
+        # When a representative termporal structure is used, the syntax will generate representative periods mapping
+        # only for the given indices, excluding the internally generated history_time_slice.
         vars, _representative_periods_mapping(m, vars, indices)
     )
     vars

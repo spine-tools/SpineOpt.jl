@@ -700,7 +700,7 @@ function unit_dynamic_time_indices(
     (
         (unit=u, t_before=tb, t_after=ta)
         for (u, blk) in units_on__temporal_block(unit=unit, _compact=false)
-        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after)
+        for (tb, ta) in dynamic_time_indices(m, blk; t_before=t_before, t_after=t_after) 
     )
 end
 
