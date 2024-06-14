@@ -92,12 +92,12 @@ function add_variable!(
         # For example, for the lower bound we need to take the maximum between the lower bound for ind,
         # and the lower bound for the referrer scaled by the appropriate factor.
         expression = get(inverse_replacement_expressions, ind, ())
-        res_bin = _resolve(bin, ind, expression...; default=false, reducer=any)
-        res_int = _resolve(int, ind, expression...; default=false, reducer=any)
-        res_lb = _resolve(lb, m, ind, expression...; reducer=max)
-        res_ub = _resolve(ub, m, ind, expression...; reducer=min)
-        res_fix_value = _resolve(fix_value, m, ind, expression...; reducer=_check_unique)
-        res_internal_fix_value = _resolve(internal_fix_value, m, ind, expression...; reducer=_check_unique)
+        res_bin = _any(bin, ind, expression...)
+        res_int = _any(int, ind, expression...)
+        res_lb = _reduce(lb, m, ind, expression..., max)
+        res_ub = _reduce(ub, m, ind, expression..., min)
+        res_fix_value = _reduce(fix_value, m, ind, expression..., _check_unique)
+        res_internal_fix_value = _reduce(internal_fix_value, m, ind, expression..., _check_unique)
         _finalize_variable!(vars[ind], res_bin, res_int, res_lb, res_ub, res_fix_value, res_internal_fix_value)
     end
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
@@ -130,11 +130,13 @@ end
 
 _check_unique(x, y) = x == y ? x : error("$x != $y")
 
-_resolve(::Nothing, args...; default=nothing, kwargs...) = default
-_resolve(f, ind; kwargs...) = f(ind)
-_resolve(f, m, ind; kwargs...) = f(m; ind...)
-_resolve(f, ind, other_ind, _factor; reducer, kwargs...) = _apply(reducer, f(ind), f(other_ind))
-function _resolve(f, m, ind, other_ind, factor; reducer, kwargs...)
+_any(::Nothing, args...) = false
+_any(f, ind) = f(ind)
+_any(f, ind, other_ind, _factor) = _apply(any, f(ind), f(other_ind))
+
+_reduce(::Nothing, args...) = nothing
+_reduce(f, m, ind, _reducer) = f(m; ind...)
+function _reduce(f, m, ind, other_ind, factor, reducer)
     _apply(reducer, f(m; ind...), _mul(factor, f(m; other_ind...)))
 end
 
@@ -162,7 +164,6 @@ end
 
 _finalize_variable!(x, args...) = nothing
 function _finalize_variable!(var::VariableRef, bin, int, lb, ub, fix_value, internal_fix_value)
-    m = owner_model(var)
     bin && set_binary(var)
     int && set_integer(var)
     _do_set_lower_bound(var, lb)

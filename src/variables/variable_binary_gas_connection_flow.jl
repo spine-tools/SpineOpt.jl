@@ -24,7 +24,7 @@
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `binary_gas_connection_flow_indices` variable.
+A list of `NamedTuple`s corresponding to indices of the `binary_gas_connection_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
 function binary_gas_connection_flow_indices(
@@ -47,19 +47,17 @@ function binary_gas_connection_flow_indices(
     )
 end
 
-set_bin(x) = true
-
 """
-    add_variable_connection_flow!(m::Model)
+    add_variable_binary_gas_connection_flow!(m::Model)
 
-Add `connection_flow` variables to model `m`.
+Add `binary_gas_connection_flow` variables to model `m`.
 """
 function add_variable_binary_gas_connection_flow!(m::Model)
     add_variable!(
         m,
         :binary_gas_connection_flow,
         binary_gas_connection_flow_indices;
-        bin=set_bin,
+        bin=(x -> true),
         fix_value=fix_binary_gas_connection_flow,
         initial_value=initial_binary_gas_connection_flow,
     )
