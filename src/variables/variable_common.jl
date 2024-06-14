@@ -61,6 +61,10 @@ function add_variable!(
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
+    inverse_replacement_expressions = Dict(
+        ref_ind => (ind, 1 / coeff)
+        for (ind, (ref_ind, coeff)) in ((ind, ref[name]) for (ind, ref) in replacement_expressions)
+    )
     m.ext[:spineopt].variables_definition[name] = Dict(
         :indices => indices,
         :bin => bin,
@@ -69,6 +73,7 @@ function add_variable!(
         :non_anticipativity_margin => non_anticipativity_margin,
         :history_time_slices => history_time_slices,
         :replacement_expressions => replacement_expressions,
+        :inverse_replacement_expressions => inverse_replacement_expressions,
     )
     lb = _nothing_if_empty(lb)
     ub = _nothing_if_empty(ub)
@@ -82,10 +87,9 @@ function add_variable!(
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
         ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
     )
-    inverse_replacement_expressions = Dict(
-        ref_ind => (ind, 1 / coeff)
-        for (ind, (ref_ind, coeff)) in ((ind, ref[name]) for (ind, ref) in replacement_expressions)
-    )
+    if _is_benders_subproblem(m) && relax_subproblem_integrality(model=m.ext[:spineopt].instance)
+        bin = int = nothing
+    end
     Threads.@threads for ind in collect(keys(vars))
         # Resolve bin, int, lb, ub, fix_value and internal_fix_value for ind.
         # If we have an replacement_expressions, then we need to combine any values given for the ind and its referrer.

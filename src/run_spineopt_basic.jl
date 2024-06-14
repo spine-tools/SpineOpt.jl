@@ -416,6 +416,7 @@ function solve_model!(
         undo_force_starting_investments! = _force_starting_investments!(m_mp)
         min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
         max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+        integrality_enforced = !relax_subproblem_integrality(model=m_mp.ext[:spineopt].instance)
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
@@ -444,11 +445,17 @@ function solve_model!(
             gap = last(m_mp.ext[:spineopt].benders_gaps)
             if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
                 @log log_level 1 "Benders tolerance satisfied, terminating..."
-                break
+                integrality_enforced && break
+                _enforce_integrality!(m; log_level)
+                integrality_enforced = true
+                continue
             end
             if j >= max_benders_iterations
                 @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
-                break
+                integrality_enforced && break
+                _enforce_integrality!(m; log_level)
+                integrality_enforced = true
+                continue
             end
             @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
             unfix_history!(m)
@@ -1278,3 +1285,21 @@ end
 
 _unfix(v::VariableRef) = is_fixed(v) && unfix(v)
 _unfix(::Call) = nothing
+
+function _enforce_integrality!(m; log_level)
+    @timelog log_level 2 "Enforcing integrality for $(_model_name(m))" _do_enforce_integrality!(m)
+end
+
+function _do_enforce_integrality!(m)
+    for (name, vars) in m.ext[:spineopt].variables
+        @fetch bin, int, inverse_replacement_expressions = m.ext[:spineopt].variables_definition[name]
+        for (ind, var) in vars
+            expression = get(inverse_replacement_expressions, ind, ())
+            _any(bin, ind, expression...) && set_binary(var)
+            _any(int, ind, expression...) && set_integer(var)
+        end
+    end
+    for stage_m in values(m.ext[:spineopt].model_by_stage)
+        _do_enforce_integrality!(stage_m)
+    end
+end
