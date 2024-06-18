@@ -1460,48 +1460,17 @@
         ],
         [
             "connection",
-            "connection_decommissioning_cost",
-            null,
-            null,
-            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
-        ],
-        [
-            "connection",
-            "connection_decommissioning_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A connection's decommissioning time, i.e., the time between the moment at which a connection decommissioning decision is takien, and the moment at which decommissioning is complete."
-        ],
-        [
-            "connection",
-            "connection_discount_rate_technology_specific",
-            0,
-            null,
-            "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."
-        ],
-        [
-            "connection",
             "connection_investment_cost",
             null,
             null,
-            "The per unit investment cost for the connection over the `connection_investment_tech_lifetime`"
+            "The per unit investment cost for the connection over the `connection_investment_lifetime`"
         ],
         [
             "connection",
-            "connection_investment_econ_lifetime",
+            "connection_investment_lifetime",
             null,
             null,
-            "Determines the minimum economical investment lifetime of a connection."
-        ],
-        [
-            "connection",
-            "connection_investment_tech_lifetime",
-            null,
-            null,
-            "Determines the maximum technical lifetime of a connection. Once invested, it remains in service for this long"
+            "Determines the minimum investment lifetime of a connection. Once invested, it remains in service for this long"
         ],
         [
             "connection",
@@ -1509,16 +1478,6 @@
             "connection_investment_variable_type_integer",
             "connection_investment_variable_type_list",
             "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"
-        ],
-        [
-            "connection",
-            "connection_lead_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."
         ],
         [
             "connection",
@@ -1989,6 +1948,7 @@
             "model",
             "db_lp_solver_options",
             {
+                "type": "map",
                 "data": [
                     [
                         "Clp.jl",
@@ -2021,7 +1981,6 @@
                         }
                     ]
                 ],
-                "type": "map",
                 "index_type": "str"
             },
             null,
@@ -2038,6 +1997,7 @@
             "model",
             "db_mip_solver_options",
             {
+                "type": "map",
                 "data": [
                     [
                         "CPLEX.jl",
@@ -2095,25 +2055,10 @@
                         }
                     ]
                 ],
-                "type": "map",
                 "index_type": "str"
             },
             null,
             "Map parameter containing MIP solver option name option value pairs for MIP. See solver documentation for supported solver options"
-        ],
-        [
-            "model",
-            "discount_rate",
-            0,
-            null,
-            "The discount rate used for the discounting of future cashflows"
-        ],
-        [
-            "model",
-            "discount_year",
-            null,
-            null,
-            "The year to which all cashflows are discounted."
         ],
         [
             "model",
@@ -2204,13 +2149,6 @@
             true,
             "boolean_value_list",
             "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
-        ],
-        [
-            "model",
-            "use_milestone_years",
-            false,
-            "boolean_value_list",
-            "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."
         ],
         [
             "model",
@@ -2515,37 +2453,6 @@
         ],
         [
             "node",
-            "storage_decommissioning_cost",
-            null,
-            null,
-            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
-        ],
-        [
-            "node",
-            "storage_decommissioning_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A storage's decommissioning time, i.e., the time between the moment at which a storage decommissioning decision is takien, and the moment at which decommissioning is complete."
-        ],
-        [
-            "node",
-            "storage_discount_rate_technology_specific",
-            0,
-            null,
-            "storage-specific discount rate used to calculate the storage's investment costs. If not specified, the model discount rate is used."
-        ],
-        [
-            "node",
-            "storage_fom_cost",
-            null,
-            null,
-            "Fixed operation and maintenance costs of a `node`. Essentially, a cost coefficient on the number of installed units and `node_state_cap` parameters. E.g. EUR/MWh"
-        ],
-        [
-            "node",
             "storage_investment_cost",
             null,
             null,
@@ -2553,17 +2460,10 @@
         ],
         [
             "node",
-            "storage_investment_econ_lifetime",
+            "storage_investment_lifetime",
             null,
             null,
-            "Economic lifetime for storage investment decisions."
-        ],
-        [
-            "node",
-            "storage_investment_tech_lifetime",
-            null,
-            null,
-            "Maximum technical lifetime for storage investment decisions."
+            "Minimum lifetime for storage investment decisions."
         ],
         [
             "node",
@@ -2571,16 +2471,6 @@
             "storage_investment_variable_type_integer",
             "storage_investment_variable_type_list",
             "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"
-        ],
-        [
-            "node",
-            "storage_lead_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A storage's lead time, i.e., the time between the moment at which a storage investment decision is takien, and the moment at which the storage investment becomes operational."
         ],
         [
             "node",
@@ -2824,8 +2714,8 @@
             "temporal_block",
             "resolution",
             {
-                "data": "1h",
-                "type": "duration"
+                "type": "duration",
+                "data": "1h"
             },
             null,
             "Temporal resolution of the `temporal_block`. Essentially, divides the period between `block_start` and `block_end` into `TimeSlices` with the input `resolution`."
@@ -3014,30 +2904,6 @@
         ],
         [
             "unit",
-            "unit_decommissioning_cost",
-            null,
-            null,
-            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
-        ],
-        [
-            "unit",
-            "unit_decommissioning_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."
-        ],
-        [
-            "unit",
-            "unit_discount_rate_technology_specific",
-            0,
-            null,
-            "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."
-        ],
-        [
-            "unit",
             "unit_investment_cost",
             null,
             null,
@@ -3045,17 +2911,10 @@
         ],
         [
             "unit",
-            "unit_investment_econ_lifetime",
+            "unit_investment_lifetime",
             null,
             null,
-            "Economic lifetime for unit investment decisions."
-        ],
-        [
-            "unit",
-            "unit_investment_tech_lifetime",
-            null,
-            null,
-            "Maximum technical lifetime for unit investment decisions."
+            "Minimum lifetime for unit investment decisions."
         ],
         [
             "unit",
@@ -3063,16 +2922,6 @@
             "unit_investment_variable_type_continuous",
             "unit_investment_variable_type_list",
             "Determines whether investment variable is integer or continuous."
-        ],
-        [
-            "unit",
-            "unit_lead_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."
         ],
         [
             "unit",
@@ -3994,76 +3843,288 @@
     ],
     "parameter_values": [
         [
-            "object_activity_control",
-            "commodity",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "connection",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
             "model",
-            "is_active",
-            false
+            "simple",
+            "model_end",
+            {
+                "type": "date_time",
+                "data": "2000-01-08T00:00:00"
+            },
+            "Base"
         ],
         [
-            "object_activity_control",
+            "model",
+            "simple",
+            "model_start",
+            {
+                "type": "date_time",
+                "data": "2000-01-01T00:00:00"
+            },
+            "Base"
+        ],
+        [
+            "model",
+            "simple",
+            "roll_forward",
+            {
+                "type": "duration",
+                "data": "1D"
+            },
+            "Base"
+        ],
+        [
             "node",
-            "is_active",
-            false
+            "electricity_node",
+            "demand",
+            {
+                "type": "time_series",
+                "data": {
+                    "2000-01-01T00:00:00": 90.0,
+                    "2000-01-01T01:00:00": 91.0,
+                    "2000-01-01T02:00:00": 93.0,
+                    "2000-01-01T03:00:00": 95.0,
+                    "2000-01-01T04:00:00": 101.0,
+                    "2000-01-01T05:00:00": 128.0,
+                    "2000-01-01T06:00:00": 133.0,
+                    "2000-01-01T07:00:00": 135.0,
+                    "2000-01-01T08:00:00": 130.0,
+                    "2000-01-01T09:00:00": 107.0,
+                    "2000-01-01T10:00:00": 80.0,
+                    "2000-01-01T11:00:00": 55.0,
+                    "2000-01-01T12:00:00": 50.0,
+                    "2000-01-01T13:00:00": 49.0,
+                    "2000-01-01T14:00:00": 51.0,
+                    "2000-01-01T15:00:00": 59.0,
+                    "2000-01-01T16:00:00": 112.0,
+                    "2000-01-01T17:00:00": 130.0,
+                    "2000-01-01T18:00:00": 141.0,
+                    "2000-01-01T19:00:00": 148.0,
+                    "2000-01-01T20:00:00": 150.0,
+                    "2000-01-01T21:00:00": 139.0,
+                    "2000-01-01T22:00:00": 121.0,
+                    "2000-01-01T23:00:00": 107.0,
+                    "2000-01-02T00:00:00": 88.0,
+                    "2000-01-02T01:00:00": 89.0,
+                    "2000-01-02T02:00:00": 91.0,
+                    "2000-01-02T03:00:00": 93.0,
+                    "2000-01-02T04:00:00": 99.0,
+                    "2000-01-02T05:00:00": 125.0,
+                    "2000-01-02T06:00:00": 130.0,
+                    "2000-01-02T07:00:00": 132.0,
+                    "2000-01-02T08:00:00": 127.0,
+                    "2000-01-02T09:00:00": 105.0,
+                    "2000-01-02T10:00:00": 78.0,
+                    "2000-01-02T11:00:00": 54.0,
+                    "2000-01-02T12:00:00": 49.0,
+                    "2000-01-02T13:00:00": 48.0,
+                    "2000-01-02T14:00:00": 50.0,
+                    "2000-01-02T15:00:00": 58.0,
+                    "2000-01-02T16:00:00": 110.0,
+                    "2000-01-02T17:00:00": 127.0,
+                    "2000-01-02T18:00:00": 138.0,
+                    "2000-01-02T19:00:00": 145.0,
+                    "2000-01-02T20:00:00": 147.0,
+                    "2000-01-02T21:00:00": 136.0,
+                    "2000-01-02T22:00:00": 119.0,
+                    "2000-01-02T23:00:00": 105.0,
+                    "2000-01-03T00:00:00": 91.0,
+                    "2000-01-03T01:00:00": 92.0,
+                    "2000-01-03T02:00:00": 94.0,
+                    "2000-01-03T03:00:00": 96.0,
+                    "2000-01-03T04:00:00": 102.0,
+                    "2000-01-03T05:00:00": 129.0,
+                    "2000-01-03T06:00:00": 134.0,
+                    "2000-01-03T07:00:00": 136.0,
+                    "2000-01-03T08:00:00": 131.0,
+                    "2000-01-03T09:00:00": 108.0,
+                    "2000-01-03T10:00:00": 81.0,
+                    "2000-01-03T11:00:00": 56.0,
+                    "2000-01-03T12:00:00": 51.0,
+                    "2000-01-03T13:00:00": 49.0,
+                    "2000-01-03T14:00:00": 52.0,
+                    "2000-01-03T15:00:00": 60.0,
+                    "2000-01-03T16:00:00": 113.0,
+                    "2000-01-03T17:00:00": 131.0,
+                    "2000-01-03T18:00:00": 142.0,
+                    "2000-01-03T19:00:00": 149.0,
+                    "2000-01-03T20:00:00": 152.0,
+                    "2000-01-03T21:00:00": 140.0,
+                    "2000-01-03T22:00:00": 122.0,
+                    "2000-01-03T23:00:00": 108.0,
+                    "2000-01-04T00:00:00": 87.0,
+                    "2000-01-04T01:00:00": 88.0,
+                    "2000-01-04T02:00:00": 90.0,
+                    "2000-01-04T03:00:00": 92.0,
+                    "2000-01-04T04:00:00": 98.0,
+                    "2000-01-04T05:00:00": 124.0,
+                    "2000-01-04T06:00:00": 129.0,
+                    "2000-01-04T07:00:00": 131.0,
+                    "2000-01-04T08:00:00": 126.0,
+                    "2000-01-04T09:00:00": 104.0,
+                    "2000-01-04T10:00:00": 78.0,
+                    "2000-01-04T11:00:00": 53.0,
+                    "2000-01-04T12:00:00": 49.0,
+                    "2000-01-04T13:00:00": 48.0,
+                    "2000-01-04T14:00:00": 49.0,
+                    "2000-01-04T15:00:00": 57.0,
+                    "2000-01-04T16:00:00": 109.0,
+                    "2000-01-04T17:00:00": 126.0,
+                    "2000-01-04T18:00:00": 137.0,
+                    "2000-01-04T19:00:00": 144.0,
+                    "2000-01-04T20:00:00": 146.0,
+                    "2000-01-04T21:00:00": 135.0,
+                    "2000-01-04T22:00:00": 117.0,
+                    "2000-01-04T23:00:00": 104.0,
+                    "2000-01-05T00:00:00": 86.0,
+                    "2000-01-05T01:00:00": 86.0,
+                    "2000-01-05T02:00:00": 88.0,
+                    "2000-01-05T03:00:00": 90.0,
+                    "2000-01-05T04:00:00": 96.0,
+                    "2000-01-05T05:00:00": 122.0,
+                    "2000-01-05T06:00:00": 126.0,
+                    "2000-01-05T07:00:00": 128.0,
+                    "2000-01-05T08:00:00": 124.0,
+                    "2000-01-05T09:00:00": 102.0,
+                    "2000-01-05T10:00:00": 76.0,
+                    "2000-01-05T11:00:00": 52.0,
+                    "2000-01-05T12:00:00": 48.0,
+                    "2000-01-05T13:00:00": 47.0,
+                    "2000-01-05T14:00:00": 48.0,
+                    "2000-01-05T15:00:00": 56.0,
+                    "2000-01-05T16:00:00": 106.0,
+                    "2000-01-05T17:00:00": 124.0,
+                    "2000-01-05T18:00:00": 134.0,
+                    "2000-01-05T19:00:00": 141.0,
+                    "2000-01-05T20:00:00": 143.0,
+                    "2000-01-05T21:00:00": 132.0,
+                    "2000-01-05T22:00:00": 115.0,
+                    "2000-01-05T23:00:00": 102.0,
+                    "2000-01-06T00:00:00": 77.0,
+                    "2000-01-06T01:00:00": 77.0,
+                    "2000-01-06T02:00:00": 79.0,
+                    "2000-01-06T03:00:00": 81.0,
+                    "2000-01-06T04:00:00": 86.0,
+                    "2000-01-06T05:00:00": 109.0,
+                    "2000-01-06T06:00:00": 113.0,
+                    "2000-01-06T07:00:00": 115.0,
+                    "2000-01-06T08:00:00": 111.0,
+                    "2000-01-06T09:00:00": 91.0,
+                    "2000-01-06T10:00:00": 68.0,
+                    "2000-01-06T11:00:00": 47.0,
+                    "2000-01-06T12:00:00": 43.0,
+                    "2000-01-06T13:00:00": 42.0,
+                    "2000-01-06T14:00:00": 43.0,
+                    "2000-01-06T15:00:00": 50.0,
+                    "2000-01-06T16:00:00": 95.0,
+                    "2000-01-06T17:00:00": 111.0,
+                    "2000-01-06T18:00:00": 120.0,
+                    "2000-01-06T19:00:00": 126.0,
+                    "2000-01-06T20:00:00": 128.0,
+                    "2000-01-06T21:00:00": 118.0,
+                    "2000-01-06T22:00:00": 103.0,
+                    "2000-01-06T23:00:00": 91.0,
+                    "2000-01-07T00:00:00": 63.0,
+                    "2000-01-07T01:00:00": 64.0,
+                    "2000-01-07T02:00:00": 65.0,
+                    "2000-01-07T03:00:00": 67.0,
+                    "2000-01-07T04:00:00": 71.0,
+                    "2000-01-07T05:00:00": 90.0,
+                    "2000-01-07T06:00:00": 93.0,
+                    "2000-01-07T07:00:00": 95.0,
+                    "2000-01-07T08:00:00": 91.0,
+                    "2000-01-07T09:00:00": 75.0,
+                    "2000-01-07T10:00:00": 56.0,
+                    "2000-01-07T11:00:00": 39.0,
+                    "2000-01-07T12:00:00": 35.0,
+                    "2000-01-07T13:00:00": 34.0,
+                    "2000-01-07T14:00:00": 36.0,
+                    "2000-01-07T15:00:00": 41.0,
+                    "2000-01-07T16:00:00": 78.0,
+                    "2000-01-07T17:00:00": 91.0,
+                    "2000-01-07T18:00:00": 99.0,
+                    "2000-01-07T19:00:00": 104.0,
+                    "2000-01-07T20:00:00": 105.0,
+                    "2000-01-07T21:00:00": 97.0,
+                    "2000-01-07T22:00:00": 85.0,
+                    "2000-01-07T23:00:00": 75.0
+                }
+            },
+            "Base"
         ],
         [
-            "object_activity_control",
-            "node__stochastic_structure",
-            "is_active",
-            false
+            "node",
+            "electricity_node",
+            "has_state",
+            true,
+            "Base"
         ],
         [
-            "object_activity_control",
-            "node__temporal_block",
-            "is_active",
-            false
+            "node",
+            "electricity_node",
+            "node_state_cap",
+            100,
+            "Base"
         ],
         [
-            "object_activity_control",
-            "output",
-            "is_active",
-            false
+            "node",
+            "electricity_node",
+            "state_coeff",
+            0.95,
+            "Base"
         ],
         [
-            "object_activity_control",
-            "report",
-            "is_active",
-            false
+            "node",
+            "fuel_node",
+            "balance_type",
+            "balance_type_none",
+            "Base"
         ],
         [
-            "object_activity_control",
-            "stochastic_scenario",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
-            "stochastic_structure",
-            "is_active",
-            false
-        ],
-        [
-            "object_activity_control",
             "temporal_block",
-            "is_active",
-            false
+            "flat",
+            "block_end",
+            {
+                "type": "duration",
+                "data": "1D"
+            },
+            "Base"
         ],
         [
-            "object_activity_control",
+            "temporal_block",
+            "flat",
+            "block_start",
+            {
+                "type": "duration",
+                "data": "0h"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "flat",
+            "resolution",
+            {
+                "type": "duration",
+                "data": "1h"
+            },
+            "Base"
+        ],
+        [
             "unit",
-            "is_active",
-            false
+            "power_plant_b",
+            "initial_units_on",
+            0,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "min_down_time",
+            {
+                "type": "duration",
+                "data": "8h"
+            },
+            "Base"
         ],
         [
             "unit",
@@ -4105,20 +4166,65 @@
         ],
         [
             "unit__from_node",
-            "is_active",
-            false
+            [
+                "power_plant_a",
+                "fuel_node"
+            ],
+            "vom_cost",
+            25,
+            "Base"
         ],
         [
-            "object_activity_control",
+            "unit__from_node",
+            [
+                "power_plant_b",
+                "fuel_node"
+            ],
+            "vom_cost",
+            50,
+            "Base"
+        ],
+        [
+            "unit__node__node",
+            [
+                "power_plant_a",
+                "electricity_node",
+                "fuel_node"
+            ],
+            "fix_ratio_out_in_unit_flow",
+            0.7,
+            "Base"
+        ],
+        [
+            "unit__node__node",
+            [
+                "power_plant_b",
+                "electricity_node",
+                "fuel_node"
+            ],
+            "fix_ratio_out_in_unit_flow",
+            0.8,
+            "Base"
+        ],
+        [
             "unit__to_node",
-            "is_active",
-            false
+            [
+                "power_plant_a",
+                "electricity_node"
+            ],
+            "unit_capacity",
+            100,
+            "Base"
         ],
         [
-            "object_activity_control",
-            "units_on__stochastic_structure",
-            "is_active",
-            false
+            "unit__to_node",
+            [
+                "power_plant_b",
+                "electricity_node"
+            ],
+            "minimum_operating_point",
+            0.1,
+            "Base"
         ],
         [
             "unit__to_node",
