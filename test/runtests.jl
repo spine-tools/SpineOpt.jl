@@ -23,6 +23,7 @@ using Test
 using Dates
 using JuMP
 using PyCall
+using Pkg
 import JSON
 import MathOptInterface as MOI
 
@@ -151,4 +152,5 @@ end
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
     include("run_examples.jl")
+    include("run_benchmark_data.jl")
 end

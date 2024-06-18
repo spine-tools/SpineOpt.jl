@@ -52,6 +52,9 @@ function update_investment_variable_type(db_url, log_level)
 		# Remove pvals before updating value list in pdef, otherwise it complains
 		pval_ids_to_rm = [x["id"] for x in pvals_to_add]
 		run_request(db_url, "call_method", ("remove_items", "parameter_value", pval_ids_to_rm...))
+		# Commit session to confirm the removal. Otherwise the item will stay in the db. This is necessary 
+		# because the next "add_item" request will add the same parameter_value item with different value.
+		run_request(db_url, "call_method", ("commit_session", "remove_outdated_parameter_values"))
 	end
 	import_data(
 		db_url,
