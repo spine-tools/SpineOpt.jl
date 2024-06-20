@@ -21,14 +21,7 @@
     generate_economic_structure!(m)
 """
 function generate_economic_structure!(m; log_level=3)
-    economic_parameters = _create_set_parameters_and_relationships()
-    for (obj, name) in [(unit, :unit), (node, :storage), (connection, :connection)]
-        @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(
-            m,
-            obj,
-            economic_parameters,
-        )
-    end
+    use_economic_representation(model=m.ext[:spineopt].instance) || return
     !isempty(
         [
             model__default_investment_temporal_block()
@@ -37,7 +30,13 @@ function generate_economic_structure!(m; log_level=3)
             connection__investment_temporal_block()
         ],
     ) || return
+    economic_parameters = _create_set_parameters_and_relationships()
     for (obj, name) in [(unit, :unit), (node, :storage), (connection, :connection)]
+        @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(
+            m,
+            obj,
+            economic_parameters,
+        )
         @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" generate_capacity_transfer_factor!(
             m,
             obj,
@@ -651,7 +650,7 @@ function generate_decommissioning_conversion_to_discounted_annuities!(
             count = 0 # count the element; this is to avoid using collect
             for _ in timeseries_vector
                 count += 1
-            end            
+            end
             sizehint!(timeseries_ind, count)
             timeseries_val = []
             sizehint!(timeseries_val, count)

@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 @testset "economic structure" begin
     url_in = "sqlite://"
     test_data = Dict(
@@ -40,19 +39,19 @@
             ["connection", "connection_group_abbc"],
             ["stochastic_scenario", "parent"],
             ["stochastic_scenario", "child"],
-            ["output","units_invested"],
-            ["output","connections_invested"],
-            ["output","storages_invested"],
-            ["output","total_costs"],
-            ["report", "report_a"]
+            ["output", "units_invested"],
+            ["output", "connections_invested"],
+            ["output", "storages_invested"],
+            ["output", "total_costs"],
+            ["report", "report_a"],
         ],
         :object_groups => [
-                ["node", "node_group_bc", "node_b"],
-                ["node", "node_group_bc", "node_c"],
-                ["connection", "connection_group_abbc", "connection_ab"],
-                ["connection", "connection_group_abbc", "connection_bc"],
-                ["unit", "unit_group_abbc", "unit_ab"],
-                ["unit", "unit_group_abbc", "unit_bc"]
+            ["node", "node_group_bc", "node_b"],
+            ["node", "node_group_bc", "node_c"],
+            ["connection", "connection_group_abbc", "connection_ab"],
+            ["connection", "connection_group_abbc", "connection_bc"],
+            ["unit", "unit_group_abbc", "unit_ab"],
+            ["unit", "unit_group_abbc", "unit_bc"],
         ],
         :relationships => [
             ["model__default_investment_temporal_block", ["instance", "two_year"]],
@@ -80,11 +79,11 @@
             ["unit__from_node", ["unit_bc", "node_b"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_bc", "node_c"]],
-            ["report__output",["report_a", "units_invested"]],
-            ["report__output",["report_a","connections_invested"]],
-            ["report__output",["report_a","storages_invested"]],
-            ["report__output",["report_a","total_costs"]],
-            ["model__report",["instance","report_a"]],
+            ["report__output", ["report_a", "units_invested"]],
+            ["report__output", ["report_a", "connections_invested"]],
+            ["report__output", ["report_a", "storages_invested"]],
+            ["report__output", ["report_a", "total_costs"]],
+            ["model__report", ["instance", "report_a"]],
             ["unit__node__node", ["unit_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
@@ -92,9 +91,10 @@
             ["unit__node__node", ["unit_bc", "node_b", "node_c"]],
             ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
             ["unit__node__node", ["unit_bc", "node_c", "node_b"]],
-            ["connection__node__node", ["connection_bc", "node_c", "node_b"]]
+            ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
         ],
         :object_parameter_values => [
+            ["model", "instance", "use_economic_representation", true],
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2030-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2032-01-01T00:00:00")],
             ["model", "instance", "duration_unit", "hour"],
@@ -108,7 +108,7 @@
                 "stochastic_structure__stochastic_scenario",
                 ["stochastic", "parent"],
                 "stochastic_scenario_end",
-                Dict("type" => "duration", "data" => "1h")
+                Dict("type" => "duration", "data" => "1h"),
             ],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -117,8 +117,8 @@
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
             ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_out_in_unit_flow", 1.0],
             ["unit__node__node", ["unit_bc", "node_c", "node_b"], "fix_ratio_out_in_unit_flow", 1.0],
-            ["unit__node__node", ["unit_bc", "node_b", "node_c"], "fix_ratio_out_in_unit_flow", 1.0]
-        ]
+            ["unit__node__node", ["unit_bc", "node_b", "node_c"], "fix_ratio_out_in_unit_flow", 1.0],
+        ],
     )
     @testset "test discounted duration - using milestone years, w/o inv. blocks" begin
         _load_test_data(url_in, test_data)
@@ -126,15 +126,15 @@
         discnt_rate = 0.05
         use_mlstne_year = true
         object_parameter_values = [
-            ["model", "instance", "discount_rate",	discnt_rate],
+            ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
-        u_ts = [ind.t for ind in unit_flow_indices(m;unit=unit(:unit_ab))]
-        key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
-        @test 1.1985925426271964 ≈ SpineOpt.unit_discounted_duration(;key_param...,t=u_ts[1]) rtol = 1e-6
+        u_ts = [ind.t for ind in unit_flow_indices(m; unit=unit(:unit_ab))]
+        key_param = Dict(unit.name => unit(:unit_ab), stochastic_scenario.name => stochastic_scenario(:parent))
+        @test 1.1985925426271964 ≈ SpineOpt.unit_discounted_duration(; key_param..., t=u_ts[1]) rtol = 1e-6
     end
     @testset "test discounted duration - w/o using milestone years" begin
         _load_test_data(url_in, test_data)
@@ -142,15 +142,15 @@
         discnt_rate = 0.05
         use_mlstne_year = false
         object_parameter_values = [
-            ["model", "instance", "discount_rate",	discnt_rate],
+            ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
-        u_ts = [ind.t for ind in unit_flow_indices(m;unit=unit(:unit_ab))]
-        key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
-        @test 0.5846792890864373 ≈ SpineOpt.unit_discounted_duration(;key_param...,t=u_ts[1]) rtol = 1e-6
+        u_ts = [ind.t for ind in unit_flow_indices(m; unit=unit(:unit_ab))]
+        key_param = Dict(unit.name => unit(:unit_ab), stochastic_scenario.name => stochastic_scenario(:parent))
+        @test 0.5846792890864373 ≈ SpineOpt.unit_discounted_duration(; key_param..., t=u_ts[1]) rtol = 1e-6
     end
 
     @testset "test investment costs, salvage fraction, capacity transfer factor, decommissioning" begin
@@ -168,25 +168,27 @@
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime" , Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime" , Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "unit_decommissioning_cost", decom_cost],
             ["unit", "unit_ab", "unit_decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
-        u_ts = [ind.t for ind in units_invested_available_indices(m;unit=unit(:unit_ab))]
-        key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
+        u_ts = [ind.t for ind in units_invested_available_indices(m; unit=unit(:unit_ab))]
+        key_param = Dict(unit.name => unit(:unit_ab), stochastic_scenario.name => stochastic_scenario(:parent))
         salvage_frac = 0.370998336
         conv_to_disc_annuities = 0.613913254
         cpt = 0.5
         decom_conv_to_disc_annuities = 0.899122663
-        @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6  
-        @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param..., t=u_ts[1]) rtol = 1e-6 
-        @test cpt == SpineOpt.unit_capacity_transfer_factor(;key_param..., vintage_t=start(u_ts[1]), t=start(u_ts[1])) 
-        @test decom_conv_to_disc_annuities ≈ SpineOpt.unit_decommissioning_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6
+        @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(; key_param..., t=u_ts[1]) rtol =
+            1e-6
+        @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(; key_param..., t=u_ts[1]) rtol = 1e-6
+        @test cpt == SpineOpt.unit_capacity_transfer_factor(; key_param..., vintage_t=start(u_ts[1]), t=start(u_ts[1]))
+        @test decom_conv_to_disc_annuities ≈
+              SpineOpt.unit_decommissioning_conversion_to_discounted_annuities(; key_param..., t=u_ts[1]) rtol = 1e-6
     end
-    
+
     @testset "test technological discount factor, investment costs, salvage fraction" begin
         _load_test_data(url_in, test_data)
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
@@ -196,25 +198,26 @@
         candidate_unts = 1
         inv_cost = 1
         object_parameter_values = [
-            ["model", "instance", "discount_rate",	discnt_rate ],
+            ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
-            ["unit", "unit_ab", "unit_investment_cost",inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific",tech_discnt_rate],
+            ["unit", "unit_ab", "unit_investment_cost", inv_cost],
+            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
             ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime" , Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime" , Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
-        u_ts = [ind.t for ind in units_invested_available_indices(m;unit=unit(:unit_ab))]
-        key_param = Dict(unit.name=>unit(:unit_ab), stochastic_scenario.name=>stochastic_scenario(:parent))
+        u_ts = [ind.t for ind in units_invested_available_indices(m; unit=unit(:unit_ab))]
+        key_param = Dict(unit.name => unit(:unit_ab), stochastic_scenario.name => stochastic_scenario(:parent))
         tech_fac = 2.189728888
         salvage_frac = 0.370998336
         conv_to_disc_annuities = 0.613913254
-        @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(;key_param...,t=u_ts[1]) rtol = 1e-6 
-        @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(;key_param...,t=u_ts[1]) rtol = 1e-6 
-        @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(;key_param...,t=u_ts[1]) rtol = 1e-6 
+        @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(; key_param..., t=u_ts[1]) rtol = 1e-6
+        @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(; key_param..., t=u_ts[1]) rtol = 1e-6
+        @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(; key_param..., t=u_ts[1]) rtol =
+            1e-6
     end
 end

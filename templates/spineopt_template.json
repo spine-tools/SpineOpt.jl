@@ -198,6 +198,7 @@
         ["model", "window_duration", null, null, "The duration of the window in case it differs from roll_forward"],
         ["model", "window_weight", 1, null, "The weight of the window in the rolling subproblem"],
         ["model", "use_milestone_years", false, "boolean_value_list", "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."],
+        ["model", "use_economic_representation", false, "boolean_value_list", "If set to true, the investment models uses economic represenation, i.e., multi-year investments will be modeled considering discounts etc."],
         ["model", "write_lodf_file", false, "boolean_value_list", "A boolean flag for whether the LODF values should be written to a results file."],
         ["model", "write_mps_file", null, "write_mps_file_list", "A selector for writing an .mps file of the model."],
         ["model", "write_ptdf_file", false, "boolean_value_list", "A boolean flag for whether the PTDF values should be written to a results file."],

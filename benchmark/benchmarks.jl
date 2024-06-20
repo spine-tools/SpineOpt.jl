@@ -111,6 +111,8 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     append!(obj_pvs, (["unit", u, "min_up_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     append!(obj_pvs, (["unit", u, "min_down_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     if add_investment
+        # activate multi-year investments
+        append!(obj_pvs, [["model", "instance", "use_economic_representation", true]])
         # add investment temporal block
         append!(objs, [["temporal_block", "two_year"]])
         append!(obj_pvs, [["temporal_block", "two_year", "resolution", unparse_db_value(Year(2))]])
@@ -150,8 +152,12 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     append!(
         rel_pvs,
         (
-            ["connection__node__node", (c, n1, n2), "connection_flow_delay", Dict("type" => "duration", "data" => "1h")] for
-            (c, n1, n2) in zip(conns, conns_to, conns_from)
+            [
+                "connection__node__node",
+                (c, n1, n2),
+                "connection_flow_delay",
+                Dict("type" => "duration", "data" => "1h"),
+            ] for (c, n1, n2) in zip(conns, conns_to, conns_from)
         ),
     )
     append!(rel_pvs, (["connection__from_node", (c, n), "connection_capacity", 1] for (c, n) in zip(conns, conns_from)))
@@ -173,11 +179,11 @@ SUITE["main"] = BenchmarkGroup()
 
 url_in_basic, url_out_basic =
     setup(number_of_weeks=1, n_count=2, add_meshed_network=true, add_investment=false, add_rolling=false)
-# url_in_invest, url_out_invest = setup(number_of_weeks=3, n_count=10, add_investment=true, add_rolling=false)
+# url_in_invest, url_out_invest = setup(number_of_weeks=1, n_count=2, add_investment=true, add_rolling=false)
 # url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
 
 SUITE["main", "run_spineopt", "basic"] =
-    @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
+    @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 1 evals = 1 seconds =
         Inf
 # SUITE["main", "run_spineopt", "investment"] =
 #     @benchmarkable run_spineopt($url_in_invest, $url_out_invest; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
