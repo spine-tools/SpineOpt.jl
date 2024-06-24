@@ -53,9 +53,14 @@ function _build_constraint_units_available(m, u, s, t)
             init=0,
         )
         <=
-        number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+        number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t,
+            _default=_default_number_of_units(u))
     )
 end
+
+# Change the default number of units so that it is zero when candidate units are present
+# and otherwise 1.
+_default_number_of_units(u) = is_candidate(unit=u) ? 0 : 1
 
 """
     constraint_units_available_indices(m::Model, unit, t)
