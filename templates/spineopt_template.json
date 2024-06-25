@@ -27,6 +27,7 @@
         ["connection__to_node__investment_group", ["connection", "node", "investment_group"], "A flow on a `connection` to a `node` whose capacity should be counted in the capacity invested available of an `investment_group`."],
         ["connection__to_node__user_constraint", ["connection", "node", "user_constraint"], "A flow on a `connection` to a `node` constrained by a `user_constraint"],
         ["connection__user_constraint", ["connection", "user_constraint"], "A `connection` investment constrained by a `user_constraint`."],
+        ["model__benders_master_stage", ["model", "stage"], "A `stage` to use for building the master problem from `model` in case it's Benders."],
         ["model__default_investment_stochastic_structure", ["model", "stochastic_structure"], "The default `stochastic_structure` of all investments in the `model`."],
         ["model__default_investment_temporal_block", ["model", "temporal_block"], "The default `temporal_block` of all investments in the `model`."],
         ["model__default_stochastic_structure", ["model", "stochastic_structure"], "The default `stochastic_structure` of the `model."],

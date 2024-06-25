@@ -21,6 +21,8 @@ Initialize the given model for SpineOpt Master Problem: add variables, add const
 """
 function _build_mp_model!(m; log_level=3)
     num_variables(m) == 0 || return
+    benders_master_stage = _only_or_nothing(model__benders_master_stage(model=m.ext[:spineopt].instance))
+    benders_master_stage === nothing || return _build_mp_model_from_stage(m, benders_master_stage; log_level)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
@@ -29,6 +31,26 @@ function _build_mp_model!(m; log_level=3)
     @timelog log_level 2 "Setting $model_name objective..." _set_mp_objective!(m)
     _init_outputs!(m)
     _call_event_handlers(m, :model_built)
+end
+
+function _build_mp_model_from_stage(m, benders_master_stage; log_level)
+    with_env(benders_master_stage.name) do
+        @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
+        @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
+        @timelog log_level 2 "Adding $model_name variables...\n" begin
+            name = name_from_fn(add_variable_sp_objective_upperbound!)
+            @timelog log_level 3 "- [$name]" add_variable_sp_objective_upperbound!(m)
+            _add_variables!(m; log_level=log_level)
+        end
+        @timelog log_level 2 "Adding $model_name expressions...\n" _add_expressions!(m; log_level=log_level)
+        @timelog log_level 2 "Adding $model_name constraints...\n" begin
+            name = name_from_fn(_add_constraint_sp_objective_upperbound!)
+            rhs = sum(getproperty(SpineOpt, term)(m, anything) for term in objective_terms(m; benders_master=false))
+            @timelog log_level 3 "- [$name]" _add_constraint_sp_objective_upperbound!(m, rhs)
+            _add_constraints!(m; log_level=log_level)
+        end
+        @timelog log_level 2 "Setting $model_name objective..." _set_mp_objective!(m)
+    end
 end
 
 """
@@ -82,10 +104,10 @@ function _add_mp_constraints!(m; log_level=3)
     _update_constraint_names!(m)
 end
 
-function _add_constraint_sp_objective_upperbound!(m::Model)
+function _add_constraint_sp_objective_upperbound!(m::Model, rhs=0)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
-        (t=t,) => @constraint(m, sp_objective_upperbound[t] >= 0) for (t,) in sp_objective_upperbound_indices(m)
+        (t=t,) => @constraint(m, sp_objective_upperbound[t] >= rhs) for (t,) in sp_objective_upperbound_indices(m)
     )
 end
 
