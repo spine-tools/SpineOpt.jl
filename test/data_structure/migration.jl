@@ -246,7 +246,7 @@ function _test_update_investment_variable_type()
 end
 
 function _test_add_model_algorithm()
-	@testset "update_investment_variable_type" begin
+	@testset "add_model_algorithm" begin
 		url = "sqlite://"
 		data = Dict(
 			:object_classes => ["model"],
