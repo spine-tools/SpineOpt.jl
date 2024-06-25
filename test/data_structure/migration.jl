@@ -245,6 +245,35 @@ function _test_update_investment_variable_type()
 	end
 end
 
+function _test_rename_lifetime_to_tech_lifetime()
+	@testset "rename_lifetime_to_tech_lifetime" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["connection", "node", "unit"],
+			:objects => [("connection", "conn"), ("node", "n"), ("unit", "u")],
+			:object_parameters => [
+				("connection", "connection_investment_lifetime"),
+				("node", "storage_investment_lifetime"),
+				("unit", "unit_investment_lifetime")
+			],
+			:object_parameter_values => [
+				("connection", "conn", "connection_investment_lifetime", Dict("type" => "duration", "data" => "1Y")),
+				("node", "n", "storage_investment_lifetime", Dict("type" => "duration", "data" => "1Y")),
+				("unit", "u", "unit_investment_lifetime", Dict("type" => "duration", "data" => "1Y"))
+			]
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test SpineOpt.rename_lifetime_to_tech_lifetime(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "rename_lifetime_to_tech_lifetime"))
+		using_spinedb(url, Y)
+		@test Y.connection_investment_tech_lifetime(connection=Y.connection(:conn)) == Year(1)
+		@test Y.storage_investment_tech_lifetime(node=Y.node(:n)) == Year(1)
+		@test Y.unit_investment_tech_lifetime(unit=Y.unit(:u)) == Year(1)		
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -252,4 +281,5 @@ end
 	_test_translate_ramp_parameters()
 	_test_remove_model_tb_ss()
 	_test_update_investment_variable_type()
+	_test_rename_lifetime_to_tech_lifetime()
 end
