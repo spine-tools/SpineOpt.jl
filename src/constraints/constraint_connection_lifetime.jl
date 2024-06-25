@@ -40,8 +40,8 @@ function _build_constraint_connection_lifetime(m::Model, conn, s_path, t)
         )
         >=
         sum(
-            connections_invested[conn, s_past, t_past]
-            for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, s_path, t)
+            connections_invested[conn, s_past, t_past] * weight
+            for (conn, s_past, t_past, weight) in _past_connections_invested_available_indices(m, conn, s_path, t)
         )
     )
 end
@@ -49,28 +49,13 @@ end
 function constraint_connection_lifetime_indices(m::Model)
     (
         (connection=conn, stochastic_path=path, t=t)
-        for conn in indices(connection_investment_lifetime)
-        for (conn, t) in connection_investment_time_indices(m; connection=conn)
+        for (conn, t) in connection_investment_time_indices(m; connection=indices(connection_investment_lifetime))
         for path in active_stochastic_paths(m, _past_connections_invested_available_indices(m, conn, anything, t))
     )
 end
 
 function _past_connections_invested_available_indices(m, conn, s_path, t)
-    t0 = _analysis_time(m)
-    connections_invested_available_indices(
-        m;
-        connection=conn,
-        stochastic_scenario=s_path,
-        t=to_time_slice(
-            m;
-            t=TimeSlice(
-                end_(t) - connection_investment_lifetime(
-                    connection=conn, analysis_time=t0, stochastic_scenario=s_path, t=t
-                ),
-                end_(t)
-            )
-        )
-    )
+    _past_indices(m, connections_invested_available_indices, connection_investment_lifetime, s_path, t; connection=conn)
 end
 
 """

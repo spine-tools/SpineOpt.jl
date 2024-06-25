@@ -245,6 +245,36 @@ function _test_update_investment_variable_type()
 	end
 end
 
+function _test_add_model_algorithm()
+	@testset "update_investment_variable_type" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["model"],
+			:object_parameters => [
+				("model", "model_type", "spineopt_standard", "model_type_list"),
+			],
+			:parameter_value_lists => [
+				("model_type_list", "spineopt_standard"),
+				("model_type_list", "spineopt_benders"),
+				("model_type_list", "spineopt_mga"),
+			],
+			:objects => [("model", "test_model")],
+			:object_parameter_values => [
+				("model", "test_model", "model_type", "spineopt_mga"),
+			],
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test Y.model_type(model=Y.model(:test_model)) == :spineopt_mga
+		@test SpineOpt.add_model_algorithm(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "add_model_algorithm"))
+		using_spinedb(url, Y)
+		@test Y.model_type(model=Y.model(:test_model)) == :spineopt_standard
+		@test Y.model_algorithm(model=Y.model(:test_model)) == :mga_algorithm
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -252,4 +282,5 @@ end
 	_test_translate_ramp_parameters()
 	_test_remove_model_tb_ss()
 	_test_update_investment_variable_type()
+	_test_add_model_algorithm()
 end

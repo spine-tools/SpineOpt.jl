@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6"  # Minimum compatible Release
+          - "1.8"  # Minimum compatible Release
           - "1"    # Latest Release of Julia v1.x
         os:
           - ubuntu-latest

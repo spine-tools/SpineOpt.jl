@@ -70,18 +70,19 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-struct FlexParameter
-    as_number
-    as_call
+struct ParameterFunction
+    fn
 end
 
+(pf::ParameterFunction)(; kwargs...) = as_number(pf; kwargs...)
+
 as_number(p::Parameter; kwargs...) = p(; kwargs...)
-as_number(x::FlexParameter; kwargs...) = x.as_number(; kwargs...)
+as_number(pf::ParameterFunction; kwargs...) = pf.fn(as_number; kwargs...)
 
 as_call(p::Parameter; kwargs...) = p[kwargs]
-as_call(x::FlexParameter; kwargs...) = x.as_call(; kwargs...)
+as_call(pf::ParameterFunction; kwargs...) = pf.fn(as_call; kwargs...)
 
-constant(x::Number) = FlexParameter((; kwargs...) -> x, (; kwargs...) -> Call(x))
+constant(x::Number) = (m; kwargs...) -> x
 
 """
     build_sense_constraint(lhs, sense::Symbol, rhs)
@@ -304,6 +305,19 @@ function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
     max_vals = (maximum_parameter_value(p) for p in lookback_params)
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
+end
+
+function _get_var_with_replacement(m, var_name, ind)
+    get(m.ext[:spineopt].variables[var_name], ind) do
+        get_var_by_name = Dict(
+            :units_on => _get_units_on,
+            :units_out_of_service => _get_units_out_of_service,
+            :units_started_up => _get_units_started_up,
+        )
+        get_var = get(get_var_by_name, var_name, nothing)
+        isnothing(get_var) && throw(KeyError(ind))
+        get_var(m, ind...)
+    end
 end
 
 # Base

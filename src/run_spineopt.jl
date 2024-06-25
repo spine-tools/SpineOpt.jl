@@ -143,17 +143,26 @@ function _run_spineopt(
     t_end = now()
     elapsed_time_string = string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
     @log log_level 1 "Execution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
-    stats = Map(
-        [
-            :SpineOpt_version,
-            :SpineOpt_git_hash,
-            :SpineInterface_version,
-            :SpineInterface_git_hash,
-            :elapsed_time,
-        ],
-        [so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string],
-    )
     if url_out !== nothing
+        stat_keys = [
+            :SpineOpt_version, :SpineOpt_git_hash, :SpineInterface_version, :SpineInterface_git_hash, :elapsed_time
+        ]
+        stat_values = Any[so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string]
+        m_mp = master_model(m)
+        if m_mp !== nothing
+            append!(
+                stat_keys,
+                [
+                    :benders_objective_lower_bound,
+                    :benders_objective_upper_bound,
+                    :benders_gap,
+                    :benders_iteration_count,
+                ],
+            )
+            gaps = m_mp.ext[:spineopt].benders_gaps
+            append!(stat_values, [_lb_str(m_mp), _ub_str(m_mp), isempty(gaps) ? "N/A" : _gap_str(m_mp), length(gaps)])
+        end
+        stats = Map(stat_keys, string.(stat_values))
         vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
         write_parameters(vals, url_out; alternative=alternative, on_conflict="replace")
     end
@@ -161,6 +170,12 @@ function _run_spineopt(
     # FIXME: make sure use_direct_model this works with db solvers
     # possibly adapt union? + allow for conflicts if direct model is used
 end
+
+_gap_str(m_mp) = string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%")
+
+_lb_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])
+
+_ub_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])
 
 """
     prepare_spineopt(url_in; <keyword arguments>)
@@ -210,27 +225,23 @@ function prepare_spineopt(
     for st in stage()
         scenario = stage_scenario(stage=st, _strict=false)
         scenario isa Symbol || error("invalid scenario $scenario for stage $st")
-        filters = merge(filters, Dict("scenario" => string(scenario)))
-        with_env(st.name) do
-            _init_data_from_db(url_in, log_level, upgrade, templates, filters, st)
+        without_filters(url_in) do clean_url_in
+            filters = merge(filters, Dict("scenario" => string(scenario)))
+            with_env(st.name) do
+                _init_data_from_db(clean_url_in, log_level, upgrade, templates, filters, st)
+            end
         end
     end
     create_model(mip_solver, lp_solver, use_direct_model)
-end
-
-function _url_from_data(data)
-    temp_db_url = "sqlite:///$(tempname())"
-    import_data(temp_db_url, data, "No comment")
-    temp_db_url
 end
 
 function _init_data_from_db(url_in, log_level, upgrade, templates, filters, st=nothing)
     st_name = st !== nothing ? st : "base"
     @timelog log_level 2 "Initializing $st_name data structure from db..." begin
         template = SpineOpt.template()
-        using_spinedb(_url_from_data(template), @__MODULE__; extend=false)
+        using_spinedb(template, @__MODULE__; extend=false)
         for template in templates
-            using_spinedb(_url_from_data(template), @__MODULE__; extend=true)
+            using_spinedb(template, @__MODULE__; extend=true)
         end
         data = _data(url_in; upgrade, filters)
         using_spinedb(data, @__MODULE__; extend=true)
@@ -265,7 +276,7 @@ function _do_upgrade_db(url_in, version; log_level)
     @log log_level 0 "Done!"
 end
 
-_data(url_in::String; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
+_data(url_in; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
 _data(data::Dict; kwargs...) = data
 
 """
@@ -296,18 +307,12 @@ function run_spineopt!(
     write_as_roll=0,
     resume_file_path=nothing,
 )
-    do_run_spineopt! = Dict(
-        :spineopt_standard => run_spineopt_standard!,
-        :spineopt_benders => run_spineopt_benders!,
-        :spineopt_mga => run_spineopt_mga!,
-    )[model_type(model=m.ext[:spineopt].instance)]
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
-    Base.invokelatest(build_model!, m; log_level)
-    _call_event_handlers(m, :model_built)
     Base.invokelatest(        
         do_run_spineopt!,
         m,
-        url_out;
+        url_out,
+        Val(model_algorithm(model=m.ext[:spineopt].instance));
         log_level=log_level,
         optimize=optimize,
         update_names=update_names,
@@ -428,7 +433,7 @@ struct SpineOptExt
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
-    sp_values::Dict{Int64,Dict}
+    results::Dict{Any,Dict}
     constraints::Dict{Symbol,Dict}
     expressions::Dict{Symbol,Dict}
     objective_terms::Dict{Symbol,Any}
@@ -464,11 +469,11 @@ struct SpineOptExt
             )
         end
         event_handlers = Dict(
-            :model_built => [],
-            :model_about_to_solve => [],
-            :model_solved => [],
-            :window_about_to_solve => [],
-            :window_solved => [],
+            :model_built => Set(),
+            :model_about_to_solve => Set(),
+            :model_solved => Set(),
+            :window_about_to_solve => Set(),
+            :window_solved => Set(),
         )
         new(
             instance,
@@ -481,7 +486,7 @@ struct SpineOptExt
             Dict{Symbol,Dict}(),  # variables
             Dict{Symbol,Dict}(),  # variables_definition
             Dict{Symbol,Dict}(),  # values
-            Dict{Int64,Dict}(),  # sp_values
+            Dict{Any,Dict}(),  # results
             Dict{Symbol,Dict}(),  # constraints
             Dict{Symbol,Dict}(),  # expressions
             Dict{Symbol,Any}(),  # objective_terms
@@ -504,7 +509,7 @@ function _model_name(m)
     st = m.ext[:spineopt].stage
     st !== nothing && return string(st.name, " stage")
     name = string(m.ext[:spineopt].instance.name)
-    master_model(m) === m && return string(name, " master")
+    _is_benders_master(m) && return string(name, " master")
     name
 end
 
@@ -518,6 +523,10 @@ JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::Abs
 The Benders master model for given model.
 """
 master_model(m) = m.ext[:spineopt].master_model
+
+_is_benders_master(m) = master_model(m) === m
+
+_is_benders_subproblem(m) = !(master_model(m) in (m, nothing))
 
 """
     stage_model(m, stage_name)
@@ -569,4 +578,34 @@ function add_event_handler!(fn, m, event)
         "invalid event $event - must be one of $(join(keys(event_handlers), ", "))"
     )
     push!(listeners, fn)
+end
+
+function _save_result!(m, k; filter_accepts_variable=(x -> true))
+    m.ext[:spineopt].results[k] = Dict(
+        name => copy(m.ext[:spineopt].values[name])
+        for name in keys(m.ext[:spineopt].variables)
+        if filter_accepts_variable(name)
+    )
+end
+
+function _set_result!(m, k)
+    result = get(m.ext[:spineopt].results, k, nothing)
+    result === nothing && return
+    @info "reusing solution for $(_model_name(m)) - $k"
+    for (name, variable_result) in result
+        val = m.ext[:spineopt].values[name]
+        for (ind, r) in variable_result
+            val[ind] = r
+        end
+    end
+    m.ext[:spineopt].has_results[] = true
+end
+
+function _set_starting_point!(m, k)
+    for (name, variable_result) in get(m.ext[:spineopt].results, k, ())
+        var = m.ext[:spineopt].variables[name]
+        for (ind, r) in variable_result
+            var[ind] isa VariableRef && set_start_value(var[ind], r)
+        end
+    end
 end

@@ -46,7 +46,6 @@ end
 
 function _build_constraint_units_out_of_service_contiguity(m::Model, u, s_path, t)
     @fetch units_out_of_service, units_taken_out_of_service, units_returned_to_service = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + units_out_of_service[u, s, t]
@@ -54,13 +53,17 @@ function _build_constraint_units_out_of_service_contiguity(m::Model, u, s_path, 
                 m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything
             );
             init=0,
-        )           
+        )
         >=
         + sum(
-            units_taken_out_of_service[u, s_past, t_past]
-            for (u, s_past, t_past) in past_units_out_of_service_indices(m, u, s_path, t, scheduled_outage_duration)
+            units_taken_out_of_service[u, s_past, t_past] * weight
+            for (u, s_past, t_past, weight) in past_units_out_of_service_indices(m, u, s_path, t)
         )
     )
+end
+
+function past_units_out_of_service_indices(m, u, s_path, t)
+    _past_indices(m, units_out_of_service_indices, scheduled_outage_duration, s_path, t; unit=u)
 end
 
 function constraint_units_out_of_service_contiguity_indices(m::Model)
@@ -68,8 +71,6 @@ function constraint_units_out_of_service_contiguity_indices(m::Model)
         (unit=u, stochastic_path=path, t=t)
         for u in indices(scheduled_outage_duration)
         for (u, t) in unit_time_indices(m; unit=u)
-        for path in active_stochastic_paths(
-            m, past_units_out_of_service_indices(m, u, anything, t, scheduled_outage_duration)
-        )
+        for path in active_stochastic_paths(m, past_units_out_of_service_indices(m, u, anything, t))
     )
 end

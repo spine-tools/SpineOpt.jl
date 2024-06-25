@@ -37,24 +37,34 @@ end
 
 function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
     @fetch units_out_of_service = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
+    max_sch_out_dur = maximum(
+        (
+            + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
+            * (
+                + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+                + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
+            )
+        )
+        for s in s_path
+    )
+    lowest_res = maximum(_maximum(resolution(temporal_block=tb)) for tb in units_on__temporal_block(unit=u))
+    max_err = rem(max_sch_out_dur, lowest_res)
     @build_constraint(
+        + 0
+        <=
         + sum(
             + units_out_of_service[u, s, t] * duration(t)
             for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s_path);
             init=0,
         )
-        >=
-        + maximum(
-            (
-                + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
-                * number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
-            ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
-            for s in s_path;
-            init=0,
-        )
+        - (max_sch_out_dur / _model_duration_unit(m.ext[:spineopt].instance)(1))
+        <=
+        + max_err / _model_duration_unit(m.ext[:spineopt].instance)(1)
     )
 end
+
+_maximum(x::T) where T<:Vector = maximum(x)
+_maximum(x) = x
 
 """
     constraint_scheduled_outage_duration_indices(m::Model, unit, t)

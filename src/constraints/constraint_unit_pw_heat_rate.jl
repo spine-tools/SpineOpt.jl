@@ -45,7 +45,6 @@ end
 
 function _build_constraint_unit_pw_heat_rate(m::Model, u, n_from, n_to, s_path, t)
     @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         sum(
             + unit_flow[u, n, d, s, t_short] * duration(t_short)
@@ -62,9 +61,7 @@ function _build_constraint_unit_pw_heat_rate(m::Model, u, n_from, n_to, s_path, 
         ==
         + sum(
             + unit_flow_op[u, n, d, op, s, t_short]
-            * unit_incremental_heat_rate(
-                m; unit=u, node1=n_from, node2=n, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short
-            )
+            * unit_incremental_heat_rate(m; unit=u, node1=n_from, node2=n, i=op, stochastic_scenario=s, t=t_short)
             * duration(t_short)
             for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                 m;
@@ -78,9 +75,7 @@ function _build_constraint_unit_pw_heat_rate(m::Model, u, n_from, n_to, s_path, 
         )
         + sum(
             + unit_flow[u, n, d, s, t_short]
-            * unit_incremental_heat_rate(
-                m; unit=u, node1=n_from, node2=n, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short
-            )
+            * unit_incremental_heat_rate(m; unit=u, node1=n_from, node2=n, i=1, stochastic_scenario=s, t=t_short)
             * duration(t_short)
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m;
@@ -96,13 +91,9 @@ function _build_constraint_unit_pw_heat_rate(m::Model, u, n_from, n_to, s_path, 
         + sum(
             + units_on[u, s, t1]
             * min(duration(t1), duration(t))
-            * unit_idle_heat_rate(
-               m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
-            )
+            * unit_idle_heat_rate(m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, t=t)
             + units_started_up[u, s, t1]
-            * unit_start_flow(
-                m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t
-            )
+            * unit_start_flow(m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, t=t)
             for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t));
             init=0,
         )
