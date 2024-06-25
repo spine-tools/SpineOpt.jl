@@ -491,6 +491,7 @@ Create the Benders master problem temporal structure for given model.
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window!(m_mp)
     generate_time_slice!(m_mp)
+    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice] = Dict()
 end
 
 """

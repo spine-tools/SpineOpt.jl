@@ -35,11 +35,17 @@ end
 
 function _build_mp_model_from_stage(m, benders_master_stage; log_level)
     with_env(benders_master_stage.name) do
+        model_name = _model_name(m)
         @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
         @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
         @timelog log_level 2 "Adding $model_name variables...\n" begin
-            name = name_from_fn(add_variable_sp_objective_upperbound!)
-            @timelog log_level 3 "- [$name]" add_variable_sp_objective_upperbound!(m)
+            for add_variable! in (
+                    add_variable_sp_objective_upperbound!,
+                    add_variable_mp_min_res_gen_to_demand_ratio_slack!,
+                )
+                name = name_from_fn(add_variable!)
+                @timelog log_level 3 "- [$name]" add_variable!(m)
+            end
             _add_variables!(m; log_level=log_level)
         end
         @timelog log_level 2 "Adding $model_name expressions...\n" _add_expressions!(m; log_level=log_level)
