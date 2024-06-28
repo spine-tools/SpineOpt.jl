@@ -32,11 +32,10 @@ function add_constraint_investment_group_minimum_capacity_invested_available!(m:
 end
 
 function _build_constraint_investment_group_minimum_capacity_invested_available(m::Model, ig, s, t)
-    t0 = _analysis_time(m)
     @build_constraint(
         _group_capacity_invested_available(m, ig, s, t)
         >=
-        minimum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
+        minimum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
     )
 end
 
@@ -63,11 +62,10 @@ function add_constraint_investment_group_maximum_capacity_invested_available!(m:
 end
 
 function _build_constraint_investment_group_maximum_capacity_invested_available(m::Model, ig, s, t)
-    t0 = _analysis_time(m)
     @build_constraint(
         _group_capacity_invested_available(m, ig, s, t)
         <=
-        maximum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)
+        maximum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
     )
 end
 
@@ -90,12 +88,11 @@ function _capacity_entities_invested_available_s_t(m)
 end
 
 function _group_capacity_invested_available(m, ig, s, t)
-    t0 = _analysis_time(m)
     @fetch units_invested_available, connections_invested_available = m.ext[:spineopt].variables
     (
         + sum(
             + units_invested_available[u, s, t]
-            * unit_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+            * unit_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
             for (u, s, t) in units_invested_available_indices(
                 m; unit=unit__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
             )
@@ -119,7 +116,7 @@ function _group_capacity_invested_available(m, ig, s, t)
         )
         + sum(
             + connections_invested_available[conn, s, t]
-            * connection_capacity(m; connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+            * connection_capacity(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
             for (conn, s, t) in connections_invested_available_indices(
                 m;
                 connection=connection__investment_group(investment_group=ig),

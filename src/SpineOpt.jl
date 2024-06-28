@@ -61,8 +61,8 @@ export generate_stochastic_structure!
 export active_stochastic_paths
 export write_report
 export write_report_from_intermediate_results
-export generate_forced_availability_factor
-export forced_availability_factor_time_series
+export generate_forced_outages
+export forced_outage_time_series
 export master_model
 export stage_model
 export write_model_file
@@ -76,15 +76,13 @@ include("util/write_information_files.jl")
 include("util/promise.jl")
 # Main stage
 include("run_spineopt.jl")
-include("generate_forced_availability_factor.jl")
-include("run_spineopt_standard.jl")
-include("run_spineopt_benders.jl")
+include("generate_forced_outages.jl")
+include("run_spineopt_basic.jl")
 include("run_spineopt_mga.jl")
+include("benders.jl")
 # Data structure
 include("data_structure/economic_structure.jl")
 include("data_structure/migration.jl")
-include("data_structure/benders_data.jl")
-include("data_structure/mga_data.jl")
 include("data_structure/temporal_structure.jl")
 include("data_structure/stochastic_structure.jl")
 include("data_structure/preprocess_data_structure.jl")

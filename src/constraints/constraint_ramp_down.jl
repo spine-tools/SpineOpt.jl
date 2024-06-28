@@ -67,7 +67,6 @@ end
 
 function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_after)
     @fetch units_on, units_shut_down, unit_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + unit_flow[u, n, d, s, t] * overlap_duration(t_before, t)
@@ -98,31 +97,31 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
         <=
         (
             + sum(
-                (
-                    + _shut_down_limit(m, u, ng, d, s, t0, t_after)
-                    - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
-                    - _ramp_down_limit(m, u, ng, d, s, t0, t_after)
+                + (
+                    + _shut_down_limit(m, u, ng, d, s, t_after)
+                    - _minimum_operating_point(m, u, ng, d, s, t_after)
+                    - _ramp_down_limit(m, u, ng, d, s, t_after)
                 )
-                * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
+                * _unit_flow_capacity(m, u, ng, d, s, t_after)
                 * units_shut_down[u, s, t]
                 * duration(t)
                 for (u, s, t) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
                 init=0,
             )
             + sum(
-                - _minimum_operating_point(m, u, ng, d, s, t0, t_after)
-                * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
+                - _minimum_operating_point(m, u, ng, d, s, t_after)
+                * _unit_flow_capacity(m, u, ng, d, s, t_after)
                 * units_on[u, s, t]
                 * duration(t)
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
                 init=0,
             )
             + sum(
-                (
-                    + _minimum_operating_point(m, u, ng, d, s, t0, t_after)
-                    + _ramp_down_limit(m, u, ng, d, s, t0, t_after)
+                + (
+                    + _minimum_operating_point(m, u, ng, d, s, t_after)
+                    + _ramp_down_limit(m, u, ng, d, s, t_after)
                 )
-                * _unit_flow_capacity(m, u, ng, d, s, t0, t_after)
+                * _unit_flow_capacity(m, u, ng, d, s, t_after)
                 * units_on[u, s, t]
                 * duration(t)
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
@@ -133,8 +132,8 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
     )
 end
 
-function _ramp_down_limit(m, u, ng, d, s, t0, t)
-    ramp_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)
+function _ramp_down_limit(m, u, ng, d, s, t)
+    ramp_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
 function constraint_ramp_down_indices(m::Model)

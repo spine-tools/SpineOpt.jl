@@ -81,12 +81,12 @@ function _is_constraint_equal_kernel(left, right)
     left_terms, right_terms = left.func.terms, right.func.terms
     missing_in_right = setdiff(keys(left_terms), keys(right_terms))
     if !isempty(missing_in_right)
-        @error string("missing in right constraint", missing_in_right)
+        @error string("missing in right constraint: ", missing_in_right)
         return false
     end
     missing_in_left = setdiff(keys(right_terms), keys(left_terms))
     if !isempty(missing_in_left)
-        @error string("missing in left constraint", missing_in_left)
+        @error string("missing in left constraint: ", missing_in_left)
         return false
     end
     for k in keys(left_terms)
@@ -137,7 +137,6 @@ end
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
-    include("data_structure/algorithm_mga_structure.jl")
     include("data_structure/postprocess_results.jl")
     include("expressions/expression.jl")
     include("constraints/constraint_unit.jl")
@@ -146,11 +145,13 @@ end
     include("constraints/constraint_user_constraint.jl")
     include("constraints/constraint_investment_group.jl")
     include("objective/objective.jl")
+    include("variables/variables.jl")
     include("util/misc.jl")
     include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
+    include("run_spineopt_mga.jl")
     include("run_examples.jl")
     include("run_benchmark_data.jl")
 end

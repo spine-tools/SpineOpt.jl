@@ -42,7 +42,6 @@ function preprocess_data_structure()
     generate_variable_indexing_support()
     generate_internal_fix_investments()
     generate_benders_structure()
-    apply_forced_availability_factor()
     generate_is_boundary()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
@@ -826,28 +825,6 @@ function generate_internal_fix_investments()
     end
 end
 
-function apply_forced_availability_factor()
-    function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
-        _product_or_nothing(x::TimeSeries, y::Nothing) = x
-        _product_or_nothing(x::TimeSeries, y) = x * y
-
-        function _new_pvals(class, x)
-            forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
-            forced_af === nothing && return Dict()
-            af = availability_factor(; (class.name => x,)..., _strict=false)
-            Dict(availability_factor.name => parameter_value(_product_or_nothing(forced_af, af)))
-        end
-
-        add_object_parameter_values!(class, Dict(x => _new_pvals(class, x) for x in class()))
-    end
-
-    isempty(model()) && return
-    m_start = minimum(model_start(model=m) for m in model())
-    m_end = maximum(model_end(model=m) for m in model())
-    _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
-    _apply_forced_availability_factor(m_start, m_end, connection, connection_availability_factor)
-end
-
 """
     generate_is_boundary()
 
@@ -889,23 +866,15 @@ function generate_is_boundary()
 end
 
 function generate_unit_flow_capacity()
-    for class in classes(unit_capacity)
-        new_pvals = Dict(
-            (u, n, d) => Dict(
-                :unit_flow_capacity => parameter_value(
-                    *(
-                        unit_capacity(unit=u, node=n, direction=d),
-                        unit_availability_factor(unit=u),
-                        unit_conv_cap_to_flow(unit=u, node=n, direction=d),
-                    )
-                )
-            )
-            for (u, n, d) in indices(unit_capacity, class)
+    function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
+        _prod_or_nothing(
+            f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
+            f(unit_availability_factor; unit=unit, kwargs...),
+            f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
         )
-        add_relationship_parameter_values!(class, new_pvals)
-        add_relationship_parameter_defaults!(class, Dict(:unit_flow_capacity => parameter_value(nothing)))
     end
-    unit_flow_capacity = Parameter(:unit_flow_capacity, classes(unit_capacity))
+
+    unit_flow_capacity = ParameterFunction(_unit_flow_capacity)
     @eval begin
         unit_flow_capacity = $unit_flow_capacity
         export unit_flow_capacity
@@ -913,75 +882,93 @@ function generate_unit_flow_capacity()
 end
 
 function generate_connection_flow_capacity()
-    for class in classes(connection_capacity)
-        new_pvals = Dict(
-            (conn, n, d) => Dict(
-                :connection_flow_capacity => parameter_value(
-                    *(
-                        connection_capacity(connection=conn, node=n, direction=d),
-                        connection_availability_factor(connection=conn),
-                        connection_conv_cap_to_flow(connection=conn, node=n, direction=d),
-                    )
-                )
-            )
-            for (conn, n, d) in indices(connection_capacity, class)
+    function _connection_flow_capacity(
+        f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
+    )
+        _prod_or_nothing(
+            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+            f(connection_availability_factor; connection=connection, kwargs...),
+            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
         )
-        add_relationship_parameter_values!(class, new_pvals)
-        add_relationship_parameter_defaults!(class, Dict(:connection_flow_capacity => parameter_value(nothing)))
     end
-    connection_flow_capacity = Parameter(:connection_flow_capacity, classes(connection_capacity))
+
+    connection_flow_capacity = ParameterFunction(_connection_flow_capacity)
     @eval begin
         connection_flow_capacity = $connection_flow_capacity
         export connection_flow_capacity
     end
 end
 
+_prod_or_nothing(args...) = any(isnothing.(args)) ? nothing : *(args...)
+
 function generate_unit_commitment_parameters()
-    _switchable_unit_iter = Iterators.flatten(
-        (
-            indices(min_up_time),
-            indices(min_down_time),
-            indices(start_up_cost),
-            indices(shut_down_cost), 
-            (x.unit for x in indices(start_up_limit)),
-            (x.unit for x in indices(shut_down_limit)),
-            # ramp_up constraint needs units_started_up variable to avoid being infeasible 
-            (x.unit for x in indices(ramp_up_limit)),
-            # ramp_down constraint needs units_shut_down variable to avoid being infeasible 
-            (x.unit for x in indices(ramp_down_limit)),
-            (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
-            (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
-        )
-    )
-    _activatable_unit_iter = Iterators.flatten(
-        (
-            _switchable_unit_iter,
-            indices(units_on_cost),
-            indices(units_on_non_anticipativity_time),
-            # In investment mode, the model needs units_on to formulate available units (constraint_units_available).
-            (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
-            (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
-            (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
-            # The variable units_on is by default linear.
-            # When the user explicitly set this variable to binary or integer, we assume they mean to use it as well.
+    unit_with_switched_variable_set = unique(
+        Iterators.flatten(
             (
-                u
-                for u in indices(online_variable_type)
-                if online_variable_type(unit=u) in (
-                    :unit_online_variable_type_binary, :unit_online_variable_type_integer
-                )
-            ),
+                indices(min_up_time),
+                indices(min_down_time),
+                indices(start_up_cost),
+                indices(shut_down_cost),
+                (x.unit for x in indices(start_up_limit)),
+                (x.unit for x in indices(shut_down_limit)),
+                # ramp_up constraint needs units_started_up variable to avoid being infeasible 
+                (x.unit for x in indices(ramp_up_limit)),
+                # ramp_down constraint needs units_shut_down variable to avoid being infeasible 
+                (x.unit for x in indices(ramp_down_limit)),
+                (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
+                (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+                (u for (st, out, u) in stage__output__unit() if out.name in (:units_started_up, :units_shut_down)),
+            )
         )
     )
-    _deactivatable_unit_iter = Iterators.flatten(
-        (indices(scheduled_outage_duration), (u for u in indices(units_unavailable) if units_unavailable(unit=u) != 0))
+    unit_with_out_of_service_variable_set = unique(
+        Iterators.flatten(
+            (
+                indices(scheduled_outage_duration),
+                indices(fix_units_out_of_service),
+                (u for (st, out, u) in stage__output__unit() if out.name == :units_out_of_service),
+            )
+        )
     )
-    for (pname, iter) in (
-        (:has_switched_variable, _switchable_unit_iter),
-        (:has_online_variable, _activatable_unit_iter),
-        (:has_out_of_service_variable, _deactivatable_unit_iter),
+    unit_with_online_variable_set = unique(
+        Iterators.flatten(
+            (
+                unit_with_switched_variable_set,
+                unit_with_out_of_service_variable_set,
+                indices(units_on_cost),
+                indices(units_on_non_anticipativity_time),
+                indices(fix_units_on),
+                (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
+                (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
+                (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
+                (x.unit for x in indices(ramp_up_limit)),
+                (x.unit for x in indices(ramp_down_limit)),
+                (u for (st, out, u) in stage__output__unit() if out.name == :units_on),
+                (
+                    u
+                    for u in indices(online_variable_type)
+                    if online_variable_type(unit=u) in (
+                        :unit_online_variable_type_binary, :unit_online_variable_type_integer
+                    )
+                ),
+            )
+        )
     )
-        add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unique(iter)))
+    unit_without_online_variable_iter = (
+        u for u in unit() if online_variable_type(unit=u) == :unit_online_variable_type_none
+    )
+    unit_without_out_of_service_variable_iter = (
+        u for u in unit() if outage_variable_type(unit=u) == :unit_online_variable_type_none
+    )
+    setdiff!(unit_with_switched_variable_set, unit_without_online_variable_iter)
+    setdiff!(unit_with_out_of_service_variable_set, unit_without_out_of_service_variable_iter)
+    setdiff!(unit_with_online_variable_set, unit_without_online_variable_iter)
+    for (pname, unit_set) in (
+        (:has_switched_variable, unit_with_switched_variable_set),
+        (:has_out_of_service_variable, unit_with_out_of_service_variable_set),
+        (:has_online_variable, unit_with_online_variable_set),
+    )
+        add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unit_set))
         add_object_parameter_defaults!(unit, Dict(pname => parameter_value(false)))
     end
     @eval begin

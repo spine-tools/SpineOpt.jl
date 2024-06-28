@@ -30,15 +30,9 @@ function storages_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    node=members(node)
-    (
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, tb) in node__investment_temporal_block(
-            node=intersect(indices(candidate_storages), node), temporal_block=temporal_block, _compact=false
-        )
-        for (n, s, t) in node_investment_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+    node = intersect(indices(candidate_storages), members(node))
+    node_investment_stochastic_time_indices(
+        m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 

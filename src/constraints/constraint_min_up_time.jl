@@ -42,7 +42,6 @@ end
 
 function _build_constraint_min_up_time(m::Model, u, s_path, t)
     @fetch units_on, units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + units_on[u, s, t]
@@ -58,8 +57,8 @@ function _build_constraint_min_up_time(m::Model, u, s_path, t)
         )
         >=
         + sum(
-            units_started_up[u, s_past, t_past]
-            for (u, s_past, t_past) in past_units_on_indices(m, u, s_path, t, min_up_time)
+            units_started_up[u, s_past, t_past] * weight
+            for (u, s_past, t_past, weight) in past_units_on_indices(m, min_up_time, u, s_path, t)
         )
     )
 end
@@ -69,7 +68,7 @@ function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_up_time)
         for (u, t) in unit_time_indices(m; unit=u)
-        for path in active_stochastic_paths(m, past_units_on_indices(m, u, anything, t, min_up_time))
+        for path in active_stochastic_paths(m, past_units_on_indices(m, min_up_time, u, anything, t))
     )
 end
 

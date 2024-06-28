@@ -66,37 +66,41 @@ function _scens_by_t(indices)
     scens_by_t
 end
 
-past_units_on_indices(args...) = past_unit_indices(units_on_indices, args...)
+past_units_on_indices(m, param, u, s_path, t) = _past_indices(m, units_on_indices, param, s_path, t; unit=u)
 
-past_units_out_of_service_indices(args...) = past_unit_indices(units_out_of_service_indices, args...)
-
-function past_unit_indices(indices, m, u, s_path, t, min_time)
-    t0 = _analysis_time(m)
-    indices(
-        m;
-        unit=u,
-        stochastic_scenario=s_path,
-        t=to_time_slice(
-            m; t=TimeSlice(end_(t) - min_time(unit=u, analysis_time=t0, stochastic_scenario=s_path, t=t), end_(t))
-        ),
-        temporal_block=anything
-    )    
+function _past_indices(m, indices, param, s_path, t; kwargs...)
+    look_behind = maximum(maximum_parameter_value(param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
+    (
+        (;
+            ind...,
+            weight=ifelse(
+                end_(t) - end_(ind.t) < param(m; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), 1, 0
+            ),
+        )
+        for ind in indices(
+            m;
+            kwargs...,
+            stochastic_scenario=s_path,
+            t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
+            temporal_block=anything,
+        )    
+    )
 end
 
-function _minimum_operating_point(m, u, ng, d, s, t0, t)
-    minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=0)
+function _minimum_operating_point(m, u, ng, d, s, t)
+    minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=0)
 end
 
-function _unit_flow_capacity(m, u, ng, d, s, t0, t)
-    unit_flow_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+function _unit_flow_capacity(m, u, ng, d, s, t)
+    unit_flow_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
 end
 
-function _start_up_limit(m, u, ng, d, s, t0, t)
-    start_up_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)
+function _start_up_limit(m, u, ng, d, s, t)
+    start_up_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
-function _shut_down_limit(m, u, ng, d, s, t0, t)
-    shut_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)
+function _shut_down_limit(m, u, ng, d, s, t)
+    shut_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
 """

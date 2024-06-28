@@ -24,14 +24,13 @@ Create an expression for fuel costs of units.
 """
 function fuel_costs(m::Model, t_range)
     @fetch unit_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @expression(
         m,
         sum(
             unit_flow[u, n, d, s, t]
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * fuel_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+            * fuel_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             for (u, ng, d) in indices(fuel_cost)
             for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range);

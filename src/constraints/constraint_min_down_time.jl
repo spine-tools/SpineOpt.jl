@@ -42,10 +42,9 @@ end
 
 function _build_constraint_min_down_time(m::Model, u, s_path, t)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
-            + number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+            + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
             + sum(
                 units_invested_available[u, s, t1]
                 for (u, s, t1) in units_invested_available_indices(
@@ -59,8 +58,8 @@ function _build_constraint_min_down_time(m::Model, u, s_path, t)
         )
         >=
         + sum(
-            units_shut_down[u, s_past, t_past]
-            for (u, s_past, t_past) in past_units_on_indices(m, u, s_path, t, min_down_time);
+            units_shut_down[u, s_past, t_past] * weight
+            for (u, s_past, t_past, weight) in past_units_on_indices(m, min_down_time, u, s_path, t);
             init=0,
         )
         + sum(
@@ -82,7 +81,7 @@ function constraint_min_down_time_indices(m::Model)
             m, 
             Iterators.flatten(
                 (
-                    past_units_on_indices(m, u, anything, t, min_down_time),
+                    past_units_on_indices(m, min_down_time, u, anything, t),
                     nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything),
                 )
             )

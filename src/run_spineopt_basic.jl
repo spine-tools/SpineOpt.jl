@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function run_spineopt_standard!(
+function do_run_spineopt!(
     m,
-    url_out;
+    url_out,
+    ::Val{:basic_algorithm};
     log_level,
     optimize,
     update_names,
@@ -27,23 +28,14 @@ function run_spineopt_standard!(
     write_as_roll,
     resume_file_path,
 )
+    build_model!(m; log_level)
     optimize || return m
-    calculate_duals = any(
-        startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
-    )
     try
-        solve_model!(
-            m;
-            log_level=log_level,
-            update_names=update_names,
-            calculate_duals=calculate_duals,
-            write_as_roll=write_as_roll,
-            resume_file_path=resume_file_path,
-        )
+        solve_model!(m; log_level, update_names, write_as_roll, resume_file_path)
         if write_as_roll > 0
             _write_intermediate_results(m)
         else
-            write_report(m, url_out; alternative=alternative, log_level=log_level)
+            write_report(m, url_out; alternative, log_level)
         end
         m
     catch err
@@ -51,7 +43,7 @@ function run_spineopt_standard!(
         m
     finally
         if write_as_roll > 0
-            write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
+            write_report_from_intermediate_results(m, url_out; alternative, log_level)
         end
     end
 end
@@ -86,6 +78,9 @@ function build_model!(m; log_level)
     @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
     _init_outputs!(m)
     _build_stage_models!(m; log_level)
+    _call_event_handlers(m, :model_built)
+    m_mp = master_model(m)
+    m_mp === nothing || _build_mp_model!(m_mp; log_level=log_level)
 end
 
 """
@@ -128,6 +123,23 @@ function _add_variables!(m; log_level=3)
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
+    end
+    _expand_replacement_expressions!(m)
+end
+
+function _expand_replacement_expressions!(m)
+    for (name, def) in m.ext[:spineopt].variables_definition
+        replacement_expressions = def[:replacement_expressions]
+        isempty(replacement_expressions) && continue
+        merge!(
+            m.ext[:spineopt].variables[name],
+            Dict(
+                ind => sum(
+                    coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in expr
+                )
+                for (ind, expr) in replacement_expressions
+            ),
+        )
     end
 end
 
@@ -250,10 +262,8 @@ function _create_objective_terms!(m)
     window_very_end = maximum(end_.(time_slice(m)))
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
-    filter!(t -> !(t in beyond_window), in_window)
-    for term in objective_terms(
-        m; operations=true, investments=model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
-    )
+    filter!(t -> !(t in in_window), beyond_window)
+    for term in objective_terms(m; benders_master=!_is_benders_subproblem(m))
         func = getproperty(SpineOpt, term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
@@ -328,7 +338,7 @@ function _init_downstream_outputs!(st, stage_m, child_models)
                 for (ent, fix_indices) in fix_indices_by_ent
                     input = downstream_outputs[ent]
                     for ind in fix_indices
-                        call_kwargs = (analysis_time=startref(current_window(child_m)), t=ind.t)
+                        call_kwargs = (analysis_time=_analysis_time(child_m), t=ind.t)
                         call = Call(input, call_kwargs, (Symbol(st.name, :_, out_name), call_kwargs))
                         fix(child_m.ext[:spineopt].variables[out_name][ind], call)
                     end
@@ -385,19 +395,91 @@ function solve_model!(
     update_names=false,
     write_as_roll=0,
     resume_file_path=nothing,
-    calculate_duals=false,
     output_suffix=(;),
     log_prefix="",
+)
+    m_mp = master_model(m)
+    if m_mp === nothing
+        # Standard solution method
+        calculate_duals = any(
+            startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
+        )
+        _do_solve_model!(
+            m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix, calculate_duals
+        )
+    else
+        # Benders solution method
+        add_event_handler!(process_subproblem_solution, m, :window_solved)
+        add_event_handler!(_set_starting_point!, m, :window_about_to_solve)
+        add_event_handler!(m, :window_solved) do m, k
+            _save_result!(m, k; filter_accepts_variable=(name -> !occursin("invested", string(name))))
+        end
+        m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
+        undo_force_starting_investments! = _force_starting_investments!(m_mp)
+        min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
+        max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+        for j in Iterators.countfrom(1)
+            @log log_level 0 "\nStarting Benders iteration $j"
+            j == 2 && undo_force_starting_investments!()
+            _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false) || break
+            @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
+            current_solution_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
+                ""
+            else
+                "(lower bound: $(_lb_str(m_mp)); upper bound: $(_ub_str(m_mp)); gap: $(_gap_str(m_mp))) "
+            end
+            _do_solve_model!(
+                m;
+                log_level,
+                update_names,
+                write_as_roll,
+                resume_file_path,
+                output_suffix,
+                calculate_duals=true,
+                log_prefix="$log_prefix Benders iteration $j $current_solution_str - ",
+            ) || break
+            @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
+            @log log_level 1 "Benders iteration $j complete"
+            @log log_level 1 "Objective lower bound: $(_lb_str(m_mp))"
+            @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))"
+            @log log_level 1 "Gap: $(_gap_str(m_mp))"
+            gap = last(m_mp.ext[:spineopt].benders_gaps)
+            if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
+                @log log_level 1 "Benders tolerance satisfied, terminating..."
+                break
+            end
+            if j >= max_benders_iterations
+                @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
+                break
+            end
+            @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+            unfix_history!(m)
+            global current_bi = add_benders_iteration(j)
+        end
+        m
+    end
+end
+
+function _do_solve_model!(
+    m;
+    log_level=3,
+    update_names=false,
+    write_as_roll=0,
+    resume_file_path=nothing,
+    output_suffix=(;),
+    log_prefix="",
+    calculate_duals=false,
     rewind=true,
 )
-    k = _resume_run!(m, resume_file_path; log_level, update_names)
-    k === nothing && return m
+    k0 = _resume_run!(m, resume_file_path; log_level, update_names)
+    k0 === nothing && return m
     _solve_stage_models!(m; log_level, log_prefix) || return false
+    m.ext[:spineopt].has_results[] = false
     _call_event_handlers(m, :model_about_to_solve)
     model_name = string(log_prefix, _model_name(m))
     rewind && @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
-    while true
-        @log log_level 1 "\n$model_name - Window $k: $(current_window(m))"
+    for k in Iterators.countfrom(k0)
+        @log log_level 1 "\n$model_name - Window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
         optimize_model!(m; log_level, calculate_duals, output_suffix) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
@@ -406,7 +488,7 @@ function solve_model!(
             @timelog log_level 2 "$model_name ... Rolling complete\n" break
         end
         update_model!(m; log_level=log_level, update_names=update_names)
-        k += 1
+        m.ext[:spineopt].has_results[] = false
     end
     _call_event_handlers(m, :model_solved)
     true
@@ -414,7 +496,7 @@ end
 
 function _solve_stage_models!(m; log_level, log_prefix)
     for stage_m in values(m.ext[:spineopt].model_by_stage)
-        solve_model!(stage_m; log_level, log_prefix) || return false
+        _do_solve_model!(stage_m; log_level, log_prefix) || return false
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
     end
@@ -475,6 +557,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
+    m.ext[:spineopt].has_results[] && return true
     model_name = _model_name(m)
     @timelog log_level 0 "Optimizing $model_name..." optimize!(m)
     termination_st = termination_status(m)
@@ -494,7 +577,10 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
         true
     elseif termination_st == MOI.INFEASIBLE
         printstyled(
-            "model $model_name is infeasible - if conflicting constraints can be identified, they will be reported below\n";
+            string(
+                "model $model_name is infeasible - ",
+                "if conflicting constraints can be identified, they will be reported below\n",
+            );
             bold=true,
         )
         try
@@ -517,6 +603,7 @@ Save a model results: first postprocess results, then save variables and objecti
 """
 function _save_model_results!(m)
     _save_variable_values!(m)
+    _save_expression_values!(m)
     _save_constraint_values!(m)
     _save_objective_values!(m)
     _save_other_values!(m)
@@ -528,6 +615,13 @@ Save the value of all variables in a model.
 function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
         m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
+    end
+end
+
+function _save_expression_values!(m::Model)
+    for (name, expr) in m.ext[:spineopt].expressions
+        name in keys(m.ext[:spineopt].outputs) || continue
+        m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(e) for (ind, e) in expr)
     end
 end
 
@@ -557,7 +651,7 @@ The value of a JuMP variable, rounded if necessary.
 """
 _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
 _variable_value(e::AffExpr) = value(e)
-_variable_value(x::Call) = realize(x)
+_variable_value(x::GenericAffExpr{Call,VariableRef}) = value(realize(x))
 
 """
 Save the value of the objective terms in a model.
@@ -589,13 +683,13 @@ function _calculate_duals(m; log_level=3)
     if has_duals(m)
         _save_marginal_values!(m)
         _save_bound_marginal_values!(m)
-    elseif model_type(model=m.ext[:spineopt].instance) !== :spineopt_benders
+    elseif _is_benders_subproblem(m)
+        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
+        _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
+    else
         @log log_level 1 "Obtaining duals for $model_name..."
         _calculate_duals_cplex(m; log_level=log_level) && return
         _calculate_duals_fallback(m; log_level=log_level)
-    else
-        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
-        _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
     end
 end
 
@@ -634,9 +728,9 @@ function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
 end
 
 function _calculate_duals_fallback(m; log_level=3, for_benders=false)
-    @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
-    lp_solver = m.ext[:spineopt].lp_solver
-    @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
+    @timelog log_level 1 "Copying model..." (m_dual_lp, ref_map) = copy_model(m)
+    set_optimizer(m_dual_lp, m.ext[:spineopt].lp_solver)
+    @log log_level 1 "Set LP solver $(solver_name(m_dual_lp)) for the copy."
     if for_benders
         @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map)
     else
@@ -660,22 +754,22 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
 end
 
 function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
-    for (name, var) in m.ext[:spineopt].variables
+    for (name, var_by_ind) in m.ext[:spineopt].variables
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && continue
-        for v in values(var)
-            v isa VariableRef || continue
-            ref_v = ref_map[v]
-            if is_binary(ref_v)
-                unset_binary(ref_v)
-            elseif is_integer(ref_v)
-                unset_integer(ref_v)
+        for var in values(var_by_ind)
+            var isa VariableRef || continue
+            ref_var = ref_map[var]
+            if is_binary(ref_var)
+                unset_binary(ref_var)
+            elseif is_integer(ref_var)
+                unset_integer(ref_var)
             else
                 continue
             end
             if and_fix
-                val = _variable_value(v)
-                fix(ref_v, val; force=true)
+                val = _variable_value(var)
+                fix(ref_var, val; force=true)
             end
         end
     end
@@ -940,7 +1034,26 @@ A new Spine database is created at `url_out` if one doesn't exist.
 """
 function write_report(m, url_out; alternative="", log_level=3)
     url_out === nothing && return
-    values = _collect_output_values(m)
+    m_mp = master_model(m)
+    values = if m_mp === nothing
+        _collect_output_values(m)
+    else
+        values_mp = _collect_output_values(m_mp)
+        values = _collect_output_values(m)
+        for key in (:total_costs, intersect(mp_terms, sp_terms)...)
+            costs_keys = (k for k in keys(values_mp) if k[1] == key)
+            costs_key = isempty(costs_keys) ? nothing : first(costs_keys)
+            costs_mp = pop!(values_mp, costs_key, Dict())
+            costs = pop!(values, costs_key, nothing)
+            if costs !== nothing
+                _merge(x, y) = timedata_operation(x, y) do x, y
+                    sum(Iterators.filter(!isnan, (x, y)); init=0)
+                end
+                values_mp[costs_key] = merge!(_merge, costs_mp, costs)
+            end
+        end
+        mergewith!(merge!, values_mp, values)
+    end
     write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end
 function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
@@ -1009,13 +1122,13 @@ end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
     by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time_sorted) for (t, val) in by_time_stamp)
-    TimeSeries(first.(by_time_stamp), last.(by_time_stamp); merge_ok=true)
+    TimeSeries(first.(by_time_stamp), collect(Float64, last.(by_time_stamp)); merge_ok=true)
 end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
         [
-            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)))
+            TimeSeries(collect(keys(by_time_stamp)), collect(Float64, values(by_time_stamp)))
             for by_time_stamp in values(by_analysis_time)
         ]
     )
@@ -1086,7 +1199,7 @@ function _sanitize_constraint_name(constraint_name)
 end
 
 _set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)
-_set_name(::Union{Call,AffExpr,Nothing}, name) = nothing
+_set_name(x, name) = nothing
 
 function _fix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
