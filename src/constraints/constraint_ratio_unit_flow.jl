@@ -78,7 +78,7 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
     sense = _ratio_to_sense(ratio)
     units_on_coeff = _ratio_to_units_on_coeff(ratio)
     start_flow_sign = _ratio_to_start_flow_sign(ratio)
-    @fetch unit_flow = m.ext[:spineopt].variables
+    @fetch unit_flow, unit_flow_op = m.ext[:spineopt].variables
     build_sense_constraint(
         + sum(
             get(unit_flow, (u, n1, d1, s, t_short), 0)
@@ -88,10 +88,27 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
         ),
         sense,
         + sum(
+            get(unit_flow_op, (u, n2, d2, op, s, t_short), 0)
+            * duration(t_short)
+            * ratio(
+                m; unit=u, node1=ng1, node2=ng2, i=op, stochastic_scenario=s, t=t
+            )
+            for (u, n2, d2, op, s, t_short) in unit_flow_op_indices(
+                m;
+                unit=u,
+                node=members(ng2),
+                direction=d2,
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
+        )
+        + sum(
             get(unit_flow, (u, n2, d2, s, t_short), 0)
             * duration(t_short)
             * ratio(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
-            for n2 in members(ng2), s in s_path, t_short in t_in_t(m; t_long=t);
+            for n2 in members(ng2), s in s_path, t_short in t_in_t(m; t_long=t)
+            if isempty(unit_flow_op_indices(m; unit=u, node=n2, direction=d2, t=t_short));
             init=0,
         )
         + sum(
@@ -223,7 +240,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio)
     (
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
-        if !_has_simple_fix_ratio_unit_flow(n1, n2, ratio)
+        if !_has_simple_fix_ratio_unit_flow(m, u, n1, n2, ratio)
         for (t, path) in t_lowest_resolution_path(
             m,
             unit_flow_indices(m; unit=u, node=[n1, n2]),

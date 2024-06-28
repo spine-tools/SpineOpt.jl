@@ -66,7 +66,7 @@ function _simple_fix_ratio_unit_flow_indices(m, d1, d2, fix_flow_ratio)
     (
         (u, n1, d1, n2, d2, s, t, fix_flow_ratio)
         for (u, n1, n2) in indices(fix_flow_ratio)
-        if _has_simple_fix_ratio_unit_flow(n1, n2, fix_flow_ratio)
+        if _has_simple_fix_ratio_unit_flow(m, u, n1, n2, fix_flow_ratio)
         for (_n, s, t) in node_stochastic_time_indices(m; node=n1)
     )
 end
@@ -85,8 +85,10 @@ function _signed_unit_start_flow(m, u, n1, n2, s, t, fix_flow_ratio)
     start_flow_sign * unit_start_flow(m; unit=u, node1=n1, node2=n2, stochastic_scenario=s, t=t, _default=0)
 end
 
-function _has_simple_fix_ratio_unit_flow(n1, n2, fix_flow_ratio)
-    _similar(n1, n2) && fix_flow_ratio in (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow)
+function _has_simple_fix_ratio_unit_flow(m, u, n1, n2, fix_flow_ratio)
+    _similar(n1, n2) && fix_flow_ratio in (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow) && (
+        isa(fix_flow_ratio(m; unit=u, node1=n1, node2=n2), Number)
+    )
 end
 
 """
