@@ -50,7 +50,7 @@ function do_run_spineopt!(
 	_check_monte_carlo_scenarios(mc_scens)
 	_setup_result_reuse!(m, mc_scens)
 	for (st, stage_m) in m.ext[:spineopt].model_by_stage
-        with_env(st.name) do
+        with_env(stage_scenario(stage=st)) do
         	_setup_result_reuse!(stage_m, mc_scens)
         end
 	end

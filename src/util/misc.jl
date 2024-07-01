@@ -320,15 +320,6 @@ function _get_var_with_replacement(m, var_name, ind)
     end
 end
 
-function _only_or_nothing(arr)
-    try
-        only(arr)
-    catch err
-        err isa ArgumentError || rethrow()
-        nothing
-    end
-end
-
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}

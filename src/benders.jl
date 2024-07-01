@@ -21,8 +21,8 @@ Initialize the given model for SpineOpt Master Problem: add variables, add const
 """
 function _build_mp_model!(m; log_level=3)
     num_variables(m) == 0 || return
-    benders_master_stage = _only_or_nothing(model__benders_master_stage(model=m.ext[:spineopt].instance))
-    benders_master_stage === nothing || return _build_mp_model_from_stage(m, benders_master_stage; log_level)
+    benders_master_scen = benders_master_scenario(model=m.ext[:spineopt].instance, _strict=false)
+    benders_master_scen === nothing || return _build_mp_model_from_scen(m, benders_master_scen; log_level)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
@@ -33,8 +33,8 @@ function _build_mp_model!(m; log_level=3)
     _call_event_handlers(m, :model_built)
 end
 
-function _build_mp_model_from_stage(m, benders_master_stage; log_level)
-    with_env(benders_master_stage.name) do
+function _build_mp_model_from_scen(m, benders_master_scen; log_level)
+    with_env(benders_master_scen) do
         model_name = _model_name(m)
         @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
         @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
@@ -51,7 +51,10 @@ function _build_mp_model_from_stage(m, benders_master_stage; log_level)
         @timelog log_level 2 "Adding $model_name expressions...\n" _add_expressions!(m; log_level=log_level)
         @timelog log_level 2 "Adding $model_name constraints...\n" begin
             name = name_from_fn(_add_constraint_sp_objective_upperbound!)
-            rhs = sum(getproperty(SpineOpt, term)(m, anything) for term in objective_terms(m; benders_master=false))
+            rhs = sum(
+                getproperty(SpineOpt, term)(m, anything)
+                for term in setdiff(objective_terms(m), objective_terms(m; benders_subproblem=false))
+            )
             @timelog log_level 3 "- [$name]" _add_constraint_sp_objective_upperbound!(m, rhs)
             _add_constraints!(m; log_level=log_level)
         end
@@ -249,7 +252,7 @@ function _save_mp_values!(obj_cls, m_mp, m, var_name)
     pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
     for st in keys(m.ext[:spineopt].model_by_stage)
-        with_env(st.name) do
+        with_env(stage_scenario(stage=st)) do
             add_object_parameter_values!(obj_cls, pvals; merge_values=true)
         end
     end
