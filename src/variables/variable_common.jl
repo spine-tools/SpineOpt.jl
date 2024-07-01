@@ -174,11 +174,11 @@ end
 
 _do_set_lower_bound(_var, ::Nothing) = nothing
 _do_set_lower_bound(var, bound::Call) = set_lower_bound(var, bound)
-_do_set_lower_bound(var, bound::Number) = isnan(bound) || set_lower_bound(var, bound)
+_do_set_lower_bound(var, bound::Number) = isfinite(bound) && set_lower_bound(var, bound)
 
 _do_set_upper_bound(_var, ::Nothing) = nothing
 _do_set_upper_bound(var, bound::Call) = set_upper_bound(var, bound)
-_do_set_upper_bound(var, bound::Number) = isnan(bound) || set_upper_bound(var, bound)
+_do_set_upper_bound(var, bound::Number) = isfinite(bound) && set_upper_bound(var, bound)
 
 _do_fix(_var, ::Nothing; kwargs...) = nothing
 _do_fix(var, x::Call; kwargs...) = fix(var, x)
