@@ -382,18 +382,91 @@ function test_fix_ratio_in_out_unit_flow_simple()
         @testset for key in keys(var_unit_flow)
             var = var_unit_flow[key]
             start(key.t) >= m_start || continue
-            if key.direction.name == :to_node
+            if key.direction.name == :from_node
                 @test var isa VariableRef
-            elseif key.direction.name == :from_node
-                @test key.node.name == :node_a
+            elseif key.direction.name == :to_node
+                @test key.node.name == :node_b
                 @test var isa GenericAffExpr
-                uf_key = (key.unit, node(:node_b), direction(:to_node), key.stochastic_scenario, key.t)
+                uf_key = (key.unit, node(:node_a), direction(:from_node), key.stochastic_scenario, key.t)
                 uo_key = (key.unit, key.stochastic_scenario, key.t)
                 @test var == (
-                    + fruf * var_unit_flow[uf_key...]
-                    + fuoc * var_units_on[uo_key...]
-                    + usf * var_units_started_up[uo_key...]
-                )
+                    + var_unit_flow[uf_key...]
+                    - fuoc * var_units_on[uo_key...]
+                    - usf * var_units_started_up[uo_key...]
+                ) / fruf
+            end
+        end
+    end
+end
+
+function test_two_fix_ratio_out_in_unit_flow_simple()
+    @testset "two_fix_ratio_out_in_unit_flow_simple" begin
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = m_start + Hour(2)
+        fruf = 0.8
+        fruf2 = 0.6
+        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        objs = [["node", "node_b2"]]
+        rels = [
+            ["unit__to_node", ["unit_ab", "node_b2"]],
+            ["unit__node__node", ["unit_ab", "node_b2", "node_a"]],
+        ]
+        rel_pvals = [
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
+            ["unit__node__node", ["unit_ab", "node_b2", "node_a"], "fix_ratio_out_in_unit_flow", fruf2],
+        ]
+        import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
+        m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        @testset for key in keys(var_unit_flow)
+            var = var_unit_flow[key]
+            start(key.t) >= m_start || continue
+            if key.direction.name == :from_node
+                @test var isa VariableRef
+            elseif key.direction.name == :to_node
+                @test key.node.name in (:node_b, :node_b2)
+                @test var isa GenericAffExpr
+                uf_key = (key.unit, node(:node_a), direction(:from_node), key.stochastic_scenario, key.t)
+                @test var == Dict(:node_b => fruf, :node_b2 => fruf2)[key.node.name] * var_unit_flow[uf_key...]
+            end
+        end
+    end
+end
+
+function test_fix_ratio_out_in_and_in_out_unit_flow_simple()
+    @testset "fix_ratio_out_in_and_in_out_unit_flow_simple" begin
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = m_start + Hour(2)
+        fruf = 0.8
+        fruf2 = 0.9
+        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        objs = [["node", "node_b2"]]
+        rels = [
+            ["unit__to_node", ["unit_ab", "node_b2"]],
+            ["unit__node__node", ["unit_ab", "node_b2", "node_a"]],
+        ]
+        rel_pvals = [
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_in_out_unit_flow", fruf],
+            ["unit__node__node", ["unit_ab", "node_b2", "node_a"], "fix_ratio_out_in_unit_flow", fruf2],
+        ]
+        import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
+        m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        @testset for key in keys(var_unit_flow)
+            var = var_unit_flow[key]
+            start(key.t) >= m_start || continue
+            if key.direction.name == :from_node
+                @test var isa VariableRef
+            elseif key.direction.name == :to_node
+                @test key.node.name in (:node_b, :node_b2)
+                @test var isa GenericAffExpr
+                uf_key = (key.unit, node(:node_a), direction(:from_node), key.stochastic_scenario, key.t)
+                uo_key = (key.unit, key.stochastic_scenario, key.t)
+                @test var == Dict(:node_b => 1 / fruf, :node_b2 => fruf2)[key.node.name] * var_unit_flow[uf_key...]
             end
         end
     end
@@ -525,7 +598,7 @@ function test_fix_ratio_out_in_connection_flow_simple_rolling()
                 frcf_val = frcf_values[k]
                 @testset for key in keys(m.ext[:spineopt].constraints[:nodal_balance])
                     con = m.ext[:spineopt].constraints[:nodal_balance][key]
-                    @show obs_con = constraint_object(con)
+                    obs_con = constraint_object(con)
                     exp_con = if key.node.name == :node_b
                         @build_constraint(
                             + node_injection[node(:node_b), tail...]
@@ -559,6 +632,8 @@ end
     test_connection_history_parameters()
     test_fix_ratio_out_in_unit_flow_simple()
     test_fix_ratio_in_out_unit_flow_simple()
+    test_two_fix_ratio_out_in_unit_flow_simple()
+    test_fix_ratio_out_in_and_in_out_unit_flow_simple()
     test_fix_ratio_out_in_unit_flow_simple_rolling()
     test_fix_ratio_out_in_connection_flow_simple()
     test_fix_ratio_out_in_connection_flow_simple_rolling()
