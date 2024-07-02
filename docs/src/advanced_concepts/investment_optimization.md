@@ -93,19 +93,19 @@ If we have model that is not currently set up for investments and we wish to cre
 |--------------------------------|------------------------------|-------------------------------------------------|
 | `candidate_units` | `unit` | The number of additional `unit`s of this type that can be invested in
 | `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
-| `unit_investment_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
+| `unit_investment_tech_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
 | `unit_investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
 | `fix_units_invested` | `unit`| Fix the value of `units_invested`
 | `fix_units_invested_available` | `unit` | Fix the value of `connections_invested_available`
 | `candidate_connections` | `connection` | The number of additional `connection`s of this type that can be invested in
 | `connection_investment_cost` | `connection` | The total overnight investment cost per candidate `connection` over the model horizon
-| `connection_investment_lifetime` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
+| `connection_investment_tech_lifetime` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
 | `connection_investment_variable_type` | `connection` | Whether the `connections_invested_available` variable is continuous, integer or binary
 | `fix_connections_invested` | `connection`| Fix the value of `connections_invested`
 | `fix_connections_invested_available` | `connection` | Fix the value of `connection_invested_available`
 | `candidate_storages` | `node` | The number of additional storages of this type that can be invested in at `node`
 | `storage_investment_cost` | `node` | The total overnight investment cost per candidate storage over the model horizon
-| `storage_investment_lifetime` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
+| `storage_investment_tech_lifetime` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
 | `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is continuous, integer or binary
 | `fix_storages_invested` | `node`| Fix the value of `storages_invested`
 | `fix_storages_invested_available` | `node` | Fix the value of `storages_invested_available`
@@ -118,11 +118,11 @@ If we have model that is not currently set up for investments and we wish to cre
 |-----------------------------|-------------------|--------------------------------------------------------------|
 | constraint_units_invested_available.jl | \constraints| constrains `units_invested_available` to be less than `candidate_units`
 | constraint_units_invested_transition.jl | \constraints| defines the relationship between `units_invested_available`, `units_invested` and `units_mothballed`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_lifetime` - analagous to `min_up_time`.
+| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_tech_lifetime` - analagous to `min_up_time`.
 | constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `number_of_units` and `units_invested_available`
 | constraint_connections_invested_available.jl | \constraints| constrains `connections_invested_available` to be less than `candidate_connections`
 | constraint_connections_invested_transition.jl | \constraints| defines the relationship between `connections_invested_available`, `connections_invested` and `connections_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_lifetime` - analagous to `min_up_time`.
+| constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_tech_lifetime` - analagous to `min_up_time`.
 | constraint_storages_invested_available.jl | \constraints| constrains `storages_invested_available` to be less than `candidate_storages`
 | constraint_storages_invested_transition.jl | \constraints| defines the relationship between `storages_invested_available`, `storages_invested` and `storages_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_investment_lifetime` - analagous to `min_up_time`.
+| constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_investment_tech_lifetime` - analagous to `min_up_time`.

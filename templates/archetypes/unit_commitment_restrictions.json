@@ -71,7 +71,7 @@
         ["node", "reserve_procurement_cost", null, null, "Procurement cost for reserves?"],
         ["node", "state_coeff", 0.0, null, "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `:node_injection` constraint."],
         ["node", "storage_investment_cost", null, null, "Determines the investment cost per unit state_cap over the investment life of a storage"],
-        ["node", "storage_investment_lifetime", null, null, null],
+        ["node", "storage_investment_tech_lifetime", null, null, null],
         ["node", "storage_investment_variable_type", "variable_type_integer", "variable_type_list", "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"],
         ["node", "tax_in_unit_flow", 0.0, null, "Tax costs for incoming `unit_flows` on this `node`. E.g. EUR/MWh."],
         ["node", "tax_net_unit_flow", 0.0, null, "Tax costs for net incoming and outgoing `unit_flows` on this `node`. Incoming flows accrue positive net taxes, and outgoing flows accrue negative net taxes."],
@@ -98,7 +98,7 @@
         ["unit", "start_up_cost", null, null, "Costs of starting up a 'sub unit', e.g. EUR/startup."],
         ["unit", "unit_availability_factor", 1.0, null, "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."],
         ["unit", "unit_investment_cost", null, null, "Investment cost per 'sub unit' built."],
-        ["unit", "unit_investment_lifetime", null, null, "Minimum lifetime for investment decisions."],
+        ["unit", "unit_investment_tech_lifetime", null, null, "Minimum lifetime for investment decisions."],
         ["unit", "unit_investment_variable_type", "unit_investment_variable_type_continuous", "unit_investment_variable_type_list", "Determines whether investment variable is integer or continuous."]
     ],
     "relationship_parameters": [

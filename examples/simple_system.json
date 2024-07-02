@@ -1380,17 +1380,48 @@
         ],
         [
             "connection",
-            "connection_investment_cost",
+            "connection_decommissioning_cost",
             null,
             null,
-            "The per unit investment cost for the connection over the `connection_investment_lifetime`"
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
         ],
         [
             "connection",
-            "connection_investment_lifetime",
+            "connection_decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A connection's decommissioning time, i.e., the time between the moment at which a connection decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "connection",
+            "connection_discount_rate_technology_specific",
+            0,
+            null,
+            "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "connection",
+            "connection_investment_cost",
             null,
             null,
-            "Determines the minimum investment lifetime of a connection. Once invested, it remains in service for this long"
+            "The per unit investment cost for the connection over the `connection_investment_tech_lifetime`"
+        ],
+        [
+            "connection",
+            "connection_investment_econ_lifetime",
+            null,
+            null,
+            "Determines the minimum economical investment lifetime of a connection."
+        ],
+        [
+            "connection",
+            "connection_investment_tech_lifetime",
+            null,
+            null,
+            "Determines the maximum technical lifetime of a connection. Once invested, it remains in service for this long"
         ],
         [
             "connection",
@@ -1398,6 +1429,16 @@
             "connection_investment_variable_type_integer",
             "connection_investment_variable_type_list",
             "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"
+        ],
+        [
+            "connection",
+            "connection_lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."
         ],
         [
             "connection",
@@ -1982,6 +2023,20 @@
         ],
         [
             "model",
+            "discount_rate",
+            0,
+            null,
+            "The discount rate used for the discounting of future cashflows"
+        ],
+        [
+            "model",
+            "discount_year",
+            null,
+            null,
+            "The year to which all cashflows are discounted."
+        ],
+        [
+            "model",
             "duration_unit",
             "hour",
             "duration_unit_list",
@@ -2069,6 +2124,13 @@
             true,
             "boolean_value_list",
             "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
+        ],
+        [
+            "model",
+            "use_milestone_years",
+            false,
+            "boolean_value_list",
+            "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."
         ],
         [
             "model",
@@ -2373,6 +2435,37 @@
         ],
         [
             "node",
+            "storage_decommissioning_cost",
+            null,
+            null,
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+        ],
+        [
+            "node",
+            "storage_decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A storage's decommissioning time, i.e., the time between the moment at which a storage decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "node",
+            "storage_discount_rate_technology_specific",
+            0,
+            null,
+            "storage-specific discount rate used to calculate the storage's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "node",
+            "storage_fom_cost",
+            null,
+            null,
+            "Fixed operation and maintenance costs of a `node`. Essentially, a cost coefficient on the number of installed units and `node_state_cap` parameters. E.g. EUR/MWh"
+        ],
+        [
+            "node",
             "storage_investment_cost",
             null,
             null,
@@ -2380,10 +2473,17 @@
         ],
         [
             "node",
-            "storage_investment_lifetime",
+            "storage_investment_econ_lifetime",
             null,
             null,
-            "Minimum lifetime for storage investment decisions."
+            "Economic lifetime for storage investment decisions."
+        ],
+        [
+            "node",
+            "storage_investment_tech_lifetime",
+            null,
+            null,
+            "Maximum technical lifetime for storage investment decisions."
         ],
         [
             "node",
@@ -2391,6 +2491,16 @@
             "storage_investment_variable_type_integer",
             "storage_investment_variable_type_list",
             "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"
+        ],
+        [
+            "node",
+            "storage_lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A storage's lead time, i.e., the time between the moment at which a storage investment decision is takien, and the moment at which the storage investment becomes operational."
         ],
         [
             "node",
@@ -2824,6 +2934,30 @@
         ],
         [
             "unit",
+            "unit_decommissioning_cost",
+            null,
+            null,
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+        ],
+        [
+            "unit",
+            "unit_decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "unit",
+            "unit_discount_rate_technology_specific",
+            0,
+            null,
+            "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "unit",
             "unit_investment_cost",
             null,
             null,
@@ -2831,10 +2965,17 @@
         ],
         [
             "unit",
-            "unit_investment_lifetime",
+            "unit_investment_econ_lifetime",
             null,
             null,
-            "Minimum lifetime for unit investment decisions."
+            "Economic lifetime for unit investment decisions."
+        ],
+        [
+            "unit",
+            "unit_investment_tech_lifetime",
+            null,
+            null,
+            "Maximum technical lifetime for unit investment decisions."
         ],
         [
             "unit",
@@ -2842,6 +2983,16 @@
             "unit_investment_variable_type_continuous",
             "unit_investment_variable_type_list",
             "Determines whether investment variable is integer or continuous."
+        ],
+        [
+            "unit",
+            "unit_lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."
         ],
         [
             "unit",
@@ -3178,6 +3329,13 @@
             null,
             null,
             "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "unit__from_node",
+            "use_unit_capacity_for_investment_cost_scaling",
+            false,
+            "boolean_value_list",
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. €/MW)"
         ],
         [
             "unit__from_node",
@@ -3668,6 +3826,13 @@
             null,
             null,
             "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "unit__to_node",
+            "use_unit_capacity_for_investment_cost_scaling",
+            false,
+            "boolean_value_list",
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. €/MW)"
         ],
         [
             "unit__to_node",
