@@ -174,6 +174,7 @@
         ["investment_group", "maximum_entities_invested_available", null, null, "Upper bound on the number of entities invested available in the group at any point in time."],
         ["investment_group", "minimum_capacity_invested_available", null, null, "Lower bound on the capacity invested available in the group at any point in time."],
         ["investment_group", "minimum_entities_invested_available", null, null, "Lower bound on the number of entities invested available in the group at any point in time."],
+        ["model", "benders_master_scenario", null, null, "A scenario to use for building the master problem from `model` in case it's Benders."],
         ["model", "big_m", 1000000, null, "Sufficiently large number used for linearization bilinear terms, e.g. to enforce bidirectional flow for gas pipielines"],
         ["model", "db_lp_solver", "HiGHS.jl", "db_lp_solver_list", "Solver for MIP problems. Solver package must be added and pre-configured in Julia. Overrides lp_solver RunSpineOpt kwarg"],
         ["model", "db_lp_solver_options", {"type": "map", "index_type": "str", "data": [["HiGHS.jl", {"type": "map", "index_type": "str", "data": [["presolve", "on"], ["time_limit", 300.01]]}], ["Clp.jl", {"type": "map", "index_type": "str", "data": [["LogLevel", 0.0]]}]]}, null, "Map parameter containing LP solver option name option value pairs. See solver documentation for supported solver options"],
