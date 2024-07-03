@@ -3835,7 +3835,7 @@
             "Investment",
             "resolution",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -3845,7 +3845,7 @@
             "flat",
             "resolution",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -3855,7 +3855,7 @@
             "EM unit",
             "unit_investment_econ_lifetime",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -3865,7 +3865,7 @@
             "EM unit",
             "unit_investment_tech_lifetime",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -3882,7 +3882,7 @@
             "Gas turbine",
             "unit_investment_econ_lifetime",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -3892,7 +3892,7 @@
             "Gas turbine",
             "unit_investment_tech_lifetime",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -12723,7 +12723,7 @@
             "Wind farm",
             "unit_investment_econ_lifetime",
             {
-                "data": "3Y",
+                "data": "1095D",
                 "type": "duration"
             },
             "Base"
@@ -12733,7 +12733,7 @@
             "Wind farm",
             "unit_investment_tech_lifetime",
             {
-                "data": "3Y",
+                "data": "1095D",
                 "type": "duration"
             },
             "Base"
@@ -12743,7 +12743,7 @@
             "Wind farm",
             "unit_investment_technical_lifetime",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -12760,7 +12760,7 @@
             "Wind farm",
             "unit_lead_time",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -12784,7 +12784,7 @@
             "unitA",
             "unit_investment_econ_lifetime",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
@@ -12794,7 +12794,7 @@
             "unitA",
             "unit_investment_tech_lifetime",
             {
-                "data": "1Y",
+                "data": "365D",
                 "type": "duration"
             },
             "Base"
