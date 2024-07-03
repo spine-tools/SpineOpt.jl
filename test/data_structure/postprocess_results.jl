@@ -160,7 +160,6 @@ function _test_save_contingency_is_binding_setup()
     test_data = Dict(
         :objects => [
             ["model", "instance"],
-            ["model", "master"],
             ["temporal_block", "hourly"],
             ["temporal_block", "investments_hourly"],
             ["temporal_block", "two_hourly"],
@@ -179,10 +178,8 @@ function _test_save_contingency_is_binding_setup()
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
-            ["model__temporal_block", ["master", "investments_hourly"]],
             ["model__stochastic_structure", ["instance", "deterministic"]],
             ["model__stochastic_structure", ["instance", "stochastic"]],
-            ["model__stochastic_structure", ["master", "investments_deterministic"]],
             ["connection__from_node", ["connection_ab", "node_a"]],
             ["connection__to_node", ["connection_ab", "node_b"]],
             ["connection__from_node", ["connection_bc", "node_b"]],
@@ -207,12 +204,6 @@ function _test_save_contingency_is_binding_setup()
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-            ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
-            ["model", "master", "duration_unit", "hour"],
-            ["model", "master", "model_type", "spineopt_other"],
-            ["model", "master", "max_gap", "0.05"],
-            ["model", "master", "max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
