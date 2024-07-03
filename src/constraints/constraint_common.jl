@@ -70,11 +70,22 @@ past_units_on_indices(m, param, u, s_path, t) = _past_indices(m, units_on_indice
 
 function _past_indices(m, indices, param, s_path, t; kwargs...)
     look_behind = maximum(maximum_parameter_value(param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
+    
+    function convert_to_days(duration)
+        if isa(duration, Year)
+            return Day(Dates.value(duration) * 365)  # approximate conversion
+        elseif isa(duration, Month)
+            return Day(Dates.value(duration) * 30)   # approximate conversion
+        else
+            return duration                          # do nothing
+        end
+    end
+
     (
         (;
             ind...,
             weight=ifelse(
-                end_(t) - end_(ind.t) < param(m; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), 1, 0
+                end_(t) - end_(ind.t) < convert_to_days(param(m; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t)), 1, 0
             ),
         )
         for ind in indices(
