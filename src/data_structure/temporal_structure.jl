@@ -258,14 +258,14 @@ function _generate_time_slice!(m::Model)
 end
 
 """
-    _output_time_slices(m, window_start, window_end)
+    _output_time_slice(m, window_start, window_end)
 
 A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the output's resolution.
 """
-function _output_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
-    output_time_slices = Dict{Object,Array{TimeSlice,1}}()
+function _output_time_slice(m::Model, window_start::DateTime, window_end::DateTime)
+    output_time_slice = Dict{Object,Array{TimeSlice,1}}()
     for out in indices(output_resolution; stage=nothing)
-        output_time_slices[out] = arr = TimeSlice[]
+        output_time_slice[out] = arr = TimeSlice[]
         time_slice_start = window_start
         i = 1
         while time_slice_start < window_end
@@ -285,7 +285,7 @@ function _output_time_slices(m::Model, window_start::DateTime, window_end::DateT
             i += 1
         end
     end
-    output_time_slices
+    output_time_slice
 end
 
 """
@@ -293,11 +293,11 @@ end
 
 Create a `Dict`, for the output resolution.
 """
-function _generate_output_time_slices!(m::Model)
+function _generate_output_time_slice!(m::Model)
     instance = m.ext[:spineopt].instance
     window_start = model_start(model=instance)
     window_end = model_end(model=instance)
-    m.ext[:spineopt].temporal_structure[:output_time_slices] = _output_time_slices(m, window_start, window_end)
+    m.ext[:spineopt].temporal_structure[:output_time_slice] = _output_time_slice(m, window_start, window_end)
 end
 
 """
@@ -484,6 +484,7 @@ Create the Benders master problem temporal structure for given model.
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window!(m_mp)
     generate_time_slice!(m_mp)
+    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice] = Dict()
 end
 
 """
@@ -636,8 +637,8 @@ representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:repre
 
 _first_repr_t(m, t) = first(representative_time_slice(m, t))
 
-function output_time_slices(m::Model; output::Object)
-    get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
+function output_time_slice(m::Model; output::Object)
+    get(m.ext[:spineopt].temporal_structure[:output_time_slice], output, nothing)
 end
 
 function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)

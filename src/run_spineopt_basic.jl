@@ -77,8 +77,7 @@ function build_model!(m; log_level)
     _init_outputs!(m)
     _build_stage_models!(m; log_level)
     _call_event_handlers(m, :model_built)
-    m_mp = master_model(m)
-    m_mp === nothing || _build_mp_model!(m_mp; log_level=log_level)
+    _is_benders_subproblem(m) && _build_mp_model!(master_model(m); log_level=log_level)
 end
 
 """
@@ -275,7 +274,7 @@ end
 
 function _build_stage_models!(m; log_level)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
-        with_env(st.name) do
+        with_env(stage_scenario(stage=st)) do
             build_model!(stage_m; log_level)
         end
         child_models = _child_models(m, st)
@@ -816,7 +815,7 @@ function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
         for (analysis_time, by_time_slice) in by_analysis_time
             t_highest_resolution!(m, by_time_slice)
             by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
-                by_time_slice, output_time_slices(m; output=out)
+                by_time_slice, output_time_slice(m; output=out)
             )
             isempty(by_time_stamp_adjusted) && continue
             by_entity_adjusted = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
