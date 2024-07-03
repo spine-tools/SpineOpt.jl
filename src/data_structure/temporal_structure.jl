@@ -417,7 +417,7 @@ function generate_time_slice!(m::Model)
     _generate_as_number_or_call!(m)
     _generate_translate_value!(m)
     _generate_time_slice!(m)
-    _generate_output_time_slices!(m)
+    _generate_output_time_slice!(m)
     _generate_time_slice_relationships!(m)
 end
 
