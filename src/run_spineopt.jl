@@ -222,22 +222,25 @@ function prepare_spineopt(
         $missing_items
         """
     end
+    scenarios = []
     for st in stage()
         scenario = stage_scenario(stage=st, _strict=false)
         scenario isa Symbol || error("invalid scenario $scenario for stage $st")
+        push!(scenarios, scenario)
+    end
+    for scenario in scenarios
         without_filters(url_in) do clean_url_in
             filters = merge(filters, Dict("scenario" => string(scenario)))
-            with_env(st.name) do
-                _init_data_from_db(clean_url_in, log_level, upgrade, templates, filters, st)
+            with_env(scenario) do
+                _init_data_from_db(clean_url_in, log_level, upgrade, templates, filters, scenario)
             end
         end
     end
     create_model(mip_solver, lp_solver, use_direct_model)
 end
 
-function _init_data_from_db(url_in, log_level, upgrade, templates, filters, st=nothing)
-    st_name = st !== nothing ? st : "base"
-    @timelog log_level 2 "Initializing $st_name data structure from db..." begin
+function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scenario="")
+    @timelog log_level 2 "Initializing $scenario data structure from db..." begin
         template = SpineOpt.template()
         using_spinedb(template, @__MODULE__; extend=false)
         for template in templates
@@ -246,8 +249,8 @@ function _init_data_from_db(url_in, log_level, upgrade, templates, filters, st=n
         data = _data(url_in; upgrade, filters)
         using_spinedb(data, @__MODULE__; extend=true)
     end
-    @timelog log_level 2 "Preprocessing $st_name data structure..." preprocess_data_structure()
-    @timelog log_level 2 "Checking $st_name data structure..." check_data_structure()
+    @timelog log_level 2 "Preprocessing $scenario data structure..." preprocess_data_structure()
+    @timelog log_level 2 "Checking $scenario data structure..." check_data_structure()
     template, data
 end
 
