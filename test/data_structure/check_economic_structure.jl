@@ -100,7 +100,7 @@
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["temporal_block", "two_year", "resolution", Dict("type" => "duration", "data" => "730D")],
+            ["temporal_block", "two_year", "resolution", Dict("type" => "duration", "data" => "2Y")],
             ["temporal_block", "hourly", "block_start", Dict("type" => "date_time", "data" => "2031-01-01T00:00:00")],
         ],
         :relationship_parameter_values => [
@@ -167,14 +167,14 @@
             ["model", "instance", "use_milestone_years", use_mlstne_year],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "365D")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "1825D")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "1825D")],
+            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "unit_decommissioning_cost", decom_cost],
-            ["unit", "unit_ab", "unit_decommissioning_time", Dict("type" => "duration", "data" => "730D")],
+            ["unit", "unit_ab", "unit_decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; optimize=false, log_level=1)
+        m = run_spineopt(url_in; optimize=false, log_level=3)
         u_ts = [ind.t for ind in units_invested_available_indices(m; unit=unit(:unit_ab))]
         key_param = Dict(unit.name => unit(:unit_ab), stochastic_scenario.name => stochastic_scenario(:parent))
         salvage_frac = 0.370998336
@@ -204,9 +204,9 @@
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "365D")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "1825D")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "1825D")],
+            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
