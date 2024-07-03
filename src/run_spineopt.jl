@@ -228,9 +228,9 @@ function prepare_spineopt(
         scenario isa Symbol || error("invalid scenario $scenario for stage $st")
         push!(scenarios, scenario)
     end
-    benders_master_scen = benders_master_scenario(model=only(model()), _strict=false)
-    benders_master_scen isa Symbol || error("invalid scenario $scenario for Benders master problem")
-    push!(scenarios, benders_master_scen)
+    bm_scen = benders_master_scenario(model=only(model()), _strict=false)
+    bm_scen === nothing || bm_scen isa Symbol || error("invalid scenario $bm_scen for Benders master problem")
+    push!(scenarios, bm_scen)
     for scenario in scenarios
         without_filters(url_in) do clean_url_in
             filters = merge(filters, Dict("scenario" => string(scenario)))
