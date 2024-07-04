@@ -158,7 +158,7 @@ end
 
 function _t_look_behind(m, conn, ng_out, ng_in, s_path, t)
     look_behind = maximum(
-        maximum_parameter_value(m, _connection_flow_delay(conn, ng_out, ng_in, s, t)) for s in s_path; init=Hour(0)
+        maximum_parameter_value(_connection_flow_delay(conn, ng_out, ng_in, s, t)) for s in s_path; init=Hour(0)
     )
     t - look_behind
 end

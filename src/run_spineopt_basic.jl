@@ -28,6 +28,7 @@ function do_run_spineopt!(
     write_as_roll,
     resume_file_path,
 )
+    _set_value_translator(m)
     build_model!(m; log_level)
     optimize || return m
     try
@@ -46,6 +47,12 @@ function do_run_spineopt!(
             write_report_from_intermediate_results(m, url_out; alternative, log_level)
         end
     end
+end
+
+function _set_value_translator(m)
+    vals = shared_values(model=m.ext[:spineopt].instance, _strict=false)
+    translator = vals === nothing ? nothing : v -> get(vals, v, nothing)
+    set_value_translator(translator)
 end
 
 """
