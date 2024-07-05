@@ -241,7 +241,9 @@ function prepare_spineopt(
             end
         end
     end
-    create_model(mip_solver, lp_solver, use_direct_model)
+    m = create_model(mip_solver, lp_solver, use_direct_model)
+    _set_value_translator(m)
+    m
 end
 
 function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scenario="")
