@@ -291,6 +291,14 @@ function _build_stage_models!(m; log_level)
     end
 end
 
+function _child_models(m, st)
+    child_models = [m.ext[:spineopt].model_by_stage[child_st] for child_st in stage__child_stage(stage1=st)]
+    if isempty(child_models)
+        child_models = [m]
+    end
+    child_models
+end
+
 function _init_downstream_outputs!(st, stage_m, child_models)
     for (out_name, _ow) in keys(stage_m.ext[:spineopt].reports_by_output)
         out = output(out_name)
@@ -388,12 +396,12 @@ end
 # If output_resolution is not specified, just fix the window end
 _fix_points(::Nothing, child_m) = (maximum(end_.(time_slice(child_m))),)
 function _fix_points(out_res, child_m)
-    out_res_pv = parameter_value(out_res)
+    out_res = parameter_value(out_res)
     w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
     next_point = w_start
     points = Set()
     for i in Iterators.countfrom(1)
-        res = out_res_pv(i=i)
+        res = out_res(i=i)
         res === nothing && break
         next_point += res
         next_point > w_end && break
@@ -533,49 +541,21 @@ function _do_solve_model!(
 end
 
 function _solve_stage_models!(m; log_level, log_prefix)
-    for (st, stage_m) in m.ext[:spineopt].model_by_stage
+    for stage_m in values(m.ext[:spineopt].model_by_stage)
         _do_solve_model!(stage_m; log_level, log_prefix) || return false
         model_name = _model_name(stage_m)
-        child_models = _child_models(m, st)
-        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m, child_models)
+        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
     end
     true
 end
 
-function _child_models(m, st)
-    child_models = [m.ext[:spineopt].model_by_stage[child_st] for child_st in stage__child_stage(stage1=st)]
-    if isempty(child_models)
-        child_models = [m]
-    end
-    child_models
-end
-
-function _update_downstream_outputs!(stage_m, child_models)
-    res = minimum(
-        end_(t) - start(t)
-        for child_m in child_models
-        for t in t_highest_resolution(child_m, time_slice(child_m))
-    )
+function _update_downstream_outputs!(stage_m)
     for (out_name, current_downstream_outputs) in stage_m.ext[:spineopt].downstream_outputs
         new_downstream_outputs = Dict(
-            ent => _downstream_output(val, res)
-            for (ent, val) in stage_m.ext[:spineopt].outputs[out_name]
-            if haskey(current_downstream_outputs, ent)
+            ent => parameter_value(_output_value(val, true)) for (ent, val) in stage_m.ext[:spineopt].outputs[out_name]
         )
         mergewith!(merge!, current_downstream_outputs, new_downstream_outputs)
     end
-end
-
-function _downstream_output(val, res)
-    ts = _output_value(val, true)
-    for (t0, t1) in zip(ts.indexes[1 : end - 1], ts.indexes[2:end])
-        v0, v1 = ts[t0], ts[t1]
-        for t in t0 + res : res : t1
-            factor = res / (t1 - t0)
-            ts[t] = v0 + factor * (v1 - v0)
-        end
-    end
-    parameter_value(ts)
 end
 
 _resume_run!(m, ::Nothing; log_level, update_names) = 1
