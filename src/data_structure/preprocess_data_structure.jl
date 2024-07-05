@@ -899,7 +899,9 @@ function generate_connection_flow_capacity()
     end
 end
 
-_prod_or_nothing(args...) = any(isnothing.(args)) ? nothing : *(args...)
+_prod_or_nothing(args...) = _prod_or_nothing(collect(args))
+_prod_or_nothing(args::Vector) = any(isnothing.(args)) ? nothing : *(args...)
+_prod_or_nothing(args::Vector{T}) where T<:Call = Call(_prod_or_nothing, args)
 
 function generate_unit_commitment_parameters()
     unit_with_switched_variable_set = unique(

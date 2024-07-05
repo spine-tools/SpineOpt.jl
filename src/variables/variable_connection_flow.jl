@@ -51,13 +51,13 @@ end
 
 function connection_flow_ub(m; connection, node, direction, kwargs...)
     any(
-        connection_flow_capacity(
-            ; connection=connection, node=ng, direction=direction, kwargs..., _strict=false
+        realize(
+            connection_flow_capacity(m; connection=connection, node=ng, direction=direction, kwargs..., _strict=false)
         ) !== nothing
         for ng in groups(node)
     ) && return NaN
-    connection_flow_capacity(
-        ; connection=connection, node=node, direction=direction, kwargs..., _strict=false
+    realize(
+        connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _strict=false)
     ) === nothing && return NaN
     connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
         + number_of_connections(m; connection=connection, kwargs..., _default=1)
