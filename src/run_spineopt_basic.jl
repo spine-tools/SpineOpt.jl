@@ -332,15 +332,51 @@ function _init_downstream_outputs!(st, stage_m, child_models)
                 end
                 for (ent, fix_indices) in fix_indices_by_ent
                     input = downstream_outputs[ent]
+                    penalty = slack_penalty(; stage=st, output=out, ent..., _strict=false)
                     for ind in fix_indices
                         call_kwargs = (analysis_time=_analysis_time(child_m), t=ind.t)
                         call = Call(input, call_kwargs, (Symbol(st.name, :_, out_name), call_kwargs))
-                        fix(child_m.ext[:spineopt].variables[out_name][ind], call)
+                        var = child_m.ext[:spineopt].variables[out_name][ind]
+                        if penalty === nothing
+                            fix(var, call)
+                        else
+                            slack_pos, slack_neg = (
+                                _add_slack_variable!(child_m, st, out, slack, ind)
+                                for slack in ("slack_pos", "slack_neg")
+                            )
+                            cons = get!(
+                                child_m.ext[:spineopt].constraints, Symbol(join((st, out, "slack"), "_")), Dict()
+                            )
+                            cons[ind] = @constraint(child_m, var + slack_pos - slack_neg == call)
+                            set_objective_coefficient(child_m, slack_pos, penalty)
+                            set_objective_coefficient(child_m, slack_neg, penalty)
+                        end
                     end
                 end
             end
         end
     end
+end
+
+function _add_slack_variable!(child_m, st, out, slack, ind)
+    var_name = Symbol(join((st, out, slack), "_"))
+    var_def = get!(child_m.ext[:spineopt].variables_definition, var_name) do
+        Dict(
+            :indices => (m; kwargs...) -> [],
+            :bin => nothing,
+            :int => nothing,
+            :non_anticipativity_time => nothing,
+            :non_anticipativity_margin => nothing,
+            :history_time_slices => [],
+            :replacement_expressions => Dict(),
+            :inverse_replacement_expressions => Dict(),
+        )
+    end
+    inds = var_def[:indices](child_m)
+    push!(inds, ind)
+    var_def[:indices] = (m; kwargs...) -> inds
+    vars = get!(child_m.ext[:spineopt].variables, var_name, Dict())
+    vars[ind] = @variable(child_m, base_name=_base_name(var_name, ind), lower_bound=0)
 end
 
 function _stage_output_includes_entity(ent, objs_by_class_name)
