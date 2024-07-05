@@ -130,7 +130,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                             connection=conn,
                             node=ng_in,
                             direction=direction(:from_node),
-                            t=to_time_slice(m; t=_t_look_behind(m, conn, ng_out, ng_in, (s,), t)),
+                            t=to_time_slice(m; t=_t_look_behind(mconn, ng_out, ng_in, (s,), t)),
                             temporal_block=anything,
                         )
                     ),
@@ -141,7 +141,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
 end
 
 function _past_connection_input_flow_indices(m, conn, ng_out, ng_in, s_path, t)
-    t_look_behind = _t_look_behind(m, conn, ng_out, ng_in, s_path, t)
+    t_look_behind = _t_look_behind(conn, ng_out, ng_in, s_path, t)
     (
         (; ind..., weight=overlap_duration(ind.t, t_look_behind))
         for ind in connection_flow_indices(
@@ -156,7 +156,7 @@ function _past_connection_input_flow_indices(m, conn, ng_out, ng_in, s_path, t)
     )
 end
 
-function _t_look_behind(m, conn, ng_out, ng_in, s_path, t)
+function _t_look_behind(conn, ng_out, ng_in, s_path, t)
     look_behind = maximum(
         maximum_parameter_value(_connection_flow_delay(conn, ng_out, ng_in, s, t)) for s in s_path; init=Hour(0)
     )
