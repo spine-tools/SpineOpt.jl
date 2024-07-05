@@ -354,12 +354,12 @@ end
 # If output_resolution is not specified, just fix the window end
 _fix_points(::Nothing, child_m) = (maximum(end_.(time_slice(child_m))),)
 function _fix_points(out_res, child_m)
-    out_res = parameter_value(out_res)
+    out_res_pv = parameter_value(out_res)
     w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
     next_point = w_start
     points = Set()
     for i in Iterators.countfrom(1)
-        res = out_res(i=i)
+        res = out_res_pv(i=i)
         res === nothing && break
         next_point += res
         next_point > w_end && break
