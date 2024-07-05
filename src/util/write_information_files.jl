@@ -17,13 +17,52 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+function _without_printing_limits(f, m)
+    limits = try
+        JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[], JuMP._TERM_LIMIT_FOR_PRINTING[]
+    catch err
+        err isa UndefVarError || rethrow()
+        nothing
+    end
+    limits === nothing && return f()
+    con_limit, term_limit = limits
+    constraint_functions = [
+        jump_function(constraint_object(cref))
+        for (F, S) in list_of_constraint_types(m)
+        for cref in all_constraints(m, F, S)
+    ]
+    JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[] = length(constraint_functions)
+    JuMP._TERM_LIMIT_FOR_PRINTING[] = maximum(_term_count.(constraint_functions); init=0)
+    try
+        return f()
+    finally
+        JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[], JuMP._TERM_LIMIT_FOR_PRINTING[] = con_limit, term_limit
+    end
+end
+
+function _term_count(x)
+    try
+        length(x.terms)
+    catch
+        0
+    end
+end
+
+function _print_full_model(io::IO, model::AbstractModel)
+    # NOTE: If errors originating here, just uncomment the line below to restore printing - although with JuMP limits
+    # return println(io, model)
+    _without_printing_limits(model) do
+        println(io, model)
+    end
+end
+
 """
     write_model_file(m; file_name="model")
 
 Write model file for given model.
 """
 function write_model_file(m::JuMP.Model; file_name="model")
-    model_string = "$m"
+    model_string = sprint(_print_full_model, m)
     model_string = replace(model_string, s": -" => ":- ")
     model_string = replace(model_string, s": " => ": + ")
     model_string = replace(model_string, s"+ " => "\n\t+ ")
