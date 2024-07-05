@@ -1411,10 +1411,10 @@ function test_constraint_unit_lifetime()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_lifetime", unit_investment_lifetime],
+                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -1467,10 +1467,10 @@ function test_constraint_unit_lifetime_mp()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_lifetime", unit_investment_lifetime],
+                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]

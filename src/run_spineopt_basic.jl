@@ -68,6 +68,8 @@ function build_model!(m; log_level)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
+    use_economic_representation(model=m.ext[:spineopt].instance) &&
+        @timelog log_level 2 "Creating $model_name economic structure..." generate_economic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
     @timelog log_level 2 "Adding $model_name variables...\n" _add_variables!(m; log_level=log_level)

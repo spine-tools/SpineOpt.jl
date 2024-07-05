@@ -61,6 +61,6 @@ function add_variable_storages_invested_available!(m::Model)
         fix_value=fix_storages_invested_available,
         internal_fix_value=internal_fix_storages_invested_available,
         initial_value=initial_storages_invested_available,
-        required_history_period=maximum_parameter_value(storage_investment_lifetime),
+        required_history_period=maximum_parameter_value(storage_investment_tech_lifetime),
     )
 end

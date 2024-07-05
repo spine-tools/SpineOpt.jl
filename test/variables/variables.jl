@@ -209,14 +209,14 @@ function test_unit_history_parameters()
         min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
         min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
         scheduled_outage_duration = Dict("type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m"))
-        unit_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         object_parameter_values = [
             ["unit", "unit_ab", "min_up_time", min_up_time],
             ["unit", "unit_ab", "min_down_time", min_down_time],
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
             ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
-            ["unit", "unit_ab", "unit_investment_lifetime", unit_investment_lifetime],
+            ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [
@@ -256,11 +256,11 @@ function test_connection_history_parameters()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
 
         url_in = _test_variable_connection_setup()
-        connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         connection_flow_delay = Dict("type" => "duration", "data" => string(conn_flow_minutes_delay, "m"))
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
+            ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [
