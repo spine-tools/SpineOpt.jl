@@ -123,7 +123,7 @@ Back in the Spine Toolbox workflow, we now have a meaningful input database for 
 
 While the tool runs, you can keep an eye on the console (typically lower right panel). A lot of information is displayed here. Amongst others, there is information on building the model and the optimality. Any errors will also appear here.
 
-![image](figs/Execute_Run_SpineOpt.png)
+![image](figs_recommended_workflow/Execute_Run_SpineOpt.png)
 
 !!! warning
     Not only does this process take a while to run due to the compilation time but also to build the model. That is because the flexible structure is quite complex. SpineOpt is therefore less suited for simple models but should perform well for more complex models.
