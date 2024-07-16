@@ -40,6 +40,7 @@ pages = [
     "Tutorials" => Any[
         "Webinars" => joinpath("tutorial", "webinars.md"),
         "Simple system" => joinpath("tutorial", "simple_system.md"),
+        "Temporal resolution" => joinpath("tutorial", "temporal_resolution.md"),
         "Reserve requirements" => joinpath("tutorial", "reserves.md"),
         "Ramping constraints" => joinpath("tutorial", "ramping.md"),
         "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),

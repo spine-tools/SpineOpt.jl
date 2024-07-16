@@ -16,7 +16,7 @@ There are four main ways to get help with SpineOpt.
 
 ### Getting started
 
-We highly recommend you to go through the [getting started](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/) chapter of the documentation.
+We highly recommend you to go through the getting started chapter of the documentation.
 
 The chapter explains in great detail the different ways to [install](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/installation/) SpineOpt. The prerequisites are also mentioned here.
 
@@ -24,7 +24,7 @@ The chapter also explains how to set up a minimal [workflow](https://spine-tools
 
 If any issues arise during the first two steps, you can consult the [trouble shooting](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/troubleshooting/) section.
 
-The documentation also contains tutorials on the different features of SpineOpt (the underlying files of the tutorials are part of our tests so these should always be up to date, though the text/images may lag behind some times).
+Once you have succesfully installed and verified the correct functioning of SpineOpt, you can start learning how to use SpineOpt. To that end you can visit the tutorials chapter of the documentation. The tutorials cover the different features of SpineOpt (the underlying files of the tutorials are part of our tests so these should always be up to date, though the text/images may lag behind some times).
 
 ### Reporting Issues and Contributing
 
