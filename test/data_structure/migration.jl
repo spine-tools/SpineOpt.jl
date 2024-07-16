@@ -209,10 +209,108 @@ function _test_remove_model_tb_ss()
 	end
 end
 
+function _test_update_investment_variable_type()
+	@testset "update_investment_variable_type" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["connection", "node"],
+			:object_parameters => [
+				("connection", "connection_investment_variable_type", "variable_type_integer", "variable_type_list"),
+				("node", "storage_investment_variable_type", "variable_type_integer", "variable_type_list"),
+			],
+			:parameter_value_lists => [
+				("variable_type_list", "variable_type_integer"),
+				("variable_type_list", "variable_type_continuous"),
+				("connection_investment_variable_type_list", "connection_investment_variable_type_continuous"),
+				("connection_investment_variable_type_list", "connection_investment_variable_type_integer"),
+			],
+			:objects => [("connection", "conn"), ("node", "n")],
+			:object_parameter_values => [
+				("connection", "conn", "connection_investment_variable_type", "variable_type_continuous"),
+				("node", "n", "storage_investment_variable_type", "variable_type_continuous")
+			],
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test Y.connection_investment_variable_type(connection=Y.connection(:conn)) == :variable_type_continuous
+		@test Y.storage_investment_variable_type(node=Y.node(:n)) == :variable_type_continuous
+		@test SpineOpt.update_investment_variable_type(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "update_investment_variable_type"))
+		using_spinedb(url, Y)
+		@test Y.connection_investment_variable_type(
+			connection=Y.connection(:conn)
+		) == :connection_investment_variable_type_continuous
+		@test Y.storage_investment_variable_type(node=Y.node(:n)) == :storage_investment_variable_type_continuous
+	end
+end
+
+function _test_add_model_algorithm()
+	@testset "add_model_algorithm" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["model"],
+			:object_parameters => [
+				("model", "model_type", "spineopt_standard", "model_type_list"),
+			],
+			:parameter_value_lists => [
+				("model_type_list", "spineopt_standard"),
+				("model_type_list", "spineopt_benders"),
+				("model_type_list", "spineopt_mga"),
+			],
+			:objects => [("model", "test_model")],
+			:object_parameter_values => [
+				("model", "test_model", "model_type", "spineopt_mga"),
+			],
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test Y.model_type(model=Y.model(:test_model)) == :spineopt_mga
+		@test SpineOpt.add_model_algorithm(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "add_model_algorithm"))
+		using_spinedb(url, Y)
+		@test Y.model_type(model=Y.model(:test_model)) == :spineopt_standard
+		@test Y.model_algorithm(model=Y.model(:test_model)) == :mga_algorithm
+	end
+end
+
+function _test_rename_lifetime_to_tech_lifetime()
+	@testset "rename_lifetime_to_tech_lifetime" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["connection", "node", "unit"],
+			:objects => [("connection", "conn"), ("node", "n"), ("unit", "u")],
+			:object_parameters => [
+				("connection", "connection_investment_lifetime"),
+				("node", "storage_investment_lifetime"),
+				("unit", "unit_investment_lifetime")
+			],
+			:object_parameter_values => [
+				("connection", "conn", "connection_investment_lifetime", Dict("type" => "duration", "data" => "1Y")),
+				("node", "n", "storage_investment_lifetime", Dict("type" => "duration", "data" => "1Y")),
+				("unit", "u", "unit_investment_lifetime", Dict("type" => "duration", "data" => "1Y"))
+			]
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test SpineOpt.rename_lifetime_to_tech_lifetime(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "rename_lifetime_to_tech_lifetime"))
+		using_spinedb(url, Y)
+		@test Y.connection_investment_tech_lifetime(connection=Y.connection(:conn)) == Year(1)
+		@test Y.storage_investment_tech_lifetime(node=Y.node(:n)) == Year(1)
+		@test Y.unit_investment_tech_lifetime(unit=Y.unit(:u)) == Year(1)		
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
 	_test_rename_model_types()
 	_test_translate_ramp_parameters()
 	_test_remove_model_tb_ss()
+	_test_update_investment_variable_type()
+	_test_add_model_algorithm()
+	_test_rename_lifetime_to_tech_lifetime()
 end

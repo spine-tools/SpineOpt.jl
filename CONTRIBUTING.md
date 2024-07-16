@@ -4,7 +4,7 @@ Thanks for taking the plunge!
 
 * It's always good to start with a quick search for an existing issue to post on, or related issues for context, before opening a new issue
 * Including minimal examples is greatly appreciated
-* If it's a bug, or unexpected behavior, reproducing on the latest development version (`Pkg.checkout("SpineOpt")`) is a good gut check and can streamline the process, along with including the first two lines of output from `versioninfo()`
+* If it's a bug, or unexpected behavior, reproducing on the latest development version (`Pkg.checkout("SpineOpt")`) is a good check and can streamline the process, along with including the first two lines of output from `versioninfo()`
 
 ## Contributing
 
@@ -31,6 +31,21 @@ Thanks for taking the plunge!
 * Don't explicitly parameterize types unless it's necessary
 * Never leave things without type qualifications. Use an explicit `::Any`.
 * Order method definitions from most specific to least specific type constraints
+
+## Releases
+Releases are discussed among the developers first. When there is a new release version for SpineOpt, it can proceed with it's own release. However, when there is an update to SpineInterface (that affects SpineOpt), both of them need a new version number and release. Here are the steps:
+
+SpineInterface (in case SpineInterface has been updated in a way that affects SpineOpt):
+* Update project.toml, version: x.y.z (using semantic version numbering)
+* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
+* Make a new release (and tag) for SpineInterface with the same version x.y.z
+
+SpineOpt (if either has been udpated):
+* update project.toml, version: a.b.c & point to correct SpineInterface version x.y.z (same as above)
+* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
+* Make a new release (and tag) a.b.c for SpineOpt
+
+If Spine Toolbox gets an update that requires changes in SpineInterface, then it also needs to be included in the loop. In this case, before updating SpineInterface, make a branch that can hold the version that worked with the old Spine Toolbox (and similarly should be done in Spine Toolbox side). The branch should be named e.g. v0.8.x-release.
 
 ## Further questions
 * For developers there is some additional information in the implementation details (e.g. how to write a constraint).

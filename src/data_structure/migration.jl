@@ -36,8 +36,12 @@ include("versions/add_mga_weight_factors.jl")
 include("versions/rename_benders_master_to_just_benders.jl")
 include("versions/translate_ramp_parameters.jl")
 include("versions/remove_model_tb_ss.jl")
+include("versions/update_investment_variable_type.jl")
+include("versions/add_model_algorithm.jl")
+include("versions/rename_lifetime_to_tech_lifetime.jl")
 
-function units_out_of_service_upgrade(db_url, log_level)
+function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
+	# No changes, just make sure we load the newest template
 	true
 end
 
@@ -51,7 +55,10 @@ _upgrade_functions = [
 	rename_benders_master_to_just_benders,
 	translate_ramp_parameters,
 	remove_model_tb_ss,
-	units_out_of_service_upgrade,
+	add_units_out_of_service_and_min_capacity_margin,
+	update_investment_variable_type,
+	add_model_algorithm,
+	rename_lifetime_to_tech_lifetime,
 ]
 
 """
@@ -92,7 +99,7 @@ create them, setting `version`'s default_value to 1.
 function find_version(url)
 	obj_clss = run_request(url, "query", ("object_class_sq",))["object_class_sq"]
 	i = findfirst(x -> x["name"] == "settings", obj_clss)
-	if i == nothing
+	if isnothing(i)
 		settings_class = first([x for x in _template["object_classes"] if x[1] == "settings"])
 		run_request(
 			url,
@@ -104,7 +111,7 @@ function find_version(url)
 	settings_class = obj_clss[i]
 	pdefs = run_request(url, "query", ("parameter_definition_sq",))["parameter_definition_sq"]
 	j = findfirst(x -> x["name"] == "version" && x["entity_class_id"] == settings_class["id"], pdefs)
-	if j == nothing
+	if isnothing(j)
 		version_par_def = first([x for x in _template["object_parameters"] if x[1:2] == ["settings", "version"]])
 		version_par_def[3] = 1  # position 3 is default_value
 		run_request(

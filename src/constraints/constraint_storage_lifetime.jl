@@ -23,48 +23,35 @@
 Constrain storages_invested_available by the investment lifetime of a storage.
 """
 function add_constraint_storage_lifetime!(m::Model)
+    _add_constraint!(m, :storage_lifetime, constraint_storage_lifetime_indices, _build_constraint_storage_lifetime)
+end
+
+function _build_constraint_storage_lifetime(m::Model, n, s_path, t)
     @fetch storages_invested_available, storages_invested = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:storage_lifetime] = Dict(
-        (node=n, stochastic_path=s, t=t) => @constraint(
-            m,
-            sum(
-                storages_invested_available[n, s, t]
-                for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
-                init=0,
-            )
-            >=
-            sum(
-                storages_invested[n, s_past, t_past]
-                for (n, s_past, t_past) in _past_storages_invested_available_indices(m, n, s, t)
-            )
+    @build_constraint(
+        sum(
+            storages_invested_available[n, s, t]
+            for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (n, s, t) in constraint_storage_lifetime_indices(m)
+        >=
+        sum(
+            storages_invested[n, s_past, t_past] * weight
+            for (n, s_past, t_past, weight) in _past_storages_invested_available_indices(m, n, s_path, t)
+        )
     )
 end
 
 function constraint_storage_lifetime_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t=t)
-        for n in indices(storage_investment_lifetime)
-        for (n, t) in node_investment_time_indices(m; node=n)
+        for (n, t) in node_investment_time_indices(m; node=indices(storage_investment_tech_lifetime))
         for path in active_stochastic_paths(m, _past_storages_invested_available_indices(m, n, anything, t))
     )
 end
 
-function _past_storages_invested_available_indices(m, n, s, t)
-    t0 = _analysis_time(m)
-    storages_invested_available_indices(
-        m;
-        node=n,
-        stochastic_scenario=s,
-        t=to_time_slice(
-            m;
-            t=TimeSlice(
-                end_(t) - storage_investment_lifetime(node=n, analysis_time=t0, stochastic_scenario=s, t=t), end_(t)
-            )
-        )
-    )
+function _past_storages_invested_available_indices(m, n, s_path, t)
+    _past_indices(m, storages_invested_available_indices, storage_investment_tech_lifetime, s_path, t; node=n)
 end
 
 """

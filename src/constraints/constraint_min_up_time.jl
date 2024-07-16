@@ -37,39 +37,38 @@ See also
 [min\_up\_time](@ref)
 """
 function add_constraint_min_up_time!(m::Model)
+    _add_constraint!(m, :min_up_time, constraint_min_up_time_indices, _build_constraint_min_up_time)
+end
+
+function _build_constraint_min_up_time(m::Model, u, s_path, t)
     @fetch units_on, units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_up_time] = Dict(
-        (unit=u, stochastic_path=s, t=t) => @constraint(
-            m,
-            + sum(
-                + units_on[u, s, t]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
-                init=0,
-            )
-            - sum(
-                + nonspin_units_shut_down[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_shut_down_indices(
-                    m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything,
-                );
-                init=0,
-            )
-            >=
-            + sum(
-                units_started_up[u, s_past, t_past]
-                for (u, s_past, t_past) in past_units_on_indices(m, u, s, t, min_up_time)
-            )
+    @build_constraint(
+        + sum(
+            + units_on[u, s, t]
+            for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything);
+            init=0,
         )
-        for (u, s, t) in constraint_min_up_time_indices(m)
+        - sum(
+            + nonspin_units_shut_down[u, n, s, t]
+            for (u, n, s, t) in nonspin_units_shut_down_indices(
+                m; unit=u, stochastic_scenario=s_path, t=t, temporal_block=anything,
+            );
+            init=0,
+        )
+        >=
+        + sum(
+            units_started_up[u, s_past, t_past] * weight
+            for (u, s_past, t_past, weight) in past_units_on_indices(m, min_up_time, u, s_path, t)
+        )
     )
 end
 
 function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
-    unique(
+    (
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_up_time)
         for (u, t) in unit_time_indices(m; unit=u)
-        for path in active_stochastic_paths(m, past_units_on_indices(m, u, anything, t, min_up_time))
+        for path in active_stochastic_paths(m, past_units_on_indices(m, min_up_time, u, anything, t))
     )
 end
 

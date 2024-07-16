@@ -70,41 +70,32 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
-function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
-    Base.get(d, NamedTuple{J}(key), default)
+struct ParameterFunction
+    fn
 end
 
-function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
-end
+(pf::ParameterFunction)(; kwargs...) = as_number(pf; kwargs...)
 
-_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
-_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+as_number(p::Parameter; kwargs...) = p(; kwargs...)
+as_number(pf::ParameterFunction; kwargs...) = pf.fn(as_number; kwargs...)
 
-function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
-end
+as_call(p::Parameter; kwargs...) = p[kwargs]
+as_call(pf::ParameterFunction; kwargs...) = pf.fn(as_call; kwargs...)
+
+constant(x::Number) = (m; kwargs...) -> x
 
 """
-    sense_constraint(m, lhs, sense::Symbol, rhs)
+    build_sense_constraint(lhs, sense::Symbol, rhs)
 
-Create a JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
+A JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
 """
-function sense_constraint(m, lhs, sense::Symbol, rhs)
-    if sense == :>=
-        @constraint(m, lhs >= rhs)
-    elseif sense == :<=
-        @constraint(m, lhs <= rhs)
-    else
-        @constraint(m, lhs == rhs)
-    end
-end
-sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
-sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
-sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
+build_sense_constraint(lhs, sense::Symbol, rhs) = build_sense_constraint(lhs, getproperty(Base, sense), rhs)
+build_sense_constraint(lhs, sense::typeof(<=), rhs) = @build_constraint(lhs <= rhs)
+build_sense_constraint(lhs, sense::typeof(==), rhs) = @build_constraint(lhs == rhs)
+build_sense_constraint(lhs, sense::typeof(>=), rhs) = @build_constraint(lhs >= rhs)
 
 function _avg(iter; init::Number)
+    iter = collect(iter)
     isempty(iter) ? init : sum(iter; init=init) / length(iter)
 end
 
@@ -155,12 +146,6 @@ function get_module(module_name)
     end
 end
 
-struct Constant
-    value
-end
-
-Base.getindex(c::Constant, _x) = Call(c.value)
-
 name_from_fn(fn) = split(split(string(fn), "add_")[2], "!")[1]
 
 function print_model_and_solution(m, variable_patterns...)
@@ -189,7 +174,6 @@ window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
 
 window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
 window_sum(x::Number, window; init=0) = x + init
-
 
 """
     align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead::Bool=true)
@@ -226,13 +210,132 @@ new_duration4 = align_variable_duration_unit(_duration2, dt1)
 This convertion is needed for comparing a duration of the type `Month` or `Year` with 
 one of `Day`, `Hour` or the finer units, which is not allowed because the former are variable duration types.
 """
-function align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead=true)
-    #TODO: the value of `_duration` is assumed to be an integer. A warning should be given.
+function align_variable_duration_unit(duration::Union{Period, Nothing}, dt::DateTime; ahead=true)
+    #TODO: the value of `duration` is assumed to be an integer. A warning should be given.
     #TODO: new format to record durations would be benefitial, e.g. 3M2d1h,
     #      cf. Dates.CompoundPeriod in the periods.jl of Julia standard library.
-    if _duration isa Month || _duration isa Year
-        ahead ? Day((dt + _duration) - dt) : Day(dt - (dt - _duration))
+    if duration isa Month || duration isa Year
+        ahead ? Day((dt + duration) - dt) : Day(dt - (dt - duration))
     else
-        _duration
+        duration
     end
+end
+
+function _log_to_file(fn, log_file_path)
+    log_file_path === nothing && return fn()
+    done = false
+    actual_stdout = stdout
+    @async begin
+        open(log_file_path, "r") do log_file
+            while !done
+                data = read(log_file, String)
+                if !isempty(data)
+                    print(actual_stdout, data)
+                    flush(actual_stdout)
+                end
+                yield()
+            end
+        end
+    end
+    open(log_file_path, "w") do log_file
+        @async while !done
+            flush(log_file)
+            yield()
+        end
+        redirect_stdout(log_file) do
+            redirect_stderr(log_file) do
+                yield()
+                try
+                    fn()
+                catch err
+                    showerror(log_file, err, stacktrace(catch_backtrace()))
+                    rethrow()
+                finally
+                    done = true
+                end
+            end
+        end
+    end
+end
+
+function _call_event_handlers(m, event, args...; kwargs...)
+    (fn -> fn(m, args...; kwargs...)).(m.ext[:spineopt].event_handlers[event])
+end
+
+function _pkgversion(pkg)
+    isdefined(Base, :pkgversion) && return pkgversion(pkg)
+    project_filepath = joinpath(pkgdir(pkg), "Project.toml")
+    parsed_contents = TOML.parsefile(project_filepath)
+    parsed_contents["version"]
+end
+
+function _version_and_git_hash(pkg)
+    version = string(_pkgversion(pkg))
+    git_hash = try
+        repo = LibGit2.GitRepo(pkgdir(pkg))
+        string(LibGit2.head_oid(repo))
+    catch err
+        err isa LibGit2.GitError || rethrow()
+        "N/A"
+    end
+    version, git_hash
+end
+
+"""
+    _similar(node1, node2)
+
+A Boolean indicating whether or not two nodes are 'similar', in the sense they are single nodes
+(i.e. not groups) with the same temporal and stochastic structure.
+"""
+function _similar(node1, node2)
+    (
+        members(node1) == [node1]
+        && members(node2) == [node2]
+        && node__temporal_block(node=node1) == node__temporal_block(node=node2)
+        && node__stochastic_structure(node=node1) == node__stochastic_structure(node=node2)
+    )
+end
+
+"""
+    _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+
+The maximum duration from a list of parameters.
+"""
+function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
+    max_vals = (maximum_parameter_value(p) for p in lookback_params)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
+end
+
+function _get_var_with_replacement(m, var_name, ind)
+    get(m.ext[:spineopt].variables[var_name], ind) do
+        get_var_by_name = Dict(
+            :units_on => _get_units_on,
+            :units_out_of_service => _get_units_out_of_service,
+            :units_started_up => _get_units_started_up,
+        )
+        get_var = get(get_var_by_name, var_name, nothing)
+        isnothing(get_var) && throw(KeyError(ind))
+        get_var(m, ind...)
+    end
+end
+
+# Base
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
+function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
+    Base.get(d, NamedTuple{J}(key), default)
+end
+function Base.get(f::Function, d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
+    Base.get(f, d, NamedTuple{J}(key))
+end
+
+function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:RelationshipLike{J},V}
+    Base.haskey(d, NamedTuple{J}(key))
+end
+
+Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
+function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
+    Base.getindex(d, NamedTuple{J}(key))
 end

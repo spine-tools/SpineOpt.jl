@@ -19,31 +19,29 @@ Depth = 3
 
 ```@docs
 run_spineopt
-write_report_from_intermediate_results
-generate_forced_availability_factor
+prepare_spineopt
+run_spineopt!
+create_model
+build_model!
+solve_model!
+add_event_handler!
+generate_temporal_structure!
+roll_temporal_structure!
+rewind_temporal_structure!
 time_slice
-t_in_t
 t_before_t
+t_in_t
+t_in_t_excl
 t_overlaps_t
+to_time_slice
+current_window
+generate_stochastic_structure!
 active_stochastic_paths
+write_model_file
+write_report
+write_report_from_intermediate_results
+master_model
+stage_model
+upgrade_db
+generate_forced_availability_factor
 ```
-
-TODO
-
-## Internals
-
-### Variable library
-
-```@docs
-unit_flow_indices
-```
-
-TODO
-
-### Constraint library
-
-TODO
-
-### Objective
-
-TODO

@@ -3,6 +3,35 @@
 The documentation is build with [Documenter.jl](https://documenter.juliadocs.org/stable/), by running the `make.jl` script.
 Note that `make.jl` calls some stuff from `docs_util.jl`.
 
+## Build the documentation locally
+
+The documentation is bundled in with the source code, so it is possible to build the documentation locally.
+
+First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
+
+```julia
+(SpineOpt) pkg> activate docs
+(docs) pkg>
+```
+
+Next, in order to make sure that the `docs` environment uses the same SpineOpt version it is contained within,
+install the package locally into the `docs` environment:
+
+```julia
+(docs) pkg> develop .
+Resolving package versions...
+<lots of packages being checked>
+(docs) pkg>
+```
+
+Now, you should be able to build the documentation by exiting the package manager and typing:
+
+```julia
+julia> include("docs/make.jl")
+```
+
+This should build the documentation on your computer, and you can access it in the `docs/build/` folder.
+
 ## Concept reference
 
 Parameters.md is one of the files that is automatically generated. Each parameter has a description in the concept_reference folder and is further processed with the spineopt template. As such there is no point in attempting to make changes directly in Parameters.md.
