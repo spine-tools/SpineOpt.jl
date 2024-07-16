@@ -30,14 +30,9 @@ function units_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    unit = members(unit)
-    unique(
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in unit__investment_temporal_block(
-            unit=intersect(indices(candidate_units), unit), temporal_block=temporal_block, _compact=false)
-        for (u, s, t) in unit_investment_stochastic_time_indices(
-            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+    unit = intersect(indices(candidate_units), members(unit))
+    unit_investment_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 
@@ -55,16 +50,15 @@ units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == 
 Add `units_invested_available` variables to model `m`.
 """
 function add_variable_units_invested_available!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_invested_available,
         units_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=units_invested_available_int,
-        replacement_value=units_on_replacement_value,
         fix_value=fix_units_invested_available,
         internal_fix_value=internal_fix_units_invested_available,
-        initial_value=initial_units_invested_available
+        initial_value=initial_units_invested_available,
+        required_history_period=maximum_parameter_value(unit_investment_tech_lifetime),
     )
 end

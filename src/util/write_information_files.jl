@@ -18,10 +18,9 @@
 #############################################################################
 
 """
-function write_model_file(m::Model; file_name="model")
+    write_model_file(m; file_name="model")
 
-Write model file for Model `m`. Objective, constraints and variable bounds are reported.
-Optional argument is keyword `file_name`.
+Write model file for given model.
 """
 function write_model_file(m::JuMP.Model; file_name="model")
     model_string = "$m"
@@ -93,6 +92,8 @@ function write_lodfs()
     end
     print(io, "\n")
     for conn_cont in connection(connection_contingency=true)
+        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
+        # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the lodf calculation
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
         for conn_mon in connection(connection_monitored=true)

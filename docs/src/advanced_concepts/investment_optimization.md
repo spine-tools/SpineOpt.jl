@@ -4,25 +4,25 @@ SpineOpt offers numerous ways to optimise investment decisions energy system mod
 
 ## Key concepts for investments
 
-**Investment Decisions**  
-These are the investment decisions that SpineOpt currently supports. At a high level, this means that the activity of the entities in question is controlled by an investment decision variable. The current implementation supports investments in :
+### Investment Decisions
+These are the investment decisions that SpineOpt currently supports. At a high level, this means that the activity of the entities in question is controlled by an investment decision variable. The current implementation supports investments in:
    - **[unit](@ref)**
    - **[connection](@ref)**
-   - **Storage** - Note: while the above investment decisions correspond to an object class (i.e.) an investment in a [unit](@ref) or a [connection](@ref), **Storages** are not an object class in themselves and are rather a property of a [node](@ref). As such, a storage investment controls whether a particular node has a state variable or not.  
+   - **[node](@ref) storage**
 
-**Investment Variable Types**  
-In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multiplied by the investment variable which may either be continuous, binary or integer. This is determined, for units, by setting the [unit\_investment\_variable\_type](@ref) parameter accordingly. Similary, for connections and node storages the [connection\_investment\_variable\_type](@ref) and [storage\_investment\_variable\_type](@ref) are specified.
+### Investment Variable Types
+In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multiplied by the investment variable which may either be continuous or integer. This is determined, for units, by setting the [unit\_investment\_variable\_type](@ref) parameter accordingly. Similary, for connections and node storages the [connection\_investment\_variable\_type](@ref) and [storage\_investment\_variable\_type](@ref) are specified.
 
-**Identiying Investment Candidate Units, Connections and Storages**  
-The parameter [candidate\_units](@ref) represents the number of units of this type that may be invested in. [candidate\_units](@ref) determines the upper bound of the investment variable and setting this to a value greater than 0 identifies the unit as an investment candidate unit in the optimisation. If the [unit\_investment\_variable\_type](@ref) is set to `:variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [unit\_investment\_variable\_type](@ref) is `:variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be interpreted as the capacity of the unit rather than the number of units with [candidate\_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [unit\_investment\_variable\_type](@ref) set to `:variable_type_integer` with [candidate\_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
-   - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit\_capacity](@ref) or [connection\_capacity](@ref) for connections or [node\_state\_cap](@ref) for storages.
+### Identiying Investment Candidate Units, Connections and Storages
+The parameter [candidate\_units](@ref) represents the number of units of this type that may be invested in. [candidate\_units](@ref) determines the upper bound of the investment variable and setting this to a value greater than 0 identifies the unit as an investment candidate unit in the optimisation. If the [unit\_investment\_variable\_type](@ref) is set to `:unit_investment_variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [unit\_investment\_variable\_type](@ref) is `:unit_investment_variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be interpreted as the capacity of the unit rather than the number of units with [candidate\_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [unit\_investment\_variable\_type](@ref) set to `:unit_investment_variable_type_integer` with [candidate\_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
+   - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit\_capacity](@ref) for units, [connection\_capacity](@ref) for connections or [node\_state\_cap](@ref) for storages.
    - [candidate\_units](@ref) sets the upper bound on the investment variable, [candidate\_connections](@ref) for connections and [candidate\_storages](@ref) for storages
-   - [unit\_investment\_variable\_type](@ref) determines whether the investment variable is integer, binary or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
+   - [unit\_investment\_variable\_type](@ref) determines whether the investment variable is integer or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
 
-**Investment Costs**  
+### Investment Costs
 Investment costs are specified by setting the appropriate `*_investment\_cost` parameter. The investment cost for [unit](@ref)s are specified by setting the [unit\_investment\_cost](@ref) parameter. This is currently interpreted as the full cost over the investment period for the unit. See the section below on **investment temporal structure** for setting the investment period. If the investment period is 1 year, then the corresponding [unit\_investment\_cost](@ref) is the annualised investment cost. For connections and storages, the investment cost parameters are [connection\_investment\_cost](@ref) and [storage\_investment\_cost](@ref), respectively.
 
-**Temporal and Stochastic Structure of Investment Decisions**  
+### Temporal and Stochastic Structure of Investment Decisions
 SpineOpt's flexible stochastic and temporal structure extend to investments where individual investment decisions can have their own temporal and stochastic structure independent of other investment decisions and other model variables. A global temporal resolution for all investment decisions can be defined by specifying the relationship [model\_\_default\_investment\_temporal\_block](@ref). If a specific temporal resolution is required for specific investment decisions, then one can specify the following relationships:
    - [unit\_\_investment\_temporal\_block](@ref) for [unit](@ref)s,
    - [connection\_\_investment\_temporal\_block](@ref) for [connection](@ref)s, and
@@ -35,6 +35,12 @@ Similarly, a global stochastic structure can be defined for all investment decis
    - [connection\_\_investment\_stochastic\_structure](@ref) for [connection](@ref)s, and
    - [node\_\_investment\_stochastic\_structure](@ref) for storages.
 Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_stochastic\_structure](@ref).
+
+### Impact of connection investments on network characteristics
+
+The [model](@ref) parameter [use\_connection\_intact\_flow](@ref) is available to control whether or not the impact of connection investments on the network
+characteristics should be captured.
+If set to `true`, then the model will use line outage distribution factors (LODF) to compute the impact of each [connection](@ref) investment over the flow across the network. Note that this introduces another variable, [connection\_intact\_flow](@ref), representing the hypothetical flow on a [connection](@ref) in case all [connection](@ref) investments were in place. Also note that the impact of each connection is captured **individually**.
 
 ## Creating an Investment Candidate Unit Example  
 If we have model that is not currently set up for investments and we wish to create an investment candidate unit, we can take the following steps.
@@ -87,19 +93,19 @@ If we have model that is not currently set up for investments and we wish to cre
 |--------------------------------|------------------------------|-------------------------------------------------|
 | `candidate_units` | `unit` | The number of additional `unit`s of this type that can be invested in
 | `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
-| `unit_investment_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
+| `unit_investment_tech_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
 | `unit_investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
 | `fix_units_invested` | `unit`| Fix the value of `units_invested`
 | `fix_units_invested_available` | `unit` | Fix the value of `connections_invested_available`
 | `candidate_connections` | `connection` | The number of additional `connection`s of this type that can be invested in
 | `connection_investment_cost` | `connection` | The total overnight investment cost per candidate `connection` over the model horizon
-| `connection_investment_lifetime` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
+| `connection_investment_tech_lifetime` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
 | `connection_investment_variable_type` | `connection` | Whether the `connections_invested_available` variable is continuous, integer or binary
 | `fix_connections_invested` | `connection`| Fix the value of `connections_invested`
 | `fix_connections_invested_available` | `connection` | Fix the value of `connection_invested_available`
 | `candidate_storages` | `node` | The number of additional storages of this type that can be invested in at `node`
 | `storage_investment_cost` | `node` | The total overnight investment cost per candidate storage over the model horizon
-| `storage_investment_lifetime` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
+| `storage_investment_tech_lifetime` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
 | `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is continuous, integer or binary
 | `fix_storages_invested` | `node`| Fix the value of `storages_invested`
 | `fix_storages_invested_available` | `node` | Fix the value of `storages_invested_available`
@@ -112,11 +118,11 @@ If we have model that is not currently set up for investments and we wish to cre
 |-----------------------------|-------------------|--------------------------------------------------------------|
 | constraint_units_invested_available.jl | \constraints| constrains `units_invested_available` to be less than `candidate_units`
 | constraint_units_invested_transition.jl | \constraints| defines the relationship between `units_invested_available`, `units_invested` and `units_mothballed`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_lifetime` - analagous to `min_up_time`.
+| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_tech_lifetime` - analagous to `min_up_time`.
 | constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `number_of_units` and `units_invested_available`
 | constraint_connections_invested_available.jl | \constraints| constrains `connections_invested_available` to be less than `candidate_connections`
 | constraint_connections_invested_transition.jl | \constraints| defines the relationship between `connections_invested_available`, `connections_invested` and `connections_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_lifetime` - analagous to `min_up_time`.
+| constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_tech_lifetime` - analagous to `min_up_time`.
 | constraint_storages_invested_available.jl | \constraints| constrains `storages_invested_available` to be less than `candidate_storages`
 | constraint_storages_invested_transition.jl | \constraints| defines the relationship between `storages_invested_available`, `storages_invested` and `storages_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_investment_lifetime` - analagous to `min_up_time`.
+| constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_investment_tech_lifetime` - analagous to `min_up_time`.

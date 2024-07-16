@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-const invest_terms = [
+const mp_terms = [
     :unit_investment_costs, :connection_investment_costs, :storage_investment_costs, :mp_objective_penalties
 ]
-const op_terms = [
+const sp_terms = [
     :variable_om_costs,
     :fixed_om_costs,
     :taxes,
@@ -32,21 +32,25 @@ const op_terms = [
     :renewable_curtailment_costs,
     :res_proc_costs,
     :units_on_costs,
+    :min_capacity_margin_penalties,
 ]
-const all_objective_terms = [op_terms; invest_terms]
+const all_objective_terms = unique!([mp_terms; sp_terms])
 
 """
-    total_costs(m::Model, t_range::Array{TimeSlice,1})
+    total_costs(m::Model, t_range::Union{Anything,Vector{TimeSlice}})
 
-Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
+Expression corresponding to the sume of all cost terms for given model, and within the given range of time.
 """
-function total_costs(m, t_range; investments=true, operations=true)
-    sum(eval(term)(m, t_range) for term in objective_terms(m; investments=investments, operations=operations))
+function total_costs(m, t_range; benders_master=true, benders_subproblem=true)
+    sum(
+        getproperty(SpineOpt, term)(m, t_range)
+        for term in objective_terms(m; benders_master=benders_master, benders_subproblem=benders_subproblem)
+    )
 end
 
-function objective_terms(m; investments=true, operations=true)
+function objective_terms(m; benders_master=true, benders_subproblem=true)
     obj_terms = []
-    investments && append!(obj_terms, invest_terms)
-    operations && append!(obj_terms, op_terms)
-    obj_terms
+    benders_master && append!(obj_terms, mp_terms)
+    benders_subproblem && append!(obj_terms, sp_terms)
+    unique!(obj_terms)
 end

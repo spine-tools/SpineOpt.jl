@@ -27,14 +27,10 @@ function node_slack_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t)
-        for n in intersect(node_with_slack_penalty(), node)
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
-        )
-    ]
-    unique!(inds)
+    node = intersect(node_with_slack_penalty(), node)
+    node_stochastic_time_indices(
+        m; node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
+    )
 end
 
 """
@@ -42,4 +38,4 @@ end
 
 Add `node_slack_pos` variables to model `m`.
 """
-add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=Constant(0))
+add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=constant(0))

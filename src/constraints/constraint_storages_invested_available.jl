@@ -31,15 +31,19 @@ is less than the number of investment candidate storages at that node.
 ```
 """
 function add_constraint_storages_invested_available!(m::Model)
+    _add_constraint!(
+        m,
+        :storages_invested_available,
+        storages_invested_available_indices,
+        _build_constraint_storages_invested_available,
+    )
+end
+
+function _build_constraint_storages_invested_available(m::Model, n, s, t)
     @fetch storages_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:storages_invested_available] = Dict(
-        (node=n, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + storages_invested_available[n, s, t]
-            <=
-            + candidate_storages[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
-        for (n, s, t) in storages_invested_available_indices(m)
+    @build_constraint(
+        + storages_invested_available[n, s, t]
+        <=
+        + candidate_storages(m; node=n, stochastic_scenario=s, t=t)
     )
 end

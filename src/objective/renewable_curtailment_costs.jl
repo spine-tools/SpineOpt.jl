@@ -23,20 +23,15 @@
 Create an expression for curtailment costs of renewables.
 """
 function renewable_curtailment_costs(m::Model, t_range)
-    @fetch unit_flow, units_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
+    @fetch unit_flow, units_on = m.ext[:spineopt].variables
     @expression(
         m,
         sum(
-            curtailment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_short)]
+            + curtailment_cost(m; unit=u, stochastic_scenario=s, t=t_short)
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             * (
-                + units_available[u, s, t_long]
-                * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_short)]
-                * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)]
-                * unit_conv_cap_to_flow[
-                    (unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short),
-                ]
+                + units_on[u, s, t_long]
+                * unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_short)
                 - unit_flow[u, n, d, s, t_short]
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t_short))

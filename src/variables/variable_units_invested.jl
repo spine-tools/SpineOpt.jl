@@ -23,14 +23,14 @@
 Add `units_invested` variables to model `m`.
 """
 function add_variable_units_invested!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_invested,
         units_invested_available_indices;
-        lb=Constant(0),
+        lb=constant(0),
         int=units_invested_available_int,
         fix_value=fix_units_invested,
-        initial_value=initial_units_invested
+        initial_value=initial_units_invested,
+        required_history_period=maximum_parameter_value(unit_investment_tech_lifetime),
     )
 end

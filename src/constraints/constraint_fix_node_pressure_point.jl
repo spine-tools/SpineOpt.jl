@@ -92,7 +92,9 @@ and
 ```
 
 The cone described by the Weymouth equation can be outer approximated by a number of tangent planes,
-using a set of fixed pressure points, as illustrated in [Schwele - Integration of Electricity, Natural Gas and Heat Systems With Market-based Coordination](https://orbit.dtu.dk/en/publications/integration-of-electricity-natural-gas-and-heat-systems-with-mark).
+using a set of fixed pressure points, as illustrated in
+[Schwele - Integration of Electricity, Natural Gas and Heat Systems With Market-based Coordination]
+(https://orbit.dtu.dk/en/publications/integration-of-electricity-natural-gas-and-heat-systems-with-mark).
 The big M method is used to replace the sign function.
 
 The linearized version of the Weymouth equation implemented in SpineOpt is given as follows:
@@ -143,76 +145,82 @@ See also
 [big\_m](@ref).
 """
 function add_constraint_fix_node_pressure_point!(m::Model)
+    _add_constraint!(
+        m,
+        :fix_node_pressure_point,
+        constraint_fix_node_pressure_point_indices,
+        _build_constraint_fix_node_pressure_point,
+    )
+end
+
+function _build_constraint_fix_node_pressure_point(m::Model, conn, n_orig, n_dest, s_path, t, j)
     @fetch node_pressure, connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:fix_node_pressure_point] = Dict(
-        (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, t=t, i=j) => @constraint(
-            m,
-            (
-                sum(
-                    connection_flow[conn, n_orig, d, s, t]
-                    for (conn, n_orig, d, s, t) in connection_flow_indices(
-                        m;
-                        connection=conn,
-                        node=n_orig,
-                        stochastic_scenario=s,
-                        direction=direction(:from_node),
-                        t=t_in_t(m; t_long=t),
-                    );
-                    init=0
-                )
-                + sum(
-                    connection_flow[conn, n_dest, d, s, t]
-                    for (conn, n_dest, d, s, t) in connection_flow_indices(
-                        m;
-                        connection=conn,
-                        node=n_dest,
-                        stochastic_scenario=s,
-                        direction=direction(:to_node),
-                        t=t_in_t(m; t_long=t),
-                    );
-                    init=0
-                )
-            )
-            / 2
-            <=
-            0
-            + fixed_pressure_constant_1[
-                (connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t),
-            ]
-            * sum(
-                node_pressure[n_orig, s, t]
-                for (n_orig, s, t) in node_pressure_indices(
-                    m; node=n_orig, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+    @build_constraint(
+        (
+            sum(
+                connection_flow[conn, n_orig, d, s, t]
+                for (conn, n_orig, d, s, t) in connection_flow_indices(
+                    m;
+                    connection=conn,
+                    node=n_orig,
+                    stochastic_scenario=s_path,
+                    direction=direction(:from_node),
+                    t=t_in_t(m; t_long=t),
                 );
-                init=0
+                init=0,
             )
-            - fixed_pressure_constant_0[
-                (connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, analysis_time=t0, t=t),
-            ]
-            * sum(
-                node_pressure[n_dest, s, t]
-                for (n_dest, s, t) in node_pressure_indices(
-                    m; node=n_dest, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                );
-                init=0
-            )            
-            + big_m(model=m.ext[:spineopt].instance)
-            * sum(
-                1 - binary_gas_connection_flow[conn, n_dest, direction(:to_node), s, t]
+            + sum(
+                connection_flow[conn, n_dest, d, s, t]
                 for (conn, n_dest, d, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=n_dest,
-                    stochastic_scenario=s,
+                    stochastic_scenario=s_path,
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t),
                 );
-                init=0
+                init=0,
             )
         )
-        for (conn, n_orig, n_dest, s, t) in constraint_connection_flow_gas_capacity_indices(m)
-        for j = 1:length(fixed_pressure_constant_1(connection=conn, node1=n_orig, node2=n_dest))
+        / 2
+        <=
+        + sum(
+            + node_pressure[n_orig, s, t]
+            * fixed_pressure_constant_1(m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, t=t)
+            for (n_orig, s, t) in node_pressure_indices(
+                m; node=n_orig, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )
+        - sum(
+            + node_pressure[n_dest, s, t]
+            * fixed_pressure_constant_0(m; connection=conn, node1=n_orig, node2=n_dest, i=j, stochastic_scenario=s, t=t)
+            for (n_dest, s, t) in node_pressure_indices(
+                m; node=n_dest, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
+            );
+            init=0,
+        )            
+        + big_m(model=m.ext[:spineopt].instance)
+        * sum(
+            1 - binary_gas_connection_flow[conn, n_dest, direction(:to_node), s, t]
+            for (conn, n_dest, d, s, t) in connection_flow_indices(
+                m;
+                connection=conn,
+                node=n_dest,
+                stochastic_scenario=s_path,
+                direction=direction(:to_node),
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
+        )
+    )
+end
+
+function constraint_fix_node_pressure_point_indices(m::Model)
+    (
+        (connection=conn, node1=n_orig, node2=n_dest, stochastic_path=s_path, t=t, i=j)
+        for (conn, n_orig, n_dest, s_path, t) in constraint_connection_flow_gas_capacity_indices(m)
+        for j in 1:length(fixed_pressure_constant_1(connection=conn, node1=n_orig, node2=n_dest))
         if fixed_pressure_constant_1(connection=conn, node1=n_orig, node2=n_dest, i=j) != 0
     )
 end

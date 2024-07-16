@@ -14,16 +14,16 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6"  # Minimum compatible Release
-          - "1.9"  # Latest Release
+          - "1.8"  # Minimum compatible Release
+          - "1"    # Latest Release of Julia v1.x
         os:
           - ubuntu-latest
-          - macOS-latest
+          # - macOS-latest
           - windows-latest
         arch:
           - x64
-        python-version: ["3.11"]
           # - x86  # FIXME: We don't support x86 because we type-annotate with Int64 and Float64 sparingly
+        python-version: ["3.11"]
         exclude:
           # Test 32-bit only on Linux
           - os: macOS-latest
@@ -49,7 +49,8 @@ jobs:
           PYTHON: python
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v1
+        if: matrix.version == '1' && matrix.os == 'ubuntu-latest'
+      - uses: codecov/codecov-action@v4
         with:
           file: lcov.info
   Documenter:
@@ -57,6 +58,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11' 
       - name: Install dependencies
         run: |
           julia ./.install_spinedb_api.jl          

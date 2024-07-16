@@ -310,38 +310,6 @@ function test_constraint_node_injection()
     end
 end
 
-function test_constraint_node_state_capacity()
-    @testset "constraint_node_state_capacity" begin
-        url_in = _test_constraint_node_setup()
-        node_capacity = Dict("node_b" => 120, "node_c" => 400)
-        object_parameter_values = [
-            ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
-            ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_state = m.ext[:spineopt].variables[:node_state]
-        constraint = m.ext[:spineopt].constraints[:node_state_capacity]
-        @test length(constraint) == 4
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            @testset for (name, cap) in node_capacity
-                n = node(Symbol(name))
-                var_n_st_key = (n, s, t)
-                con_key = (n, [s], t)
-                var_n_st = var_node_state[var_n_st_key...]
-                expected_con = @build_constraint(var_n_st <= cap)
-                con = constraint[con_key...]
-                observed_con = constraint_object(con)
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end
-end
-
 function test_constraint_cyclic_node_state()
     @testset "constraint_cyclic_node_state" begin
         url_in = _test_constraint_node_setup()
@@ -713,7 +681,7 @@ function test_constraint_storages_invested_available_mp()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        m_mp = master_problem_model(m)
+        m_mp = master_model(m)
         var_storages_invested_available = m_mp.ext[:spineopt].variables[:storages_invested_available]
         constraint = m_mp.ext[:spineopt].constraints[:storages_invested_available]
         @test length(constraint) == 2
@@ -788,7 +756,7 @@ function test_constraint_storages_invested_transition_mp()
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        m_mp = master_problem_model(m)
+        m_mp = master_model(m)
         var_storages_invested_available = m_mp.ext[:spineopt].variables[:storages_invested_available]
         var_storages_invested = m_mp.ext[:spineopt].variables[:storages_invested]
         var_storages_decommissioned = m_mp.ext[:spineopt].variables[:storages_decommissioned]
@@ -818,15 +786,16 @@ function test_constraint_storage_lifetime()
     @testset "constraint_storage_lifetime" begin
         candidate_storages = 1
         node_capacity = 500
+        expected_num_vars = Dict(30 => 6, 180 => 8, 240 => 9)
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
-            storage_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_lifetime", storage_investment_lifetime],
+                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -840,7 +809,9 @@ function test_constraint_storage_lifetime()
             var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
             var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
             constraint = m.ext[:spineopt].constraints[:storage_lifetime]
-
+            
+            @test length(var_storages_invested_available) == expected_num_vars[lifetime_minutes]
+            @test length(var_storages_invested) == expected_num_vars[lifetime_minutes]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
@@ -881,12 +852,12 @@ function test_constraint_storage_lifetime_mp()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
-            storage_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_lifetime", storage_investment_lifetime],
+                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]
@@ -898,7 +869,7 @@ function test_constraint_storage_lifetime_mp()
                 url_in; relationships=relationships, object_parameter_values=object_parameter_values
             )
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            m_mp = master_problem_model(m)
+            m_mp = master_model(m)
             var_storages_invested_available = m_mp.ext[:spineopt].variables[:storages_invested_available]
             var_storages_invested = m_mp.ext[:spineopt].variables[:storages_invested]
             constraint = m_mp.ext[:spineopt].constraints[:storage_lifetime]
@@ -933,11 +904,92 @@ function test_constraint_storage_lifetime_mp()
     end
 end
 
+function test_constraint_min_capacity_margin()
+    @testset "constraint_min_capacity_margin" begin
+        url_in = _test_constraint_node_setup()        
+        margin_b = 100
+        demand_b = 105
+        capacity = 200
+        object_parameter_values = [
+            ["node", "node_b", "min_capacity_margin", margin_b],
+            ["node", "node_b", "demand", demand_b],
+            ["unit", "unit_ab", "units_on_cost", 1],  # To have unis_on variables
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
+        ]      
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        constraint = m.ext[:spineopt].constraints[:min_capacity_margin]
+        margin_expression = m.ext[:spineopt].expressions[:capacity_margin]
+        @test length(constraint) == 2
+        paths = ([stochastic_scenario(:parent)], [stochastic_scenario(:parent), stochastic_scenario(:child)])
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        n = node(:node_b)
+        @testset for (s, t) in zip(paths, time_slices)
+            expr_key = (n, s, t)
+            con_key = (n, s, t)
+            expr = margin_expression[expr_key...]
+            expected_con = @build_constraint(realize(expr) >= margin_b)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)            
+        end
+    end
+end
+
+function test_constraint_min_capacity_margin_penalty()
+    @testset "constraint_min_capacity_margin_penalty" begin
+        url_in = _test_constraint_node_setup()        
+        margin_b = 100
+        demand_b = 105
+        capacity = 200
+        penalty = 1000
+        object_parameter_values = [
+            ["node", "node_b", "min_capacity_margin", margin_b],
+            ["node", "node_b", "min_capacity_margin_penalty", penalty],
+            ["node", "node_b", "demand", demand_b],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
+        ]      
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_mcm_slack = m.ext[:spineopt].variables[:min_capacity_margin_slack]
+        constraint = m.ext[:spineopt].constraints[:min_capacity_margin]
+        margin_expression = m.ext[:spineopt].expressions[:capacity_margin]
+        @test length(constraint) == 2        
+        paths = ([stochastic_scenario(:parent)], [stochastic_scenario(:parent), stochastic_scenario(:child)])
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))        
+        t_ss = Dict(time_slices[1] => scenarios[1], time_slices[2] => scenarios[2])
+        @testset for (path, t) in zip(paths, time_slices)            
+            n = node(:node_b)
+            var_mcm_slack_indices = (n, t_ss[t], t)
+            expr_key = (n, path, t)
+            con_key = (n, path, t)
+            expr = margin_expression[expr_key...]
+            expected_con = @build_constraint(realize(expr) + var_mcm_slack[var_mcm_slack_indices...] >= margin_b)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)            
+        end             
+    end
+end
+
+
 @testset "node-based constraints" begin
     test_constraint_nodal_balance()
     test_constraint_nodal_balance_group()
     test_constraint_node_injection()
-    test_constraint_node_state_capacity()
     test_constraint_cyclic_node_state()
     test_constraint_storage_line_pack()
     test_constraint_compression_ratio()
@@ -952,4 +1004,6 @@ end
     test_constraint_storages_invested_transition_mp()
     test_constraint_storage_lifetime()
     test_constraint_storage_lifetime_mp()
+    test_constraint_min_capacity_margin()
+    test_constraint_min_capacity_margin_penalty()
 end
