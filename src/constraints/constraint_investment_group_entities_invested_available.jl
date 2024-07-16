@@ -23,14 +23,25 @@
 Force number of entities invested available in a group to be greater than the minimum.
 """
 function add_constraint_investment_group_minimum_entities_invested_available!(m::Model)
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:investment_group_minimum_entities_invested_available] = Dict(
-        (investment_group=ig, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            _group_entities_invested_available(m, ig, s, t)
-            >=
-            minimum_entities_invested_available[(investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
+    _add_constraint!(
+        m,
+        :investment_group_minimum_entities_invested_available,
+        constraint_investment_group_minimum_entities_invested_available_indices,
+        _build_constraint_investment_group_minimum_entities_invested_available,
+    )
+end
+
+function _build_constraint_investment_group_minimum_entities_invested_available(m::Model, ig, s, t)
+    @build_constraint(
+        _group_entities_invested_available(m, ig, s, t)
+        >=
+        minimum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
+    )
+end
+
+function constraint_investment_group_minimum_entities_invested_available_indices(m::Model)
+    (
+        (investment_group=ig, stochastic_scenario=s, t=t)
         for ig in indices(minimum_entities_invested_available)
         for (s, t) in _entities_invested_available_s_t(m)
     )
@@ -42,32 +53,45 @@ end
 Force number of entities invested available in a group to be lower than the maximum.
 """
 function add_constraint_investment_group_maximum_entities_invested_available!(m::Model)
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:investment_group_maximum_entities_invested_available] = Dict(
-        (investment_group=ig, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            _group_entities_invested_available(m, ig, s, t)
-            <=
-            maximum_entities_invested_available[(investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
+    _add_constraint!(
+        m,
+        :investment_group_maximum_entities_invested_available,
+        constraint_investment_group_maximum_entities_invested_available_indices,
+        _build_constraint_investment_group_maximum_entities_invested_available,
+    )
+end
+
+function _build_constraint_investment_group_maximum_entities_invested_available(m::Model, ig, s, t)
+    @build_constraint(
+        _group_entities_invested_available(m, ig, s, t)
+        <=
+        maximum_entities_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
+    )
+end
+
+function constraint_investment_group_maximum_entities_invested_available_indices(m::Model)
+    (
+        (investment_group=ig, stochastic_scenario=s, t=t)
         for ig in indices(maximum_entities_invested_available)
         for (s, t) in _entities_invested_available_s_t(m)
     )
 end
 
 function _entities_invested_available_s_t(m)
-    [
+    (
         (stochastic_scenario=s, t=t)
         for (t, path) in t_lowest_resolution_path(
             m,
-            vcat(
-                units_invested_available_indices(m),
-                connections_invested_available_indices(m),
-                storages_invested_available_indices(m)
+            Iterators.flatten(
+                (
+                    units_invested_available_indices(m),
+                    connections_invested_available_indices(m),
+                    storages_invested_available_indices(m),
+                )
             )
         )
         for s in path
-    ]
+    )
 end
 
 function _group_entities_invested_available(m, ig, s, t)
@@ -80,7 +104,7 @@ function _group_entities_invested_available(m, ig, s, t)
             for (u, s, t) in units_invested_available_indices(
                 m; unit=unit__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
             );
-            init=0
+            init=0,
         )
         + sum(
             connections_invested_available[conn, s, t]
@@ -90,14 +114,14 @@ function _group_entities_invested_available(m, ig, s, t)
                 stochastic_scenario=s,
                 t=t_in_t(m; t_long=t)
             );
-            init=0
+            init=0,
         )
         + sum(
             storages_invested_available[n, s, t]
             for (n, s, t) in storages_invested_available_indices(
                 m; node=node__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
             );
-            init=0
+            init=0,
         )
     )
 end

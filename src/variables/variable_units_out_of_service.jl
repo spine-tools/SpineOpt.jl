@@ -17,6 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+function units_out_of_service_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    unit = intersect(unit, _unit_with_out_of_service_variable())
+    unit_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block,
+    )
+end
+
+"""
+    _unit_with_out_of_service_variable()
+
+An `Array` of units that need `units_out_of_service`, `units_taken_out_of_service` and `units_returned_to_service`.
+"""
+_unit_with_out_of_service_variable() = unit(has_out_of_service_variable=true)
+
 """
     units_out_of_service_bin(x)
 
@@ -31,39 +51,25 @@ Check if unit online variable type is defined as an integer.
 """
 units_out_of_service_int(x) = outage_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
-function units_out_of_service_replacement_value(ind)
-    if outage_variable_type(unit=ind.unit, _default=:unit_online_variable_type_none) == :unit_online_variable_type_none
-        units_unavailable[(; ind...)]
-    else
-        nothing
-    end
-end
-
-function units_out_of_service_switched_replacement_value(ind)
-    if outage_variable_type(unit=ind.unit, _default=:unit_online_variable_type_none) == :unit_online_variable_type_none
-        Call(0)
-    else
-        nothing
-    end
-end
-
-
 """
     add_variable_units_out_of_service!(m::Model)
 
 Add `units_out_of_service` variables to model `m`.
 """
 function add_variable_units_out_of_service!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :units_out_of_service,
-        units_on_indices;
-        lb=Constant(0),
+        units_out_of_service_indices;
+        lb=constant(0),
         bin=units_out_of_service_bin,
         int=units_out_of_service_int,
         fix_value=fix_units_out_of_service,
         initial_value=initial_units_out_of_service,
-        replacement_value=units_out_of_service_replacement_value,        
+        required_history_period=maximum_parameter_value(scheduled_outage_duration),        
     )
+end
+
+function _get_units_out_of_service(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t), 0)
 end

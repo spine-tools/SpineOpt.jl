@@ -24,7 +24,7 @@
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `binary_gas_connection_flow_indices` variable.
+A list of `NamedTuple`s corresponding to indices of the `binary_gas_connection_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
 function binary_gas_connection_flow_indices(
@@ -36,36 +36,29 @@ function binary_gas_connection_flow_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    node = members(node)
-    [
-        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d, s, t) in connection_flow_indices(
-            m;
-            connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
-            node=intersect(node, SpineOpt.node(has_state=false)),
-            stochastic_scenario=stochastic_scenario,
-            direction=direction,
-            t=t,
-            temporal_block=temporal_block,
-        )
-    ]
+    connection_flow_indices(
+        m;
+        connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
+        node=intersect(members(node), SpineOpt.node(has_state=false)),
+        stochastic_scenario=stochastic_scenario,
+        direction=direction,
+        t=t,
+        temporal_block=temporal_block,
+    )
 end
 
-set_bin(x) = true
-
 """
-    add_variable_connection_flow!(m::Model)
+    add_variable_binary_gas_connection_flow!(m::Model)
 
-Add `connection_flow` variables to model `m`.
+Add `binary_gas_connection_flow` variables to model `m`.
 """
 function add_variable_binary_gas_connection_flow!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :binary_gas_connection_flow,
         binary_gas_connection_flow_indices;
-        bin=set_bin,
+        bin=(x -> true),
         fix_value=fix_binary_gas_connection_flow,
-        initial_value=initial_binary_gas_connection_flow
+        initial_value=initial_binary_gas_connection_flow,
     )
 end

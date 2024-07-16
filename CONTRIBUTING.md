@@ -32,6 +32,21 @@ Thanks for taking the plunge!
 * Never leave things without type qualifications. Use an explicit `::Any`.
 * Order method definitions from most specific to least specific type constraints
 
+## Releases
+Releases are discussed among the developers first. When there is a new release version for SpineOpt, it can proceed with it's own release. However, when there is an update to SpineInterface (that affects SpineOpt), both of them need a new version number and release. Here are the steps:
+
+SpineInterface (in case SpineInterface has been updated in a way that affects SpineOpt):
+* Update project.toml, version: x.y.z (using semantic version numbering)
+* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
+* Make a new release (and tag) for SpineInterface with the same version x.y.z
+
+SpineOpt (if either has been udpated):
+* update project.toml, version: a.b.c & point to correct SpineInterface version x.y.z (same as above)
+* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
+* Make a new release (and tag) a.b.c for SpineOpt
+
+If Spine Toolbox gets an update that requires changes in SpineInterface, then it also needs to be included in the loop. In this case, before updating SpineInterface, make a branch that can hold the version that worked with the old Spine Toolbox (and similarly should be done in Spine Toolbox side). The branch should be named e.g. v0.8.x-release.
+
 ## Further questions
 * For developers there is some additional information in the implementation details (e.g. how to write a constraint).
 * You can talk to your fellow developers over gitter if the above is insufficient.

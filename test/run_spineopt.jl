@@ -467,7 +467,6 @@ function _test_unfeasible()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in, url_out; log_level=0)
         @test termination_status(m) != MOI.OPTIMAL
     end
@@ -782,7 +781,7 @@ function _test_fix_unit_flow_with_rolling()
             relationship_parameter_values=relationship_parameter_values
         )
         rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out)
+        m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         @testset for ind in indices(Y.unit_flow)
             @testset for (t, v) in Y.unit_flow(; ind...)
@@ -867,7 +866,7 @@ function _test_time_limit()
         )
         rm(file_path_out; force=true)
         windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
-        msgs = ["no solution available for window $w - moving on..." for w in windows]
+        msgs = ["no solution available for instance - window $w - moving on..." for w in windows]
         @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
     end
 end
@@ -890,7 +889,8 @@ function _test_only_linear_model_has_duals()
         objects = [["output", "bound_units_on"]]
         relationships = [["report__output", ["report_x", "bound_units_on"]]]
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"],
+            ["unit", "unit_ab", "units_on_cost", 1],  # To have units_on variables
         ]
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
@@ -898,6 +898,19 @@ function _test_only_linear_model_has_duals()
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         @test !has_duals(m)
+    end
+end
+
+function _test_add_event_handler()
+    @testset "add_event_handler" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        called = false
+        m = run_spineopt(url_in, url_out; log_level=0) do m
+            add_event_handler!(m, :model_built) do m
+                called = true
+            end
+        end
+        @test called
     end
 end
 
@@ -923,4 +936,5 @@ end
     _test_time_limit()
     _test_only_linear_model_has_duals()
     _test_report_relative_optimality_gap()
+    _test_add_event_handler()
 end

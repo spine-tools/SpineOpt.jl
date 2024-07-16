@@ -35,41 +35,49 @@ See also
 [has\_state](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
+    _add_constraint!(
+        m, :node_state_capacity, constraint_node_state_capacity_indices, _build_constraint_node_state_capacity
+    )
+end
+
+function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:node_state_capacity] = Dict(
-        (node=ng, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + sum(
-                + node_state[ng, s, t] for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);
-                init=0,
-            )
-            <=
-            + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+    @build_constraint(
+        + sum(
+            + node_state[n, s, t]
+            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            init=0,
+        )
+        <=
+        + sum(
+            + node_state_cap(m; node=ng, stochastic_scenario=s, t=t)
             * (
-                candidate_storages(node=ng) !== nothing ?
-                sum(
+                + number_of_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
+                + sum(
                     storages_invested_available[n, s, t1]
                     for (n, s, t1) in storages_invested_available_indices(
-                        m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_short=t)
+                        m; node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
                     );
                     init=0,
-                ) : 1
+                )
             )
+            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (ng, s, t) in constraint_node_state_capacity_indices(m)
     )
 end
 
 function constraint_node_state_capacity_indices(m::Model)
-    unique(
+    (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(m; node=indices(node_state_cap))
+        for (ng, t) in node_time_indices(m; node=intersect(indices(node_state_cap), indices(candidate_storages)))
         for path in active_stochastic_paths(
             m,
-            vcat(
-                node_state_indices(m; node=ng, t=t),
-                storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t))
+            Iterators.flatten(
+                (
+                    node_state_indices(m; node=ng, t=t),
+                    storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
+                )
             )
         )
     )

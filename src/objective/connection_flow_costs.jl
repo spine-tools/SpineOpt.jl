@@ -24,14 +24,13 @@ Create an expression for `connection_flow` costs.
 """
 function connection_flow_costs(m::Model, t_range)
     @fetch connection_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @expression(
         m,
         sum(
             connection_flow[conn, n, d, s, t]
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * connection_flow_cost[(connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * connection_flow_cost(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (conn, n, d) in indices(connection_flow_cost)
             for (conn, n, d, s, t) in connection_flow_indices(m; connection=conn, node=n, direction=d, t=t_range);

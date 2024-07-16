@@ -30,18 +30,19 @@ investment candidate connections.
 ```
 """
 function add_constraint_connections_invested_available!(m::Model)
-    @fetch connections_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:connections_invested_available] = Dict(
-        (connection=conn, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + connections_invested_available[conn, s, t]
-            <=
-            + candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )
-        for (conn, s, t) in connections_invested_available_indices(m)
+    _add_constraint!(
+        m,
+        :connections_invested_available,
+        connections_invested_available_indices,
+        _build_constraint_connections_invested_available,
     )
 end
-# TODO: units_invested_available or \sum(units_invested)?
-# Candidate units: max amount of units that can be installed over model horizon
-# or max amount of units that can be available at a time?
+
+function _build_constraint_connections_invested_available(m::Model, conn, s, t)
+    @fetch connections_invested_available = m.ext[:spineopt].variables
+    @build_constraint(
+        + connections_invested_available[conn, s, t]
+        <=
+        + candidate_connections(m; connection=conn, stochastic_scenario=s, t=t)
+    )
+end

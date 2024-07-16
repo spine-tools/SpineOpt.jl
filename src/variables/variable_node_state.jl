@@ -24,14 +24,20 @@ A set of tuples for indexing the `node_state` variable where filtering options c
 for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
-    unique(
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, tb) in node_with_state__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+    node = intersect(node, SpineOpt.node(has_state=true))
+    node_stochastic_time_indices(
+        m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
+
+function node_state_ub(m; node, kwargs...)
+    node_state_cap(m; node=node, kwargs..., _default=NaN) * (
+        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + something(candidate_storages(m; node=node, kwargs...), 0)
+    )
+end
+
+_default_nb_of_storages(n) = is_candidate(node=n) ? 0 : 1
 
 """
     add_variable_node_state!(m::Model)
@@ -39,13 +45,13 @@ end
 Add `node_state` variables to model `m`.
 """
 function add_variable_node_state!(m::Model)
-    t0 = _analysis_time(m)
     add_variable!(
         m,
         :node_state,
         node_state_indices;
         lb=node_state_min,
+        ub=node_state_ub,
         fix_value=fix_node_state,
-        initial_value=initial_node_state
+        initial_value=initial_node_state,
     )
 end

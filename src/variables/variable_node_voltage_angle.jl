@@ -29,16 +29,13 @@ function node_voltage_angle_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=intersect(node, SpineOpt.node(has_voltage_angle=true)),
-            stochastic_scenario=stochastic_scenario,
-            t=t,
-            temporal_block=temporal_block,
-        )
-    ]
-    unique!(inds)
+    node_stochastic_time_indices(
+        m;
+        node=intersect(node, SpineOpt.node(has_voltage_angle=true)),
+        stochastic_scenario=stochastic_scenario,
+        t=t,
+        temporal_block=temporal_block,
+    )
 end
 
 """
@@ -47,7 +44,6 @@ end
 Add `node_voltage_angle` variables to model `m`.
 """
 function add_variable_node_voltage_angle!(m::Model)
-    t0 = start(current_window(m))
     add_variable!(
         m,
         :node_voltage_angle,

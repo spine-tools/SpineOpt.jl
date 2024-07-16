@@ -21,31 +21,50 @@
 The unit must be taken out of service for maintenance for a duration equal to scheduled_outage_duration:
 
 ```math
-\sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t \geq scheduled\_outage\_duration_{(u,s,t)}number\_of\_units_u \quad \forall u \in unit, \, \forall (s,t)
+\sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t
+\geq scheduled\_outage\_duration_{(u,s,t)}number\_of\_units_u \quad \forall u \in unit, \, \forall (s,t)
 ```
 
 """
 function add_constraint_min_scheduled_outage_duration!(m::Model)
-    @fetch units_out_of_service = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_scheduled_outage_duration] = Dict(
-        (unit=u, stochastic_path=s_long, t=t_long) => @constraint(
-            m, 
-            + sum(
-                units_out_of_service[u, s, t] * duration(t)
-                for (u, s, t) in units_on_indices(m; unit=u);
-                init=0
-            ) 
-            >= 
-            (
-                + scheduled_outage_duration[(unit=u, stochastic_scenario=s_long, analysis_time=t0, t=t_long)]
-                * number_of_units[(unit=u, stochastic_scenario=s_long, analysis_time=t0, t=t_long)]
-            ) / _model_duration_unit(m.ext[:spineopt].instance)(1)
-            
-        )
-        for (u, s_long, t_long) in constraint_min_scheduled_outage_duration_indices(m)
+    _add_constraint!(
+        m,
+        :min_scheduled_outage_duration,
+        constraint_min_scheduled_outage_duration_indices,
+        _build_constraint_min_scheduled_outage_duration,
     )
 end
+
+function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
+    @fetch units_out_of_service = m.ext[:spineopt].variables
+    max_sch_out_dur = maximum(
+        (
+            + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
+            * (
+                + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+                + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
+            )
+        )
+        for s in s_path
+    )
+    lowest_res = maximum(_maximum(resolution(temporal_block=tb)) for tb in units_on__temporal_block(unit=u))
+    max_err = rem(max_sch_out_dur, lowest_res)
+    @build_constraint(
+        + 0
+        <=
+        + sum(
+            + units_out_of_service[u, s, t] * duration(t)
+            for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s_path);
+            init=0,
+        )
+        - (max_sch_out_dur / _model_duration_unit(m.ext[:spineopt].instance)(1))
+        <=
+        + max_err / _model_duration_unit(m.ext[:spineopt].instance)(1)
+    )
+end
+
+_maximum(x::T) where T<:Vector = maximum(x)
+_maximum(x) = x
 
 """
     constraint_scheduled_outage_duration_indices(m::Model, unit, t)
@@ -54,10 +73,9 @@ Creates all indices required to include units, stochastic paths and a reference 
 constraint generation.
 """
 function constraint_min_scheduled_outage_duration_indices(m::Model)
-    unique(
-        (unit=u, stochastic_path=path, t=t)
+    (
+        (unit=u, stochastic_path=path, t=current_window(m))
         for u in indices(scheduled_outage_duration)
-        for t in current_window(m)
-        for path in active_stochastic_paths(m, units_on_indices(m; unit=u))        
+        for path in active_stochastic_paths(m, units_out_of_service_indices(m; unit=u))        
     )
 end

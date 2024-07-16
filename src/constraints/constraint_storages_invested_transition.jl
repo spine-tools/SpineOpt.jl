@@ -35,31 +35,38 @@ and [storages\_decommissioned](@ref) in adjacent timeslices.
 ```
 """
 function add_constraint_storages_invested_transition!(m::Model)
+    _add_constraint!(
+        m,
+        :storages_invested_transition,
+        constraint_storages_invested_transition_indices,
+        _build_constraint_storages_invested_transition,
+    )
+end
+
+function _build_constraint_storages_invested_transition(m::Model, n, s_path, t_before, t_after)
     @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:storages_invested_transition] = Dict(
-        (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
-            m,
-            sum(
-                + storages_invested_available[n, s, t_after] - storages_invested[n, s, t_after]
-                + storages_decommissioned[n, s, t_after]
-                for (n, s, t_after) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_after);
-                init=0,
-            )
-            ==
-            sum(
-                + storages_invested_available[n, s, t_before]
-                for (n, s, t_before) in storages_invested_available_indices(
-                    m; node=n, stochastic_scenario=s, t=t_before
-                );
-                init=0,
-            )
+    @build_constraint(
+        sum(
+            + storages_invested_available[n, s, t_after] - storages_invested[n, s, t_after]
+            + storages_decommissioned[n, s, t_after]
+            for (n, s, t_after) in storages_invested_available_indices(
+                m; node=n, stochastic_scenario=s_path, t=t_after
+            );
+            init=0,
         )
-        for (n, s, t_before, t_after) in constraint_storages_invested_transition_indices(m)
+        ==
+        sum(
+            + storages_invested_available[n, s, t_before]
+            for (n, s, t_before) in storages_invested_available_indices(
+                m; node=n, stochastic_scenario=s_path, t=t_before
+            );
+            init=0,
+        )
     )
 end
 
 function constraint_storages_invested_transition_indices(m::Model)
-    unique(
+    (
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, t_before, t_after) in node_investment_dynamic_time_indices(m)
         for path in active_stochastic_paths(m, storages_invested_available_indices(m; node=n, t=[t_before, t_after]))

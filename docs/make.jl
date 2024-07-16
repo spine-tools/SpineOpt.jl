@@ -7,18 +7,14 @@ include("docs_utils.jl")
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
 default_translation = Dict(
-    # ["tool_features"] => "Tool Features",
-    ["relationship_classes"] => "Relationship Classes",
-    ["parameter_value_lists"] => "Parameter Value Lists",
-    # ["features"] => "Features",
-    # ["tools"] => "Tools",
-    ["object_parameters", "relationship_parameters"] => "Parameters",
-    ["object_classes"] => "Object Classes",
+    "relationship_classes" => "Relationship Classes",
+    "parameter_value_lists" => "Parameter Value Lists",
+    "object_parameters" => "Parameters",
+    "relationship_parameters" => "Parameters",
+    "object_classes" => "Object Classes",
 )
-concept_dictionary = add_cross_references!(
-    initialize_concept_dictionary(SpineOpt.template(); translation = default_translation),
-)
-write_concept_reference_files(concept_dictionary, path)
+concept_dict = concept_dictionary(SpineOpt.template(); translation = default_translation)
+write_concept_reference_files(concept_dict, path)
 
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
 # and content from docstrings
@@ -38,10 +34,8 @@ pages = [
     "Introduction" => "index.md",
     "Getting Started" => Any[
         "Installation" => joinpath("getting_started", "installation.md"),
-        "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
-        "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
-        "Archetypes" => joinpath("getting_started", "archetypes.md"),
-        "Managing Outputs" => joinpath("getting_started", "output_data.md"),
+        "Recommended workflow" => joinpath("getting_started", "recommended_workflow.md"),
+        "Troubleshooting" => joinpath("getting_started", "troubleshooting.md"),
     ],
     "Tutorials" => Any[
         "Webinars" => joinpath("tutorial", "webinars.md"),
@@ -57,6 +51,7 @@ pages = [
         "Relationship Classes" => joinpath("concept_reference", "Relationship Classes.md"),
         "Parameters" => joinpath("concept_reference", "Parameters.md"),
         "Parameter Value Lists" => joinpath("concept_reference", "Parameter Value Lists.md"),
+        "Archetypes" => joinpath("concept_reference", "archetypes.md"),
     ],
     "Mathematical Formulation" => Any[
         "Variables" => joinpath("mathematical_formulation", "variables.md"),
@@ -80,6 +75,7 @@ pages = [
         ),
         "Imposing renewable energy targets" => joinpath("advanced_concepts", "cumulated_flow_restrictions.md"),
         "Modelling to generate alternatives" => joinpath("advanced_concepts", "mga.md"),
+        "Multi-stage optimisation" => joinpath("advanced_concepts", "multi_stage.md"),
     ],
     "Implementation details" => [],
     "Library" => "library.md",

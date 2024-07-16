@@ -159,22 +159,22 @@
     m = run_spineopt(url_in, log_level=0, optimize=false)
 
     @testset "node_stochastic_time_indices" begin
-        @test length(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a))) == 1
-        @test length(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1))) == 2
-        @test length(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a2))) == 2
-        @test length(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b))) == 3
+        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 1
+        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))) == 2
+        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a2)))) == 2
+        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b)))) == 3
         @test isempty(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b1)))
         @test isempty(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b2)))
-        @test length(node_stochastic_time_indices(m)) == 8
+        @test length(collect(node_stochastic_time_indices(m))) == 8
     end
     @testset "unit_stochastic_time_indices" begin
-        @test length(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a))) == 3
+        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 3
         @test isempty(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))
         @test isempty(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a2)))
-        @test length(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b))) == 2
-        @test length(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b1))) == 1
-        @test length(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b2))) == 1
-        @test length(unit_stochastic_time_indices(m)) == 7
+        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b)))) == 2
+        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b1)))) == 1
+        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b2)))) == 1
+        @test length(collect(unit_stochastic_time_indices(m))) == 7
     end
     @testset "node_stochastic_scenario_weight" begin
         @test realize(

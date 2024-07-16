@@ -17,12 +17,8 @@ Having a high-level overview of how this documentation is structured will help y
 
 - **Getting Started**
   contains guides for starting to use *SpineOpt.jl*.
-  The [Installation](@ref) section links to the guides for how to install *SpineOpt.jl*
-  and *Spine Toolbox* on your computer. The [Setting up a workflow for SpineOpt in Spine Toolbox](@ref)
-  section explains how to set up and run *SpineOpt.jl* from *Spine Toolbox*.
-  The [Creating Your Own Model](@ref) section explains how to create a new model from scratch.
-  This includes a list of the necessary [Object Classes](@ref) and [Relationship Classes](@ref),
-  but for more information, you will probably need to consult the **Concept Reference** chapter.
+  The [Installation](@ref installation) section explains different ways to install *SpineOpt.jl* on your computer. To ensure that the installation has been done correctly, the [Recommended workflow](@ref recommended_workflow)
+  section provides a guide to set up a minimal working example of *SpineOpt.jl* in *Spine Toolbox*. Some SpineOpt concepts will already be explained in this example but more information is provided in the **Concept Reference** chapter. Regardless, any issues during this example will most likely be due to the installation. If any problems are encountered, you can start with the [Trouble shooting](@ref troubleshooting) section.
 
 - **Tutorials**
   provides guided examples for a set of basic use-cases, either as videos, written text and/or example files.

@@ -32,29 +32,25 @@ in order to impose a lower limit on the aggregated [node\_pressure](@ref) within
 See also [min\_node\_pressure](@ref).
 """
 function add_constraint_min_node_pressure!(m::Model)
+    _add_constraint!(m, :min_node_pressure, constraint_min_node_pressure_indices, _build_constraint_min_node_pressure)
+end
+
+function _build_constraint_min_node_pressure(m::Model, ng, s_path, t)
     @fetch node_pressure = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:min_node_pressure] = Dict(
-        (node=ng, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + sum(
-                + node_pressure[ng, s, t]
-                for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t);
-                init=0,
-            )
-            >=
-            + min_node_pressure[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+    @build_constraint(
+        sum(
+            + node_pressure[ng, s, t]
+            - min_node_pressure(m; node=ng, stochastic_scenario=s, t=t)
+            for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            init=0,
         )
-        for (ng, s, t) in constraint_min_node_pressure_indices(m)
+        >=
+        0
     )
 end
 
 function constraint_min_node_pressure_indices(m::Model)
-    unique(
-        (node=ng, stochastic_path=path, t=t)
-        for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure))
-        for path in active_stochastic_paths(m, s)
-    )
+    ((node=ng, stochastic_path=[s], t=t) for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure)))
 end
 
 """
