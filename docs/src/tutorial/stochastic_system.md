@@ -1,4 +1,4 @@
-# Stochastic system tutorial
+# Stochastic structure tutorial
 
 Welcome to Spine Toolbox's Stochastic System tutorial.
 
@@ -6,8 +6,10 @@ This tutorial provides a step-by-step guide to get started with the stochastic s
 More information can be found in the [documentation on the stochastic structure](@ref stochastic_framework).
 It is recommended to make sure you are able to get the simple system tutorial working first.
 
-In this tutorial we will take a look at independent scenarios, stochastic paths
-and different stochastic paths in different parts of the energy system.
+In this tutorial we will take a look at independent scenarios and stochastic paths.
+
+!!! info
+    In theory it is also possible to have different stochastic structures in different parts of your system. In practice that is very much prone to errors. As much of the functionality of different stochastic structures can be accomplished with a clever DAG, it is recommended to work with a single stochastic structure at all times.
 
 ## Setup starting from simple system tutorial
 
@@ -163,34 +165,3 @@ When we run the model now, we will obtain values for all scenarios.
     The *stochastic\_scenario\_end* parameter starts counting from the start of the simulation!
     In the examples above, when the base scenario has a duration of 6h and the forecast scenarios have a duration of 16h,
     the forecast scenarios will only be active for 10 hours between hour 6 and hour 16!
-
-## Different stochastic structures
-
-It is also possible to have different stochastic structures across the model.
-However, there are only certain variables on which this has an effect.
-We are going to take the example of *units_on*.
-There are no *units_on* in the simple system,
-so we'll build on the unit commitment tutorial instead.
-
-Make a new project like before but load tutorial_UC.json instead of the simple system.
-
-There is already a (deterministic) stochastic structure present
-and now we'll add another stochastic structure specifically for power plant b.
-- add stochastic structure *DAG*
-- add scenario *value1*
-- add scenario *value2*
-- connect the scenarios to the stochastic structure and the stochastic structure to the model.
-
-Note that the stochastic structure *Deterministic* remains the default of the model
-(there is no default stochastic structure relationship between the stochastic structure and the model).
-The stochastic structure *DAG* will instead be connected to power plant b.
-- add the relationship *units_on__stochastic_structure* between power plant b and DAG.
-
-With the stochastic structure we can now choose different starting conditions.
-In particular we'll consider the costs when a unit is on.
-- Turn the cost of units on parameter from 3.0 into a map
-with 1.0 for value 1 and 5.0 for value 2.
-
-!!! note
-    This does not work for all parameters.
-    One example is the number of units that are initially on as this refers to an historic time slice.
