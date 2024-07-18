@@ -63,7 +63,11 @@ end
 
 function _build_constraint_user_constraint(m::Model, uc, path, t)
     build_sense_constraint(
-        + (_is_benders_master(m) ? 0 : _operations_term(m, uc, path, t))
+        + (
+            _is_benders_master(m) && benders_master_scenario(model=m.ext[:spineopt].instance, _strict=false) === nothing
+            ? 0
+            : _operations_term(m, uc, path, t)
+        )
         + _investment_term(m, uc, path, t),
         constraint_sense(user_constraint=uc),
         + sum(right_hand_side(m; user_constraint=uc, stochastic_scenario=s, t=t) for s in path; init=0)
