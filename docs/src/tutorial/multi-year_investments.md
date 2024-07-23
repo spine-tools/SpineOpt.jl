@@ -45,7 +45,7 @@ Operation temporal blocks are non-continuous, in 2030 and in 2035, respectively.
 
     This additional definition means that we will also have results for it, which is redundant and should be ignored when post-processing. 
 
-After defining these temporal blocks, we have to make sure they are used by SpineOpt. This means we have to put all the operation blocks in _model__default_temporal_block_, and the investment block in _model__default_investment_temporal_block_.
+After defining these temporal blocks, we have to make sure they are used by SpineOpt. This means we have to put all the operation blocks in `model__default_temporal_block`, and the investment block in `model__default_investment_temporal_block`.
 
 ![image](figs_multi-year/temporal_block1.png)
 
@@ -58,14 +58,14 @@ After defining these temporal blocks, we have to make sure they are used by Spin
 
 Remember that our previously built simple system concerns only operation without any investments, now we need to add investment possibilities. The general steps for creating a candidate unit can be found [here](https://spine-tools.github.io/SpineOpt.jl/latest/advanced_concepts/investment_optimization/).  
 
-We will allow investments for power_plant_a in both 2030 and 2035, and for power_plant_b only in 2035. This is realised through the definition of [candidate\_units](@ref). We define a time-varying [candidate\_units](@ref) as follows.
+We will allow investments for power\_plant\_a in both 2030 and 2035, and for power\_plant\_b only in 2035. This is realised through the definition of `candidate_units`. We define a time-varying `candidate_units` as follows.
 
-- power_plant_a: [2030: 1, 2035: 2]. Note this means in 2030, 1 unit can be invested, and in 2035, another 1 **(instead of 2)** can invested. In other words, this parameter includes the previously available units.
-- power_plant_b: [2030: 0, 2035: 1].
+- power\_plant\_a: [2030: 1, 2035: 2]. Note this means in 2030, 1 unit can be invested, and in 2035, another 1 **(instead of 2)** can invested. In other words, this parameter includes the previously available units.
+- power\_plant\_b: [2030: 0, 2035: 1].
 
 ## Providing investment costs
 
-Specify your unit investment cost by setting the _unit_investment_cost_ parameter. In this tutorial, for illustrative purposes, we only give a constant value. It is important to mention that normally, you should use the discounted cost. In this example, the costs in 2030 and in 2035 should be discounted to the discount year, i.e., you would define a time-varying cost to reflect the economic representation. SpineOpt allows the users to give any parameter they would need, according to their wishes.
+Specify your unit investment cost by setting the `unit_investment_cost` parameter. In this tutorial, for illustrative purposes, we only give a constant value. It is important to mention that normally, you should use the discounted cost. In this example, the costs in 2030 and in 2035 should be discounted to the discount year, i.e., you would define a time-varying cost to reflect the economic representation. SpineOpt allows the users to give any parameter they would need, according to their wishes.
 
 ## Checking outputs
 For convenience, you may want to add some variables to the report as below, which is the last thing before running the model. 
@@ -74,14 +74,14 @@ For convenience, you may want to add some variables to the report as below, whic
 
 Now you can run the model.
 
-We can check the results for power_plant_a first. The below pictures show that in 2030, there is 1 investment, and in 2035, there is another investment. In 2035, there are 2 units on.
+We can check the results for power\_plant\_a first. The below pictures show that in 2030, there is 1 investment, and in 2035, there is another investment. In 2035, there are 2 units on.
 
 Note we notice a drop between the two periods for operation variables, _units_on_ in this case, because it is a redundant result.
 
 ![image](figs_multi-year/result-ppa-invested.png)
 ![image](figs_multi-year/result-ppa-on.png)
 
-We also get 1 investment for power_plant_b in 2035.
+We also get 1 investment for power\_plant\_b in 2035.
 
 ![image](figs_multi-year/result-ppb-invested.png)
 ![image](figs_multi-year/result-ppb-on.png)
