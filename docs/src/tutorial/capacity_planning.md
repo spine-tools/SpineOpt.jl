@@ -101,6 +101,6 @@ We also get 1 investment for power_plant_b in 2035.
 
 ## Debugging
 
-For debugging purposes, it may be interesting to have an overview of all the parameters in this tutorial.
+For debugging purposes, consider an overview of all the parameters in this tutorial below.
 
 ![image](figs_capacity_planning/overview.png)
