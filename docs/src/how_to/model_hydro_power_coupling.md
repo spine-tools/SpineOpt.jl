@@ -289,7 +289,7 @@ by inserting the following *unit\_\_to\_node* relationship parameter values:
 *Setting the maximal electricity production of each plant.*
 
 Hooray! You can now commit the database, close the Spine DB Editor and
-run your model! Go to the main Spine window and click on Execute ![image](figs_a5/play-circle.png).
+run your model! Go to the main Spine window and click on Execute.
 
 ### Examining the results
 
@@ -503,15 +503,3 @@ water node, downstream of Fallet).
 It is often the case that a system of hydropower plants should follow a
 given production profile. To model this in the given system, all we have
 to do is set a demand in the form of a timeseries to the *electricity\_node*.
-
--   Add the [Contracted load
-    timeseries](https://raw.githubusercontent.com/spine-tools/Spine-Toolbox/master/docs/source/data/contracted_load.txt),
-    to the *demand* parameter value of
-    the *electricity\_node* (see
-    [adding node parameter values](../index.md#Defining-node-parameter-values)).
-
-Commit your changes in the database, execute the project and
-[examine the results](../index.md#Examining-the-results)!
-
-This concludes the tutorial, we hope that you enjoyed building
-hydropower systems in Spine as much as we do!
