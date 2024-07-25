@@ -1,4 +1,4 @@
-# Stochastic Framework
+# [Stochastic Framework](@id stochastic_framework)
 
 Scenario-based stochastics in unit commitment and economic dispatch models typically only consider branching
 scenario trees.
