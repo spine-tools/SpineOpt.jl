@@ -3,8 +3,11 @@
 This how-to aims at demonstrating how we can model a hydropower system
 in Spine (*SpineOpt.jl* and *Spine-Toolbox*) with different assumptions and
 goals. It starts off by setting up a simple model of system of two
-hydropower plants and gradually introduces additional features. The goal
-of the model is to capture the combined operation of two hydropower
+hydropower plants and gradually introduces additional features.
+
+## Context
+
+The goal of the model is to capture the combined operation of two hydropower
 plants (Språnget and Fallet) that operate on the same river as shown in
 the picture bellow. Each power plant has its own reservoir and generates
 electricity by discharging water. The plants might need to spill water,
@@ -15,8 +18,6 @@ the downstream power plant.
 
 
 ![A system of two hydropower plants.](figs_two_hydro/two_hydro.png)
-
-*A system of two hydropower plants*
 
 ## Setting up a Basic Hydropower Model
 
@@ -32,9 +33,7 @@ In the *Add objects* dialogue that should pop up, enter
 the object names for the commodities as you see in the image below and
 then press Ok.
 
-![image](figs_two_hydro/two_hydro_commodities.png)
-
-*Defining commodities.*
+![Defining commodities](figs_two_hydro/two_hydro_commodities.png)
 
 #### Nodes
 
@@ -42,9 +41,7 @@ Follow a similar path to add nodes, right click on the node class, and
 select *Add objects* from the context menu.
 In the dialogue, enter the node names as shown:
 
-![image](figs_two_hydro/two_hydro_nodes.png)
-
-*Defining nodes.*
+![Defining nodes](figs_two_hydro/two_hydro_nodes.png)
 
 Nodes in SpineOpt are used to balance commodities. As you noticed, we
 defined two nodes for each hydropower station (water nodes) and a single
@@ -60,9 +57,7 @@ Similarly, add connections, right click on the connection class, select
 *Add objects* from the context menu and add
 the following connections:
 
-![image](figs_two_hydro/two_hydro_connections.png)
-
-*Defining connections.*
+![Defining connections](figs_two_hydro/two_hydro_connections.png)
 
 Connections enable the nodes to interact. Since, for each plant we need
 to model the amount of water that is discharged and the amount that is
@@ -76,9 +71,7 @@ another, you need a unit. You guessed it! Right click on the unit class,
 select *Add objects* from the context menu
 and add the following units:
 
-![image](figs_two_hydro/two_hydro_units.png)
-
-*Defining units.*
+![Defining units](figs_two_hydro/two_hydro_units.png)
 
 We have defined one unit for each hydropower plant that converts water
 to electricity and an additional unit that we will use to model the
@@ -95,25 +88,19 @@ required, right click on the *node\_\_commodity* class, and select *Add relation
 *Add relationships* dialogue, enter the
 following relationships as you see in the image below and then press Ok.
 
-![image](figs_two_hydro/two_hydro_node_commodities.png)
-
-*Introducing node\_\_commodity relationships.*
+![Introducing node__commodity relationships](figs_two_hydro/two_hydro_node_commodities.png)
 
 #### Associating connections to nodes
 
 Next step is to define the topology of flows between the nodes. To do
 that insert the following relationships in the *connection\_\_from\_node* class:
 
-![image](figs_two_hydro/two_hydro_connection_from_node.png)
-
-*Introducing connection\_\_from\_node relationships.*
+![Introducing connection__from_node relationships](figs_two_hydro/two_hydro_connection_from_node.png)
 
 as well as the following the following *connection\_\_node_node* relationships as you
 see in the figure:
 
-![Introducing connection__node_node relationships.](figs_two_hydro/two_hydro_connection_node_node.png)
-
-*Introducing connection\_\_node\_node relationships.*
+![Introducing connection__node__node relationships.](figs_two_hydro/two_hydro_connection_node_node.png)
 
 #### Placing the units in the model
 
@@ -123,20 +110,14 @@ the *unit\_\_from\_node* class:
 
 ![Introducing unit__from_node relationships.](figs_two_hydro/two_hydro_unit_from_node.png)
 
-*Introducing unit\_\_from\_node relationships.*
-
 in the *unit\_\_node_node* class:
 
 ![Introducing unit__node_node relationships.](figs_two_hydro/two_hydro_unit_node_node.png)
-
-*Introducing unit\_\_node\_node relationships.*
 
 and in the *unit\_\_to\_node* class as you
 see in the following figure:
 
 ![Introducing unit__to_node relationships.](figs_two_hydro/two_hydro_unit_to_node.png)
-
-*Introducing unit\_\_to\_node relationships.*
 
 #### Defining the report outputs
 
@@ -146,8 +127,6 @@ variables to the output database you need to specify them in the form of
 following relationships to the *report\_output* class:
 
 ![Introducing report outputs with report_output relationships.](figs_two_hydro/two_hydro_report.png)
-
-*Introducing report outputs with report\_output relationships.*
 
 ### Objects and Relationships parameter values
 
@@ -159,8 +138,6 @@ parameter values first select the *model*
 class in the Object tree and enter the following values in the *Object parameter value* pane:
 
 ![Defining model execution parameters.](figs_two_hydro/two_hydro_model_parameters.png)
-
-*Defining model execution parameters.*
 
 Observe the difference between the *Object
 parameter value* and the *Object parameter
@@ -191,8 +168,6 @@ the *Object tree*, we need to add the
 following entries:
 
 ![Defining model execution parameters.](figs_two_hydro/two_hydro_node_parameters.png)
-
-*Defining model execution parameters.*
 
 Before we go through the interpretation of each parameter, click on the
 following link for each *fix\_node\_state*
@@ -234,8 +209,6 @@ class in the *Object tree* and we set the
 
 ![Setting the temporal resolution of the model.](figs_two_hydro/two_hydro_temporal_block.png)
 
-*Setting the temporal resolution of the model.*
-
 #### Defining connection parameter values
 
 The water that is discharged from Språnget will flow from *Språnget\_lower* node to *Fallet\_upper* through the *Språnget\_to\_Fallet\_disc* connection, while the
@@ -246,8 +219,6 @@ next:
 
 ![Defining discharge and spillage ratio flows.](figs_two_hydro/two_hydro_connection_node_node_parameters.png)
 
-*Defining discharge and spillage ratio flows.*
-
 #### Defining unit parameter values
 
 Similarly, for each one of the *unit\_\_from_node*, *unit\_\_node_node*, and *unit\_\_to_node* relationship classes we need to
@@ -255,8 +226,6 @@ add the the maximal water that can be discharged by each hydropower
 plant:
 
 ![Setting the maximal water discharge of each plant.](figs_two_hydro/two_hydro_unit_from_node_parameters.png)
-
-*Setting the maximal water discharge of each plant.*
 
 To define the income from selling the produced electricity we use the
 *vom\_cost* parameter and negate the values
@@ -269,8 +238,6 @@ by double clicking on the same cell afterwards:
 
 ![Previewing and editing the electricity prices timeseries.](figs_two_hydro/two_hydro_vom_cost.png)
 
-*Previewing and editing the electricity prices timeseries.*
-
 Carrying on with our hydropower model we must define the conversion
 ratios between the nodes. Assuming that water is not "lost" from the
 *upper* node toward the *lower* node and electricity is produced with the
@@ -279,14 +246,10 @@ parameter values for each hydropower plant, in the *unit\_\_node_node* class:
 
 ![Defining conversion efficiencies.](figs_two_hydro/two_hydro_unit_node_node_parameters.png)
 
-*Defining conversion efficiencies.*
-
 Lastly, we can define the maximal electricity production of each plant
 by inserting the following *unit\_\_to\_node* relationship parameter values:
 
 ![Setting the maximal electricity production of each plant.](figs_two_hydro/two_hydro_unit_to_node_parameters.png)
-
-*Setting the maximal electricity production of each plant.*
 
 Hooray! You can now commit the database, close the Spine DB Editor and
 run your model! Go to the main Spine window and click on Execute.
@@ -308,15 +271,11 @@ electricity production in the system:
 
 ![Total electricity produced in the system.](figs_two_hydro/two_hydro_results_electricity.png)
 
-*Total electricity produced in the system.*
-
 Now, take to a minute to reflect on how you could retrieve the data
 representing the water that is discharged by each hydropower plant as
 shown in the next figure:
 
 ![Water discharge of Språnget hydropower plant.](figs_two_hydro/two_hydro_results_discharge.png)
-
-*Water discharge of Språnget hydropower plant.*
 
 The right answer is that you need to select some hydropower plant (e.g.,
 Språnget) and then double-click on the value cell of the object name
@@ -420,7 +379,6 @@ modifications to the initial model.
         set 0 as the price of electricity for the last hour *2021-01-02T00:00:00*. The price is set
         to zero to ensure no electricity is sold during this hour.
     ![Modify the fix_node_state parameter value of Språnget_upper and Fallet_upper nodes.](figs_two_hydro/two_hydro_fix_node_state.png)
-    *Modify the fix\_node\_state parameter value of Språnget\_upper and Fallet\_upper nodes.*
 -   Finally, we need to add some relationship parameter values for the
     new units:
     -   Add a *vom\_cost* parameter value
@@ -434,7 +392,6 @@ modifications to the initial model.
         use an assumed future electricity value for the additional
         time step at the end of the horizon. 
     ![Adding vom_cost parameter value on the value_stored_water unit.](figs_two_hydro/two_hydro_max_stored_water_unit_values.png)
-    *Adding vom\_cost parameter value on the value\_stored\_water unit.*
     -   Add two *fix\_ratio\_out\_in\_unit\_flow* parameter
         values as you see in the figure bellow. The efficiency of
         *Fallet\_stored\_water* is the same
@@ -445,7 +402,6 @@ modifications to the initial model.
         Fallet and Språnget plant, therefore we use the sum of the two
         efficiencies in the parameter value of *Språnget\_stored\_water*.
     ![Adding fix_ratio_out_in_unit_flow parameter values on the Språnget_stored_water and Fallet_stored_water units.](figs_two_hydro/two_hydro_max_stored_water_unit_node_node.png)
-    *Adding fix\_ratio\_out\_in\_unit\_flow parameter values on the Språnget\_stored\_water and Fallet\_stored\_water units.*
 
 You can now commit your changes in the database, execute the project and
 [examine the results](../index.md#Examining-the-results)! As an exercise, try to retrieve
@@ -484,8 +440,6 @@ minimisation to be added in the objective function.
         to impose a minimum, and the *vom\_cost* to penalise the water that is
         spilt:
     ![Setting minimum (the minimal value is defined as percentage of capacity), maximum, and spillage penalty.](figs_two_hydro/two_hydro_min_spill_unit_node_node.png)
-    
-    *Setting minimum (the minimal value is defined as percentage of capacity), maximum, and spillage penalty.*
  
 -   For the *Språnget\_spill* unit
     define the *fix\_ratio\_out\_in\_unit\_flow* parameter
