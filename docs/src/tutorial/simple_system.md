@@ -7,9 +7,15 @@ system with Spine Toolbox for SpineOpt.
 Spine Toolbox is used to create a workflow with databases and tools and 
 SpineOpt is the tool that simulates/optimizes the energy system.
 
-## Introduction
+!!! info
+    If you haven't yet installed the tools or you are not sure whether you have the latest version,
+    please follow the installation/upgrade guides: 
+    - For Spine Toolbox: [Spine Toolbox installation guide](https://github.com/spine-tools/Spine-Toolbox#installation)
+    - For SpineOpt: [SpineOpt installation guide](@ref installation)
 
-### Model assumptions
+## About the simple system
+
+In the simple system:
 
 -   Two power plants take fuel from a source node and release
     electricity to another node in order to supply a demand.
@@ -24,16 +30,7 @@ SpineOpt is the tool that simulates/optimizes the energy system.
 
 ![image](figs_simple_system/simple_system_schematic.png)
 
-### Installation and upgrades
-
-If you haven't yet installed the tools or you are not sure whether you have the latest version,
-please follow the installation/upgrade guides: 
-- For Spine Toolbox: [Spine Toolbox installation guide](https://github.com/spine-tools/Spine-Toolbox#installation)
-- For SpineOpt: [SpineOpt installation guide](https://github.com/spine-tools/SpineOpt.jl#installation)
-
-## Guide
-
-### Spine Toolbox workflow
+## Spine Toolbox workflow
 
 The workflow for this tutorial is quite simple: A SpineOpt tool that 
 reads data from an input database, executes the simulation/optimization 
@@ -78,149 +75,186 @@ The result should look similar to this (+/- the Load template block):
 That is it for the workflow. Now we can enter the data for the setup of the simple system 
 into the input database, run the workflow and view the results in the output database.
 
-### Entering input data
+## Entering input data
 
-#### Importing the SpineOpt database template
+To enter the necessary data for the simple system, we'll use the *Spine DB editor*.
+The *Spine DB editor* is a dedicated interface within Spine Toolbox
+for visualizing and managing Spine databases. The default view shows 
+tables (see below) but for viewing energy system configurations
+it is nice to see a graph. Press the graph button in the toolbar.
+The graph view only shows what you select in the root menu 
+and what your selected entities are connected to.
 
--   Download [the SpineOpt database
-    template](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/spineopt_template.json)
-    and [the basic SpineOpt
-    model](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/models/basic_model_template.json)
-    (right click on the links, then select *Save link as...*)
-
+To open the editor:
 -   Double click the input Data Store item 
     (or select the 'input' Data Store item in the *Design View*, 
-    go to *Data Store Properties* and hit **Open editor**). 
-    This will open the newly created database in the *Spine DB editor*,
-     looking similar to this:
+    go to *Data Store Properties* and hit **Open editor**).
+
 ![image](figs_simple_system/simple_system_toolbox_empty.png)
 
-!!! note
-    The *Spine DB editor* is a dedicated interface within Spine Toolbox
-    for visualizing and managing Spine databases. The default view shows 
-    tables but for viewing energy system configurations it is nice to see 
-    a graph. Open the hamburger menu (or press *Alt + F*) and press the 
-    graph button. The graph view only shows what you select in the root menu 
-    and what your selected objects or relationships are connected to.
+In the following we enter the input data for the simple system.
 
--   To import the templates to the database, click the hamburger menu (or press **Alt + F**), 
-    select **File -> Import...**, and then select the template file you previously
+### Importing the SpineOpt database template
+
+A SpineOpt database is a spine database but a spine database is not necessarily a SpineOpt database. Therefore we first need to format the database to a SpineOpt database with the SpineOpt template. The SpineOpt template contains the fundamental entity classes and parameter definitions that SpineOpt recognizes and expects. One option to load the template is to use the 'Load template' tool as mentioned before. Another option is to import the template with the Spine DB editor. To that end:
+
+-   Download [the SpineOpt database
+    template](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/spineopt_template.json) (right click on the link, then select *Save link as...*)
+
+-   To import the template to the database,
+    click on **File -> Import...**, and then select the template file you previously
     downloaded (*spineopt\_template.json*). The contents of that file will be 
     imported into the current database, and you should then see classes like 
-    'commodity', 'connection' and 'model' under the root node in the *Object tree*
-     (on the left). Then import the second file (*basic\_model\_template.json*).
+    'commodity', 'connection' and 'model' under the root menu.
 
--   To save our changes, go again to the hamburger menu and select **Session -> Commit**.
+-   To save our changes, press the **Commit** button in the toolbar.
     Enter a commit message, e.g. 'Import SpineOpt template', in the popup dialog
     and click **Commit**.
 
-!!! note
-    The SpineOpt template contains the fundamental entity classes
-    and parameter definitions that SpineOpt recognizes and expects.
-    The SpineOpt basic model template contains some predefined entities 
-    for a common deterministic model with a 'flat' temporal structure.
+![image](figs_simple_system/simple_system_spineopt_template.png)
 
-#### Creating objects
+### Model settings
 
--   Always in the Spine DB editor, locate the *Object tree* (typically
-    at the top-left). Expand the [root] element if not
-    expanded.
+A typical SpineOpt database has two parts: the model settings and the physical system.
 
--   Right click on the [node] class, and select *Add objects* 
-    from the context menu. The *Add objects* dialog will pop up.
+The model settings that we need for this tutorial are also available as a template that we can import. The SpineOpt basic model template contains some predefined entities for a common deterministic model with a 'flat' temporal structure.
 
--   Enter the names for the system nodes as seen in the image below,
-    then press *Ok*. This will create two objects of class
-    *node*, called *fuel\_node* and *electricity\_node*.
-![image](figs_simple_system/simple_system_add_nodes.png)
+-   Download [the basic SpineOpt
+    model](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/models/basic_model_template.json)
+    (right click on the link, then select *Save link as...*)
 
--   Right click on the *unit* class, and select *Add
-    objects* from the context menu. The *Add objects* dialog will pop
-    up.
+-   Import the template to the database through **File -> Import...**,
+    and then select the template file you previously downloaded (*basic\_model\_template.json*).
 
-!!! note
-    In SpineOpt, nodes are points where an energy balance takes place,
-    whereas units are energy conversion devices that can take energy from
-    nodes, and release energy to nodes.
+-   Commit (save) the changes through the **Commit** button in the toolbar.
 
--   Enter the names for the system units as seen in the image below,
-    then press *Ok*. This will create two objects of class
-    *unit*, called *power\_plant\_a* and
-    *power\_plant\_b*.
-![image](figs_simple_system/simple_system_add_units.png)
+One of the predefined entities is the report.
+The report determines which variables of the SpineOpt model show up in the results later on.
+Currently, there is no output connected to the report. We'll have to do that manually:
 
-!!! note
-    To modify an object after you enter it, right click on it and select
-    **Edit...** from the context menu.
+-   Locate the *Entity tree* in the Spine DB editor (typically
+    at the top-left).
 
-#### Establishing relationships
+-   Press the '+' next to the *report\_\_output* class.
+    The *Add entities* dialog will pop up.
 
--   Always in the Spine DB editor, locate the *Relationship tree*
-    (typically at the bottom-left). Expand the *root*
-    element if not expanded.
+-   We'll have to fill in the field for the report and the output.
+    Double click the field to see the options.
+    For the 'report' field we need 'report1'
+    and for the 'output' field we only need 'unit\_flow'.
 
--   Right click on the *unit\_\_from\_node* class, and select
-    *Add relationships* from the context menu. The *Add relationships*
-    dialog will pop up.
+-   Press *Ok*.
 
-!!! note
-    Alternatively right click the objects in the graph view and 
-    *add relationships* will show the available relationships.
-    Note that this only works when the involved units/nodes/... are visible
-    in the graph view. To make an object visible, simply click on the object
-    in the list of objects/object classes. You can select multiple objects with
-    ctrl or shift.
-
--   Select the names of the two units and their **sending** nodes, as
-    seen in the image below; then press *Ok*. This will establish that
-    both *power\_plant\_a* and *power\_plant\_b*
-    take energy from the *fuel\_node*.
-![image](figs_simple_system/simple_system_add_unit__from_node_relationships.png)
-
--   Right click on the *unit\_\_to_node* class, and select
-    *Add relationships* from the context menu. The *Add relationships*
-    dialog will pop up.
-
--   Select the names of the two units and their **receiving** nodes, as
-    seen in the image below; then press *Ok*. This will establish that
-    both *power\_plant\_a* and *power\_plant\_b*
-    release energy into the *electricity\_node*.
-![image](figs_simple_system/simple_system_add_unit__to_node_relationships.png)
-
--   Right click on the *unit\_\_node\_\_node* class, and select
-    *Add relationships* from the context menu. The *Add relationships*
-    dialog will pop up.
-
--   For each of the units enter the unit under *unit*,
-    *electricity_node* under the first node and *fuel_node* under the 
-    second node. These relationships will define the relation (or behavior)
-     between the output and input of the unit.
-![image](figs_simple_system/simple_system_add_unit__node__node.png)
-
-!!! note
-    The *unit\_\_node\_\_node* relationship is necessary to limit the flow 
-    (flows are unbound by default) and to define an efficiency.
-    The order of the nodes is important for that definition (see later on).
-    It may seem unintuitive to define an efficiency through a three-way 
-    relationship instead of a property of a unit, but this approach allows you
-    to define efficiencies between any flow(s) coming in and out of the unit (e.g. CHP). 
-
--   Right click on the *report\_\_output* class, and select
-    *Add relationships* from the context menu. The *Add relationships*
-    dialog will pop up.
+-   Commit (save) the changes through the **Commit** button in the toolbar.
 
 -   Enter *report1* under *report*, and
     *unit\_flow* under *output*, as seen in the image below;
     then press *Ok*. This will tell SpineOpt to write the value of the
     *unit\_flow* optimization variable to the output
     database, as part of *report1*.
+
 ![image](figs_simple_system/simple_system_add_report__output_relationships.png)
 
-!!! note
-    In SpineOpt, outputs represent optimization variables that can be
-    written to the output database as part of a report.
+The resulting model structure can then be seen in the picture below (by selecting the model, the stochastic structure and the report in the root menu).
 
-#### Specifying object parameter values
+![image](figs_simple_system/simple_system_basic_model.png)
+
+### Creating nodes and units
+
+As for the physical system, we start with creating nodes and units.
+As shown before, the simple system contains 2 nodes and 2 units.
+
+!!! info
+    In SpineOpt, nodes are points where an energy balance takes place,
+    whereas units are energy conversion devices that can take energy from
+    nodes, and release energy to nodes.
+
+To create the nodes:
+
+-   Locate the *Entity tree* in the Spine DB editor (typically
+    at the top-left).
+
+-   Right click on the [node] class, and select *Add objects* 
+    from the context menu (or press the '+' icon next to it).
+    The *Add entities* dialog will pop up.
+
+-   Enter the names for the system nodes as seen in the image below,
+    then press *Ok*. This will create two entities of class
+    *node*, called *fuel* and *electricity*.
+
+![image](figs_simple_system/simple_system_add_nodes.png)
+
+To create the units we do the same thing:
+
+-   Press '+' next to the *unit* class, and add two units called
+    *power\_plant\_a* and *power\_plant\_b*.
+
+![image](figs_simple_system/simple_system_add_units.png)
+
+!!! info
+    To modify an object after you enter it, right click on it and select
+    **Edit...** from the context menu.
+
+### Creating relationships between the nodes and units
+
+For the simple system we need to link the nodes and the units.
+Intuitively, we know that we need to make flows from the
+'fuel' node to the units and to the 'electricity' node.
+Additionally we'll have to add a 'unit\_\_node\_node' entity
+to be able to add data on properties to the relation between
+the input and the output of the units.
+
+For the flow from the 'fuel' node to the units:
+
+-   Press '+' next to the *unit\_\_from\_node* class,
+    you'll see a 'unit' field and a 'node' field.
+
+-   Double click the unit field to see the options.
+    Select each unit once.
+
+-   Double click the node field to see the options.
+    Select the 'fuel' node twice.
+
+!!! info
+    Alternatively right click the objects in the *graph view* and 
+    *add relationships* will show the available relationships.
+    Note that this only works when the involved units/nodes/... are visible
+    in the graph view. To make an object visible, simply click on the object
+    in the list of objects/object classes. You can select multiple objects with
+    ctrl or shift.
+
+![image](figs_simple_system/simple_system_add_unit__from_node_relationships.png)
+
+For the flow from the units to the 'electricity' node, we do the same:
+
+-   Press '+' next to the *unit\_\_to\_node* class and choose
+    each unit once and the 'electricity' node twice.
+
+![image](figs_simple_system/simple_system_add_unit__to_node_relationships.png)
+
+These flows so far only determine what happens between the node and the unit.
+However, we also need to determine what happens between the input and output of the unit.
+As there can be multiple inputs and outputs, we'll have to define which flows exactly
+contribute to the input/output behaviour. To that end we use a *unit\_\_node\_\_node* class.
+
+-   Press '+' next to the *unit\_\_node\_\_node* class and choose the unit, 
+    its output node and its input node.
+
+![image](figs_simple_system/simple_system_add_unit__node__node.png)
+
+!!! info
+    The *unit\_\_node\_\_node* relationship is necessary to limit the flow 
+    (flows are unbound by default) and to define an efficiency.
+    The order of the nodes is important for that definition (see later on).
+    It may seem unintuitive to define an efficiency through a three-way 
+    relationship instead of a property of a unit, but this approach allows you
+    to define efficiencies between any flow(s) coming in and out of the unit (e.g. CHP).
+
+The resulting system can be seen in the picture below (by selecting the node in the root menu).
+
+![image](figs_simple_system/simple_system_entities.png)
+
+### Specifying object parameter values
 
 -   Back to *Object tree*, expand the *node* class and
     select *electricity\_node*.
@@ -234,7 +268,7 @@ into the input database, run the workflow and view the results in the output dat
     at the electricity node.
 ![image](figs_simple_system/simple_system_electricity_demand.png)
 
-!!! note
+!!! info
     The alternative name is not optional. If you don't select *Base* 
     (or another name) you will not be able to save your data.
     Speaking of which, when is the last time you saved/committed?
@@ -248,7 +282,7 @@ into the input database, run the workflow and view the results in the output dat
     not balanced, and thus provide as much fuel as needed.
 ![image](figs_simple_system/simple_system_fuel_balance_type.png)
 
-#### Specifying relationship parameter values 
+### Specifying relationship parameter values 
 
 -   In *Relationship tree*, expand the *unit\_\_from\_node*
     class and select *power\_plant\_a | fuel\_node*.
@@ -306,14 +340,17 @@ into the input database, run the workflow and view the results in the output dat
     *0.8*, respectively. It should look like the image below.
 ![image](figs_simple_system/simple_system_fix_ratio_out_in_unit_flow.png)
 
-!!! note
+!!! info
     The order of the nodes is important for the *fix\_ratio\_out\_in\_unit\_flow* 
     parameter. If you have swapped the nodes or inverted the efficiency values, 
     the Run SpineOpt tool will run into errors.
 
+### reporting outputs
+
+
 When you're ready, save/commit all changes to the database.
 
-### Executing the workflow
+## Executing the workflow
 
 -   Go back to Spine Toolbox's main window, and hit the **Execute
     project** button ![image](figs_simple_system/play-circle.png) from the tool bar. 
@@ -323,7 +360,7 @@ When you're ready, save/commit all changes to the database.
 -   Select the 'Run SpineOpt' Tool. You should see the output from
     SpineOpt in the *Julia Console* after clicking the *object activity control*.
 
-### Examining the results
+## Examining the results
 
 -   Select the output data store and open the Spine DB editor.
     You can already inspect the fields in the displayed tables 
