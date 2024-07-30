@@ -209,15 +209,16 @@ For the flow from the 'fuel' node to the units:
 -   Press '+' next to the *unit\_\_from\_node* class,
     you'll see a 'unit' field and a 'node' field.
 
--   Double click the unit field to see the options.
-    Select each unit once.
+-   Double click the unit or node field to see the options.
 
--   Double click the node field to see the options.
-    Select the 'fuel' node twice.
+-   Select each unit once and the 'fuel' node twice,
+    resulting in the combinations
+    'power\_plant\_a'-'fuel' and 'power\_plant\_b'-'fuel'.
 
 !!! info
     Alternatively right click the objects in the *graph view* and 
     *add relationships* will show the available relationships.
+    You can then make the desired relations visually.
     Note that this only works when the involved units/nodes/... are visible
     in the graph view. To make an object visible, simply click on the object
     in the list of objects/object classes. You can select multiple objects with
@@ -228,7 +229,9 @@ For the flow from the 'fuel' node to the units:
 For the flow from the units to the 'electricity' node, we do the same:
 
 -   Press '+' next to the *unit\_\_to\_node* class and choose
-    each unit once and the 'electricity' node twice.
+    each unit once and the 'electricity' node twice,
+    resulting in the combinations
+    'power\_plant\_a'-'electricity' and 'power\_plant\_b'-'electricity'
 
 ![image](figs_simple_system/simple_system_add_unit__to_node_relationships.png)
 
@@ -238,7 +241,9 @@ As there can be multiple inputs and outputs, we'll have to define which flows ex
 contribute to the input/output behaviour. To that end we use a *unit\_\_node\_\_node* class.
 
 -   Press '+' next to the *unit\_\_node\_\_node* class and choose the unit, 
-    its output node and its input node.
+    its output node and its input node,
+    resulting in the combinations
+    'power\_plant\_a'-'electricity'-'fuel' and 'power\_plant\_b'-'electricity'-'fuel'
 
 ![image](figs_simple_system/simple_system_add_unit__node__node.png)
 
@@ -254,18 +259,29 @@ The resulting system can be seen in the picture below (by selecting the node in 
 
 ![image](figs_simple_system/simple_system_entities.png)
 
-### Specifying object parameter values
+### Adding parameter values
 
--   Back to *Object tree*, expand the *node* class and
-    select *electricity\_node*.
+With the system in place, we can now enter the data as described in the beginning of this tutorial,
+i.e. the capacities, efficiencies, demand, etc.
+To enter the data we'll be using the table (typically in the center or below the graph view).
 
--   Locate the *Object parameter* table (typically at the top-center).
+!!! info
+    The table view has three tabs below the table.
+    We use the *parameter value* tab to enter values
+    and the *parameter definition* tab to get an overview
+    of the available parameters and their default values.
 
--   In the *Object parameter* table (typically at the top-center),
-    select the *demand* parameter and the *Base*
-    alternative, and enter the value *150* as seen in the
-    image below. This will establish that there's a demand of '150'
-    at the electricity node.
+Let's start with adding an electricity demand of 150 at the electricity node.
+
+-   Select the 'electricity' node in the root menu, in the graph view
+    or in the list after double clicking the *entity\_by\_name* field in the table.
+
+-   Double click the *parameter\_name* field and select *demand*.
+
+-   Double click the *alternativet\_name* field and select *Base*.
+
+-   Double click the *value* field and enter 150.
+
 ![image](figs_simple_system/simple_system_electricity_demand.png)
 
 !!! info
@@ -273,71 +289,82 @@ The resulting system can be seen in the picture below (by selecting the node in 
     (or another name) you will not be able to save your data.
     Speaking of which, when is the last time you saved/committed?
 
--   Select *fuel\_node* in the *Object tree*.
+For the fuel node we want an infinite supply.
+Since the default behaviour of a node is to balance all incoming and outgoing flows,
+we'll have to take that balance away.
 
--   In the *Object parameter* table, select the
-    *balance\_type* parameter and the *Base*
-    alternative, and enter the value *balance\_type\_none* as
-    seen in the image below. This will establish that the fuel node is
-    not balanced, and thus provide as much fuel as needed.
+In the table, select
+
+-   *entity\_by\_name*: 'fuel' node
+
+-   *parameter\_name*: *balance\_type*
+
+-   *alternative\_name*: *Base*
+
+-   *value*: *balance\_type\_none*
+
 ![image](figs_simple_system/simple_system_fuel_balance_type.png)
 
-### Specifying relationship parameter values 
+For the power plants we want to specify the variable operation and maintenance (VOM) cost,
+the capacity and the efficiency.
+Each of these parameters are defined in different parts of the system.
+That is, again, because it is possible to define multiple inputs and outputs.
+To pinpoint the correct flows, the parameters are therefore related to the flows rather than the unit.
+In particular, the VOM cost is related to the input flow
+and as such to *unit\_\_from\_node* between the unit and the 'fuel' node.
+The capacity is related to the output flow
+and as such to *unit\_\_to\_node* between the unit and the 'electricity' node.
+The efficiency is related to the relation between the input and the output
+and as such to *unit\_\_node\_node* between the unit, the 'electricity' node and the 'fuel' node.
 
--   In *Relationship tree*, expand the *unit\_\_from\_node*
-    class and select *power\_plant\_a | fuel\_node*.
+We enter these values again in the table.
 
--   In the *Relationship parameter* table (typically at the
-    bottom-center), select the *vom\_cost* parameter and the
-    *Base* alternative, and enter the value *25*
-    as seen in the image below. This will set the operating cost for
-    *power\_plant\_a*.
-![image](figs_simple_system/simple_system_power_plant_a_vom_cost.png)
+For the VOM cost of the power plants:
 
--   Select *power\_plant\_b | fuel\_node* in the *Relationship
-    tree*.
+-   select the *unit\_\_from\_node* entity class
 
--   In the *Relationship parameter* table, select the
-    *vom\_cost* parameter and the *Base*
-    alternative, and enter the value *50* as seen in the
-    image below. This will set the operating cost for
-    *power\_plant\_b*.
-![image](figs_simple_system/simple_system_power_plant_b_vom_cost.png)
+-   *entity\_by\_name*: 'power\_plant\_a|fuel'
 
--   In *Relationship tree*, expand the *unit\_\_to_node*
-    class and select *power\_plant\_a | electricity\_node*.
+-   *parameter\_name*: *vom\_cost*
 
--   In the *Relationship parameter* table, select the
-    *unit\_capacity* parameter and the *Base*
-    alternative, and enter the value *100* as seen in the
-    image below. This will set the capacity for
-    *power\_plant\_a*.
-![image](figs_simple_system/simple_system_power_plant_a_capacity.png)
+-   *alternative\_name*: *Base*
 
--   Select *power\_plant\_b | electricity\_node* in the
-    *Relationship tree*.
+-   *value*: 25.0
 
--   In the *Relationship parameter* table, select the
-    *unit\_capacity* parameter and the *Base*
-    alternative, and enter the value *200* as seen in the
-    image below. This will set the capacity for
-    *power\_plant\_b*.
-![image](figs_simple_system/simple_system_power_plant_b_capacity.png)
+-   Do the same for 'power\_plant\_b' with a value of 50.0
 
--   In *Relationship tree*, select the
-    *unit\_\_node\_\_node* class, and come back to the
-    *Relationship parameter* table.
+![image](figs_simple_system/simple_system_vom_cost.png)
 
--   In the *Relationship parameter* table, select *power\_plant\_a |
-    electricity\_node | fuel\_node* under *object name list*,
-    *fix\_ratio\_out\_in\_unit\_flow* under *parameter name*,
-    *Base* under *alternative name*, and enter
-    *0.7* under *value*. Repeat the operation for
-    *power\_plant\_b*, but this time enter *0.8*
-    under *value*. This will set the conversion ratio from fuel to
-    electricity for *power\_plant\_a* and
-    *power\_plant\_b* to *0.7* and
-    *0.8*, respectively. It should look like the image below.
+For the capacity of the power plants:
+
+-   select the *unit\_\_to\_node* entity class
+
+-   *entity\_by\_name*: 'power\_plant\_a|electricity'
+
+-   *parameter\_name*: *unit\_capacity*
+
+-   *alternative\_name*: *Base*
+
+-   *value*: 100.0
+
+-   Do the same for 'power\_plant\_b' with a value of 200.0
+
+![image](figs_simple_system/simple_system_capacity.png)
+
+For the efficiency of the power plants:
+
+-   select the *unit\_\_node\_node* entity class
+
+-   *entity\_by\_name*: 'power\_plant\_a|electricity|fuel'
+
+-   *parameter\_name*: *fix\_ratio\_out\_in\_unit\_flow*
+
+-   *alternative\_name*: *Base*
+
+-   *value*: 0.7
+
+-   Do the same for 'power\_plant\_b' with a value of 0.8
+
 ![image](figs_simple_system/simple_system_fix_ratio_out_in_unit_flow.png)
 
 !!! info
@@ -345,36 +372,36 @@ The resulting system can be seen in the picture below (by selecting the node in 
     parameter. If you have swapped the nodes or inverted the efficiency values, 
     the Run SpineOpt tool will run into errors.
 
-### reporting outputs
-
-
 When you're ready, save/commit all changes to the database.
+
+Select the root in the entity tree to see an overview of all parameters in the table.
+
+![image](figs_simple_system/simple_system_parameters.png)
 
 ## Executing the workflow
 
+With the input database ready, we are ready to run SpineOpt.
+
 -   Go back to Spine Toolbox's main window, and hit the **Execute
-    project** button ![image](figs_simple_system/play-circle.png) from the tool bar. 
+    project** button from the tool bar. 
     You should see 'Executing All Directed Acyclic Graphs' printed in
     the *Event log* (at the bottom left by default).
 
 -   Select the 'Run SpineOpt' Tool. You should see the output from
-    SpineOpt in the *Julia Console* after clicking the *object activity control*.
+    SpineOpt in the *Julia Console* (after clicking the *object activity control* in older versions).
 
 ## Examining the results
 
--   Select the output data store and open the Spine DB editor.
-    You can already inspect the fields in the displayed tables 
-    or use a pivot table.
--   For the pivot table, press **Alt + F** for the shortcut to the hamburger menu,
-    and select **Pivot -> Index**.
--   Select
-    *report\_\_unit\_\_node\_\_direction\_\_stochastic\_scenario*
-    under **Relationship tree**, and the first cell under
-    **alternative** in the *Frozen table*.
--   Under alternative in the Frozen table, you can choose results from
-    different runs. Pick the run you want to view. If the workflow has
-    been run several times, the most recent run will usually be found at
-    the bottom.
--   The *Pivot table* will be populated with results from the SpineOpt
-    run. It will look something like the image below.
-![image](figs_simple_system/simple_system_results_pivot_table.png)
+If everything went well, the output should be written to the output database.
+Opening the output database in the Spine DB editor, we can inspect its values.
+Note that the entity tree looks different as there is no SpineOpt template loaded here.
+Regardless, the output is available in the displayed tables.
+
+By default all runs are shown in the tables.
+By selecting a specific run in the the *alternatives* (typically on the right),
+you can instead view the results of a single run.
+
+Typically there will be *Time Series* in the values.
+Double click these to view the values.
+
+For 'power\_plant\_a' you should see a value of 100 and for 'power\_plant\_b' a value of 50.
