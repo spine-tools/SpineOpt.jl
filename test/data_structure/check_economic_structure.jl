@@ -94,7 +94,6 @@
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
         ],
         :object_parameter_values => [
-            ["model", "instance", "use_economic_representation", true],
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2030-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2032-01-01T00:00:00")],
             ["model", "instance", "duration_unit", "hour"],
@@ -129,6 +128,7 @@
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
+            ["model", "instance", "use_economic_representation", true],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -145,6 +145,7 @@
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
+            ["model", "instance", "use_economic_representation", true],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -179,7 +180,7 @@
         units_invested = m.ext[:spineopt].variables[:units_invested]
         observed_coe_obj = coefficient(objective_function(m), units_invested[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]])
         expected_coe_obj = inv_cost
-        @test expected_coe_obj == observed_coe_obj        
+        @test expected_coe_obj == observed_coe_obj         
         object_parameter_values = [
             ["model", "instance", "use_economic_representation", true],
         ]
