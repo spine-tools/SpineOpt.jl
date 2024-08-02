@@ -607,6 +607,7 @@ function _save_model_results!(m)
     _save_constraint_values!(m)
     _save_objective_values!(m)
     _save_other_values!(m)
+    _save_economic_parameter_values!(m)
 end
 
 """
@@ -632,6 +633,25 @@ function _save_other_values!(m::Model)
         )
     catch err
         @warn err
+    end
+end
+
+function _save_economic_parameter_values!(m::Model)
+    m.ext[:spineopt].values[:unit_salvage_fraction] = Dict{Any,Any}()
+    m.ext[:spineopt].values[:unit_tech_discount_factor] = Dict{Any,Any}()
+    m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = Dict{Any,Any}()
+
+    if use_economic_representation(model=m.ext[:spineopt].instance)
+        for (u, s, t) in units_invested_available_indices(m)
+            m.ext[:spineopt].values[:unit_salvage_fraction] =
+                Dict((u, s, t) => parameter_value(unit_salvage_fraction[(unit=u, stochastic_scenario=s, t=t)]))
+            m.ext[:spineopt].values[:unit_tech_discount_factor] =
+                Dict((u, s, t) => parameter_value(unit_tech_discount_factor[(unit=u, stochastic_scenario=s, t=t)]))
+            m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = Dict(
+                (u, s, t) =>
+                    parameter_value(unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, t=t)]),
+            )
+        end
     end
 end
 
