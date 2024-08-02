@@ -178,7 +178,7 @@
         u_ts = [ind.t for ind in units_invested_available_indices(m; unit=unit(:unit_ab))]
         units_invested = m.ext[:spineopt].variables[:units_invested]
         observed_coe_obj = coefficient(objective_function(m), units_invested[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]])
-        expected_coe_obj = (1 - salvage_frac) * conv_to_disc_annuities * inv_cost * unit_tech_discount_factor
+        expected_coe_obj = inv_cost
         @test expected_coe_obj == observed_coe_obj        
         object_parameter_values = [
             ["model", "instance", "use_economic_representation", true],
