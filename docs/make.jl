@@ -38,7 +38,7 @@ pages = [
         "Troubleshooting" => joinpath("getting_started", "troubleshooting.md"),
     ],
     "Tutorials" => Any[
-        "Webinars" => joinpath("tutorial", "webinars.md"),
+        "Webinars and examples" => joinpath("tutorial", "webinars.md"),
         "Simple system" => joinpath("tutorial", "simple_system.md"),
         "Temporal resolution" => joinpath("tutorial", "temporal_resolution.md"),
         "Stochastic structure" => joinpath("tutorial", "stochastic_system.md"),
