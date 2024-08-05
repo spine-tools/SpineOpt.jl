@@ -44,7 +44,7 @@ As for the report, we are typically interested in the outputs *node\_state*, *un
 
 ### Nodes and commodities
 
-Nodes are at the center of a SpineOpt system, so let's start with that. There are other ways to model hydro power plants but here we represent each hydro power plant with 2 nodes, an 'upper' node to represent the water arriving at each plant and a 'lower' node to represent the water that is discharged and becomes available to the next plant.
+Nodes are at the center of a SpineOpt system, so let's start with that. There are other ways to model hydro power plants but here we represent each hydro power plant with 2 nodes, an 'upper' node to represent the water arriving at each plant and a 'lower' node to represent the water that is discharged and becomes available to the next plant. The general idea of splitting these in 2 nodes is to be able to simulate a time delay between the entrance and the exit (although in this tutorial we will not go in detail in this time delay).
 
 Additionally we need a node for electricity.
 
@@ -121,7 +121,9 @@ The result should look like this:
 
 ### Storage in nodes
 
-To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *has\_state* as True (be careful to not set it as a string but select the boolean true value). Then, we need to set the capacity of the reservoir by setting the *node\_state\_cap* parameter value. Finally, we fix the initial and final values of the reservoir by setting the parameter *fix\_node\_state* to the respective values (we introduce *nan* values for the time steps that we don't want to impose such constraints).
+To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *has\_state* as True (be careful to not set it as a string but select the boolean true value). Then, we need to set the capacity of the reservoir by setting the *node\_state\_cap* parameter value.
+
+Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *fix\_node\_state* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
 
 ![storage Spranget](figs_two_hydro/two_hydro_spranget_storage.png)
 ![storage Fallet](figs_two_hydro/two_hydro_fallet_storage.png)
