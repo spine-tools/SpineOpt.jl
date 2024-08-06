@@ -637,22 +637,55 @@ function _save_other_values!(m::Model)
 end
 
 function _save_economic_parameter_values!(m::Model)
-    m.ext[:spineopt].values[:unit_salvage_fraction] = Dict{Any,Any}()
-    m.ext[:spineopt].values[:unit_tech_discount_factor] = Dict{Any,Any}()
-    m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = Dict{Any,Any}()
 
-    if use_economic_representation(model=m.ext[:spineopt].instance)
-        for (u, s, t) in units_invested_available_indices(m)
-            m.ext[:spineopt].values[:unit_salvage_fraction] =
-                Dict((u, s, t) => parameter_value(unit_salvage_fraction[(unit=u, stochastic_scenario=s, t=t)]))
-            m.ext[:spineopt].values[:unit_tech_discount_factor] =
-                Dict((u, s, t) => parameter_value(unit_tech_discount_factor[(unit=u, stochastic_scenario=s, t=t)]))
-            m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = Dict(
-                (u, s, t) =>
-                    parameter_value(unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, t=t)]),
-            )
-        end
+    if !use_economic_representation(model=m.ext[:spineopt].instance)
+
+        m.ext[:spineopt].values[:unit_salvage_fraction] = Dict()
+        m.ext[:spineopt].values[:unit_tech_discount_factor] = Dict()
+        m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = Dict()
+    
+        m.ext[:spineopt].values[:connection_salvage_fraction] = Dict()
+        m.ext[:spineopt].values[:connection_tech_discount_factor] = Dict()
+        m.ext[:spineopt].values[:connection_conversion_to_discounted_annuities] = Dict()
+    
+        m.ext[:spineopt].values[:storage_salvage_fraction] = Dict()
+        m.ext[:spineopt].values[:storage_tech_discount_factor] = Dict()
+        m.ext[:spineopt].values[:storage_conversion_to_discounted_annuities] = Dict()
+
+        return nothing
     end
+
+    m.ext[:spineopt].values[:unit_salvage_fraction] = 
+        Dict((unit=u, stochastic_scenario=s, t=t) => unit_salvage_fraction[(unit=u, stochastic_scenario=s, t=t)]
+            for (u, s, t) in units_invested_available_indices(m)) 
+    m.ext[:spineopt].values[:unit_tech_discount_factor] = 
+        Dict((unit=u, stochastic_scenario=s, t=t) => unit_tech_discount_factor[(unit=u, stochastic_scenario=s, t=t)]
+            for (u, s, t) in units_invested_available_indices(m))  
+    m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = 
+        Dict((unit=u, stochastic_scenario=s, t=t) => unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, t=t)]
+            for (u, s, t) in units_invested_available_indices(m))  
+
+    m.ext[:spineopt].values[:connection_salvage_fraction] = 
+        Dict((c, s, t) => connection_salvage_fraction[(connection=c, stochastic_scenario=s, t=t)]
+                for (c, s, t) in connections_invested_available_indices(m))
+    m.ext[:spineopt].values[:connection_tech_discount_factor] = 
+        Dict((c, s, t) => connection_tech_discount_factor[(connection=c, stochastic_scenario=s, t=t)]
+                for (c, s, t) in connections_invested_available_indices(m))
+    m.ext[:spineopt].values[:connection_conversion_to_discounted_annuities] = 
+        Dict((c, s, t) => connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, t=t)] 
+                for (c, s, t) in connections_invested_available_indices(m))
+
+    m.ext[:spineopt].values[:storage_salvage_fraction] = 
+        Dict((n, s, t) => storage_salvage_fraction[(node=n, stochastic_scenario=s, t=t)]
+            for (n, s, t) in storages_invested_available_indices(m))
+    m.ext[:spineopt].values[:storage_tech_discount_factor] = 
+        Dict((n, s, t) => storage_tech_discount_factor[(node=n, stochastic_scenario=s, t=t)]
+            for (n, s, t) in storages_invested_available_indices(m))
+    m.ext[:spineopt].values[:storage_conversion_to_discounted_annuities] = 
+        Dict((n, s, t) => storage_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, t=t)]
+            for (n, s, t) in storages_invested_available_indices(m))
+
+    return nothing
 end
 
 """
