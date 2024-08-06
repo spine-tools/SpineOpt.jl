@@ -636,6 +636,9 @@ function _save_other_values!(m::Model)
     end
 end
 
+"""
+Save the value of the economic paramters of units, connections, and storages if the user wants to report it.
+"""
 function _save_economic_parameter_values!(m::Model)
 
     if !use_economic_representation(model=m.ext[:spineopt].instance)
@@ -656,33 +659,33 @@ function _save_economic_parameter_values!(m::Model)
     end
 
     m.ext[:spineopt].values[:unit_salvage_fraction] = 
-        Dict((unit=u, stochastic_scenario=s, t=t) => unit_salvage_fraction[(unit=u, stochastic_scenario=s, t=t)]
+        Dict((unit=u, stochastic_scenario=s, t=t) => unit_salvage_fraction(unit=u, stochastic_scenario=s, t=t)
             for (u, s, t) in units_invested_available_indices(m)) 
     m.ext[:spineopt].values[:unit_tech_discount_factor] = 
-        Dict((unit=u, stochastic_scenario=s, t=t) => unit_tech_discount_factor[(unit=u, stochastic_scenario=s, t=t)]
+        Dict((unit=u, stochastic_scenario=s, t=t) => unit_tech_discount_factor(unit=u, stochastic_scenario=s, t=t)
             for (u, s, t) in units_invested_available_indices(m))  
     m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = 
-        Dict((unit=u, stochastic_scenario=s, t=t) => unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, t=t)]
+        Dict((unit=u, stochastic_scenario=s, t=t) => unit_conversion_to_discounted_annuities(unit=u, stochastic_scenario=s, t=t)
             for (u, s, t) in units_invested_available_indices(m))  
 
     m.ext[:spineopt].values[:connection_salvage_fraction] = 
-        Dict((c, s, t) => connection_salvage_fraction[(connection=c, stochastic_scenario=s, t=t)]
+        Dict((c, s, t) => connection_salvage_fraction(connection=c, stochastic_scenario=s, t=t)
                 for (c, s, t) in connections_invested_available_indices(m))
     m.ext[:spineopt].values[:connection_tech_discount_factor] = 
-        Dict((c, s, t) => connection_tech_discount_factor[(connection=c, stochastic_scenario=s, t=t)]
+        Dict((c, s, t) => connection_tech_discount_factor(connection=c, stochastic_scenario=s, t=t)
                 for (c, s, t) in connections_invested_available_indices(m))
     m.ext[:spineopt].values[:connection_conversion_to_discounted_annuities] = 
-        Dict((c, s, t) => connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, t=t)] 
+        Dict((c, s, t) => connection_conversion_to_discounted_annuities(connection=c, stochastic_scenario=s, t=t) 
                 for (c, s, t) in connections_invested_available_indices(m))
 
     m.ext[:spineopt].values[:storage_salvage_fraction] = 
-        Dict((n, s, t) => storage_salvage_fraction[(node=n, stochastic_scenario=s, t=t)]
+        Dict((n, s, t) => storage_salvage_fraction(node=n, stochastic_scenario=s, t=t)
             for (n, s, t) in storages_invested_available_indices(m))
     m.ext[:spineopt].values[:storage_tech_discount_factor] = 
-        Dict((n, s, t) => storage_tech_discount_factor[(node=n, stochastic_scenario=s, t=t)]
+        Dict((n, s, t) => storage_tech_discount_factor(node=n, stochastic_scenario=s, t=t)
             for (n, s, t) in storages_invested_available_indices(m))
     m.ext[:spineopt].values[:storage_conversion_to_discounted_annuities] = 
-        Dict((n, s, t) => storage_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, t=t)]
+        Dict((n, s, t) => storage_conversion_to_discounted_annuities(node=n, stochastic_scenario=s, t=t)
             for (n, s, t) in storages_invested_available_indices(m))
 
     return nothing
