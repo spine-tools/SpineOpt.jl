@@ -35,6 +35,9 @@ function renewable_curtailment_costs(m::Model, t_range)
                 - unit_flow[u, n, d, s, t_short]
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t_short))
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t_short) for u in indices(curtailment_cost) for (u, n, d) in indices(unit_capacity; unit=u)
             for (u, s, t_long) in units_on_indices(m; unit=u, t=t_range)
             for (u, n, d, s, t_short) in unit_flow_indices(m; unit=u, node=n, direction=d, t=t_in_t(m; t_long=t_long));

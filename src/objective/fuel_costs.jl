@@ -29,6 +29,9 @@ function fuel_costs(m::Model, t_range)
         sum(
             unit_flow[u, n, d, s, t]
             * duration(t)
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * fuel_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
