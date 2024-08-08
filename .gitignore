@@ -28,6 +28,7 @@ model\.so_model
 *.csv
 
 SpineOptApp
+
 docs/src/concept_reference/Object Classes.md
 docs/src/concept_reference/Relationship Classes.md
 docs/src/concept_reference/Parameters.md
