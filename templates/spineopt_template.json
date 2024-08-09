@@ -478,6 +478,7 @@
 		["output", "connection_salvage_fraction", null],
 		["output", "connection_tech_discount_factor", null],
 		["output", "connection_conversion_to_discounted_annuities", null],
+        ["output", "connection_discounted_duration", null],
         ["output", "contingency_is_binding", null],
         ["output", "fixed_om_costs", null],
         ["output", "fuel_costs", null],
@@ -504,6 +505,7 @@
 		["output", "storage_salvage_fraction", null],
 		["output", "storage_tech_discount_factor", null],
 		["output", "storage_conversion_to_discounted_annuities", null],
+        ["output", "storage_discounted_duration", null],
         ["output", "taxes", null],
         ["output", "total_costs", null],
         ["output", "unit_flow", null],
@@ -520,6 +522,7 @@
 		["output", "unit_salvage_fraction", null],
 		["output", "unit_tech_discount_factor", null],
 		["output", "unit_conversion_to_discounted_annuities", null],
+        ["output", "unit_discounted_duration", null],
         ["output", "variable_om_costs", null]
     ],
     "tools": [
