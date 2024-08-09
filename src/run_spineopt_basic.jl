@@ -671,6 +671,7 @@ function _save_economic_parameter_values!(m::Model)
     m.ext[:spineopt].values[:unit_salvage_fraction] = Dict{key_type,Float64}()
     m.ext[:spineopt].values[:unit_tech_discount_factor] = Dict{key_type,Float64}()
     m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:unit_discounted_duration] = Dict{key_type,Float64}()
     if use_economic_representation(model=m.ext[:spineopt].instance)
         _populate_economic_parameter_values!(
             m,
@@ -699,6 +700,15 @@ function _save_economic_parameter_values!(m::Model)
             user_outputs,
             key_type
         )
+        _populate_economic_parameter_values!(
+            m,
+            :unit_discounted_duration,
+            units_invested_available_indices,
+            unit_discounted_duration,
+            :unit,
+            user_outputs,
+            key_type
+        )
     end
 
     # Connections
@@ -709,6 +719,7 @@ function _save_economic_parameter_values!(m::Model)
     m.ext[:spineopt].values[:connection_salvage_fraction] = Dict{key_type,Float64}()
     m.ext[:spineopt].values[:connection_tech_discount_factor] = Dict{key_type,Float64}()
     m.ext[:spineopt].values[:connection_conversion_to_discounted_annuities] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:connection_discounted_duration] = Dict{key_type,Float64}()
     if use_economic_representation(model=m.ext[:spineopt].instance)
         _populate_economic_parameter_values!(
             m,
@@ -737,6 +748,15 @@ function _save_economic_parameter_values!(m::Model)
             user_outputs,
             key_type
         )
+        _populate_economic_parameter_values!(
+            m,
+            :connection_discounted_duration,
+            connections_invested_available_indices,
+            connection_discounted_duration,
+            :connection,
+            user_outputs,
+            key_type
+        )
     end
 
     # Storages
@@ -744,9 +764,10 @@ function _save_economic_parameter_values!(m::Model)
         :node, :stochastic_scenario, :t),
         Tuple{SpineInterface.Object, SpineInterface.Object, SpineInterface.TimeSlice}
     }
-    m.ext[:spineopt].values[:node_salvage_fraction] = Dict{key_type,Float64}()
-    m.ext[:spineopt].values[:node_tech_discount_factor] = Dict{key_type,Float64}()
-    m.ext[:spineopt].values[:node_conversion_to_discounted_annuities] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:storage_salvage_fraction] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:storage_tech_discount_factor] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:storage_conversion_to_discounted_annuities] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:storage_discounted_duration] = Dict{key_type,Float64}()
     if use_economic_representation(model=m.ext[:spineopt].instance)
         _populate_economic_parameter_values!(
             m,
@@ -771,6 +792,15 @@ function _save_economic_parameter_values!(m::Model)
             :storage_conversion_to_discounted_annuities,
             storages_invested_available_indices,
             storage_conversion_to_discounted_annuities,
+            :node,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :storage_discounted_duration,
+            storages_invested_available_indices,
+            storage_discounted_duration,
             :node,
             user_outputs,
             key_type
