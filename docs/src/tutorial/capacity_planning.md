@@ -56,7 +56,7 @@ To be able to see the investments in the results, we'll have to add some more ou
 
 Multi-year investments refer to making investment decisions at different points in time, such that a pathway of investments can be modeled. This is particularly useful when long-term scenarios are modeled, but modeling each year is not practical. Or in a business case, investment decisions are supposed to be made in different years which has an impact on the cash flow.
 
-In this tutorial, we consider two investment points, at the start of the modeling horizon (2030), and 5 years later (2035). Operation is assumed to be monthly, but only in 2030 and 2035. In other words, we only model 2030 and 2035 as milestone years for the pathway 2030 - 2035.
+In this tutorial, we consider two investment points, at the start of the modeling horizon (2030), and 5 years later (2035). Operation is assumed to be every 4 months, but only in 2030 and 2035. In other words, we only model 2030 and 2035 as milestone years for the pathway 2030 - 2035.
 
 To make this work, some adjustments are needed to:
 + the temporal structure,
@@ -87,14 +87,14 @@ We will allow investments for `power_plant_a` in both 2030 and 2035, and for `po
 ![image](figs_capacity_planning/multi-year_unit_a.png)
 ![image](figs_capacity_planning/multi-year_unit_b.png)
 
-We can check the results for power_plant_a first. The below pictures show that in 2030, there is 1 investment, and in 2035, there is another investment. In 2035, there are 2 units on.
+We can check the results for `power_plant_a` first. The below pictures show that in 2030, there is 1 investment, and in 2035, there is another investment. In 2035, there are 2 units on.
 
-Note we notice a drop between the two periods for operation variables, _units_on_ in this case, because it is a redundant result.
+Note we notice a drop between the two periods for operation variables, `units_on` in this case, because it is a redundant result.
 
 ![image](figs_capacity_planning/result-ppa-invested.png)
 ![image](figs_capacity_planning/result-ppa-on.png)
 
-We also get 1 investment for power_plant_b in 2035.
+We also get 1 investment for `power_plant_b` in 2035.
 
 ![image](figs_capacity_planning/result-ppb-invested.png)
 ![image](figs_capacity_planning/result-ppb-on.png)

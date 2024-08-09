@@ -28,6 +28,9 @@ function taxes(m::Model, t_range)
         m,
         + sum(
             + unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t)
             * tax_net_unit_flow(m; node=n, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
@@ -38,6 +41,9 @@ function taxes(m::Model, t_range)
         )
         - sum(
             + unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t)
             * tax_net_unit_flow(m; node=n, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
@@ -48,6 +54,9 @@ function taxes(m::Model, t_range)
         )
         + sum(
             + unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t)
             * tax_out_unit_flow(m; node=n, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
@@ -58,6 +67,9 @@ function taxes(m::Model, t_range)
         )
         + sum(
             unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t)
             * tax_in_unit_flow(m; node=n, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))

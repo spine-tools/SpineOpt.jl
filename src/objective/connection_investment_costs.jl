@@ -29,6 +29,7 @@ function connection_investment_costs(m::Model, t_range)
         m,
         + sum(
             connections_invested[c, s, t]
+            * _connection_weight_for_economic_representation(m; c, s, t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_investment_cost(m; connection=c, stochastic_scenario=s, t=t)
             * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
@@ -36,4 +37,14 @@ function connection_investment_costs(m::Model, t_range)
             init=0,
         )
     )
+end
+
+function _connection_weight_for_economic_representation(m; c, s, t)
+    if use_economic_representation(model=m.ext[:spineopt].instance)
+        return (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, t=t)]) * 
+                connection_tech_discount_factor[(connection=c, stochastic_scenario=s, t=t)] * 
+                connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, t=t)]
+    else
+        return 1
+    end
 end
