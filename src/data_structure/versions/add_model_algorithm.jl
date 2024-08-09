@@ -36,18 +36,20 @@ function add_model_algorithm(db_url, log_level)
 	]
 	if !isempty(spineopt_mga_pvals)
 		import_data(db_url, ""; parameter_definitions=[("model", "model_algorithm")])
+		val, typ = unparse_db_value("spineopt_standard")
 		to_upd = [
-			Dict("id" => x["id"], "value" => unparse_db_value("spineopt_standard")[1], "type" => nothing)
+			Dict("id" => x["id"], "value" => val, "type" => typ)
 			for x in spineopt_mga_pvals
 		]
+		val, typ = unparse_db_value("mga_algorithm")
 		to_add = [
 			Dict(
 				"entity_class_name" => x["entity_class_name"],
 				"entity_byname" => [x["entity_name"]],
 				"parameter_definition_name" => "model_algorithm",
 				"alternative_name" => x["alternative_name"],
-				"value" => unparse_db_value("mga_algorithm")[1],
-				"type" => nothing,
+				"value" => val,
+				"type" => typ,
 			)
 			for x in spineopt_mga_pvals
 		]
