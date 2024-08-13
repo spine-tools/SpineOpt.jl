@@ -1453,10 +1453,67 @@ function test_constraint_unit_lifetime()
                 var_u_inv_av_key = (unit(:unit_ab), s, t)
                 var_u_inv_av = var_units_invested_available[var_u_inv_av_key...]
                 vars_u_inv = [var_units_invested[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_u_inv_av >= sum(vars_u_inv))
+                expected_con = @build_constraint(var_u_inv_av == sum(vars_u_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
+        end
+    end
+end
+
+function test_constraint_unit_lifetime_sense()
+    @testset "constraint_unit_lifetime_sense" begin
+        candidate_units = 3
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        lifetime_minutes = 240
+        senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
+        url_in = _test_constraint_unit_setup()
+        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        @testset for (sense_key, sense_value) in senses
+            object_parameter_values = [
+                ["unit", "unit_ab", "candidate_units", candidate_units],
+                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "unit_investment_lifetime_sense", sense_key],
+                ["model", "instance", "model_end", model_end],
+            ]
+            SpineInterface.import_data(
+                url_in; relationships=relationships, object_parameter_values=object_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+            var_units_invested = m.ext[:spineopt].variables[:units_invested]
+            constraint = m.ext[:spineopt].constraints[:unit_lifetime]
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
+            )
+            head_hours = length(
+                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+            ).value
+            tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
+            scenarios = [
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ][1:(head_hours + tail_hours)]
+            h = length(constraint)
+            s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
+            s, t = s_set[1], t_set[1]
+            path = reverse(unique(s_set))
+            key = (unit(:unit_ab), path, t)
+            var_u_inv_av_key = (unit(:unit_ab), s, t)
+            var_u_inv_av = var_units_invested_available[var_u_inv_av_key...]
+            vars_u_inv = [var_units_invested[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
+            expected_con = SpineOpt.build_sense_constraint(var_u_inv_av - sum(vars_u_inv), sense_value, 0)
+            observed_con = constraint_object(constraint[key...])
+            @test _is_constraint_equal(observed_con, expected_con)
         end
     end
 end
@@ -1509,7 +1566,7 @@ function test_constraint_unit_lifetime_mp()
                 var_u_inv_av_key = (unit(:unit_ab), s, t)
                 var_u_inv_av = var_units_invested_available[var_u_inv_av_key...]
                 vars_u_inv = [var_units_invested[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_u_inv_av >= sum(vars_u_inv))
+                expected_con = @build_constraint(var_u_inv_av == sum(vars_u_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -2032,6 +2089,7 @@ end
     test_constraint_units_invested_transition()
     test_constraint_units_invested_transition_mp()
     test_constraint_unit_lifetime()
+    test_constraint_unit_lifetime_sense()
     test_constraint_unit_lifetime_mp()
     test_constraint_ramp_up()
     test_constraint_ramp_down()
