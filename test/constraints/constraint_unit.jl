@@ -1861,20 +1861,20 @@ function test_constraint_user_constraint_with_unit_operating_segments()
     end
 end
 
-function test_constraint_pw_unit_heat_rate()
-    @testset "constraint_pw_unit_heat_rate" begin
+function test_constraint_ratio_unit_flow_fix_ratio_pw()
+    @testset "constraint_ratio_unit_flow_fix_ratio_pw" begin
         url_in = _test_constraint_unit_setup()
-        unit_idle_heat_rate = 200
+        fix_units_on_coefficient_in_out = 200
         unit_start_flow = 100
         points = [0.1, 0.5, 1.0]
         inc_hrs = [10, 20, 30]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
-        unit_incremental_heat_rate = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
+        fix_ratio_in_out_unit_flow = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
         relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "unit_incremental_heat_rate", unit_incremental_heat_rate],
-            [relationships[1]..., "unit_idle_heat_rate", unit_idle_heat_rate],
+            [relationships[1]..., "fix_ratio_in_out_unit_flow", fix_ratio_in_out_unit_flow],
+            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
             [relationships[1]..., "unit_start_flow", unit_start_flow],
         ]
         SpineInterface.import_data(
@@ -1887,7 +1887,7 @@ function test_constraint_pw_unit_heat_rate()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:unit_pw_heat_rate]
+        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -1899,7 +1899,7 @@ function test_constraint_pw_unit_heat_rate()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + unit_idle_heat_rate
+            + fix_units_on_coefficient_in_out
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
             + unit_start_flow * (
                 + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
@@ -1912,19 +1912,19 @@ function test_constraint_pw_unit_heat_rate()
     end
 end
 
-function test_constraint_pw_unit_heat_rate_simple()
-    @testset "constraint_pw_unit_heat_rate_simple" begin
+function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
+    @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple" begin
         url_in = _test_constraint_unit_setup()
-        unit_idle_heat_rate = 200
-        unit_start_flow = 100
+        fix_units_on_coefficient_in_out = 200
+        unit_start_flow = 0
         points = [0.1, 0.5, 1.0]
         inc_hrs = 10
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "unit_incremental_heat_rate", inc_hrs],
-            [relationships[1]..., "unit_idle_heat_rate", unit_idle_heat_rate],
+            [relationships[1]..., "fix_ratio_in_out_unit_flow", inc_hrs],
+            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
             [relationships[1]..., "unit_start_flow", unit_start_flow],
         ]
         SpineInterface.import_data(
@@ -1937,7 +1937,7 @@ function test_constraint_pw_unit_heat_rate_simple()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:unit_pw_heat_rate]
+        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -1949,12 +1949,8 @@ function test_constraint_pw_unit_heat_rate_simple()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + unit_idle_heat_rate
+            + fix_units_on_coefficient_in_out
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
-            + unit_start_flow * (
-                + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
-                + var_units_started_up[unit(:unit_ab), s_child, t1h2]
-            )
         )
         con_key = (key_u_a_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
@@ -1962,16 +1958,16 @@ function test_constraint_pw_unit_heat_rate_simple()
     end
 end
 
-function test_constraint_pw_unit_heat_rate_simple2()
-    @testset "constraint_pw_unit_heat_rate_simple2" begin
+function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
+    @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple2" begin
         url_in = _test_constraint_unit_setup()
-        unit_idle_heat_rate = 200
-        unit_start_flow = 100
+        fix_units_on_coefficient_in_out = 200
+        unit_start_flow = 0
         inc_hrs = 10
         relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
         relationship_parameter_values = [
-            [relationships[1]..., "unit_incremental_heat_rate", inc_hrs],
-            [relationships[1]..., "unit_idle_heat_rate", unit_idle_heat_rate],
+            [relationships[1]..., "fix_ratio_in_out_unit_flow", inc_hrs],
+            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
             [relationships[1]..., "unit_start_flow", unit_start_flow],
         ]
         SpineInterface.import_data(
@@ -1984,7 +1980,7 @@ function test_constraint_pw_unit_heat_rate_simple2()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:unit_pw_heat_rate]
+        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -1995,12 +1991,8 @@ function test_constraint_pw_unit_heat_rate_simple2()
         expected_con = @build_constraint(
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             == 2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h]
-            + unit_idle_heat_rate
+            + fix_units_on_coefficient_in_out
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
-            + unit_start_flow * (
-                + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
-                + var_units_started_up[unit(:unit_ab), s_child, t1h2]
-            )
         )
         con_key = (key_u_a_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
@@ -2039,7 +2031,7 @@ end
     test_constraint_non_spinning_reserves_upper_bounds()
     test_constraint_user_constraint()
     test_constraint_user_constraint_with_unit_operating_segments()
-    test_constraint_pw_unit_heat_rate()
-    test_constraint_pw_unit_heat_rate_simple()
-    test_constraint_pw_unit_heat_rate_simple2()
+    test_constraint_ratio_unit_flow_fix_ratio_pw()
+    test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
+    test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
 end
