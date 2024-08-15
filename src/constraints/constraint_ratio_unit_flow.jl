@@ -107,8 +107,15 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
             get(unit_flow, (u, n2, d2, s, t_short), 0)
             * duration(t_short)
             * ratio(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
-            for n2 in members(ng2), s in s_path, t_short in t_in_t(m; t_long=t)
-            if isempty(unit_flow_op_indices(m; unit=u, node=n2, direction=d2, t=t_short));
+            for (u, n2, d2, s, t_short) in unit_flow_indices(
+                m;
+                unit=u,
+                node=members(ng2),
+                direction=d2,
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            )
+            if isempty(unit_flow_op_indices(m; unit=u, node=n2, direction=d2));
             init=0,
         )
         + sum(
