@@ -74,7 +74,7 @@ function _are_unit_flows_related(u, n_from, n_to)
 	) || any(
 		ratio(unit=u, node1=n_from, node2=n_to, _strict=false) !== nothing
 		for ratio in (fix_ratio_in_out_unit_flow, max_ratio_in_out_unit_flow, min_ratio_in_out_unit_flow)
-	) || unit_incremental_heat_rate(unit=u, node1=n_from, node2=n_to, _strict=false) !== nothing
+	)
 end
 
 function _connection_issue(c)
