@@ -307,18 +307,8 @@ function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
     reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
 end
 
-function _get_var_with_replacement(m, var_name, ind)
-    get(m.ext[:spineopt].variables[var_name], ind) do
-        get_var_by_name = Dict(
-            :units_on => _get_units_on,
-            :units_out_of_service => _get_units_out_of_service,
-            :units_started_up => _get_units_started_up,
-        )
-        get_var = get(get_var_by_name, var_name, nothing)
-        isnothing(get_var) && throw(KeyError(ind))
-        get_var(m, ind...)
-    end
-end
+_force_fix(v::VariableRef, x) = fix(v, x; force=true)
+_force_fix(::Call, x) = nothing
 
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}

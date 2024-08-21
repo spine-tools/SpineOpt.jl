@@ -50,15 +50,11 @@ function connection_flow_indices(
 end
 
 function connection_flow_ub(m; connection, node, direction, kwargs...)
-    any(
-        realize(
-            connection_flow_capacity(m; connection=connection, node=ng, direction=direction, kwargs..., _strict=false)
-        ) !== nothing
-        for ng in groups(node)
+    (
+        connection_flow_capacity(connection=connection, node=node, direction=direction) === nothing
+        || is_candidate(connection=connection)
+        || members(node) != [node]
     ) && return NaN
-    realize(
-        connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _strict=false)
-    ) === nothing && return NaN
     connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
         + number_of_connections(m; connection=connection, kwargs..., _default=1)
         + something(candidate_connections(m; connection=connection, kwargs...), 0)
