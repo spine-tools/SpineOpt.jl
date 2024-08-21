@@ -3360,6 +3360,13 @@
         ],
         [
             "unit",
+            "unit_investment_lifetime_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `unit_lifetime` constraint sense."
+        ],
+        [
+            "unit",
             "unit_investment_variable_type",
             "unit_investment_variable_type_continuous",
             "unit_investment_variable_type_list",
@@ -4475,6 +4482,13 @@
                 "type": "duration",
                 "data": "10Y"
             },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_a",
+            "unit_investment_lifetime_sense",
+            ">=",
             "Base"
         ],
         [

@@ -845,6 +845,67 @@ function test_constraint_storage_lifetime()
     end
 end
 
+function test_constraint_storage_lifetime_sense()
+    @testset "constraint_storage_lifetime_sense" begin
+        candidate_storages = 1
+        node_capacity = 500
+        expected_num_vars = Dict(30 => 6, 180 => 8, 240 => 9)
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        lifetime_minutes = 240
+        senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
+        url_in = _test_constraint_node_setup()
+        storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        relationships = [
+            ["node__investment_temporal_block", ["node_c", "hourly"]],
+            ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
+        ]
+        @testset for (sense_key, sense_value) in senses
+            object_parameter_values = [
+                ["node", "node_c", "candidate_storages", candidate_storages],
+                ["node", "node_c", "node_state_cap", node_capacity],
+                ["node", "node_c", "has_state", true],
+                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
+                ["node", "node_c", "storage_investment_lifetime_sense", sense_key],
+                ["model", "instance", "model_end", model_end],
+            ]
+            SpineInterface.import_data(
+                url_in; relationships=relationships, object_parameter_values=object_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+            var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
+            constraint = m.ext[:spineopt].constraints[:storage_lifetime]
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
+            )
+            head_hours = length(
+                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+            ).value
+            tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
+            scenarios = [
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ][1:(head_hours + tail_hours)]
+            h = length(constraint)
+            s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
+            s, t = s_set[1], t_set[1]
+            path = reverse(unique(s_set))
+            key = (node(:node_c), path, t)
+            var_s_inv_av_key = (node(:node_c), s, t)
+            var_s_inv_av = var_storages_invested_available[var_s_inv_av_key...]
+            vars_s_inv = [var_storages_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
+            expected_con = SpineOpt.build_sense_constraint(var_s_inv_av - sum(vars_s_inv), sense_value, 0)
+            observed_con = constraint_object(constraint[key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 function test_constraint_storage_lifetime_mp()
     @testset "constraint_storage_lifetime_mp" begin
         candidate_storages = 1
@@ -1003,6 +1064,7 @@ end
     test_constraint_storages_invested_transition()
     test_constraint_storages_invested_transition_mp()
     test_constraint_storage_lifetime()
+    test_constraint_storage_lifetime_sense()
     test_constraint_storage_lifetime_mp()
     test_constraint_min_capacity_margin()
     test_constraint_min_capacity_margin_penalty()
