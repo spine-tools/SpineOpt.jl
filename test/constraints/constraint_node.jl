@@ -837,7 +837,7 @@ function test_constraint_storage_lifetime()
                 var_s_inv_av_key = (node(:node_c), s, t)
                 var_s_inv_av = var_storages_invested_available[var_s_inv_av_key...]
                 vars_s_inv = [var_storages_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_s_inv_av == sum(vars_s_inv))
+                expected_con = @build_constraint(var_s_inv_av >= sum(vars_s_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -957,7 +957,7 @@ function test_constraint_storage_lifetime_mp()
                 var_s_inv_av_key = (node(:node_c), s, t)
                 var_s_inv_av = var_storages_invested_available[var_s_inv_av_key...]
                 vars_s_inv = [var_storages_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_s_inv_av == sum(vars_s_inv))
+                expected_con = @build_constraint(var_s_inv_av >= sum(vars_s_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end

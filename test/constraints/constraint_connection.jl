@@ -1058,7 +1058,7 @@ function test_constraint_connection_lifetime()
                 var_c_inv_av = var_connections_invested_available[var_c_inv_av_key...]
                 vars_c_inv =
                     [var_connections_invested[connection(:connection_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_c_inv_av == sum(vars_c_inv))
+                expected_con = @build_constraint(var_c_inv_av >= sum(vars_c_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -1172,7 +1172,7 @@ function test_constraint_connection_lifetime_mp()
                 var_c_inv_av = var_connections_invested_available[var_c_inv_av_key...]
                 vars_c_inv =
                     [var_connections_invested[connection(:connection_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_c_inv_av == sum(vars_c_inv))
+                expected_con = @build_constraint(var_c_inv_av >= sum(vars_c_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end

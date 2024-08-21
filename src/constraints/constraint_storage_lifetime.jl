@@ -19,8 +19,9 @@
 
 @doc raw"""
 Constrain [storages\_invested\_available](@ref) by the investment lifetime of a storage.
-The parameter [storage\_investment\_lifetime\_sense](@ref) defaults to equality,
-but can be changed to allow minimum investment lifetime ([storage\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list))
+The parameter [storage\_investment\_lifetime\_sense](@ref) defaults to minimum investment
+lifetime ([storage\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list)),
+but can be changed to allow strict investment lifetime ([storage\_investment\_lifetime\_sense](@ref) [`==`](@ref constraint_sense_list))
 or maximum investment lifetime ([storage\_investment\_lifetime\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The storage lifetime is enforced by the following constraint:
 

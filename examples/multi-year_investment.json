@@ -3361,7 +3361,7 @@
         [
             "unit",
             "unit_investment_lifetime_sense",
-            "==",
+            ">=",
             "constraint_sense_list",
             "A selector for `unit_lifetime` constraint sense."
         ],

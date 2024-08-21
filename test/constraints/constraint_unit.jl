@@ -1453,7 +1453,7 @@ function test_constraint_unit_lifetime()
                 var_u_inv_av_key = (unit(:unit_ab), s, t)
                 var_u_inv_av = var_units_invested_available[var_u_inv_av_key...]
                 vars_u_inv = [var_units_invested[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_u_inv_av == sum(vars_u_inv))
+                expected_con = @build_constraint(var_u_inv_av >= sum(vars_u_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -1566,7 +1566,7 @@ function test_constraint_unit_lifetime_mp()
                 var_u_inv_av_key = (unit(:unit_ab), s, t)
                 var_u_inv_av = var_units_invested_available[var_u_inv_av_key...]
                 vars_u_inv = [var_units_invested[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_u_inv_av == sum(vars_u_inv))
+                expected_con = @build_constraint(var_u_inv_av >= sum(vars_u_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end

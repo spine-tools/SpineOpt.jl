@@ -19,8 +19,9 @@
 
 @doc raw"""
 Constrain [units\_invested\_available](@ref) by the investment lifetime of a unit.
-The parameter [unit\_investment\_lifetime\_sense](@ref) defaults to equality,
-but can be changed to allow minimum investment lifetime ([unit\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list))
+The parameter [unit\_investment\_lifetime\_sense](@ref) defaults to minimum investment
+lifetime ([unit\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list)),
+but can be changed to allow strict investment lifetime ([unit\_investment\_lifetime\_sense](@ref) [`==`](@ref constraint_sense_list))
 or maximum investment lifetime ([unit\_investment\_lifetime\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The unit lifetime is enforced by the following constraint:
 

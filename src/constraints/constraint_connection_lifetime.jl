@@ -19,8 +19,9 @@
 
 @doc raw"""
 Constrain [connections\_invested\_available](@ref) by the investment lifetime of a connection.
-The parameter [connection\_investment\_lifetime\_sense](@ref) defaults to equality,
-but can be changed to allow minimum investment lifetime ([connection\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list))
+The parameter [connection\_investment\_lifetime\_sense](@ref) defaults to minimum investment 
+lifetime ([connection\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list)),
+but can be changed to strict lifetime ([connection\_investment\_lifetime\_sense](@ref) [`==`](@ref constraint_sense_list))
 or maximum investment lifetime ([connection\_investment\_lifetime\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The connection lifetime is enforced by the following constraint:
 
