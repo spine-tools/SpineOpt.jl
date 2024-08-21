@@ -49,13 +49,11 @@ function unit_flow_indices(
 end
 
 function unit_flow_ub(m; unit, node, direction, kwargs...)
-    any(
-        unit_flow_capacity(; unit=unit, node=ng, direction=direction, kwargs..., _strict=false) !== nothing
-        for ng in groups(node)
+    (
+        unit_flow_capacity(unit=unit, node=node, direction=direction) === nothing
+        || has_online_variable(unit=unit)
+        || members(node) != [node]
     ) && return NaN
-    unit_flow_capacity(
-        ; unit=unit, node=node, direction=direction, kwargs..., _strict=false
-    ) === nothing && return NaN
     unit_flow_capacity(m; unit=unit, node=node, direction=direction, kwargs..., _default=NaN) * (
         + number_of_units(m; unit=unit, kwargs..., _default=1)
         + something(candidate_units(m; unit=unit, kwargs...), 0)

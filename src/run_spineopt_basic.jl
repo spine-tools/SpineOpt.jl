@@ -79,8 +79,7 @@ function build_model!(m; log_level)
     _init_outputs!(m)
     _build_stage_models!(m; log_level)
     _call_event_handlers(m, :model_built)
-    m_mp = master_model(m)
-    m_mp === nothing || _build_mp_model!(m_mp; log_level=log_level)
+    _is_benders_subproblem(m) && _build_mp_model!(master_model(m); log_level=log_level)
 end
 
 """
@@ -125,22 +124,6 @@ function _add_variables!(m; log_level=3)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
     _expand_replacement_expressions!(m)
-end
-
-function _expand_replacement_expressions!(m)
-    for (name, def) in m.ext[:spineopt].variables_definition
-        replacement_expressions = def[:replacement_expressions]
-        isempty(replacement_expressions) && continue
-        merge!(
-            m.ext[:spineopt].variables[name],
-            Dict(
-                ind => sum(
-                    coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in expr
-                )
-                for (ind, expr) in replacement_expressions
-            ),
-        )
-    end
 end
 
 """
@@ -277,7 +260,7 @@ end
 
 function _build_stage_models!(m; log_level)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
-        with_env(st.name) do
+        with_env(stage_scenario(stage=st)) do
             build_model!(stage_m; log_level)
         end
         child_models = _child_models(m, st)
@@ -357,12 +340,12 @@ end
 # If output_resolution is not specified, just fix the window end
 _fix_points(::Nothing, child_m) = (maximum(end_.(time_slice(child_m))),)
 function _fix_points(out_res, child_m)
-    out_res = parameter_value(out_res)
+    out_res_pv = parameter_value(out_res)
     w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
     next_point = w_start
     points = Set()
     for i in Iterators.countfrom(1)
-        res = out_res(i=i)
+        res = out_res_pv(i=i)
         res === nothing && break
         next_point += res
         next_point > w_end && break
@@ -992,7 +975,7 @@ function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
         for (analysis_time, by_time_slice) in by_analysis_time
             t_highest_resolution!(m, by_time_slice)
             by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
-                by_time_slice, output_time_slices(m; output=out)
+                by_time_slice, output_time_slice(m; output=out)
             )
             isempty(by_time_stamp_adjusted) && continue
             by_entity_adjusted = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
@@ -1390,13 +1373,10 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         for history_ind in indices(m; ind..., t=history_t)
             v = get(var, history_ind, nothing)  # NOTE: only fix variables that have history
             v === nothing && continue
-            _fix(v, val[ind])
+            _force_fix(v, val[ind])
         end
     end
 end
-
-_fix(v::VariableRef, x) = fix(v, x; force=true)
-_fix(::Call, x) = nothing
 
 function apply_non_anticipativity_constraints!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
