@@ -323,6 +323,40 @@ function test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
     url_in = "sqlite://"
 end
 
+function test_unit_flow_simple_bounds()
+    @testset "unit_flow_simple_bounds" begin
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = m_start + Hour(2)
+        fruf = 0.8
+        cap_to_node = 200
+        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        obj_pvals = [
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_linear"],
+        ]
+        rel_pvals = [
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", cap_to_node],
+        ]
+        import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
+        m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        ind_unit_flow_head = (unit(:unit_ab), node(:node_a), direction(:from_node), stochastic_scenario(:parent))
+        @testset for con_key in (:unit_flow_lb, :unit_flow_ub)
+            sense, bound = Dict(:unit_flow_lb => (>=, 0), :unit_flow_ub => (<=, cap_to_node))[con_key]
+            @testset for key in keys(m.ext[:spineopt].constraints[con_key])
+                @test key.direction.name == :to_node
+                @test key.node.name == :node_b
+                @test key.unit.name == :unit_ab
+                observed_con = constraint_object(m.ext[:spineopt].constraints[con_key][key])
+                expected_con = SpineOpt.build_sense_constraint(
+                    fruf * var_unit_flow[ind_unit_flow_head..., key.t], sense, bound
+                )
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+end
+
 function test_fix_ratio_out_in_unit_flow_simple()
     @testset "fix_ratio_out_in_unit_flow_simple" begin
         m_start = DateTime(2000, 1, 1, 0)
