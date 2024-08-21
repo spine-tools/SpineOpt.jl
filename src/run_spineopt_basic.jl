@@ -124,22 +124,6 @@ function _add_variables!(m; log_level=3)
     _expand_replacement_expressions!(m)
 end
 
-function _expand_replacement_expressions!(m)
-    for (name, def) in m.ext[:spineopt].variables_definition
-        replacement_expressions = def[:replacement_expressions]
-        isempty(replacement_expressions) && continue
-        merge!(
-            m.ext[:spineopt].variables[name],
-            Dict(
-                ind => sum(
-                    coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in expr
-                )
-                for (ind, expr) in replacement_expressions
-            ),
-        )
-    end
-end
-
 """
 Add SpineOpt expressions to the given model.
 """
@@ -1213,13 +1197,10 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         for history_ind in indices(m; ind..., t=history_t)
             v = get(var, history_ind, nothing)  # NOTE: only fix variables that have history
             v === nothing && continue
-            _fix(v, val[ind])
+            _force_fix(v, val[ind])
         end
     end
 end
-
-_fix(v::VariableRef, x) = fix(v, x; force=true)
-_fix(::Call, x) = nothing
 
 function apply_non_anticipativity_constraints!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
