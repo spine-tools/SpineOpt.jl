@@ -60,42 +60,61 @@ function unit_flow_ub(m; unit, node, direction, kwargs...)
     )
 end
 
-function _fix_ratio_out_in_unit_flow(m, u, n_to, n_from, s, t, fix_ratio)
-    if fix_ratio == fix_ratio_out_in_unit_flow
-        fix_ratio(m; unit=u, node1=n_to, node2=n_from, stochastic_scenario=s, t=t)
-    elseif fix_ratio == fix_ratio_in_out_unit_flow
-        _div_or_zero(1, fix_ratio(m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, t=t))
+#=
+Replacement expressions
+Direct:
+    unit_flow[u, n1, d1]
+    ==
+    fix_ratio(u, n1, n2) * unit_flow[u, n2, d2]
+    + fix_units_on_coeff(u, n1, n2) * units_on[u]
+    + startflow_sign(fix_ratio) * unit_start_flow(u, n1, n2) * units_started_up[u]
+
+Inverse:
+    unit_flow[u, n1, d1]
+    ==
+    (1 / fix_ratio(u, n2, n1)) * unit_flow[u, n2, d2]
+    - (fix_units_on_coeff(u, n2, n1) / fix_ratio(u, n2, n1)) * units_on[u]
+    - (startflow_sign(fix_ratio) * unit_start_flow(u, n2, n1) / fix_ratio(u, n2, n1)) * units_started_up[u]
+=#
+function _fix_ratio_unit_flow(m, u, n1, n2, s, t, fix_ratio, direct)
+    if direct
+        fix_ratio(m; unit=u, node1=n1, node2=n2, stochastic_scenario=s, t=t)
+    else
+        _div_or_zero(1, fix_ratio(m; unit=u, node1=n2, node2=n1, stochastic_scenario=s, t=t))
     end
 end
 
-function _fix_units_on_coeff_out_in(m, u, n_to, n_from, s, t, fix_ratio)
-    if fix_ratio == fix_ratio_out_in_unit_flow
-        fix_units_on_coefficient_out_in(m; unit=u, node1=n_to, node2=n_from, stochastic_scenario=s, t=t, _default=0)
-    elseif fix_ratio == fix_ratio_in_out_unit_flow
+function _fix_units_on_coeff(m, u, n1, n2, s, t, fix_ratio, direct)
+    fix_units_on_coeff = _ratio_to_units_on_coeff(fix_ratio)
+    if direct
+        fix_units_on_coeff(m; unit=u, node1=n1, node2=n2, stochastic_scenario=s, t=t, _default=0)
+    else
         - _div_or_zero(
-            fix_units_on_coefficient_in_out(
-                m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, t=t, _default=0
-            ),
-            fix_ratio(m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, t=t),
+            fix_units_on_coeff(m; unit=u, node1=n2, node2=n1, stochastic_scenario=s, t=t, _default=0),
+            fix_ratio(m; unit=u, node1=n2, node2=n1, stochastic_scenario=s, t=t),
         )
     end
 end
 
-_div_or_zero(x, y) = iszero(y) ? zero(y) : x / y
-
-function _signed_unit_start_flow(m, u, n_to, n_from, s, t, fix_ratio)
-    if fix_ratio == fix_ratio_out_in_unit_flow
-        - unit_start_flow(m; unit=u, node1=n_to, node2=n_from, stochastic_scenario=s, t=t, _default=0)
-    elseif fix_ratio == fix_ratio_in_out_unit_flow
-        - _div_or_zero(
-            unit_start_flow(m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, t=t, _default=0),
-            fix_ratio(m; unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, t=t),
+function _signed_unit_start_flow(m, u, n1, n2, s, t, fix_ratio, direct)
+    sign = _ratio_to_start_flow_sign(fix_ratio)
+    iszero(sign) && return 0
+    if direct
+        sign * unit_start_flow(m; unit=u, node1=n1, node2=n2, stochastic_scenario=s, t=t, _default=0)
+    else
+        - sign * _div_or_zero(
+            unit_start_flow(m; unit=u, node1=n2, node2=n1, stochastic_scenario=s, t=t, _default=0),
+            fix_ratio(m; unit=u, node1=n2, node2=n1, stochastic_scenario=s, t=t),
         )
     end
 end
 
 function _has_simple_fix_ratio_unit_flow(n1, n2, fix_ratio)
-    _similar(n1, n2) && fix_ratio in (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow)
+    _similar(n1, n2) && fix_ratio in _fix_unit_flow_ratios()
+end
+
+function _fix_unit_flow_ratios()
+    (fix_ratio_out_in_unit_flow, fix_ratio_in_out_unit_flow, fix_ratio_out_out_unit_flow, fix_ratio_in_in_unit_flow)
 end
 
 """
@@ -104,34 +123,24 @@ end
 Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
-    d_to, d_from = direction(:to_node), direction(:from_node)
-    replacement_expressions = Dict(
-        (unit=u, node=n_to, direction=d_to, stochastic_scenario=s, t=t) => Dict(
+    fix_ratio_d1_d2 = ((r, _ratio_to_d1_d2(r)...) for r in _fix_unit_flow_ratios())
+    replacement_expressions = OrderedDict(
+        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t) => Dict(
             :unit_flow => (
-                (unit=u, node=n_from, direction=d_from, stochastic_scenario=s, t=t),
-                _fix_ratio_out_in_unit_flow(m, u, n_to, n_from, s, t, fix_ratio),
+                (unit=u, node=n_ref, direction=d_ref, stochastic_scenario=s, t=t),
+                _fix_ratio_unit_flow(m, u, n, n_ref, s, t, fix_ratio, direct),
             ),
             :units_on => (
-                (unit=u, stochastic_scenario=s, t=t), _fix_units_on_coeff_out_in(m, u, n_to, n_from, s, t, fix_ratio)
+                (unit=u, stochastic_scenario=s, t=t), _fix_units_on_coeff(m, u, n, n_ref, s, t, fix_ratio, direct)
             ),
             :units_started_up => (
-                (unit=u, stochastic_scenario=s, t=t), _signed_unit_start_flow(m, u, n_to, n_from, s, t, fix_ratio)
+                (unit=u, stochastic_scenario=s, t=t),
+                _signed_unit_start_flow(m, u, n, n_ref, s, t, fix_ratio, direct),
             ),
         )
-        for (u, n_to, n_from, fix_ratio) in Iterators.flatten(
-            (
-                (
-                    (u, n_to, n_from, fix_ratio_out_in_unit_flow)
-                    for (u, n_to, n_from) in indices(fix_ratio_out_in_unit_flow)
-                ),
-                (
-                    (u, n_to, n_from, fix_ratio_in_out_unit_flow)
-                    for (u, n_from, n_to) in indices(fix_ratio_in_out_unit_flow)
-                ),
-            )
-        )
-        if _similar(n_to, n_from)
-        for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
+        for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)
+        if _has_simple_fix_ratio_unit_flow(n, n_ref, fix_ratio)
+        for (_n, s, t) in node_stochastic_time_indices(m; node=n_ref)
     )
     add_variable!(
         m,
