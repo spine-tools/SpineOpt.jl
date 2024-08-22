@@ -451,8 +451,6 @@ function test_two_fix_ratio_out_in_unit_flow_simple()
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         @testset for key in keys(var_unit_flow)
             var = var_unit_flow[key]
@@ -487,8 +485,6 @@ function test_two_fix_ratio_in_out_unit_flow_simple()
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         @testset for key in keys(var_unit_flow)
             var = var_unit_flow[key]
@@ -523,8 +519,6 @@ function test_fix_ratio_out_in_and_in_out_unit_flow_simple()
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         @testset for key in keys(var_unit_flow)
             var = var_unit_flow[key]
@@ -542,8 +536,8 @@ function test_fix_ratio_out_in_and_in_out_unit_flow_simple()
     end
 end
 
-function test_three_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
-    @testset "three_fix_ratio_out_in_and_one_out_out_unit_flow_simple" begin
+function test_two_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
+    @testset "two_fix_ratio_out_in_and_one_out_out_unit_flow_simple" begin
         m_start = DateTime(2000, 1, 1, 0)
         m_end = m_start + Hour(2)
         fruf = 0.8
@@ -564,8 +558,6 @@ function test_three_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         @testset for key in keys(var_unit_flow)
             var = var_unit_flow[key]
@@ -746,7 +738,7 @@ end
     test_two_fix_ratio_out_in_unit_flow_simple()
     test_two_fix_ratio_in_out_unit_flow_simple()
     test_fix_ratio_out_in_and_in_out_unit_flow_simple()
-    test_three_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
+    test_two_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
     test_fix_ratio_out_in_unit_flow_simple_rolling()
     test_fix_ratio_out_in_connection_flow_simple()
     test_fix_ratio_out_in_connection_flow_simple_rolling()
