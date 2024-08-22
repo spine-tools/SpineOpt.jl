@@ -119,13 +119,12 @@ function _expand_replacement_expressions!(m)
         replacement_expressions = def[:replacement_expressions]
         isempty(replacement_expressions) && continue
         vars = m.ext[:spineopt].variables[name]
-        exprs = Dict(
-            ind => sum(
+        exprs = Dict()
+        for (ind, formula) in replacement_expressions
+            vars[ind] = exprs[ind] = sum(
                 coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in formula
             )
-            for (ind, formula) in replacement_expressions
-        )
-        merge!(vars, exprs)
+        end
         @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
         _finalize_variables!(m, name, exprs, bin, int, lb, ub, fix_value, internal_fix_value)
     end
