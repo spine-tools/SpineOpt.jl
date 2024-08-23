@@ -87,7 +87,7 @@ function add_variable!(
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
         ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
     )
-    _finalize_variables!(m, name, vars, bin, int, lb, ub, fix_value, internal_fix_value)
+    _finalize_variables!(m, vars, bin, int, lb, ub, fix_value, internal_fix_value)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
@@ -126,7 +126,7 @@ function _expand_replacement_expressions!(m)
             )
         end
         @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
-        _finalize_variables!(m, name, exprs, bin, int, lb, ub, fix_value, internal_fix_value)
+        _finalize_expressions!(m, name, exprs, bin, int, lb, ub, fix_value, internal_fix_value)
     end
 end
 
@@ -143,9 +143,29 @@ function _get_var_with_replacement(m, var_name, ind)
     end
 end
 
-function _finalize_variables!(m, name, vars, bin, int, lb, ub, fix_value, internal_fix_value)
-    inds = collect(keys(vars))
-    vars = collect(values(vars))
+function _finalize_variables!(args...)
+    inds, vars, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(args...)
+    _set_binary.(vars, bins)
+    _set_integer.(vars, ints)
+    _set_lower_bound.(vars, lbs)
+    _set_upper_bound.(vars, ubs)
+    _fix.(vars, internal_fix_values)
+    _fix.(vars, fix_values)
+end
+
+function _finalize_expressions!(m, name, args...)
+    inds, exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(m, args...)
+    _set_binary.(exprs, bins)
+    _set_integer.(exprs, ints)
+    _set_lower_bound.(exprs, lbs, Symbol(name, :_lb), inds)
+    _set_upper_bound.(exprs, ubs, Symbol(name, :_ub), inds)
+    _fix.(exprs, internal_fix_values, Symbol(name, :_fix_value), inds)
+    _fix.(exprs, fix_values, Symbol(name, :_internal_fix_value), inds)
+end
+
+function _collect_info(m, d, bin, int, lb, ub, fix_value, internal_fix_value)
+    inds = collect(keys(d))
+    vars_or_exprs = collect(values(d))
     bins = Any[nothing for i in eachindex(inds)]
     ints = Any[nothing for i in eachindex(inds)]
     lbs = Any[nothing for i in eachindex(inds)]
@@ -161,12 +181,7 @@ function _finalize_variables!(m, name, vars, bin, int, lb, ub, fix_value, intern
         fix_values[i] = _resolve(fix_value, m, ind)
         internal_fix_values[i] = _resolve(internal_fix_value, m, ind)
     end
-    _set_binary.(vars, bins)
-    _set_integer.(vars, ints)
-    m.ext[:spineopt].constraints[Symbol(name, :_lb)] = Dict(zip(inds, _set_lower_bound.(vars, lbs)))
-    m.ext[:spineopt].constraints[Symbol(name, :_ub)] = Dict(zip(inds, _set_upper_bound.(vars, ubs)))
-    m.ext[:spineopt].constraints[Symbol(name, :_internal_fix)] = Dict(zip(inds, _fix.(vars, internal_fix_values)))
-    m.ext[:spineopt].constraints[Symbol(name, :_fix)] = Dict(zip(inds, _fix.(vars, fix_values)))
+    inds, vars_or_exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values
 end
 
 _resolve(::Nothing, _ind) = false
@@ -183,12 +198,12 @@ _set_integer(expr::GenericAffExpr, int) = int && set_integer.(keys(expr.terms))
 _set_lower_bound(::VariableRef, ::Nothing) = nothing
 _set_lower_bound(var::VariableRef, bound::Call) = set_lower_bound(var, bound)
 _set_lower_bound(var::VariableRef, bound::Number) = isfinite(bound) && set_lower_bound(var, bound)
-_set_lower_bound(expr::GenericAffExpr, bound) = _set_bound(expr, >=, bound)
+_set_lower_bound(expr::GenericAffExpr, bound, name, ind) = _set_bound(expr, >=, bound, name, ind)
 
 _set_upper_bound(::VariableRef, ::Nothing) = nothing
 _set_upper_bound(var::VariableRef, bound::Call) = set_upper_bound(var, bound)
 _set_upper_bound(var::VariableRef, bound::Number) = isfinite(bound) && set_upper_bound(var, bound)
-_set_upper_bound(expr::GenericAffExpr, bound) = _set_bound(expr, <=, bound)
+_set_upper_bound(expr::GenericAffExpr, bound, name, ind) = _set_bound(expr, <=, bound, name, ind)
 
 _fix(::VariableRef, ::Nothing) = nothing
 _fix(var::VariableRef, x::Call) = fix(var, x)
@@ -199,30 +214,33 @@ function _fix(var::VariableRef, x::Number)
         unfix(var)
     end
 end
-_fix(expr::GenericAffExpr, x) = _set_bound(expr, ==, x)
+_fix(expr::GenericAffExpr, x, name, ind) = _set_bound(expr, ==, x, name, ind)
 
-_set_bound(_expr, _sense, _bound::Nothing) = nothing
-function _set_bound(expr, sense, bound::Call)
-    upd = _ExpressionBoundUpdate(expr, sense, bound)
+_set_bound(_expr, _sense, _bound::Nothing, _name, _ind) = nothing
+function _set_bound(expr, sense, bound::Call, name, ind)
+    upd = _ExpressionBoundUpdate(expr, sense, bound, name, ind)
     upd()
 end
-function _set_bound(expr, sense, bound::Number)
-    (isfinite(bound) && owner_model(expr) !== nothing) || return
-    constraint = build_sense_constraint(expr, sense, bound)
-    add_constraint(owner_model(expr), constraint)
+function _set_bound(expr, sense, bound::Number, name, ind)
+    m = owner_model(expr)
+    (isfinite(bound) && m !== nothing) || return
+    bounds = get!(m.ext[:spineopt].constraints, name, Dict())
+    existing_constraint = get(bounds, ind, nothing)
+    existing_constraint !== nothing && delete(m, existing_constraint)
+    new_constraint = build_sense_constraint(expr, sense, bound)
+    bounds[ind] = add_constraint(m, new_constraint)
 end
 
 struct _ExpressionBoundUpdate
     expr
     sense
     bound
-    existing_constraint::Ref{Union{Nothing,ConstraintRef}}
-    _ExpressionBoundUpdate(args...) = new(args..., nothing)
+    name
+    ind
 end
 
 function (upd::_ExpressionBoundUpdate)()
-    upd.existing_constraint[] !== nothing && delete(owner_model(upd.expr), upd.existing_constraint[])
-    upd.existing_constraint[] = _set_bound(upd.expr, upd.sense, realize(upd.bound, upd))
+    _set_bound(upd.expr, upd.sense, realize(upd.bound, upd))
 end
 
 """
