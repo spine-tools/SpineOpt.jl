@@ -240,7 +240,7 @@ struct _ExpressionBoundUpdate
 end
 
 function (upd::_ExpressionBoundUpdate)()
-    _set_bound(upd.expr, upd.sense, realize(upd.bound, upd))
+    _set_bound(upd.expr, upd.sense, realize(upd.bound, upd), upd.name, upd.ind)
 end
 
 """
