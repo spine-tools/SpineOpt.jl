@@ -321,7 +321,6 @@ function _related_flows(fix_ratio_d1_d2)
             fix_ratio_direct[x, n1, d1, n2, d2] = (fix_ratio, false)
         end
     end
-    for x in flows_by_ref_flow @show x end
     sort!(flows_by_ref_flow; by=(k -> length(flows_by_ref_flow[k])), rev=true)
     seen_flows = Set()
     for (ref, flows) in flows_by_ref_flow
