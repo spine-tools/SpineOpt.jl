@@ -483,8 +483,13 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, economic
             discnt_rate_tech(; Dict(obj_cls.name => id)...) != 0 &&
             !isnothing(econ_lifetime(; Dict(obj_cls.name => id)...))
         )
+            stochastic_struct = if isempty(invest_stoch_struct(; Dict(obj_cls.name => id)...))
+                model__default_stochastic_structure(model=instance)
+            else
+                invest_stoch_struct(; Dict(obj_cls.name => id)...)
+            end
             stoch_map_vector = stochastic_structure__stochastic_scenario(
-                stochastic_structure=invest_stoch_struct(; Dict(obj_cls.name => id)...),
+                stochastic_structure=stochastic_struct,
             )
             stoch_map_val = []
             sizehint!(stoch_map_val, length(stoch_map_vector))
