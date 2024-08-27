@@ -67,6 +67,24 @@ function add_variable!(
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
+    t = vcat(history_time_slices, time_slice(m))
+    first_ind = iterate(indices(m; t=t))
+    K = first_ind === nothing ? Any : typeof(first_ind[1])
+    V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
+    vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
+        ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
+    )
+    history_vars_by_ind = Dict(
+        ind => [
+            history_var
+            for history_var in (get(vars, history_ind, nothing) for history_ind in indices(m; ind..., t=history_t))
+            if history_var !== nothing
+        ]
+        for (ind, history_t) in (
+            (ind, t_history_t(m; t=ind.t)) for ind in indices(m; t=time_slice(m)) if haskey(ind, :t)
+        )
+        if history_t !== nothing
+    )
     m.ext[:spineopt].variables_definition[name] = Dict(
         :indices => indices,
         :bin => bin,
@@ -77,15 +95,9 @@ function add_variable!(
         :internal_fix_value => internal_fix_value,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
+        :history_vars_by_ind => history_vars_by_ind,
         :history_time_slices => history_time_slices,
         :replacement_expressions => replacement_expressions,
-    )
-    t = vcat(history_time_slices, time_slice(m))
-    first_ind = iterate(indices(m; t=t))
-    K = first_ind === nothing ? Any : typeof(first_ind[1])
-    V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
-    vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
-        ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
     )
     _finalize_variables!(m, vars, bin, int, lb, ub, fix_value, internal_fix_value)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call

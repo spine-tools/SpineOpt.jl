@@ -252,7 +252,7 @@ end
 
 function _init_outputs!(m::Model)
     for out_name in _output_names(m)
-        get!(m.ext[:spineopt].outputs, out_name, Dict{NamedTuple,Dict}())
+        get!(m.ext[:spineopt].outputs, out_name, Dict())
     end
 end
 
@@ -487,7 +487,7 @@ end
 function _update_downstream_outputs!(stage_m)
     for (out_name, current_downstream_outputs) in stage_m.ext[:spineopt].downstream_outputs
         new_downstream_outputs = Dict(
-            ent => parameter_value(_output_value(val, true)) for (ent, val) in stage_m.ext[:spineopt].outputs[out_name]
+            ent => parameter_value(_output_value(val)) for (ent, val) in stage_m.ext[:spineopt].outputs[out_name]
         )
         mergewith!(merge!, current_downstream_outputs, new_downstream_outputs)
     end
@@ -599,6 +599,13 @@ function _save_variable_values!(m::Model)
     end
 end
 
+"""
+The value of a JuMP variable, rounded if necessary.
+"""
+_variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
+_variable_value(e::AffExpr) = value(e)
+_variable_value(x::GenericAffExpr{Call,VariableRef}) = value(realize(x))
+
 function _save_expression_values!(m::Model)
     for (name, expr) in m.ext[:spineopt].expressions
         name in keys(m.ext[:spineopt].outputs) || continue
@@ -626,13 +633,6 @@ function _save_constraint_values!(m::Model)
         m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(c) for (ind, c) in con)
     end
 end
-
-"""
-The value of a JuMP variable, rounded if necessary.
-"""
-_variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
-_variable_value(e::AffExpr) = value(e)
-_variable_value(x::GenericAffExpr{Call,VariableRef}) = value(realize(x))
 
 """
 Save the value of the objective terms in a model.
@@ -774,100 +774,40 @@ end
 Save the outputs of a model.
 """
 function _save_outputs!(m, output_suffix)
-    is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
+    w_start, w_end = start(current_window(m)), end_(current_window(m))
     for out_name in _output_names(m)
-        out = output(out_name)
         value = get(m.ext[:spineopt].values, out_name, nothing)
-        crop_to_window = !is_last_window && all(
-            overwrite_results_on_rolling(report=rpt, output=out) for rpt in report__output(output=out)
-        )
-        if _save_output!(m, out, value, output_suffix, crop_to_window)
-            continue
-        end
         param = parameter(out_name, @__MODULE__)
-        if _save_output!(m, out, param, output_suffix, crop_to_window)
+        if value === param === nothing
+            @warn "can't find any values for '$out_name'"
             continue
         end
-        @warn "can't find any values for '$out_name'"
+        by_suffix = get!(m.ext[:spineopt].outputs, out_name, Dict())
+        by_window = get!(by_suffix, output_suffix, Dict())
+        by_window[w_start, w_end] = Dict(
+            _static(ind) => val for (ind, val) in _output_value_by_ind(m, something(value, param))
+        )
     end
 end
 
-function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
-    by_entity = _value_by_entity(m, value_or_param, crop_to_window)
-    for (entity, by_analysis_time) in by_entity
-        entity = (; entity..., output_suffix...)
-        for (analysis_time, by_time_slice) in by_analysis_time
-            t_highest_resolution!(m, by_time_slice)
-            by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
-                by_time_slice, output_time_slice(m; output=out)
-            )
-            isempty(by_time_stamp_adjusted) && continue
-            by_entity_adjusted = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
-            by_analysis_time_adjusted = get!(by_entity_adjusted, entity, Dict{DateTime,Any}())
-            current_by_time_slice_adjusted = get(by_analysis_time_adjusted, analysis_time, nothing)
-            if current_by_time_slice_adjusted === nothing
-                by_analysis_time_adjusted[analysis_time] = by_time_stamp_adjusted
-            else
-                merge!(current_by_time_slice_adjusted, by_time_stamp_adjusted)
-            end
-        end
-    end
-    true
-end
-_save_output!(m, out, ::Nothing, output_suffix, crop_to_window) = false
+_static(ind::NamedTuple) = (; (k => _static(v) for (k, v) in pairs(ind))...)
+_static(t::TimeSlice) = (start(t), end_(t))
+_static(x) = x
 
-function _value_by_entity(m, value::Dict, crop_to_window)
-    by_entity = Dict()
-    analysis_time = start(current_window(m))
-    for (ind, val) in value
-        t_keys = collect(_time_slice_keys(ind))
-        t = !isempty(t_keys) ? maximum(ind[k] for k in t_keys) : current_window(m)
-        t <= analysis_time && continue
-        crop_to_window && start(t) >= end_(current_window(m)) && continue
-        entity = _drop_key(ind, t_keys...)
-        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-        by_time_slice = get!(by_analysis_time, analysis_time, Dict{TimeSlice,Any}())
-        by_time_slice[t] = val
-    end
-    by_entity
-end
-function _value_by_entity(m, parameter::Parameter, crop_to_window)
-    by_entity = Dict()
-    analysis_time = start(current_window(m))
-    for entity in indices_as_tuples(parameter)
+_output_value_by_ind(_m, value::Dict) = value
+function _output_value_by_ind(m, parameter::Parameter)
+    inds = (
+        (; entity..., stochastic_scenario=scen, t=t)
+        for entity in indices_as_tuples(parameter)
         for (scen, t) in stochastic_time_indices(m)
-            t <= analysis_time && continue
-            crop_to_window && start(t) >= end_(current_window(m)) && continue
-            entity = (; entity..., stochastic_scenario=scen)
-            val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
-            val === nothing && continue
-            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_slice = get!(by_analysis_time, analysis_time, Dict{TimeSlice,Any}())
-            by_time_slice[t] = val
-        end
-    end
-    by_entity
-end
-
-function _value_by_time_stamp_adjusted(by_time_slice, output_time_slices::Array)
-    by_time_stamp_adjusted = Dict()
-    for t_out in output_time_slices
-        val = _get_ajusted_value(by_time_slice, t_out)
-        val === nothing && continue  # No adjustment possible
-        by_time_stamp_adjusted[start(t_out)] = val
-    end
-    by_time_stamp_adjusted
-end
-function _value_by_time_stamp_adjusted(by_time_slice, ::Nothing)
-    Dict(start(t) => v for (t, v) in by_time_slice)
-end
-
-function _get_ajusted_value(by_time_slice, t_out)
-    higher_res_time_slices = filter(t -> iscontained(t, t_out), keys(by_time_slice))
-    if !isempty(higher_res_time_slices)
-        # Aggregate
-        sum(by_time_slice[t] for t in higher_res_time_slices) / length(higher_res_time_slices)
-    end
+    )
+    (
+        (ind, val)
+        for (ind, val) in (
+            (ind, parameter(; ind..., analysis_time=start(current_window(m)), _strict=false)) for ind in inds
+        )
+        if val !== nothing
+    )
 end
 
 function _compute_and_print_conflict!(m)
@@ -1045,13 +985,12 @@ function write_report(reports_by_output::Dict, url_out, values::Dict; alternativ
         if output_name in all_objective_terms
             output_name = Symbol(:objective_, output_name)
         end
-        output_val = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
         for (report_name, output_url) in reports
             if output_url === nothing
                 output_url = url_out
             end
             vals = get!(get!(vals_by_url_by_report, output_url, Dict()), report_name, Dict())
-            vals[output_name] = output_val
+            vals[output_name] = value
         end
     end
     for (output_url, vals_by_report) in vals_by_url_by_report
@@ -1066,11 +1005,14 @@ function _collect_output_values(m)
     _wait_for_dual_solves(m)
     values = Dict()
     for (output_name, overwrite) in keys(m.ext[:spineopt].reports_by_output)
-        by_entity = get(m.ext[:spineopt].outputs, output_name, nothing)
-        by_entity === nothing && continue
+        by_suffix = get(m.ext[:spineopt].outputs, output_name, nothing)
+        by_suffix === nothing && continue
         key = (output_name, overwrite)
         haskey(values, key) && continue
-        values[key] = _output_value_by_entity(by_entity, overwrite)
+        out_res = output_resolution(output=output(output_name))
+        values[key] = _output_value_by_entity(
+            by_suffix, overwrite, out_res, model_end(model=m.ext[:spineopt].instance)
+        )
     end
     values
 end
@@ -1085,41 +1027,93 @@ function _wait_for_dual_solves(m)
     end
 end
 
-function _output_value_by_entity(by_entity, overwrite_results_on_rolling)
+function _output_value_by_entity(by_suffix, overwrite_results_on_rolling, output_resolution, model_end)
+    by_entity = Dict()
+    for (suffix, by_window) in by_suffix
+        for ((w_start, w_end), values) in by_window
+            crop_to_window = overwrite_results_on_rolling && w_end < model_end
+            for (entity, value) in values
+                t_keys = [k for (k, v) in pairs(entity) if v isa Tuple{DateTime,DateTime}]
+                t = t_start, t_end = isempty(t_keys) ? (w_start, w_end) : maximum(entity[k] for k in t_keys)
+                t_start < w_start && continue
+                crop_to_window && t_start >= w_end && continue
+                entity = _output_entity(entity, t_keys, suffix)
+                by_analysis_time = get!(by_entity, entity, Dict())
+                by_t_interval = get!(by_analysis_time, w_start, Dict())
+                by_t_interval[t] = value
+            end
+        end
+    end
     Dict(
-        entity => _output_value(by_analysis_time, overwrite_results_on_rolling)
+        entity => _output_value(_polish(by_analysis_time), overwrite_results_on_rolling, output_resolution)
         for (entity, by_analysis_time) in by_entity
     )
 end
 
-function _output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
-    by_analysis_time_realized = Dict(
-        analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
-        for (analysis_time, by_time_stamp) in by_analysis_time
-    )
-    _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling))
+function _output_entity(entity::NamedTuple, t_keys, suffix)
+    stoch_path = get(entity, :stochastic_path, (;))
+    flat_stoch_path = (; (Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
+    (; _drop_key(entity, :stochastic_path, t_keys...)..., flat_stoch_path..., suffix...)
 end
 
-function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
-    by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
-    by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time_sorted) for (t, val) in by_time_stamp)
-    TimeSeries(first.(by_time_stamp), collect(Float64, last.(by_time_stamp)); merge_ok=true)
+function _polish(by_analysis_time)
+    OrderedDict(
+        analysis_time => OrderedDict(
+            t_start => realize(value) for ((t_start, t_end), value) in sort(by_t_interval; lt=_t_interval_lt)
+        )
+        for (analysis_time, by_t_interval) in sort(by_analysis_time)
+    )
 end
-function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+
+"""
+Return true either if the first interval starts before the second,
+or if it has a lower resolution (i.e. longer duration) than the second.
+"""
+function _t_interval_lt(t1, t2)
+    t_start1, t_end1 = t1
+    t_start2, t_end2 = t2
+    t_start1 < t_start2 || t_end1 - t_start1 > t_end2 - t_start2
+end
+
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Bool=true, output_resolution=nothing)
+    _output_value(by_analysis_time, Val(overwrite_results_on_rolling), output_resolution)
+end
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true}, output_resolution)
+    by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time) for (t, val) in by_time_stamp)
+    _aggregated(first.(by_time_stamp), collect(Float64, last.(by_time_stamp)), output_resolution; merge_ok=true)
+
+end
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false}, output_resolution)
     Map(
         collect(keys(by_analysis_time)),
         [
-            TimeSeries(collect(keys(by_time_stamp)), collect(Float64, values(by_time_stamp)))
+            _aggregated(collect(keys(by_time_stamp)), collect(Float64, values(by_time_stamp)), output_resolution)
             for by_time_stamp in values(by_analysis_time)
-        ]
+        ],
     )
 end
 
-function _flatten_stochastic_path(entity::NamedTuple)
-    stoch_path = get(entity, :stochastic_path, nothing)
-    stoch_path === nothing && return entity
-    flat_stoch_path = (; Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
-    (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
+_aggregated(inds, vals, ::Nothing; kwargs...) = TimeSeries(inds, vals; kwargs...)
+function _aggregated(inds, vals, res; kwargs...)
+    aggr_inds = []
+    aggr_vals = []
+    aggregate(ref_t, cumm_vals) = (push!(aggr_inds, ref_t); push!(aggr_vals, sum(cumm_vals) / length(cumm_vals)))
+    ref_t = first(inds)
+    cumm_vals = [first(vals)]
+    for (t, v) in Iterators.drop(zip(inds, vals), 1)
+        if t - ref_t < res
+            # Accummulate
+            push!(cumm_vals, v)
+        else
+            aggregate(ref_t, cumm_vals)
+            ref_t = t
+            cumm_vals = [v]
+        end
+    end
+    if !isempty(cumm_vals)
+        aggregate(ref_t, cumm_vals)
+    end
+    TimeSeries(aggr_inds, aggr_vals; kwargs...)
 end
 
 function _dump_resume_data(m::Model, k, ::Nothing) end
@@ -1184,21 +1178,14 @@ _set_name(x, name) = nothing
 
 function _fix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
-        _fix_history_variable!(m, name, definition[:indices])
+        _fix_history_variable!(m, name, definition[:history_vars_by_ind])
     end
 end
 
-function _fix_history_variable!(m::Model, name::Symbol, indices)
-    var = m.ext[:spineopt].variables[name]
-    val = m.ext[:spineopt].values[name]
-    for ind in indices(m; t=time_slice(m))
-        history_t = t_history_t(m; t=ind.t)
-        history_t === nothing && continue
-        for history_ind in indices(m; ind..., t=history_t)
-            v = get(var, history_ind, nothing)  # NOTE: only fix variables that have history
-            v === nothing && continue
-            _force_fix(v, val[ind])
-        end
+function _fix_history_variable!(m::Model, name::Symbol, history_vars_by_ind)
+    vals = m.ext[:spineopt].values[name]
+    for (ind, history_vars) in history_vars_by_ind
+        _force_fix.(history_vars, vals[ind])
     end
 end
 
@@ -1247,12 +1234,7 @@ end
 
 function unfix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
-        var = m.ext[:spineopt].variables[name]
-        history_time_slices = m.ext[:spineopt].variables_definition[name][:history_time_slices]
-        indices = definition[:indices]
-        for history_ind in indices(m; t=history_time_slices)
-            _unfix(var[history_ind])
-        end
+        _unfix.(Iterators.flatten(values(definition[:history_vars_by_ind])))
     end
 end
 
