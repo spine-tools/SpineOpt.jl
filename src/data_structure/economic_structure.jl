@@ -489,8 +489,8 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, economic
                 invest_stoch_struct(; Dict(obj_cls.name => id)...)
             end
             stoch_map_vector = stochastic_structure__stochastic_scenario(
-                        stochastic_structure=stochastic_struct,
-                    )
+                stochastic_structure=stochastic_struct,
+            )
             stoch_map_val = []
             sizehint!(stoch_map_val, length(stoch_map_vector))
             stoch_map_ind = []
