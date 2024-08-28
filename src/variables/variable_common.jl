@@ -223,12 +223,34 @@ function _set_bound(expr, sense, bound::Call, name, ind)
 end
 function _set_bound(expr, sense, bound::Number, name, ind)
     m = owner_model(expr)
-    (isfinite(bound) && m !== nothing) || return
+    m === nothing && return
     bounds = get!(m.ext[:spineopt].constraints, name, Dict())
     existing_constraint = get(bounds, ind, nothing)
-    existing_constraint !== nothing && delete(m, existing_constraint)
-    new_constraint = build_sense_constraint(expr, sense, bound)
-    bounds[ind] = add_constraint(m, new_constraint)
+    if existing_constraint !== nothing
+        _update_bound_constraint(existing_constraint, expr, sense, bound)
+    elseif isfinite(bound)
+        new_constraint = build_sense_constraint(expr, sense, bound)
+        bounds[ind] = add_constraint(m, new_constraint)
+    end
+end
+
+function _update_bound_constraint(existing_constraint, expr, ::typeof(==), bound)
+    if isnan(bound)
+        for var in keys(expr.terms)
+            set_normalized_coefficient(existing_constraint, var, 0)
+        end
+        set_normalized_rhs(existing_constraint, 0)
+    else
+        for (var, coeff) in expr.terms
+            set_normalized_coefficient(existing_constraint, var, coeff)
+        end
+        set_normalized_rhs(existing_constraint, bound - expr.constant)
+    end
+end
+function _update_bound_constraint(existing_constraint, expr, _sense, bound)
+    if isfinite(bound)
+        set_normalized_rhs(existing_constraint, bound - expr.constant)
+    end
 end
 
 struct _ExpressionBoundUpdate
