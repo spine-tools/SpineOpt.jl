@@ -242,14 +242,14 @@ function _update_bound_constraint(existing_constraint, expr, ::typeof(==), bound
         set_normalized_rhs(existing_constraint, 0)
     else
         for (var, coeff) in expr.terms
-            set_normalized_coefficient(existing_constraint, var, coeff)
+            set_normalized_coefficient(existing_constraint, var, realize(coeff))
         end
-        set_normalized_rhs(existing_constraint, bound - expr.constant)
+        set_normalized_rhs(existing_constraint, bound - realize(expr.constant))
     end
 end
 function _update_bound_constraint(existing_constraint, expr, _sense, bound)
     if isfinite(bound)
-        set_normalized_rhs(existing_constraint, bound - expr.constant)
+        set_normalized_rhs(existing_constraint, bound - realize(expr.constant))
     end
 end
 
