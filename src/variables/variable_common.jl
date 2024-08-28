@@ -247,9 +247,9 @@ function _update_bound_constraint(existing_constraint, expr, sense::typeof(==), 
         set_normalized_rhs(existing_constraint, bound - expr.constant)
     end
 end
-function _update_bound_constraint(existing_constraint, expr, sense, bound)
+function _update_bound_constraint(existing_constraint, expr, _sense, bound)
     if isfinite(bound)
-        set_normalized_rhs(existing_constraint, bound)
+        set_normalized_rhs(existing_constraint, bound - expr.constant)
     end
 end
 
