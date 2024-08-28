@@ -1,18 +1,9 @@
-# Representative days with seasonal storages
-
-In order to reduce the problem size, representative periods are often used in optimization
-models. However, this often limits the ability to properly account for seasonal storages.
-
-In SpineOpt, we provide functionality to use representative days with seasonal storages.
-
-## [General idea](@id general_idea_rep_period_seasonal_Storage)
-
-The general idea is to mimick the seasonal effects throughout a non-representative period,
-e.g. a year of optimization, by introducing a specific sequence of the representative periods.
-
-## [Usage of representative days and seasonal storages for investment problems](@id Usage_rep_period_seasonal_Storage)
+# [How to set up representative days for investment problems](@id Usage_rep_period_seasonal_Storage)
 
 Assuming you already have an investment model with a certain temporal structure that works, you can turn it into a representative periods model with the following steps.
+
+!!! info
+   Note that representative days often limit the ability to properly account for seasonal storages. However, SpineOpt takes this into account and allows for seasonal storage.
 
 1. Select the representative periods. For example if you are modelling a year, you can select a few weeks
    (one in summer, one in winder, and one in mid season).

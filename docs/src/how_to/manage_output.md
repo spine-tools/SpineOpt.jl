@@ -1,4 +1,4 @@
-# Managing Output Data
+# How to manage Output Data
 
 Once a model is created and successfully run, it will hopefully produce results and output data. This section covers how the writing of output data is controlled and managed.
 
