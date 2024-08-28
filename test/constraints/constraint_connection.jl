@@ -1016,10 +1016,10 @@ function test_constraint_connection_lifetime()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_connection_setup()
-            connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
-                ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
+                ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -1066,16 +1066,73 @@ function test_constraint_connection_lifetime()
     end
 end
 
+function test_constraint_connection_lifetime_sense()
+    @testset "constraint_connection_lifetime_sense" begin
+        candidate_connections = 3
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        lifetime_minutes = 240
+        senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
+        url_in = _test_constraint_connection_setup()
+        connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]
+        @testset for (sense_key, sense_value) in senses    
+            object_parameter_values = [
+                ["connection", "connection_ab", "candidate_connections", candidate_connections],
+                ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
+                ["connection", "connection_ab", "connection_investment_lifetime_sense", sense_key],
+                ["model", "instance", "model_end", model_end],
+            ]
+            SpineInterface.import_data(
+                url_in; relationships=relationships, object_parameter_values=object_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+            var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+            constraint = m.ext[:spineopt].constraints[:connection_lifetime]
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
+            )
+            head_hours =
+                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
+            scenarios = [
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ][1:(head_hours + tail_hours)]
+            h = length(constraint)
+            s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
+            s, t = s_set[1], t_set[1]
+            path = reverse(unique(s_set))
+            key = (connection(:connection_ab), path, t)
+            var_c_inv_av_key = (connection(:connection_ab), s, t)
+            var_c_inv_av = var_connections_invested_available[var_c_inv_av_key...]
+            vars_c_inv =
+                [var_connections_invested[connection(:connection_ab), s, t] for (s, t) in zip(s_set, t_set)]
+            expected_con = SpineOpt.build_sense_constraint(var_c_inv_av - sum(vars_c_inv), sense_value, 0)
+            observed_con = constraint_object(constraint[key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 function test_constraint_connection_lifetime_mp()
     @testset "constraint_connection_lifetime_mp" begin
         candidate_connections = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_connection_setup()
-            connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
-                ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
+                ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]
@@ -1387,7 +1444,7 @@ function test_constraint_candidate_connection_lb()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_lifetime",
+                "connection_investment_tech_lifetime",
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "connection_monitored", true],
@@ -1493,7 +1550,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_lifetime",
+                "connection_investment_tech_lifetime",
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "connection_monitored", true],
@@ -1617,7 +1674,7 @@ function test_constraint_candidate_connection_ub()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_lifetime",
+                "connection_investment_tech_lifetime",
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "connection_monitored", true],
@@ -1698,6 +1755,7 @@ end
     test_constraint_connections_invested_transition()
     test_constraint_connections_invested_transition_mp()
     test_constraint_connection_lifetime()
+    test_constraint_connection_lifetime_sense()
     test_constraint_connection_lifetime_mp()
     test_constraint_connections_invested_available()
     test_constraint_connections_invested_available_mp()

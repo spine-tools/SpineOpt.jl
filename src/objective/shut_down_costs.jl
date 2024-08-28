@@ -29,6 +29,9 @@ function shut_down_costs(m::Model, t_range)
         sum(
             + units_shut_down[u, s, t]
             * shut_down_cost(m; unit=u, stochastic_scenario=s, t=t)
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
             for (u, s, t) in units_on_indices(m; unit=indices(shut_down_cost), t=t_range);

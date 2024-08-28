@@ -17,10 +17,30 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_connection_lifetime!(m::Model)
+@doc raw"""
+Constrain [connections\_invested\_available](@ref) by the investment lifetime of a connection.
+The parameter [connection\_investment\_lifetime\_sense](@ref) defaults to minimum investment 
+lifetime ([connection\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list)),
+but can be changed to strict lifetime ([connection\_investment\_lifetime\_sense](@ref) [`==`](@ref constraint_sense_list))
+or maximum investment lifetime ([connection\_investment\_lifetime\_sense](@ref) [`<=`](@ref constraint_sense_list)).
+The connection lifetime is enforced by the following constraint:
 
-Constrain connections_invested_available by the investment lifetime of a connection.
+```math
+\begin{aligned}
+& v^{connections\_invested\_available}_{(conn,s,t)}
+- \sum_{
+        t\_past = t-p^{connection\_investment\_tech\_lifetime}
+}^{t}
+v^{connections\_invested}_{(conn,s,t\_past)} \\
+& \begin{cases}
+\ge & \text{if } p^{connection\_investment\_lifetime\_sense} = ">=" \\
+= & \text{if } p^{connection\_investment\_lifetime\_sense} = "==" \\
+\le & \text{if } p^{connection\_investment\_lifetime\_sense} = "<=" \\
+\end{cases} \\
+& 0 \\
+& \forall (conn,s,t)
+\end{aligned}
+```
 """
 function add_constraint_connection_lifetime!(m::Model)
     _add_constraint!(
@@ -30,7 +50,7 @@ end
 
 function _build_constraint_connection_lifetime(m::Model, conn, s_path, t)
     @fetch connections_invested_available, connections_invested = m.ext[:spineopt].variables
-    @build_constraint(
+    build_sense_constraint(
         sum(
             connections_invested_available[conn, s, t]
             for (conn, s, t) in connections_invested_available_indices(
@@ -38,24 +58,26 @@ function _build_constraint_connection_lifetime(m::Model, conn, s_path, t)
             );
             init=0,
         )
-        >=
+        -
         sum(
             connections_invested[conn, s_past, t_past] * weight
             for (conn, s_past, t_past, weight) in _past_connections_invested_available_indices(m, conn, s_path, t)
-        )
+        ),
+        eval(connection_investment_lifetime_sense(connection=conn)),
+        0
     )
 end
 
 function constraint_connection_lifetime_indices(m::Model)
     (
         (connection=conn, stochastic_path=path, t=t)
-        for (conn, t) in connection_investment_time_indices(m; connection=indices(connection_investment_lifetime))
+        for (conn, t) in connection_investment_time_indices(m; connection=indices(connection_investment_tech_lifetime))
         for path in active_stochastic_paths(m, _past_connections_invested_available_indices(m, conn, anything, t))
     )
 end
 
 function _past_connections_invested_available_indices(m, conn, s_path, t)
-    _past_indices(m, connections_invested_available_indices, connection_investment_lifetime, s_path, t; connection=conn)
+    _past_indices(m, connections_invested_available_indices, connection_investment_tech_lifetime, s_path, t; connection=conn)
 end
 
 """

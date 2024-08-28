@@ -34,19 +34,18 @@ pages = [
     "Introduction" => "index.md",
     "Getting Started" => Any[
         "Installation" => joinpath("getting_started", "installation.md"),
-        "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
-        "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
-        "Archetypes" => joinpath("getting_started", "archetypes.md"),
-        "Managing Outputs" => joinpath("getting_started", "output_data.md"),
+        "Recommended workflow" => joinpath("getting_started", "recommended_workflow.md"),
+        "Troubleshooting" => joinpath("getting_started", "troubleshooting.md"),
     ],
     "Tutorials" => Any[
-        "Webinars" => joinpath("tutorial", "webinars.md"),
+        "Webinars and examples" => joinpath("tutorial", "webinars.md"),
         "Simple system" => joinpath("tutorial", "simple_system.md"),
+        "Temporal resolution" => joinpath("tutorial", "temporal_resolution.md"),
+        "Stochastic structure" => joinpath("tutorial", "stochastic_system.md"),
+        "Capacity planning" => joinpath("tutorial", "capacity_planning.md"),
         "Reserve requirements" => joinpath("tutorial", "reserves.md"),
         "Ramping constraints" => joinpath("tutorial", "ramping.md"),
         "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
-        "Two hydro plants" => joinpath("tutorial", "tutorialTwoHydro.md"),
-        "Case Study A5" => joinpath("tutorial", "case_study_a5.md"),
     ],
     "How to" => [],
     "Concept Reference" => Any[
@@ -55,6 +54,7 @@ pages = [
         "Relationship Classes" => joinpath("concept_reference", "Relationship Classes.md"),
         "Parameters" => joinpath("concept_reference", "Parameters.md"),
         "Parameter Value Lists" => joinpath("concept_reference", "Parameter Value Lists.md"),
+        "Archetypes" => joinpath("concept_reference", "archetypes.md"),
     ],
     "Mathematical Formulation" => Any[
         "Variables" => joinpath("mathematical_formulation", "variables.md"),

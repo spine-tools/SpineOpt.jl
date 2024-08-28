@@ -28,6 +28,9 @@ function res_proc_costs(m::Model, t_range)
         m,
         sum(
             unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * reserve_procurement_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)

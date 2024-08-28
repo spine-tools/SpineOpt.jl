@@ -34,10 +34,11 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
     or nothing
   - `required_history_period::Union{Period,Nothing}=nothing`: given an index, return the required history period
     or nothing
-  - `replacement_expressions::Dict=Dict()`: mapping some of the indices returned by the given `indices` function,
-    to another Dict with a recipe to build an expression to use instead of the variable.
-    The recipe Dict maps variable names to a tuple of index and coefficient.
-    The expression is built as the sum of the coefficient and the variable for that index over the entire Dict.
+  - `replacement_expressions::Dict=Dict()`: mapping some of the indices of the variable - as returned by the given
+    `indices` function - to another Dict that defines an expression to use instead of the variable for that index.
+    The expression Dict simply maps variable names to a tuple of reference index and coefficient.
+    The expression is then built as the sum of the coefficient and the variable for the reference index,
+    over the entire Dict.
 """
 function add_variable!(
     m::Model,
@@ -55,6 +56,11 @@ function add_variable!(
     required_history_period::Union{Period,Nothing}=nothing,
     replacement_expressions=Dict(),
 )
+    lb = _nothing_if_empty(lb)
+    ub = _nothing_if_empty(ub)
+    initial_value = _nothing_if_empty(initial_value)
+    fix_value = _nothing_if_empty(fix_value)
+    internal_fix_value = _nothing_if_empty(internal_fix_value)
     if required_history_period === nothing
         required_history_period = _model_duration_unit(m.ext[:spineopt].instance)(1)
     end
@@ -65,16 +71,15 @@ function add_variable!(
         :indices => indices,
         :bin => bin,
         :int => int,
+        :lb => lb,
+        :ub => ub,
+        :fix_value => fix_value,
+        :internal_fix_value => internal_fix_value,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
         :history_time_slices => history_time_slices,
         :replacement_expressions => replacement_expressions,
     )
-    lb = _nothing_if_empty(lb)
-    ub = _nothing_if_empty(ub)
-    initial_value = _nothing_if_empty(initial_value)
-    fix_value = _nothing_if_empty(fix_value)
-    internal_fix_value = _nothing_if_empty(internal_fix_value)
     t = vcat(history_time_slices, time_slice(m))
     first_ind = iterate(indices(m; t=t))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
@@ -82,24 +87,7 @@ function add_variable!(
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
         ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
     )
-    inverse_replacement_expressions = Dict(
-        ref_ind => (ind, 1 / coeff)
-        for (ind, (ref_ind, coeff)) in ((ind, ref[name]) for (ind, ref) in replacement_expressions)
-    )
-    Threads.@threads for ind in collect(keys(vars))
-        # Resolve bin, int, lb, ub, fix_value and internal_fix_value for ind.
-        # If we have an replacement_expressions, then we need to combine any values given for the ind and its referrer.
-        # For example, for the lower bound we need to take the maximum between the lower bound for ind,
-        # and the lower bound for the referrer scaled by the appropriate factor.
-        expression = get(inverse_replacement_expressions, ind, ())
-        res_bin = _any(bin, ind, expression...)
-        res_int = _any(int, ind, expression...)
-        res_lb = _reduce(lb, m, ind, expression..., max)
-        res_ub = _reduce(ub, m, ind, expression..., min)
-        res_fix_value = _reduce(fix_value, m, ind, expression..., _check_unique)
-        res_internal_fix_value = _reduce(internal_fix_value, m, ind, expression..., _check_unique)
-        _finalize_variable!(vars[ind], res_bin, res_int, res_lb, res_ub, res_fix_value, res_internal_fix_value)
-    end
+    _finalize_variables!(m, vars, bin, int, lb, ub, fix_value, internal_fix_value)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
@@ -122,72 +110,137 @@ end
 _nothing_if_empty(p::Parameter) = isempty(indices(p)) ? nothing : p
 _nothing_if_empty(x) = x
 
+_add_variable!(m, name, ind) = @variable(m, base_name=_base_name(name, ind))
+
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
-function _add_variable!(m, name, ind)
-    @variable(m, base_name=_base_name(name, ind))
-end
-
-_check_unique(x, y) = x == y ? x : error("$x != $y")
-
-_any(::Nothing, args...) = false
-_any(f, ind) = f(ind)
-_any(f, ind, other_ind, _factor) = _apply(any, f(ind), f(other_ind))
-
-_reduce(::Nothing, args...) = nothing
-_reduce(f, m, ind, _reducer) = f(m; ind...)
-function _reduce(f, m, ind, other_ind, factor, reducer)
-    _apply(reducer, f(m; ind...), _mul(factor, f(m; other_ind...)))
-end
-
-_mul(_factor, ::Nothing) = nothing
-_mul(factor, x) = factor * x
-_mul(factor::Call, x) = Call(_mul, [factor, x])
-_mul(factor, x::Call) = Call(_mul, [factor, x])
-_mul(factor::Call, x::Call) = Call(_mul, [factor, x])
-
-_apply(reducer, x, ::Nothing) = x
-_apply(reducer, ::Nothing, y) = y
-_apply(reducer, ::Nothing, ::Nothing) = nothing
-_apply(reducer, x::Call, y) = Call(_apply, [reducer, x, y])
-_apply(reducer, x, y::Call) = Call(_apply, [reducer, x, y])
-_apply(reducer, x::Call, y::Call) = Call(_apply, [reducer, x, y])
-function _apply(reducer, x::Number, y::Number)
-    if isnan(x)
-        y
-    elseif isnan(y)
-        x
-    else
-        reducer(x, y)
+function _expand_replacement_expressions!(m)
+    for (name, def) in m.ext[:spineopt].variables_definition
+        replacement_expressions = def[:replacement_expressions]
+        isempty(replacement_expressions) && continue
+        vars = m.ext[:spineopt].variables[name]
+        exprs = Dict()
+        for (ind, formula) in replacement_expressions
+            vars[ind] = exprs[ind] = sum(
+                coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in formula
+            )
+        end
+        @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
+        _finalize_expressions!(m, name, exprs, bin, int, lb, ub, fix_value, internal_fix_value)
     end
 end
 
-_finalize_variable!(x, args...) = nothing
-function _finalize_variable!(var::VariableRef, bin, int, lb, ub, fix_value, internal_fix_value)
-    bin && set_binary(var)
-    int && set_integer(var)
-    _do_set_lower_bound(var, lb)
-    _do_set_upper_bound(var, ub)
-    _do_fix(var, internal_fix_value; force=true)
-    _do_fix(var, fix_value; force=true)
+function _get_var_with_replacement(m, var_name, ind)
+    get(m.ext[:spineopt].variables[var_name], ind) do
+        get_var_by_name = Dict(
+            :units_on => _get_units_on,
+            :units_out_of_service => _get_units_out_of_service,
+            :units_started_up => _get_units_started_up,
+        )
+        get_var = get(get_var_by_name, var_name, nothing)
+        isnothing(get_var) && throw(KeyError(ind))
+        get_var(m, ind...)
+    end
 end
 
-_do_set_lower_bound(_var, ::Nothing) = nothing
-_do_set_lower_bound(var, bound::Call) = set_lower_bound(var, bound)
-_do_set_lower_bound(var, bound::Number) = isnan(bound) || set_lower_bound(var, bound)
+function _finalize_variables!(args...)
+    inds, vars, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(args...)
+    _set_binary.(vars, bins)
+    _set_integer.(vars, ints)
+    _set_lower_bound.(vars, lbs)
+    _set_upper_bound.(vars, ubs)
+    _fix.(vars, internal_fix_values)
+    _fix.(vars, fix_values)
+end
 
-_do_set_upper_bound(_var, ::Nothing) = nothing
-_do_set_upper_bound(var, bound::Call) = set_upper_bound(var, bound)
-_do_set_upper_bound(var, bound::Number) = isnan(bound) || set_upper_bound(var, bound)
+function _finalize_expressions!(m, name, args...)
+    inds, exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(m, args...)
+    _set_binary.(exprs, bins)
+    _set_integer.(exprs, ints)
+    _set_lower_bound.(exprs, lbs, Symbol(name, :_lb), inds)
+    _set_upper_bound.(exprs, ubs, Symbol(name, :_ub), inds)
+    _fix.(exprs, internal_fix_values, Symbol(name, :_fix_value), inds)
+    _fix.(exprs, fix_values, Symbol(name, :_internal_fix_value), inds)
+end
 
-_do_fix(_var, ::Nothing; kwargs...) = nothing
-_do_fix(var, x::Call; kwargs...) = fix(var, x)
-function _do_fix(var, x::Number; kwargs...)
+function _collect_info(m, d, bin, int, lb, ub, fix_value, internal_fix_value)
+    inds = collect(keys(d))
+    vars_or_exprs = collect(values(d))
+    bins = Any[nothing for i in eachindex(inds)]
+    ints = Any[nothing for i in eachindex(inds)]
+    lbs = Any[nothing for i in eachindex(inds)]
+    ubs = Any[nothing for i in eachindex(inds)]
+    internal_fix_values = Any[nothing for i in eachindex(inds)]
+    fix_values = Any[nothing for i in eachindex(inds)]
+    Threads.@threads for i in eachindex(inds)
+        ind = inds[i]
+        bins[i] = _resolve(bin, ind)
+        ints[i] = _resolve(int, ind)
+        lbs[i] = _resolve(lb, m, ind)
+        ubs[i] = _resolve(ub, m, ind)
+        fix_values[i] = _resolve(fix_value, m, ind)
+        internal_fix_values[i] = _resolve(internal_fix_value, m, ind)
+    end
+    inds, vars_or_exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values
+end
+
+_resolve(::Nothing, _ind) = false
+_resolve(f, ind) = f(ind)
+_resolve(::Nothing, _m, _ind) = nothing
+_resolve(f, m, ind) = f(m; ind...)
+
+_set_binary(var::VariableRef, bin) = bin && set_binary(var)
+_set_binary(expr::GenericAffExpr, bin) = bin && set_binary.(keys(expr.terms))
+
+_set_integer(var::VariableRef, int) = int && set_integer(var)
+_set_integer(expr::GenericAffExpr, int) = int && set_integer.(keys(expr.terms))
+
+_set_lower_bound(::VariableRef, ::Nothing) = nothing
+_set_lower_bound(var::VariableRef, bound::Call) = set_lower_bound(var, bound)
+_set_lower_bound(var::VariableRef, bound::Number) = isfinite(bound) && set_lower_bound(var, bound)
+_set_lower_bound(expr::GenericAffExpr, bound, name, ind) = _set_bound(expr, >=, bound, name, ind)
+
+_set_upper_bound(::VariableRef, ::Nothing) = nothing
+_set_upper_bound(var::VariableRef, bound::Call) = set_upper_bound(var, bound)
+_set_upper_bound(var::VariableRef, bound::Number) = isfinite(bound) && set_upper_bound(var, bound)
+_set_upper_bound(expr::GenericAffExpr, bound, name, ind) = _set_bound(expr, <=, bound, name, ind)
+
+_fix(::VariableRef, ::Nothing) = nothing
+_fix(var::VariableRef, x::Call) = fix(var, x)
+function _fix(var::VariableRef, x::Number)
     if !isnan(x)
-        fix(var, x; kwargs...)
+        fix(var, x; force=true)
     elseif is_fixed(var)
         unfix(var)
     end
+end
+_fix(expr::GenericAffExpr, x, name, ind) = _set_bound(expr, ==, x, name, ind)
+
+_set_bound(_expr, _sense, _bound::Nothing, _name, _ind) = nothing
+function _set_bound(expr, sense, bound::Call, name, ind)
+    upd = _ExpressionBoundUpdate(expr, sense, bound, name, ind)
+    upd()
+end
+function _set_bound(expr, sense, bound::Number, name, ind)
+    m = owner_model(expr)
+    (isfinite(bound) && m !== nothing) || return
+    bounds = get!(m.ext[:spineopt].constraints, name, Dict())
+    existing_constraint = get(bounds, ind, nothing)
+    existing_constraint !== nothing && delete(m, existing_constraint)
+    new_constraint = build_sense_constraint(expr, sense, bound)
+    bounds[ind] = add_constraint(m, new_constraint)
+end
+
+struct _ExpressionBoundUpdate
+    expr
+    sense
+    bound
+    name
+    ind
+end
+
+function (upd::_ExpressionBoundUpdate)()
+    _set_bound(upd.expr, upd.sense, realize(upd.bound, upd), upd.name, upd.ind)
 end
 
 """

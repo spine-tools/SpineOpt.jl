@@ -68,6 +68,8 @@ function build_model!(m; log_level)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
+    use_economic_representation(model=m.ext[:spineopt].instance) &&
+        @timelog log_level 2 "Creating $model_name economic structure..." generate_economic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
     @timelog log_level 2 "Adding $model_name variables...\n" _add_variables!(m; log_level=log_level)
@@ -77,8 +79,7 @@ function build_model!(m; log_level)
     _init_outputs!(m)
     _build_stage_models!(m; log_level)
     _call_event_handlers(m, :model_built)
-    m_mp = master_model(m)
-    m_mp === nothing || _build_mp_model!(m_mp; log_level=log_level)
+    _is_benders_subproblem(m) && _build_mp_model!(master_model(m); log_level=log_level)
 end
 
 """
@@ -123,22 +124,6 @@ function _add_variables!(m; log_level=3)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
     _expand_replacement_expressions!(m)
-end
-
-function _expand_replacement_expressions!(m)
-    for (name, def) in m.ext[:spineopt].variables_definition
-        replacement_expressions = def[:replacement_expressions]
-        isempty(replacement_expressions) && continue
-        merge!(
-            m.ext[:spineopt].variables[name],
-            Dict(
-                ind => sum(
-                    coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in expr
-                )
-                for (ind, expr) in replacement_expressions
-            ),
-        )
-    end
 end
 
 """
@@ -274,7 +259,7 @@ end
 
 function _build_stage_models!(m; log_level)
     for (st, stage_m) in m.ext[:spineopt].model_by_stage
-        with_env(st.name) do
+        with_env(stage_scenario(stage=st)) do
             build_model!(stage_m; log_level)
         end
         child_models = _child_models(m, st)
@@ -354,12 +339,12 @@ end
 # If output_resolution is not specified, just fix the window end
 _fix_points(::Nothing, child_m) = (maximum(end_.(time_slice(child_m))),)
 function _fix_points(out_res, child_m)
-    out_res = parameter_value(out_res)
+    out_res_pv = parameter_value(out_res)
     w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
     next_point = w_start
     points = Set()
     for i in Iterators.countfrom(1)
-        res = out_res(i=i)
+        res = out_res_pv(i=i)
         res === nothing && break
         next_point += res
         next_point > w_end && break
@@ -604,6 +589,7 @@ function _save_model_results!(m)
     _save_constraint_values!(m)
     _save_objective_values!(m)
     _save_other_values!(m)
+    _save_economic_parameter_values!(m)
 end
 
 """
@@ -630,6 +616,179 @@ function _save_other_values!(m::Model)
     catch err
         @warn err
     end
+end
+
+"""
+Generalized function to initialize and populate economic parameter values.
+"""
+function _populate_economic_parameter_values!(
+    m::Model,
+    param_name::Symbol,
+    indices_func,
+    value_func,
+    entity::Symbol,
+    user_outputs,
+    key_type
+)
+    m.ext[:spineopt].values[param_name] = 
+        Dict{key_type,Float64}(
+            (entity=>e, stochastic_scenario=s, t=t) =>
+            value_func(; entity=>e, stochastic_scenario=s, t=t)
+            for (e, s, t) in indices_func(m) if param_name in user_outputs
+        )
+    return nothing
+end
+
+"""
+Save the value of the economic parameters of units, connections, and storages if the user wants to report it.
+"""
+function _save_economic_parameter_values!(m::Model)
+    user_outputs = (out_name for (out_name, _ow) in keys(m.ext[:spineopt].reports_by_output))
+
+    # Units
+    key_type = NamedTuple{(
+        :unit, :stochastic_scenario, :t),
+        Tuple{SpineInterface.Object, SpineInterface.Object, SpineInterface.TimeSlice}
+    }
+    m.ext[:spineopt].values[:unit_salvage_fraction] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:unit_tech_discount_factor] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:unit_conversion_to_discounted_annuities] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:unit_discounted_duration] = Dict{key_type,Float64}()
+    if use_economic_representation(model=m.ext[:spineopt].instance)
+        _populate_economic_parameter_values!(
+            m,
+            :unit_salvage_fraction,
+            units_invested_available_indices,
+            unit_salvage_fraction,
+            :unit,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :unit_tech_discount_factor,
+            units_invested_available_indices,
+            unit_tech_discount_factor,
+            :unit,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :unit_conversion_to_discounted_annuities,
+            units_invested_available_indices,
+            unit_conversion_to_discounted_annuities,
+            :unit,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :unit_discounted_duration,
+            units_invested_available_indices,
+            unit_discounted_duration,
+            :unit,
+            user_outputs,
+            key_type
+        )
+    end
+
+    # Connections
+    key_type = NamedTuple{(
+        :connection, :stochastic_scenario, :t),
+        Tuple{SpineInterface.Object, SpineInterface.Object, SpineInterface.TimeSlice}
+    }
+    m.ext[:spineopt].values[:connection_salvage_fraction] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:connection_tech_discount_factor] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:connection_conversion_to_discounted_annuities] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:connection_discounted_duration] = Dict{key_type,Float64}()
+    if use_economic_representation(model=m.ext[:spineopt].instance)
+        _populate_economic_parameter_values!(
+            m,
+            :connection_salvage_fraction,
+            connections_invested_available_indices,
+            connection_salvage_fraction,
+            :connection,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :connection_tech_discount_factor,
+            connections_invested_available_indices,
+            connection_tech_discount_factor,
+            :connection,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :connection_conversion_to_discounted_annuities,
+            connections_invested_available_indices,
+            connection_conversion_to_discounted_annuities,
+            :connection,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :connection_discounted_duration,
+            connections_invested_available_indices,
+            connection_discounted_duration,
+            :connection,
+            user_outputs,
+            key_type
+        )
+    end
+
+    # Storages
+    key_type = NamedTuple{(
+        :node, :stochastic_scenario, :t),
+        Tuple{SpineInterface.Object, SpineInterface.Object, SpineInterface.TimeSlice}
+    }
+    m.ext[:spineopt].values[:storage_salvage_fraction] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:storage_tech_discount_factor] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:storage_conversion_to_discounted_annuities] = Dict{key_type,Float64}()
+    m.ext[:spineopt].values[:storage_discounted_duration] = Dict{key_type,Float64}()
+    if use_economic_representation(model=m.ext[:spineopt].instance)
+        _populate_economic_parameter_values!(
+            m,
+            :storage_salvage_fraction,
+            storages_invested_available_indices,
+            storage_salvage_fraction,
+            :node,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :storage_tech_discount_factor,
+            storages_invested_available_indices,
+            storage_tech_discount_factor,
+            :node,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :storage_conversion_to_discounted_annuities,
+            storages_invested_available_indices,
+            storage_conversion_to_discounted_annuities,
+            :node,
+            user_outputs,
+            key_type
+        )
+        _populate_economic_parameter_values!(
+            m,
+            :storage_discounted_duration,
+            storages_invested_available_indices,
+            storage_discounted_duration,
+            :node,
+            user_outputs,
+            key_type
+        )
+    end
+    return nothing
 end
 
 """
@@ -815,7 +974,7 @@ function _save_output!(m, out, value_or_param, output_suffix, crop_to_window)
         for (analysis_time, by_time_slice) in by_analysis_time
             t_highest_resolution!(m, by_time_slice)
             by_time_stamp_adjusted = _value_by_time_stamp_adjusted(
-                by_time_slice, output_time_slices(m; output=out)
+                by_time_slice, output_time_slice(m; output=out)
             )
             isempty(by_time_stamp_adjusted) && continue
             by_entity_adjusted = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
@@ -1213,13 +1372,10 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         for history_ind in indices(m; ind..., t=history_t)
             v = get(var, history_ind, nothing)  # NOTE: only fix variables that have history
             v === nothing && continue
-            _fix(v, val[ind])
+            _force_fix(v, val[ind])
         end
     end
 end
-
-_fix(v::VariableRef, x) = fix(v, x; force=true)
-_fix(::Call, x) = nothing
 
 function apply_non_anticipativity_constraints!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition

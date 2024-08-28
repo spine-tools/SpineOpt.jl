@@ -28,6 +28,9 @@ function units_on_costs(m::Model, t_range)
         m,
         sum(
             + units_on[u, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t)
             * units_on_cost(m; unit=u, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))

@@ -28,3 +28,10 @@ The resulting file has the extension `*.so_model` in the especified path.
     If running the previous code gives you an error, please try replacing the last line with `SpineOpt.write_model_file(m; file_name="<path-with-file-name>")`. This error might appear in previous versions of SpineOpt where the `write_model_file` was not exported as part of the SpineOpt package.
 
 In either case, here are some tips if you are using this file for debugging. The file can be very large so often it is helpful to create a minimum example of your model with only one or two timesteps. In addition, in the call to run\_spineopt() you can add the keyword argument `optimize=false`, as in the example above, so it will just build the model and not attempt to solve it.
+
+The function `write_model_file` formats the file nicely for the user's readability. However, if the model is too large, it skips the number of rows it prints. If you still want the complete file, you can also use the JuMP function `write_to_file` to print the model. For more details on the function, please visit the JuMP package documentation.
+
+```julia
+using JuMP
+JuMP.write_to_file(m, filename="<path-with-file-name>")
+```
