@@ -61,6 +61,23 @@ exist for the other 11 cases described above.
     In this case, there remains a degree of freedom regarding the composition of flows within the group.
 
 See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_out\_in](@ref).
+
+
+If an array type [fix\_ratio\_in\_out\_unit\_flow](@ref) is defined, the constraint implements a standard piecewise
+linear ratio (incremental heat rate):
+
+```math
+\begin{aligned}
+& v^{unit\_flow}_{(u, n_{in}, d, s, t)} \\
+& = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} p^{fix\_ratio\_in\_out\_unit\_flow}_{(u, n_{in}, n_{out}, op, s, t)}
+\cdot v^{unit\_flow\_op}_{(u, n_{out}, d, op, s, t)} \\
+& + p^{fix\_units\_on\_coefficient\_in\_out}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_on}_{(u, s, t)} \\
+& + p^{unit\_start\_flow}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_started\_up}_{(u, s, t)} \\
+& \forall (u,n_{in},n_{out}) \in indices(p^{fix\_ratio\_in\_out\_unit\_flow}) \\
+& \forall (s,t)
+\end{aligned}
+```
+See also [fix\_ratio\_in\_out\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_in\_out](@ref).
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio)
     _add_constraint!(

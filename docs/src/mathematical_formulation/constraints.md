@@ -118,10 +118,6 @@ For dispatchable units, additional ramping constraints can be introduced. For se
 
 @@add_constraint_unit_flow_op_sum!
 
-#### [Unit piecewise incremental heat rate](@id constraint_unit_pw_heat_rate)
-
-@@add_constraint_unit_pw_heat_rate!
-
 ### Bounds on commodity flows
 
 #### [Bound on cumulated unit flows](@id constraint_total_cumulated_unit_flow)
