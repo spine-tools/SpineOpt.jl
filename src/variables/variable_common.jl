@@ -227,18 +227,29 @@ function _set_bound(expr, sense, bound::Number, name, ind)
     bounds = get!(m.ext[:spineopt].constraints, name, Dict())
     existing_constraint = get(bounds, ind, nothing)
     if existing_constraint !== nothing
-        if isfinite(bound)
-            set_normalized_rhs(existing_constraint, bound)
-        elseif isnan(bound) && sense == ==
-            # Remove fix bound
-            for var in keys(expr.terms)
-                set_normalized_coefficient(existing_constraint, var, 0)
-            end
-            set_normalized_rhs(existing_constraint, 0)
-        end
+        _update_bound_constraint(existing_constraint, expr, sense, bound)
     elseif isfinite(bound)
         new_constraint = build_sense_constraint(expr, sense, bound)
         bounds[ind] = add_constraint(m, new_constraint)
+    end
+end
+
+function _update_bound_constraint(existing_constraint, expr, sense::typeof(==), bound)
+    if isnan(bound)
+        for var in keys(expr.terms)
+            set_normalized_coefficient(existing_constraint, var, 0)
+        end
+        set_normalized_rhs(existing_constraint, 0)
+    else
+        for (var, coeff) in expr.terms
+            set_normalized_coefficient(existing_constraint, var, coeff)
+        end
+        set_normalized_rhs(existing_constraint, bound - expr.constant)
+    end
+end
+function _update_bound_constraint(existing_constraint, expr, sense, bound)
+    if isfinite(bound)
+        set_normalized_rhs(existing_constraint, bound)
     end
 end
 
