@@ -234,7 +234,7 @@ function _set_bound(expr, sense, bound::Number, name, ind)
     end
 end
 
-function _update_bound_constraint(existing_constraint, expr, sense::typeof(==), bound)
+function _update_bound_constraint(existing_constraint, expr, ::typeof(==), bound)
     if isnan(bound)
         for var in keys(expr.terms)
             set_normalized_coefficient(existing_constraint, var, 0)
