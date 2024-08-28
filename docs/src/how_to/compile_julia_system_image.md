@@ -1,4 +1,4 @@
-# Compile into a Julia system image
+# How to compile into a Julia system image
 
 Sometimes it can be useful to 'compile' SpineOpt into a so-called system image. A system image is a binary library
 that, roughly speaking, 'stores' all the compilation work from a previous Julia session.

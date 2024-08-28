@@ -15,6 +15,10 @@ Thus, we highly recommend installing *Spine Toolbox* as well, as outlined in the
 
 Having a high-level overview of how this documentation is structured will help you know where to look for certain things.
 
+The documentation is implicitly structured in 3 parts (documenter.jl does not explicitly support parts).
+
+Part 1 aims to get new users started as quick as possible. It contains installation instructions (including trouble shooting), tutorials for basic usage and explains how to do some high-level things (e.g define an efficiency).
+
 - **Getting Started**
   contains guides for starting to use *SpineOpt.jl*.
   The [Installation](@ref installation) section explains different ways to install *SpineOpt.jl* on your computer. To ensure that the installation has been done correctly, the [Recommended workflow](@ref recommended_workflow)
@@ -31,44 +35,51 @@ Having a high-level overview of how this documentation is structured will help y
   provides explanations on how to do specific high-level things that might involve multiple elements
   (e.g. how to print the model).
 
-- **Concept Reference**
+Part 2 explains the core principles, features and design decisions of SpineOpt without getting lost in the details.
+
+- **Database structure**
   lists and explains all the important data and model structure related concepts to understand in *SpineOpt.jl*.
   For a mathematical modelling point of view, see the **Mathematical Formulation**
   chapter instead. The [Basics of the model structure](@ref) section briefly explains the general purpose of the most
   important concepts, like [Object Classes](@ref) and [Relationship Classes](@ref).
-  Meanwhile, the [Object Classes](@ref), [Relationship Classes](@ref), [Parameters](@ref),
-  and [Parameter Value Lists](@ref) sections contain detailed explanations of each and every aspect of *SpineOpt.jl*,
-  organized into the respective sections for clarity.
+
+- **Standard model framework**
+  covers the temporal and stochastic framework present in very SpineOpt model.
+  The [Temporal Framework](@ref) section explains how defining *time* works in *SpineOpt.jl*, and how it can be used
+  for different purposes. The [Stochastic Framework](@ref) section details how different stochastic structures can be
+  defined, how they interact with each other, and how this impacts writing [Constraints](@ref) in *SpineOpt.jl*.
+
+- **Standard model features**
+  covers the features of the SpineOpt model.
+  The [Investment Optimization](@ref) section explains how to include investment variables in your models.
+  The [Unit commitment](@ref) section explains how clustered unit-commitment is defined,
+  while the [Ramping](@ref) and [Reserves](@ref) sections explain how to enable these operational details in your model.
+  The [User Constraints](@ref) section details how to include generic data-driven custom constraints.
+  The remaining sections, namely [PTDF-Based Powerflow](@ref ptdf-based-powerflow),
+  [Pressure driven gas transfer](@ref pressure-driven-gas-transfer), [Lossless nodal DC power flows](@ref),
+  explain various use-case specific modelling approaches supported by *SpineOpt.jl*.
+
+- **Algorithms**
+  are alternative options to the standard model.
+  The [Decomposition](@ref) section explains the Benders decomposition implementation included in *SpineOpt.jl*,
+  as well as how to use it.
+  There is also Modelling to generate alternatives and multi stage optimisation.
+
+Part 3 contains all the detailed information you need when you are looking for something specific (e.g. a parameter name or the formulation of a constraint).
+
+- **SpineOpt Template**
+  contains a list of all the entities and parameters as you see them in the Spine Toolbox db editor.
+  The [Object Classes](@ref), [Relationship Classes](@ref), [Parameters](@ref),
+  and [Parameter Value Lists](@ref) sections contain detailed explanations of each and every aspect of *SpineOpt.jl*, organized into the respective sections for clarity.
 
 - **Mathematical Formulation**
   provides the mathematical view of *SpineOpt.jl*, as some of the
   methodology-related aspects of the model are more easily understood as math than Julia code. The [Variables](@ref)
   section explains the purpose of each variable in the model, as well as how the variables are related to the different
-  [Object Classes](@ref) and [Relationship Classes](@ref). The [Constraints](@ref) section contains the mathematical
-  formulation of each constraint, as well as explanations to their purpose and how they are controlled via different
-  [Parameters](@ref). Finally, the [Objective](@ref) section explains the default objective function used in
-  *SpineOpt.jl*.
-
-- **Advanced Concepts**
-  explains some of the more complicated aspects of *SpineOpt.jl* in more detail,
-  hopefully making it easier for you to better understand and apply them in your own modelling.
-  The first few sections focus on aspects of *SpineOpt.jl* that most users are likely to use,
-  or which are more or less required to understand for advanced use.
-  The [Temporal Framework](@ref) section explains how defining *time* works in *SpineOpt.jl*, and how it can be used
-  for different purposes. The [Stochastic Framework](@ref) section details how different stochastic structures can be
-  defined, how they interact with each other, and how this impacts writing [Constraints](@ref) in *SpineOpt.jl*.
-  The [Unit commitment](@ref) section explains how clustered unit-commitment is defined,
-  while the [Ramping](@ref) and [Reserves](@ref) sections explain how to enable these operational details in your model.
-  The [Investment Optimization](@ref) section explains how to include investment variables in your models,
-  while the [User Constraints](@ref) section details how to include generic data-driven custom constraints.
-  The last few sections focus on highly specialized use-cases for *SpineOpt.jl*,
-  which are unlikely to be relevant for simple modelling tasks.
-  The [Decomposition](@ref) section explains the Benders decomposition implementation included in *SpineOpt.jl*,
-  as well as how to use it.
-  The remaining sections, namely [PTDF-Based Powerflow](@ref ptdf-based-powerflow),
-  [Pressure driven gas transfer](@ref pressure-driven-gas-transfer), [Lossless nodal DC power flows](@ref),
-  and [Representative days with seasonal storages](@ref),
-  explain various use-case specific modelling approaches supported by *SpineOpt.jl*.
+  [Object Classes](@ref) and [Relationship Classes](@ref).
+  the [Objective](@ref) section explains the default objective function used in *SpineOpt.jl*.
+  The [Constraints](@ref) section contains the mathematical
+  formulation of each constraint, as well as explanations to their purpose and how they are controlled via different [Parameters](@ref).
 
 - **Implementation details**
   explains some parts of the code (for those who are interested in how things work under the hood).

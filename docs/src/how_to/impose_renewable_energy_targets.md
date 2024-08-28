@@ -1,4 +1,4 @@
-# Imposing renewable energy targets
+# How to impose renewable energy targets
 
 This advanced concept illustrates how renewable targets can be realized in SpineOpt. 
 
