@@ -615,6 +615,16 @@
         ],
         [
             "output",
+            "connection_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "connection_discounted_duration",
+            null
+        ],
+        [
+            "output",
             "connection_flow",
             null
         ],
@@ -631,6 +641,16 @@
         [
             "output",
             "connection_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "connection_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "connection_tech_discount_factor",
             null
         ],
         [
@@ -780,7 +800,27 @@
         ],
         [
             "output",
+            "storage_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "storage_discounted_duration",
+            null
+        ],
+        [
+            "output",
             "storage_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "storage_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "storage_tech_discount_factor",
             null
         ],
         [
@@ -810,6 +850,16 @@
         ],
         [
             "output",
+            "unit_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "unit_discounted_duration",
+            null
+        ],
+        [
+            "output",
             "unit_flow",
             null
         ],
@@ -826,6 +876,16 @@
         [
             "output",
             "unit_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "unit_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "unit_tech_discount_factor",
             null
         ],
         [
@@ -1113,44 +1173,12 @@
             "balance_type_none"
         ],
         [
-            "balance_type_list",
-            "balance_type_group"
-        ],
-        [
-            "balance_type_list",
-            "balance_type_node"
-        ],
-        [
-            "balance_type_list",
-            "balance_type_none"
-        ],
-        [
             "boolean_value_list",
             false
         ],
         [
             "boolean_value_list",
             true
-        ],
-        [
-            "boolean_value_list",
-            false
-        ],
-        [
-            "boolean_value_list",
-            true
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_lodf"
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_none"
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_ptdf"
         ],
         [
             "commodity_physics_list",
@@ -1173,22 +1201,6 @@
             "connection_investment_variable_type_integer"
         ],
         [
-            "connection_investment_variable_type_list",
-            "connection_investment_variable_type_continuous"
-        ],
-        [
-            "connection_investment_variable_type_list",
-            "connection_investment_variable_type_integer"
-        ],
-        [
-            "connection_type_list",
-            "connection_type_lossless_bidirectional"
-        ],
-        [
-            "connection_type_list",
-            "connection_type_normal"
-        ],
-        [
             "connection_type_list",
             "connection_type_lossless_bidirectional"
         ],
@@ -1207,118 +1219,6 @@
         [
             "constraint_sense_list",
             ">="
-        ],
-        [
-            "constraint_sense_list",
-            "<="
-        ],
-        [
-            "constraint_sense_list",
-            "=="
-        ],
-        [
-            "constraint_sense_list",
-            ">="
-        ],
-        [
-            "db_lp_solver_list",
-            "KNITRO.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CDCS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CDDLib.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Clp.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "COSMO.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CPLEX.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CSDP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "ECOS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Xpress.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "GLPK.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Gurobi.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "HiGHS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Hypatia.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Ipopt.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "MadNLP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "MosekTools.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "NLopt.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "OSQP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "ProxSDP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SCIP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SCS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPA.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPNAL.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPT3.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SeDuMi.jl"
         ],
         [
             "db_lp_solver_list",
@@ -1422,46 +1322,6 @@
         ],
         [
             "db_mip_solver_list",
-            "KNITRO.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Cbc.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "CPLEX.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "HiGHS.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Xpress.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "GLPK.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Gurobi.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Juniper.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "MosekTools.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "SCIP.jl"
-        ],
-        [
-            "db_mip_solver_list",
             "Cbc.jl"
         ],
         [
@@ -1499,14 +1359,6 @@
         [
             "db_mip_solver_list",
             "Xpress.jl"
-        ],
-        [
-            "duration_unit_list",
-            "hour"
-        ],
-        [
-            "duration_unit_list",
-            "minute"
         ],
         [
             "duration_unit_list",
@@ -1530,14 +1382,6 @@
         ],
         [
             "model_type_list",
-            "spineopt_standard"
-        ],
-        [
-            "model_type_list",
-            "spineopt_other"
-        ],
-        [
-            "model_type_list",
             "spineopt_mga"
         ],
         [
@@ -1557,22 +1401,6 @@
             "node_opf_type_reference"
         ],
         [
-            "node_opf_type_list",
-            "node_opf_type_normal"
-        ],
-        [
-            "node_opf_type_list",
-            "node_opf_type_reference"
-        ],
-        [
-            "storage_investment_variable_type_list",
-            "storage_investment_variable_type_continuous"
-        ],
-        [
-            "storage_investment_variable_type_list",
-            "storage_investment_variable_type_integer"
-        ],
-        [
             "storage_investment_variable_type_list",
             "storage_investment_variable_type_continuous"
         ],
@@ -1587,30 +1415,6 @@
         [
             "unit_investment_variable_type_list",
             "unit_investment_variable_type_integer"
-        ],
-        [
-            "unit_investment_variable_type_list",
-            "unit_investment_variable_type_continuous"
-        ],
-        [
-            "unit_investment_variable_type_list",
-            "unit_investment_variable_type_integer"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_binary"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_integer"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_linear"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_none"
         ],
         [
             "unit_online_variable_type_list",
@@ -1639,18 +1443,6 @@
         [
             "variable_type_list",
             "variable_type_integer"
-        ],
-        [
-            "write_mps_file_list",
-            "write_mps_always"
-        ],
-        [
-            "write_mps_file_list",
-            "write_mps_never"
-        ],
-        [
-            "write_mps_file_list",
-            "write_mps_on_no_solve"
         ],
         [
             "write_mps_file_list",
@@ -1732,7 +1524,7 @@
         [
             "connection",
             "connection_availability_factor",
-            1.0,
+            1,
             null,
             "Availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
         ],
@@ -1754,8 +1546,8 @@
             "connection",
             "connection_decommissioning_time",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "A connection's decommissioning time, i.e., the time between the moment at which a connection decommissioning decision is takien, and the moment at which decommissioning is complete."
@@ -1763,7 +1555,7 @@
         [
             "connection",
             "connection_discount_rate_technology_specific",
-            0.0,
+            0,
             null,
             "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."
         ],
@@ -1783,6 +1575,13 @@
         ],
         [
             "connection",
+            "connection_investment_lifetime_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `connection_lifetime` constraint sense."
+        ],
+        [
+            "connection",
             "connection_investment_tech_lifetime",
             null,
             null,
@@ -1799,8 +1598,8 @@
             "connection",
             "connection_lead_time",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."
@@ -1920,7 +1719,7 @@
         [
             "connection",
             "number_of_connections",
-            1.0,
+            1,
             null,
             "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."
         ],
@@ -1934,7 +1733,7 @@
         [
             "connection__from_node",
             "connection_conv_cap_to_flow",
-            1.0,
+            1,
             null,
             "Optional coefficient for `connection_capacity` unit conversions in the case that the `connection_capacity` value is incompatible with the desired `connection_flow` units."
         ],
@@ -2032,7 +1831,7 @@
         [
             "connection__from_node__user_constraint",
             "connection_flow_coefficient",
-            0.0,
+            0,
             null,
             "defines the user constraint coefficient on the connection flow variable in the from direction"
         ],
@@ -2047,8 +1846,8 @@
             "connection__node__node",
             "connection_flow_delay",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "Delays the `connection_flows` associated with the latter `node` in respect to the `connection_flows` associated with the first `node`."
@@ -2105,7 +1904,7 @@
         [
             "connection__to_node",
             "connection_conv_cap_to_flow",
-            1.0,
+            1,
             null,
             "Optional coefficient for `connection_capacity` unit conversions in the case the `connection_capacity` value is incompatible with the desired `connection_flow` units."
         ],
@@ -2203,21 +2002,21 @@
         [
             "connection__to_node__user_constraint",
             "connection_flow_coefficient",
-            0.0,
+            0,
             null,
             "defines the user constraint coefficient on the connection flow variable in the to direction"
         ],
         [
             "connection__user_constraint",
             "connections_invested_available_coefficient",
-            0.0,
+            0,
             null,
             "coefficient of `connections_invested_available` in the specific `user_constraint`"
         ],
         [
             "connection__user_constraint",
             "connections_invested_coefficient",
-            0.0,
+            0,
             null,
             "coefficient of `connections_invested` in the specific `user_constraint`"
         ],
@@ -2274,8 +2073,20 @@
             "model",
             "db_lp_solver_options",
             {
-                "type": "map",
                 "data": [
+                    [
+                        "Clp.jl",
+                        {
+                            "data": [
+                                [
+                                    "LogLevel",
+                                    0
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
+                    ],
                     [
                         "HiGHS.jl",
                         {
@@ -2292,21 +2103,9 @@
                             "type": "map",
                             "index_type": "str"
                         }
-                    ],
-                    [
-                        "Clp.jl",
-                        {
-                            "data": [
-                                [
-                                    "LogLevel",
-                                    0.0
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
                     ]
                 ],
+                "type": "map",
                 "index_type": "str"
             },
             null,
@@ -2323,50 +2122,7 @@
             "model",
             "db_mip_solver_options",
             {
-                "type": "map",
                 "data": [
-                    [
-                        "HiGHS.jl",
-                        {
-                            "data": [
-                                [
-                                    "presolve",
-                                    "on"
-                                ],
-                                [
-                                    "mip_rel_gap",
-                                    0.01
-                                ],
-                                [
-                                    "threads",
-                                    0.0
-                                ],
-                                [
-                                    "time_limit",
-                                    300.01
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
-                    ],
-                    [
-                        "Cbc.jl",
-                        {
-                            "data": [
-                                [
-                                    "ratioGap",
-                                    0.01
-                                ],
-                                [
-                                    "logLevel",
-                                    0.0
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
-                    ],
                     [
                         "CPLEX.jl",
                         {
@@ -2379,8 +2135,51 @@
                             "type": "map",
                             "index_type": "str"
                         }
+                    ],
+                    [
+                        "Cbc.jl",
+                        {
+                            "data": [
+                                [
+                                    "logLevel",
+                                    0
+                                ],
+                                [
+                                    "ratioGap",
+                                    0.01
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
+                    ],
+                    [
+                        "HiGHS.jl",
+                        {
+                            "data": [
+                                [
+                                    "mip_rel_gap",
+                                    0.01
+                                ],
+                                [
+                                    "presolve",
+                                    "on"
+                                ],
+                                [
+                                    "threads",
+                                    0
+                                ],
+                                [
+                                    "time_limit",
+                                    300.01
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
                     ]
                 ],
+                "type": "map",
                 "index_type": "str"
             },
             null,
@@ -2424,7 +2223,7 @@
         [
             "model",
             "max_iterations",
-            10.0,
+            10,
             null,
             "Specifies the maximum number of iterations for the model. Currently only used for the master problem within a decomposed structure"
         ],
@@ -2445,7 +2244,7 @@
         [
             "model",
             "min_iterations",
-            1.0,
+            1,
             null,
             "Specifies the minimum number of iterations for the model. Currently only used for the master problem within a decomposed structure"
         ],
@@ -2460,8 +2259,8 @@
             "model",
             "model_end",
             {
-                "type": "date_time",
-                "data": "2000-01-02T00:00:00"
+                "data": "2000-01-02T00:00:00.0",
+                "type": "date_time"
             },
             null,
             "Defines the last timestamp to be modelled. Rolling optimization terminates after passing this point."
@@ -2470,8 +2269,8 @@
             "model",
             "model_start",
             {
-                "type": "date_time",
-                "data": "2000-01-01T00:00:00"
+                "data": "2000-01-01T00:00:00.0",
+                "type": "date_time"
             },
             null,
             "Defines the first timestamp to be modelled. Relative `temporal_blocks` refer to this value for their start and end."
@@ -2577,7 +2376,7 @@
         [
             "node",
             "demand",
-            0.0,
+            0,
             null,
             "Demand for the `commodity` of a `node`. Energy gains can be represented using negative `demand`."
         ],
@@ -2626,14 +2425,14 @@
         [
             "node",
             "frac_state_loss",
-            0.0,
+            0,
             null,
             "Self-discharge coefficient for `node_state` variables. Effectively, represents the *loss power per unit of state*."
         ],
         [
             "node",
             "fractional_demand",
-            0.0,
+            0,
             null,
             "The fraction of a `node` group's `demand` applied for the `node` in question."
         ],
@@ -2801,21 +2600,21 @@
         [
             "node",
             "node_state_min",
-            0.0,
+            0,
             null,
             "The minimum permitted value for a `node_state` variable."
         ],
         [
             "node",
             "number_of_storages",
-            1.0,
+            1,
             null,
             "Denotes the number of 'sub storages' aggregated to form the modelled `node`."
         ],
         [
             "node",
             "state_coeff",
-            1.0,
+            1,
             null,
             "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `node_injection` constraint."
         ],
@@ -2830,8 +2629,8 @@
             "node",
             "storage_decommissioning_time",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "A storage's decommissioning time, i.e., the time between the moment at which a storage decommissioning decision is takien, and the moment at which decommissioning is complete."
@@ -2839,7 +2638,7 @@
         [
             "node",
             "storage_discount_rate_technology_specific",
-            0.0,
+            0,
             null,
             "storage-specific discount rate used to calculate the storage's investment costs. If not specified, the model discount rate is used."
         ],
@@ -2866,6 +2665,13 @@
         ],
         [
             "node",
+            "storage_investment_lifetime_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `storage_lifetime` constraint sense."
+        ],
+        [
+            "node",
             "storage_investment_tech_lifetime",
             null,
             null,
@@ -2882,8 +2688,8 @@
             "node",
             "storage_lead_time",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "A storage's lead time, i.e., the time between the moment at which a storage investment decision is takien, and the moment at which the storage investment becomes operational."
@@ -2940,7 +2746,7 @@
         [
             "node__node",
             "diff_coeff",
-            0.0,
+            0,
             null,
             "Commodity diffusion coefficient between two `nodes`. Effectively, denotes the *diffusion power per unit of state* from the first `node` to the second."
         ],
@@ -2968,28 +2774,28 @@
         [
             "node__user_constraint",
             "demand_coefficient",
-            0.0,
+            0,
             null,
             "coefficient of the specified node's demand in the specified user constraint"
         ],
         [
             "node__user_constraint",
             "node_state_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of the specified node's state variable in the specified user constraint."
         ],
         [
             "node__user_constraint",
             "storages_invested_available_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of the specified node's storages invested available variable in the specified user constraint."
         ],
         [
             "node__user_constraint",
             "storages_invested_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of the specified node's storage investment variable in the specified user constraint."
         ],
@@ -3031,7 +2837,7 @@
         [
             "settings",
             "version",
-            14,
+            15,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
         ],
@@ -3094,7 +2900,7 @@
         [
             "stochastic_structure__stochastic_scenario",
             "weight_relative_to_parents",
-            1.0,
+            1,
             null,
             "The weight of the `stochastic_scenario` in the objective function relative to its parents."
         ],
@@ -3130,8 +2936,8 @@
             "temporal_block",
             "resolution",
             {
-                "type": "duration",
-                "data": "1h"
+                "data": "1h",
+                "type": "duration"
             },
             null,
             "Temporal resolution of the `temporal_block`. Essentially, divides the period between `block_start` and `block_end` into `TimeSlices` with the input `resolution`."
@@ -3139,7 +2945,7 @@
         [
             "temporal_block",
             "weight",
-            1.0,
+            1,
             null,
             "Weighting factor of the temporal block associated with the objective function"
         ],
@@ -3272,7 +3078,7 @@
         [
             "unit",
             "number_of_units",
-            1.0,
+            1,
             null,
             "Denotes the number of 'sub units' aggregated to form the modelled `unit`."
         ],
@@ -3314,7 +3120,7 @@
         [
             "unit",
             "unit_availability_factor",
-            1.0,
+            1,
             null,
             "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."
         ],
@@ -3329,8 +3135,8 @@
             "unit",
             "unit_decommissioning_time",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."
@@ -3338,7 +3144,7 @@
         [
             "unit",
             "unit_discount_rate_technology_specific",
-            0.0,
+            0,
             null,
             "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."
         ],
@@ -3358,6 +3164,13 @@
         ],
         [
             "unit",
+            "unit_investment_lifetime_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `unit_lifetime` constraint sense."
+        ],
+        [
+            "unit",
             "unit_investment_tech_lifetime",
             null,
             null,
@@ -3374,8 +3187,8 @@
             "unit",
             "unit_lead_time",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."
@@ -3614,7 +3427,7 @@
         [
             "unit__from_node",
             "min_unit_flow",
-            0.0,
+            0,
             null,
             "Set lower bound of the `unit_flow` variable."
         ],
@@ -3698,7 +3511,7 @@
         [
             "unit__from_node",
             "unit_conv_cap_to_flow",
-            1.0,
+            1,
             null,
             "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."
         ],
@@ -3721,7 +3534,7 @@
             "use_unit_capacity_for_investment_cost_scaling",
             false,
             "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. \u20ac/MW)"
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. \u00e2\u201a\u00ac/MW)"
         ],
         [
             "unit__from_node",
@@ -3740,7 +3553,7 @@
         [
             "unit__from_node__user_constraint",
             "unit_flow_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of a `unit_flow` variable for a custom `user_constraint`."
         ],
@@ -3775,28 +3588,28 @@
         [
             "unit__node__node",
             "fix_units_on_coefficient_in_in",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `fix_ratio_in_in_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "fix_units_on_coefficient_in_out",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `fix_ratio_in_out_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "fix_units_on_coefficient_out_in",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `fix_ratio_out_in_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "fix_units_on_coefficient_out_out",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `fix_ratio_out_out_unit_flow` constraint."
         ],
@@ -3831,28 +3644,28 @@
         [
             "unit__node__node",
             "max_units_on_coefficient_in_in",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `max_ratio_in_in_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "max_units_on_coefficient_in_out",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `max_ratio_in_out_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "max_units_on_coefficient_out_in",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `max_ratio_out_in_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "max_units_on_coefficient_out_out",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `max_ratio_out_out_unit_flow` constraint."
         ],
@@ -3887,49 +3700,35 @@
         [
             "unit__node__node",
             "min_units_on_coefficient_in_in",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `min_ratio_in_in_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "min_units_on_coefficient_in_out",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `min_ratio_in_out_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "min_units_on_coefficient_out_in",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `min_ratio_out_in_unit_flow` constraint."
         ],
         [
             "unit__node__node",
             "min_units_on_coefficient_out_out",
-            0.0,
+            0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `min_ratio_out_out_unit_flow` constraint."
         ],
         [
             "unit__node__node",
-            "unit_idle_heat_rate",
-            0.0,
-            null,
-            "Flow from node1 per unit time and per `units_on` that results in no additional flow to node2"
-        ],
-        [
-            "unit__node__node",
-            "unit_incremental_heat_rate",
-            null,
-            null,
-            "Standard piecewise incremental heat rate where node1 is assumed to be the fuel and node2 is assumed to be electriciy. Assumed monotonically increasing. Array type or single coefficient where the number of coefficients must match the dimensions of `unit_operating_points`"
-        ],
-        [
-            "unit__node__node",
             "unit_start_flow",
-            0.0,
+            0,
             null,
             "Flow from node1 that is incurred when a unit is started up."
         ],
@@ -4111,7 +3910,7 @@
         [
             "unit__to_node",
             "min_unit_flow",
-            0.0,
+            0,
             null,
             "Set lower bound of the `unit_flow` variable."
         ],
@@ -4195,7 +3994,7 @@
         [
             "unit__to_node",
             "unit_conv_cap_to_flow",
-            1.0,
+            1,
             null,
             "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."
         ],
@@ -4218,7 +4017,7 @@
             "use_unit_capacity_for_investment_cost_scaling",
             false,
             "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. \u20ac/MW)"
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. \u00e2\u201a\u00ac/MW)"
         ],
         [
             "unit__to_node",
@@ -4237,35 +4036,35 @@
         [
             "unit__to_node__user_constraint",
             "unit_flow_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of a `unit_flow` variable for a custom `user_constraint`."
         ],
         [
             "unit__user_constraint",
             "units_invested_available_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of the `units_invested_available` variable in the specified `user_constraint`."
         ],
         [
             "unit__user_constraint",
             "units_invested_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of the `units_invested` variable in the specified `user_constraint`."
         ],
         [
             "unit__user_constraint",
             "units_on_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of a `units_on` variable for a custom `user_constraint`."
         ],
         [
             "unit__user_constraint",
             "units_started_up_coefficient",
-            0.0,
+            0,
             null,
             "Coefficient of a `units_started_up` variable for a custom `user_constraint`."
         ],
@@ -4300,7 +4099,7 @@
         [
             "user_constraint",
             "right_hand_side",
-            0.0,
+            0,
             null,
             "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."
         ],
@@ -4318,27 +4117,26 @@
             "electricity_node",
             "demand",
             {
-                "type": "map",
-                "index_type": "str",
-                "rank": 1,
                 "data": [
                     [
                         "base",
-                        150.0
+                        150
                     ],
                     [
                         "forecast1",
-                        100.0
+                        100
                     ],
                     [
                         "forecast2",
-                        120.0
+                        120
                     ],
                     [
                         "forecast3",
-                        140.0
+                        140
                     ]
-                ]
+                ],
+                "type": "map",
+                "index_type": "str"
             },
             "Base"
         ],
@@ -4357,8 +4155,8 @@
             ],
             "stochastic_scenario_end",
             {
-                "type": "duration",
-                "data": "6h"
+                "data": "6h",
+                "type": "duration"
             },
             "Base"
         ],
@@ -4397,8 +4195,8 @@
             "flat",
             "resolution",
             {
-                "type": "duration",
-                "data": "1h"
+                "data": "1h",
+                "type": "duration"
             },
             "Base"
         ],
