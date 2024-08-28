@@ -1038,14 +1038,14 @@ function _output_value_by_entity(by_suffix, overwrite_results_on_rolling, output
                 t_start < w_start && continue
                 crop_to_window && t_start >= w_end && continue
                 entity = _output_entity(entity, t_keys, suffix)
-                by_analysis_time = get!(by_entity, entity, Dict())
-                by_t_interval = get!(by_analysis_time, w_start, Dict())
+                by_analysis_time = get!(by_entity, entity, OrderedDict())
+                by_t_interval = get!(by_analysis_time, w_start, OrderedDict())
                 by_t_interval[t] = value
             end
         end
     end
     Dict(
-        entity => _output_value(_polish(by_analysis_time), overwrite_results_on_rolling, output_resolution)
+        entity => _output_value(_polish!(by_analysis_time), overwrite_results_on_rolling, output_resolution)
         for (entity, by_analysis_time) in by_entity
     )
 end
@@ -1056,12 +1056,12 @@ function _output_entity(entity::NamedTuple, t_keys, suffix)
     (; _drop_key(entity, :stochastic_path, t_keys...)..., flat_stoch_path..., suffix...)
 end
 
-function _polish(by_analysis_time)
+function _polish!(by_analysis_time)
     OrderedDict(
         analysis_time => OrderedDict(
-            t_start => realize(value) for ((t_start, t_end), value) in sort(by_t_interval; lt=_t_interval_lt)
+            t_start => realize(value) for ((t_start, t_end), value) in sort!(by_t_interval; lt=_t_interval_lt)
         )
-        for (analysis_time, by_t_interval) in sort(by_analysis_time)
+        for (analysis_time, by_t_interval) in sort!(by_analysis_time)
     )
 end
 
