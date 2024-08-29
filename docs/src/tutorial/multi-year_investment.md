@@ -55,7 +55,3 @@ Now we also change [use\_milestone\_years](@ref) to `true`. This indicates that 
 The values for the parameter `unit_discounted_duration` are shown below. Note now in 2000, the value becomes 2.79. This parameter value acts as a weight taking into account the discount per year and the resolution of the milestone years. In order words, now the operation costs for the in-between years have also been included.
 
 ![image](figs_multi-year/unit_discounted_duration_milestone.png)
-
-
-
-
