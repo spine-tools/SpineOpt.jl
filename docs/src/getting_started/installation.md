@@ -17,6 +17,12 @@ Once SpineOpt is installed, you can verify whether it works by following the [Re
 
     Instructions for PyCall configuration are also provided in the instructions for installation from source.
 
+## Choose your Installation Method
+There are three main ways to install SpineToobox:
+ * Installation through Spine Tooblox
+ * Installation via the Julia REPL
+ * Installation from sources
+
 ## Installation through Spine Toolbox
 Prerequisites:
 + [Spine Toolbox](https://github.com/Spine-tools/Spine-Toolbox?tab=readme-ov-file#installation)
