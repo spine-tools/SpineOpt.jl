@@ -65,7 +65,7 @@ Prerequisites:
 !!! warning
     We've encountered performance issues with Julia 1.9 so that version is not recommended. The latest version should be fine.
 
-!!! info
+!!! tip
     Typically you'd install Julia from the [website](https://julialang.org/downloads/)
 
     However, particularly on Linux, it may be more convenient to install Julia through Python:
@@ -87,10 +87,15 @@ Pkg.activate("jenv")# create and activate the environment named 'jenv' in the cu
 
 ### 2. install SpineOpt (in the environment)
 
-To install SpineOpt, execute the following commands in the Julia REPL (again in the folder of the julia environment):
+If you have created the environment in the previous step, you need to activate it before installing SpineOpt (unless you are still in the same terminal session). To that end, open the Julia REPL in the folder where you created the environment and execute the following commands:
 ```julia
 import Pkg # the package manager
-Pkg.activate("jenv") # only needed if you want to use a virtual environment
+Pkg.activate("jenv") # activate the virtual environment in the current working directory
+```
+
+To install SpineOpt, execute the following commands in the Julia REPL:
+```julia
+import Pkg # not needed if you are still in the same REPL session
 Pkg.Registry.add("General")
 Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/spine-tools/SpineJuliaRegistry")) # Add SpineJuliaRegistry as an available registry for your Julia
 Pkg.add("SpineOpt") # Install SpineOpt from the SpineJuliaRegistry
