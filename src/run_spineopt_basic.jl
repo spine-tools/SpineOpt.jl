@@ -633,9 +633,9 @@ function _populate_economic_parameter_values!(
 )
     m.ext[:spineopt].values[param_name] = 
         Dict{key_type,Float64}(
-            (entity=>e, stochastic_scenario=s, t=t) =>
-            value_func(; entity=>e, stochastic_scenario=s, t=t)
-            for (e, s, t) in indices_func(m) if param_name in user_outputs
+            (entity=>ind[entity], stochastic_scenario=ind[:stochastic_scenario], t=ind[:t]) =>
+            value_func(; entity=>ind[entity], stochastic_scenario=ind[:stochastic_scenario], t=ind[:t])
+            for ind in indices_func(m) if param_name in user_outputs
         )
     return nothing
 end
@@ -686,7 +686,7 @@ function _save_economic_parameter_values!(m::Model)
         _populate_economic_parameter_values!(
             m,
             :unit_discounted_duration,
-            units_invested_available_indices,
+            unit_flow_indices,
             unit_discounted_duration,
             :unit,
             user_outputs,
@@ -734,7 +734,7 @@ function _save_economic_parameter_values!(m::Model)
         _populate_economic_parameter_values!(
             m,
             :connection_discounted_duration,
-            connections_invested_available_indices,
+            connection_flow_indices,
             connection_discounted_duration,
             :connection,
             user_outputs,
