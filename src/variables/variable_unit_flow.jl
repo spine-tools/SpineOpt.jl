@@ -109,8 +109,10 @@ function _signed_unit_start_flow(m, u, n1, n2, s, t, fix_ratio, direct)
     end
 end
 
-function _has_simple_fix_ratio_unit_flow(n1, n2, fix_ratio)
-    _similar(n1, n2) && fix_ratio in _fix_unit_flow_ratios()
+function _has_simple_fix_ratio_unit_flow(m, u, n1, d1, n2, d2, fix_ratio)
+    _similar(n1, n2) && fix_ratio in _fix_unit_flow_ratios() &&
+        isempty(unit_flow_op_indices(m; unit=u, node=n1, direction=d1)) &&
+        isempty(unit_flow_op_indices(m; unit=u, node=n2, direction=d2))
 end
 
 function _fix_unit_flow_ratios()
@@ -139,9 +141,7 @@ function add_variable_unit_flow!(m::Model)
             ),
         )
         for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)
-        if _has_simple_fix_ratio_unit_flow(n, n_ref, fix_ratio) && 
-            isempty(unit_flow_op_indices(m; unit=u, node=n_ref, direction=d_ref)) && 
-            isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d))
+        if _has_simple_fix_ratio_unit_flow(m, u, n, d, n_ref, d_ref, fix_ratio)
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_ref)
     )
     add_variable!(
