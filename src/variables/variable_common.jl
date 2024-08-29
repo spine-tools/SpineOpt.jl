@@ -157,10 +157,12 @@ function _finalize_expressions!(m, name, args...)
     inds, exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(m, args...)
     _set_binary.(exprs, bins)
     _set_integer.(exprs, ints)
-    _set_lower_bound.(exprs, lbs, Symbol(name, :_lb), inds)
-    _set_upper_bound.(exprs, ubs, Symbol(name, :_ub), inds)
-    _fix.(exprs, internal_fix_values, Symbol(name, :_fix_value), inds)
-    _fix.(exprs, fix_values, Symbol(name, :_internal_fix_value), inds)
+    m.ext[:spineopt].constraints[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, lbs)))
+    m.ext[:spineopt].constraints[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, ubs)))
+    m.ext[:spineopt].constraints[Symbol(name, :_internal_fix)] = Dict(
+        zip(inds, set_expr_bound.(exprs, ==, internal_fix_values))
+    )
+    m.ext[:spineopt].constraints[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, fix_values)))
 end
 
 function _collect_info(m, d, bin, int, lb, ub, fix_value, internal_fix_value)
@@ -195,52 +197,22 @@ _set_binary(expr::GenericAffExpr, bin) = bin && set_binary.(keys(expr.terms))
 _set_integer(var::VariableRef, int) = int && set_integer(var)
 _set_integer(expr::GenericAffExpr, int) = int && set_integer.(keys(expr.terms))
 
-_set_lower_bound(::VariableRef, ::Nothing) = nothing
+_set_lower_bound(_var, ::Nothing) = nothing
 _set_lower_bound(var::VariableRef, bound::Call) = set_lower_bound(var, bound)
 _set_lower_bound(var::VariableRef, bound::Number) = isfinite(bound) && set_lower_bound(var, bound)
-_set_lower_bound(expr::GenericAffExpr, bound, name, ind) = _set_bound(expr, >=, bound, name, ind)
 
-_set_upper_bound(::VariableRef, ::Nothing) = nothing
+_set_upper_bound(_var, ::Nothing) = nothing
 _set_upper_bound(var::VariableRef, bound::Call) = set_upper_bound(var, bound)
 _set_upper_bound(var::VariableRef, bound::Number) = isfinite(bound) && set_upper_bound(var, bound)
-_set_upper_bound(expr::GenericAffExpr, bound, name, ind) = _set_bound(expr, <=, bound, name, ind)
 
-_fix(::VariableRef, ::Nothing) = nothing
-_fix(var::VariableRef, x::Call) = fix(var, x)
-function _fix(var::VariableRef, x::Number)
-    if !isnan(x)
-        fix(var, x; force=true)
+_fix(_var, ::Nothing) = nothing
+_fix(var::VariableRef, value::Call) = fix(var, value)
+function _fix(var::VariableRef, value::Number)
+    if !isnan(value)
+        fix(var, value; force=true)
     elseif is_fixed(var)
         unfix(var)
     end
-end
-_fix(expr::GenericAffExpr, x, name, ind) = _set_bound(expr, ==, x, name, ind)
-
-_set_bound(_expr, _sense, _bound::Nothing, _name, _ind) = nothing
-function _set_bound(expr, sense, bound::Call, name, ind)
-    upd = _ExpressionBoundUpdate(expr, sense, bound, name, ind)
-    upd()
-end
-function _set_bound(expr, sense, bound::Number, name, ind)
-    m = owner_model(expr)
-    (isfinite(bound) && m !== nothing) || return
-    bounds = get!(m.ext[:spineopt].constraints, name, Dict())
-    existing_constraint = get(bounds, ind, nothing)
-    existing_constraint !== nothing && delete(m, existing_constraint)
-    new_constraint = build_sense_constraint(expr, sense, bound)
-    bounds[ind] = add_constraint(m, new_constraint)
-end
-
-struct _ExpressionBoundUpdate
-    expr
-    sense
-    bound
-    name
-    ind
-end
-
-function (upd::_ExpressionBoundUpdate)()
-    _set_bound(upd.expr, upd.sense, realize(upd.bound, upd), upd.name, upd.ind)
 end
 
 """
