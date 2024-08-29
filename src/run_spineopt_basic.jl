@@ -339,7 +339,7 @@ function _init_downstream_outputs!(st, stage_m, child_models)
                             cons = get!(
                                 child_m.ext[:spineopt].constraints, Symbol(join((st, out, "slack"), "_")), Dict()
                             )
-                            cons[ind] = @constraint(child_m, var + slack_pos - slack_neg == call)
+                            cons[ind] = set_expr_bound(var + slack_pos - slack_neg, ==, call)
                             set_objective_coefficient(child_m, slack_pos, penalty)
                             set_objective_coefficient(child_m, slack_neg, penalty)
                         end
