@@ -66,7 +66,9 @@ Prerequisites:
     We've encountered performance issues with Julia 1.9 so that version is not recommended. The latest version should be fine.
 
 !!! info
-    You can install Julia through Python:
+    Typically you'd install Julia from the [website](https://julialang.org/downloads/)
+
+    However, particularly on Linux, it may be more convenient to install Julia through Python:
     ```
     pip install jill
     jill install

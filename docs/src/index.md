@@ -11,6 +11,12 @@ While, in principle, it is possible to run *SpineOpt* by itself, it has been des
 workflow management tools therein.
 Thus, we highly recommend installing *Spine Toolbox* as well, as outlined in the [Installation](@ref) guide.
 
+## Important remark on spine entities
+
+The documentation often refers to objects and relationships. These are actually both entities in a spine database (technically they are entities with one dimension and multiple dimensions respectively). The distinction here is to make a more clear distinction between the physical unit/node (entity with one dimension or object) and the flows between units and/or nodes (entities with multiple dimensions or relationships).
+
+In this documentation the two naming structures (object/relationships or entities) will be used interchangeably. Though, in upcoming versions of the documentation, the naming structure will gravitate more towards entities.
+
 ## How the documentation is structured
 
 Having a high-level overview of how this documentation is structured will help you know where to look for certain things.
