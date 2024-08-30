@@ -477,10 +477,7 @@ function solve_model!(
             end
             if j >= max_benders_iterations
                 @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
-                integrality_enforced && break
-                _enforce_integrality!(m; log_level)
-                integrality_enforced = true
-                continue
+                break
             end
             @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
             unfix_history!(m)
