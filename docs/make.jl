@@ -43,6 +43,7 @@ pages = [
         "Temporal resolution" => joinpath("tutorial", "temporal_resolution.md"),
         "Stochastic structure" => joinpath("tutorial", "stochastic_system.md"),
         "Capacity planning" => joinpath("tutorial", "capacity_planning.md"),
+        "Multi-year investments using economic parameters" => joinpath("tutorial", "multi-year_investment.md"),
         "Reserve requirements" => joinpath("tutorial", "reserves.md"),
         "Ramping constraints" => joinpath("tutorial", "ramping.md"),
         "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
