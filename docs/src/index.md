@@ -33,7 +33,7 @@ Part 1 aims to get new users started as quick as possible. It contains installat
 - **Tutorials**
   provides guided examples for a set of basic use-cases, either as videos, written text and/or example files.
   The *SpineOpt.jl* repository includes a folder `examples` for ready-made example models.
-  Each example is its own sub-folder, where the input data is provided as `.json` or `.sqlite` files.
+  Each example is its own sub-folder, where the input data is provided as `.json` or `.sqlite` files. Although these examples are part of the unit tests (and should therefore be up to date), they do rely on migration scripts for their updates. That does mean that there is the possibility that there is a missing parameter that is not used by the example and as such does not trigger an error. To avoid issues, you may want to load the SpineOpt template first before you import these examples.
   This way, you can easily get a feel for how SpineOpt works with pre-made datasets,
   either through [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox), or directly from the Julia REPL.
 
