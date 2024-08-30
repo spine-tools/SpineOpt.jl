@@ -258,49 +258,6 @@ function _generate_time_slice!(m::Model)
 end
 
 """
-    _output_time_slice(m, window_start, window_end)
-
-A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the output's resolution.
-"""
-function _output_time_slice(m::Model, window_start::DateTime, window_end::DateTime)
-    output_time_slice = Dict{Object,Array{TimeSlice,1}}()
-    for out in indices(output_resolution; stage=nothing)
-        output_time_slice[out] = arr = TimeSlice[]
-        time_slice_start = window_start
-        i = 1
-        while time_slice_start < window_end
-            duration = output_resolution(output=out, stage=nothing, i=i)
-            if iszero(duration)
-                # TODO: Try to move this to a check...
-                error("`output_resolution` of output `$(out)` cannot be zero!")
-            end
-            time_slice_end = time_slice_start + duration
-            if time_slice_end > window_end
-                time_slice_end = window_end
-                @warn("the last time slice of output $out has been cut to fit within the optimisation window")
-            end
-            push!(arr, TimeSlice(time_slice_start, time_slice_end; duration_unit=_model_duration_unit(m)))
-            iszero(duration) && break
-            time_slice_start = time_slice_end
-            i += 1
-        end
-    end
-    output_time_slice
-end
-
-"""
-    _generate_output_time_slice!(m::Model)
-
-Create a `Dict`, for the output resolution.
-"""
-function _generate_output_time_slice!(m::Model)
-    instance = m.ext[:spineopt].instance
-    window_start = model_start(model=instance)
-    window_end = model_end(model=instance)
-    m.ext[:spineopt].temporal_structure[:output_time_slice] = _output_time_slice(m, window_start, window_end)
-end
-
-"""
     _generate_time_slice_relationships()
 
 E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
@@ -410,7 +367,6 @@ end
 function generate_time_slice!(m::Model)
     _generate_as_number_or_call!(m)
     _generate_time_slice!(m)
-    _generate_output_time_slice!(m)
     _generate_time_slice_relationships!(m)
 end
 
