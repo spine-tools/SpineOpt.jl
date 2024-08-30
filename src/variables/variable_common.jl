@@ -85,7 +85,7 @@ function add_variable!(
         )
         if history_t !== nothing
     )
-    m.ext[:spineopt].variables_definition[name] = Dict(
+    m.ext[:spineopt].variables_definition[name] = def = Dict(
         :indices => indices,
         :bin => bin,
         :int => int,
@@ -99,7 +99,7 @@ function add_variable!(
         :history_time_slices => history_time_slices,
         :replacement_expressions => replacement_expressions,
     )
-    _finalize_variables!(m, vars, bin, int, lb, ub, fix_value, internal_fix_value)
+    _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
@@ -137,8 +137,7 @@ function _expand_replacement_expressions!(m)
                 coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in formula
             )
         end
-        @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
-        _finalize_expressions!(m, name, exprs, bin, int, lb, ub, fix_value, internal_fix_value)
+        _finalize_expressions!(m, exprs, name, def)
     end
 end
 
@@ -155,47 +154,47 @@ function _get_var_with_replacement(m, var_name, ind)
     end
 end
 
-function _finalize_variables!(args...)
-    inds, vars, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(args...)
-    _set_binary.(vars, bins)
-    _set_integer.(vars, ints)
-    _set_lower_bound.(vars, lbs)
-    _set_upper_bound.(vars, ubs)
-    _fix.(vars, internal_fix_values)
-    _fix.(vars, fix_values)
+function _finalize_variables!(m, var_by_ind, def)
+    info = _collect_info(m, collect(keys(var_by_ind)), def)
+    vars = values(var_by_ind)
+    _set_binary.(vars, getindex.(info, :bin))
+    _set_integer.(vars, getindex.(info, :int))
+    _set_lower_bound.(vars, getindex.(info, :lb))
+    _set_upper_bound.(vars, getindex.(info, :ub))
+    _fix.(vars, getindex.(info, :internal_fix_value))
+    _fix.(vars, getindex.(info, :fix_value))
 end
 
-function _finalize_expressions!(m, name, args...)
-    inds, exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(m, args...)
-    _set_binary.(exprs, bins)
-    _set_integer.(exprs, ints)
-    m.ext[:spineopt].constraints[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, lbs)))
-    m.ext[:spineopt].constraints[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, ubs)))
-    m.ext[:spineopt].constraints[Symbol(name, :_internal_fix)] = Dict(
-        zip(inds, set_expr_bound.(exprs, ==, internal_fix_values))
+function _finalize_expressions!(m, expr_by_ind, name, def)
+    inds = collect(keys(expr_by_ind))
+    exprs = values(expr_by_ind)
+    info = _collect_info(m, inds, def)
+    _set_binary.(exprs, getindex.(info, :bin))
+    _set_integer.(exprs, getindex.(info, :int))
+    cons = m.ext[:spineopt].constraints
+    cons[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, getindex.(info, :lb))))
+    cons[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, getindex.(info, :ub))))
+    cons[Symbol(name, :_internal_fix)] = Dict(
+        zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :internal_fix_value)))
     )
-    m.ext[:spineopt].constraints[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, fix_values)))
+    cons[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :fix_value))))
 end
 
-function _collect_info(m, d, bin, int, lb, ub, fix_value, internal_fix_value)
-    inds = collect(keys(d))
-    vars_or_exprs = collect(values(d))
-    bins = Any[nothing for i in eachindex(inds)]
-    ints = Any[nothing for i in eachindex(inds)]
-    lbs = Any[nothing for i in eachindex(inds)]
-    ubs = Any[nothing for i in eachindex(inds)]
-    internal_fix_values = Any[nothing for i in eachindex(inds)]
-    fix_values = Any[nothing for i in eachindex(inds)]
+function _collect_info(m, inds, def)
+    @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
+    info = NamedTuple[(;) for i in eachindex(inds)]
     Threads.@threads for i in eachindex(inds)
         ind = inds[i]
-        bins[i] = _resolve(bin, ind)
-        ints[i] = _resolve(int, ind)
-        lbs[i] = _resolve(lb, m, ind)
-        ubs[i] = _resolve(ub, m, ind)
-        fix_values[i] = _resolve(fix_value, m, ind)
-        internal_fix_values[i] = _resolve(internal_fix_value, m, ind)
+        info[i] = (
+            bin=_resolve(bin, ind),
+            int=_resolve(int, ind),
+            lb=_resolve(lb, m, ind),
+            ub=_resolve(ub, m, ind),
+            fix_value=_resolve(fix_value, m, ind),
+            internal_fix_value=_resolve(internal_fix_value, m, ind),
+        )
     end
-    inds, vars_or_exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values
+    info
 end
 
 _resolve(::Nothing, _ind) = false
