@@ -429,9 +429,9 @@ function solve_model!(
             @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
             termination_msg = if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
-                "Benders tolerance satisfied, terminating..."
+                "Benders tolerance satisfied"
             elseif j >= max_benders_iterations
-                "Maximum number of iterations reached ($j), terminating..."
+                "Maximum number of iterations reached ($j)"
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
@@ -446,6 +446,7 @@ function solve_model!(
                     log_prefix,
                     calculate_duals,
                 )
+                @log log_level 1 "Terminating..."
                 break
             end
             @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
