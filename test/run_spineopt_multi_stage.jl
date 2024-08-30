@@ -215,6 +215,6 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
     end
 end
 
-@testset "lt_storage" begin
+@testset "run_spineopt_multi_stage" begin
     _test_run_spineopt_lt_storage_benders_storage_investment()
 end

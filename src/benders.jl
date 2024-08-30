@@ -313,3 +313,20 @@ function add_benders_iteration(j)
     new_bi
 end
 
+function _collect_outputs!(
+    m, m_mp; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix, calculate_duals
+)
+    _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false, save_outputs=true)
+    _do_solve_model!(
+        m;
+        log_level,
+        update_names,
+        write_as_roll,
+        resume_file_path,
+        output_suffix,
+        calculate_duals,
+        save_outputs=true,
+        log_prefix="$(log_prefix)Benders converged - collecting outputs - ",
+    )
+end
+
