@@ -380,11 +380,11 @@ function solve_model!(
     log_prefix="",
 )
     m_mp = master_model(m)
+    calculate_duals = any(
+        startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
+    )
     if m_mp === nothing
         # Standard solution method
-        calculate_duals = any(
-            startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
-        )
         _do_solve_model!(
             m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix, calculate_duals
         )
@@ -402,7 +402,9 @@ function solve_model!(
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
-            _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false) || break
+            _do_solve_model!(
+                m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false, save_outputs=false
+            ) || break
             @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
             current_solution_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
                 ""
@@ -417,7 +419,8 @@ function solve_model!(
                 resume_file_path,
                 output_suffix,
                 calculate_duals=true,
-                log_prefix="$log_prefix Benders iteration $j $current_solution_str - ",
+                save_outputs=false,
+                log_prefix="$(log_prefix)Benders iteration $j $current_solution_str - ",
             ) || break
             @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
             @log log_level 1 "Benders iteration $j complete"
@@ -425,12 +428,24 @@ function solve_model!(
             @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))"
             @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
-            if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
-                @log log_level 1 "Benders tolerance satisfied, terminating..."
-                break
+            termination_msg = if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
+                "Benders tolerance satisfied, terminating..."
+            elseif j >= max_benders_iterations
+                "Maximum number of iterations reached ($j), terminating..."
             end
-            if j >= max_benders_iterations
-                @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
+            if termination_msg !== nothing
+                @log log_level 1 termination_msg
+                _collect_outputs!(
+                    m,
+                    m_mp;
+                    log_level,
+                    update_names,
+                    write_as_roll,
+                    resume_file_path,
+                    output_suffix,
+                    log_prefix,
+                    calculate_duals,
+                )
                 break
             end
             @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
@@ -451,16 +466,18 @@ function _do_solve_model!(
     log_prefix="",
     calculate_duals=false,
     rewind=true,
+    save_outputs=true,
 )
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
     k0 === nothing && return m
     _solve_stage_models!(m; log_level, log_prefix) || return false
     m.ext[:spineopt].has_results[] = false
     _call_event_handlers(m, :model_about_to_solve)
-    model_name = string(log_prefix, _model_name(m))
+    model_name = _model_name(m)
+    full_model_name = string(log_prefix, model_name)
     rewind && @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     for k in Iterators.countfrom(k0)
-        @log log_level 1 "\n$model_name - Window $k of $(window_count(m)): $(current_window(m))"
+        @log log_level 1 "\n$full_model_name - Window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
         optimize_model!(m; log_level, calculate_duals, output_suffix) || return false
         _save_window_state(m, k; write_as_roll, resume_file_path)
@@ -534,7 +551,7 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;))
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;), save_outputs=true)
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -549,8 +566,10 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
             m.ext[:spineopt].has_results[] = true
             @timelog log_level 2 "Saving $model_name results..." _save_model_results!(m)
             calculate_duals && _calculate_duals(m; log_level=log_level)
-            @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m)
-            @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix)
+            if save_outputs
+                @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m)
+                @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix)
+            end
         else
             m.ext[:spineopt].has_results[] = false
             @warn "no solution available for $model_name - window $(current_window(m)) - moving on..."
