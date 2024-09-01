@@ -213,6 +213,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
             end
         end
     end
+    @test termination_status(m) == MOI.OPTIMAL
 end
 
 function _test_run_spineopt_lt_storage_benders_storage_investment_with_slack_penalty()
