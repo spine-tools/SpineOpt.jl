@@ -85,19 +85,19 @@ function add_variable!(
         )
         if history_t !== nothing
     )
-    m.ext[:spineopt].variables_definition[name] = def = Dict(
-        :indices => indices,
-        :bin => bin,
-        :int => int,
-        :lb => lb,
-        :ub => ub,
-        :fix_value => fix_value,
-        :internal_fix_value => internal_fix_value,
-        :non_anticipativity_time => non_anticipativity_time,
-        :non_anticipativity_margin => non_anticipativity_margin,
-        :history_vars_by_ind => history_vars_by_ind,
-        :history_time_slices => history_time_slices,
-        :replacement_expressions => replacement_expressions,
+    m.ext[:spineopt].variables_definition[name] = def = _variable_definition(
+        indices=indices,
+        bin=bin,
+        int=int,
+        lb=lb,
+        ub=ub,
+        fix_value=fix_value,
+        internal_fix_value=internal_fix_value,
+        non_anticipativity_time=non_anticipativity_time,
+        non_anticipativity_margin=non_anticipativity_margin,
+        history_vars_by_ind=history_vars_by_ind,
+        history_time_slices=history_time_slices,
+        replacement_expressions=replacement_expressions,
     )
     _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
@@ -125,6 +125,36 @@ _nothing_if_empty(x) = x
 _add_variable!(m, name, ind) = @variable(m, base_name=_base_name(name, ind))
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
+
+function _variable_definition(;
+    indices=((m; kwargs...) -> []),
+    bin=nothing,
+    int=nothing,
+    lb=nothing,
+    ub=nothing,
+    fix_value=nothing,
+    internal_fix_value=nothing,
+    non_anticipativity_time=nothing,
+    non_anticipativity_margin=nothing,
+    history_time_slices=[],
+    history_vars_by_ind=Dict(),
+    replacement_expressions=Dict(),
+)
+    Dict(
+        :indices => indices,
+        :bin => bin,
+        :int => int,
+        :lb => lb,
+        :ub => ub,
+        :fix_value => fix_value,
+        :internal_fix_value => internal_fix_value,
+        :non_anticipativity_time => non_anticipativity_time,
+        :non_anticipativity_margin => non_anticipativity_margin,
+        :history_time_slices => history_time_slices,
+        :history_vars_by_ind => history_vars_by_ind,
+        :replacement_expressions => replacement_expressions,
+    )
+end
 
 function _expand_replacement_expressions!(m)
     for (name, def) in m.ext[:spineopt].variables_definition
@@ -200,7 +230,7 @@ end
 _resolve(::Nothing, _ind) = false
 _resolve(f, ind) = f(ind)
 _resolve(::Nothing, _m, _ind) = nothing
-_resolve(f, m, ind) = f(m; ind...)
+_resolve(f, m, ind) = f(m; ind..., _strict=false)
 
 _set_binary(var::VariableRef, bin) = bin && set_binary(var)
 _set_binary(expr::GenericAffExpr, bin) = bin && set_binary.(keys(expr.terms))
