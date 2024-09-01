@@ -505,7 +505,10 @@ end
 function _update_downstream_outputs!(stage_m)
     for (out_name, current_downstream_outputs) in stage_m.ext[:spineopt].downstream_outputs
         new_downstream_outputs = Dict(
-            ent => parameter_value(_output_value(val)) for (ent, val) in stage_m.ext[:spineopt].outputs[out_name]
+            ent => parameter_value(val)
+            for (ent, val) in _output_value_by_entity(
+                stage_m.ext[:spineopt].outputs[out_name], model_end(model=stage_m.ext[:spineopt].instance)
+            )
         )
         mergewith!(merge!, current_downstream_outputs, new_downstream_outputs)
     end
@@ -1030,9 +1033,7 @@ function _collect_output_values(m)
         key = (output_name, overwrite)
         haskey(values, key) && continue
         out_res = output_resolution(output=output(output_name))
-        values[key] = _output_value_by_entity(
-            by_suffix, overwrite, out_res, model_end(model=m.ext[:spineopt].instance)
-        )
+        values[key] = _output_value_by_entity(by_suffix, model_end(model=m.ext[:spineopt].instance), overwrite, out_res)
     end
     values
 end
@@ -1047,7 +1048,7 @@ function _wait_for_dual_solves(m)
     end
 end
 
-function _output_value_by_entity(by_suffix, overwrite_results_on_rolling, output_resolution, model_end)
+function _output_value_by_entity(by_suffix, model_end, overwrite_results_on_rolling=true, output_resolution=nothing)
     by_entity = Dict()
     for (suffix, by_window) in by_suffix
         for ((w_start, w_end), values) in by_window
@@ -1101,7 +1102,6 @@ end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true}, output_resolution)
     by_time_stamp = ((t, val) for by_time_stamp in values(by_analysis_time) for (t, val) in by_time_stamp)
     _aggregated(first.(by_time_stamp), collect(Float64, last.(by_time_stamp)), output_resolution; merge_ok=true)
-
 end
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false}, output_resolution)
     Map(
