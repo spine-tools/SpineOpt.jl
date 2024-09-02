@@ -250,7 +250,7 @@ function _set_objective_mga_iteration!(
                     mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     <=
                     sum(
-                        (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration, t0))
+                        (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration))
                         * scenario_weight_function(m; _drop_key(ind_, :t)...) # FIXME: can also be only node or so
                         for ind_ in variable_indices_function(m; ind...)
                     )
@@ -262,7 +262,7 @@ function _set_objective_mga_iteration!(
                     mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     <=
                     sum(
-                        (_mga_result(m, variable_name, ind_, mga_current_iteration, t0) - variable[ind_])
+                        (_mga_result(m, variable_name, ind_, mga_current_iteration) - variable[ind_])
                         * scenario_weight_function(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     )
@@ -274,7 +274,7 @@ function _set_objective_mga_iteration!(
                     mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     >=
                     sum(
-                        (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration, t0))
+                        (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration))
                         * scenario_weight_function(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     )
@@ -285,7 +285,7 @@ function _set_objective_mga_iteration!(
                     mga_aux_diff[(ind..., mga_iteration=mga_current_iteration)]
                     >=
                     sum(
-                        (_mga_result(m, variable_name, ind_, mga_current_iteration, t0) - variable[ind_])
+                        (_mga_result(m, variable_name, ind_, mga_current_iteration) - variable[ind_])
                         * scenario_weight_function(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     ) 
@@ -296,8 +296,10 @@ function _set_objective_mga_iteration!(
     end
 end
 
-function _mga_result(m, variable_name, ind, mga_iteration, t0)
-    m.ext[:spineopt].outputs[variable_name][(_drop_key(ind, :t)..., mga_iteration=mga_iteration)][t0][start(ind.t)]
+function _mga_result(m, variable_name, ind, mga_iteration)
+    suffix = (mga_iteration=mga_iteration,)
+    window = start(current_window(m)), end_(current_window(m))
+    m.ext[:spineopt].outputs[variable_name][suffix][window][_static(ind)]
 end
 
 function add_mga_objective_constraint!(m::Model)

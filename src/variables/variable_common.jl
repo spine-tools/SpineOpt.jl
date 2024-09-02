@@ -67,19 +67,6 @@ function add_variable!(
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
-    m.ext[:spineopt].variables_definition[name] = Dict(
-        :indices => indices,
-        :bin => bin,
-        :int => int,
-        :lb => lb,
-        :ub => ub,
-        :fix_value => fix_value,
-        :internal_fix_value => internal_fix_value,
-        :non_anticipativity_time => non_anticipativity_time,
-        :non_anticipativity_margin => non_anticipativity_margin,
-        :history_time_slices => history_time_slices,
-        :replacement_expressions => replacement_expressions,
-    )
     t = vcat(history_time_slices, time_slice(m))
     first_ind = iterate(indices(m; t=t))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
@@ -87,7 +74,32 @@ function add_variable!(
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
         ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
     )
-    _finalize_variables!(m, vars, bin, int, lb, ub, fix_value, internal_fix_value)
+    history_vars_by_ind = Dict(
+        ind => [
+            history_var
+            for history_var in (get(vars, history_ind, nothing) for history_ind in indices(m; ind..., t=history_t))
+            if history_var !== nothing
+        ]
+        for (ind, history_t) in (
+            (ind, t_history_t(m; t=ind.t)) for ind in indices(m; t=time_slice(m)) if haskey(ind, :t)
+        )
+        if history_t !== nothing
+    )
+    m.ext[:spineopt].variables_definition[name] = def = _variable_definition(
+        indices=indices,
+        bin=bin,
+        int=int,
+        lb=lb,
+        ub=ub,
+        fix_value=fix_value,
+        internal_fix_value=internal_fix_value,
+        non_anticipativity_time=non_anticipativity_time,
+        non_anticipativity_margin=non_anticipativity_margin,
+        history_vars_by_ind=history_vars_by_ind,
+        history_time_slices=history_time_slices,
+        replacement_expressions=replacement_expressions,
+    )
+    _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
         last_history_t = last(history_time_slice(m))
@@ -114,6 +126,36 @@ _add_variable!(m, name, ind) = @variable(m, base_name=_base_name(name, ind))
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
+function _variable_definition(;
+    indices=((m; kwargs...) -> []),
+    bin=nothing,
+    int=nothing,
+    lb=nothing,
+    ub=nothing,
+    fix_value=nothing,
+    internal_fix_value=nothing,
+    non_anticipativity_time=nothing,
+    non_anticipativity_margin=nothing,
+    history_time_slices=[],
+    history_vars_by_ind=Dict(),
+    replacement_expressions=Dict(),
+)
+    Dict(
+        :indices => indices,
+        :bin => bin,
+        :int => int,
+        :lb => lb,
+        :ub => ub,
+        :fix_value => fix_value,
+        :internal_fix_value => internal_fix_value,
+        :non_anticipativity_time => non_anticipativity_time,
+        :non_anticipativity_margin => non_anticipativity_margin,
+        :history_time_slices => history_time_slices,
+        :history_vars_by_ind => history_vars_by_ind,
+        :replacement_expressions => replacement_expressions,
+    )
+end
+
 function _expand_replacement_expressions!(m)
     for (name, def) in m.ext[:spineopt].variables_definition
         replacement_expressions = def[:replacement_expressions]
@@ -125,8 +167,7 @@ function _expand_replacement_expressions!(m)
                 coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in formula
             )
         end
-        @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
-        _finalize_expressions!(m, name, exprs, bin, int, lb, ub, fix_value, internal_fix_value)
+        _finalize_expressions!(m, exprs, name, def)
     end
 end
 
@@ -143,53 +184,53 @@ function _get_var_with_replacement(m, var_name, ind)
     end
 end
 
-function _finalize_variables!(args...)
-    inds, vars, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(args...)
-    _set_binary.(vars, bins)
-    _set_integer.(vars, ints)
-    _set_lower_bound.(vars, lbs)
-    _set_upper_bound.(vars, ubs)
-    _fix.(vars, internal_fix_values)
-    _fix.(vars, fix_values)
+function _finalize_variables!(m, var_by_ind, def)
+    info = _collect_info(m, collect(keys(var_by_ind)), def)
+    vars = values(var_by_ind)
+    _set_binary.(vars, getindex.(info, :bin))
+    _set_integer.(vars, getindex.(info, :int))
+    _set_lower_bound.(vars, getindex.(info, :lb))
+    _set_upper_bound.(vars, getindex.(info, :ub))
+    _fix.(vars, getindex.(info, :internal_fix_value))
+    _fix.(vars, getindex.(info, :fix_value))
 end
 
-function _finalize_expressions!(m, name, args...)
-    inds, exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values = _collect_info(m, args...)
-    _set_binary.(exprs, bins)
-    _set_integer.(exprs, ints)
-    m.ext[:spineopt].constraints[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, lbs)))
-    m.ext[:spineopt].constraints[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, ubs)))
-    m.ext[:spineopt].constraints[Symbol(name, :_internal_fix)] = Dict(
-        zip(inds, set_expr_bound.(exprs, ==, internal_fix_values))
+function _finalize_expressions!(m, expr_by_ind, name, def)
+    inds = collect(keys(expr_by_ind))
+    exprs = values(expr_by_ind)
+    info = _collect_info(m, inds, def)
+    _set_binary.(exprs, getindex.(info, :bin))
+    _set_integer.(exprs, getindex.(info, :int))
+    cons = m.ext[:spineopt].constraints
+    cons[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, getindex.(info, :lb))))
+    cons[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, getindex.(info, :ub))))
+    cons[Symbol(name, :_internal_fix)] = Dict(
+        zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :internal_fix_value)))
     )
-    m.ext[:spineopt].constraints[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, fix_values)))
+    cons[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :fix_value))))
 end
 
-function _collect_info(m, d, bin, int, lb, ub, fix_value, internal_fix_value)
-    inds = collect(keys(d))
-    vars_or_exprs = collect(values(d))
-    bins = Any[nothing for i in eachindex(inds)]
-    ints = Any[nothing for i in eachindex(inds)]
-    lbs = Any[nothing for i in eachindex(inds)]
-    ubs = Any[nothing for i in eachindex(inds)]
-    internal_fix_values = Any[nothing for i in eachindex(inds)]
-    fix_values = Any[nothing for i in eachindex(inds)]
+function _collect_info(m, inds, def)
+    @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
+    info = NamedTuple[(;) for i in eachindex(inds)]
     Threads.@threads for i in eachindex(inds)
         ind = inds[i]
-        bins[i] = _resolve(bin, ind)
-        ints[i] = _resolve(int, ind)
-        lbs[i] = _resolve(lb, m, ind)
-        ubs[i] = _resolve(ub, m, ind)
-        fix_values[i] = _resolve(fix_value, m, ind)
-        internal_fix_values[i] = _resolve(internal_fix_value, m, ind)
+        info[i] = (
+            bin=_resolve(bin, ind),
+            int=_resolve(int, ind),
+            lb=_resolve(lb, m, ind),
+            ub=_resolve(ub, m, ind),
+            fix_value=_resolve(fix_value, m, ind),
+            internal_fix_value=_resolve(internal_fix_value, m, ind),
+        )
     end
-    inds, vars_or_exprs, bins, ints, lbs, ubs, internal_fix_values, fix_values
+    info
 end
 
 _resolve(::Nothing, _ind) = false
 _resolve(f, ind) = f(ind)
 _resolve(::Nothing, _m, _ind) = nothing
-_resolve(f, m, ind) = f(m; ind...)
+_resolve(f, m, ind) = f(m; ind..., _strict=false)
 
 _set_binary(var::VariableRef, bin) = bin && set_binary(var)
 _set_binary(expr::GenericAffExpr, bin) = bin && set_binary.(keys(expr.terms))
