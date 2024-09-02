@@ -618,7 +618,7 @@ Save the value of all variables in a model.
 """
 function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
-        m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
+        m.ext[:spineopt].values[name] = _fdict(_variable_value, var)
     end
 end
 
@@ -632,7 +632,7 @@ _variable_value(x::GenericAffExpr{Call,VariableRef}) = value(realize(x))
 function _save_expression_values!(m::Model)
     for (name, expr) in m.ext[:spineopt].expressions
         name in keys(m.ext[:spineopt].outputs) || continue
-        m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(e) for (ind, e) in expr)
+        m.ext[:spineopt].values[name] = _fdict(JuMP.value, expr)
     end
 end
 
@@ -653,8 +653,19 @@ function _save_constraint_values!(m::Model)
     for (name, con) in m.ext[:spineopt].constraints
         name = Symbol(:value_constraint_, name)
         name in keys(m.ext[:spineopt].outputs) || continue
-        m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(c) for (ind, c) in con)
+        m.ext[:spineopt].values[name] = _fdict(JuMP.value, con)
     end
+end
+
+"""
+A copy of given dictionary `d` computed by applying the given function `f` to each value.
+"""
+function _fdict(f, d)
+    vals = collect(Any, values(d))
+    @Threads.threads for i in eachindex(vals)
+        vals[i] = f(vals[i])
+    end
+    Dict(zip(keys(d), vals))
 end
 
 """
@@ -671,7 +682,6 @@ function _save_objective_values!(m::Model)
     end
     m.ext[:spineopt].values[:total_costs] = Dict(ind => total_costs)
     m.ext[:spineopt].values[:total_costs_tail] = Dict(ind => total_costs_tail)
-    nothing
 end
 
 function _save_window_state(m, k; write_as_roll, resume_file_path)
