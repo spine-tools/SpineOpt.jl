@@ -353,16 +353,7 @@ end
 function _add_slack_variable!(child_m, st, out, slack, ind)
     var_name = Symbol(join((st, out, slack), "_"))
     var_def = get!(child_m.ext[:spineopt].variables_definition, var_name) do
-        Dict(
-            :indices => (m; kwargs...) -> [],
-            :bin => nothing,
-            :int => nothing,
-            :non_anticipativity_time => nothing,
-            :non_anticipativity_margin => nothing,
-            :history_time_slices => [],
-            :replacement_expressions => Dict(),
-            :inverse_replacement_expressions => Dict(),
-        )
+        _variable_definition()
     end
     inds = var_def[:indices](child_m)
     push!(inds, ind)
