@@ -17,7 +17,7 @@ It can be tricky to put the correct cost parameters into the model since factors
 
 This factor translates the overnight costs of investment into discounted (to the discount_year) annual payments, distributed over the total lifetime of the investment. Investment payments are assumed to increase linearly over the lead-time, and decrease linearly towards the end of the economic lifetime. This is also illustrated here:
 
-![image](files_multi-year/discounted_annuities.png)
+![image](figs_multi-year/discounted_annuities.png)
 
 For this purpose, we first calculate first the fraction of payment per year (e.g. something like 0.25, 0.5, 0.75,1 over the lead time; 1 for the economic lifetime minus the lead time, and 0.75, 0.5, 0.25 and 0 for the remaining economic lifetime). Each payment fraction is then multiplied by the discounting factor of the payment year with respect to the discounting year (e.g. start of optimization).
 
@@ -45,9 +45,9 @@ When `use_economic_representation` is set to `true`:
 
 More information can be found in the following files.
 
-- [Economic representation in SpineOpt](files_multi-year/Spine_invest.pdf) contains the details of the calculation of the economic prameters. Note that this document covers more concepts than what is currently available in SpineOpt (the available ones are the parameters listed above and the adaptions in the objective), the rest is under development.
+- [Economic representation in SpineOpt](https://github.com/Spine-project/SpineOpt.jl/files/9130471/Spine_invest.3.pdf) contains the details of the calculation of the economic prameters. Note that this document covers more concepts than what is currently available in SpineOpt (the available ones are the parameters listed above and the adaptions in the objective), the rest is under development.
 
-- [Economic parameters calculation tool](files_multi-year/parameter_illustration.xlsx) is an excel tool that you can use to calculate the economic parameters on your own.
+- [Economic parameters calculation tool](https://github.com/Spine-project/SpineOpt.jl/files/9130469/parameter_illustration.2.xlsx) is an excel tool that you can use to calculate the economic parameters on your own.
 
 Please also note that the use of economic representation in SpineOpt has the following limitations, which warrant future improvements:
 
