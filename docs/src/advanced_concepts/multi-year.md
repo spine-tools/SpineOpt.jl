@@ -52,4 +52,5 @@ More information can be found in the following files.
 Please also note that the use of economic representation in SpineOpt has the following limitations, which warrant future improvements:
 
 - The combination of milestone years and Benders' decomposition is not supported. If no milestone years are used, then you can use the decomposition.
+
 - Rolling horizon is not supported.
