@@ -29,7 +29,6 @@ Thanks for taking the plunge!
 * Don't go over the 119 per-line character limit
 * Avoid squashing code blocks onto one line, e.g. `for foo in bar; baz += qux(foo); end`
 * Don't explicitly parameterize types unless it's necessary
-* Never leave things without type qualifications. Use an explicit `::Any`.
 * Order method definitions from most specific to least specific type constraints
 
 ## Releases

@@ -439,12 +439,12 @@ function _test_dont_overwrite_results_on_rolling()
             direction=Y.direction(:to_node),
             stochastic_scenario=Y.stochastic_scenario(:parent),
         )
-        analysis_times = DateTime(2000, 1, 1): Hour(6) : DateTime(2000, 1, 2) - Hour(1)
+        analysis_times = DateTime(2000, 1, 1):Hour(6):(DateTime(2000, 1, 2) - Hour(1))
         # For each analysis time we cover a window of ± 12 hours with `t`,
         # and check that only `t`s within the optimisation window have a `unit_flow` value
-        @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
+        @testset for at in analysis_times, t in (at - Hour(12)):Hour(1):(at + Hour(12))
             window_start = max(DateTime(2000, 1, 1), at)
-            window_end = min(DateTime(2000, 1, 2), at + Hour(9))
+            window_end = at + Hour(9)
             obs_unit_flow = Y.unit_flow(; flow_key..., analysis_time=at, t=t)
             if window_start <= t < window_end
                 exp_unit_flow = (t < DateTime(2000, 1, 1, 12)) ? 50 : 90
@@ -576,8 +576,7 @@ function _test_output_resolution_for_an_input()
             key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
             @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(out_res):DateTime(2000, 1, 2) - Hour(1))
                 lower = out_res * (k - 1) + 1
-                upper = out_res * k
-                upper > 24 && (upper = 24)
+                upper = min(24, out_res * k)
                 range = lower:upper
                 expected = sum(((7 <= j <= 18) ? 50 : 100) for j in range) / length(range)
                 @test Y.demand(; key..., t=t) == expected

@@ -11,6 +11,12 @@ While, in principle, it is possible to run *SpineOpt* by itself, it has been des
 workflow management tools therein.
 Thus, we highly recommend installing *Spine Toolbox* as well, as outlined in the [Installation](@ref) guide.
 
+## Important remark on spine entities
+
+The documentation often refers to objects and relationships. These are actually both entities in a spine database (technically they are entities with one dimension and multiple dimensions respectively). The distinction here is to make a more clear distinction between the physical unit/node (entity with one dimension or object) and the flows between units and/or nodes (entities with multiple dimensions or relationships).
+
+In this documentation the two naming structures (object/relationships or entities) will be used interchangeably. Though, in upcoming versions of the documentation, the naming structure will gravitate more towards entities.
+
 ## How the documentation is structured
 
 Having a high-level overview of how this documentation is structured will help you know where to look for certain things.
@@ -30,6 +36,9 @@ Part 1 aims to get new users started as quick as possible. It contains installat
   Each example is its own sub-folder, where the input data is provided as `.json` or `.sqlite` files.
   This way, you can easily get a feel for how SpineOpt works with pre-made datasets,
   either through [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox), or directly from the Julia REPL.
+
+!!! warning
+  Although these examples are part of the unit tests (and should therefore be up to date), they do rely on migration scripts for their updates. That does mean that there is the possibility that there is a missing parameter that is not used by the example and as such does not trigger an error. Therefore it is not recommended to rely on these example files for building your own models.
 
 - **How to**
   provides explanations on how to do specific high-level things that might involve multiple elements

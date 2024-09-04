@@ -19,7 +19,7 @@ Regardless, the following sections explain the different archetypes included in 
 as well as what steps the user needs to take to connect said archetype to their input data correctly.
 
 ## Loading the SpineOpt Template and Archetypes into Your Model
-To load the latest version of the SpineOpt template, in the Spine DB Editor, from the menu (three hirzontal bars in the top right), click on import as follows:
+To load the latest version of the SpineOpt template, in the Spine DB Editor, from the menu (three horizontal bars in the top right), click on import as follows:
 
 ![importing the SpineOpt Template](https://user-images.githubusercontent.com/7080191/156589727-baa578b6-41f2-4de8-beb1-27ec4bddb5d6.png)
 
