@@ -213,7 +213,6 @@ function _add_constraints!(m; log_level=3)
             add_constraint_unit_flow_op_rank!,
             add_constraint_unit_flow_op_sum!,
             add_constraint_unit_lifetime!,
-            add_constraint_unit_pw_heat_rate!,
             add_constraint_unit_state_transition!,
             add_constraint_units_available!,
             add_constraint_units_invested_available!,

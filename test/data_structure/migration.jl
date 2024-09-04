@@ -304,6 +304,36 @@ function _test_rename_lifetime_to_tech_lifetime()
 	end
 end
 
+function _test_translate_heatrate_parameters()
+	@testset "translate_heatrate_parameters" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["node", "unit"],
+			:relationship_classes => [
+				["unit__node__node", ["unit", "node", "node"]],
+			],
+			:objects => [("node", "n1"), ("node", "n2"), ("unit", "u")],
+			:relationships => [("unit__node__node", ["u", "n1", "n2"])],
+			:relationship_parameters => [
+				("unit__node__node", "unit_incremental_heat_rate"),
+				("unit__node__node", "unit_idle_heat_rate")
+			],
+			:relationship_parameter_values => [
+				("unit__node__node", ["u", "n1", "n2"], "unit_incremental_heat_rate", 10),
+				("unit__node__node", ["u", "n1", "n2"], "unit_idle_heat_rate", 200)
+			]
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test SpineOpt.translate_heatrate_parameters(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "translate_heatrate_parameters"))
+		using_spinedb(url, Y)
+		@test Y.fix_ratio_in_out_unit_flow(unit=Y.unit(:u), node1=Y.node(:n1), node2=Y.node(:n2)) == 10
+		@test Y.fix_units_on_coefficient_in_out(unit=Y.unit(:u), node1=Y.node(:n1), node2=Y.node(:n2)) == 200	
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -313,4 +343,5 @@ end
 	_test_update_investment_variable_type()
 	_test_add_model_algorithm()
 	_test_rename_lifetime_to_tech_lifetime()
+	_test_translate_heatrate_parameters()
 end

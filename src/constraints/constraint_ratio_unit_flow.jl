@@ -61,6 +61,23 @@ exist for the other 11 cases described above.
     In this case, there remains a degree of freedom regarding the composition of flows within the group.
 
 See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_out\_in](@ref).
+
+
+If an array type [fix\_ratio\_in\_out\_unit\_flow](@ref) is defined, the constraint implements a standard piecewise
+linear ratio (incremental heat rate):
+
+```math
+\begin{aligned}
+& v^{unit\_flow}_{(u, n_{in}, d, s, t)} \\
+& = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} p^{fix\_ratio\_in\_out\_unit\_flow}_{(u, n_{in}, n_{out}, op, s, t)}
+\cdot v^{unit\_flow\_op}_{(u, n_{out}, d, op, s, t)} \\
+& + p^{fix\_units\_on\_coefficient\_in\_out}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_on}_{(u, s, t)} \\
+& + p^{unit\_start\_flow}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_started\_up}_{(u, s, t)} \\
+& \forall (u,n_{in},n_{out}) \in indices(p^{fix\_ratio\_in\_out\_unit\_flow}) \\
+& \forall (s,t)
+\end{aligned}
+```
+See also [fix\_ratio\_in\_out\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_in\_out](@ref).
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio)
     _add_constraint!(
@@ -78,7 +95,7 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
     sense = _ratio_to_sense(ratio)
     units_on_coeff = _ratio_to_units_on_coeff(ratio)
     start_flow_sign = _ratio_to_start_flow_sign(ratio)
-    @fetch unit_flow = m.ext[:spineopt].variables
+    @fetch unit_flow, unit_flow_op = m.ext[:spineopt].variables
     build_sense_constraint(
         + sum(
             get(unit_flow, (u, n1, d1, s, t_short), 0)
@@ -88,10 +105,34 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
         ),
         sense,
         + sum(
+            get(unit_flow_op, (u, n2, d2, op, s, t_short), 0)
+            * duration(t_short)
+            * ratio(
+                m; unit=u, node1=ng1, node2=ng2, i=op, stochastic_scenario=s, t=t
+            )
+            for (u, n2, d2, op, s, t_short) in unit_flow_op_indices(
+                m;
+                unit=u,
+                node=members(ng2),
+                direction=d2,
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            );
+            init=0,
+        )
+        + sum(
             get(unit_flow, (u, n2, d2, s, t_short), 0)
             * duration(t_short)
             * ratio(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
-            for n2 in members(ng2), s in s_path, t_short in t_in_t(m; t_long=t);
+            for (u, n2, d2, s, t_short) in unit_flow_indices(
+                m;
+                unit=u,
+                node=members(ng2),
+                direction=d2,
+                stochastic_scenario=s_path,
+                t=t_in_t(m; t_long=t),
+            )
+            if isempty(unit_flow_op_indices(m; unit=u, node=n2, direction=d2));
             init=0,
         )
         + sum(
@@ -223,7 +264,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio)
     (
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
-        if !_has_simple_fix_ratio_unit_flow(n1, n2, ratio)
+        if !_has_simple_fix_ratio_unit_flow(m, u, n1, d1, n2, d2, ratio)
         for (t, path) in t_lowest_resolution_path(
             m,
             unit_flow_indices(m; unit=u, node=[n1, n2]),
