@@ -3534,7 +3534,7 @@
             "use_unit_capacity_for_investment_cost_scaling",
             false,
             "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. \u00e2\u201a\u00ac/MW)"
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. \u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac/MW)"
         ],
         [
             "unit__from_node",
@@ -4017,7 +4017,7 @@
             "use_unit_capacity_for_investment_cost_scaling",
             false,
             "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. \u00e2\u201a\u00ac/MW)"
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. \u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac/MW)"
         ],
         [
             "unit__to_node",
