@@ -171,6 +171,14 @@ function _run_spineopt(
     # possibly adapt union? + allow for conflicts if direct model is used
 end
 
+function _current_solution_string(m_mp)
+    if isempty(m_mp.ext[:spineopt].benders_gaps)
+        ""
+    else
+        "(lower bound: $(_lb_str(m_mp)); upper bound: $(_ub_str(m_mp)); gap: $(_gap_str(m_mp))) "
+    end
+end
+
 _gap_str(m_mp) = string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%")
 
 _lb_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])
