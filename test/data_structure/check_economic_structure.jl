@@ -89,6 +89,15 @@
             ["report__output", ["report_a", "unit_salvage_fraction"]],
             ["report__output", ["report_a", "unit_tech_discount_factor"]],
             ["report__output", ["report_a", "unit_conversion_to_discounted_annuities"]],
+            ["report__output", ["report_a", "unit_discounted_duration"]],
+            ["report__output", ["report_a", "connection_salvage_fraction"]],
+            ["report__output", ["report_a", "connection_tech_discount_factor"]],
+            ["report__output", ["report_a", "connection_conversion_to_discounted_annuities"]],
+            ["report__output", ["report_a", "connection_discounted_duration"]],            
+            ["report__output", ["report_a", "storage_salvage_fraction"]],
+            ["report__output", ["report_a", "storage_tech_discount_factor"]],
+            ["report__output", ["report_a", "storage_conversion_to_discounted_annuities"]],
+            ["report__output", ["report_a", "storage_discounted_duration"]],            
             ["model__report", ["instance", "report_a"]],
             ["unit__node__node", ["unit_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
@@ -257,17 +266,15 @@
             ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        # here `optimize = true` so we can also test the outputs of new parameters
-        m = run_spineopt(url_in; optimize=true, log_level=1)
-        values = m.ext[:spineopt].values
+        m = run_spineopt(url_in; optimize=false, log_level=1)
         u_ts = [ind.t for ind in units_invested_available_indices(m; unit=unit(:unit_ab))]
-        key_param = (unit=unit(:unit_ab),stochastic_scenario=stochastic_scenario(:parent),t=u_ts[1])
+        key_param = Dict(unit.name => unit(:unit_ab), stochastic_scenario.name => stochastic_scenario(:parent))
         tech_fac = 2.189728888
         salvage_frac = 0.370998336
         conv_to_disc_annuities = 0.613913254
-        @test salvage_frac ≈ values[:unit_salvage_fraction][key_param] rtol = 1e-6
-        @test tech_fac ≈ values[:unit_tech_discount_factor][key_param] rtol = 1e-6
-        @test conv_to_disc_annuities ≈ values[:unit_conversion_to_discounted_annuities][key_param] rtol = 1e-6
+        @test salvage_frac ≈ SpineOpt.unit_salvage_fraction(; key_param..., t=u_ts[1]) rtol = 1e-6
+        @test tech_fac ≈ SpineOpt.unit_tech_discount_factor(; key_param..., t=u_ts[1]) rtol = 1e-6
+        @test conv_to_disc_annuities ≈ SpineOpt.unit_conversion_to_discounted_annuities(; key_param..., t=u_ts[1]) rtol = 1e-6
         units_invested = m.ext[:spineopt].variables[:units_invested]
         observed_coe_obj = coefficient(objective_function(m), units_invested[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]])
         expected_coe_obj = (1 - salvage_frac) * conv_to_disc_annuities * tech_fac * inv_cost

@@ -258,7 +258,7 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, econ
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]))
+        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -333,7 +333,7 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]))
+        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -460,7 +460,7 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_par
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]))
+        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -516,7 +516,7 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, economic
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]))
+        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -584,7 +584,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
         end
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]))
+        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 """
@@ -683,6 +683,6 @@ function generate_decommissioning_conversion_to_discounted_annuities!(
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]))
+        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
