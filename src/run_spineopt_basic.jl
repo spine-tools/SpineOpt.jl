@@ -409,11 +409,6 @@ function solve_model!(
             end
             _do_solve_model!(m_mp; log_level, update_names, log_prefix, rewind=false, extra_kwargs...) || break
             @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
-            current_solution_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
-                ""
-            else
-                "(lower bound: $(_lb_str(m_mp)); upper bound: $(_ub_str(m_mp)); gap: $(_gap_str(m_mp))) "
-            end
             _do_solve_model!(
                 m;
                 log_level,
@@ -421,7 +416,7 @@ function solve_model!(
                 write_as_roll,
                 resume_file_path,
                 calculate_duals=true,
-                log_prefix="$(log_prefix)Benders iteration $j $current_solution_str - ",
+                log_prefix="$(log_prefix)Benders iteration $j $(_current_solution_string(m_mp)) - ",
                 extra_kwargs...,
             ) || break
             @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
@@ -437,6 +432,9 @@ function solve_model!(
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
+                final_log_prefix = string(
+                    log_prefix, "$termination_msg $(_current_solution_string(m_mp)) - collecting outputs - "
+                )
                 save_intermediate_benders_results(model=m_mp.ext[:spineopt].instance) || _collect_outputs!(
                     m,
                     m_mp;
@@ -445,8 +443,8 @@ function solve_model!(
                     write_as_roll,
                     resume_file_path,
                     output_suffix,
-                    log_prefix,
                     calculate_duals,
+                    log_prefix=final_log_prefix,
                 )
                 @log log_level 1 "Terminating..."
                 break

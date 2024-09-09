@@ -325,8 +325,8 @@ function _collect_outputs!(
         resume_file_path,
         output_suffix,
         calculate_duals,
+        log_prefix,
         save_outputs=true,
-        log_prefix="$(log_prefix)Benders converged - collecting outputs - ",
     )
 end
 
