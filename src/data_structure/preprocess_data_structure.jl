@@ -761,10 +761,9 @@ Creates the `benders_iteration` object class. Benders cuts have the Benders iter
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
-    bi_name = :benders_iteration
-    current_bi = Object(:bi_1, bi_name)
+    current_bi = _make_bi(1)
     benders_iteration = ObjectClass(
-        bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
+        :benders_iteration, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
     )
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
     units_invested_available_mv = Parameter(:units_invested_available_mv, [unit])
