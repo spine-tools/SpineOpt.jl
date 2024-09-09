@@ -340,7 +340,7 @@ function investment_costs(m_mp)
 end
 
 function add_benders_iteration(j)
-    new_bi = Object(Symbol(:bi_, j))
+    new_bi = _make_bi(j)
     add_object!(benders_iteration, new_bi)
     new_bi
 end
@@ -357,8 +357,8 @@ function _collect_outputs!(
         resume_file_path,
         output_suffix,
         calculate_duals,
+        log_prefix,
         save_outputs=true,
-        log_prefix="$(log_prefix)Benders converged - collecting outputs - ",
     )
 end
 

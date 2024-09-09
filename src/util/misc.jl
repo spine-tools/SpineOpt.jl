@@ -339,6 +339,8 @@ end
 
 _div_or_zero(x, y) = iszero(y) ? zero(y) : x / y
 
+_make_bi(j) = Object(Symbol(:bi_, lpad(j, 3, "0")), :benders_iteration)
+
 """
     _get_max_duration(m::Model, lookback_params::Vector{Parameter})
 

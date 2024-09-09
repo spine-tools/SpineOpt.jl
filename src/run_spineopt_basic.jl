@@ -436,25 +436,22 @@ function solve_model!(
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
-            _do_solve_model!(
-                m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false, save_outputs=false
-            ) || break
-            @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
-            current_solution_str = if isempty(m_mp.ext[:spineopt].benders_gaps)
-                ""
+            extra_kwargs = if report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+                (save_outputs=true, output_suffix=(output_suffix..., benders_iteration=current_bi,))
             else
-                "(lower bound: $(_lb_str(m_mp)); upper bound: $(_ub_str(m_mp)); gap: $(_gap_str(m_mp))) "
+                (save_outputs=false, output_suffix=output_suffix)
             end
+            _do_solve_model!(m_mp; log_level, update_names, log_prefix, rewind=false, extra_kwargs...) || break
+            @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
             _do_solve_model!(
                 m;
                 log_level,
                 update_names,
                 write_as_roll,
                 resume_file_path,
-                output_suffix,
                 calculate_duals=true,
-                save_outputs=false,
-                log_prefix="$(log_prefix)Benders iteration $j $current_solution_str - ",
+                log_prefix="$(log_prefix)Benders iteration $j $(_current_solution_string(m_mp)) - ",
+                extra_kwargs...,
             ) || break
             @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
             @log log_level 1 "Benders iteration $j complete"
@@ -475,7 +472,10 @@ function solve_model!(
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
-                _collect_outputs!(
+                final_log_prefix = string(
+                    log_prefix, "$termination_msg $(_current_solution_string(m_mp)) - collecting outputs - "
+                )
+                report_benders_iterations(model=m_mp.ext[:spineopt].instance) || _collect_outputs!(
                     m,
                     m_mp;
                     log_level,
@@ -483,15 +483,15 @@ function solve_model!(
                     write_as_roll,
                     resume_file_path,
                     output_suffix,
-                    log_prefix,
                     calculate_duals,
+                    log_prefix=final_log_prefix,
                 )
                 @log log_level 1 "Terminating..."
                 break
             end
             @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
             unfix_history!(m)
-            global current_bi = add_benders_iteration(j)
+            global current_bi = add_benders_iteration(j + 1)
         end
         m
     end
