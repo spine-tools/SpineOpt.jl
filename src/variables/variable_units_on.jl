@@ -31,11 +31,8 @@ function units_on_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     unit = intersect(unit, _unit_with_online_variable())
-    (
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, s, t) in unit_stochastic_time_indices(
-            m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
-        )
+    unit_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 
@@ -88,22 +85,6 @@ Check if unit online variable type is defined as an integer.
 """
 units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
-function units_on_replacement_value(ind)
-    if online_variable_type(unit=ind.unit) == :unit_online_variable_type_none
-        number_of_units[(; ind...)]
-    else
-        nothing
-    end
-end
-
-function units_switched_replacement_value(ind)
-    if online_variable_type(unit=ind.unit) == :unit_online_variable_type_none
-        Call(0)
-    else
-        nothing
-    end
-end
-
 """
     add_variable_units_on!(m::Model)
 
@@ -119,7 +100,6 @@ function add_variable_units_on!(m::Model)
         int=units_on_int,
         fix_value=fix_units_on,
         initial_value=initial_units_on,
-        replacement_value=units_on_replacement_value,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,
         required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),
@@ -128,6 +108,10 @@ end
 
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(m; unit=u, stochastic_scenario=s, analysis_time=_analysis_time(m), t=t)
+        number_of_units(m; unit=u, stochastic_scenario=s, t=t)
     end
+end
+
+function _get_units_started_up(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_started_up], (u, s, t), 0)
 end

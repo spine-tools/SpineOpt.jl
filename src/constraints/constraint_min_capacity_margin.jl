@@ -46,7 +46,6 @@ end
 function _build_constraint_min_capacity_margin(m::Model, n, s_path, t)
     @fetch min_capacity_margin_slack = m.ext[:spineopt].variables
     @fetch capacity_margin = m.ext[:spineopt].expressions    
-    t0 = _analysis_time(m)
     @build_constraint(
         + capacity_margin[n, s_path, t]
         + sum(
@@ -56,7 +55,7 @@ function _build_constraint_min_capacity_margin(m::Model, n, s_path, t)
         )
         >=
         + sum(
-            min_capacity_margin(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
+            min_capacity_margin(m; node=n, stochastic_scenario=s, t=t)
             for (n, s, t) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s_path, t=t);
             init=0,
         )

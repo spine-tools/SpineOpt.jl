@@ -41,10 +41,9 @@ end
 
 function _build_constraint_storages_invested_available(m::Model, n, s, t)
     @fetch storages_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + storages_invested_available[n, s, t]
         <=
-        + candidate_storages(m; node=n, stochastic_scenario=s, analysis_time=t0, t=t)
+        + candidate_storages(m; node=n, stochastic_scenario=s, t=t)
     )
 end

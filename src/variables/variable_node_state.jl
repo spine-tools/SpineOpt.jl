@@ -25,25 +25,15 @@ for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
     node = intersect(node, SpineOpt.node(has_state=true))
-    (
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
-        )
+    node_stochastic_time_indices(
+        m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 
-function node_state_ub_as_number(; node, kwargs...)
-    node_state_cap(; node=node, kwargs..., _default=NaN) * (
-        + number_of_storages(; node=node, kwargs..., _default=_default_nb_of_storages(node))
-        + candidate_storages(; node=node, kwargs..., _default=0)
-    )
-end
-
-function node_state_ub_as_call(; node, kwargs...)
-    node_state_cap[(node=node, kwargs..., _default=NaN)] * (
-        + number_of_storages[(node=node, kwargs..., _default=_default_nb_of_storages(node))]
-        + Call(something, [candidate_storages[(node=node, kwargs..., _default=0)], 0])
+function node_state_ub(m; node, kwargs...)
+    node_state_cap(m; node=node, kwargs..., _default=NaN) * (
+        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + something(candidate_storages(m; node=node, kwargs...), 0)
     )
 end
 
@@ -60,7 +50,7 @@ function add_variable_node_state!(m::Model)
         :node_state,
         node_state_indices;
         lb=node_state_min,
-        ub=FlexParameter(node_state_ub_as_number, node_state_ub_as_call),
+        ub=node_state_ub,
         fix_value=fix_node_state,
         initial_value=initial_node_state,
     )

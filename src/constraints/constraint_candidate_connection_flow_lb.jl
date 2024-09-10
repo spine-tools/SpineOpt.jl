@@ -46,7 +46,6 @@ end
 
 function _build_constraint_candidate_connection_flow_lb(m::Model, conn, n, d, s_path, t)
     @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             connection_flow[conn, n, d, s, t] * duration(t)
@@ -74,9 +73,7 @@ function _build_constraint_candidate_connection_flow_lb(m::Model, conn, n, d, s_
             )
         )
         * sum(
-            connection_capacity(
-                m; connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1e6
-            )
+            connection_capacity(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t, _default=1e6)
             * duration(t)
             for (conn, n, d, s, t) in connection_intact_flow_indices(
                 m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)

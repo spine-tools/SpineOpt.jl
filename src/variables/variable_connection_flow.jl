@@ -49,13 +49,32 @@ function connection_flow_indices(
     )
 end
 
-function _fix_ratio_out_in_connection_flow_simple(conn, n_to, n_from)
+function connection_flow_ub(m; connection, node, direction, kwargs...)
+    (
+        connection_flow_capacity(connection=connection, node=node, direction=direction, _strict=false) === nothing
+        || is_candidate(connection=connection)
+        || members(node) != [node]
+    ) && return NaN
+    connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
+        + number_of_connections(m; connection=connection, kwargs..., _default=1)
+        + something(candidate_connections(m; connection=connection, kwargs...), 0)
+    )
+end
+
+function _fix_ratio_connection_flow(m, conn, n1, n2, s, t, fix_ratio, direct)
+    if direct
+        fix_ratio(m; connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t)
+    else
+        _div_or_zero(1, fix_ratio(m; connection=conn, node1=n2, node2=n1, stochastic_scenario=s, t=t))
+    end
+end
+
+function _has_simple_fix_ratio_out_in_connection_flow(conn, n1, n2, direct=true)
+    n_to, n_from = direct ? (n1, n2) : (n2, n1)
     (
         _similar(n_to, n_from)
         && iszero(connection_flow_delay(connection=conn, node1=n_to, node2=n_from, _default=Hour(0)))
-    ) || return nothing
-    ratio = fix_ratio_out_in_connection_flow(connection=conn, node1=n_to, node2=n_from, _strict=false)
-    ratio isa Number && return ratio
+    )
 end
 
 """
@@ -64,26 +83,29 @@ end
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_connection_flow!(m::Model)
-    ind_map = Dict(
-        (connection=conn, node=n_to, direction=direction(:to_node), stochastic_scenario=s, t=t) => (
-            (connection=conn, node=n_from, direction=direction(:from_node), stochastic_scenario=s, t=t), ratio
+    fix_ratio_d1_d2 = ((fix_ratio_out_in_connection_flow, direction(:to_node), direction(:from_node)),)
+    replacement_expressions = OrderedDict(
+        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t) => Dict(
+            :connection_flow => (
+                (connection=conn, node=n_ref, direction=d_ref, stochastic_scenario=s, t=t),
+                _fix_ratio_connection_flow(m, conn, n, n_ref, s, t, fix_ratio, direct),
+            )
         )
-        for (conn, n_to, n_from, ratio) in (
-            (x..., _fix_ratio_out_in_connection_flow_simple(x...)) for x in indices(fix_ratio_out_in_connection_flow)
-        )
-        if ratio !== nothing
-        for (_n, s, t) in node_stochastic_time_indices(m; node=n_to)
+        for (conn, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)
+        if _has_simple_fix_ratio_out_in_connection_flow(conn, n, n_ref, direct)
+        for (_n, s, t) in node_stochastic_time_indices(m; node=n_ref)
     )
     add_variable!(
         m,
         :connection_flow,
         connection_flow_indices;
         lb=constant(0),
+        ub=connection_flow_ub,
         fix_value=fix_connection_flow,
         initial_value=initial_connection_flow,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
         required_history_period=maximum_parameter_value(connection_flow_delay),
-        ind_map=ind_map,
+        replacement_expressions=replacement_expressions,
     )
 end

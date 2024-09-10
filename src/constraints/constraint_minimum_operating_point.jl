@@ -74,7 +74,6 @@ end
 
 function _build_constraint_minimum_operating_point(m::Model, u, ng, d, s_path, t)
     @fetch unit_flow, nonspin_units_started_up, nonspin_units_shut_down = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             + unit_flow[u, n, d, s, t_short] * duration(t_short)
@@ -107,9 +106,9 @@ function _build_constraint_minimum_operating_point(m::Model, u, ng, d, s_path, t
                 )
             )
             * min(duration(t), duration(t_over))
-            * minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            * unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            * unit_conv_cap_to_flow(m; unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
+            * minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            * unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            * unit_conv_cap_to_flow(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             for (u, s, t_over) in unit_stochastic_time_indices(
                 m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
             );

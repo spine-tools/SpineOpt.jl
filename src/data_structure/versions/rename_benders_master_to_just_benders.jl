@@ -19,7 +19,7 @@
 """
 	rename_benders_master_to_just_benders(db_url)
 
-Renaming `spineopt_benders_master` to `spineopt_benders`.
+Rename `spineopt_benders_master` to `spineopt_benders`.
 """
 function rename_benders_master_to_just_benders(db_url, log_level)
 	@log log_level 0 "Renaming `spineopt_benders_master` to `spineopt_benders`"

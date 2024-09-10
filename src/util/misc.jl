@@ -70,18 +70,19 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-struct FlexParameter
-    as_number
-    as_call
+struct ParameterFunction
+    fn
 end
 
+(pf::ParameterFunction)(; kwargs...) = as_number(pf; kwargs...)
+
 as_number(p::Parameter; kwargs...) = p(; kwargs...)
-as_number(x::FlexParameter; kwargs...) = x.as_number(; kwargs...)
+as_number(pf::ParameterFunction; kwargs...) = pf.fn(as_number; kwargs...)
 
 as_call(p::Parameter; kwargs...) = p[kwargs]
-as_call(x::FlexParameter; kwargs...) = x.as_call(; kwargs...)
+as_call(pf::ParameterFunction; kwargs...) = pf.fn(as_call; kwargs...)
 
-constant(x::Number) = FlexParameter((; kwargs...) -> x, (; kwargs...) -> Call(x))
+constant(x::Number) = (m; kwargs...) -> x
 
 """
     build_sense_constraint(lhs, sense::Symbol, rhs)
@@ -296,6 +297,49 @@ function _similar(node1, node2)
 end
 
 """
+    _related_flows(fix_ratio_d1_d2)
+
+Take an iterator over tuples `(fix_ratio, direction1, direction2)` and return another iterator over tuples
+`(unit or connection, ref_node, ref_direction, node, direction, fix_ratio, direct)`,
+corresponding to a reference flow and a flow that can be expressed in terms of it via a fix ratio.
+`direct` is `true` if `(direction, ref_direction) == (direction1, direction2)` and `false` otherwise.
+The result guarantees that no flows refer to each other, that the number of reference flows is minimal,
+and that if a reference flow can also be expressed in terms of another reference flow,
+then the reference's reference is always issued first.
+"""
+function _related_flows(fix_ratio_d1_d2)
+    flows_by_ref_flow = OrderedDict()
+    fix_ratio_direct = Dict()
+    for (fix_ratio, d1, d2) in fix_ratio_d1_d2
+        for (x, n1, n2) in indices(fix_ratio)
+            _similar(n1, n2) || continue
+            f1 = (x, n1, d1)
+            f2 = (x, n2, d2)
+            push!(get!(flows_by_ref_flow, f2, Set()), f1)
+            push!(get!(flows_by_ref_flow, f1, Set()), f2)
+            fix_ratio_direct[x, n2, d2, n1, d1] = (fix_ratio, true)
+            fix_ratio_direct[x, n1, d1, n2, d2] = (fix_ratio, false)
+        end
+    end
+    sort!(flows_by_ref_flow; by=(k -> length(flows_by_ref_flow[k])), rev=true)
+    seen_flows = Set()
+    for (ref, flows) in flows_by_ref_flow
+        setdiff!(flows, seen_flows)
+        push!(seen_flows, ref)
+        union!(seen_flows, flows)
+    end
+    lt(flow1, flow2) = flow2 in get(flows_by_ref_flow, flow1, ())
+    sort!(flows_by_ref_flow; lt=lt)
+    (
+        (x, n_ref, d_ref, n, d, fix_ratio_direct[x, n_ref, d_ref, n, d]...)
+        for ((x, n_ref, d_ref), flows) in flows_by_ref_flow
+        for (_x, n, d) in flows
+    )
+end
+
+_div_or_zero(x, y) = iszero(y) ? zero(y) : x / y
+
+"""
     _get_max_duration(m::Model, lookback_params::Vector{Parameter})
 
 The maximum duration from a list of parameters.
@@ -305,6 +349,9 @@ function _get_max_duration(m::Model, lookback_params::Vector{Parameter})
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     reduce(max, (val for val in max_vals if val !== nothing); init=dur_unit(1))
 end
+
+_force_fix(v::VariableRef, x) = fix(v, x; force=true)
+_force_fix(::Call, x) = nothing
 
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}

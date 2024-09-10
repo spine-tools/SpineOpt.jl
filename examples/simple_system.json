@@ -615,6 +615,16 @@
         ],
         [
             "output",
+            "connection_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "connection_discounted_duration",
+            null
+        ],
+        [
+            "output",
             "connection_flow",
             null
         ],
@@ -631,6 +641,16 @@
         [
             "output",
             "connection_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "connection_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "connection_tech_discount_factor",
             null
         ],
         [
@@ -780,7 +800,27 @@
         ],
         [
             "output",
+            "storage_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "storage_discounted_duration",
+            null
+        ],
+        [
+            "output",
             "storage_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "storage_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "storage_tech_discount_factor",
             null
         ],
         [
@@ -810,6 +850,16 @@
         ],
         [
             "output",
+            "unit_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "unit_discounted_duration",
+            null
+        ],
+        [
+            "output",
             "unit_flow",
             null
         ],
@@ -826,6 +876,16 @@
         [
             "output",
             "unit_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "unit_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "unit_tech_discount_factor",
             null
         ],
         [
@@ -1220,6 +1280,14 @@
             "minute"
         ],
         [
+            "model_algorithm_list",
+            "basic_algorithm"
+        ],
+        [
+            "model_algorithm_list",
+            "mga_algorithm"
+        ],
+        [
             "model_type_list",
             "spineopt_benders"
         ],
@@ -1230,10 +1298,6 @@
         [
             "model_type_list",
             "spineopt_other"
-        ],
-        [
-            "model_type_list",
-            "spineopt_mga"
         ],
         [
             "node_opf_type_list",
@@ -1380,17 +1444,55 @@
         ],
         [
             "connection",
-            "connection_investment_cost",
+            "connection_decommissioning_cost",
             null,
             null,
-            "The per unit investment cost for the connection over the `connection_investment_lifetime`"
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
         ],
         [
             "connection",
-            "connection_investment_lifetime",
+            "connection_decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A connection's decommissioning time, i.e., the time between the moment at which a connection decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "connection",
+            "connection_discount_rate_technology_specific",
+            0,
+            null,
+            "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "connection",
+            "connection_investment_cost",
             null,
             null,
-            "Determines the minimum investment lifetime of a connection. Once invested, it remains in service for this long"
+            "The per unit investment cost for the connection over the `connection_investment_tech_lifetime`"
+        ],
+        [
+            "connection",
+            "connection_investment_econ_lifetime",
+            null,
+            null,
+            "Determines the minimum economical investment lifetime of a connection."
+        ],
+        [
+            "connection",
+            "connection_investment_lifetime_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `connection_lifetime` constraint sense."
+        ],
+        [
+            "connection",
+            "connection_investment_tech_lifetime",
+            null,
+            null,
+            "Determines the maximum technical lifetime of a connection. Once invested, it remains in service for this long"
         ],
         [
             "connection",
@@ -1398,6 +1500,16 @@
             "connection_investment_variable_type_integer",
             "connection_investment_variable_type_list",
             "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"
+        ],
+        [
+            "connection",
+            "connection_lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."
         ],
         [
             "connection",
@@ -1641,8 +1753,8 @@
             "connection__node__node",
             "connection_flow_delay",
             {
-                "type": "duration",
-                "data": "0h"
+                "data": "0h",
+                "type": "duration"
             },
             null,
             "Delays the `connection_flows` associated with the latter `node` in respect to the `connection_flows` associated with the first `node`."
@@ -1868,7 +1980,6 @@
             "model",
             "db_lp_solver_options",
             {
-                "type": "map",
                 "data": [
                     [
                         "Clp.jl",
@@ -1901,6 +2012,7 @@
                         }
                     ]
                 ],
+                "type": "map",
                 "index_type": "str"
             },
             null,
@@ -1917,7 +2029,6 @@
             "model",
             "db_mip_solver_options",
             {
-                "type": "map",
                 "data": [
                     [
                         "CPLEX.jl",
@@ -1975,10 +2086,25 @@
                         }
                     ]
                 ],
+                "type": "map",
                 "index_type": "str"
             },
             null,
             "Map parameter containing MIP solver option name option value pairs for MIP. See solver documentation for supported solver options"
+        ],
+        [
+            "model",
+            "discount_rate",
+            0,
+            null,
+            "The discount rate used for the discounting of future cashflows"
+        ],
+        [
+            "model",
+            "discount_year",
+            null,
+            null,
+            "The year to which all cashflows are discounted."
         ],
         [
             "model",
@@ -2031,10 +2157,17 @@
         ],
         [
             "model",
+            "model_algorithm",
+            "basic_algorithm",
+            "model_algorithm_list",
+            "The algorithm to run (e.g., basic, MGA)"
+        ],
+        [
+            "model",
             "model_end",
             {
-                "type": "date_time",
-                "data": "2000-01-02T00:00:00"
+                "data": "2000-01-02T00:00:00.0",
+                "type": "date_time"
             },
             null,
             "Defines the last timestamp to be modelled. Rolling optimization terminates after passing this point."
@@ -2043,8 +2176,8 @@
             "model",
             "model_start",
             {
-                "type": "date_time",
-                "data": "2000-01-01T00:00:00"
+                "data": "2000-01-01T00:00:00.0",
+                "type": "date_time"
             },
             null,
             "Defines the first timestamp to be modelled. Relative `temporal_blocks` refer to this value for their start and end."
@@ -2054,7 +2187,7 @@
             "model_type",
             "spineopt_standard",
             "model_type_list",
-            "Used to identify model objects as relating to the master problem or operational sub problems (default)"
+            "The model type which gives the solution method (e.g. standerd, Benders)"
         ],
         [
             "model",
@@ -2069,6 +2202,27 @@
             true,
             "boolean_value_list",
             "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
+        ],
+        [
+            "model",
+            "use_economic_representation",
+            false,
+            "boolean_value_list",
+            "If set to true, the investment models uses economic represenation, i.e., multi-year investments will be modeled considering discounts etc."
+        ],
+        [
+            "model",
+            "use_milestone_years",
+            false,
+            "boolean_value_list",
+            "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."
+        ],
+        [
+            "model",
+            "use_tight_compact_formulations",
+            false,
+            "boolean_value_list",
+            "Whether to use tight and compact constraint formulations."
         ],
         [
             "model",
@@ -2373,6 +2527,37 @@
         ],
         [
             "node",
+            "storage_decommissioning_cost",
+            null,
+            null,
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+        ],
+        [
+            "node",
+            "storage_decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A storage's decommissioning time, i.e., the time between the moment at which a storage decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "node",
+            "storage_discount_rate_technology_specific",
+            0,
+            null,
+            "storage-specific discount rate used to calculate the storage's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "node",
+            "storage_fom_cost",
+            null,
+            null,
+            "Fixed operation and maintenance costs of a `node`. Essentially, a cost coefficient on the number of installed units and `node_state_cap` parameters. E.g. EUR/MWh"
+        ],
+        [
+            "node",
             "storage_investment_cost",
             null,
             null,
@@ -2380,10 +2565,24 @@
         ],
         [
             "node",
-            "storage_investment_lifetime",
+            "storage_investment_econ_lifetime",
             null,
             null,
-            "Minimum lifetime for storage investment decisions."
+            "Economic lifetime for storage investment decisions."
+        ],
+        [
+            "node",
+            "storage_investment_lifetime_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `storage_lifetime` constraint sense."
+        ],
+        [
+            "node",
+            "storage_investment_tech_lifetime",
+            null,
+            null,
+            "Maximum technical lifetime for storage investment decisions."
         ],
         [
             "node",
@@ -2391,6 +2590,16 @@
             "storage_investment_variable_type_integer",
             "storage_investment_variable_type_list",
             "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"
+        ],
+        [
+            "node",
+            "storage_lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A storage's lead time, i.e., the time between the moment at which a storage investment decision is takien, and the moment at which the storage investment becomes operational."
         ],
         [
             "node",
@@ -2535,7 +2744,7 @@
         [
             "settings",
             "version",
-            12,
+            15,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
         ],
@@ -2634,8 +2843,8 @@
             "temporal_block",
             "resolution",
             {
-                "type": "duration",
-                "data": "1h"
+                "data": "1h",
+                "type": "duration"
             },
             null,
             "Temporal resolution of the `temporal_block`. Essentially, divides the period between `block_start` and `block_end` into `TimeSlices` with the input `resolution`."
@@ -2824,6 +3033,30 @@
         ],
         [
             "unit",
+            "unit_decommissioning_cost",
+            null,
+            null,
+            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+        ],
+        [
+            "unit",
+            "unit_decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."
+        ],
+        [
+            "unit",
+            "unit_discount_rate_technology_specific",
+            0,
+            null,
+            "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."
+        ],
+        [
+            "unit",
             "unit_investment_cost",
             null,
             null,
@@ -2831,10 +3064,24 @@
         ],
         [
             "unit",
-            "unit_investment_lifetime",
+            "unit_investment_econ_lifetime",
             null,
             null,
-            "Minimum lifetime for unit investment decisions."
+            "Economic lifetime for unit investment decisions."
+        ],
+        [
+            "unit",
+            "unit_investment_lifetime_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `unit_lifetime` constraint sense."
+        ],
+        [
+            "unit",
+            "unit_investment_tech_lifetime",
+            null,
+            null,
+            "Maximum technical lifetime for unit investment decisions."
         ],
         [
             "unit",
@@ -2842,6 +3089,16 @@
             "unit_investment_variable_type_continuous",
             "unit_investment_variable_type_list",
             "Determines whether investment variable is integer or continuous."
+        ],
+        [
+            "unit",
+            "unit_lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."
         ],
         [
             "unit",
@@ -3181,6 +3438,13 @@
         ],
         [
             "unit__from_node",
+            "use_unit_capacity_for_investment_cost_scaling",
+            false,
+            "boolean_value_list",
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. \u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac/MW)"
+        ],
+        [
+            "unit__from_node",
             "vom_cost",
             null,
             null,
@@ -3367,20 +3631,6 @@
             0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `min_ratio_out_out_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "unit_idle_heat_rate",
-            0,
-            null,
-            "Flow from node1 per unit time and per `units_on` that results in no additional flow to node2"
-        ],
-        [
-            "unit__node__node",
-            "unit_incremental_heat_rate",
-            null,
-            null,
-            "Standard piecewise incremental heat rate where node1 is assumed to be the fuel and node2 is assumed to be electriciy. Assumed monotonically increasing. Array type or single coefficient where the number of coefficients must match the dimensions of `unit_operating_points`"
         ],
         [
             "unit__node__node",
@@ -3671,6 +3921,13 @@
         ],
         [
             "unit__to_node",
+            "use_unit_capacity_for_investment_cost_scaling",
+            false,
+            "boolean_value_list",
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. \u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac/MW)"
+        ],
+        [
+            "unit__to_node",
             "vom_cost",
             null,
             null,
@@ -3781,8 +4038,8 @@
             "flat",
             "resolution",
             {
-                "type": "duration",
-                "data": "1D"
+                "data": "1D",
+                "type": "duration"
             },
             "Base"
         ],

@@ -245,6 +245,95 @@ function _test_update_investment_variable_type()
 	end
 end
 
+function _test_add_model_algorithm()
+	@testset "add_model_algorithm" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["model"],
+			:object_parameters => [
+				("model", "model_type", "spineopt_standard", "model_type_list"),
+			],
+			:parameter_value_lists => [
+				("model_type_list", "spineopt_standard"),
+				("model_type_list", "spineopt_benders"),
+				("model_type_list", "spineopt_mga"),
+			],
+			:objects => [("model", "test_model")],
+			:object_parameter_values => [
+				("model", "test_model", "model_type", "spineopt_mga"),
+			],
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test Y.model_type(model=Y.model(:test_model)) == :spineopt_mga
+		@test SpineOpt.add_model_algorithm(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "add_model_algorithm"))
+		using_spinedb(url, Y)
+		@test Y.model_type(model=Y.model(:test_model)) == :spineopt_standard
+		@test Y.model_algorithm(model=Y.model(:test_model)) == :mga_algorithm
+	end
+end
+
+function _test_rename_lifetime_to_tech_lifetime()
+	@testset "rename_lifetime_to_tech_lifetime" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["connection", "node", "unit"],
+			:objects => [("connection", "conn"), ("node", "n"), ("unit", "u")],
+			:object_parameters => [
+				("connection", "connection_investment_lifetime"),
+				("node", "storage_investment_lifetime"),
+				("unit", "unit_investment_lifetime")
+			],
+			:object_parameter_values => [
+				("connection", "conn", "connection_investment_lifetime", Dict("type" => "duration", "data" => "1Y")),
+				("node", "n", "storage_investment_lifetime", Dict("type" => "duration", "data" => "1Y")),
+				("unit", "u", "unit_investment_lifetime", Dict("type" => "duration", "data" => "1Y"))
+			]
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test SpineOpt.rename_lifetime_to_tech_lifetime(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "rename_lifetime_to_tech_lifetime"))
+		using_spinedb(url, Y)
+		@test Y.connection_investment_tech_lifetime(connection=Y.connection(:conn)) == Year(1)
+		@test Y.storage_investment_tech_lifetime(node=Y.node(:n)) == Year(1)
+		@test Y.unit_investment_tech_lifetime(unit=Y.unit(:u)) == Year(1)		
+	end
+end
+
+function _test_translate_heatrate_parameters()
+	@testset "translate_heatrate_parameters" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["node", "unit"],
+			:relationship_classes => [
+				["unit__node__node", ["unit", "node", "node"]],
+			],
+			:objects => [("node", "n1"), ("node", "n2"), ("unit", "u")],
+			:relationships => [("unit__node__node", ["u", "n1", "n2"])],
+			:relationship_parameters => [
+				("unit__node__node", "unit_incremental_heat_rate"),
+				("unit__node__node", "unit_idle_heat_rate")
+			],
+			:relationship_parameter_values => [
+				("unit__node__node", ["u", "n1", "n2"], "unit_incremental_heat_rate", 10),
+				("unit__node__node", ["u", "n1", "n2"], "unit_idle_heat_rate", 200)
+			]
+		)
+		_load_test_data_without_template(url, data)
+		Y = Module()
+		using_spinedb(url, Y)
+		@test SpineOpt.translate_heatrate_parameters(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "translate_heatrate_parameters"))
+		using_spinedb(url, Y)
+		@test Y.fix_ratio_in_out_unit_flow(unit=Y.unit(:u), node1=Y.node(:n1), node2=Y.node(:n2)) == 10
+		@test Y.fix_units_on_coefficient_in_out(unit=Y.unit(:u), node1=Y.node(:n1), node2=Y.node(:n2)) == 200	
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -252,4 +341,7 @@ end
 	_test_translate_ramp_parameters()
 	_test_remove_model_tb_ss()
 	_test_update_investment_variable_type()
+	_test_add_model_algorithm()
+	_test_rename_lifetime_to_tech_lifetime()
+	_test_translate_heatrate_parameters()
 end

@@ -31,6 +31,6 @@ function add_variable_connections_invested!(m::Model)
         fix_value=fix_connections_invested,
         initial_value=initial_connections_invested,
         int=connections_invested_available_int,
-        required_history_period=maximum_parameter_value(connection_investment_lifetime),
+        required_history_period=maximum_parameter_value(connection_investment_tech_lifetime),
     )
 end

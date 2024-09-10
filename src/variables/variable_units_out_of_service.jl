@@ -51,23 +51,6 @@ Check if unit online variable type is defined as an integer.
 """
 units_out_of_service_int(x) = outage_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
-function units_out_of_service_replacement_value(ind)
-    if outage_variable_type(unit=ind.unit, _default=:unit_online_variable_type_none) == :unit_online_variable_type_none
-        units_unavailable[(; ind...)]
-    else
-        nothing
-    end
-end
-
-function units_out_of_service_switched_replacement_value(ind)
-    if outage_variable_type(unit=ind.unit, _default=:unit_online_variable_type_none) == :unit_online_variable_type_none
-        Call(0)
-    else
-        nothing
-    end
-end
-
-
 """
     add_variable_units_out_of_service!(m::Model)
 
@@ -83,13 +66,10 @@ function add_variable_units_out_of_service!(m::Model)
         int=units_out_of_service_int,
         fix_value=fix_units_out_of_service,
         initial_value=initial_units_out_of_service,
-        replacement_value=units_out_of_service_replacement_value,
         required_history_period=maximum_parameter_value(scheduled_outage_duration),        
     )
 end
 
 function _get_units_out_of_service(m, u, s, t)
-    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do
-        units_unavailable(m; unit=u, stochastic_scenario=s, analysis_time=_analysis_time(m), t=t)
-    end
+    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t), 0)
 end

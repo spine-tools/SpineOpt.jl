@@ -41,7 +41,6 @@ end
 
 function _build_constraint_compression_ratio(m::Model, conn, n_orig, n_dest, s_path, t)
     @fetch node_pressure = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @build_constraint(
         + sum(
             node_pressure[n_dest, s, t] * duration(t)
@@ -53,9 +52,7 @@ function _build_constraint_compression_ratio(m::Model, conn, n_orig, n_dest, s_p
         <=
         + sum(
             node_pressure[n_orig, s, t]
-            * compression_factor(
-                m; connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, analysis_time=t0, t=t
-            )
+            * compression_factor(m; connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, t=t)
             * duration(t)
             for (n_orig, s, t) in node_pressure_indices(
                 m; node=n_orig, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)

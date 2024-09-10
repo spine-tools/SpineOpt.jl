@@ -24,13 +24,15 @@ Create an expression for units_on cost.
 """
 function units_on_costs(m::Model, t_range)
     @fetch units_on = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     @expression(
         m,
         sum(
             + units_on[u, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
             * duration(t)
-            * units_on_cost(m; unit=u, stochastic_scenario=s, analysis_time=t0, t=t)
+            * units_on_cost(m; unit=u, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             # This term is activated when there is a representative termporal block in those containing TimeSlice t.
             # We assume only one representative temporal structure available, of which the termporal blocks represent

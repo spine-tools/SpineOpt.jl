@@ -118,10 +118,6 @@ For dispatchable units, additional ramping constraints can be introduced. For se
 
 @@add_constraint_unit_flow_op_sum!
 
-#### [Unit piecewise incremental heat rate](@id constraint_unit_pw_heat_rate)
-
-@@add_constraint_unit_pw_heat_rate!
-
 ### Bounds on commodity flows
 
 #### [Bound on cumulated unit flows](@id constraint_total_cumulated_unit_flow)
@@ -206,11 +202,10 @@ For further explanation on setting up a database for nodal lossless DC power flo
 
 ## Investments
 ### Investments in units
-#### [Economic lifetime of a unit](@id constraint_unit_lifetime)
-(Comment 2023-05-03: Currently under development)
 
-#### Technical lifetime of a unit
-(Comment 2021-04-29: Currently under development)
+#### [Technical lifetime of a unit](@id constraint_unit_lifetime)
+
+@@add_constraint_unit_lifetime!
 
 ### [Available Investment Units](@id constraint_units_invested_available)
 
@@ -249,10 +244,9 @@ For further explanation on setting up a database for nodal lossless DC power flo
 
 @@add_constraint_candidate_connection_flow_ub!
 
-#### [Economic lifetime of a connection](@id constraint_connection_lifetime)
-(Comment 2023-05-12: Currently under development)
-#### Technical lifetime of a connection
-(Comment 2021-04-29: Currently under development)
+#### [Technical lifetime of a connection](@id constraint_connection_lifetime)
+
+@@add_constraint_connection_lifetime!
 
 ### Investments in storages
 Note: can we actually invest in nodes that are not storages? (e.g. new location)
@@ -265,11 +259,9 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 
 @@add_constraint_storages_invested_transition!
 
-#### [Economic lifetime of a storage](@id constraint_storage_lifetime)
-(Comment 2023-05-12: Currently under development)
+#### [Technical lifetime of a storage](@id constraint_storage_lifetime)
 
-#### Technical lifetime of a storage
-(Comment 2021-04-29: Currently under development)
+@@add_constraint_storage_lifetime!
 
 ### Capacity transfer
 (Comment 2021-04-29: Currently under development)
