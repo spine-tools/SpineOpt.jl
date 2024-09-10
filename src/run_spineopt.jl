@@ -150,19 +150,28 @@ function _run_spineopt(
         stat_values = Any[so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string]
         m_mp = master_model(m)
         if m_mp !== nothing
-            append!(
-                stat_keys,
-                [
-                    :benders_objective_lower_bound,
-                    :benders_objective_upper_bound,
-                    :benders_gap,
-                    :benders_iteration_count,
-                ],
-            )
             gaps = m_mp.ext[:spineopt].benders_gaps
-            append!(stat_values, [_lb_str(m_mp), _ub_str(m_mp), isempty(gaps) ? "N/A" : _gap_str(m_mp), length(gaps)])
+            if !isempty(gaps)
+                append!(
+                    stat_keys,
+                    [
+                        :benders_objective_lower_bound,
+                        :benders_objective_upper_bound,
+                        :benders_gap,
+                        :benders_iteration_count,
+                    ],
+                )
+                benders_stat_values = if report_benders_iterations(model=m.ext[:spineopt].instance, _default=false)
+                    lbs = m_mp.ext[:spineopt].objective_lower_bounds
+                    ubs = m_mp.ext[:spineopt].objective_upper_bounds
+                    [lbs, ubs, gaps, length(gaps)]
+                else
+                    [_lb_str(m_mp), _ub_str(m_mp), _gap_str(m_mp), length(gaps)]
+                end
+                append!(stat_values, benders_stat_values)
+            end
         end
-        stats = Map(stat_keys, string.(stat_values))
+        stats = Map(stat_keys, stat_values)
         vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
         write_parameters(vals, url_out; alternative=alternative, on_conflict="replace")
     end
@@ -181,9 +190,9 @@ end
 
 _gap_str(m_mp) = string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%")
 
-_lb_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])
+_lb_str(m_mp) = @sprintf("%.5e", last(m_mp.ext[:spineopt].objective_lower_bounds))
 
-_ub_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])
+_ub_str(m_mp) = @sprintf("%.5e", last(m_mp.ext[:spineopt].objective_upper_bounds))
 
 """
     prepare_spineopt(url_in; <keyword arguments>)
@@ -454,8 +463,8 @@ struct SpineOptExt
     stochastic_structure::Dict
     dual_solves::Array{Any,1}
     dual_solves_lock::ReentrantLock
-    objective_lower_bound::Base.RefValue{Float64}
-    objective_upper_bound::Base.RefValue{Float64}
+    objective_lower_bounds::Vector{Float64}
+    objective_upper_bounds::Vector{Float64}
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
@@ -507,8 +516,8 @@ struct SpineOptExt
             Dict(),  # stochastic_structure
             [],  # dual_solves
             ReentrantLock(),  # dual_solves_lock
-            Ref(0.0),  # objective_lower_bound
-            Ref(0.0),  # objective_upper_bound
+            [],  # objective_lower_bounds
+            [],  # objective_upper_bounds
             [],  # benders_gaps
             Ref(false),  # has_results
             event_handlers,
