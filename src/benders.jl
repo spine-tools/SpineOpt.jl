@@ -296,11 +296,12 @@ function _save_sp_unit_flow(m)
 end
 
 function save_mp_objective_bounds_and_gap!(m_mp)
-    obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = objective_value(m_mp)
-    sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
-    obj_ub = m_mp.ext[:spineopt].objective_upper_bound[] = sp_obj_val + value(realize(investment_costs(m_mp)))
+    obj_lb = objective_value(m_mp)
+    obj_ub = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + value(realize(investment_costs(m_mp)))
     gap = (obj_ub == obj_lb) ? 0 : 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)
     push!(m_mp.ext[:spineopt].benders_gaps, gap)
+    push!(m_mp.ext[:spineopt].objective_lower_bounds, obj_lb)
+    push!(m_mp.ext[:spineopt].objective_upper_bounds, obj_ub)
 end
 
 function investment_costs(m_mp)
