@@ -697,9 +697,6 @@ function _calculate_duals(m; log_level=3)
     if has_duals(m)
         _save_marginal_values!(m)
         _save_bound_marginal_values!(m)
-    elseif _is_benders_subproblem(m)
-        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
-        _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
     else
         @log log_level 1 "Obtaining duals for $model_name..."
         _calculate_duals_cplex(m; log_level=log_level) && return
@@ -720,7 +717,7 @@ function _calculate_duals_cplex(m; log_level=3)
     if ret == 0
         try
             _save_marginal_values!(m)
-            _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+            _save_bound_marginal_values!(m)
         catch err
             @error err
             CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
@@ -731,25 +728,11 @@ function _calculate_duals_cplex(m; log_level=3)
     ret == 0
 end
 
-function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
-    m = owner_model(v)
-    sign = objective_sense(m) == MIN_SENSE ? 1.0 : -1.0
-    col = Cint(CPLEX.column(cplex_model, index(v)) - 1)
-    p = Ref{Cdouble}()
-    CPLEX.CPXgetdj(cplex_model.env, cplex_model.lp, p, col, col)
-    rc = p[]
-    sign * rc
-end
-
-function _calculate_duals_fallback(m; log_level=3, for_benders=false)
+function _calculate_duals_fallback(m; log_level=3)
     @timelog log_level 1 "Copying model..." (m_dual_lp, ref_map) = copy_model(m)
     set_optimizer(m_dual_lp, m.ext[:spineopt].lp_solver)
     @log log_level 1 "Set LP solver $(solver_name(m_dual_lp)) for the copy."
-    if for_benders
-        @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map)
-    else
-        @timelog log_level 1 "Fixing discrete variables..." _relax_discrete_vars!(m, ref_map; and_fix=true)
-    end
+    @timelog log_level 1 "Relaxing and fixing discrete variables..." _relax_discrete_vars!(m, ref_map)
     dual_fallback(con) = DualPromise(ref_map[con])
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
@@ -767,7 +750,7 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     end
 end
 
-function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
+function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap)
     for (name, var_by_ind) in m.ext[:spineopt].variables
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && continue
@@ -781,10 +764,8 @@ function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
             else
                 continue
             end
-            if and_fix
-                val = _variable_value(var)
-                fix(ref_var, val; force=true)
-            end
+            val = _variable_value(var)
+            fix(ref_var, val; force=true)
         end
     end
 end
