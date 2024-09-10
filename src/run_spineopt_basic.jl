@@ -697,6 +697,9 @@ function _calculate_duals(m; log_level=3)
     if has_duals(m)
         _save_marginal_values!(m)
         _save_bound_marginal_values!(m)
+    elseif _is_benders_subproblem(m)
+        @log log_level 1 "Obtaining duals for $model_name to generate Benders cuts..."
+        _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
     else
         @log log_level 1 "Obtaining duals for $model_name..."
         _calculate_duals_cplex(m; log_level=log_level) && return
@@ -728,11 +731,16 @@ function _calculate_duals_cplex(m; log_level=3)
     ret == 0
 end
 
-function _calculate_duals_fallback(m; log_level=3)
+function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     @timelog log_level 1 "Copying model..." (m_dual_lp, ref_map) = copy_model(m)
     set_optimizer(m_dual_lp, m.ext[:spineopt].lp_solver)
     @log log_level 1 "Set LP solver $(solver_name(m_dual_lp)) for the copy."
-    @timelog log_level 1 "Relaxing and fixing discrete variables..." _relax_discrete_vars!(m, ref_map)
+    fix_variables = if for_benders
+        (:bound_units_invested_available, :bound_connections_invested_available, :bound_storages_invested_available)
+    else
+        ()
+    end
+    @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map; fix_variables)
     dual_fallback(con) = DualPromise(ref_map[con])
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
@@ -750,7 +758,7 @@ function _calculate_duals_fallback(m; log_level=3)
     end
 end
 
-function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap)
+function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; fix_variables=())
     for (name, var_by_ind) in m.ext[:spineopt].variables
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && continue
@@ -764,8 +772,10 @@ function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap)
             else
                 continue
             end
-            val = _variable_value(var)
-            fix(ref_var, val; force=true)
+            if name in fix_variables
+                val = _variable_value(var)
+                fix(ref_var, val; force=true)
+            end
         end
     end
 end
