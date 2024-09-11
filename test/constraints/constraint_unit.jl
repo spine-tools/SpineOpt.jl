@@ -263,6 +263,46 @@ function test_units_out_of_service_transition()
     end
 end
 
+function test_constraint_unit_startup_shutdown_bound()
+    @testset "constraint_unit_startup_shutdown_bound" begin
+        url_in = _test_constraint_unit_setup()
+        number_of_units = 4
+        candidate_units = 3
+        unit_availability_factor = 0.5
+        object_parameter_values = [
+            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "number_of_units", number_of_units],
+            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "start_up_cost", 1],
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+        var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
+        var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+        constraint = m.ext[:spineopt].constraints[:unit_startup_shutdown_bound]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_key = (unit(:unit_ab), s, t)
+            var_u_su = var_units_started_up[var_key...]
+            var_u_sd = var_units_shut_down[var_key...]
+            var_u_inv_av = var_units_invested_available[var_key...]
+            expected_con = @build_constraint(var_u_su + var_u_sd <= number_of_units + var_u_inv_av)
+            con_key = (unit(:unit_ab), s, t)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 function test_constraint_unit_flow_capacity()
     @testset "constraint_unit_flow_capacity" begin
         ucap = 100
@@ -2061,6 +2101,7 @@ end
     test_constraint_units_available()
     test_constraint_units_available_units_unavailable()
     test_constraint_unit_state_transition()
+    test_constraint_unit_startup_shutdown_bound()
     test_constraint_unit_flow_capacity()
     test_constraint_minimum_operating_point()
     test_constraint_operating_point_bounds()
