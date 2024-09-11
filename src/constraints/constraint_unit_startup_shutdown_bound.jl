@@ -1,0 +1,63 @@
+#############################################################################
+# Copyright (C) 2017 - 2023  Spine Project
+#
+# This file is part of SpineOpt.
+#
+# SpineOpt is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# SpineOpt is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#############################################################################
+
+@doc raw"""
+The constraint is designed to prevent simultaneous start-ups and shutdowns in the model.
+It is important to note that this will always be the case if the right-hand side of the 
+constraint equals one and the variables on the left-hand side are binaries.
+However, it's possible for start-ups and shutdowns to occur simultaneously for integer
+variables despite this constraint. In such cases, it is recommended to include a minimum up
+and down time parameter in the input data to prevent this behavior.
+
+```math
+\begin{aligned}
+& v^{units\_started\_up}_{(u,s,t)} + v^{units\_shut\_down}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} \\
+& \forall u \in unit \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also [number\_of\_units](@ref).
+"""
+function add_constraint_unit_startup_shutdown_bound!(m::Model)
+    _add_constraint!(
+        m, :unit_startup_shutdown_bound, constraint_units_available_indices, _build_constraint_unit_startup_shutdown_bound
+    )
+end
+
+function _build_constraint_unit_startup_shutdown_bound(m::Model, u, s, t)
+    @fetch units_started_up, units_shut_down, units_invested_available = m.ext[:spineopt].variables
+    @build_constraint(
+        sum(
+            units_started_up[u, s, t] + units_shut_down[u, s, t]
+            for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+            init=0,
+        )
+        - sum(
+            units_invested_available[u, s, t1]
+            for (u, s, t1) in units_invested_available_indices(
+                m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+            );
+            init=0,
+        )
+        <=
+        + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+        - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
+    )
+end

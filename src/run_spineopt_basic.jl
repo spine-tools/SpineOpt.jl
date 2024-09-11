@@ -215,6 +215,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_unit_lifetime!,
             add_constraint_unit_state_transition!,
             add_constraint_units_available!,
+            add_constraint_unit_startup_shutdown_bound!,
             add_constraint_units_invested_available!,
             add_constraint_units_invested_transition!,
             add_constraint_units_out_of_service_contiguity!,
