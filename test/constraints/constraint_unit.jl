@@ -160,8 +160,8 @@ function test_constraint_units_available_units_unavailable()
     @testset "constraint_units_available_units_unavailable" begin
         url_in = _test_constraint_unit_setup()
         number_of_units = 4
-        number_of_units_when_candidates_units = 0
         candidate_units = 3
+        number_of_units_when_candidates_units = ifelse(candidate_units == 0, number_of_units, 0) 
         units_unavailable = 1
         unit_availability_factor = 0.5
         object_parameter_values = [
