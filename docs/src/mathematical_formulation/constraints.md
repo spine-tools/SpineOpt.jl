@@ -70,6 +70,10 @@ parameters):
 
 @@add_constraint_unit_state_transition!
 
+##### [Startup and shutdown bound](@id constraint_startup_shutdown_bound)
+
+@@add_constraint_unit_startup_shutdown_bound!
+
 ##### [Minimum down time](@id constraint_min_down_time)
 
 @@add_constraint_min_down_time!
