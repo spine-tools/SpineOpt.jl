@@ -37,7 +37,8 @@ See also [number\_of\_units](@ref).
 """
 function add_constraint_unit_startup_shutdown_bound!(m::Model)
     _add_constraint!(
-        m, :unit_startup_shutdown_bound, constraint_units_available_indices, _build_constraint_unit_startup_shutdown_bound
+        m, :unit_startup_shutdown_bound, constraint_unit_startup_shutdown_bound_indices,
+        _build_constraint_unit_startup_shutdown_bound
     )
 end
 
@@ -59,5 +60,25 @@ function _build_constraint_unit_startup_shutdown_bound(m::Model, u, s, t)
         <=
         + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
         - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
+    )
+end
+
+"""
+    constraint_unit_startup_shutdown_bound_indices(m::Model, unit, t)
+    
+Creates all indices required to include units, stochastic paths and temporals for the
+`add_constraint_unit_startup_shutdown_bound!` constraint generation.
+"""
+function constraint_unit_startup_shutdown_bound_indices(m::Model)
+    (
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, t) in unit_time_indices(m; unit=_unit_with_switched_variable())
+        for path in active_stochastic_paths(
+            m,
+            Iterators.flatten(
+                (units_on_indices(m; unit=u, t=t), units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t)))
+            ),
+        )
+        for s in path
     )
 end
