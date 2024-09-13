@@ -426,7 +426,7 @@ function solve_model!(
             @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
             termination_msg = if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
-                "Benders tolerance satisfied"
+                "Benders tolerance satisfied at iter $j"
             elseif j >= max_benders_iterations
                 "Maximum number of iterations reached ($j)"
             end
@@ -745,11 +745,12 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     @timelog log_level 1 "Copying model..." (m_dual_lp, ref_map) = copy_model(m)
     set_optimizer(m_dual_lp, m.ext[:spineopt].lp_solver)
     @log log_level 1 "Set LP solver $(solver_name(m_dual_lp)) for the copy."
-    if for_benders
-        @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map)
+    fix_variables = if for_benders
+        (:units_invested_available, :connections_invested_available, :storages_invested_available)
     else
-        @timelog log_level 1 "Fixing discrete variables..." _relax_discrete_vars!(m, ref_map; and_fix=true)
+        ()
     end
+    @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map; fix_variables)
     dual_fallback(con) = DualPromise(ref_map[con])
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
@@ -767,7 +768,7 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     end
 end
 
-function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
+function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; fix_variables=())
     for (name, var_by_ind) in m.ext[:spineopt].variables
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && continue
@@ -781,7 +782,7 @@ function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
             else
                 continue
             end
-            if and_fix
+            if name in fix_variables || isempty(fix_variables)
                 val = _variable_value(var)
                 fix(ref_var, val; force=true)
             end

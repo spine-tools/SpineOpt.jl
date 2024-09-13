@@ -56,13 +56,13 @@ Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 function generate_is_candidate()
     is_candidate = Parameter(:is_candidate, [node, unit, connection])
     add_object_parameter_values!(
-        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_connections))
+        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_connections))
     )
     add_object_parameter_values!(
-        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_units))
+        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_units))
     )
     add_object_parameter_values!(
-        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_storages))
+        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_storages))
     )
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
@@ -71,6 +71,8 @@ function generate_is_candidate()
         is_candidate = $is_candidate
     end
 end
+
+_nz_indices(p::Parameter) = (first(x) for x in indices_as_tuples(p) if !iszero(p(; x...)))
 
 function update_use_connection_intact_flow()
     if isempty(connection(is_candidate=true)) && !isempty(model())
