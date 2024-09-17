@@ -482,10 +482,13 @@ struct SpineOptExt
             end
         else
             intermediate_results_folder = ""
-            reports_by_output = Dict(
-                (out.name, true) => []
+            outputs = (
+                out
                 for stage__output__entity in (stage__output__unit, stage__output__node, stage__output__connection)
                 for (out, _ent) in stage__output__entity(stage=stage)
+            )
+            reports_by_output = Dict(
+                (out.name, true) => [] for out in Iterators.flatten((outputs, stage__output(stage=stage)))
             )
         end
         event_handlers = Dict(
