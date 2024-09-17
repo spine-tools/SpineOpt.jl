@@ -34,52 +34,39 @@ function translate_heatrate_parameters(db_url, log_level)
 	run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
 		"entity_class_name" => "unit__node__node", "name" => "fix_ratio_in_out_unit_flow")
 	)
-	# Get entities in the class and get all alternatives
-	entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict(
-		"entity_class_name" => "unit__node__node")
+	# Get the values of the old unit_idle_heat_rate parameter
+	pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+		"entity_class_name" => "unit__node__node", 
+		"parameter_definition_name" => "unit_idle_heat_rate")
 	)
-	alternative_items = run_request(db_url, "call_method", ("get_alternative_items",))
-	for entity in entity_items
-		for alternative in alternative_items
-			# Get the value of the old unit_idle_heat_rate parameter
-			pval = run_request(db_url, "call_method", ("get_parameter_value_item",), Dict(
-				"entity_class_name" => "unit__node__node", 
-				"parameter_definition_name" => "unit_idle_heat_rate", 
-				"entity_byname" => (entity["element_name_list"]), 
-				"alternative_name" => alternative["name"])
-			)
-			if length(pval) > 0
-				# Add the value as fix_units_on_coefficient_in_out into the database
-				run_request(
-					db_url, "call_method", ("add_update_parameter_value_item",), Dict(
-						"entity_class_name" => "unit__node__node", 
-						"parameter_definition_name" => "fix_units_on_coefficient_in_out", 
-						"entity_byname" => (entity["element_name_list"]), 
-						"alternative_name" => alternative["name"], 
-						"value" => pval["value"], 
-						"type" => pval["type"])
-				)
-			end
-			# Get the value of the old unit_incremental_heat_rate parameter
-			pval = run_request(db_url, "call_method", ("get_parameter_value_item",), Dict(
-				"entity_class_name" => "unit__node__node", 
-				"parameter_definition_name" => "unit_incremental_heat_rate", 
-				"entity_byname" => (entity["element_name_list"]), 
-				"alternative_name" => alternative["name"])
-			)
-			if length(pval) > 0
-				# Add the value as fix_ratio_in_out_unit_flow into the database
-				run_request(
-					db_url, "call_method", ("add_update_parameter_value_item",), Dict(
-						"entity_class_name" => "unit__node__node", 
-						"parameter_definition_name" => "fix_ratio_in_out_unit_flow", 
-						"entity_byname" => (entity["element_name_list"]), 
-						"alternative_name" => alternative["name"], 
-						"value" => pval["value"], 
-						"type" => pval["type"])
-				)
-			end
-		end
+	# Add the values as fix_units_on_coefficient_in_out into the database
+	for pval in pvals
+		run_request(
+			db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+				"entity_class_name" => pval["entity_class_name"], 
+				"parameter_definition_name" => "fix_units_on_coefficient_in_out", 
+				"entity_byname" => pval["entity_byname"], 
+				"alternative_name" => pval["alternative_name"], 
+				"value" => pval["value"], 
+				"type" => pval["type"])
+		)		
+	end
+	# Get the values of the old unit_incremental_heat_rate parameter
+	pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+		"entity_class_name" => "unit__node__node", 
+		"parameter_definition_name" => "unit_incremental_heat_rate")
+	)
+	# Add the values as fix_ratio_in_out_unit_flow into the database
+	for pval in pvals
+		run_request(
+			db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+				"entity_class_name" => pval["entity_class_name"], 
+				"parameter_definition_name" => "fix_ratio_in_out_unit_flow", 
+				"entity_byname" => pval["entity_byname"], 
+				"alternative_name" => pval["alternative_name"], 
+				"value" => pval["value"], 
+				"type" => pval["type"])
+		)		
 	end
 	# Remove old parameter definition
 	pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
