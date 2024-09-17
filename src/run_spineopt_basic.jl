@@ -282,11 +282,15 @@ function _init_downstream_outputs!(st, stage_m, child_models)
         out = output(out_name)
         out_indices = stage_m.ext[:spineopt].variables_definition[out_name][:indices](stage_m)
         isempty(out_indices) && continue
-        objs_by_class_name = Dict(
-            :unit => stage__output__unit(stage=st, output=out),
-            :node => stage__output__node(stage=st, output=out),
-            :connection => stage__output__connection(stage=st, output=out),
-        )
+        objs_by_class_name = if out in stage__output(stage=st)
+            Dict(:unit => anything, :node => anything, :connection => anything)
+        else
+            Dict(
+                :unit => stage__output__unit(stage=st, output=out),
+                :node => stage__output__node(stage=st, output=out),
+                :connection => stage__output__connection(stage=st, output=out),
+            )
+        end
         unique_entities = unique(_drop_key(ind, :t) for ind in out_indices)
         filter!(unique_entities) do ent
             _stage_output_includes_entity(ent, objs_by_class_name)
@@ -301,6 +305,11 @@ function _init_downstream_outputs!(st, stage_m, child_models)
         )
         objs_by_class_name_by_res = Dict()
         for (class_name, objs) in objs_by_class_name
+            if objs === anything
+                res = output_resolution(; stage=st, output=out, _strict=false)
+                get!(objs_by_class_name_by_res, res, Dict())[class_name] = anything
+                continue
+            end
             for obj in objs
                 res = output_resolution(; stage=st, output=out, ((class_name => obj),)..., _strict=false)
                 push!(get!(get!(objs_by_class_name_by_res, res, Dict()), class_name, []), obj)
@@ -331,7 +340,8 @@ end
 
 function _stage_output_includes_entity(ent, objs_by_class_name)
     any(objs_by_class_name) do (class_name, objs)
-        get(ent, class_name, nothing) in objs
+        obj = get(ent, class_name, nothing)
+        obj !== nothing && obj in objs
     end
 end
 

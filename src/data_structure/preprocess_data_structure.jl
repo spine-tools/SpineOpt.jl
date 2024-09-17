@@ -914,13 +914,12 @@ function generate_unit_commitment_parameters()
                 indices(shut_down_cost),
                 (x.unit for x in indices(start_up_limit)),
                 (x.unit for x in indices(shut_down_limit)),
-                # ramp_up constraint needs units_started_up variable to avoid being infeasible 
                 (x.unit for x in indices(ramp_up_limit)),
-                # ramp_down constraint needs units_shut_down variable to avoid being infeasible 
                 (x.unit for x in indices(ramp_down_limit)),
                 (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
                 (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
-                (u for (st, out, u) in stage__output__unit() if out.name in (:units_started_up, :units_shut_down)),
+                (u for (st, u) in stage__output__unit(output=output.((:units_started_up, :units_shut_down)))),
+                !isempty(stage__output(output=output.((:units_started_up, :units_shut_down)))) ? unit() : (),
             )
         )
     )
@@ -929,7 +928,8 @@ function generate_unit_commitment_parameters()
             (
                 indices(scheduled_outage_duration),
                 indices(fix_units_out_of_service),
-                (u for (st, out, u) in stage__output__unit() if out.name == :units_out_of_service),
+                (u for (st, u) in stage__output__unit(output=output(:units_out_of_service))),
+                !isempty(stage__output(output=output(:units_out_of_service))) ? unit() : (),
             )
         )
     )
@@ -946,7 +946,8 @@ function generate_unit_commitment_parameters()
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),
                 (x.unit for x in indices(ramp_down_limit)),
-                (u for (st, out, u) in stage__output__unit() if out.name == :units_on),
+                (u for (st, u) in stage__output__unit(output=output(:units_on))),
+                !isempty(stage__output(output=output(:units_on))) ? unit() : (),
                 (
                     u
                     for u in indices(online_variable_type)
