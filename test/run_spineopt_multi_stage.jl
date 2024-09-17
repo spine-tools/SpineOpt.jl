@@ -168,17 +168,15 @@ function _lt_storage_investments_setup(storage_count)
     lt_storage_data = _lt_storage_data(storage_count)
     lt_storage_investments_data = Dict(
         :relationships => Any[
-            ("stage__output__node", ("lt_storage", "storages_invested_available", "storage_node$k"))
-            for k in 1:storage_count
+            ("stage__output", ("lt_storage", "storages_invested_available"))
         ],
         :relationship_parameter_values => Any[
             (
-                "stage__output__node",
-                ("lt_storage", "storages_invested_available", "storage_node$k"),
+                "stage__output",
+                ("lt_storage", "storages_invested_available"),
                 "output_resolution",
                 unparse_db_value(Hour(1)),
             )
-            for k in 1:storage_count
         ],
     )
     merge!(append!, lt_storage_data, lt_storage_investments_data)
