@@ -132,7 +132,7 @@ function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
-            res = resolution(temporal_block=block, i=i, _strict=false)
+            res = resolution(temporal_block=block, i=i, s=time_slice_start, _strict=false)
             res !== nothing || break
             if iszero(res)
                 # TODO: Try to move this to a check...
