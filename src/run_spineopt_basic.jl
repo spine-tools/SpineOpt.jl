@@ -422,6 +422,9 @@ function solve_model!(
     calculate_duals = any(
         startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
+    add_event_handler!.(
+        _save_total_costs_by_time_stamp!, [m; collect(values(m.ext[:spineopt].model_by_stage))], :window_solved
+    )
     if m_mp === nothing
         # Standard solution method
         _do_solve_multi_stage_model!(
@@ -500,6 +503,25 @@ function solve_model!(
     end
 end
 
+function _save_total_costs_by_time_stamp!(m, _k)
+    merge!(
+        get!(m.ext[:spineopt].values, :total_costs_by_time_stamp, Dict()),
+        Dict(
+            start(t) => realize(value(total_costs(m, t)))
+            for t in _hr_time_slice(m)
+            if end_(t) <= end_(current_window(m))
+        ),
+    )
+end
+
+function _hr_time_slice(m)
+    st = stage=m.ext[:spineopt].stage
+    st === nothing && return setdiff(time_slice(m), t_in_t_excl(m; t_short=anything))
+    with_env(stage_scenario(stage=st)) do
+        setdiff(time_slice(m), t_in_t_excl(m; t_short=anything))
+    end
+end
+
 function _do_solve_multi_stage_model!(
     m;
     log_level=3,
@@ -512,19 +534,30 @@ function _do_solve_multi_stage_model!(
     rewind=true,
     save_outputs=true,
 )
-    _solve_stage_models!(m; log_level, log_prefix) || return false
-    _do_solve_model!(
-        m;
-        log_level,
-        update_names,
-        write_as_roll,
-        resume_file_path,
-        output_suffix,
-        log_prefix,
-        calculate_duals,
-        rewind,
-        save_outputs,
-    )
+    for i in Iterators.countfrom(1)
+        log_prefix_i = string(log_prefix, "multi-stage iteration $i - ")
+        _solve_stage_models!(m; log_level, log_prefix=log_prefix_i) || return false
+        _do_solve_model!(
+            m;
+            log_level,
+            update_names,
+            write_as_roll,
+            resume_file_path,
+            output_suffix,
+            log_prefix=log_prefix_i,
+            calculate_duals,
+            rewind,
+            save_outputs,
+        ) || return false
+        i < min_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=1) && continue
+        if i >= max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
+            @log log_level 1 "Maximum number of multi-stage iterations reached, terminating..."
+            break
+        end
+        _update_stage_models!(m; log_level) || break
+        unfix_history!.([m; collect(values(m.ext[:spineopt].model_by_stage))])
+    end
+    true
 end
 
 function _solve_stage_models!(m; log_level, log_prefix)
@@ -583,12 +616,148 @@ function _update_downstream_outputs!(stage_m)
     end
 end
 
+function _update_stage_models!(m; log_level)
+    any(
+        _update_stage_model!(stage_m, _child_models(m, st), st; log_level)
+        for (st, stage_m) in m.ext[:spineopt].model_by_stage
+    )
+end
+
 function _child_models(m, st)
     child_models = [m.ext[:spineopt].model_by_stage[child_st] for child_st in stage__child_stage(stage1=st)]
     if isempty(child_models)
         child_models = [m]
     end
     child_models
+end
+
+function _update_stage_model!(stage_m, child_models, st; log_level)
+    if window_count(stage_m) > 1
+        @log log_level 1 "Skipping updating model for $st stage because it's rolling"
+        return false
+    end
+    time_slices = unique!([t for child_m in child_models for t in _time_slices_to_update(stage_m, child_m, st)])
+    isempty(time_slices) && return false
+    _do_update_stage_model!(stage_m, time_slices, st; log_level)
+end
+
+function _time_slices_to_update(stage_m, child_m, st)
+    stage_costs = stage_m.ext[:spineopt].values[:total_costs_by_time_stamp]
+    child_costs = child_m.ext[:spineopt].values[:total_costs_by_time_stamp]
+    stage_ts = TimeSeries(collect(keys(stage_costs)), collect(values(stage_costs)))
+    inds = collect(keys(stage_ts))
+    child_ts = TimeSeries(inds, fill(0.0, length(inds)))
+    for (i, next_i) in zip(inds[1 : end - 1], inds[2:end])
+        for (child_i, child_v) in child_costs
+            if i <= child_i < next_i
+                child_ts[i] += child_v
+            end
+        end
+    end
+    i = last(inds)
+    for (child_i, child_v) in child_costs
+        if i <= child_i
+            child_ts[i] += child_v
+        end
+    end
+    stage_cost = sum(values(stage_ts))
+    child_cost = sum(values(child_ts))
+    max_gap = max_multi_stage_gap(model=stage_m.ext[:spineopt].instance, _default=0.05)
+    gap = (child_cost - stage_cost) / ((child_cost + stage_cost) / 2)
+    gap > max_gap || return ()
+    diff_ts = (child_ts - stage_ts) / ((child_ts + stage_ts) / 2)
+    isempty(diff_ts) && return ()
+    time_stamps = [k for (k, v) in diff_ts if v > max_gap]
+    sort!(time_stamps; by=(i -> diff_ts[i]), rev=true)
+    time_slices = [t for i in time_stamps for t in to_time_slice(stage_m; t=TimeSlice(i, i + Minute(1)))]
+    with_env(stage_scenario(stage=st)) do
+        t_highest_resolution!(stage_m, time_slices)
+    end
+end
+
+function _do_update_stage_model!(stage_m, time_slices, st; log_level)
+    m_start = model_start(model=stage_m.ext[:spineopt].instance)
+    by_cls_name_by_t = OrderedDict()
+    k = 0
+    for t in time_slices
+        level = _get_level!(stage_m, t)
+        alt_name = adaptation_alternatives(stage=st, i=level, _strict=false)
+        by_cls_name = get(stage_m.ext[:spineopt].pvals_by_alt_name, alt_name, nothing)
+        by_cls_name === nothing && continue
+        by_cls_name_by_t[t] = by_cls_name
+        k += 1
+        k >= max_time_slices_to_adapt(model=stage_m.ext[:spineopt].instance, _default=1) && break
+    end
+    isempty(by_cls_name_by_t) && return false
+    with_env(stage_scenario(stage=st)) do
+        for (t, by_cls_name) in by_cls_name_by_t
+            @log log_level 1 "Adapting time-slice $t for $st stage"
+            for (cls_name, by_ent_byname) in by_cls_name
+                cls = getproperty(SpineOpt, cls_name)
+                new_vals = Dict(
+                    ent => Dict(
+                        p.name => parameter_value(_update_value(p(; ent...), val, t, m_start))
+                        for (p, val) in ((getproperty(SpineOpt, p_name), val) for (p_name, val) in by_p_name)
+                    )
+                    for (ent, by_p_name) in (
+                        (_entity(cls, ent_byname), by_p_name) for (ent_byname, by_p_name) in by_ent_byname
+                    )
+                )
+                add_parameter_values!(cls, new_vals)
+            end
+        end
+        m_ext = copy(stage_m.ext)
+        empty!(stage_m)
+        stage_m.ext = m_ext
+        model_name = _model_name(stage_m)
+        @timelog log_level 2 "Rebuilding $model_name...\n" build_model!(stage_m; log_level=0)
+    end
+    true
+end
+
+function _get_level!(stage_m, t)
+    level_by_time_slice = stage_m.ext[:spineopt].level_by_time_slice
+    new_level = nothing
+    for (other_t, level) in level_by_time_slice
+        if iscontained(t, other_t)
+            new_level = level + 1
+            break
+        end
+    end
+    if new_level === nothing
+        new_level = 1
+    end
+    level_by_time_slice[t] = new_level
+    sort!(level_by_time_slice; by=(t -> (end_(t) - start(t))))
+    new_level
+end
+
+function _entity(cls::ObjectClass, obj_name::Symbol)
+    NamedTuple{(cls.name,)}(cls(obj_name))
+end
+function _entity(cls::RelationshipClass, obj_names::Vector{Symbol})
+    rels = cls(;
+        (ocn => getproperty(SpineOpt, ocn)(on) for (ocn, on) in zip(dimensions(cls), obj_names))..., _compact=false,
+    )
+    first(rels)
+end
+
+_Scalar = Union{Nothing,Number,Symbol,DateTime,Period,Dates.CompoundPeriod}
+
+function _update_value(current_val::_Scalar, new_val::_Scalar, t::TimeSlice, m_start)
+    inds = [m_start, start(t), end_(t)]
+    vals = [current_val, new_val, current_val]
+    Map(inds, vals)
+end
+function _update_value(current_val::Map{DateTime,T}, new_val::_Scalar, t::TimeSlice, m_start) where T<:_Scalar
+    updated = Map(keys(current_val), values(current_val))
+    old_val = parameter_value(updated)(; dt=end_(t))
+    updated[start(t)] = new_val
+    updated[end_(t)] = old_val
+    updated
+end
+function _update_value(current_val::T, new_val, time_slices, m_start) where T
+    error("can't update a value of type $T")
 end
 
 _resume_run!(m, ::Nothing; log_level, update_names) = 1

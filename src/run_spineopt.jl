@@ -258,7 +258,8 @@ function prepare_spineopt(
             end
         end
     end
-    m = create_model(mip_solver, lp_solver, use_direct_model)
+    pvals_by_alt_name = _pvals_by_alt_name(url_in)
+    m = create_model(mip_solver, lp_solver, use_direct_model, pvals_by_alt_name)
     _set_value_translator(m)
     m
 end
@@ -305,6 +306,22 @@ end
 
 _data(url_in; upgrade, filters) = export_data(url_in; upgrade=upgrade, filters=filters)
 _data(data::Dict; kwargs...) = data
+
+function _pvals_by_alt_name(url_in)
+    pvals_by_alt_name = Dict()
+    without_filters(url_in) do clean_url_in
+        data = _data(clean_url_in; upgrade=false, filters=Dict())
+        pvals = vcat(data["object_parameter_values"], data["relationship_parameter_values"])
+        for (cls_name, obj_name_or_names, p_name, value, alt_name) in pvals
+            by_cls_name = get!(pvals_by_alt_name, alt_name, Dict())
+            by_ent_byname = get!(by_cls_name, Symbol(cls_name), Dict())
+            ent_byname = obj_name_or_names isa String ? Symbol(obj_name_or_names) : Symbol.(obj_name_or_names)
+            by_p_name = get!(by_ent_byname, ent_byname, Dict())
+            by_p_name[Symbol(p_name)] = parse_db_value(value)
+        end
+    end
+    pvals_by_alt_name
+end
 
 """
     run_spineopt!(m, url_out; <keyword arguments>)
@@ -356,7 +373,7 @@ A `JuMP.Model` extended to be used with SpineOpt.
 `mip_solver` and `lp_solver` are 'optimizer factories' to be passed to `JuMP.Model` or `JuMP.direct_model`;
 `use_direct_model` is a `Bool` indicating whether `JuMP.Model` or `JuMP.direct_model` should be used.
 """
-function create_model(mip_solver, lp_solver, use_direct_model)
+function create_model(mip_solver, lp_solver, use_direct_model, pvals_by_alt_name)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
@@ -368,7 +385,7 @@ function create_model(mip_solver, lp_solver, use_direct_model)
     model_by_stage = OrderedDict()
     for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
         model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st)
+        stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st, pvals_by_alt_name=pvals_by_alt_name)
     end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
     m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; model_by_stage=model_by_stage)
@@ -455,6 +472,8 @@ struct SpineOptExt
     master_model::Union{Model,Nothing}
     model_by_stage::OrderedDict{Object,Model}
     stage::Union{Object,Nothing}
+    pvals_by_alt_name::Dict{String,Dict}
+    level_by_time_slice::OrderedDict{TimeSlice,Int64}
     intermediate_results_folder::String
     reports_by_output::Dict
     variables::Dict{Symbol,Dict}
@@ -475,7 +494,9 @@ struct SpineOptExt
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
-    function SpineOptExt(instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing)
+    function SpineOptExt(
+        instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing, pvals_by_alt_name=Dict()
+    )
         if stage === nothing
             intermediate_results_folder = tempname(; cleanup=false)
             mkpath(intermediate_results_folder)
@@ -511,6 +532,8 @@ struct SpineOptExt
             master_model,
             model_by_stage,
             stage,
+            pvals_by_alt_name,
+            OrderedDict{TimeSlice,Int64}(),  # level_by_time_slice,
             intermediate_results_folder,
             reports_by_output,
             Dict{Symbol,Dict}(),  # variables
