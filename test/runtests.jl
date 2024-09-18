@@ -131,9 +131,6 @@ function _dismember_function(func)
 end
 
 @testset begin
-    include("run_spineopt_benders.jl")
-
-    #=
     include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
@@ -156,5 +153,4 @@ end
     include("run_spineopt_mga.jl")
     include("run_examples.jl")
     include("run_benchmark_data.jl")
-    =#
 end

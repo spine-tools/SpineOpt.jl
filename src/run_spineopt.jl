@@ -364,7 +364,7 @@ function create_model(mip_solver, lp_solver, use_direct_model)
         stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st)
     end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)
+    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; model_by_stage=model_by_stage)
     m
 end
 
@@ -468,7 +468,7 @@ struct SpineOptExt
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
-    function SpineOptExt(instance, lp_solver, master_model=nothing, model_by_stage=Dict(); stage=nothing)
+    function SpineOptExt(instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing)
         if stage === nothing
             intermediate_results_folder = tempname(; cleanup=false)
             mkpath(intermediate_results_folder)

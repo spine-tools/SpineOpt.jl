@@ -315,7 +315,7 @@ function add_benders_iteration(j)
 end
 
 function _collect_outputs!(
-    m, m_mp; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix, calculate_duals
+    m, m_mp; log_level, update_names, write_as_roll, output_suffix, log_prefix, calculate_duals
 )
     _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false, save_outputs=true)
     _do_solve_model!(
@@ -323,7 +323,6 @@ function _collect_outputs!(
         log_level,
         update_names,
         write_as_roll,
-        resume_file_path,
         output_suffix,
         calculate_duals,
         log_prefix,

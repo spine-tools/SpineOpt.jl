@@ -269,14 +269,6 @@ function _build_stage_models!(m; log_level)
     end
 end
 
-function _child_models(m, st)
-    child_models = [m.ext[:spineopt].model_by_stage[child_st] for child_st in stage__child_stage(stage1=st)]
-    if isempty(child_models)
-        child_models = [m]
-    end
-    child_models
-end
-
 function _init_downstream_outputs!(st, stage_m, child_models)
     for (out_name, _ow) in keys(stage_m.ext[:spineopt].reports_by_output)
         out = output(out_name)
@@ -355,6 +347,10 @@ function _fix_points(out_res, child_m)
     for i in Iterators.countfrom(1)
         res = out_res_pv(i=i)
         res === nothing && break
+        if iszero(res)
+            push!(points, w_end)
+            break
+        end
         next_point += res
         next_point > w_end && break
         push!(points, next_point)
@@ -395,7 +391,7 @@ function solve_model!(
     )
     if m_mp === nothing
         # Standard solution method
-        _do_solve_model!(
+        _do_solve_multi_stage_model!(
             m; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix, calculate_duals
         )
     else
@@ -419,12 +415,10 @@ function solve_model!(
             end
             _do_solve_model!(m_mp; log_level, update_names, log_prefix, rewind=false, extra_kwargs...) || break
             @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
-            _do_solve_model!(
+            _do_solve_multi_stage_model!(
                 m;
                 log_level,
                 update_names,
-                write_as_roll,
-                resume_file_path,
                 calculate_duals=true,
                 log_prefix="$(log_prefix)Benders iteration $j $(_current_solution_string(m_mp)) - ",
                 extra_kwargs...,
@@ -438,7 +432,7 @@ function solve_model!(
             termination_msg = if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
                 "Benders tolerance satisfied at iter $j"
             elseif j >= max_benders_iterations
-                "Maximum number of iterations reached ($j)"
+                "Maximum number of Benders iterations reached ($j)"
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
@@ -451,7 +445,6 @@ function solve_model!(
                     log_level,
                     update_names,
                     write_as_roll,
-                    resume_file_path,
                     output_suffix,
                     calculate_duals,
                     log_prefix=final_log_prefix,
@@ -465,6 +458,42 @@ function solve_model!(
         end
         m
     end
+end
+
+function _do_solve_multi_stage_model!(
+    m;
+    log_level=3,
+    update_names=false,
+    write_as_roll=0,
+    resume_file_path=nothing,
+    output_suffix=(;),
+    log_prefix="",
+    calculate_duals=false,
+    rewind=true,
+    save_outputs=true,
+)
+    _solve_stage_models!(m; log_level, log_prefix) || return false
+    _do_solve_model!(
+        m;
+        log_level,
+        update_names,
+        write_as_roll,
+        resume_file_path,
+        output_suffix,
+        log_prefix,
+        calculate_duals,
+        rewind,
+        save_outputs,
+    )
+end
+
+function _solve_stage_models!(m; log_level, log_prefix)
+    for stage_m in values(m.ext[:spineopt].model_by_stage)
+        _do_solve_model!(stage_m; log_level, log_prefix) || return false
+        model_name = _model_name(stage_m)
+        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
+    end
+    true
 end
 
 function _do_solve_model!(
@@ -481,7 +510,6 @@ function _do_solve_model!(
 )
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
     k0 === nothing && return m
-    _solve_stage_models!(m; log_level, log_prefix) || return false
     m.ext[:spineopt].has_results[] = false
     _call_event_handlers(m, :model_about_to_solve)
     model_name = _model_name(m)
@@ -503,15 +531,6 @@ function _do_solve_model!(
     true
 end
 
-function _solve_stage_models!(m; log_level, log_prefix)
-    for stage_m in values(m.ext[:spineopt].model_by_stage)
-        _do_solve_model!(stage_m; log_level, log_prefix) || return false
-        model_name = _model_name(stage_m)
-        @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
-    end
-    true
-end
-
 function _update_downstream_outputs!(stage_m)
     for (out_name, current_downstream_outputs) in stage_m.ext[:spineopt].downstream_outputs
         new_downstream_outputs = Dict(
@@ -522,6 +541,14 @@ function _update_downstream_outputs!(stage_m)
         )
         mergewith!(merge!, current_downstream_outputs, new_downstream_outputs)
     end
+end
+
+function _child_models(m, st)
+    child_models = [m.ext[:spineopt].model_by_stage[child_st] for child_st in stage__child_stage(stage1=st)]
+    if isempty(child_models)
+        child_models = [m]
+    end
+    child_models
 end
 
 _resume_run!(m, ::Nothing; log_level, update_names) = 1
