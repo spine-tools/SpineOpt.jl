@@ -188,11 +188,11 @@ function _current_solution_string(m_mp)
     end
 end
 
-_gap_str(m_mp) = string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%")
+_gap_str(m_mp) = _percentage_str(last(m_mp.ext[:spineopt].benders_gaps))
 
-_lb_str(m_mp) = @sprintf("%.5e", last(m_mp.ext[:spineopt].objective_lower_bounds))
+_lb_str(m_mp) = _number_str(last(m_mp.ext[:spineopt].objective_lower_bounds))
 
-_ub_str(m_mp) = @sprintf("%.5e", last(m_mp.ext[:spineopt].objective_upper_bounds))
+_ub_str(m_mp) = _number_str(last(m_mp.ext[:spineopt].objective_upper_bounds))
 
 """
     prepare_spineopt(url_in; <keyword arguments>)
