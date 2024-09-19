@@ -636,36 +636,46 @@ function _update_stage_model!(stage_m, child_models, st; log_level)
         @log log_level 1 "Skipping updating model for $st stage because it's rolling"
         return false
     end
-    time_slices = unique!([t for child_m in child_models for t in _time_slices_to_update(stage_m, child_m, st)])
-    isempty(time_slices) && return false
+    max_gap = max_multi_stage_gap(model=stage_m.ext[:spineopt].instance, _default=0.05)
+    diff_ts_by_st = Dict(st => _diff_ts(stage_m, child_m) for child_m in child_models)
+    gap = maximum(mean(values(diff_ts)) for diff_ts in values(diff_ts_by_st))
+    done = gap <= max_gap
+    @log log_level 1 "Tolerance $(done ? "" : "not ")satisfied for $st stage (gap: $(_percentage_str(gap)))"
+    done && return false
+    time_slices = unique!(
+        [t for (st, diff_ts) in diff_ts_by_st for t in _time_slices_to_update(stage_m, st, diff_ts, max_gap)]
+    )
     _do_update_stage_model!(stage_m, time_slices, st; log_level)
 end
 
-function _time_slices_to_update(stage_m, child_m, st)
+function _diff_ts(stage_m, child_m)
     stage_costs = stage_m.ext[:spineopt].values[:total_costs_by_time_stamp]
     child_costs = child_m.ext[:spineopt].values[:total_costs_by_time_stamp]
     stage_ts = TimeSeries(collect(keys(stage_costs)), collect(values(stage_costs)))
-    inds = collect(keys(stage_ts))
-    child_ts = TimeSeries(inds, fill(0.0, length(inds)))
+    child_ts = _aggregated(child_costs, stage_ts)
+    (child_ts - stage_ts) / ((child_ts + stage_ts) / 2)
+end
+
+function _aggregated(vals_by_ind, other_ts)
+    inds = collect(keys(other_ts))
+    ts = TimeSeries(inds, fill(0.0, length(inds)))
     for (i, next_i) in zip(inds[1 : end - 1], inds[2:end])
-        for (child_i, child_v) in child_costs
-            if i <= child_i < next_i
-                child_ts[i] += child_v
+        for (j, v) in vals_by_ind
+            if i <= j < next_i
+                ts[i] += v
             end
         end
     end
     i = last(inds)
-    for (child_i, child_v) in child_costs
-        if i <= child_i
-            child_ts[i] += child_v
+    for (j, v) in vals_by_ind
+        if i <= j
+            ts[i] += v
         end
     end
-    stage_cost = sum(values(stage_ts))
-    child_cost = sum(values(child_ts))
-    max_gap = max_multi_stage_gap(model=stage_m.ext[:spineopt].instance, _default=0.05)
-    gap = (child_cost - stage_cost) / ((child_cost + stage_cost) / 2)
-    gap > max_gap || return ()
-    diff_ts = (child_ts - stage_ts) / ((child_ts + stage_ts) / 2)
+    ts
+end
+
+function _time_slices_to_update(stage_m, st, diff_ts, max_gap)
     isempty(diff_ts) && return ()
     time_stamps = [k for (k, v) in diff_ts if v > max_gap]
     sort!(time_stamps; by=(i -> diff_ts[i]), rev=true)
@@ -682,21 +692,30 @@ function _do_update_stage_model!(stage_m, time_slices, st; log_level)
     for t in time_slices
         level = _get_level!(stage_m, t)
         alt_name = adaptation_alternatives(stage=st, i=level, _strict=false)
+        if alt_name === nothing
+            @log log_level 1 "Can't adapt $t because it's been already fully adapted"
+            continue
+        end
         by_cls_name = get(stage_m.ext[:spineopt].pvals_by_alt_name, alt_name, nothing)
-        by_cls_name === nothing && continue
+        if by_cls_name === nothing
+            @log log_level 1 "Can't adapt $t because alternative $alt_name doesn't seem to have any parameter values"
+            continue
+        end
         by_cls_name_by_t[t] = by_cls_name
         k += 1
         k >= max_time_slices_to_adapt(model=stage_m.ext[:spineopt].instance, _default=1) && break
     end
-    isempty(by_cls_name_by_t) && return false
+    if isempty(by_cls_name_by_t)
+        @log log_level 1 "No more time-slices to adapt for $st stage"
+        return false
+    end
     with_env(stage_scenario(stage=st)) do
         for (t, by_cls_name) in by_cls_name_by_t
-            @log log_level 1 "Adapting time-slice $t for $st stage"
             for (cls_name, by_ent_byname) in by_cls_name
                 cls = getproperty(SpineOpt, cls_name)
                 new_vals = Dict(
                     ent => Dict(
-                        p.name => parameter_value(_update_value(p(; ent...), val, t, m_start))
+                        p.name => parameter_value(_adapt_value(p, ent, val, t, m_start; log_level))
                         for (p, val) in ((getproperty(SpineOpt, p_name), val) for (p_name, val) in by_p_name)
                     )
                     for (ent, by_p_name) in (
@@ -744,20 +763,26 @@ end
 
 _Scalar = Union{Nothing,Number,Symbol,DateTime,Period,Dates.CompoundPeriod}
 
-function _update_value(current_val::_Scalar, new_val::_Scalar, t::TimeSlice, m_start)
+function _adapt_value(p, ent, new_val, t::TimeSlice, m_start; log_level)
+    @log log_level 1 "Adapting $(p.name) of time-slice $t to $new_val"
+    _adapt_value(p(; ent...), new_val, t, m_start)
+end
+
+function _adapt_value(current_val::_Scalar, new_val::_Scalar, t::TimeSlice, m_start)
     inds = [m_start, start(t), end_(t)]
     vals = [current_val, new_val, current_val]
     Map(inds, vals)
 end
-function _update_value(current_val::Map{DateTime,T}, new_val::_Scalar, t::TimeSlice, m_start) where T<:_Scalar
+function _adapt_value(current_val::Map{DateTime,T}, new_val::_Scalar, t::TimeSlice, m_start) where T<:_Scalar
     updated = Map(keys(current_val), values(current_val))
     old_val = parameter_value(updated)(; dt=end_(t))
     updated[start(t)] = new_val
     updated[end_(t)] = old_val
     updated
 end
-function _update_value(current_val::T, new_val, time_slices, m_start) where T
-    error("can't update a value of type $T")
+function _adapt_value(current_val::T1, new_val::T2, time_slices, m_start) where {T1,T2}
+    @warn "can't adapt a value of type $T1 with a value of type $T2"
+    current_val
 end
 
 _resume_run!(m, ::Nothing; log_level, update_names) = 1
