@@ -422,9 +422,6 @@ function solve_model!(
     calculate_duals = any(
         startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
-    add_event_handler!.(
-        _save_total_costs_by_time_stamp!, [m; collect(values(m.ext[:spineopt].model_by_stage))], :window_solved
-    )
     if m_mp === nothing
         # Standard solution method
         _do_solve_multi_stage_model!(
@@ -504,6 +501,75 @@ function solve_model!(
     end
 end
 
+function _do_solve_multi_stage_model!(
+    m;
+    log_level=3,
+    update_names=false,
+    write_as_roll=0,
+    resume_file_path=nothing,
+    output_suffix=(;),
+    log_prefix="",
+    calculate_duals=false,
+    save_outputs=true,
+)
+    is_adaptive = any(adaptation_alternatives(stage=st, _strict=false) !== nothing for st in stage())
+    if is_adaptive
+        add_event_handler!.(
+            _save_total_costs_by_time_stamp!, [m; collect(values(m.ext[:spineopt].model_by_stage))], :window_solved
+        )
+    end
+    max_gap = max_multi_stage_gap(model=m.ext[:spineopt].instance, _default=0.05)
+    min_iters = min_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=1)
+    max_iters = max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
+    for i in Iterators.countfrom(1)
+        log_prefix_i = string(log_prefix, "multi-stage iteration $i - ")
+        _solve_stage_models!(m; log_level, log_prefix=log_prefix_i) || return false
+        _do_solve_model!(
+            m;
+            log_level,
+            update_names,
+            write_as_roll,
+            resume_file_path,
+            output_suffix,
+            log_prefix=log_prefix_i,
+            calculate_duals,
+            save_outputs=(save_outputs && !is_adaptive),
+        ) || return false
+        updated, gap = _update_stage_models!(m, max_gap; log_level)
+        termination_msg = if i >= min_iters
+            if gap <= max_gap
+                "Multi-stage tolerance satisfied at iter $i"
+            elseif !updated
+                "Time-slice adaptation fully completed at iter $i"
+            end
+        elseif i >= max_iters
+            "Maximum number of multi-stage iterations reached ($i)"
+        end
+        if termination_msg !== nothing
+            @log log_level 1 termination_msg
+            if save_outputs && is_adaptive
+                final_log_prefix = string(
+                    log_prefix, "$termination_msg (gap: $(_percentage_str(gap))) - collecting outputs - "
+                )
+                _do_solve_model!(
+                    m;
+                    log_level,
+                    update_names,
+                    write_as_roll,
+                    resume_file_path,
+                    output_suffix,
+                    log_prefix=final_log_prefix,
+                    calculate_duals,
+                    save_outputs=true,
+                )
+            end
+            break
+        end
+        unfix_history!.([m; collect(values(m.ext[:spineopt].model_by_stage))])
+    end
+    true
+end
+
 function _save_total_costs_by_time_stamp!(m, _k)
     merge!(
         get!(m.ext[:spineopt].values, :total_costs_by_time_stamp, Dict()),
@@ -521,43 +587,6 @@ function _hr_time_slice(m)
     with_env(stage_scenario(stage=st)) do
         setdiff(time_slice(m), t_in_t_excl(m; t_short=anything))
     end
-end
-
-function _do_solve_multi_stage_model!(
-    m;
-    log_level=3,
-    update_names=false,
-    write_as_roll=0,
-    resume_file_path=nothing,
-    output_suffix=(;),
-    log_prefix="",
-    calculate_duals=false,
-    save_outputs=true,
-)
-    for i in Iterators.countfrom(1)
-        log_prefix_i = string(log_prefix, "multi-stage iteration $i - ")
-        _solve_stage_models!(m; log_level, log_prefix=log_prefix_i) || return false
-        _do_solve_model!(
-            m;
-            log_level,
-            update_names,
-            write_as_roll,
-            resume_file_path,
-            output_suffix,
-            log_prefix=log_prefix_i,
-            calculate_duals,
-            rewind,
-            save_outputs,
-        ) || return false
-        i < min_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=1) && continue
-        if i >= max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
-            @log log_level 1 "Maximum number of multi-stage iterations reached, terminating..."
-            break
-        end
-        _update_stage_models!(m; log_level) || break
-        unfix_history!.([m; collect(values(m.ext[:spineopt].model_by_stage))])
-    end
-    true
 end
 
 function _solve_stage_models!(m; log_level, log_prefix)
@@ -616,11 +645,27 @@ function _update_downstream_outputs!(stage_m)
     end
 end
 
-function _update_stage_models!(m; log_level)
-    any(
-        _update_stage_model!(stage_m, _child_models(m, st), st; log_level)
-        for (st, stage_m) in m.ext[:spineopt].model_by_stage
-    )
+function _update_stage_models!(m, max_gap; log_level)
+    updated = false
+    gaps = []
+    for (st, stage_m) in m.ext[:spineopt].model_by_stage
+        if window_count(stage_m) > 1
+            @log log_level 1 "Skipping updating model for $st stage because it's rolling"
+            continue
+        end
+        all_diff_ts = [_diff_ts(stage_m, child_m) for child_m in _child_models(m, st)]
+        gap = maximum(mean(values(diff_ts)) for diff_ts in all_diff_ts)
+        done = gap <= max_gap
+        @log log_level 1 "Tolerance $(done ? "" : "not ")satisfied for $st stage (gap: $(_percentage_str(gap)))"
+        if !done
+            time_slices = unique!(
+                [t for diff_ts in all_diff_ts for t in _time_slices_to_update(stage_m, st, diff_ts, max_gap)]
+            )
+            updated |= _update_stage_model!(stage_m, time_slices, st; log_level)
+        end
+        push!(gaps, gap)
+    end
+    updated, maximum(gaps; init=0)
 end
 
 function _child_models(m, st)
@@ -629,23 +674,6 @@ function _child_models(m, st)
         child_models = [m]
     end
     child_models
-end
-
-function _update_stage_model!(stage_m, child_models, st; log_level)
-    if window_count(stage_m) > 1
-        @log log_level 1 "Skipping updating model for $st stage because it's rolling"
-        return false
-    end
-    max_gap = max_multi_stage_gap(model=stage_m.ext[:spineopt].instance, _default=0.05)
-    diff_ts_by_st = Dict(st => _diff_ts(stage_m, child_m) for child_m in child_models)
-    gap = maximum(mean(values(diff_ts)) for diff_ts in values(diff_ts_by_st))
-    done = gap <= max_gap
-    @log log_level 1 "Tolerance $(done ? "" : "not ")satisfied for $st stage (gap: $(_percentage_str(gap)))"
-    done && return false
-    time_slices = unique!(
-        [t for (st, diff_ts) in diff_ts_by_st for t in _time_slices_to_update(stage_m, st, diff_ts, max_gap)]
-    )
-    _do_update_stage_model!(stage_m, time_slices, st; log_level)
 end
 
 function _diff_ts(stage_m, child_m)
@@ -685,7 +713,7 @@ function _time_slices_to_update(stage_m, st, diff_ts, max_gap)
     end
 end
 
-function _do_update_stage_model!(stage_m, time_slices, st; log_level)
+function _update_stage_model!(stage_m, time_slices, st; log_level)
     m_start = model_start(model=stage_m.ext[:spineopt].instance)
     by_cls_name_by_t = OrderedDict()
     k = 0
@@ -693,7 +721,7 @@ function _do_update_stage_model!(stage_m, time_slices, st; log_level)
         level = _get_level!(stage_m, t)
         alt_name = adaptation_alternatives(stage=st, i=level, _strict=false)
         if alt_name === nothing
-            @log log_level 1 "Can't adapt $t because it's been already fully adapted"
+            @log log_level 1 "Can't adapt $t because it's already been fully adapted"
             continue
         end
         by_cls_name = get(stage_m.ext[:spineopt].pvals_by_alt_name, alt_name, nothing)
