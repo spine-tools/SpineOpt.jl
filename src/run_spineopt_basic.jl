@@ -436,20 +436,21 @@ function solve_model!(
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
-                final_log_prefix = string(
-                    log_prefix, "$termination_msg $(_current_solution_string(m_mp)) - collecting outputs - "
-                )
-                report_benders_iterations(model=m_mp.ext[:spineopt].instance) || _collect_outputs!(
-                    m,
-                    m_mp;
-                    log_level,
-                    update_names,
-                    write_as_roll,
-                    output_suffix,
-                    calculate_duals,
-                    log_prefix=final_log_prefix,
-                )
-                @log log_level 1 "Terminating..."
+                if !report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+                    final_log_prefix = string(
+                        log_prefix, "$termination_msg $(_current_solution_string(m_mp)) - collecting outputs - "
+                    )
+                    _collect_outputs!(
+                        m,
+                        m_mp;
+                        log_level,
+                        update_names,
+                        write_as_roll,
+                        output_suffix,
+                        calculate_duals,
+                        log_prefix=final_log_prefix,
+                    )
+                end
                 break
             end
             @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
@@ -469,7 +470,6 @@ function _do_solve_multi_stage_model!(
     output_suffix=(;),
     log_prefix="",
     calculate_duals=false,
-    rewind=true,
     save_outputs=true,
 )
     _solve_stage_models!(m; log_level, log_prefix) || return false
@@ -482,7 +482,6 @@ function _do_solve_multi_stage_model!(
         output_suffix,
         log_prefix,
         calculate_duals,
-        rewind,
         save_outputs,
     )
 end
