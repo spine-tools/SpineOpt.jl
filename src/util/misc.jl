@@ -355,6 +355,10 @@ end
 _force_fix(v::VariableRef, x) = fix(v, x; force=true)
 _force_fix(::Call, x) = nothing
 
+_percentage_str(x::Number) = string(@sprintf("%1.4f", x * 100), "%")
+
+_number_str(x::Number) = @sprintf("%.5e", x)
+
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
