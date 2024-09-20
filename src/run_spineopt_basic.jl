@@ -659,10 +659,19 @@ function _update_stage_models!(m, max_gap; log_level)
             @log log_level 1 "Skipping updating model for $st stage because it's rolling"
             continue
         end
+        stage_costs = sum(values(stage_m.ext[:spineopt].values[:total_costs_by_time_stamp]))
         child_models = _child_models(m, st)
-        gap = maximum(_stage_child_gap(stage_m, child_m) for child_m in child_models)
+        max_child_costs = maximum(
+            sum(values(child_m.ext[:spineopt].values[:total_costs_by_time_stamp])) for child_m in child_models
+        )
+        gap = (max_child_costs - stage_costs) / ((max_child_costs + stage_costs) / 2)
         done = gap <= max_gap
-        @log log_level 1 "Tolerance $(done ? "" : "not ")satisfied for $st stage (gap: $(_percentage_str(gap)))"
+        solution_string = string(
+            "stage cost: $(_number_str(stage_costs)), ",
+            "maximum child cost: $(_number_str(max_child_costs)), ",
+            "gap: $(_percentage_str(gap))",
+        )
+        @log log_level 1 "Tolerance $(done ? "" : "not ")satisfied for $st stage ($solution_string)"
         if !done
             all_diff_ts = (_diff_ts(stage_m, child_m) for child_m in child_models)
             time_slices = unique!(
@@ -681,14 +690,6 @@ function _child_models(m, st)
         child_models = [m]
     end
     child_models
-end
-
-function _stage_child_gap(stage_m, child_m)
-    stage_costs_by_t = stage_m.ext[:spineopt].values[:total_costs_by_time_stamp]
-    child_costs_by_t = child_m.ext[:spineopt].values[:total_costs_by_time_stamp]
-    stage_total_costs = sum(values(stage_costs_by_t))
-    child_total_costs = sum(values(child_costs_by_t))
-    (child_total_costs - stage_total_costs) / ((child_total_costs + stage_total_costs) / 2)
 end
 
 function _diff_ts(stage_m, child_m)
