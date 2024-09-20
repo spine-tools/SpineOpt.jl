@@ -511,17 +511,25 @@ function node_investment_stochastic_time_indices(
 end
 
 function node_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
+    end
 end
 
 function unit_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
+    end
 end
 
 function connection_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
+    end
 end
 
 function any_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight][(; kwargs...)]
+    end
 end

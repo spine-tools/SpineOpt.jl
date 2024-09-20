@@ -359,6 +359,14 @@ _percentage_str(x::Number) = string(@sprintf("%1.4f", x * 100), "%")
 
 _number_str(x::Number) = @sprintf("%.5e", x)
 
+function _with_model_env(f, m)
+    st = m.ext[:spineopt].stage
+    st === nothing && return f()
+    with_env(stage_scenario(stage=st)) do
+        f()
+    end
+end
+
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
