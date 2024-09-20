@@ -40,7 +40,6 @@ function preprocess_data_structure()
     generate_direction()
     generate_ptdf_lodf()
     generate_variable_indexing_support()
-    generate_internal_fix_investments()
     generate_benders_structure()
     generate_is_boundary()
     generate_unit_flow_capacity()
@@ -787,42 +786,6 @@ function generate_benders_structure()
         export connections_invested_available_mv
         export storages_invested_available_mv
         export sp_unit_flow
-    end
-end
-
-"""
-    generate_internal_fix_investments()
-
-Creates parameters to be used as `internal_fix_value` for investment variables.
-The value is set to zero for one hour before the model starts, so the model doesn't create free investments
-during the history.
-
-The benders algorithm also uses these parameters to fix the subproblem investment variables to the master problem
-solution.
-"""
-function generate_internal_fix_investments()
-    models = model()
-    isempty(models) && return
-    starts = [model_start(model=m) for m in models]
-    instance = models[argmin(starts)]
-    t = model_start(model=instance)
-    dur_unit = _model_duration_unit(instance)
-    scens = stochastic_scenario()
-    for (pname, class, candidates) in (
-            (:internal_fix_units_invested_available, unit, candidate_units),
-            (:internal_fix_connections_invested_available, connection, candidate_connections),
-            (:internal_fix_storages_invested_available, node, candidate_storages),
-        )
-        parameter = Parameter(pname, [class])
-        pvals = Dict(
-            obj => Dict(
-                pname => parameter_value(Map(scens, [TimeSeries([t - dur_unit(1), t], [0.0, NaN]) for _s in scens]))
-            )
-            for obj in indices(candidates)
-        )
-        add_object_parameter_values!(class, pvals)
-        add_object_parameter_defaults!(class, Dict(pname => parameter_value(nothing)))
-        @eval $pname = $parameter
     end
 end
 

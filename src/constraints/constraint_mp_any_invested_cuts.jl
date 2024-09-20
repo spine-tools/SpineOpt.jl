@@ -31,6 +31,9 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
         connections_invested_available,
         storages_invested_available
     ) = m.ext[:spineopt].variables
+    benders_units_invested_available = m.ext[:spineopt].downstream_outputs[:units_invested_available]
+    benders_connections_invested_available = m.ext[:spineopt].downstream_outputs[:connections_invested_available]
+    benders_storages_invested_available = m.ext[:spineopt].downstream_outputs[:storages_invested_available]
     merge!(
         get!(m.ext[:spineopt].constraints, :mp_any_invested_cut, Dict()),
         Dict(
@@ -43,7 +46,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 + sum(
                     (
                         + units_invested_available[u, s, t]
-                        - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
+                        - benders_units_invested_available[(unit=u, stochastic_scenario=s)](t=t)
                     )
                     * window_sum(units_invested_available_mv(unit=u, stochastic_scenario=s), t)
                     for (u, s, t) in units_invested_available_indices(m);
@@ -53,7 +56,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 + sum(
                     (
                         + connections_invested_available[c, s, t]
-                        - internal_fix_connections_invested_available(connection=c, stochastic_scenario=s, t=t)
+                        - benders_connections_invested_available[(connection=c, stochastic_scenario=s)](t=t)
                     )
                     * window_sum(connections_invested_available_mv(connection=c, stochastic_scenario=s), t)
                     for (c, s, t) in connections_invested_available_indices(m);
@@ -63,7 +66,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 + sum(
                     (
                         + storages_invested_available[n, s, t]
-                        - internal_fix_storages_invested_available(node=n, stochastic_scenario=s, t=t)
+                        - benders_storages_invested_available[(node=n, stochastic_scenario=s)](t=t)
                     )
                     * window_sum(storages_invested_available_mv(node=n, stochastic_scenario=s), t)
                     for (n, s, t) in storages_invested_available_indices(m);

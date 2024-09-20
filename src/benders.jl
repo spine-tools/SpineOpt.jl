@@ -161,6 +161,50 @@ function _do_force_starting_investments!(m::Model, variable_name::Symbol, bender
     callbacks
 end
 
+function _init_benders_invested_available!(m_mp, m)
+    for var_name in (:units_invested_available, :connections_invested_available, :storages_invested_available)
+        var_indices = m_mp.ext[:spineopt].variables_definition[var_name][:indices](m_mp)
+        unique_entities = unique(_drop_key(ind, :t) for ind in var_indices)
+        model_very_end = maximum(end_.(ind.t for ind in var_indices); init=DateTime(0))
+        x_invested_available_by_ent = m_mp.ext[:spineopt].downstream_outputs[var_name] = Dict(
+            ent => parameter_value(TimeSeries([model_very_end + Minute(1)], [NaN])) for ent in unique_entities
+        )
+        isempty(var_indices) && continue
+        for m_sp in [m; collect(values(m.ext[:spineopt].model_by_stage))]
+            fix_indices_by_ent = Dict()
+            for ind in m_sp.ext[:spineopt].variables_definition[var_name][:indices](m_sp)
+                ent = _drop_key(ind, :t)
+                push!(get!(fix_indices_by_ent, ent, []), ind)
+            end
+            for (ent, fix_indices) in fix_indices_by_ent
+                x_invested_available = x_invested_available_by_ent[ent]
+                for ind in fix_indices
+                    call_kwargs = (t=ind.t,)
+                    call = Call(x_invested_available, call_kwargs, (Symbol(:benders_, var_name), call_kwargs))
+                    fix(m_sp.ext[:spineopt].variables[var_name][ind], call)
+                end
+            end
+        end
+    end
+end
+
+function process_master_problem_solution(m_mp, m)
+    _do_save_outputs!(m_mp, (:units_invested_available, :connections_invested_available, :storages_invested_available))
+    _update_benders_invested_available!(m_mp)
+end
+
+function _update_benders_invested_available!(m_mp)
+    for (var_name, current_benders_invested_available) in m_mp.ext[:spineopt].downstream_outputs
+        new_benders_invested_available = Dict(
+            ent => parameter_value(val)
+            for (ent, val) in _output_value_by_entity(
+                m_mp.ext[:spineopt].outputs[var_name], model_end(model=m_mp.ext[:spineopt].instance)
+            )
+        )
+        mergewith!(merge!, current_benders_invested_available, new_benders_invested_available)
+    end
+end
+
 """
     _pval_by_entity(vals)
 
@@ -206,24 +250,6 @@ function _window_time_series(by_t)
     push!(inds, maximum(end_.(time_slices)))
     push!(vals, NaN)
     TimeSeries(inds, vals)
-end
-
-function process_master_problem_solution(m_mp, m)
-    _save_mp_values!(unit, m_mp, m, :units_invested_available)
-    _save_mp_values!(connection, m_mp, m, :connections_invested_available)
-    _save_mp_values!(node, m_mp, m, :storages_invested_available)
-end
-
-function _save_mp_values!(obj_cls, m_mp, m, var_name)
-    benders_param_name = Symbol(:internal_fix_, var_name)
-    pval_by_ent = _pval_by_entity(m_mp.ext[:spineopt].values[var_name])
-    pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
-    add_object_parameter_values!(obj_cls, pvals; merge_values=true)
-    for st in keys(m.ext[:spineopt].model_by_stage)
-        with_env(stage_scenario(stage=st)) do
-            add_object_parameter_values!(obj_cls, pvals; merge_values=true)
-        end
-    end
 end
 
 function process_subproblem_solution(m, k)

@@ -396,6 +396,7 @@ function solve_model!(
         )
     else
         # Benders solution method
+        _init_benders_invested_available!(m_mp, m)
         add_event_handler!(process_subproblem_solution, m, :window_solved)
         add_event_handler!(_set_starting_point!, m, :window_about_to_solve)
         add_event_handler!(m, :window_solved) do m, k
@@ -845,8 +846,12 @@ end
 Save the outputs of a model.
 """
 function _save_outputs!(m, output_suffix)
+    _do_save_outputs!(m, _output_names(m), output_suffix)
+end
+
+function _do_save_outputs!(m, output_names, output_suffix=(;))
     w_start, w_end = start(current_window(m)), end_(current_window(m))
-    for out_name in _output_names(m)
+    for out_name in output_names
         value = get(m.ext[:spineopt].values, out_name, nothing)
         param = parameter(out_name, @__MODULE__)
         if value === param === nothing

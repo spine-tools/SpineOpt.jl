@@ -48,9 +48,8 @@ function add_variable!(
     int::Union{Function,Nothing}=nothing,
     lb::Union{Parameter,Function,Nothing}=nothing,
     ub::Union{Parameter,Function,Nothing}=nothing,
-    initial_value::Union{Parameter,Nothing}=nothing,
+    initial_value::Union{Parameter,Function,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
-    internal_fix_value::Union{Parameter,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
     required_history_period::Union{Period,Nothing}=nothing,
@@ -60,7 +59,6 @@ function add_variable!(
     ub = _nothing_if_empty(ub)
     initial_value = _nothing_if_empty(initial_value)
     fix_value = _nothing_if_empty(fix_value)
-    internal_fix_value = _nothing_if_empty(internal_fix_value)
     if required_history_period === nothing
         required_history_period = _model_duration_unit(m.ext[:spineopt].instance)(1)
     end
@@ -92,7 +90,6 @@ function add_variable!(
         lb=lb,
         ub=ub,
         fix_value=fix_value,
-        internal_fix_value=internal_fix_value,
         non_anticipativity_time=non_anticipativity_time,
         non_anticipativity_margin=non_anticipativity_margin,
         history_vars_by_ind=history_vars_by_ind,
@@ -133,7 +130,6 @@ function _variable_definition(;
     lb=nothing,
     ub=nothing,
     fix_value=nothing,
-    internal_fix_value=nothing,
     non_anticipativity_time=nothing,
     non_anticipativity_margin=nothing,
     history_time_slices=[],
@@ -147,7 +143,6 @@ function _variable_definition(;
         :lb => lb,
         :ub => ub,
         :fix_value => fix_value,
-        :internal_fix_value => internal_fix_value,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
         :history_time_slices => history_time_slices,
@@ -191,7 +186,6 @@ function _finalize_variables!(m, var_by_ind, def)
     _set_integer.(vars, getindex.(info, :int))
     _set_lower_bound.(vars, getindex.(info, :lb))
     _set_upper_bound.(vars, getindex.(info, :ub))
-    _fix.(vars, getindex.(info, :internal_fix_value))
     _fix.(vars, getindex.(info, :fix_value))
 end
 
@@ -204,14 +198,11 @@ function _finalize_expressions!(m, expr_by_ind, name, def)
     cons = m.ext[:spineopt].constraints
     cons[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, getindex.(info, :lb))))
     cons[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, getindex.(info, :ub))))
-    cons[Symbol(name, :_internal_fix)] = Dict(
-        zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :internal_fix_value)))
-    )
     cons[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :fix_value))))
 end
 
 function _collect_info(m, inds, def)
-    @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
+    @fetch bin, int, lb, ub, fix_value = def
     info = NamedTuple[(;) for i in eachindex(inds)]
     Threads.@threads for i in eachindex(inds)
         ind = inds[i]
@@ -221,7 +212,6 @@ function _collect_info(m, inds, def)
             lb=_resolve(lb, m, ind),
             ub=_resolve(ub, m, ind),
             fix_value=_resolve(fix_value, m, ind),
-            internal_fix_value=_resolve(internal_fix_value, m, ind),
         )
     end
     info
