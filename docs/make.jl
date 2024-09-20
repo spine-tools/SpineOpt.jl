@@ -60,6 +60,7 @@ pages = [
     "Standard model features" => Any[
         "Unit Commitment" => joinpath("advanced_concepts", "unit_commitment.md"),
         "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
+        "Multi-year Investments" => joinpath("advanced_concepts", "multi-year.md"),
         "Reserves" => joinpath("advanced_concepts", "reserves.md"),
         "Ramping" => joinpath("advanced_concepts", "ramping.md"),
         "Lossless nodal DC power flows" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),

@@ -22,6 +22,11 @@
 """
 function generate_economic_structure!(m; log_level=3)
     use_economic_representation(model=m.ext[:spineopt].instance) || return
+    if !isnothing(roll_forward(model=m.ext[:spineopt].instance))
+        error("Using economic representation with rolling horizon is currently not supported.")
+    elseif model_type(model=m.ext[:spineopt].instance) === :spineopt_benders 
+        error("Using economic representation with Benders' decomposition is currently not supported.")
+    end
     !isempty(
         [
             model__default_investment_temporal_block()
