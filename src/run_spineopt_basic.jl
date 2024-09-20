@@ -512,17 +512,18 @@ function _do_solve_multi_stage_model!(
     calculate_duals=false,
     save_outputs=true,
 )
+    all_models = [m; collect(values(m.ext[:spineopt].model_by_stage))]
     is_adaptive = any(adaptation_alternatives(stage=st, _strict=false) !== nothing for st in stage())
     if is_adaptive
-        add_event_handler!.(
-            _save_total_costs_by_time_stamp!, [m; collect(values(m.ext[:spineopt].model_by_stage))], :window_solved
-        )
+        add_event_handler!.(_save_total_costs_by_time_stamp!, all_models, :window_solved)
     end
     max_gap = max_multi_stage_gap(model=m.ext[:spineopt].instance, _default=0.05)
     min_iters = min_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=1)
     max_iters = max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
+    gap = nothing
     for i in Iterators.countfrom(1)
-        log_prefix_i = string(log_prefix, "multi-stage iteration $i - ")
+        gap_str = gap === nothing ? "" : "(gap: $(_percentage_str(gap))"
+        log_prefix_i = string(log_prefix, "multi-stage iteration $i $gap_str - ")
         _solve_stage_models!(m; log_level, log_prefix=log_prefix_i) || return false
         _do_solve_model!(
             m;
@@ -565,20 +566,24 @@ function _do_solve_multi_stage_model!(
             end
             break
         end
-        unfix_history!.([m; collect(values(m.ext[:spineopt].model_by_stage))])
+        unfix_history!.(all_models)
+        empty!.(m.ext[:spineopt].values[:total_costs_by_time_stamp] for m in all_models)
     end
     true
 end
 
 function _save_total_costs_by_time_stamp!(m, _k)
-    merge!(
-        get!(m.ext[:spineopt].values, :total_costs_by_time_stamp, Dict()),
-        Dict(
-            start(t) => realize(value(total_costs(m, t)))
-            for t in _hr_time_slice(m)
-            if end_(t) <= end_(current_window(m))
-        ),
-    )
+    total_costs_by_time_stamp = Dict()
+    for t in time_slice(m)
+        costs = realize(value(total_costs(m, t)))
+        t_start = start(t)
+        if haskey(total_costs_by_time_stamp, start(t))
+            total_costs_by_time_stamp[t_start] += costs
+        else
+            total_costs_by_time_stamp[t_start] = costs
+        end
+    end
+    merge!(get!(m.ext[:spineopt].values, :total_costs_by_time_stamp, Dict()), total_costs_by_time_stamp)
 end
 
 function _hr_time_slice(m)
@@ -654,11 +659,12 @@ function _update_stage_models!(m, max_gap; log_level)
             @log log_level 1 "Skipping updating model for $st stage because it's rolling"
             continue
         end
-        all_diff_ts = [_diff_ts(stage_m, child_m) for child_m in _child_models(m, st)]
-        gap = maximum(mean(values(diff_ts)) for diff_ts in all_diff_ts)
+        child_models = _child_models(m, st)
+        gap = maximum(_stage_child_gap(stage_m, child_m) for child_m in child_models)
         done = gap <= max_gap
         @log log_level 1 "Tolerance $(done ? "" : "not ")satisfied for $st stage (gap: $(_percentage_str(gap)))"
         if !done
+            all_diff_ts = (_diff_ts(stage_m, child_m) for child_m in child_models)
             time_slices = unique!(
                 [t for diff_ts in all_diff_ts for t in _time_slices_to_update(stage_m, st, diff_ts, max_gap)]
             )
@@ -677,26 +683,34 @@ function _child_models(m, st)
     child_models
 end
 
+function _stage_child_gap(stage_m, child_m)
+    stage_costs_by_t = stage_m.ext[:spineopt].values[:total_costs_by_time_stamp]
+    child_costs_by_t = child_m.ext[:spineopt].values[:total_costs_by_time_stamp]
+    stage_total_costs = sum(values(stage_costs_by_t))
+    child_total_costs = sum(values(child_costs_by_t))
+    (child_total_costs - stage_total_costs) / ((child_total_costs + stage_total_costs) / 2)
+end
+
 function _diff_ts(stage_m, child_m)
-    stage_costs = stage_m.ext[:spineopt].values[:total_costs_by_time_stamp]
-    child_costs = child_m.ext[:spineopt].values[:total_costs_by_time_stamp]
-    stage_ts = TimeSeries(collect(keys(stage_costs)), collect(values(stage_costs)))
-    child_ts = _aggregated(child_costs, stage_ts)
+    stage_costs_by_t = stage_m.ext[:spineopt].values[:total_costs_by_time_stamp]
+    child_costs_by_t = child_m.ext[:spineopt].values[:total_costs_by_time_stamp]
+    stage_ts = TimeSeries(collect(keys(stage_costs_by_t)), collect(values(stage_costs_by_t)))
+    child_ts = _aggregated(child_costs_by_t, stage_ts)
     (child_ts - stage_ts) / ((child_ts + stage_ts) / 2)
 end
 
-function _aggregated(vals_by_ind, other_ts)
+function _aggregated(vals_by_t, other_ts)
     inds = collect(keys(other_ts))
     ts = TimeSeries(inds, fill(0.0, length(inds)))
     for (i, next_i) in zip(inds[1 : end - 1], inds[2:end])
-        for (j, v) in vals_by_ind
+        for (j, v) in vals_by_t
             if i <= j < next_i
                 ts[i] += v
             end
         end
     end
     i = last(inds)
-    for (j, v) in vals_by_ind
+    for (j, v) in vals_by_t
         if i <= j
             ts[i] += v
         end
