@@ -555,7 +555,11 @@ the second starting when the first ends.
   - `t_before`: if given, return an `Array` of `TimeSlice`s that start when `t_before` ends.
   - `t_after`: if given, return an `Array` of `TimeSlice`s that end when `t_after` starts.
 """
-t_before_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
+function t_before_t(m::Model; kwargs...)
+    _with_model_env(m) do
+        m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
+    end
+end
 
 """
     t_in_t(m; t_short=anything, t_long=anything)
@@ -567,7 +571,11 @@ the second containing the first.
   - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short`.
   - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long`.
 """
-t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
+function t_in_t(m::Model; kwargs...)
+    _with_model_env(m) do
+        m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
+    end
+end
 
 """
     t_in_t_excl(m; t_short=anything, t_long=anything)
@@ -578,7 +586,11 @@ Same as [t_in_t](@ref) but exclude tuples of the same `TimeSlice`.
   - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short` (other than `t_short` itself).
   - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long` (other than `t_long` itself).
 """
-t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+function t_in_t_excl(m::Model; kwargs...)
+    _with_model_env(m) do
+        m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+    end
+end
 
 """
     t_overlaps_t(m; t)
