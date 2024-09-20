@@ -413,7 +413,7 @@ function solve_model!(
             else
                 (save_outputs=false, output_suffix=output_suffix)
             end
-            _do_solve_model!(m_mp; log_level, update_names, log_prefix, rewind=false, extra_kwargs...) || break
+            _do_solve_model!(m_mp; log_level, update_names, log_prefix, extra_kwargs...) || break
             @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
             _do_solve_multi_stage_model!(
                 m;
@@ -504,7 +504,6 @@ function _do_solve_model!(
     output_suffix=(;),
     log_prefix="",
     calculate_duals=false,
-    rewind=true,
     save_outputs=true,
 )
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
@@ -513,7 +512,9 @@ function _do_solve_model!(
     _call_event_handlers(m, :model_about_to_solve)
     model_name = _model_name(m)
     full_model_name = string(log_prefix, model_name)
-    rewind && @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
+    if m.ext[:spineopt].temporal_structure[:as_number_or_call] === as_call
+        @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
+    end
     for k in Iterators.countfrom(k0)
         @log log_level 1 "\n$full_model_name - Window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
@@ -1300,6 +1301,7 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
 end
 
 function unfix_history!(m::Model)
+    m.ext[:spineopt].temporal_structure[:as_number_or_call] === as_number && return
     for (name, definition) in m.ext[:spineopt].variables_definition
         _unfix.(Iterators.flatten(values(definition[:history_vars_by_ind])))
     end

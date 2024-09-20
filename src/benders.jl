@@ -317,7 +317,7 @@ end
 function _collect_outputs!(
     m, m_mp; log_level, update_names, write_as_roll, output_suffix, log_prefix, calculate_duals
 )
-    _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false, save_outputs=true)
+    _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, save_outputs=true)
     _do_solve_model!(
         m;
         log_level,

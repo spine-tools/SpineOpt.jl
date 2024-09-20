@@ -324,9 +324,7 @@ end
 function _generate_as_number_or_call!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    temp_struct[:as_number_or_call] = if (
-            needs_auto_updating(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
-        )
+    temp_struct[:as_number_or_call] = if needs_auto_updating(Val(algo)) || temp_struct[:window_count] > 1
         as_call
     else
         as_number
