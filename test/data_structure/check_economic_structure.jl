@@ -273,4 +273,52 @@
         expected_coe_obj = (1 - salvage_frac) * conv_to_disc_annuities * tech_fac * inv_cost
         @test expected_coe_obj ≈ observed_coe_obj rtol = 1e-6
     end
+    @testset "test rolling error exception" begin
+        _load_test_data(url_in, test_data)
+        discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
+        discnt_rate = 0.05
+        tech_discnt_rate = 0.85
+        use_mlstne_year = false
+        candidate_unts = 1
+        inv_cost = 2
+        object_parameter_values = [
+            ["model", "instance", "discount_rate", discnt_rate],
+            ["model", "instance", "discount_year", discnt_year],
+            ["model", "instance", "use_milestone_years", use_mlstne_year],
+            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "roll_forward", Dict("type" =>"duration","data"=>"1D")],
+            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "unit_investment_cost", inv_cost],
+            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+        ]
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
+    end
+    @testset "test Benders error exception" begin
+        _load_test_data(url_in, test_data)
+        discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
+        discnt_rate = 0.05
+        tech_discnt_rate = 0.85
+        use_mlstne_year = false
+        candidate_unts = 1
+        inv_cost = 2
+        object_parameter_values = [
+            ["model", "instance", "discount_rate", discnt_rate],
+            ["model", "instance", "discount_year", discnt_year],
+            ["model", "instance", "use_milestone_years", use_mlstne_year],
+            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "model_type", "spineopt_benders"],
+            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "unit_investment_cost", inv_cost],
+            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+        ]
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
+    end
 end

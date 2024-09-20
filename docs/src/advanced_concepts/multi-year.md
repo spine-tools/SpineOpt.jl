@@ -6,7 +6,7 @@ There are two tutorials related to multi-year investments: [Capacity planning Tu
 
 ## Basic idea
 
-SpineOpt offers flexibility to the users so that different things can be modeled given specific set-ups and inputs of the model. This flexibility can be greatly illustrated by the multi-year investments modeling. We apply the same mathmatical formulation for any capacity planning exercises, as shown in [Capacity planning Tutorial](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/capacity_planning/). For the multi-year model, what you would need differently from a single-year model is mainly the specification of the temporal structure, i.e., the investment period and operational period, and the rest works very much similarly to a single-year model.
+SpineOpt offers flexibility to the users so that different things can be modeled given specific set-ups and inputs of the model. This flexibility can be greatly illustrated by the multi-year investments modeling. We apply the same mathematical formulation for any capacity planning exercises, as shown in [Capacity planning Tutorial](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/capacity_planning/). For the multi-year model, what you would need differently from a single-year model is mainly the specification of the temporal structure, i.e., the investment period and operational period, and the rest works very much similarly to a single-year model.
 
 ## Economic representation
 
@@ -49,8 +49,5 @@ More information can be found in the following files.
 
 - [Economic parameters calculation tool](https://github.com/Spine-project/SpineOpt.jl/files/9130469/parameter_illustration.2.xlsx) is an excel tool that you can use to calculate the economic parameters on your own.
 
-Please also note that the use of economic representation in SpineOpt has the following limitations, which warrant future improvements:
-
-- The combination of milestone years and Benders' decomposition is not supported. If no milestone years are used, then you can use the decomposition.
-
-- Rolling horizon is not supported.
+!!! Warning
+    Please also note that the use of economic representation in SpineOpt does not support rolling horizon and Benders' decomposition, which warrants future improvements.
