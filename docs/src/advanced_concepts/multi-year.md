@@ -49,5 +49,5 @@ More information can be found in the following files.
 
 - [Economic parameters calculation tool](https://github.com/Spine-project/SpineOpt.jl/files/9130469/parameter_illustration.2.xlsx) is an excel tool that you can use to calculate the economic parameters on your own.
 
-!!! Warning
+!!! warning
     Please also note that the use of economic representation in SpineOpt does not support rolling horizon and Benders' decomposition, which warrants future improvements.
