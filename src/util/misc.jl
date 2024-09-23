@@ -361,8 +361,9 @@ _number_str(x::Number) = @sprintf("%.5e", x)
 
 function _with_model_env(f, m)
     st = m.ext[:spineopt].stage
-    st === nothing && return f()
-    with_env(stage_scenario(stage=st)) do
+    scen = stage_scenario(stage=st, _strict=false)
+    scen === nothing && return f()
+    with_env(scen) do
         f()
     end
 end
