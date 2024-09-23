@@ -324,12 +324,28 @@ end
 function _generate_as_number_or_call!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
     algo = model_algorithm(model=m.ext[:spineopt].instance)
-    temp_struct[:as_number_or_call] = if needs_auto_updating(Val(algo)) || temp_struct[:window_count] > 1
+    temp_struct[:as_number_or_call] = if (
+        needs_auto_updating(Val(algo))
+        || temp_struct[:window_count] > 1
+        || _is_benders_subproblem(m)
+        || (_is_child_stage(m) && !_is_benders_master(m))
+    )
         as_call
     else
         as_number
     end
 end
+
+function _is_child_stage(m)
+    st = m.ext[:spineopt].stage
+    parent_stages = if st === nothing
+        setdiff(stage(), stage__child_stage(stage2=anything))
+    else
+        stage__child_stage(stage2=st)
+    end
+    !isempty(parent_stages)
+end
+
 
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.

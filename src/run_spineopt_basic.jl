@@ -322,7 +322,12 @@ function _init_downstream_outputs!(st, stage_m, child_models)
                     for ind in fix_indices
                         call_kwargs = (analysis_time=_analysis_time(child_m), t=ind.t)
                         call = Call(input, call_kwargs, (Symbol(st.name, :_, out_name), call_kwargs))
-                        fix(child_m.ext[:spineopt].variables[out_name][ind], call)
+                        var = child_m.ext[:spineopt].variables[out_name][ind]
+                        if var isa VariableRef
+                            fix(var, call)
+                        elseif var isa GenericAffExpr
+                            set_expr_bound(var, ==, call)
+                        end
                     end
                 end
             end
