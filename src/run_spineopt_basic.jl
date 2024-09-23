@@ -518,9 +518,7 @@ function _do_solve_multi_stage_model!(
 )
     all_models = [m; collect(values(m.ext[:spineopt].model_by_stage))]
     is_adaptive = any(adaptation_alternatives(stage=st, _strict=false) !== nothing for st in stage())
-    if is_adaptive
-        add_event_handler!.(_save_total_costs_by_time_stamp!, all_models, :window_solved)
-    end
+    add_event_handler!.(_save_total_costs_by_time_stamp!, all_models, :window_solved)
     max_gap = max_multi_stage_gap(model=m.ext[:spineopt].instance, _default=0.05)
     min_iters = min_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=1)
     max_iters = max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
