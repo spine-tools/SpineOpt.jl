@@ -586,14 +586,6 @@ function _save_total_costs_by_time_stamp!(m, _k)
     merge!(get!(m.ext[:spineopt].values, :total_costs_by_time_stamp, Dict()), total_costs_by_time_stamp)
 end
 
-function _hr_time_slice(m)
-    st = stage=m.ext[:spineopt].stage
-    st === nothing && return setdiff(time_slice(m), t_in_t_excl(m; t_short=anything))
-    with_env(stage_scenario(stage=st)) do
-        setdiff(time_slice(m), t_in_t_excl(m; t_short=anything))
-    end
-end
-
 function _solve_stage_models!(m; log_level, log_prefix)
     for stage_m in values(m.ext[:spineopt].model_by_stage)
         _do_solve_model!(stage_m; log_level, log_prefix) || return false
@@ -724,9 +716,7 @@ function _time_slices_to_update(stage_m, st, diff_ts, max_gap)
     time_stamps = [k for (k, v) in diff_ts if v > max_gap]
     sort!(time_stamps; by=(i -> diff_ts[i]), rev=true)
     time_slices = [t for i in time_stamps for t in to_time_slice(stage_m; t=TimeSlice(i, i + Minute(1)))]
-    with_env(stage_scenario(stage=st)) do
-        t_highest_resolution!(stage_m, time_slices)
-    end
+    t_highest_resolution!(stage_m, time_slices)
 end
 
 function _update_stage_model!(stage_m, time_slices, st; log_level)
