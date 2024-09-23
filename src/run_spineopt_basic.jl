@@ -331,7 +331,11 @@ function _init_downstream_outputs!(st, stage_m, child_models)
                         call = Call(input, call_kwargs, (Symbol(st.name, :_, out_name), call_kwargs))
                         var = child_m.ext[:spineopt].variables[out_name][ind]
                         if penalty === nothing
-                            fix(var, call)
+                            if var isa VariableRef
+                                fix(var, call)
+                            elseif var isa GenericAffExpr
+                                set_expr_bound(var, ==, call)
+                            end
                         else
                             slack_pos, slack_neg = (
                                 _add_slack_variable!(child_m, st, out, slack, ind)
