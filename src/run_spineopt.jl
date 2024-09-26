@@ -468,6 +468,7 @@ struct SpineOptExt
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
+    extras::Dict
     function SpineOptExt(instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing)
         if stage === nothing
             intermediate_results_folder = tempname(; cleanup=false)
@@ -525,6 +526,7 @@ struct SpineOptExt
             [],  # benders_gaps
             Ref(false),  # has_results
             event_handlers,
+            Dict(),  # extras
         )
     end
 end

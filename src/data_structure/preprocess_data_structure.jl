@@ -40,8 +40,7 @@ function preprocess_data_structure()
     generate_direction()
     generate_ptdf_lodf()
     generate_variable_indexing_support()
-    generate_internal_fix_investments()
-    generate_benders_structure()
+    generate_benders_iteration()
     generate_is_boundary()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
@@ -757,72 +756,21 @@ function add_required_outputs()
 end
 
 """
-    generate_benders_structure()
+    generate_benders_iteration()
 
-Creates the `benders_iteration` object class. Benders cuts have the Benders iteration as an index. A new
+Create the `benders_iteration` object class. Benders cuts have the Benders iteration as an index. A new
 benders iteration object is pushed on each master problem iteration.
 """
-function generate_benders_structure()
+function generate_benders_iteration()
     current_bi = _make_bi(1)
     benders_iteration = ObjectClass(
         :benders_iteration, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
     )
-    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
-    units_invested_available_mv = Parameter(:units_invested_available_mv, [unit])
-    connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection])
-    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node])
-    sp_unit_flow = Parameter(:sp_unit_flow, [unit__to_node, unit__from_node])
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
-        sp_objective_value_bi = $sp_objective_value_bi
-        units_invested_available_mv = $units_invested_available_mv
-        connections_invested_available_mv = $connections_invested_available_mv
-        storages_invested_available_mv = $storages_invested_available_mv
-        sp_unit_flow = $sp_unit_flow
         export benders_iteration
         export current_bi
-        export sp_objective_value_bi
-        export units_invested_available_mv
-        export connections_invested_available_mv
-        export storages_invested_available_mv
-        export sp_unit_flow
-    end
-end
-
-"""
-    generate_internal_fix_investments()
-
-Creates parameters to be used as `internal_fix_value` for investment variables.
-The value is set to zero for one hour before the model starts, so the model doesn't create free investments
-during the history.
-
-The benders algorithm also uses these parameters to fix the subproblem investment variables to the master problem
-solution.
-"""
-function generate_internal_fix_investments()
-    models = model()
-    isempty(models) && return
-    starts = [model_start(model=m) for m in models]
-    instance = models[argmin(starts)]
-    t = model_start(model=instance)
-    dur_unit = _model_duration_unit(instance)
-    scens = stochastic_scenario()
-    for (pname, class, candidates) in (
-            (:internal_fix_units_invested_available, unit, candidate_units),
-            (:internal_fix_connections_invested_available, connection, candidate_connections),
-            (:internal_fix_storages_invested_available, node, candidate_storages),
-        )
-        parameter = Parameter(pname, [class])
-        pvals = Dict(
-            obj => Dict(
-                pname => parameter_value(Map(scens, [TimeSeries([t - dur_unit(1), t], [0.0, NaN]) for _s in scens]))
-            )
-            for obj in indices(candidates)
-        )
-        add_object_parameter_values!(class, pvals)
-        add_object_parameter_defaults!(class, Dict(pname => parameter_value(nothing)))
-        @eval $pname = $parameter
     end
 end
 
