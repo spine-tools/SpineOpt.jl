@@ -81,10 +81,6 @@ function add_constraint_mp_any_invested_cuts!(m_mp, m)
     )
 end
 
-function _val_by_ent(m, var_name)
-    _output_value_by_entity(m.ext[:spineopt].outputs[var_name], model_end(model=m.ext[:spineopt].instance))
-end
-
 function window_sum(ts::TimeSeries, window; init=0)
     sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
 end

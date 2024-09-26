@@ -28,13 +28,17 @@ sum (
 """
 function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
     @fetch units_invested_available, mp_min_res_gen_to_demand_ratio_slack = m_mp.ext[:spineopt].variables
+    benders_units_invested_available = m_mp.ext[:spineopt].downstream_outputs[:units_invested_available]
+    sp_unit_flow = _val_by_ent(m, :unit_flow)
     merge!(
         get!(m_mp.ext[:spineopt].constraints, :mp_min_res_gen_to_demand_ratio_cuts, Dict()),
         Dict(
             (benders_iteration=bi, commodity=comm) => @constraint(
                 m_mp,
                 + sum(
-                    window_sum_duration(m_mp, sp_unit_flow(unit=u, node=n, direction=d, stochastic_scenario=s), window)
+                    window_sum_duration(
+                        m_mp, sp_unit_flow[(unit=u, node=n, direction=d, stochastic_scenario=s)], window
+                    )
                     for window in m_mp.ext[:spineopt].temporal_structure[:sp_windows]
                     for (u, s) in _unit_scenario(unit(is_renewable=true))
                     for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
@@ -43,7 +47,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
                 + sum(
                     sum(
                         + units_invested_available[u, s, t]
-                        - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t, _default=0)
+                        - benders_units_invested_available[(unit=u, stochastic_scenario=s)](t=t)
                         for (u, s, t) in units_invested_available_indices(
                             m_mp; unit=u, stochastic_scenario=s, t=to_time_slice(m_mp; t=window)
                         );
@@ -107,3 +111,12 @@ function _unit_scenario(unit)
         for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
     )
 end
+
+function window_sum_duration(m, ts::TimeSeries, window; init=0)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    time_slice_value_iter = (
+        (TimeSlice(t1, t2; duration_unit=dur_unit), v) for (t1, t2, v) in zip(ts.indexes, ts.indexes[2:end], ts.values)
+    )
+    sum(v * duration(t) for (t, v) in time_slice_value_iter if iscontained(start(t), window) && !isnan(v); init=init)
+end
+window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init

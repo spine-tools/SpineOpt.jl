@@ -189,7 +189,9 @@ function _init_benders_invested_available!(m_mp, m)
 end
 
 function process_master_problem_solution(m_mp, m)
-    _do_save_outputs!(m_mp, (:units_invested_available, :connections_invested_available, :storages_invested_available))
+    _do_save_outputs!(
+        m_mp, (:units_invested_available, :connections_invested_available, :storages_invested_available), (;)
+    )
     _update_benders_invested_available!(m_mp)
 end
 
@@ -206,6 +208,8 @@ function _update_benders_invested_available!(m_mp)
 end
 
 function process_subproblem_solution(m, k)
+    win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
+    win_weight = win_weight !== nothing ? win_weight : 1.0
     _wait_for_dual_solves(m)
     _do_save_outputs!(
         m,
@@ -214,81 +218,27 @@ function process_subproblem_solution(m, k)
             :bound_connections_invested_available,
             :bound_storages_invested_available,
             :unit_flow,
-        )
+        ),
+        (;);
+        weight=win_weight,
     )
     if k == 1
         m.ext[:spineopt].extras[:sp_objective_value_bi] = 0
     end
-    m.ext[:spineopt].extras[:sp_objective_value_bi] += sum(values(m.ext[:spineopt].values[:total_costs]))
+    m.ext[:spineopt].extras[:sp_objective_value_bi] += win_weight * sum(values(m.ext[:spineopt].values[:total_costs]))
     if _is_last_window(m, k)
-        m.ext[:spineopt].extras[:sp_objective_value_bi] += sum(values(m.ext[:spineopt].values[:total_costs_tail]))
+        m.ext[:spineopt].extras[:sp_objective_value_bi] += (
+            win_weight * sum(values(m.ext[:spineopt].values[:total_costs_tail]))
+        )
     end
-end
-
-"""
-    _pval_by_entity(vals)
-
-Take the given Dict, which should be a mapping from variable indices to their value,
-and return another Dict mapping entities to `ParameterValue`s.
-
-The keys in the result are the keys of the input, without the stochastic_scenario and the t (i.e., just the entity).
-The values are `ParameterValue{Map}`s mapping the `stochastic_scenario` of the variable key,
-to a `TimeSeries` mapping the `t` of the key, to the 'realized' variable value.
-"""
-function _pval_by_entity(vals, t_end=nothing)
-    by_ent = Dict()
-    for (ind, val) in vals
-        ent = _drop_key(ind, :stochastic_scenario, :t)
-        by_s = get!(by_ent, ent, Dict())
-        by_t = get!(by_s, ind.stochastic_scenario, Dict())
-        realized_val = realize(val)
-        if t_end !== nothing && t_end < end_(ind.t)
-            realized_val *= (t_end - start(ind.t)) / (end_(ind.t) - start(ind.t))
-        end
-        by_t[ind.t] = realized_val
-    end
-    Dict(
-        ent => parameter_value(Map(collect(keys(by_s)), [_window_time_series(by_t) for by_t in values(by_s)]))
-        for (ent, by_s) in by_ent
-    )
-end
-
-"""
-    _window_time_series(by_t)
-
-A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Float64`, with an explicit NaN at the end.
-The NaN is there because we want to merge marginal values from different windows of the Benders subproblem
-into one `TimeSeries`.
-
-Without the NaN, the last value of one window would apply until the next window, which wouldn't be correct
-if there were gaps between the windows (as in rolling representative periods Benders).
-With the NaN, the gap is correctly skipped in the Benders cuts.
-"""
-function _window_time_series(by_t)
-    time_slices, vals = collect(keys(by_t)), collect(values(by_t))
-    inds = start.(time_slices)
-    push!(inds, maximum(end_.(time_slices)))
-    push!(vals, NaN)
-    TimeSeries(inds, vals)
 end
 
 function _is_last_window(m, k)
     k == m.ext[:spineopt].temporal_structure[:window_count]
 end
 
-function _save_sp_unit_flow(m)
-    window_values = Dict(
-        k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
-    )
-    pval_by_ent = _pval_by_entity(window_values)
-    pvals_to_node = Dict(
-        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:to_node)
-    )
-    pvals_from_node = Dict(
-        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:from_node)
-    )
-    add_relationship_parameter_values!(unit__to_node, pvals_to_node; merge_values=true)
-    add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
+function _val_by_ent(m, var_name)
+    _output_value_by_entity(m.ext[:spineopt].outputs[var_name], model_end(model=m.ext[:spineopt].instance))
 end
 
 function save_mp_objective_bounds_and_gap!(m_mp, m)
@@ -325,4 +275,3 @@ function _collect_outputs!(
         save_outputs=true,
     )
 end
-
