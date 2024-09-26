@@ -519,6 +519,7 @@ function _do_solve_multi_stage_model!(
     all_models = [m; collect(values(m.ext[:spineopt].model_by_stage))]
     is_adaptive = any(adaptation_alternatives(stage=st, _strict=false) !== nothing for st in stage())
     add_event_handler!.(_save_total_costs_by_time_stamp!, all_models, :window_solved)
+    add_event_handler!.(_set_total_costs_to_infinite!, all_models, :window_failed)
     max_gap = max_multi_stage_gap(model=m.ext[:spineopt].instance, _default=0.05)
     min_iters = min_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=1)
     max_iters = max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
@@ -537,7 +538,8 @@ function _do_solve_multi_stage_model!(
             log_prefix=log_prefix_i,
             calculate_duals,
             save_outputs=(save_outputs && !is_adaptive),
-        ) || return false
+            skip_failed_windows=true,
+        )
         updated, gap = _update_stage_models!(m, max_gap; log_level)
         termination_msg = if i >= min_iters
             if gap <= max_gap
@@ -564,6 +566,7 @@ function _do_solve_multi_stage_model!(
                     log_prefix=final_log_prefix,
                     calculate_duals,
                     save_outputs=true,
+                    skip_failed_windows=true,
                 )
             end
             break
@@ -585,6 +588,11 @@ function _save_total_costs_by_time_stamp!(m, _k)
             total_costs_by_time_stamp[t_start] = costs
         end
     end
+    merge!(get!(m.ext[:spineopt].values, :total_costs_by_time_stamp, Dict()), total_costs_by_time_stamp)
+end
+
+function _set_total_costs_to_infinite!(m, _k)
+    total_costs_by_time_stamp = Dict(start(t) => Inf for t in time_slice(m))
     merge!(get!(m.ext[:spineopt].values, :total_costs_by_time_stamp, Dict()), total_costs_by_time_stamp)
 end
 
@@ -699,7 +707,13 @@ function _diff_ts(stage_m, child_m)
     child_costs_by_t = child_m.ext[:spineopt].values[:total_costs_by_time_stamp]
     stage_ts = TimeSeries(collect(keys(stage_costs_by_t)), collect(values(stage_costs_by_t)))
     child_ts = _aggregated(child_costs_by_t, stage_ts)
-    (child_ts - stage_ts) / ((child_ts + stage_ts) / 2)
+    diff_ts = (child_ts - stage_ts) / ((child_ts + stage_ts) / 2)
+    for (k, v) in diff_ts
+        if isnan(v)
+            diff_ts[k] = Inf
+        end
+    end
+    diff_ts
 end
 
 function _aggregated(vals_by_t, other_ts)
@@ -737,7 +751,7 @@ function _update_stage_model!(stage_m, time_slices, st; log_level)
         level = _get_level!(stage_m, t)
         alt_name = adaptation_alternatives(stage=st, i=level, _strict=false)
         if alt_name === nothing
-            @log log_level 1 "Can't adapt $t because it's already been fully adapted"
+            @log log_level 1 "Can't adapt $t because there's no (more) adaptation alternatives"
             continue
         end
         by_cls_name = get(stage_m.ext[:spineopt].pvals_by_alt_name, alt_name, nothing)
