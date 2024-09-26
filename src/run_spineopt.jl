@@ -497,6 +497,7 @@ struct SpineOptExt
             :model_solved => Set(),
             :window_about_to_solve => Set(),
             :window_solved => Set(),
+            :window_failed => Set(),
         )
         new(
             instance,
@@ -585,6 +586,7 @@ Below is a table of events, arguments, and when do they fire.
 | `:model_solved` | `m` | Right after model `m` is solved. |
 | `:window_about_to_solve` | `(m, k)` | Right before window `k` for model `m` is solved. |
 | `:window_solved` | `(m, k)` | Right after window `k` for model `m` is solved. |
+| `:window_failed` | `(m, k)` | Right after window `k` for model `m` fails to solve. |
 
 # Example
 

@@ -510,6 +510,7 @@ function _do_solve_model!(
     log_prefix="",
     calculate_duals=false,
     save_outputs=true,
+    skip_failed_windows=false,
 )
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
     k0 === nothing && return m
@@ -521,11 +522,18 @@ function _do_solve_model!(
         @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     end
     for k in Iterators.countfrom(k0)
-        @log log_level 1 "\n$full_model_name - Window $k of $(window_count(m)): $(current_window(m))"
+        @log log_level 1 "\n$full_model_name - window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
-        optimize_model!(m; log_level, output_suffix, calculate_duals, save_outputs) || return false
+        if optimize_model!(m; log_level, output_suffix, calculate_duals, save_outputs)
+            _call_event_handlers(m, :window_solved, k)
+        elseif skip_failed_windows
+            @error "$full_model_name - window $k failed to solve! - you might see a gap in the results"
+            _call_event_handlers(m, :window_failed, k)
+            unfix_history!(m)
+        else
+            return false
+        end
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        _call_event_handlers(m, :window_solved, k)
         if @timelog log_level 2 "$model_name - Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$model_name ... Rolling complete\n" break
         end
