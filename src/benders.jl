@@ -114,15 +114,15 @@ end
 """
 Add benders cuts to master problem.
 """
-function _add_mp_cuts!(m; log_level=3)
+function _add_mp_cuts!(m_mp, m; log_level=3)
     for add_constraint! in (
             add_constraint_mp_any_invested_cuts!,
             add_constraint_mp_min_res_gen_to_demand_ratio_cuts!,
         )
         name = name_from_fn(add_constraint!)
-        @timelog log_level 3 "- [$name]" add_constraint!(m)
+        @timelog log_level 3 "- [$name]" add_constraint!(m_mp, m)
     end
-    _update_constraint_names!(m)
+    _update_constraint_names!(m_mp)
 end
 
 """
@@ -205,6 +205,26 @@ function _update_benders_invested_available!(m_mp)
     end
 end
 
+function process_subproblem_solution(m, k)
+    _wait_for_dual_solves(m)
+    _do_save_outputs!(
+        m,
+        (
+            :bound_units_invested_available,
+            :bound_connections_invested_available,
+            :bound_storages_invested_available,
+            :unit_flow,
+        )
+    )
+    if k == 1
+        m.ext[:spineopt].extras[:sp_objective_value_bi] = 0
+    end
+    m.ext[:spineopt].extras[:sp_objective_value_bi] += sum(values(m.ext[:spineopt].values[:total_costs]))
+    if _is_last_window(m, k)
+        m.ext[:spineopt].extras[:sp_objective_value_bi] += sum(values(m.ext[:spineopt].values[:total_costs_tail]))
+    end
+end
+
 """
     _pval_by_entity(vals)
 
@@ -252,58 +272,8 @@ function _window_time_series(by_t)
     TimeSeries(inds, vals)
 end
 
-function process_subproblem_solution(m, k)
-    win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
-    win_weight = win_weight !== nothing ? win_weight : 1.0
-    _save_sp_marginal_values(m, k, win_weight)
-    _save_sp_objective_value(m, k, win_weight)
-    _save_sp_unit_flow(m)
-end
-
-function _save_sp_marginal_values(m, k, win_weight)
-    _wait_for_dual_solves(m)
-    _save_sp_marginal_values!(unit, m, :bound_units_invested_available, :units_invested_available_mv, k, win_weight)
-    _save_sp_marginal_values!(
-        connection, m, :bound_connections_invested_available, :connections_invested_available_mv, k, win_weight
-    )
-    _save_sp_marginal_values!(
-        node, m, :bound_storages_invested_available, :storages_invested_available_mv, k, win_weight
-    )
-end
-
 function _is_last_window(m, k)
     k == m.ext[:spineopt].temporal_structure[:window_count]
-end
-
-function _save_sp_marginal_values!(obj_cls, m, var_name, param_name, k, win_weight)
-    vals = Dict(
-        k => win_weight * realize(v)
-        for (k, v) in m.ext[:spineopt].values[var_name]
-        if start(current_window(m)) <= start(k.t) < end_(current_window(m))
-    )
-    if _is_last_window(m, k)
-        merge!(
-            vals,
-            Dict(
-                k => realize(v) for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= end_(current_window(m))
-            )
-        )
-    end
-    pval_by_ent = _pval_by_entity(vals, _is_last_window(m, k) ? nothing : end_(current_window(m)))
-    pvals = Dict(only(ent) => Dict(param_name => pval) for (ent, pval) in pval_by_ent)
-    add_object_parameter_values!(obj_cls, pvals; merge_values=true)
-end
-
-function _save_sp_objective_value(m, k, win_weight)
-    current_sp_obj_val = win_weight * sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
-    if _is_last_window(m, k)
-        current_sp_obj_val += sum(values(m.ext[:spineopt].values[:total_costs_tail]); init=0)
-    end
-    previous_sp_obj_val = k == 1 ? 0 : sp_objective_value_bi(benders_iteration=current_bi, _default=0)
-    total_sp_obj_val = previous_sp_obj_val + current_sp_obj_val
-    add_object_parameter_values!(
-        benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
-    )
 end
 
 function _save_sp_unit_flow(m)
@@ -321,9 +291,9 @@ function _save_sp_unit_flow(m)
     add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
 
-function save_mp_objective_bounds_and_gap!(m_mp)
+function save_mp_objective_bounds_and_gap!(m_mp, m)
     obj_lb = objective_value(m_mp)
-    obj_ub = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + value(realize(investment_costs(m_mp)))
+    obj_ub = m.ext[:spineopt].extras[:sp_objective_value_bi] + value(realize(investment_costs(m_mp)))
     gap = (obj_ub == obj_lb) ? 0 : 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)
     push!(m_mp.ext[:spineopt].benders_gaps, gap)
     push!(m_mp.ext[:spineopt].objective_lower_bounds, obj_lb)

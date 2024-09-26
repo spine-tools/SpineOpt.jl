@@ -424,7 +424,7 @@ function solve_model!(
                 log_prefix="$(log_prefix)Benders iteration $j $(_current_solution_string(m_mp)) - ",
                 extra_kwargs...,
             ) || break
-            @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
+            @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp, m)
             @log log_level 1 "Benders iteration $j complete"
             @log log_level 1 "Objective lower bound: $(_lb_str(m_mp))"
             @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))"
@@ -454,7 +454,7 @@ function solve_model!(
                 end
                 break
             end
-            @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+            @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp, m; log_level=log_level)
             unfix_history!(m)
             global current_bi = add_benders_iteration(j + 1)
         end
@@ -1102,17 +1102,17 @@ function _wait_for_dual_solves(m)
 end
 
 function _output_value_by_entity(by_suffix, model_end, overwrite_results_on_rolling=true, output_resolution=nothing)
-    by_entity = Dict()
+    d = Dict()
     for (suffix, by_window) in by_suffix
-        for ((w_start, w_end), values) in by_window
+        for ((w_start, w_end), by_entity) in by_window
             crop_to_window = overwrite_results_on_rolling && w_end < model_end
-            for (entity, value) in values
+            for (entity, value) in by_entity
                 t_keys = [k for (k, v) in pairs(entity) if v isa Tuple{DateTime,DateTime}]
                 t = t_start, t_end = isempty(t_keys) ? (w_start, w_end) : maximum(entity[k] for k in t_keys)
                 t_start < w_start && continue
                 crop_to_window && t_start >= w_end && continue
                 entity = _output_entity(entity, t_keys, suffix)
-                by_analysis_time = get!(by_entity, entity, OrderedDict())
+                by_analysis_time = get!(d, entity, OrderedDict())
                 by_t_interval = get!(by_analysis_time, w_start, OrderedDict())
                 by_t_interval[t] = value
             end
@@ -1120,7 +1120,7 @@ function _output_value_by_entity(by_suffix, model_end, overwrite_results_on_roll
     end
     Dict(
         entity => _output_value(_polish!(by_analysis_time), overwrite_results_on_rolling, output_resolution)
-        for (entity, by_analysis_time) in by_entity
+        for (entity, by_analysis_time) in d
     )
 end
 
