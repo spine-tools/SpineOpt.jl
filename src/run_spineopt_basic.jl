@@ -525,7 +525,9 @@ function _do_solve_model!(
     for k in Iterators.countfrom(k0)
         @log log_level 1 "\n$full_model_name - window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
-        if optimize_model!(m; log_level, output_suffix, calculate_duals, save_outputs)
+        if optimize_model!(
+            m; log_level, output_suffix, calculate_duals, save_outputs, print_conflict=!skip_failed_windows
+        )
             _call_event_handlers(m, :window_solved, k)
         elseif skip_failed_windows
             @error "$full_model_name - window $k failed to solve! - you might see a gap in the results"
@@ -606,7 +608,9 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_suffix=(;), save_outputs=true)
+function optimize_model!(
+    m::Model; log_level=3, calculate_duals=false, output_suffix=(;), save_outputs=true, print_conflict=true
+)
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -630,7 +634,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
             @warn "no solution available for $model_name - window $(current_window(m)) - moving on..."
         end
         true
-    elseif termination_st == MOI.INFEASIBLE
+    elseif termination_st == MOI.INFEASIBLE && print_conflict
         printstyled(
             string(
                 "model $model_name is infeasible - ",
