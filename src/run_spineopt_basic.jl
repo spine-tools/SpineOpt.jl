@@ -527,6 +527,11 @@ function _do_solve_multi_stage_model!(
     max_iters = max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
     gap = nothing
     for i in Iterators.countfrom(1)
+        extra_kwargs = if report_multi_stage_iterations(model=m.ext[:spineopt].instance)
+            (save_outputs=true, output_suffix=(output_suffix..., multi_stage_iteration=i,))
+        else
+            (save_outputs=(save_outputs && !is_adaptive), output_suffix=output_suffix)
+        end
         gap_str = gap === nothing ? "" : "(gap: $(_percentage_str(gap))"
         log_prefix_i = string(log_prefix, "multi-stage iteration $i $gap_str - ")
         _solve_stage_models!(m; log_level, log_prefix=log_prefix_i) || return false
@@ -536,11 +541,10 @@ function _do_solve_multi_stage_model!(
             update_names,
             write_as_roll,
             resume_file_path,
-            output_suffix,
             log_prefix=log_prefix_i,
             calculate_duals,
-            save_outputs=(save_outputs && !is_adaptive),
             skip_failed_windows=true,
+            extra_kwargs...,
         )
         updated, gap = _update_stage_models!(m, max_gap; log_level)
         termination_msg = if i >= min_iters
@@ -554,7 +558,7 @@ function _do_solve_multi_stage_model!(
         end
         if termination_msg !== nothing
             @log log_level 1 termination_msg
-            if save_outputs && is_adaptive
+            if save_outputs && is_adaptive && !report_multi_stage_iterations(model=m.ext[:spineopt].instance)
                 final_log_prefix = string(
                     log_prefix, "$termination_msg (gap: $(_percentage_str(gap))) - collecting outputs - "
                 )
