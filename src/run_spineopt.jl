@@ -495,7 +495,9 @@ struct SpineOptExt
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
     extras::Dict
-    function SpineOptExt(instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing)
+    function SpineOptExt(
+        instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing, pvals_by_alt_name=Dict()
+    )
         if stage === nothing
             intermediate_results_folder = tempname(; cleanup=false)
             mkpath(intermediate_results_folder)
