@@ -607,7 +607,7 @@ function add_event_handler!(fn, m, event)
     push!(listeners, fn)
 end
 
-function _save_result!(m, k; filter_accepts_variable=(x -> true))
+function _save_result!(m, k=nothing; filter_accepts_variable=(x -> true))
     m.ext[:spineopt].results[k] = Dict(
         name => copy(m.ext[:spineopt].values[name])
         for name in keys(m.ext[:spineopt].variables)
@@ -615,10 +615,9 @@ function _save_result!(m, k; filter_accepts_variable=(x -> true))
     )
 end
 
-function _set_result!(m, k)
+function _set_result!(m, k=nothing)
     result = get(m.ext[:spineopt].results, k, nothing)
     result === nothing && return
-    @info "reusing solution for $(_model_name(m)) - $k"
     for (name, variable_result) in result
         val = m.ext[:spineopt].values[name]
         for (ind, r) in variable_result
@@ -628,11 +627,15 @@ function _set_result!(m, k)
     m.ext[:spineopt].has_results[] = true
 end
 
-function _set_starting_point!(m, k)
+function _set_starting_point!(m, k=nothing)
     for (name, variable_result) in get(m.ext[:spineopt].results, k, ())
-        var = m.ext[:spineopt].variables[name]
+        var_by_ind = m.ext[:spineopt].variables[name]
+        var_def = m.ext[:spineopt].variables_definition[name]
         for (ind, r) in variable_result
-            var[ind] isa VariableRef && set_start_value(var[ind], r)
+            for new_ind in var_def[:indices](m; _drop_key(ind, :t)..., t=to_time_slice(m; t=ind.t))
+                var = var_by_ind[new_ind]
+                var isa VariableRef && set_start_value(var, r)
+            end
         end
     end
 end
