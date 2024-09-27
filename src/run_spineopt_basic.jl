@@ -758,6 +758,13 @@ function _update_stage_model!(stage_m, time_slices, st; log_level)
         alt_name = adaptation_alternatives(stage=st, i=level, _strict=false)
         if alt_name === nothing
             @log log_level 1 "Can't adapt $t because there's no (more) adaptation alternatives"
+            adjacent_t = [t_before_t(stage_m; t_after=t); t_before_t(stage_m; t_before=t)]
+            if !isempty(adjacent_t)
+                adjacent_t_str = join(adjacent_t, ", ", " and ")
+                @log log_level 1 "will try to adapt adjacent time-slices instead: $adjacent_t_str"
+                append!(time_slices, adjacent_t)
+                unique!(time_slices)
+            end
             continue
         end
         by_cls_name = get(stage_m.ext[:spineopt].pvals_by_alt_name, alt_name, nothing)
