@@ -519,10 +519,13 @@ function _do_solve_multi_stage_model!(
     calculate_duals=false,
     save_outputs=true,
 )
-    all_models = [m; collect(values(m.ext[:spineopt].model_by_stage))]
+    stage_models = collect(values(m.ext[:spineopt].model_by_stage))
+    all_models = [m; stage_models]
     is_adaptive = any(adaptation_alternatives(stage=st, _strict=false) !== nothing for st in stage())
     add_event_handler!.(_save_total_costs_by_time_stamp!, all_models, :window_solved)
     add_event_handler!.(_set_total_costs_to_infinite!, all_models, :window_failed)
+    add_event_handler!.(_set_starting_point!, stage_models, :model_about_to_solve)
+    add_event_handler!.(_save_result!, stage_models, :model_solved)
     max_gap = max_multi_stage_gap(model=m.ext[:spineopt].instance, _default=0.05)
     min_iters = min_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=1)
     max_iters = max_multi_stage_iterations(model=m.ext[:spineopt].instance, _default=10)
