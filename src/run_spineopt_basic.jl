@@ -731,17 +731,11 @@ end
 function _aggregated(vals_by_t, other_ts)
     inds = collect(keys(other_ts))
     ts = TimeSeries(inds, fill(0.0, length(inds)))
-    for (i, next_i) in zip(inds[1 : end - 1], inds[2:end])
+    for (i, next_i) in zip(inds, [inds[2:end]; typemax(DateTime)])
         for (j, v) in vals_by_t
             if i <= j < next_i
                 ts[i] += v
             end
-        end
-    end
-    i = last(inds)
-    for (j, v) in vals_by_t
-        if i <= j
-            ts[i] += v
         end
     end
     ts
