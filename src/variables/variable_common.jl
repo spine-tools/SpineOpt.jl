@@ -111,7 +111,7 @@ function add_variable!(
         end
     end
     isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
-        vars, _representative_periods_mapping(m, vars, indices)
+        vars, _representative_periods_mapping(m, vars, indices, replacement_expressions)
     )
     vars
 end
@@ -281,7 +281,7 @@ end
 
 A `Dict` mapping non representative indices to the variable for the representative index.
 """
-function _representative_periods_mapping(m::Model, vars::Dict, indices::Function)
+function _representative_periods_mapping(m::Model, vars::Dict, indices::Function, replacement_expressions::Union{Dict, OrderedDict})
     # By default, `indices` skips represented time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
     # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
@@ -290,5 +290,5 @@ function _representative_periods_mapping(m::Model, vars::Dict, indices::Function
     representative_indices = indices(m)
     all_indices = indices(m, temporal_block=anything)
     represented_indices = setdiff(all_indices, representative_indices)
-    Dict(ind => vars[_representative_index(m, ind, indices)] for ind in represented_indices)
+    Dict(ind => vars[_representative_index(m, ind, indices)] for ind in represented_indices if !haskey(replacement_expressions, ind))
 end
