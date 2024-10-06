@@ -1102,7 +1102,7 @@ function _collect_output_values(m)
         by_suffix === nothing && continue
         key = (output_name, overwrite)
         haskey(values, key) && continue
-        out_res = output_resolution(output=output(output_name))
+        out_res = output_resolution(output=output(output_name), stage=nothing)
         values[key] = _output_value_by_entity(by_suffix, model_end(model=m.ext[:spineopt].instance), overwrite, out_res)
     end
     values
