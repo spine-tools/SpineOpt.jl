@@ -633,7 +633,7 @@ function _set_starting_point!(m, k=nothing)
         var_def = m.ext[:spineopt].variables_definition[name]
         for (ind, r) in variable_result
             for new_ind in var_def[:indices](m; _drop_key(ind, :t)..., t=to_time_slice(m; t=ind.t))
-                var = var_by_ind[new_ind]
+                var = get(var_by_ind, new_ind, nothing)
                 var isa VariableRef && set_start_value(var, r)
             end
         end
