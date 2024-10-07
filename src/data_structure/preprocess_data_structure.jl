@@ -904,6 +904,30 @@ _prod_or_nothing(args::Vector) = any(isnothing.(args)) ? nothing : *(args...)
 _prod_or_nothing(args::Vector{T}) where T<:Call = Call(_prod_or_nothing, args)
 
 function generate_unit_commitment_parameters()
+    models = model()
+    isempty(models) && return
+    starts = [model_start(model=m) for m in models]
+    instance = models[argmin(starts)]
+    dur_unit = _model_duration_unit(instance)
+    dur_value = parameter_value(dur_unit(1)) 
+
+    for u in indices(online_variable_type)
+        unit_var_type = online_variable_type(unit=u)   
+        if unit_var_type in (:unit_online_variable_type_binary, :unit_online_variable_type_integer)
+            min_up = min_up_time(unit=u)
+            min_down = min_down_time(unit=u)
+            params_to_add = Dict() 
+            if isnothing(min_up)
+                params_to_add[:min_up_time] = dur_value
+            end
+            if isnothing(min_down)
+                params_to_add[:min_down_time] = dur_value
+            end
+            if !isempty(params_to_add)
+                add_object_parameter_values!(unit, Dict(u => params_to_add))
+            end
+        end
+    end  
     unit_with_switched_variable_set = unique(
         Iterators.flatten(
             (
