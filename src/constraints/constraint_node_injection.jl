@@ -73,10 +73,11 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
             + sum(demand(m; node=n, stochastic_scenario=s, t=t) * coef for (t, coef) in _first_repr_t_comb(m, t_after))
             + sum(
                 + sum(
-                    fractional_demand(m; node=n, stochastic_scenario=s, t=t) * coef
+                    + fractional_demand(m; node=n, stochastic_scenario=s, t=t)
+                    * demand(m; node=ng, stochastic_scenario=s, t=t)
+                    * coef
                     for (t, coef) in _first_repr_t_comb(m, t_after)
                 )
-                * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t_after))
                 for ng in groups(n);
                 init=0,
             )
