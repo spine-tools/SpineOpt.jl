@@ -315,6 +315,10 @@ function _generate_representative_time_slice!(m::Model)
             end
             blks = keys(representative_blk_to_coef)
             coefs = values(representative_blk_to_coef)
+            coefs_sum = sum(coefs)
+            if !isapprox(coefs_sum, 1)
+                error("sum of coefficients for $represented_blk, $represented_t_start must be 1 - not $coefs_sum")
+            end
             for representative_ts in zip((time_slice(m; temporal_block=blk) for blk in blks)...)
                 representative_t_duration = minimum(end_(t) - start(t) for t in representative_ts)
                 represented_t_end = represented_t_start + representative_t_duration
