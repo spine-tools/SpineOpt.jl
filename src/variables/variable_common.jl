@@ -65,12 +65,14 @@ function add_variable!(
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
-    t = vcat(history_time_slices, time_slice(m))
-    first_ind = iterate(indices(m; t=t))
+    first_ind = iterate(indices(m))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
-        ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
+        ind => _add_variable!(m, name, ind)
+        for kwargs in ((t=history_time_slices, temporal_block=anything), (t=time_slice(m),))
+        for ind in indices(m; kwargs...)
+        if !haskey(replacement_expressions, ind)
     )
     history_vars_by_ind = Dict(
         ind => [
@@ -274,18 +276,22 @@ function _representative_index(m, ind, indices)
 end
 
 """
-    _representative_periods_mapping(v::Dict{VariableRef}, indices::Function)
-
 A `Dict` mapping non representative indices to the variable for the representative index.
 """
-function _representative_periods_mapping(m::Model, vars::Dict, indices::Function)
+function _representative_periods_mapping(
+    m::Model, vars::Dict, indices::Function, replacement_expressions::Union{Dict, OrderedDict}
+)
     # By default, `indices` skips represented time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
     # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
     # To include represented time slices, we need to specify `temporal_block=anything`.
     # Note that for node_state and investment variables, `represented_indices`, below, will be empty.
     representative_indices = indices(m)
-    all_indices = indices(m, temporal_block=anything)
+    all_indices = indices(m; temporal_block=anything)
     represented_indices = setdiff(all_indices, representative_indices)
-    Dict(ind => vars[_representative_index(m, ind, indices)] for ind in represented_indices)
+    Dict(
+        ind => vars[_representative_index(m, ind, indices)]
+        for ind in represented_indices
+        if !haskey(replacement_expressions, ind)
+    )
 end
