@@ -249,34 +249,39 @@ function _fix(var::VariableRef, value::Number)
 end
 
 """
-    _representative_index(ind)
-
-The representative index corresponding to the given one.
+A `Dict` mapping representative indidces to coefficient.
 """
-function _representative_index(m, ind, indices)
-    representative_t = representative_time_slice(m, ind.t)
-    representative_inds = indices(m; ind..., t=representative_t)
-    if isempty(representative_inds)
+function _representative_index_to_coefficient(m, ind, indices)
+    representative_t_to_coef_arr = representative_time_slice_combinations(m, ind.t)
+    representative_inds_to_coef_arr = [
+        Dict(indices(m; ind..., t=representative_t) => coef for (representative_t, coef) in representative_t_to_coef)
+        for representative_t_to_coef in representative_t_to_coef_arr
+    ]
+    filter!(representative_inds_to_coef_arr) do representative_inds_to_coef
+        !any(isempty.(keys(representative_inds_to_coef)))
+    end
+    if isempty(representative_inds_to_coef_arr)
         representative_blocks = unique(
             blk
-            for t in representative_t
+            for representative_t_to_coef in representative_t_to_coef_arr
+            for t in keys(representative_t_to_coef)
             for blk in blocks(t)
             if representative_periods_mapping(temporal_block=blk) === nothing
         )
         node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
         error(
-            "can't find a representative index for $ind -",
+            "can't find a linear representative index combination for $ind -",
             " this is probably because ",
             node_or_unit,
             " is not associated to any of the representative temporal_blocks ",
             join(("'$blk'" for blk in representative_blocks), ", "),
         )
     end
-    first(representative_inds)
+    Dict(first(inds) => coef for (inds, coef) in first(representative_inds_to_coef_arr))
 end
 
 """
-A `Dict` mapping non representative indices to the variable for the representative index.
+A `Dict` mapping non representative indices to the variable or expression for the representative index.
 """
 function _representative_periods_mapping(
     m::Model, vars::Dict, indices::Function, replacement_expressions::Union{Dict, OrderedDict}
@@ -290,7 +295,10 @@ function _representative_periods_mapping(
     all_indices = indices(m; temporal_block=anything)
     represented_indices = setdiff(all_indices, representative_indices)
     Dict(
-        ind => vars[_representative_index(m, ind, indices)]
+        ind => sum(
+            coef * vars[representative_ind]
+            for (representative_ind, coef) in _representative_index_to_coefficient(m, ind, indices)
+        )
         for ind in represented_indices
         if !haskey(replacement_expressions, ind)
     )

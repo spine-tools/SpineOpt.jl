@@ -296,21 +296,30 @@ end
 Generate a `Dict` mapping all non-representative to representative time-slices
 """
 function _generate_representative_time_slice!(m::Model)
-    m.ext[:spineopt].temporal_structure[:representative_time_slice] = d = Dict()
+    m.ext[:spineopt].temporal_structure[:representative_time_slice_combinations] = d = Dict()
     model_blocks = Set(members(temporal_block()))
+    representative_blk_by_index = Dict(
+        round(Int, representative_period_index(temporal_block=blk)) => blk
+        for blk in indices(representative_period_index)
+    )
     for represented_blk in indices(representative_periods_mapping)
-        for (represented_t_start, representative_blk_name) in representative_periods_mapping(
+        for (represented_t_start, representative_combination) in representative_periods_mapping(
             temporal_block=represented_blk
         )
-            representative_blk = temporal_block(representative_blk_name)
-            if !(representative_blk in model_blocks)
-                error("representative temporal block $representative_blk is not in model $(m.ext[:spineopt].instance)")
+            representative_blk_to_coef = _representative_block_to_coefficient(
+                representative_combination, representative_blk_by_index
+            )
+            invalid_blks = setdiff(keys(representative_blk_to_coef), model_blocks)
+            if !isempty(invalid_blks)
+                error("representative temporal block(s) $invalid_blks are not defined")
             end
-            for representative_t in time_slice(m, temporal_block=representative_blk)
-                representative_t_duration = end_(representative_t) - start(representative_t)
+            blks = keys(representative_blk_to_coef)
+            coefs = values(representative_blk_to_coef)
+            for representative_ts in zip((time_slice(m; temporal_block=blk) for blk in blks)...)
+                representative_t_duration = minimum(end_(t) - start(t) for t in representative_ts)
                 represented_t_end = represented_t_start + representative_t_duration
                 new_d = Dict(
-                    represented_t => [representative_t]
+                    represented_t => [Dict(zip(representative_ts, coefs))]
                     for represented_t in to_time_slice(m, t=TimeSlice(represented_t_start, represented_t_end))
                     if represented_blk in represented_t.blocks
                 )
@@ -319,6 +328,17 @@ function _generate_representative_time_slice!(m::Model)
             end
         end
     end
+end
+
+function _representative_block_to_coefficient(representative_combination::Symbol, _representative_blk_by_index)
+    Dict(temporal_block(representative_combination) => 1)
+end
+function _representative_block_to_coefficient(representative_combination::Array, representative_blk_by_index)
+    invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
+    if !isempty(invalid_indexes)
+        error("there's no representative temporal block(s) with indexes $invalid_indexes") 
+    end
+    Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
 end
 
 function _generate_as_number_or_call!(m)
@@ -454,7 +474,7 @@ Create the Benders master problem temporal structure for given model.
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window!(m_mp)
     generate_time_slice!(m_mp)
-    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice] = Dict()
+    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice_combinations] = Dict()
 end
 
 """
@@ -615,9 +635,11 @@ An `Array` of `TimeSlice`s in model `m` that overlap the given `t`, where `t` *m
 """
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
 
-representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, [t])
+function representative_time_slice_combinations(m, t)
+    get(m.ext[:spineopt].temporal_structure[:representative_time_slice_combinations], t, [Dict(t => 1)])
+end
 
-_first_repr_t(m, t) = first(representative_time_slice(m, t))
+_first_repr_t_comb(m, t) = first(representative_time_slice_combinations(m, t))
 
 function output_time_slice(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slice], output, nothing)
