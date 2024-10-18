@@ -125,7 +125,6 @@ include("variables/variable_units_taken_out_of_service.jl")
 include("variables/variable_user_constraint_slack.jl")
 # Expressions
 include("expressions/capacity_margin.jl")
-include("expressions/expression_represented_node_state.jl")
 # Objective
 include("objective/connection_flow_costs.jl")
 include("objective/connection_investment_costs.jl")
