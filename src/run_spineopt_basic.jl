@@ -136,6 +136,7 @@ Add SpineOpt expressions to the given model.
 function _add_expressions!(m; log_level=3)
     for add_expression! in (
             add_expression_capacity_margin!,
+            #add_expression_represented_node_state!,
         )
         name = name_from_fn(add_expression!)
         @timelog log_level 3 "- [$name]" add_expression!(m)
@@ -208,6 +209,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_ramp_down!,
             add_constraint_ramp_up!,
             add_constraint_ratio_out_in_connection_intact_flow!,
+            #add_constraint_represented_node_state_capacity!,
             add_constraint_storage_lifetime!,
             add_constraint_storage_line_pack!,
             add_constraint_storages_invested_available!,
@@ -547,7 +549,7 @@ function _do_solve_multi_stage_model!(
             resume_file_path,
             log_prefix=log_prefix_i,
             calculate_duals,
-            skip_failed_windows=true,
+            skip_failed_windows=is_adaptive,
             extra_kwargs...,
         )
         updated, gap = _update_stage_models!(m, max_gap; log_level)

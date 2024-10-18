@@ -34,25 +34,22 @@ See also
 [node\_state\_cap](@ref),
 [has\_state](@ref).
 """
-function add_constraint_node_state_capacity!(m::Model)
+function add_constraint_represented_node_state_capacity!(m::Model)
     _add_constraint!(
-        m, :node_state_capacity, constraint_node_state_capacity_indices, _build_constraint_node_state_capacity
+        m, :represented_node_state_capacity, constraint_represented_node_state_capacity_indices, _build_constraint_represented_node_state_capacity
     )
 end
 
-function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
-    @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
-    @build_constraint(
-        + sum(
-            + node_state[n, s, t]
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
-            init=0,
-        )
+function _build_constraint_represented_node_state_capacity(m::Model, ng, s_path, t)
+    @fetch storages_invested_available = m.ext[:spineopt].variables
+    @fetch represented_node_state = m.ext[:spineopt].expressions    
+    @build_constraint(        
+        + represented_node_state[ng, s_path, t]
         <=
         + sum(
-            + node_state_cap(m; node=ng, stochastic_scenario=s, t=t)
+            + node_state_cap(m; node=ng, stochastic_scenario=s_path, t=t)
             * (
-                + number_of_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
+                + number_of_storages(m; node=ng, stochastic_scenario=s_path, t=t, _default=_default_nb_of_storages(ng))
                 + sum(
                     storages_invested_available[n, s, t1]
                     for (n, s, t1) in storages_invested_available_indices(
@@ -60,18 +57,16 @@ function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
                     );
                     init=0,
                 )
-            )
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
-            init=0,
+            )            
         )
-    )
+    )    
 end
 
-function constraint_node_state_capacity_indices(m::Model)
+function constraint_represented_node_state_capacity_indices(m::Model)
     (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(m; node=intersect(indices(node_state_cap), indices(candidate_storages)))
-        if (has_state(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
+        for (ng, t) in node_time_indices(m; node=indices(node_state_cap))
+        if (has_state(node=ng) && is_longterm_storage(node=ng) && !_is_representative(t))
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
@@ -91,7 +86,7 @@ Form the stochastic index array for the `:constraint_node_state_capacity` constr
 
 Uses stochastic path indices of the `node_state` variables. Keyword arguments can be used to filter the resulting
 """
-function constraint_node_state_capacity_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
+function constraint_represented_node_state_capacity_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
     f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
-    filter(f, constraint_node_state_capacity_indices(m))
+    filter(f, constraint_represented_node_state_capacity_indices(m))
 end
