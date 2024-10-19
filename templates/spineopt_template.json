@@ -259,6 +259,7 @@
         ["node", "tax_net_unit_flow", null, null, "Tax costs for net incoming and outgoing `unit_flows` on this `node`. Incoming flows accrue positive net taxes, and outgoing flows accrue negative net taxes."],
         ["node", "tax_out_unit_flow", null, null, "Tax costs for outgoing `unit_flows` from this `node`. E.g. EUR/MWh."],
         ["node", "upward_reserve", false, null, "Identifier for `node`s providing upward reserves"],
+        ["node", "is_longterm_storage", false, null, "If true, `node` has a state variable for representative and non-representative timeslices"],
         ["output", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["output", "output_resolution", null, null, "Temporal resolution of the output variables associated with this `output`."],
         ["report", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
