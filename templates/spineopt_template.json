@@ -631,7 +631,6 @@
         ["report","all_constraint_dual",null],
         ["report","all_derived_parameter",null],
         ["report","all_objective",null],
-        ["report","all_postprocess_result",null],
         ["report","all_variable",null],
         ["report","all_variable_reduced_cost",null]
     ],
@@ -1425,30 +1424,6 @@
             [
                 "all_objective",
                 "variable_om_costs"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "all_postprocess_result",
-                "connection_avg_intact_throughflow"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "all_postprocess_result",
-                "connection_avg_throughflow"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "all_postprocess_result",
-                "contingency_is_binding"
             ],
             null
         ],
