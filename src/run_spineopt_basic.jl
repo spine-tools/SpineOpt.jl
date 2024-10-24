@@ -383,6 +383,7 @@ function _fix_points(out_res, child_m)
     w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
     next_point = w_start
     points = Set()
+
     for i in Iterators.countfrom(1)
         res = out_res_pv(i=i)
         res === nothing && break
@@ -550,15 +551,19 @@ function _do_solve_multi_stage_model!(
             skip_failed_windows=is_adaptive,
             extra_kwargs...,
         )
-        updated, gap = _update_stage_models!(m, max_gap; log_level)
-        termination_msg = if i >= min_iters
-            if gap <= max_gap
-                "Multi-stage tolerance satisfied at iter $i"
-            elseif !updated
-                "Time-slice adaptation fully completed at iter $i"
+        if is_adaptive
+            updated, gap = _update_stage_models!(m, max_gap; log_level)
+            termination_msg = if i >= min_iters
+                if gap <= max_gap
+                    "Multi-stage tolerance satisfied at iter $i"
+                elseif !updated
+                    "Time-slice adaptation fully completed at iter $i"
+                end
+            elseif i >= max_iters || !is_adaptive
+                "Maximum number of multi-stage iterations reached ($i)"
             end
-        elseif i >= max_iters
-            "Maximum number of multi-stage iterations reached ($i)"
+        else
+            termination_msg = "Mutli-state execution complete"
         end
         if termination_msg !== nothing
             @log log_level 1 termination_msg
