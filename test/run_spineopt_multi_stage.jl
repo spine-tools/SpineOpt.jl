@@ -39,15 +39,19 @@ function _ref_setup(storage_count)
             ("stochastic_scenario", "realisation"),
             ("node", "demand_node"),
             ("unit", "other_unit"),
-            ("report", "my_report"),
+            ("report", "report_x"),
+            ("report", "report_y"),
         ],
         :relationships => Any[
             ("model__default_temporal_block", ("test_model", "flat")),
             ("model__default_stochastic_structure", ("test_model", "deterministic")),
             ("stochastic_structure__stochastic_scenario", ("deterministic", "realisation")),
             ("unit__to_node", ("other_unit", "demand_node")),
-            ("report__output", ("my_report", "node_state")),
-            ("report__output", ("my_report", "storages_invested_available")),
+            ("report__output", ("report_x", "node_state")),
+            ("report__output", ("report_x", "storages_invested_available")),
+            #FIXME: Uncomment either of the following lines will fail the test.
+            # ("report__output", ("report_y", "node_state")),
+            # ("report__output", ("report_y", "storages_invested_available")),
         ],
         :object_parameter_values => Any[
             ("model", "test_model", "model_start", unparse_db_value(m_start)),
