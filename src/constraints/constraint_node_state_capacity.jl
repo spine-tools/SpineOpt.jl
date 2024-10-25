@@ -71,6 +71,7 @@ function constraint_node_state_capacity_indices(m::Model)
     (
         (node=ng, stochastic_path=path, t=t)
         for (ng, t) in node_time_indices(m; node=intersect(indices(node_state_cap), indices(candidate_storages)))
+        if (has_state(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

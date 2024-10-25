@@ -25,9 +25,10 @@ for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
     node = intersect(node, SpineOpt.node(has_state=true))
-    node_stochastic_time_indices(
+    
+    node_state_stochastic_time_indices(
         m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
-    )
+    )  
 end
 
 function node_state_ub(m; node, kwargs...)

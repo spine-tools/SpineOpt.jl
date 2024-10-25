@@ -135,7 +135,7 @@ Add SpineOpt expressions to the given model.
 """
 function _add_expressions!(m; log_level=3)
     for add_expression! in (
-            add_expression_capacity_margin!,
+            add_expression_capacity_margin!,            
         )
         name = name_from_fn(add_expression!)
         @timelog log_level 3 "- [$name]" add_expression!(m)
@@ -207,7 +207,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_operating_point_rank!,
             add_constraint_ramp_down!,
             add_constraint_ramp_up!,
-            add_constraint_ratio_out_in_connection_intact_flow!,
+            add_constraint_ratio_out_in_connection_intact_flow!,            
             add_constraint_storage_lifetime!,
             add_constraint_storage_line_pack!,
             add_constraint_storages_invested_available!,
@@ -383,6 +383,7 @@ function _fix_points(out_res, child_m)
     w_start, w_end = minimum(start.(time_slice(child_m))), maximum(end_.(time_slice(child_m)))
     next_point = w_start
     points = Set()
+
     for i in Iterators.countfrom(1)
         res = out_res_pv(i=i)
         res === nothing && break
@@ -547,18 +548,22 @@ function _do_solve_multi_stage_model!(
             resume_file_path,
             log_prefix=log_prefix_i,
             calculate_duals,
-            skip_failed_windows=true,
+            skip_failed_windows=is_adaptive,
             extra_kwargs...,
         )
-        updated, gap = _update_stage_models!(m, max_gap; log_level)
-        termination_msg = if i >= min_iters
-            if gap <= max_gap
-                "Multi-stage tolerance satisfied at iter $i"
-            elseif !updated
-                "Time-slice adaptation fully completed at iter $i"
+        if is_adaptive
+            updated, gap = _update_stage_models!(m, max_gap; log_level)
+            termination_msg = if i >= min_iters
+                if gap <= max_gap
+                    "Multi-stage tolerance satisfied at iter $i"
+                elseif !updated
+                    "Time-slice adaptation fully completed at iter $i"
+                end
+            elseif i >= max_iters || !is_adaptive
+                "Maximum number of multi-stage iterations reached ($i)"
             end
-        elseif i >= max_iters
-            "Maximum number of multi-stage iterations reached ($i)"
+        else
+            termination_msg = "Mutli-state execution complete"
         end
         if termination_msg !== nothing
             @log log_level 1 termination_msg
