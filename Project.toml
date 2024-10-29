@@ -20,6 +20,7 @@ SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
+DataStructures = "0.18"
 Distributions = "0.25"
 HiGHS = "1"
 JSON = "0.21"
