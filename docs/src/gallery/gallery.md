@@ -1,19 +1,10 @@
 # How to run the examples
 
-To run the examples, we recommend to follow the instructions [here](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/#Spine-Toolbox-workflow) to set up the basic SpineToolbox workflow. Then, follow the following steps to load the example:
-- Select the *input* data store and in the *Data Store Properties* window:\
-	`Dialect: sqlite`\
-	`New Spine db` (button bottom left)\
-	`Save` - SpineToolbox will default to a location
-- Double click on *input* to open the DB Editor
-- Select `File` > `Import` > Choose the JSON file corresponding to the example
-- Commit the changes to the database
-
-Remember to create your *output* data store, and you will be ready to run the examples.
+To run the examples, we recommend to follow the instructions [here](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/recommended_workflow/) to set up the basic SpineToolbox workflow, loading the JSON example file in your input data store depending on the example you want to run. We recommend creating a new SpineToolbox project for each example.
 
 # Examples
 
-Each example has a link to the JSON file with the input data, which you can load as described before.
+Each example has a link to the JSON file with the input data.
 
 - [**Simple system**](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json): Example with two nodes and units, including the relationships among them for a temporal block with duration of one day.
 - [**Stochastic model**](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/stochastic.json): Setup of stochastic structures for three forecast scenarios.
