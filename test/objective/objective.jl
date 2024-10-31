@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "objective" begin
+function _test_objective_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -66,8 +66,13 @@
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
-    @testset "fixed_om_costs" begin
-        _load_test_data(url_in, test_data)
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function test_fom_cost_case_1()
+    @testset "fom_cost case 1" begin
+        url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
         number_of_units = 2
@@ -104,8 +109,85 @@
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
     end
-    @testset "fuel_costs" begin
-        _load_test_data(url_in, test_data)
+end
+
+function test_fom_cost_case_2()
+    @testset "fom_cost case 2" begin
+        url_in = _test_objective_setup()
+        unit_capacity = 100
+        fom_cost = 8
+        number_of_units = 0
+        # The template provides the parameter `number_of_units` with a default value of 1.
+        candidate_units = 3
+        object_parameter_values = [
+            ["unit", "unit_ab", "fom_cost", fom_cost],
+            ["unit", "unit_ab", "number_of_units", number_of_units],
+            ["unit", "unit_ab", "candidate_units", candidate_units],
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            relationships=relationships, 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+        
+        duration = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = fom_cost * unit_capacity * duration *
+        sum(             
+            (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) 
+            for (s, t) in zip(scenarios, time_slices)
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+end
+
+function test_fom_cost_case_3()
+    @testset "fom_cost case 3" begin
+        url_in = _test_objective_setup()
+        unit_capacity = 100
+        fom_cost = 8
+        number_of_units = 2
+        object_parameter_values = [
+            ["unit", "unit_ab", "fom_cost", fom_cost],
+            ["unit", "unit_ab", "number_of_units", number_of_units],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        
+        duration = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = fom_cost * unit_capacity * duration *
+        sum(             
+            number_of_units for (s, t) in zip(scenarios, time_slices)
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+end
+
+function test_fuel_cost()
+    @testset "fuel_cost" begin
+        url_in = _test_objective_setup()
         fuel_cost = 125
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
@@ -119,8 +201,11 @@
         expected_obj = fuel_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
     end
-    @testset "investment_costs" begin
-        _load_test_data(url_in, test_data)
+end
+
+function test_unit_investment_cost()
+    @testset "unit_investment_cost" begin
+        url_in = _test_objective_setup()
         unit_investment_cost = 1000
         candidate_units = 3
         object_parameter_values = [
@@ -142,8 +227,11 @@
         )
         @test observed_obj == expected_obj
     end
+end
+
+function test_node_slack_penalty()
     @testset "node_slack_penalty" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_objective_setup()
         node_a_slack_penalty = 0.6
         node_b_slack_penalty = 0.4
         object_parameter_values = [
@@ -172,8 +260,11 @@
         )
         @test observed_obj == expected_obj
     end
+end
+
+function test_user_constraint_slack_penalty()
     @testset "user_constraint_slack_penalty" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_objective_setup()
         uc_slack_penalty = 0.6
         objects = [["user_constraint", "ucx"]]
         relationships = [["node__user_constraint", ["node_a", "ucx"]]]
@@ -200,8 +291,11 @@
         )
         @test observed_obj == expected_obj
     end
-    @testset "shut_down_costs" begin
-        _load_test_data(url_in, test_data)
+end
+
+function test_shut_down_cost()
+    @testset "shut_down_cost" begin
+        url_in = _test_objective_setup()
         shut_down_cost = 180
         object_parameter_values = [["unit", "unit_ab", "shut_down_cost", shut_down_cost]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -215,8 +309,11 @@
         expected_obj = shut_down_cost * units_shut_down[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
     end
-    @testset "start_up_costs" begin
-        _load_test_data(url_in, test_data)
+end
+
+function test_start_up_cost()
+    @testset "start_up_cost" begin
+        url_in = _test_objective_setup()
         start_up_cost = 220
         object_parameter_values = [["unit", "unit_ab", "start_up_cost", start_up_cost]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -230,8 +327,11 @@
         expected_obj = start_up_cost * units_started_up[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
     end
+end
+
+function test_vom_cost()
     @testset "vom_cost" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_objective_setup()
         vom_cost = 150
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
@@ -245,8 +345,11 @@
         expected_obj = vom_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
     end
-    @testset "connection_flow_costs" begin
-        _load_test_data(url_in, test_data)
+end
+
+function test_connection_flow_cost()
+    @testset "connection_flow_cost" begin
+        url_in = _test_objective_setup()
         connection_flow_cost = 185
         objects = [["connection", "connection_ab"]]
         relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
@@ -271,8 +374,11 @@
         )
         @test observed_obj == expected_obj
     end
-    @testset "units_on_costs" begin
-        _load_test_data(url_in, test_data)
+end
+
+function test_units_on_cost()
+    @testset "units_on_cost" begin
+        url_in = _test_objective_setup()
         units_on_cost = 913
         object_parameter_values = [["unit", "unit_ab", "units_on_cost", units_on_cost]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -284,4 +390,19 @@
         expected_obj = 2 * units_on_cost * units_on[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
     end
+end
+
+@testset "objective" begin
+    test_fom_cost_case_1()
+    test_fom_cost_case_2()
+    test_fom_cost_case_3()
+    test_fuel_cost()
+    test_unit_investment_cost()
+    test_node_slack_penalty()
+    test_user_constraint_slack_penalty()
+    test_shut_down_cost()
+    test_start_up_cost()
+    test_vom_cost()
+    test_connection_flow_cost()
+    test_units_on_cost()
 end
