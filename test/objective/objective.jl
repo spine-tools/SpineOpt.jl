@@ -70,8 +70,8 @@ function _test_objective_setup()
     url_in
 end
 
-function test_fom_cost_case_1()
-    @testset "fom_cost case 1" begin
+function test_fom_cost_case1()
+    @testset "fom_cost case1" begin
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
@@ -111,8 +111,8 @@ function test_fom_cost_case_1()
     end
 end
 
-function test_fom_cost_case_2()
-    @testset "fom_cost case 2" begin
+function test_fom_cost_case2()
+    @testset "fom_cost case2" begin
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
@@ -153,8 +153,8 @@ function test_fom_cost_case_2()
     end
 end
 
-function test_fom_cost_case_3()
-    @testset "fom_cost case 3" begin
+function test_fom_cost_case3()
+    @testset "fom_cost case3" begin
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
@@ -393,9 +393,9 @@ function test_units_on_cost()
 end
 
 @testset "objective" begin
-    test_fom_cost_case_1()
-    test_fom_cost_case_2()
-    test_fom_cost_case_3()
+    test_fom_cost_case1()
+    test_fom_cost_case2()
+    test_fom_cost_case3()
     test_fuel_cost()
     test_unit_investment_cost()
     test_node_slack_penalty()
