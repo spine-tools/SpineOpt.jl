@@ -34,7 +34,7 @@ pages = [
     "Introduction" => "index.md",
     "Getting Started" => Any[
         "Installation" => joinpath("getting_started", "installation.md"),
-        "Recommended workflow" => joinpath("getting_started", "recommended_workflow.md"),
+        "Verify installation" => joinpath("getting_started", "recommended_workflow.md"),
         "Troubleshooting" => joinpath("getting_started", "troubleshooting.md"),
     ],
     "Tutorials" => Any[
