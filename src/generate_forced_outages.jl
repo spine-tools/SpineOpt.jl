@@ -21,7 +21,7 @@ using Random
 
 function _rand_time(mean_time; resolution)
     mean_time = round(mean_time, resolution(1))
-    resolution(round(Int, rand(Exponential(iszero(mean_time.value) ? 1e-6 : mean_time.value))))
+    resolution(ceil(rand(Exponential(mean_time.value))))
 end
 
 function _forced_outages(t_start, t_end, mttf, mttr; resolution)
@@ -47,8 +47,10 @@ function forced_outage_time_series(t_start, t_end, mttf, mttr; seed=nothing, res
         append!(indices, [failure_time, repair_time])
         append!(values, [1, 0])
     end
-    push!(indices, t_end)
-    push!(values, 0)
+    if last(indices) < t_end
+        push!(indices, t_end)
+        push!(values, 0)
+    end
     TimeSeries(indices, values)
 end
 

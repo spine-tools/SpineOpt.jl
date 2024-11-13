@@ -559,11 +559,11 @@ function _do_solve_multi_stage_model!(
                 elseif !updated
                     "Time-slice adaptation fully completed at iter $i"
                 end
-            elseif i >= max_iters || !is_adaptive
+            elseif i >= max_iters
                 "Maximum number of multi-stage iterations reached ($i)"
             end
         else
-            termination_msg = "Mutli-state execution complete"
+            termination_msg = "Multi-state execution complete"
         end
         if termination_msg !== nothing
             @log log_level 1 termination_msg

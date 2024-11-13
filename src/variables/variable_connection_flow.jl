@@ -51,7 +51,9 @@ end
 
 function connection_flow_ub(m; connection, node, direction, kwargs...)
     (
-        connection_flow_capacity(connection=connection, node=node, direction=direction, _strict=false) === nothing
+        realize(
+            connection_flow_capacity(m; connection=connection, node=node, direction=direction, _strict=false)
+        ) === nothing
         || is_candidate(connection=connection)
         || members(node) != [node]
     ) && return NaN
