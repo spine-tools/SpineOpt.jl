@@ -559,7 +559,7 @@ function _do_solve_multi_stage_model!(
                 elseif !updated
                     "Time-slice adaptation fully completed at iter $i"
                 end
-            elseif i >= max_iters || !is_adaptive
+            elseif i >= max_iters
                 "Maximum number of multi-stage iterations reached ($i)"
             end
         else
