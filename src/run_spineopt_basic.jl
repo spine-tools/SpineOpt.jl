@@ -563,7 +563,7 @@ function _do_solve_multi_stage_model!(
                 "Maximum number of multi-stage iterations reached ($i)"
             end
         else
-            termination_msg = "Mutli-state execution complete"
+            termination_msg = "Mutli-stage execution complete"
         end
         if termination_msg !== nothing
             @log log_level 1 termination_msg
