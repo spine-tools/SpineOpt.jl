@@ -1,7 +1,7 @@
 name = "SpineOpt"
 uuid = "0d8fc150-4032-4b6e-9540-20efcb304861"
 authors = ["Spine Project consortium <spine_info@vtt.fi>"]
-version = "0.8.3"
+version = "0.9.1"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
@@ -20,6 +20,9 @@ SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
+Arrow = "2"
+DataStructures = "0.18"
+Distributions = "0.25"
 HiGHS = "1"
 JSON = "0.21"
 JuMP = "^1.20"

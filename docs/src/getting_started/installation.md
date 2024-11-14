@@ -102,9 +102,7 @@ Pkg.activate("jenv") # activate the virtual environment in the current working d
 To install SpineOpt, execute the following commands in the Julia REPL:
 ```julia
 import Pkg # not needed if you are still in the same REPL session
-Pkg.Registry.add("General")
-Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/spine-tools/SpineJuliaRegistry")) # Add SpineJuliaRegistry as an available registry for your Julia
-Pkg.add("SpineOpt") # Install SpineOpt from the SpineJuliaRegistry
+Pkg.add("SpineOpt")
 ```
 
 The SpineOpt package is now available and ready to use in your julia scripts. If you have installed SpineOpt in a virtual environment, don't forget to activate the virtual environment when you try to run your scripts.

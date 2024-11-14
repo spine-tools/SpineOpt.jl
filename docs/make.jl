@@ -34,11 +34,11 @@ pages = [
     "Introduction" => "index.md",
     "Getting Started" => Any[
         "Installation" => joinpath("getting_started", "installation.md"),
-        "Recommended workflow" => joinpath("getting_started", "recommended_workflow.md"),
+        "Verify installation" => joinpath("getting_started", "recommended_workflow.md"),
         "Troubleshooting" => joinpath("getting_started", "troubleshooting.md"),
     ],
     "Tutorials" => Any[
-        "Webinars and examples" => joinpath("tutorial", "webinars.md"),
+        "Webinars" => joinpath("tutorial", "webinars.md"),
         "Simple system" => joinpath("tutorial", "simple_system.md"),
         "Temporal resolution" => joinpath("tutorial", "temporal_resolution.md"),
         "Stochastic structure" => joinpath("tutorial", "stochastic_system.md"),
@@ -49,6 +49,7 @@ pages = [
         "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
     ],
     "How to" => [],
+    "Example gallery" => joinpath("gallery", "gallery.md"),    
     "Database structure" => Any[
         "Basics of the data structure" => joinpath("concept_reference", "the_basics.md"),
         "Archetypes" => joinpath("concept_reference", "archetypes.md"),

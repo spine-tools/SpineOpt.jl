@@ -1,4 +1,4 @@
-# [Recommended Workflow](@id recommended_workflow)
+# [Verify installation](@id recommended_workflow)
 
 Now that we've installed Spine Toolbox and SpineOpt, let's make sure that everything truly works by running an example. We'll be using an existing example to ensure that any issues we may encounter at this point are related to the installation. If you indeed encounter any problems, check the [troubleshooting](@ref troubleshooting) section. On the other hand, if you are able to successfully complete this example, you can continue to a first hands on experience with the tutorials.
 

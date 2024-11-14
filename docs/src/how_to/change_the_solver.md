@@ -1,4 +1,4 @@
-# How to change the solver
+# [How to change the solver](@id how-to-change-solver)
 
 If you want to change the solver for your optimization problem in SpineOpt, here is some guidance:
 - You can change the solvers in your input datastore using the `db_lp_solver` and `db_mip_solver` parameter values of the `model` object.
