@@ -466,10 +466,10 @@ function _test_benders_rolling_representative_periods()
         wd = rf + look_ahead
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
-        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
-        do_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
-        do_not_inv_cost = do_inv_cost + 1  # maximum cost at which investment is profitable
+        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)  # 540
+        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)  # 270
+        do_inv_cost = op_cost_no_inv - op_cost_inv - res  # 269, minimum cost at which investment is not profitable
+        do_not_inv_cost = do_inv_cost + res  # 270, maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -496,9 +496,9 @@ function _test_benders_rolling_representative_periods()
                 ["report__output", ["report_x", "total_costs"]],
             ]
             object_parameter_values = [
-                ["model", "instance", "window_duration", unparse_db_value(Hour(wd))],
-                ["model", "instance", "roll_forward", unparse_db_value([Hour(2 * rf)])],
-                ["model", "instance", "window_weight", unparse_db_value([wd / rf, wd / rf])],
+                ["model", "instance", "window_duration", unparse_db_value(Hour(wd))],  # 9
+                ["model", "instance", "roll_forward", unparse_db_value([Hour(2 * rf)])],  # 12
+                ["model", "instance", "window_weight", unparse_db_value([wd / rf, wd / rf])],  # 1.5, 1.5
                 ["model", "instance", "model_type", "spineopt_benders"],
                 ["model", "instance", "max_iterations", 10],
                 ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
