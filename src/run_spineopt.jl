@@ -617,7 +617,7 @@ end
 
 function _set_result!(m, k=nothing)
     result = get(m.ext[:spineopt].results, k, nothing)
-    result === nothing && return
+    result === nothing && return false
     for (name, variable_result) in result
         val = m.ext[:spineopt].values[name]
         for (ind, r) in variable_result
