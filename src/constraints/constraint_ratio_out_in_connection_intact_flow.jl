@@ -85,7 +85,7 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
                     connection_intact_flow_indices(m; connection=conn, node=n_in, direction=direction(:from_node)),
                 )
             )
-        )
+        ) if _is_representative(t)
     )
 end
 

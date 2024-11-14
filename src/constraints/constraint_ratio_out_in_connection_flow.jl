@@ -116,7 +116,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
         if !_has_simple_fix_ratio_out_in_connection_flow(conn, ng_out, ng_in)
         for (t, path_out) in t_lowest_resolution_path(
             m, connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))
-        )
+        ) if _is_representative(t)
         for path in active_stochastic_paths(
             m, 
             Iterators.flatten(
