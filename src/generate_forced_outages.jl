@@ -41,17 +41,17 @@ _forced_outages(t_start, t_end, mttf, ::Nothing; resolution) = [(t_start + _rand
 
 function forced_outage_time_series(t_start, t_end, mttf, mttr, nb_of_units; seed=nothing, resolution=Hour)
     indices = [t_start]
-    values = [0]
+    values = [0.0]
     if nb_of_units > 0
         seed === nothing || Random.seed!(seed)
         for (failure_time, repair_time) in _forced_outages(t_start, t_end, mttf, mttr; resolution)
             append!(indices, [failure_time, repair_time])
-            append!(values, [nb_of_units, 0])
+            append!(values, [nb_of_units, 0.0])
         end
     end
     if last(indices) < t_end
         push!(indices, t_end)
-        push!(values, 0)
+        push!(values, 0.0)
     end
     TimeSeries(indices, values)
 end
