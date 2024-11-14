@@ -87,8 +87,9 @@ function _setup_result_reuse!(m, mc_scens)
 	mc_scen_keys = _monte_carlo_scenario_keys(mc_scens)
     add_event_handler!(m, :window_about_to_solve) do m, window_nb
     	result_key = (; window_nb=window_nb, Dict(k => _monte_carlo_scenario[k][] for k in mc_scen_keys)...)
-    	@info "reusing solution for $(_model_name(m)) - $result_key"
-    	_set_result!(m, result_key)
+    	if _set_result!(m, result_key)
+    		@info "reusing solution for $(_model_name(m)) - $result_key"
+    	end
     end
     add_event_handler!(m, :window_solved) do m, window_nb
     	result_key = (; window_nb=window_nb, Dict(k => _monte_carlo_scenario[k][] for k in mc_scen_keys)...)
