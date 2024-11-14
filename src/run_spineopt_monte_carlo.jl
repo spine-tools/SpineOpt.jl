@@ -62,8 +62,9 @@ function do_run_spineopt!(
 		solve_model!(
 			m; log_level, update_names, output_suffix=scen_id, log_prefix="Monte Carlo scenario $k $scen_id - ",
         ) || @warn "Monte Carlo scenario $scen_id failed to solve, moving on..."
+    	write_report(m, url_out; alternative, log_level)
+        _clear_results!(m)
 	end
-    write_report(m, url_out; alternative, log_level)
 end
 
 _check_monte_carlo_scenarios(_mc_scens) = error(
