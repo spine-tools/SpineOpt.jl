@@ -455,7 +455,7 @@ function solve_model!(
             else
                 (save_outputs=false, output_suffix=output_suffix)
             end
-            _do_solve_model!(m_mp; log_level, update_names, log_prefix, extra_kwargs...) || break
+            _do_solve_model!(m_mp; log_level, update_names, log_prefix, extra_kwargs...) || return false
             @timelog log_level 2 "Processing $(_model_name(m_mp)) solution" process_master_problem_solution(m_mp, m)
             _do_solve_multi_stage_model!(
                 m;
@@ -464,7 +464,7 @@ function solve_model!(
                 calculate_duals=true,
                 log_prefix="$(log_prefix)Benders iteration $j $(_current_solution_string(m_mp)) - ",
                 extra_kwargs...,
-            ) || break
+            ) || return false
             @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp, m)
             @log log_level 1 "Benders iteration $j complete"
             @log log_level 1 "Objective lower bound: $(_lb_str(m_mp))"
@@ -505,7 +505,7 @@ function solve_model!(
             unfix_history!(m)
             global current_bi = add_benders_iteration(j + 1)
         end
-        m
+        true
     end
 end
 
@@ -644,16 +644,18 @@ function _do_solve_model!(
     for k in Iterators.countfrom(k0)
         @log log_level 1 "\n$full_model_name - window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
-        if optimize_model!(
-            m; log_level, output_suffix, calculate_duals, save_outputs, print_conflict=!skip_failed_windows
-        )
-            _call_event_handlers(m, :window_solved, k)
-        elseif skip_failed_windows
-            @error "$full_model_name - window $k failed to solve! - you might see a gap in the results"
-            _call_event_handlers(m, :window_failed, k)
-            unfix_history!(m)
-        else
-            return false
+        if !m.ext[:spineopt].has_results[]
+            if optimize_model!(
+                m; log_level, output_suffix, calculate_duals, save_outputs, print_conflict=!skip_failed_windows
+            )
+                _call_event_handlers(m, :window_solved, k)
+            elseif skip_failed_windows
+                @error "$full_model_name - window $k failed to solve! - you might see a gap in the results"
+                _call_event_handlers(m, :window_failed, k)
+                unfix_history!(m)
+            else
+                return false
+            end
         end
         _save_window_state(m, k; write_as_roll, resume_file_path)
         if @timelog log_level 2 "$model_name - Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
@@ -908,7 +910,6 @@ function optimize_model!(
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
-    m.ext[:spineopt].has_results[] && return true
     model_name = _model_name(m)
     @timelog log_level 0 "Optimizing $model_name..." optimize!(m)
     termination_st = termination_status(m)
