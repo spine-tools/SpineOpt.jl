@@ -39,13 +39,15 @@ _forced_outages(t_start, t_end, ::Nothing, mttr; resolution) = []  # never fails
 _forced_outages(t_start, t_end, ::Nothing, ::Nothing; resolution) = []  # never fails
 _forced_outages(t_start, t_end, mttf, ::Nothing; resolution) = [(t_start + _rand_time(mttf; resolution), t_end)]
 
-function forced_outage_time_series(t_start, t_end, mttf, mttr; seed=nothing, resolution=Hour)
-    seed === nothing || Random.seed!(seed)
+function forced_outage_time_series(t_start, t_end, mttf, mttr, nb_of_units; seed=nothing, resolution=Hour)
     indices = [t_start]
     values = [0]
-    for (failure_time, repair_time) in _forced_outages(t_start, t_end, mttf, mttr; resolution)
-        append!(indices, [failure_time, repair_time])
-        append!(values, [1, 0])
+    if nb_of_units > 0
+        seed === nothing || Random.seed!(seed)
+        for (failure_time, repair_time) in _forced_outages(t_start, t_end, mttf, mttr; resolution)
+            append!(indices, [failure_time, repair_time])
+            append!(values, [nb_of_units, 0])
+        end
     end
     if last(indices) < t_end
         push!(indices, t_end)
@@ -91,7 +93,8 @@ function generate_forced_outages(url_in, url_out=url_in; alternative="Base")
             m_start,
             m_end,
             mean_time_to_failure(unit=u, _strict=false),
-            mean_time_to_repair(unit=u, _strict=false)
+            mean_time_to_repair(unit=u, _strict=false),
+            number_of_units(unit=u),
         )
         for u in indices(mean_time_to_failure)
     )
