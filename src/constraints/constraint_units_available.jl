@@ -40,22 +40,19 @@ function _build_constraint_units_available(m, u, s, t)
     @build_constraint(
         + sum(
             + units_on[u, s, t]
-            + ifelse(
-                units_unavailable(m; unit=u, stochastic_scenario=s, t=t) > 0,
-                0,
-                _get_units_out_of_service(m, u, s, t),
-            )
+            + ifelse(units_unavailable(m; unit=u, stochastic_scenario=s, t=t) > 0, 0, 1)
+            * _get_units_out_of_service(m, u, s, t)
             for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
             init=0,
         )
-        <=
-        + sum(
+        - sum(
             units_invested_available[u, s, t1]
             for (u, s, t1) in units_invested_available_indices(
                 m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
             );
             init=0,
         )
+        <=
         + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
         - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
     )
