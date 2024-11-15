@@ -236,6 +236,9 @@ function test_save_contingency_is_binding()
         objects = [
             ["commodity", "electricity"],
             ["report", "report_x"],
+            #FIXME: Another report with the same output will fail the test by an error
+            # Uncomment the following line and that in "relationships" to see the error
+            # ["report", "report_y"],
             ["output", "contingency_is_binding"],
         ]
         relationships = [
@@ -255,6 +258,7 @@ function test_save_contingency_is_binding()
             ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
             ["report__output", ["report_x", "contingency_is_binding"]],
+            # ["report__output", ["report_y", "contingency_is_binding"]],
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "connection_monitored", true],
