@@ -548,7 +548,7 @@ function _do_solve_multi_stage_model!(
             resume_file_path,
             log_prefix=log_prefix_i,
             calculate_duals,
-            skip_failed_windows=is_adaptive,
+            skip_failed_windows=true,
             extra_kwargs...,
         )
         if is_adaptive
