@@ -456,7 +456,7 @@ function unit_stochastic_time_indices(
     m::Model;
     unit=anything,
     stochastic_scenario=anything,
-    temporal_block=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
     t=anything,
 )
     (
