@@ -55,7 +55,8 @@ function _build_constraint_units_available(m, u, s, t)
         <=
         # Change the default number of units so that it is zero when candidate units are present
         # and otherwise 1.
-        + ifelse(is_candidate(unit=u), 0, number_of_units(m; unit=u, stochastic_scenario=s, t=t) )
+        + ifelse(is_candidate(unit=u), number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
+            number_of_units(m; unit=u, stochastic_scenario=s, t=t) )
         - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
     )
 end
