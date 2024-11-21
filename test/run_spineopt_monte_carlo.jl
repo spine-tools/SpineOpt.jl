@@ -122,5 +122,4 @@ _dict_to_map(x) = x
 
 @testset "run_spineopt_monte_carlo" begin
     _test_monte_carlo()
-    # FIXME: _test_benders_unit_storage()
 end

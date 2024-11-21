@@ -156,10 +156,6 @@ function constraint_node_injection_indices(m::Model)
     )
 end
 
-function _is_representative(t)
-    any(representative_periods_mapping(temporal_block=blk) === nothing for blk in blocks(t))
-end
-
 """
     constraint_node_injection_indices_filtered(m::Model; filtering_options...)
 

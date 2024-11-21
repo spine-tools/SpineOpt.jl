@@ -645,6 +645,10 @@ end
 
 _first_repr_t_comb(m, t) = first(representative_time_slice_combinations(m, t))
 
+function _is_representative(t)
+    any(representative_periods_mapping(temporal_block=blk) === nothing for blk in blocks(t))
+end
+
 function output_time_slice(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slice], output, nothing)
 end
@@ -667,8 +671,16 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     (
         (node=n, t=t1)
-        for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+        for n in intersect(node, SpineOpt.node())
+        for t1 in time_slice(
+            m;
+            temporal_block=[
+                tb
+                for (_n, tbg) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)
+                for tb in members(tbg)
+            ],
+            t=t,
+        )
     )
 end
 
@@ -690,16 +702,19 @@ end
 
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online variables unit with filter keywords.
 """
-function unit_time_indices(
-    m::Model;
-    unit=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
-    t=anything,
-)
+function unit_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
     (
         (unit=u, t=t1)
-        for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+        for u in intersect(unit, SpineOpt.unit())
+        for t1 in time_slice(
+            m;
+            temporal_block=[
+                tb
+                for (_u, tbg) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false)
+                for tb in members(tbg)
+            ],
+            t=t,
+        )
     )
 end
 

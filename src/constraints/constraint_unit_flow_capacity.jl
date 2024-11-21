@@ -284,7 +284,8 @@ function constraint_unit_flow_capacity_indices(m::Model)
             Iterators.flatten(
                 ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
             )
-        ) if _is_representative(t)
+        )
+        if _is_representative(t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

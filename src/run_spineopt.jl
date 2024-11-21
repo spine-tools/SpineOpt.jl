@@ -311,7 +311,7 @@ function _pvals_by_alt_name(url_in)
     pvals_by_alt_name = Dict()
     without_filters(url_in) do clean_url_in
         data = _data(clean_url_in; upgrade=false, filters=Dict())
-        pvals = vcat(data["object_parameter_values"], data["relationship_parameter_values"])
+        pvals = vcat(get(data, "object_parameter_values", []), get(data, "relationship_parameter_values", []))
         for (cls_name, obj_name_or_names, p_name, value, alt_name) in pvals
             by_cls_name = get!(pvals_by_alt_name, alt_name, Dict())
             by_ent_byname = get!(by_cls_name, Symbol(cls_name), Dict())

@@ -430,34 +430,13 @@ function node_stochastic_time_indices(
     )
 end
 
-
-"""
-    node_state_stochastic_time_indices(m; <keyword arguments>)
-
-Stochastic time indexes for `nodes` with a state variable with keyword arguments that allow filtering.
-"""
-function node_state_stochastic_time_indices(
-    m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
-)
-    (
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, t) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for (n, s) in node_stochastic_indices(m; node=n, stochastic_scenario=stochastic_scenario, t=t)
-        if (has_state(node=n) && is_longterm_storage(node=n)) ||_is_representative(t)
-    )
-end
-
 """
     unit_stochastic_time_indices(m; <keyword arguments>)
 
 Stochastic time indexes for `units` with keyword arguments that allow filtering.
 """
 function unit_stochastic_time_indices(
-    m::Model;
-    unit=anything,
-    stochastic_scenario=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
-    t=anything,
+    m::Model; unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
 )
     (
         (unit=u, stochastic_scenario=s, t=t)
