@@ -168,13 +168,13 @@ function _test_representative_periods()
             ],
             :relationship_parameter_values => [
                 ["unit__from_node", ["batt_unit", "elec_node"], "unit_capacity", 50],
-                ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 50],
+                ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
                 ["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow", 0.9],
-                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.9],
+                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.8],
                 ["unit__from_node", ["electrolizer", "elec_node"], "unit_capacity", 1000],
                 ["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow", 1.5],
                 ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
-                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.5],
+                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.6],
                 ["unit__to_node", ["pv", "elec_node"], "unit_capacity", 300],
                 ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
                 ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
@@ -182,34 +182,36 @@ function _test_representative_periods()
                 ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition", true],
                 ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition_sense", "=="],
             ],
-        )        
+        )
         count, errors = import_data(url_in, "Add test data"; test_data...)
         @test isempty(errors)
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=3)
+        vals = Dict(
+            (cls, ent, param) => val isa Tuple ? parse_db_value(val...) : val
+            for key in (:object_parameter_values, :relationship_parameter_values)
+            for (cls, ent, param, val) in test_data[key]
+        )
         @testset for con_name in keys(m.ext[:spineopt].constraints)
             cons = m.ext[:spineopt].constraints[con_name]
             @testset for ind in keys(cons)
                 con = cons[ind]
-                _test_representative_periods_constraint(m, con_name, ind, con, elec_demand_ts)
+                _test_representative_periods_constraint(m, con_name, ind, con, vals)
             end
         end
     end
 end
 
-function _test_representative_periods_constraint(m, con_name, ind, con, elec_demand_ts)
-    if con == nothing
-        @show con_name, ind, con
-    end
+function _test_representative_periods_constraint(m, con_name, ind, con, vals)
     con === nothing && return
-    elec_demand = parameter_value(elec_demand_ts)
     rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 4), temporal_block(:operations), temporal_block(:rp1))
     rt2 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 8), temporal_block(:operations), temporal_block(:rp2))
     representative_time_slices = [rt1, rt2]
     d_from = direction(:from_node)
     d_to = direction(:to_node)
     observed_con = constraint_object(con)
-    if con_name == :cyclic_node_state
+    t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
+    expected_con = if con_name == :cyclic_node_state
         n, s_path, t_start, t_end, tb = ind
         @test n == node(:h2_node)
         @test s_path == [stochastic_scenario(:realisation)]
@@ -217,16 +219,14 @@ function _test_representative_periods_constraint(m, con_name, ind, con, elec_dem
         @test t_end == TimeSlice(DateTime(2000, 1, 10), DateTime(2000, 1, 11), temporal_block(:operations))
         @test tb == temporal_block(:operations)
         @fetch node_state = m.ext[:spineopt].variables
-        expected_con = @build_constraint(node_state[n, only(s_path), t_end] == node_state[n, only(s_path), t_start])
-        @test _is_constraint_equal(observed_con, expected_con)
+        @build_constraint(node_state[n, only(s_path), t_end] == node_state[n, only(s_path), t_start])
     elseif con_name == :nodal_balance
         n, s, t = ind
         @test n in node()
         @test s == stochastic_scenario(:realisation)
         @test t in representative_time_slices
         @fetch node_injection = m.ext[:spineopt].variables
-        expected_con = @build_constraint(node_injection[n, s, t] == 0)
-        @test _is_constraint_equal(observed_con, expected_con)
+        @build_constraint(node_injection[n, s, t] == 0)
     elseif con_name == :node_injection
         n, s_path, t_before, t_after = ind
         @test n in node()
@@ -238,45 +238,157 @@ function _test_representative_periods_constraint(m, con_name, ind, con, elec_dem
         else
             @test t_after in time_slice(m)
         end
-        expected_con = if n == node(:batt_node)
+        if n == node(:batt_node)
+            fr_e2b = vals["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow"]
             @build_constraint(
                 + node_injection[n, s, t_after]
-                + node_slack_neg[n, s, t_after]
-                - node_slack_pos[n, s, t_after]
-                + (1 / 24) * node_state[n, s, t_after]
-                + unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after]
-                - 0.9 * unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
-                == 0
+                ==
+                - node_slack_neg[n, s, t_after]
+                + node_slack_pos[n, s, t_after]
+                - (1 / 24) * node_state[n, s, t_after]
+                - unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after]
+                + fr_e2b * unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
             )
         elseif n == node(:elec_node)
+            elec_demand = parameter_value(vals["node", "elec_node", "demand"])
+            fr_b2e = vals["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow"]
+            fr_e2h = vals["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow"]
             @build_constraint(
                 + node_injection[n, s, t_after]
-                - 0.9 * unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after]
-                + unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
-                + 1.5 * unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after]
-                - unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
-                - unit_flow[unit(:pv), node(:elec_node), d_to, s, t_after]
-                - unit_flow[unit(:wind), node(:elec_node), d_to, s, t_after]
-                - unit_flow[unit(:conventional), node(:elec_node), d_to, s, t_after]
-                + elec_demand(t=t_after)
-                == 0
+                ==
+                + fr_b2e * unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after]
+                - unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
+                - fr_e2h * unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after]
+                + unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
+                + unit_flow[unit(:pv), node(:elec_node), d_to, s, t_after]
+                + unit_flow[unit(:wind), node(:elec_node), d_to, s, t_after]
+                + unit_flow[unit(:conventional), node(:elec_node), d_to, s, t_after]
+                - elec_demand(t=t_after)
             )
         else#if n == node(:h2_node)
+            fr_h2e = vals["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow"]
             @build_constraint(
                 + node_injection[n, s, t_after]
-                + node_slack_neg[n, s, t_after]
-                - node_slack_pos[n, s, t_after]
-                + (1 / 24) * node_state[n, s, t_after]
-                - (1 / 24) * node_state[n, s, t_before]
-                - unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after]
-                + 1.5 * unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
-                == 0
-            )            
+                ==
+                - node_slack_neg[n, s, t_after]
+                + node_slack_pos[n, s, t_after]
+                - (1 / 24) * node_state[n, s, t_after]
+                + (1 / 24) * node_state[n, s, t_before]
+                + unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after]
+                - fr_h2e * unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
+            )
         end
-        @test _is_constraint_equal(observed_con, expected_con)
+    elseif con_name == :node_state_capacity
+        n, s_path, t = ind
+        @test n == node(:batt_node)
+        @test s_path == [stochastic_scenario(:realisation)]
+        @test t in representative_time_slices
+        @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
+        s = only(s_path)
+        nsc = vals["node", string(n), "node_state_cap"]
+        @build_constraint(node_state[n, s, t] <= nsc * storages_invested_available[n, s, t_invest])
+    elseif con_name == :storages_invested_transition
+        n, s_path, t_before, t_after = ind
+        @test n == node(:batt_node)
+        @test s_path == [stochastic_scenario(:realisation)]
+        @test t_after == t_invest
+        @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt].variables
+        s = only(s_path)
+        @build_constraint(
+            + storages_invested_available[n, s, t_after]
+            - storages_invested_available[n, s, t_before]
+            ==
+            + storages_invested[n, s, t_after]
+            - storages_decommissioned[n, s, t_after]
+        )
+    elseif con_name == :storages_invested_available
+        n, s, t = ind
+        @test n == node(:batt_node)
+        @test s == stochastic_scenario(:realisation)
+        @test t == t_invest
+        @fetch storages_invested_available = m.ext[:spineopt].variables
+        cs = vals["node", string(n), "candidate_storages"]
+        @build_constraint(storages_invested_available[n, s, t] <= cs)
+    elseif con_name == :unit_flow_lb
+        u, n, d, s, t = ind
+        # TODO
+        nothing
+    elseif con_name == :unit_flow_capacity
+        u, n, d, s_path, t = ind
+        @test u in unit()
+        @test s_path == [stochastic_scenario(:realisation)]
+        @test t in representative_time_slices
+        s = only(s_path)
+        @fetch unit_flow, units_on = m.ext[:spineopt].variables
+        rhs = if u == unit(:batt_unit)
+            @test d in direction()
+            cls = Dict(d_from => "unit__from_node", d_to => "unit__to_node")[d]
+            vals[cls, ["batt_unit", "elec_node"], "unit_capacity"]
+        elseif u == unit(:electrolizer)
+            @test d in d_from
+            vals["unit__from_node", [string(u), string(n)], "unit_capacity"]
+        else
+            @test d in d_to
+            vals["unit__to_node", [string(u), string(n)], "unit_capacity"]
+        end
+        if u in (unit(:batt_unit), unit(:h2_gen), unit(:electrolizer), unit(:pv), unit(:wind))
+            rhs *= units_on[u, s, t]
+        end
+        if u in (unit(:pv), unit(:wind))
+            uaf = parameter_value(vals["unit", string(u), "unit_availability_factor"])
+            rhs *= uaf(t=t)
+        end
+        @build_constraint(24 * unit_flow[u, n, d, s, t] <= 24 * rhs)
+    elseif con_name == :unit_state_transition
+        u, s_path, t_before, t_after = ind
+        @test u == unit(:h2_gen)
+        @test s_path == [stochastic_scenario(:realisation)]
+        @test t_after in representative_time_slices
+        @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
+        s = only(s_path)
+        @build_constraint(
+            + units_on[u, s, t_after]
+            - units_on[u, s, t_before]
+            ==
+            + units_started_up[u, s, t_after]
+            - units_shut_down[u, s, t_after]
+        )
+    elseif con_name == :units_available
+        u, s, t = ind
+        @test u in unit()
+        @test s == stochastic_scenario(:realisation)
+        @test t in representative_time_slices
+        @fetch units_on, units_invested_available = m.ext[:spineopt].variables
+        @build_constraint(units_on[u, s, t] <= units_invested_available[u, s, t_invest])
+    elseif con_name == :units_invested_transition
+        u, s_path, t_before, t_after = ind
+        @test u in unit()
+        @test s_path == [stochastic_scenario(:realisation)]
+        @test t_after == t_invest
+        @fetch units_invested_available, units_invested, units_mothballed = m.ext[:spineopt].variables
+        s = only(s_path)
+        @build_constraint(
+            + units_invested_available[u, s, t_after]
+            - units_invested_available[u, s, t_before]
+            == 
+            + units_invested[u, s, t_after]
+            - units_mothballed[u, s, t_after]
+        )
+    elseif con_name == :units_invested_available
+        u, s, t = ind
+        @test u in unit()
+        @test s == stochastic_scenario(:realisation)
+        @test t == t_invest
+        @fetch units_invested_available = m.ext[:spineopt].variables
+        cu = vals["unit", string(u), "candidate_units"]
+        @build_constraint(units_invested_available[u, s, t] <= cu)
     else
-        # @info "unexpected constraint $con_name"
-        # @test false
+        @info "unexpected constraint $con_name"
+        nothing
+        @test false
+    end
+    if expected_con !== nothing
+        @test _is_constraint_equal(observed_con, expected_con)
     end
 end
 

@@ -86,9 +86,9 @@ function _show_constraint(con)
 end
 
 _signed_string(x) = string(x >= 0 ? "+" : "-", " ", abs(x))
-_signed_string(s::MOI.LessThan) = _signed_string(s.lower)
+_signed_string(s::MOI.LessThan) = _signed_string(s.upper)
 _signed_string(s::MOI.EqualTo) = _signed_string(s.value)
-_signed_string(s::MOI.GreaterThan) = _signed_string(s.upper)
+_signed_string(s::MOI.GreaterThan) = _signed_string(s.lower)
 
 _sense_string(::MOI.LessThan) = "<="
 _sense_string(::MOI.EqualTo) = "=="

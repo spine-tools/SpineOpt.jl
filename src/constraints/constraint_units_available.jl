@@ -68,6 +68,7 @@ function constraint_units_available_indices(m::Model)
     (
         (unit=u, stochastic_scenario=s, t=t)
         for (u, t) in unit_time_indices(m; unit=_unit_with_online_variable())
+        if _is_representative(t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
