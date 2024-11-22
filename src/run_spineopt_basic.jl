@@ -513,6 +513,7 @@ function _do_solve_model!(
     save_outputs=true,
     skip_failed_windows=false,
 )
+    t_start = now()
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
     k0 === nothing && return m
     m.ext[:spineopt].has_results[] = false
@@ -546,6 +547,14 @@ function _do_solve_model!(
         m.ext[:spineopt].has_results[] = false
     end
     _call_event_handlers(m, :model_solved)
+    t_end = now()
+    elapsed_time_string = _elapsed_time_string(t_start, t_end)
+    if !isempty(output_suffix)
+        push!(
+            get!(m.ext[:spineopt].extras, :elapsed_time_by_solve, Dict()),
+            output_suffix => _elapsed_time_string(t_start, t_end),
+        )
+    end
     true
 end
 

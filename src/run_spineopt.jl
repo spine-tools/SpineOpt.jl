@@ -141,13 +141,21 @@ function _run_spineopt(
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
     t_end = now()
-    elapsed_time_string = string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
+    elapsed_time_string = _elapsed_time_string(t_start, t_end)
     @log log_level 1 "Execution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     if url_out !== nothing
         stat_keys = [
             :SpineOpt_version, :SpineOpt_git_hash, :SpineInterface_version, :SpineInterface_git_hash, :elapsed_time
         ]
         stat_values = Any[so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string]
+        elapsed_time_by_solve = get(m.ext[:spineopt].extras, :elapsed_time_by_solve, nothing)
+        if elapsed_time_by_solve !== nothing
+            elapsed_time_by_solve_map = Map(
+                string.(keys(elapsed_time_by_solve)), collect(values(elapsed_time_by_solve))
+            )
+            push!(stat_keys, :elapsed_time_by_solve)
+            push!(stat_values, elapsed_time_by_solve_map)
+        end
         m_mp = master_model(m)
         if m_mp !== nothing
             gaps = m_mp.ext[:spineopt].benders_gaps

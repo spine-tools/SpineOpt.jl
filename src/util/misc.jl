@@ -356,6 +356,10 @@ function _with_model_env(f, m)
     end
 end
 
+function _elapsed_time_string(t_start, t_end)
+    string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
+end
+
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
 _RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
