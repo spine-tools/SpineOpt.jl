@@ -34,8 +34,9 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
     or nothing
   - `required_history_period::Union{Period,Nothing}=nothing`: given an index, return the required history period
     or nothing
-  - `replacement_expressions::Dict=Dict()`: mapping some of the indices of the variable - as returned by the given
-    `indices` function - to another Dict that defines an expression to use instead of the variable for that index.
+  - `replacement_expressions::OrderedDict=OrderedDict()`: mapping some of the indices of the variable -
+    as returned by the given `indices` function - to another Dict that defines an expression to use
+    instead of the variable for that index.
     The expression Dict simply maps variable names to a tuple of reference index and coefficient.
     The expression is then built as the sum of the coefficient and the variable for the reference index,
     over the entire Dict.
@@ -53,7 +54,7 @@ function add_variable!(
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
     required_history_period::Union{Period,Nothing}=nothing,
-    replacement_expressions=Dict(),
+    replacement_expressions=OrderedDict(),
 )
     lb = _nothing_if_empty(lb)
     ub = _nothing_if_empty(ub)
@@ -65,6 +66,9 @@ function add_variable!(
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
+    isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
+        replacement_expressions, _representative_period_expresions(m, name, indices, replacement_expressions)
+    )
     first_ind = iterate(indices(m))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
@@ -112,9 +116,6 @@ function add_variable!(
             fix(var, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
         end
     end
-    isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
-        vars, _representative_periods_mapping(m, vars, indices, replacement_expressions)
-    )
     vars
 end
 
@@ -136,7 +137,7 @@ function _variable_definition(;
     non_anticipativity_margin=nothing,
     history_time_slices=[],
     history_vars_by_ind=Dict(),
-    replacement_expressions=Dict(),
+    replacement_expressions=OrderedDict(),
 )
     Dict(
         :indices => indices,
@@ -161,7 +162,9 @@ function _expand_replacement_expressions!(m)
         exprs = Dict()
         for (ind, formula) in replacement_expressions
             vars[ind] = exprs[ind] = sum(
-                coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in formula
+                coeff * _get_var_with_replacement(m, ref_name, ref_ind)
+                for (ref_name, reference_index_to_coef) in formula
+                for (ref_ind, coeff) in reference_index_to_coef
             )
         end
         _finalize_expressions!(m, exprs, name, def)
@@ -284,10 +287,10 @@ function _representative_index_to_coefficient(m, ind, indices)
 end
 
 """
-A `Dict` mapping non representative indices to the variable or expression for the representative index.
+A `Dict` mapping non representative indices to the expression Dict for the representative index.
 """
-function _representative_periods_mapping(
-    m::Model, vars::Dict, indices::Function, replacement_expressions::Union{Dict, OrderedDict}
+function _representative_period_expresions(
+    m::Model, name::Symbol, indices::Function, replacement_expressions::Union{Dict, OrderedDict}
 )
     # By default, `indices` skips represented time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
@@ -297,11 +300,8 @@ function _representative_periods_mapping(
     representative_indices = indices(m)
     all_indices = indices(m; temporal_block=anything)
     represented_indices = setdiff(all_indices, representative_indices)
-    Dict(
-        ind => sum(
-            coef * vars[representative_ind]
-            for (representative_ind, coef) in _representative_index_to_coefficient(m, ind, indices)
-        )
+    OrderedDict(
+        ind => Dict(name => _representative_index_to_coefficient(m, ind, indices))
         for ind in represented_indices
         if !haskey(replacement_expressions, ind)
     )
