@@ -155,11 +155,12 @@ function test_constraint_units_available()
         end
     end
 end
+
 function test_constraint_units_available_units_unavailable()
     @testset "constraint_units_available_units_unavailable" begin
         url_in = _test_constraint_unit_setup()
         number_of_units = 4
-        candidate_units = 3
+        candidate_units = 3 
         units_unavailable = 1
         unit_availability_factor = 0.5
         object_parameter_values = [
@@ -185,6 +186,40 @@ function test_constraint_units_available_units_unavailable()
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
             expected_con = @build_constraint(var_u_on <= number_of_units + var_u_inv_av - units_unavailable)
+            con_key = (unit(:unit_ab), s, t)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_units_available_units_unavailable_default" begin
+        url_in = _test_constraint_unit_setup()
+        candidate_units = 3
+        number_of_units_when_candidates_units = 0 
+        units_unavailable = 1
+        unit_availability_factor = 0.5
+        object_parameter_values = [
+            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "units_unavailable", units_unavailable],
+            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+        constraint = m.ext[:spineopt].constraints[:units_available]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (unit(:unit_ab), s, t)
+            var_u_on = var_units_on[key...]
+            var_u_inv_av = var_units_invested_available[key...]
+            expected_con = @build_constraint(var_u_on <= number_of_units_when_candidates_units + var_u_inv_av - units_unavailable)
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
