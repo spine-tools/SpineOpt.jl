@@ -8,6 +8,11 @@ Have you created a new project? File > New project
 ## I get an error that the 'model' object is not defined in the database
 That tends to happen when you accidentally switched your input and output in the Run SpineOpt tool.
 
+## Solver throws error `Name too long`
+Variables and constraints names in SpineOpt sometimes can be longer than the maximum name length the solvers allow. If you get this error, we recommend using the solver parameters to run it ingnoring the names. For instance, Gurobi has the parameter `IgnoreNames` which allows to run without the names but returning the solution with the original names in the model.
+
+To setup the solver parameters you can look at the [How-to section](@ref how-to-change-solver) guide change the solver and define its parameters.
+
 ## SpineOpt and SpineInterface are out of sync
 Some of the development of SpineOpt depends on the development of SpineInterface and vice versa. At some points in time that can create an incompatibility between the two.
 
