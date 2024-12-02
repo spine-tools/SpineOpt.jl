@@ -544,7 +544,7 @@ function _do_solve_model!(
             end
         end
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        if @timelog log_level 2 "$model_name - Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
+        if @timelog log_level 2 "Rolling $model_name temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 "$model_name ... Rolling complete\n" break
         end
         update_model!(m; log_level=log_level, update_names=update_names)
@@ -1230,9 +1230,7 @@ function _dump_resume_data(m::Model, k, resume_file_path)
 end
 
 function _clear_results!(m)
-    for out in output()
-        by_entity = get!(m.ext[:spineopt].outputs, out.name, nothing)
-        by_entity === nothing && continue
+    for by_entity in values(m.ext[:spineopt].outputs)
         empty!(by_entity)
     end
 end

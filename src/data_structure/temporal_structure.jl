@@ -366,16 +366,25 @@ _to_time_slice(time_slices::Array{TimeSlice,1}, t::TimeSlice) = _to_time_slice(t
 Roll a `TimeSliceSet` in time by a period specified by `forward`.
 """
 function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
-    roll!.(t_set.time_slices, forward)
-    roll!.(values(t_set.gaps), forward)
-    roll!.(values(t_set.bridges), forward)
-    nothing
+    updates = collect(_roll_many!(t_set.time_slices, forward))
+    append!(updates, _roll_many!(values(t_set.gaps), forward))
+    append!(updates, _roll_many!(values(t_set.bridges), forward))
+    updates
 end
 
-function _refresh_time_slice_set!(t_set::TimeSliceSet)
-    refresh!.(t_set.time_slices)
-    refresh!.(values(t_set.gaps))
-    refresh!.(values(t_set.bridges))
+function _roll_many!(t_iter, forward)
+    (upd for t in t_iter for upd in roll!(t, forward; return_updates=true))
+end
+
+function _time_slice_set_collect_updates(t_set::TimeSliceSet)
+    updates = collect(_collect_updates_many(t_set.time_slices))
+    append!(_collect_updates_many(values(t_set.gaps)))
+    append!(_collect_updates_many(values(t_set.bridges)))
+    updates
+end
+
+function _collect_updates_many(t_iter)
+    (upd for t in t_iter for upd in collect_updates(t))
 end
 
 function generate_time_slice!(m::Model)
@@ -486,9 +495,11 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     !rev && any(
         x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
     ) && return false
-    roll!(current_window, rf)
-    _roll_time_slice_set!(temp_struct[:time_slice], rf)
-    _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
+    updates = roll!(current_window, rf; return_updates=true)
+    append!(updates, _roll_time_slice_set!(temp_struct[:time_slice], rf))
+    append!(updates, _roll_time_slice_set!(temp_struct[:history_time_slice], rf))
+    unique!(updates)
+    _call_many(updates)
     true
 end
 
@@ -505,10 +516,20 @@ function rewind_temporal_structure!(m::Model)
         _update_variable_names!(m)
         _update_constraint_names!(m)
     else
-        refresh!(temp_struct[:current_window])
-        _refresh_time_slice_set!(temp_struct[:time_slice])
-        _refresh_time_slice_set!(temp_struct[:history_time_slice])
+        updates = collect_updates(temp_struct[:current_window])
+        append!(updates, _time_slice_set_collect_updates(temp_struct[:time_slice]))
+        append!(updates, _time_slice_set_collect_updates(temp_struct[:history_time_slice]))
+        unique!(updates)
+        _call_many(updates)
     end
+end
+
+function _call_many(updates)
+    _do_call.(updates)
+end
+
+function _do_call(upd)
+    upd()
 end
 
 """
