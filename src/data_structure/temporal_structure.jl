@@ -378,8 +378,8 @@ end
 
 function _time_slice_set_collect_updates(t_set::TimeSliceSet)
     updates = collect(_collect_updates_many(t_set.time_slices))
-    append!(_collect_updates_many(values(t_set.gaps)))
-    append!(_collect_updates_many(values(t_set.bridges)))
+    append!(updates, _collect_updates_many(values(t_set.gaps)))
+    append!(updates, _collect_updates_many(values(t_set.bridges)))
     updates
 end
 
