@@ -130,15 +130,17 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                     (
                         ind
                         for s in path_out
-                        for ind in connection_flow_indices(
+                        for ind in Iterators.flatten(
+                            (
+                            connection_flow_indices(
                             m;
                             connection=conn,
                             node=ng_in,
                             direction=direction(:from_node),
                             t=to_time_slice(m; t=_t_look_behind(conn, ng_out, ng_in, (s,), t)),
                             temporal_block=anything,
-                        )
-                    ),
+                        ), connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))))
+                    )
                 )
             )
         )
