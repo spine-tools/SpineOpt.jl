@@ -24,7 +24,7 @@ function _is_time_slice_set_equal(ts_a, ts_b)
 end
 
 function _model()
-    m = Model()
+    m = Model(; add_bridges = false)
     JuMP.set_string_names_on_creation(m, false)
     m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model()), nothing)
     m

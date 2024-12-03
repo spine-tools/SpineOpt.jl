@@ -432,7 +432,7 @@ _parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
 
-_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
+_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver; add_bridges = false)
 
 struct SpineOptExt
     instance::Object
