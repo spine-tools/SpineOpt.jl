@@ -60,8 +60,8 @@ function t_highest_resolution_path(m, indices, extra_indices...)
     scens_by_t = t_highest_resolution_sets!(m, _scens_by_t(indices))
     extra_scens_by_t = _scens_by_t(Iterators.flatten(extra_indices))
     for (t, scens) in scens_by_t
-        for t_long in t_in_t(m; t_short=t)
-            union!(scens, get(extra_scens_by_t, t_long, ()))
+        for t_short in t_in_t(m; t_long=t)
+            union!(scens, get(extra_scens_by_t, t_short, ()))
         end
     end
     ((t, path) for (t, scens) in scens_by_t for path in active_stochastic_paths(m, scens))
