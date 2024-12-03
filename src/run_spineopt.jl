@@ -348,6 +348,7 @@ function create_model(mip_solver, lp_solver, use_direct_model)
     end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
     m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)
+    JuMP.set_string_names_on_creation(m, false)
     m
 end
 

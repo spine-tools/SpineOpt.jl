@@ -25,6 +25,7 @@ end
 
 function _model()
     m = Model()
+    JuMP.set_string_names_on_creation(m, false)
     m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model()), nothing)
     m
 end
