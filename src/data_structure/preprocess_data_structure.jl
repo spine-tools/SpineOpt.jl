@@ -745,6 +745,7 @@ function add_required_outputs()
     required_output_names = Dict(
         :connection_avg_throughflow => :connection_flow,
         :connection_avg_intact_throughflow => :connection_intact_flow,
+        :contingency_is_binding => :connection_flow,
     )
     for r in report()
         new_output_names = (get(required_output_names, out.name, nothing) for out in report__output(report=r))

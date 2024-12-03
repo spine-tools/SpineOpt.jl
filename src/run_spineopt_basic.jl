@@ -687,8 +687,13 @@ end
 Save the value of all variables in a model.
 """
 function _save_variable_values!(m::Model)
-    for (name, var) in m.ext[:spineopt].variables
-        m.ext[:spineopt].values[name] = _fdict(_variable_value, var)
+    for (name, vars) in m.ext[:spineopt].variables
+        inds = if haskey(m.ext[:spineopt].outputs, name) || !haskey(m.ext[:spineopt].variables_definition, name)
+            keys(vars)
+        else
+            keys(m.ext[:spineopt].variables_definition[name][:history_vars_by_ind])
+        end
+        m.ext[:spineopt].values[name] = _fdict(_variable_value, inds, (vars[ind] for ind in inds))
     end
 end
 
@@ -700,9 +705,9 @@ _variable_value(e::AffExpr) = value(e)
 _variable_value(x::GenericAffExpr{Call,VariableRef}) = value(realize(x))
 
 function _save_expression_values!(m::Model)
-    for (name, expr) in m.ext[:spineopt].expressions
+    for (name, exprs) in m.ext[:spineopt].expressions
         name in keys(m.ext[:spineopt].outputs) || continue
-        m.ext[:spineopt].values[name] = _fdict(JuMP.value, expr)
+        m.ext[:spineopt].values[name] = _fdict(JuMP.value, exprs)
     end
 end
 
@@ -720,10 +725,10 @@ end
 Save the value of all constraints if the user wants to report it.
 """
 function _save_constraint_values!(m::Model)
-    for (name, con) in m.ext[:spineopt].constraints
+    for (name, cons) in m.ext[:spineopt].constraints
         name = Symbol(:value_constraint_, name)
         name in keys(m.ext[:spineopt].outputs) || continue
-        m.ext[:spineopt].values[name] = _fdict(JuMP.value, con)
+        m.ext[:spineopt].values[name] = _fdict(JuMP.value, cons)
     end
 end
 
@@ -731,11 +736,14 @@ end
 A copy of given dictionary `d` computed by applying the given function `f` to each value.
 """
 function _fdict(f, d)
-    vals = collect(Any, values(d))
+    _fdict(f, keys(d), values(d))
+end
+function _fdict(f, k, v)
+    vals = collect(Any, v)
     @Threads.threads for i in eachindex(vals)
         vals[i] = f(vals[i])
     end
-    Dict(zip(keys(d), vals))
+    Dict(zip(k, vals))
 end
 
 """
@@ -744,14 +752,24 @@ Save the value of the objective terms in a model.
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
     total_costs = total_costs_tail = 0
+    needs_total_costs = _is_benders_subproblem(m) || haskey(m.ext[:spineopt].outputs, :total_costs)
     for (term, (in_window, beyond_window)) in m.ext[:spineopt].objective_terms
-        cost, cost_tail = JuMP.value(realize(in_window)), JuMP.value(realize(beyond_window))
-        total_costs += cost
-        total_costs_tail += cost_tail
-        m.ext[:spineopt].values[term] = Dict(ind => cost)
+        needs_term = term in keys(m.ext[:spineopt].outputs)
+        needs_total_costs || needs_term || continue
+        cost = JuMP.value(realize(in_window))
+        if needs_term
+            m.ext[:spineopt].values[term] = Dict(ind => cost)
+        end
+        if needs_total_costs
+            cost_tail = JuMP.value(realize(beyond_window))
+            total_costs += cost
+            total_costs_tail += cost_tail
+        end
     end
-    m.ext[:spineopt].values[:total_costs] = Dict(ind => total_costs)
-    m.ext[:spineopt].values[:total_costs_tail] = Dict(ind => total_costs_tail)
+    if needs_total_costs
+        m.ext[:spineopt].values[:total_costs] = Dict(ind => total_costs)
+        m.ext[:spineopt].values[:total_costs_tail] = Dict(ind => total_costs_tail)
+    end
 end
 
 function _save_window_state(m, k; write_as_roll, resume_file_path)
