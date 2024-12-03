@@ -339,6 +339,7 @@ function create_model(mip_solver, lp_solver, use_direct_model)
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
         m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
+        JuMP.set_string_names_on_creation(m_mp, false)
         m_mp
     end
     model_by_stage = OrderedDict()
