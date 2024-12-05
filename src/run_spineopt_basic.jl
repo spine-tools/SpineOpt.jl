@@ -542,7 +542,7 @@ function _do_solve_model!(
             end
         end
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        if @timelog log_level 2 "Rolling $model_name temporal structure...\n" !roll_temporal_structure!(m, k) stats
+        if @timelog log_level 2 "Rolling $model_name temporal structure...\n" stats !roll_temporal_structure!(m, k)
             @log log_level 2 "Rolling complete\n"
             break
         end
@@ -638,18 +638,18 @@ function optimize_model!(
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
     model_name = _model_name(m)
-    @timelog log_level 0 "Optimizing $model_name..." optimize!(m) stats
+    @timelog log_level 0 "Optimizing $model_name..." stats optimize!(m)
     termination_st = termination_status(m)
     if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
             @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
             m.ext[:spineopt].has_results[] = true
-            @timelog log_level 2 "Saving $model_name results..." _save_model_results!(m) stats
+            @timelog log_level 2 "Saving $model_name results..." stats _save_model_results!(m)
             calculate_duals && _calculate_duals(m; log_level=log_level)
             if save_outputs
-                @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m) stats
-                @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix) stats
+                @timelog log_level 2 "Postprocessing $model_name results..." stats postprocess_results!(m)
+                @timelog log_level 2 "Saving $model_name outputs..." stats _save_outputs!(m, output_suffix)
             end
         else
             m.ext[:spineopt].has_results[] = false
@@ -1267,12 +1267,14 @@ update constraints and update objective.
 function update_model!(m; log_level=3, update_names=false, stats=nothing)
     model_name = _model_name(m)
     if update_names
-        @timelog log_level 2 "Updating $model_name variable names..." _update_variable_names!(m) stats
-        @timelog log_level 2 "Updating $model_name constraint names..." _update_constraint_names!(m) stats
+        @timelog log_level 2 "Updating $model_name variable names..." stats _update_variable_names!(m)
+        @timelog log_level 2 "Updating $model_name constraint names..." stats _update_constraint_names!(m)
     end
     m.ext[:spineopt].has_results[] || return
-    @timelog log_level 2 "Fixing $model_name history..." _fix_history!(m) stats
-    @timelog log_level 2 "Applying $model_name non-anticipativity constraints..." apply_non_anticipativity_constraints!(m) stats
+    @timelog log_level 2 "Fixing $model_name history..." stats _fix_history!(m)
+    @timelog log_level 2 "Applying $model_name non-anticipativity constraints..." stats begin
+        apply_non_anticipativity_constraints!(m)
+    end
 end
 
 function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))

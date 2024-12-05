@@ -32,10 +32,15 @@ end
 """
     @timelog(level, threshold, msg, expr)
 """
-macro timelog(level, threshold, msg, expr, stats=nothing)
+macro timelog(level, threshold, msg, expr)
+    quote
+        @timelog $(esc(level)) $(esc(threshold)) $(esc(msg)) nothing $(esc(expr))
+    end
+end
+macro timelog(level, threshold, msg, stats, expr)
     quote
         if $(esc(level)) >= $(esc(threshold))
-            @timemsg $(esc(msg)) $(esc(expr)) $(esc(stats))
+            @timemsg $(esc(msg)) $(esc(stats)) $(esc(expr))
         else
             $(esc(expr))
         end
@@ -45,7 +50,7 @@ end
 """
     @timemsg(msg, expr)
 """
-macro timemsg(msg, expr, stats=nothing)
+macro timemsg(msg, stats, expr)
     quote
         local msg = $(esc(msg))
         local stats = $(esc(stats))
