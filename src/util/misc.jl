@@ -24,7 +24,6 @@ macro log(level, threshold, msg)
     quote
         if $(esc(level)) >= $(esc(threshold))
             printstyled($(esc(msg)), "\n"; bold=true)
-            yield()
         end
     end
 end
@@ -34,24 +33,51 @@ end
 """
 macro timelog(level, threshold, msg, expr)
     quote
+        @timelog $(esc(level)) $(esc(threshold)) $(esc(msg)) nothing $(esc(expr))
+    end
+end
+macro timelog(level, threshold, msg, stats, expr)
+    quote
         if $(esc(level)) >= $(esc(threshold))
-            @timemsg $(esc(msg)) $(esc(expr))
+            @timemsg $(esc(msg)) $(esc(stats)) $(esc(expr))
         else
             $(esc(expr))
         end
     end
 end
 
-"""
-    @timemsg(msg, expr)
-"""
-macro timemsg(msg, expr)
+const _SENTINEL = "SpineOptSentinel"
+
+macro timemsg(msg, stats, expr)
     quote
-        printstyled($(esc(msg)); bold=true)
-        r = @time $(esc(expr))
-        yield()
-        r
+        msg = $(esc(msg))
+        stats = $(esc(stats))
+        printstyled(stderr, msg; bold=true)
+        pipe = Pipe()
+        task = @Threads.spawn _drain(pipe)
+        val = redirect_stdout(pipe) do
+            val = @time $(esc(expr))
+            println(_SENTINEL)
+            val
+        end
+        last_str = fetch(task)
+        if stats isa Dict
+            seconds = parse(Float64, strip(split(last_str, "seconds")[1]))
+            push!(get!(stats, strip(msg), []), seconds)
+        end
+        val
     end
+end
+
+function _drain(pipe)
+    last_str = ""
+    while true
+        str = readline(pipe)
+        str == _SENTINEL && break
+        println(stderr, str)
+        last_str = str
+    end
+    last_str
 end
 
 """
