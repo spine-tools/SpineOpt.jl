@@ -58,14 +58,14 @@ function _build_constraint_ratio_out_in_connection_flow(m::Model, conn, ng_out, 
     @fetch connection_flow = m.ext[:spineopt].variables
     build_sense_constraint(
         + sum(
-            + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
+            + connection_flow[conn, n_out, d, s, t_short]
             for (conn, n_out, d, s, t_short) in connection_flow_indices(
                 m;
                 connection=conn,
                 node=ng_out,
                 direction=direction(:to_node),
                 stochastic_scenario=s_path,
-                t=t_in_t(m; t_long=t),
+                t=t_in_t(m; t_short=t),
             );
             init=0,
         ),
@@ -73,8 +73,7 @@ function _build_constraint_ratio_out_in_connection_flow(m::Model, conn, ng_out, 
         + sum(
             + connection_flow[conn, n_in, d, s_past, t_past]
             * ratio_out_in(m; connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s_past, t=t_past)
-            * weight
-            for (conn, n_in, d, s_past, t_past, weight) in _past_connection_input_flow_indices(
+            for (conn, n_in, d, s_past, t_past) in _past_connection_input_flow_indices(
                 m, conn, ng_out, ng_in, s_path, t
             );
             init=0,
@@ -114,8 +113,11 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=path, t=t)
         for (conn, ng_out, ng_in) in indices(ratio_out_in)
         if !_has_simple_fix_ratio_out_in_connection_flow(conn, ng_out, ng_in)
-        for (t, path_out) in t_lowest_resolution_path(
-            m, connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))
+        for (t, path_out) in t_highest_resolution_path(
+            m, Iterators.flatten((
+                connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node)), 
+                connection_flow_indices(m; connection=conn, node=ng_in, direction=direction(:from_node))
+                ))
         )
         for path in active_stochastic_paths(
             m, 
@@ -125,15 +127,16 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                     (
                         ind
                         for s in path_out
-                        for ind in connection_flow_indices(
+                        for ind in Iterators.flatten((
+                            connection_flow_indices(
                             m;
                             connection=conn,
                             node=ng_in,
                             direction=direction(:from_node),
                             t=to_time_slice(m; t=_t_look_behind(conn, ng_out, ng_in, (s,), t)),
                             temporal_block=anything,
-                        )
-                    ),
+                        ), connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))))
+                    )
                 )
             )
         )
@@ -143,7 +146,7 @@ end
 function _past_connection_input_flow_indices(m, conn, ng_out, ng_in, s_path, t)
     t_look_behind = _t_look_behind(conn, ng_out, ng_in, s_path, t)
     (
-        (; ind..., weight=overlap_duration(ind.t, t_look_behind))
+        (; ind...)
         for ind in connection_flow_indices(
             m;
             connection=conn,
