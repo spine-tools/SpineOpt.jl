@@ -24,7 +24,6 @@ macro log(level, threshold, msg)
     quote
         if $(esc(level)) >= $(esc(threshold))
             printstyled($(esc(msg)), "\n"; bold=true)
-            yield()
         end
     end
 end
@@ -52,26 +51,34 @@ end
 """
 macro timemsg(msg, stats, expr)
     quote
-        local msg = $(esc(msg))
-        local stats = $(esc(stats))
-        printstyled(msg; bold=true)
-        local pipe = Pipe()
-        local r = redirect_stdout(pipe) do
-            @time $(esc(expr))
+        msg = $(esc(msg))
+        stats = $(esc(stats))
+        printstyled(stderr, msg; bold=true)
+        pipe = Pipe()
+        task = @Threads.spawn _drain(pipe)
+        val = redirect_stdout(pipe) do
+            val = @time $(esc(expr))
+            println("\u91")
+            val
         end
-        close(pipe.in)
-        local last_str = ""
-        for str in eachline(pipe)
-            println(str)
-            last_str = str
-        end
+        last_str = fetch(task)
         if stats isa Dict
             seconds = parse(Float64, strip(split(last_str, "seconds")[1]))
-            push!(get!(stats, msg, []), seconds)
+            push!(get!(stats, strip(msg), []), seconds)
         end
-        yield()
-        r
+        val
     end
+end
+
+function _drain(pipe)
+    last_str = ""
+    while true
+        str = readline(pipe)
+        str == "\u91" && break
+        println(stderr, str)
+        last_str = str
+    end
+    last_str
 end
 
 """
