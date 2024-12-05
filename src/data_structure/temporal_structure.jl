@@ -722,6 +722,7 @@ end
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment variables with filter keywords.
 """
 function unit_investment_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
+    unit = intersect(unit, SpineOpt.unit(is_candidate=true))
     (
         (unit=u, t=t1)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
@@ -735,6 +736,7 @@ end
 Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection` investment variables with filter keywords.
 """
 function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
+    connection = intersect(connection, SpineOpt.connection(is_candidate=true))
     (
         (connection=conn, t=t1)
         for (conn, tb) in connection__investment_temporal_block(
@@ -750,6 +752,7 @@ end
 Generate an `Array` of all valid `(node, t)` `NamedTuples` for `node` investment variables (storages) with filter keywords.
 """
 function node_investment_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
+    node = intersect(node, SpineOpt.node(is_candidate=true))
     (
         (node=n, t=t1)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
@@ -765,7 +768,7 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything)
     (
         (unit=u, t_before=tb, t_after=ta)
-        for u in intersect(unit, SpineOpt.unit())
+        for u in intersect(unit, SpineOpt.unit(is_candidate=true))
         for (tb, ta) in dynamic_time_indices(
             m, unit__investment_temporal_block(unit=u); t_before=t_before, t_after=t_after
         )
@@ -780,7 +783,7 @@ Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples`
 function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
     (
         (connection=conn, t_before=tb, t_after=ta)
-        for conn in intersect(connection, SpineOpt.connection())
+        for conn in intersect(connection, SpineOpt.connection(is_candidate=true))
         for (tb, ta) in dynamic_time_indices(
             m, connection__investment_temporal_block(connection=conn); t_before=t_before, t_after=t_after
         )
@@ -796,7 +799,7 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` for `
 function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     (
         (node=n, t_before=tb, t_after=ta)
-        for n in intersect(node, SpineOpt.node())
+        for n in intersect(node, SpineOpt.node(is_candidate=true))
         for (tb, ta) in dynamic_time_indices(
             m, node__investment_temporal_block(node=n); t_before=t_before, t_after=t_after
         )
