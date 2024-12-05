@@ -32,10 +32,10 @@ end
 """
     @timelog(level, threshold, msg, expr)
 """
-macro timelog(level, threshold, msg, expr)
+macro timelog(level, threshold, msg, expr, stats=nothing)
     quote
         if $(esc(level)) >= $(esc(threshold))
-            @timemsg $(esc(msg)) $(esc(expr))
+            @timemsg $(esc(msg)) $(esc(expr)) $(esc(stats))
         else
             $(esc(expr))
         end
@@ -45,10 +45,25 @@ end
 """
     @timemsg(msg, expr)
 """
-macro timemsg(msg, expr)
+macro timemsg(msg, expr, stats=nothing)
     quote
-        printstyled($(esc(msg)); bold=true)
-        r = @time $(esc(expr))
+        local msg = $(esc(msg))
+        local stats = $(esc(stats))
+        printstyled(msg; bold=true)
+        local pipe = Pipe()
+        local r = redirect_stdout(pipe) do
+            @time $(esc(expr))
+        end
+        close(pipe.in)
+        local last_str = ""
+        for str in eachline(pipe)
+            println(str)
+            last_str = str
+        end
+        if stats isa Dict
+            seconds = parse(Float64, strip(split(last_str, "seconds")[1]))
+            push!(get!(stats, msg, []), seconds)
+        end
         yield()
         r
     end

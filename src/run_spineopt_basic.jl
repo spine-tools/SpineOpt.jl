@@ -515,11 +515,8 @@ function _do_solve_model!(
 )
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
     k0 === nothing && return m
-    t_start = if !isempty(output_suffix)
-        t_start = now()
-        @log log_level 1 "Solve started at $t_start"
-        t_start
-    end
+    t_start = now()
+    @log log_level 1 "Solve started at $t_start"
     m.ext[:spineopt].has_results[] = false
     _call_event_handlers(m, :model_about_to_solve)
     model_name = _model_name(m)
@@ -527,12 +524,13 @@ function _do_solve_model!(
     if m.ext[:spineopt].temporal_structure[:as_number_or_call] === as_call
         @timelog log_level 2 "Bringing $model_name to the first window..." rewind_temporal_structure!(m)
     end
+    stats = Dict()
     for k in Iterators.countfrom(k0)
         @log log_level 1 "\n$full_model_name - window $k of $(window_count(m)): $(current_window(m))"
         _call_event_handlers(m, :window_about_to_solve, k)
         if !m.ext[:spineopt].has_results[]
             if optimize_model!(
-                m; log_level, output_suffix, calculate_duals, save_outputs, print_conflict=!skip_failed_windows
+                m; log_level, output_suffix, calculate_duals, save_outputs, stats, print_conflict=!skip_failed_windows
             )
                 _call_event_handlers(m, :window_solved, k)
             elseif skip_failed_windows
@@ -544,21 +542,24 @@ function _do_solve_model!(
             end
         end
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        if @timelog log_level 2 "Rolling $model_name temporal structure...\n" !roll_temporal_structure!(m, k)
-            @timelog log_level 2 "$model_name ... Rolling complete\n" break
+        if @timelog log_level 2 "Rolling $model_name temporal structure...\n" !roll_temporal_structure!(m, k) stats
+            @log log_level 2 "Rolling complete\n"
+            break
         end
-        update_model!(m; log_level=log_level, update_names=update_names)
+        update_model!(m; log_level, update_names, stats)
         m.ext[:spineopt].has_results[] = false
     end
     _call_event_handlers(m, :model_solved)
+    t_end = now()
+    elapsed_time_string = _elapsed_time_string(t_start, t_end)
+    @log log_level 1 "Solve complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
+    for (msg, times) in stats
+        min, max = extrema(times)
+        avg = sum(times) / length(times)
+        @log log_level 2 "$msg\n\tmin: $min seconds, max: $max seconds, avg: $avg seconds"
+    end
     if !isempty(output_suffix)
-        t_end = now()
-        elapsed_time_string = _elapsed_time_string(t_start, t_end)
-        @log log_level 1 "Solve complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
-        push!(
-            get!(m.ext[:spineopt].extras, :elapsed_time_by_solve, Dict()),
-            output_suffix => _elapsed_time_string(t_start, t_end),
-        )
+        get!(m.ext[:spineopt].extras, :elapsed_time_by_solve, Dict())[output_suffix] = elapsed_time_string
     end
     true
 end
@@ -625,24 +626,30 @@ Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
 function optimize_model!(
-    m::Model; log_level=3, calculate_duals=false, output_suffix=(;), save_outputs=true, print_conflict=true
+    m::Model;
+    log_level=3,
+    calculate_duals=false,
+    output_suffix=(;),
+    save_outputs=true,
+    print_conflict=true,
+    stats=nothing,
 )
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
     model_name = _model_name(m)
-    @timelog log_level 0 "Optimizing $model_name..." optimize!(m)
+    @timelog log_level 0 "Optimizing $model_name..." optimize!(m) stats
     termination_st = termination_status(m)
     if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
             @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
             m.ext[:spineopt].has_results[] = true
-            @timelog log_level 2 "Saving $model_name results..." _save_model_results!(m)
+            @timelog log_level 2 "Saving $model_name results..." _save_model_results!(m) stats
             calculate_duals && _calculate_duals(m; log_level=log_level)
             if save_outputs
-                @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m)
-                @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix)
+                @timelog log_level 2 "Postprocessing $model_name results..." postprocess_results!(m) stats
+                @timelog log_level 2 "Saving $model_name outputs..." _save_outputs!(m, output_suffix) stats
             end
         else
             m.ext[:spineopt].has_results[] = false
@@ -1257,14 +1264,15 @@ end
 Update the given model for the next window in the rolling horizon: update variables, fix the necessary variables,
 update constraints and update objective.
 """
-function update_model!(m; log_level=3, update_names=false)
+function update_model!(m; log_level=3, update_names=false, stats=nothing)
+    model_name = _model_name(m)
     if update_names
-        _update_variable_names!(m)
-        _update_constraint_names!(m)
+        @timelog log_level 2 "Updating $model_name variable names..." _update_variable_names!(m) stats
+        @timelog log_level 2 "Updating $model_name constraint names..." _update_constraint_names!(m) stats
     end
     m.ext[:spineopt].has_results[] || return
-    @timelog log_level 2 "Fixing history..." _fix_history!(m)
-    @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
+    @timelog log_level 2 "Fixing $model_name history..." _fix_history!(m) stats
+    @timelog log_level 2 "Applying $model_name non-anticipativity constraints..." apply_non_anticipativity_constraints!(m) stats
 end
 
 function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
