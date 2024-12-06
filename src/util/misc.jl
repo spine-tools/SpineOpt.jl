@@ -72,7 +72,13 @@ end
 function _drain(pipe)
     last_str = ""
     while true
-        str = readline(pipe)
+        str = try
+            readline(pipe)
+        catch err
+            err isa ArgumentError || rethrow()
+            sleep(0.02)
+            continue
+        end
         str == _SENTINEL && break
         println(stderr, str)
         last_str = str
