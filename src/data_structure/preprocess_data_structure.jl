@@ -45,6 +45,7 @@ function preprocess_data_structure()
     generate_is_boundary()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
+    generate_connection_admittance()
     generate_unit_commitment_parameters()
 end
 
@@ -896,6 +897,52 @@ function generate_connection_flow_capacity()
     @eval begin
         connection_flow_capacity = $connection_flow_capacity
         export connection_flow_capacity
+    end
+end
+
+"""
+    generate_connection_admittance()
+
+Generate `connection_conductance` and `connection_susceptance` Parameters
+associated with the and `connection` `ObjectClass`. They are derived from
+resistance and reactance which the user is expected to give as input. Default
+values are set to zero.
+"""
+function generate_connection_admittance()
+    connection_conductance = Parameter(:connection_conductance, [connection])
+    connection_susceptance = Parameter(:connection_susceptance, [connection])
+    
+    add_object_parameter_values!(
+        connection, 
+        Dict(conn => Dict(:connection_conductance => 
+                parameter_value(connection_resistance(connection = conn)/
+                            (connection_resistance(connection = conn)^2 +
+                            connection_reactance(connection = conn)^2) ) ) 
+                for conn in connection()
+                    if !isnothing(connection_resistance(connection = conn)) && 
+                        !isnothing(connection_reactance(connection = conn))
+        )
+    )
+    
+    add_object_parameter_defaults!(connection, Dict(:connection_conductance => parameter_value(0.0)))
+    
+    add_object_parameter_values!(
+        connection, 
+        Dict(conn => Dict(:connection_susceptance => 
+                parameter_value(-connection_reactance(connection = conn)/
+                            (connection_resistance(connection = conn)^2 +
+                            connection_reactance(connection = conn)^2) ) ) 
+                for conn in connection()
+                    if !isnothing(connection_resistance(connection = conn)) && 
+                        !isnothing(connection_reactance(connection = conn))
+        )
+    )
+
+    add_object_parameter_defaults!(connection, Dict(:connection_susceptance => parameter_value(0.0)))
+    
+    @eval begin
+        connection_conductance = $connection_conductance
+        connection_susceptance = $connection_susceptance
     end
 end
 

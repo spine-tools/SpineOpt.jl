@@ -48,6 +48,39 @@ function unit_flow_indices(
     )
 end
 
+"""
+    unit_flow_reactive_indices(
+        m,
+        unit=anything,
+        node=anything,
+        direction=anything,
+        s=anything
+        t=anything
+    )
+
+A list of `NamedTuple`s corresponding to indices of the `unit_flow_reactive` variable 
+where the keyword arguments act as filters for each dimension.
+"""
+function unit_flow_reactive_indices(
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    [(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+        for (u, n, d, s, t) in unit_flow_indices(m; unit = unit, 
+                                    node = intersect(members(node), SpineOpt.node(has_voltage=true)), 
+                                    direction=direction, 
+                                    stochastic_scenario = stochastic_scenario, 
+                                    t=t, temporal_block = temporal_block)
+        
+    
+    ]
+end
+
 function unit_flow_ub(m; unit, node, direction, kwargs...)
     (
         unit_flow_capacity(unit=unit, node=node, direction=direction, _strict=false) === nothing
@@ -155,5 +188,21 @@ function add_variable_unit_flow!(m::Model)
         non_anticipativity_time=unit_flow_non_anticipativity_time,
         non_anticipativity_margin=unit_flow_non_anticipativity_margin,
         replacement_expressions=replacement_expressions,
+    )
+end
+
+"""
+    add_variable_unit_flow_reactive!(m::Model)
+
+Add `unit_flow_reactive` variables to model `m`. The reactive power flow from unit to node
+(injection of reactive power) or from node to unit (absorption of reactive power).
+"""
+function add_variable_unit_flow_reactive!(m::Model)
+
+    add_variable!(
+        m,
+        :unit_flow_reactive,
+        unit_flow_reactive_indices;
+        lb=Constant(0)
     )
 end

@@ -49,6 +49,36 @@ function connection_flow_indices(
     )
 end
 
+"""
+    connection_reactive_flow_indices(
+        connection=anything,
+        node=anything,
+        direction=anything,
+        stochastic_scenario=anything,
+        t=anything
+    )
+
+A list of `NamedTuple`s corresponding to indices of the `connection_flow_reactive` variable.
+The keyword arguments act as filters for each dimension.
+"""
+function connection_reactive_flow_indices(
+    m::Model;
+    connection=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing))
+
+    #TBA: check for the connection_has_ac_flow flag
+    connection_flow_indices(m, connection=connection,
+        node=intersect(node, SpineOpt.node(has_voltage=true)),
+        direction=direction,
+        stochastic_scenario=stochastic_scenario,
+        t=t,
+        temporal_block=temporal_block )
+end
+
 function connection_flow_ub(m; connection, node, direction, kwargs...)
     (
         connection_flow_capacity(connection=connection, node=node, direction=direction, _strict=false) === nothing
@@ -109,3 +139,19 @@ function add_variable_connection_flow!(m::Model)
         replacement_expressions=replacement_expressions,
     )
 end
+
+"""
+    add_variable_connection_flow_reactive!(m::Model)
+
+Add `connection_flow_reactive` variables to model `m`, which represent reactive power flow
+from connection to node or vice versa.
+"""
+function add_variable_connection_flow_reactive!(m::Model)
+    t0 = _analysis_time(m)
+    add_variable!(
+        m,
+        :connection_flow_reactive,
+        connection_reactive_flow_indices
+    )
+end
+
