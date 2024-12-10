@@ -113,12 +113,15 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=path, t=t)
         for (conn, ng_out, ng_in) in indices(ratio_out_in)
         if !_has_simple_fix_ratio_out_in_connection_flow(conn, ng_out, ng_in)
-        for (t, path_out) in t_highest_resolution_path(
-            m, Iterators.flatten((
+        for t in t_highest_resolution!(
+            m, unique(x.t for x in Iterators.flatten((
                 connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node)), 
                 connection_flow_indices(m; connection=conn, node=ng_in, direction=direction(:from_node))
                 ))
+            )      
         )
+        for path_out in 
+            [unique(s.stochastic_scenario) for s in connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))]                  
         for path in active_stochastic_paths(
             m, 
             Iterators.flatten(
@@ -127,7 +130,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                     (
                         ind
                         for s in path_out
-                        for ind in Iterators.flatten((
+                        for ind in 
                             connection_flow_indices(
                             m;
                             connection=conn,
@@ -135,8 +138,8 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                             direction=direction(:from_node),
                             t=to_time_slice(m; t=_t_look_behind(conn, ng_out, ng_in, (s,), t)),
                             temporal_block=anything,
-                        ), connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))))
-                    )
+                        )
+                    ),
                 )
             )
         )
