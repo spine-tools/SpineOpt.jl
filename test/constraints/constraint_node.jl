@@ -1096,6 +1096,12 @@ function test_node_voltage1()
         vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
         connflow = m.ext[:spineopt].variables[:connection_flow]
               
+        if isdefined(Main, :Infiltrator)
+            Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
+        end
+
+        println(value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) )
+        
         @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.001
 
     end
@@ -1264,6 +1270,90 @@ function test_node_voltage2()
     end
 end
 
+"""
+Testing the reverse real AC flow over a connection.
+This requires that the variable connection_flow is a free variable.
+"""
+function test_reverse_ac_flow()
+
+    @testset "reverse_acflow" begin
+        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
+        
+        #solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], ["solver:SCS.jl"])]))
+        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
+
+        url_in = _test_constraint_node_setup()
+
+        # add one more node and connection
+        # the connection is defined in reverse direction of what will be real power flow
+        objects = [
+            ["connection", "connection_cd"],
+            ["node", "node_d"],
+        ]
+
+        object_parameter_values = [
+            ["model", "instance", "db_mip_solver", "Juniper.jl"],
+            ["model", "instance", "db_lp_solver", "Juniper.jl"],
+            ["model", "instance", "db_mip_solver_options", solver_options],
+            ["model", "instance", "db_lp_solver_options", solver_options],
+            ["node", "node_b", "has_voltage", true],
+            ["node", "node_b", "demand_reactive", 0.0],
+            ["node", "node_b", "min_voltage", 0.7],
+            ["node", "node_c", "has_voltage", true],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 0.0],
+            ["node", "node_c", "demand_reactive", 0.2],
+            ["node", "node_d", "has_voltage", true],
+            ["node", "node_d", "min_voltage", 0.7],
+            ["node", "node_d", "demand", 0.0],
+            ["node", "node_d", "demand_reactive", 0.2],
+            ["connection","connection_bc","connection_resistance",0.2],
+            ["connection","connection_bc","connection_reactance",0.2],
+            ["connection","connection_bc","connection_current_max",1.0],
+            ["connection","connection_cd","connection_resistance",0.2],
+            ["connection","connection_cd","connection_reactance",0.2],
+            ["connection","connection_cd","connection_current_max",1.0]
+        ]
+
+        relationships = [
+            ["connection__from_node", ["connection_cd", "node_d"]],
+            ["connection__to_node", ["connection_cd", "node_c"]],
+            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
+            ["connection__node__node", [ "connection_cd", "node_d", "node_c"]],
+            ["node__temporal_block", ["node_d", "hourly"]],
+            ["node__stochastic_structure", ["node_d", "stochastic"]],
+        ]
+        
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+            ["connection__node__node",
+            ["connection_cd", "node_d", "node_c"], "connection_has_ac_flow", true]
+        ]
+            
+        SpineInterface.import_data(
+            url_in;
+            objects = objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+
+        @test value( vsq[node(:node_d), stochastic_scenario(:parent), 
+                        time_slices[1]] ) ≈ 0.7302 atol=0.0001
+    end
+end
+
+
 @testset "node-based constraints" begin
     # test_constraint_nodal_balance()
     # test_constraint_nodal_balance_group()
@@ -1283,9 +1373,10 @@ end
     # test_constraint_storage_lifetime()
     # test_constraint_storage_lifetime_sense()
     # test_constraint_storage_lifetime_mp()
-    test_constraint_min_capacity_margin()
+    # test_constraint_min_capacity_margin()
     # test_constraint_min_capacity_margin_penalty()
-    test_node_voltage1()
-    test_constraint_unit_flow_reactive()
-    #test_node_voltage2()
+    # test_node_voltage1()
+    # test_constraint_unit_flow_reactive()
+    # test_node_voltage2()
+    test_reverse_ac_flow()
 end

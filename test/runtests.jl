@@ -25,6 +25,7 @@ using JuMP
 using PyCall
 using Pkg
 using Juniper, SCS
+using Infiltrator
 import JSON
 import MathOptInterface as MOI
 

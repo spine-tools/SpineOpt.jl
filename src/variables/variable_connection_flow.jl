@@ -79,6 +79,24 @@ function connection_reactive_flow_indices(
         temporal_block=temporal_block )
 end
 
+"""
+    connection_flow_lb(m; connection, node, direction, kwargs...)
+    
+    The connection flow lower bound is normally zero but in AC flow
+    connections it is unbounded. Checks if reactive flow has been defined
+    for the connection, node and direction and produces zero bound or no bound. 
+"""
+function connection_flow_lb(m; connection, node, direction, kwargs...)
+    
+        if isempty(connection_reactive_flow_indices(m, 
+                connection=connection, 
+                node=node, direction=direction) )
+            return 0
+        else
+            return NaN
+        end
+end
+
 function connection_flow_ub(m; connection, node, direction, kwargs...)
     (
         connection_flow_capacity(connection=connection, node=node, direction=direction, _strict=false) === nothing
@@ -129,7 +147,8 @@ function add_variable_connection_flow!(m::Model)
         m,
         :connection_flow,
         connection_flow_indices;
-        lb=constant(0),
+        #lb=constant(0),
+        lb=connection_flow_lb,
         ub=connection_flow_ub,
         fix_value=fix_connection_flow,
         initial_value=initial_connection_flow,
