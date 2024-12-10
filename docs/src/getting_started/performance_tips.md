@@ -1,0 +1,3 @@
+# [Perfomance tips](@id performance_tips)
+
+By default, SpineOpt generates names for variables when creating models in JuMP. These names help users quickly identify data issues if the model becomes infeasible. However, generating these names can add extra computational overhead. For more information, see the [JuMP documentation](https://jump.dev/JuMP.jl/stable/tutorials/getting_started/performance_tips/#Disable-string-names). To improve the speed of SpineOpt runs, users can disable name creation by passing the argument `use_model_names = false` when calling the function [run_spineopt](https://spine-tools.github.io/SpineOpt.jl/latest/library/#SpineOpt.run_spineopt).
