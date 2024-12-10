@@ -203,6 +203,6 @@ function add_variable_unit_flow_reactive!(m::Model)
         m,
         :unit_flow_reactive,
         unit_flow_reactive_indices;
-        lb=Constant(0)
+        lb=constant(0)
     )
 end

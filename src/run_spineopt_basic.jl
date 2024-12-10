@@ -1047,7 +1047,7 @@ function write_report(reports_by_output::Dict, url_out, values::Dict; alternativ
 end
 
 function _collect_output_values(m)
-    _wait_for_dual_solves(m)
+    #_wait_for_dual_solves(m)
     values = Dict()
     for (output_name, overwrite) in keys(m.ext[:spineopt].reports_by_output)
         by_suffix = get(m.ext[:spineopt].outputs, output_name, nothing)
