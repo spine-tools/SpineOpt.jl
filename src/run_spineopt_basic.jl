@@ -515,10 +515,11 @@ function _do_solve_model!(
 )
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
     k0 === nothing && return m
+    _call_event_handlers(m, :model_about_to_solve)
+    m.ext[:spineopt].has_results[] && return m
     t_start = now()
     @log log_level 1 "Solve started at $t_start"
     m.ext[:spineopt].has_results[] = false
-    _call_event_handlers(m, :model_about_to_solve)
     model_name = _model_name(m)
     full_model_name = string(log_prefix, model_name)
     if m.ext[:spineopt].temporal_structure[:as_number_or_call] === as_call
