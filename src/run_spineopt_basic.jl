@@ -514,9 +514,9 @@ function _do_solve_model!(
     skip_failed_windows=false,
 )
     k0 = _resume_run!(m, resume_file_path; log_level, update_names)
-    k0 === nothing && return m
+    k0 === nothing && return true
     _call_event_handlers(m, :model_about_to_solve)
-    m.ext[:spineopt].has_results[] && return m
+    m.ext[:spineopt].has_results[] && return true
     t_start = now()
     @log log_level 1 "Solve started at $t_start"
     m.ext[:spineopt].has_results[] = false
