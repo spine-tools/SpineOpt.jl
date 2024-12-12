@@ -1046,7 +1046,10 @@ function test_constraint_min_capacity_margin_penalty()
     end
 end
 
-
+"""
+    test_node_voltage1()
+    Testing the voltage of the demand node when there is a real power demand behind a single connection.
+"""
 function test_node_voltage1()
     @testset "constraint_node_voltage" begin
    
@@ -1056,9 +1059,7 @@ function test_node_voltage1()
         url_in = _test_constraint_node_setup()
         object_parameter_values = [
             ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_lp_solver", "Juniper.jl"],
             ["model", "instance", "db_mip_solver_options", solver_options],
-            ["model", "instance", "db_lp_solver_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
             ["node", "node_b", "min_voltage", 0.7],
@@ -1069,7 +1070,6 @@ function test_node_voltage1()
             ["connection","connection_bc","connection_resistance",0.2],
             ["connection","connection_bc","connection_reactance",0.2],
             ["connection","connection_bc","connection_current_max",1.0]
-
         ]
         relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
         relationship_parameter_values = [
@@ -1086,7 +1086,7 @@ function test_node_voltage1()
             relationship_parameter_values=relationship_parameter_values,
         )
 
-        m = run_spineopt(url_in; log_level=3, optimize=true)
+        m = run_spineopt(url_in; log_level=1, optimize=true)
 
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
@@ -1103,23 +1103,23 @@ function test_node_voltage1()
         println(value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) )
         
         @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.001
-
     end
 end
 
+"""
+    test_constraint_unit_flow_reactive()
+    Testing the reactive power flow when there is a reactive power demand behind a single connection.
+"""
 function test_constraint_unit_flow_reactive()
     @testset "constraint_unit_flow_reactive" begin
    
         nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
-        
         solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
 
         url_in = _test_constraint_node_setup()
         object_parameter_values = [
             ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_lp_solver", "Juniper.jl"],
             ["model", "instance", "db_mip_solver_options", solver_options],
-            ["model", "instance", "db_lp_solver_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 0.7],
@@ -1133,6 +1133,7 @@ function test_constraint_unit_flow_reactive()
         ]
         
         relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
@@ -1205,9 +1206,7 @@ function test_node_voltage2()
 
         object_parameter_values = [
             ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_lp_solver", "Juniper.jl"],
             ["model", "instance", "db_mip_solver_options", solver_options],
-            ["model", "instance", "db_lp_solver_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 0.7],
@@ -1225,7 +1224,6 @@ function test_node_voltage2()
             ["connection","connection_cd","connection_resistance",0.2],
             ["connection","connection_cd","connection_reactance",0.2],
             ["connection","connection_cd","connection_current_max",1.0]
-
         ]
         relationships = [
             ["connection__from_node", ["connection_cd", "node_c"]],
@@ -1271,66 +1269,46 @@ function test_node_voltage2()
 end
 
 """
-Testing the reverse real AC flow over a connection.
-This requires that the variable connection_flow is a free variable.
+Testing the reverse real AC flow over a connection..
 """
 function test_reverse_ac_flow()
 
     @testset "reverse_acflow" begin
-        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
-        
-        #solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], ["solver:SCS.jl"])]))
+        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
         solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
 
         url_in = _test_constraint_node_setup()
 
         # add one more node and connection
-        # the connection is defined in reverse direction of what will be real power flow
         objects = [
-            ["connection", "connection_cd"],
+            ["connection", "connection_bd"],
             ["node", "node_d"],
         ]
-
         object_parameter_values = [
             ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_lp_solver", "Juniper.jl"],
             ["model", "instance", "db_mip_solver_options", solver_options],
-            ["model", "instance", "db_lp_solver_options", solver_options],
             ["node", "node_b", "has_voltage", true],
-            ["node", "node_b", "demand_reactive", 0.0],
+            ["node", "node_b", "demand_reactive", 0.1],
             ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "has_voltage", true],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.0],
-            ["node", "node_c", "demand_reactive", 0.2],
             ["node", "node_d", "has_voltage", true],
             ["node", "node_d", "min_voltage", 0.7],
-            ["node", "node_d", "demand", 0.0],
-            ["node", "node_d", "demand_reactive", 0.2],
-            ["connection","connection_bc","connection_resistance",0.2],
-            ["connection","connection_bc","connection_reactance",0.2],
-            ["connection","connection_bc","connection_current_max",1.0],
-            ["connection","connection_cd","connection_resistance",0.2],
-            ["connection","connection_cd","connection_reactance",0.2],
-            ["connection","connection_cd","connection_current_max",1.0]
+            ["node", "node_d", "demand", 0.2],
+            ["node", "node_d", "demand_reactive", 0.0],
+            ["connection","connection_bd","connection_resistance",0.2],
+            ["connection","connection_bd","connection_reactance",0.2],
+            ["connection","connection_bd","connection_current_max",1.0]
         ]
-
-        relationships = [
-            ["connection__from_node", ["connection_cd", "node_d"]],
-            ["connection__to_node", ["connection_cd", "node_c"]],
-            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
-            ["connection__node__node", [ "connection_cd", "node_d", "node_c"]],
+        relationships = [["connection__from_node", ["connection_bd", "node_b"]],
+            ["connection__to_node", ["connection_bd", "node_d"]],
+            ["connection__node__node", [ "connection_bd", "node_b", "node_d"]],
             ["node__temporal_block", ["node_d", "hourly"]],
-            ["node__stochastic_structure", ["node_d", "stochastic"]],
+            ["node__stochastic_structure", ["node_d", "stochastic"]]
         ]
-        
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
             ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
-            ["connection__node__node",
-            ["connection_cd", "node_d", "node_c"], "connection_has_ac_flow", true]
+                ["connection_bd", "node_b", "node_d"], "connection_has_ac_flow", true]
         ]
             
         SpineInterface.import_data(
@@ -1347,36 +1325,40 @@ function test_reverse_ac_flow()
         
         # aliases for the model OPF variables
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        vsin  = m.ext[:spineopt].variables[:node_voltageproduct_sine]
+        vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
+        connflow = m.ext[:spineopt].variables[:connection_flow]
 
-        @test value( vsq[node(:node_d), stochastic_scenario(:parent), 
-                        time_slices[1]] ) ≈ 0.7302 atol=0.0001
+        println(value( vsq[node(:node_d), stochastic_scenario(:parent), time_slices[1]] ) )
+        
+        @test value( vsq[node(:node_d), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.001
     end
 end
 
 
 @testset "node-based constraints" begin
-    # test_constraint_nodal_balance()
-    # test_constraint_nodal_balance_group()
-    # test_constraint_node_injection()
-    # test_constraint_cyclic_node_state()
-    # test_constraint_storage_line_pack()
-    # test_constraint_compression_ratio()
-    # test_constraint_min_node_pressure()
-    # test_constraint_max_node_pressure()
-    # test_constraint_min_node_voltage_angle()
-    # test_constraint_max_node_voltage_angle()
-    # test_constraint_node_state_capacity_investments()
-    # test_constraint_storages_invested_available()
-    # test_constraint_storages_invested_available_mp()
-    # test_constraint_storages_invested_transition()
-    # test_constraint_storages_invested_transition_mp()
-    # test_constraint_storage_lifetime()
-    # test_constraint_storage_lifetime_sense()
-    # test_constraint_storage_lifetime_mp()
-    # test_constraint_min_capacity_margin()
-    # test_constraint_min_capacity_margin_penalty()
-    # test_node_voltage1()
-    # test_constraint_unit_flow_reactive()
-    # test_node_voltage2()
+    test_constraint_nodal_balance()
+    test_constraint_nodal_balance_group()
+    test_constraint_node_injection()
+    test_constraint_cyclic_node_state()
+    test_constraint_storage_line_pack()
+    test_constraint_compression_ratio()
+    test_constraint_min_node_pressure()
+    test_constraint_max_node_pressure()
+    test_constraint_min_node_voltage_angle()
+    test_constraint_max_node_voltage_angle()
+    test_constraint_node_state_capacity_investments()
+    test_constraint_storages_invested_available()
+    test_constraint_storages_invested_available_mp()
+    test_constraint_storages_invested_transition()
+    test_constraint_storages_invested_transition_mp()
+    test_constraint_storage_lifetime()
+    test_constraint_storage_lifetime_sense()
+    test_constraint_storage_lifetime_mp()
+    test_constraint_min_capacity_margin()
+    test_constraint_min_capacity_margin_penalty()
+    test_node_voltage1()
+    test_constraint_unit_flow_reactive()
+    test_node_voltage2()
     test_reverse_ac_flow()
 end

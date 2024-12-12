@@ -118,8 +118,12 @@ function add_constraint_connection_flow_real!(m::Model)
     )
 end
 
+"""
+    constraint_connection_flow_voltage_indices(m::Model)
+
+    The connection flow indices for which AC flow connection flows are calculated. 
+"""
 function constraint_connection_flow_voltage_indices(m::Model)
-    
     connection_flow_indices(m, node=SpineOpt.node(has_voltage=true))
 end
 
