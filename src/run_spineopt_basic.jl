@@ -554,15 +554,44 @@ function _do_solve_model!(
     t_end = now()
     elapsed_time_string = _elapsed_time_string(t_start, t_end)
     @log log_level 1 "Solve complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
-    for (msg, times) in stats
-        min, max = extrema(times)
-        avg = sum(times) / length(times)
-        @log log_level 2 "$msg\n\tmin: $min seconds, max: $max seconds, avg: $avg seconds"
+    if log_level >= 2
+        rows = [["Action", "min", "max", "avg"]]
+        for (action, times) in stats
+            min, max = string.(extrema(times))
+            avg = string(sum(times) / length(times))
+            push!(rows, [action, min, max, avg])
+        end
+        println("Time summary:")
+        _print_table(rows)
     end
     if !isempty(output_suffix)
         get!(m.ext[:spineopt].extras, :elapsed_time_by_solve, Dict())[output_suffix] = elapsed_time_string
     end
     true
+end
+
+function _print_table(rows)
+    widths = [maximum(length.([r[j] for r in rows])) for j in 1:4]
+    println()
+    _print_row(rows[1], widths)
+    _print_hline(widths)
+    for row in rows[2:end]
+        _print_row(row, widths)
+    end
+    println()
+end
+
+function _print_hline(widths)
+    row = [repeat("─", w) for w in widths]
+    _print_row(row, widths, "─┼─")
+end
+
+function _print_row(row, widths, delim=" │ ")
+    for (j, x) in enumerate(row)
+        print(rpad(x, widths[j]))
+        j != length(row) && print(delim)
+    end
+    println()
 end
 
 function _update_downstream_outputs!(stage_m)
