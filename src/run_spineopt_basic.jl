@@ -65,6 +65,8 @@ Build given SpineOpt model:
 """
 function build_model!(m; log_level)
     num_variables(m) == 0 || return
+    t_start = now()
+    @log log_level 1 "\nBuild started at $t_start"
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
@@ -78,6 +80,10 @@ function build_model!(m; log_level)
     _build_stage_models!(m; log_level)
     _call_event_handlers(m, :model_built)
     _is_benders_subproblem(m) && _build_mp_model!(master_model(m); log_level=log_level)
+    t_end = now()
+    elapsed_time_string = _elapsed_time_string(t_start, t_end)
+    @log log_level 1 "Build complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
+    get!(m.ext[:spineopt].extras, :build_time, Dict())[(model=model_name,)] = elapsed_time_string
 end
 
 """
@@ -478,7 +484,7 @@ function _do_solve_multi_stage_model!(
     calculate_duals=false,
     save_outputs=true,
 )
-    _solve_stage_models!(m; log_level, log_prefix) || return false
+    _solve_stage_models!(m; log_level, log_prefix, output_suffix) || return false
     _do_solve_model!(
         m;
         log_level,
@@ -492,9 +498,9 @@ function _do_solve_multi_stage_model!(
     )
 end
 
-function _solve_stage_models!(m; log_level, log_prefix)
+function _solve_stage_models!(m; log_level, kwargs...)
     for stage_m in values(m.ext[:spineopt].model_by_stage)
-        _do_solve_model!(stage_m; log_level, log_prefix) || return false
+        _do_solve_model!(stage_m; log_level, kwargs...) || return false
         model_name = _model_name(stage_m)
         @timelog log_level 2 "Updating outputs for $model_name..." _update_downstream_outputs!(stage_m)
     end
@@ -518,7 +524,7 @@ function _do_solve_model!(
     _call_event_handlers(m, :model_about_to_solve)
     m.ext[:spineopt].has_results[] && return true
     t_start = now()
-    @log log_level 1 "Solve started at $t_start"
+    @log log_level 1 "\nSolve started at $t_start"
     model_name = _model_name(m)
     full_model_name = string(log_prefix, model_name)
     if m.ext[:spineopt].temporal_structure[:as_number_or_call] === as_call
@@ -564,9 +570,8 @@ function _do_solve_model!(
         println("Time summary:")
         _print_table(rows)
     end
-    if !isempty(output_suffix)
-        get!(m.ext[:spineopt].extras, :elapsed_time_by_solve, Dict())[output_suffix] = elapsed_time_string
-    end
+    solve_name = (; model=model_name, output_suffix...)
+    get!(m.ext[:spineopt].extras, :solve_time, Dict())[solve_name] = elapsed_time_string
     true
 end
 

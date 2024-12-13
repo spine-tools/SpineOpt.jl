@@ -148,16 +148,21 @@ function _run_spineopt(
             :SpineOpt_version, :SpineOpt_git_hash, :SpineInterface_version, :SpineInterface_git_hash, :elapsed_time
         ]
         stat_values = Any[so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string]
-        elapsed_time_by_solve = get(m.ext[:spineopt].extras, :elapsed_time_by_solve, nothing)
-        if elapsed_time_by_solve !== nothing
-            elapsed_time_by_solve_map = Map(
-                string.(keys(elapsed_time_by_solve)), collect(values(elapsed_time_by_solve))
-            )
-            push!(stat_keys, :elapsed_time_by_solve)
-            push!(stat_values, elapsed_time_by_solve_map)
+        models = [m]
+        if master_model(m) !== nothing
+            push!(models, master_model(m))
         end
-        m_mp = master_model(m)
-        if m_mp !== nothing
+        append!(models, values(m.ext[:spineopt].model_by_stage))
+        for key in (:build_time, :solve_time)
+            time = merge((get(m.ext[:spineopt].extras, key, Dict()) for m in models)...)
+            if !isempty(time)
+                time_map = Map(string.(keys(time)), collect(values(time)))
+                push!(stat_keys, key)
+                push!(stat_values, time_map)
+            end
+        end
+        if master_model(m) !== nothing
+            m_mp = master_model(m)
             gaps = m_mp.ext[:spineopt].benders_gaps
             if !isempty(gaps)
                 append!(
