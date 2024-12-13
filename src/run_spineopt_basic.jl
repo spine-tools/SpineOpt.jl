@@ -519,7 +519,6 @@ function _do_solve_model!(
     m.ext[:spineopt].has_results[] && return m
     t_start = now()
     @log log_level 1 "Solve started at $t_start"
-    m.ext[:spineopt].has_results[] = false
     model_name = _model_name(m)
     full_model_name = string(log_prefix, model_name)
     if m.ext[:spineopt].temporal_structure[:as_number_or_call] === as_call
@@ -545,6 +544,7 @@ function _do_solve_model!(
         _save_window_state(m, k; write_as_roll, resume_file_path)
         if @timelog log_level 2 "Rolling $model_name temporal structure...\n" stats !roll_temporal_structure!(m, k)
             @log log_level 2 "Rolling complete\n"
+            m.ext[:spineopt].has_results[] = false
             break
         end
         update_model!(m; log_level, update_names, stats)
