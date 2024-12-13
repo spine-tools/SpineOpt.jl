@@ -25,6 +25,7 @@ Preprocess input data structure for SpineOpt.
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure()
+    check_model_object()
     generate_is_candidate()
     update_use_connection_intact_flow()
     expand_model_default_relationships()
@@ -74,7 +75,7 @@ end
 _nz_indices(p::Parameter) = (first(x) for x in indices_as_tuples(p) if !iszero(p(; x...)))
 
 function update_use_connection_intact_flow()
-    if isempty(connection(is_candidate=true)) && !isempty(model())
+    if isempty(connection(is_candidate=true))
         instance = first(model())
         add_object_parameter_values!(
             model, Dict(instance => Dict(:use_connection_intact_flow => parameter_value(false)))
@@ -205,7 +206,7 @@ end
 """
     generate_node_has_ptdf()
 
-Generate `has_ptdf`, `ptdf_duration` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
+Generate `has_ptdf` and `ptdf_duration` parameters associated to the `node` `ObjectClass`.
 """
 function generate_node_has_ptdf()
     function _new_node_pvals(n)
@@ -217,22 +218,18 @@ function generate_node_has_ptdf()
         ptdf_durations = [commodity_physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
-        ptdf_threshold = maximum(commodity_ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
         Dict(
             :has_ptdf => parameter_value(!isempty(ptdf_comms)),
             :ptdf_duration => parameter_value(ptdf_duration),
-            :node_ptdf_threshold => parameter_value(ptdf_threshold),
         )
     end
 
     add_object_parameter_values!(node, Dict(n => _new_node_pvals(n) for n in node()))
     has_ptdf = Parameter(:has_ptdf, [node])
     ptdf_duration = Parameter(:ptdf_duration, [node])
-    node_ptdf_threshold = Parameter(:node_ptdf_threshold, [node])
     @eval begin
         has_ptdf = $has_ptdf
         ptdf_duration = $ptdf_duration
-        node_ptdf_threshold = $node_ptdf_threshold
     end
 end
 
@@ -528,12 +525,8 @@ function generate_ptdf_lodf()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    !isempty(model(model_type=:spineopt_standard)) && write_ptdf_file(
-        model=first(model(model_type=:spineopt_standard))
-    ) && write_ptdfs()
-    !isempty(model(model_type=:spineopt_standard)) && write_lodf_file(
-        model=first(model(model_type=:spineopt_standard))
-    ) && write_lodfs()
+    write_ptdf_file(model=first(model())) && write_ptdfs()
+    write_lodf_file(model=first(model())) && write_lodfs()
 end
 
 """
