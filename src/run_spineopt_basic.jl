@@ -77,13 +77,13 @@ function build_model!(m; log_level)
     @timelog log_level 2 "Adding $model_name constraints...\n" _add_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
     _init_outputs!(m)
-    _build_stage_models!(m; log_level)
     _call_event_handlers(m, :model_built)
     _is_benders_subproblem(m) && _build_mp_model!(master_model(m); log_level=log_level)
     t_end = now()
     elapsed_time_string = _elapsed_time_string(t_start, t_end)
     @log log_level 1 "Build complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     get!(m.ext[:spineopt].extras, :build_time, Dict())[(model=model_name,)] = elapsed_time_string
+    _build_stage_models!(m; log_level)
 end
 
 """
