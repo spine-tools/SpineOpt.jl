@@ -542,7 +542,7 @@ function _do_solve_model!(
             end
         end
         _save_window_state(m, k; write_as_roll, resume_file_path)
-        if @timelog log_level 2 "Rolling $model_name temporal structure...\n" stats !roll_temporal_structure!(m, k)
+        if @timelog log_level 2 "Rolling $model_name temporal structure..." stats !roll_temporal_structure!(m, k)
             @log log_level 2 "Rolling complete\n"
             m.ext[:spineopt].has_results[] = false
             break
