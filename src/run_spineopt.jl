@@ -36,6 +36,8 @@ A new Spine database is created at `url_out` if one doesn't exist.
 - `mip_solver=nothing`: a MIP solver to use if no MIP solver specified in the DB.
 - `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
 - `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
+- `use_model_names::Bool=true`: whether or not to use the names in the model.
+- `add_bridges::Bool=false` whether or not bridges from JuMP to the solver should be added to the model.
 - `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
 - `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
    (expensive).
@@ -88,6 +90,8 @@ function run_spineopt(
     mip_solver=nothing,
     lp_solver=nothing,
     use_direct_model=false,
+    use_model_names=true,
+    add_bridges=false,
     optimize=true,
     update_names=false,
     alternative="",
@@ -107,6 +111,8 @@ function run_spineopt(
             mip_solver=mip_solver,
             lp_solver=lp_solver,
             use_direct_model=use_direct_model,
+            use_model_names=use_model_names,
+            add_bridges=add_bridges,
             optimize=optimize,
             update_names=update_names,
             alternative=alternative,
@@ -126,6 +132,8 @@ function _run_spineopt(
     mip_solver,
     lp_solver,
     use_direct_model,
+    use_model_names,
+    add_bridges,
     log_level,
     alternative,
     kwargs...,
@@ -137,7 +145,18 @@ function _run_spineopt(
     println("[SpineInterface version $si_ver (git hash: $si_git_hash)]")
     t_start = now()
     @log log_level 1 "Execution started at $t_start"
-    m = prepare_spineopt(url_in; upgrade, filters, templates, mip_solver, lp_solver, use_direct_model, log_level)
+    m = prepare_spineopt(
+            url_in;
+            upgrade,
+            filters,
+            templates,
+            mip_solver,
+            lp_solver,
+            use_direct_model,
+            use_model_names,
+            add_bridges,
+            log_level
+        )
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
     t_end = now()
@@ -193,6 +212,8 @@ or a `Dict` (e.g. manually created or parsed from a json file).
 - `mip_solver`
 - `lp_solver`
 - `use_direct_model`
+- `use_model_names`
+- `add_bridges`
 
 See [run_spineopt](@ref) for the description of the keyword arguments.
 """
@@ -205,6 +226,8 @@ function prepare_spineopt(
     mip_solver=nothing,
     lp_solver=nothing,
     use_direct_model=false,
+    use_model_names=true,
+    add_bridges=false,
 )
     @log log_level 0 "Reading input data from $(_real_url(url_in))..."
     _check_version(url_in; log_level, upgrade)
@@ -236,7 +259,7 @@ function prepare_spineopt(
             end
         end
     end
-    create_model(mip_solver, lp_solver, use_direct_model)
+    create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
 end
 
 function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scenario="")
@@ -326,28 +349,36 @@ function run_spineopt!(
 end
 
 """
-    create_model(mip_solver, lp_solver, use_direct_model)
+    create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
 
 A `JuMP.Model` extended to be used with SpineOpt.
 `mip_solver` and `lp_solver` are 'optimizer factories' to be passed to `JuMP.Model` or `JuMP.direct_model`;
 `use_direct_model` is a `Bool` indicating whether `JuMP.Model` or `JuMP.direct_model` should be used.
+`use_model_names` is a `Bool` indicating whether the names in the model should be used.
+`add_bridges` is a `Bool` indicating whether bridges from JuMP to the solver should be added to the model.
 """
-function create_model(mip_solver, lp_solver, use_direct_model)
+function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
+    if model_algorithm(model=instance) === :mga_algorithm && !add_bridges
+        add_bridges = true
+        @warn "Bridges are required for MGA algorithm - adding them"
+    end
     m_mp = if model_type(model=instance) === :spineopt_benders
-        m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+        m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model, add_bridges)
         m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
+        JuMP.set_string_names_on_creation(m_mp, use_model_names)
         m_mp
     end
     model_by_stage = OrderedDict()
     for st in sort(stage(); lt=(x, y) -> y in stage__child_stage(stage1=x))
-        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+        model_by_stage[st] = stage_m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model, add_bridges)
         stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st)
     end
-    m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+    m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model, add_bridges)
     m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)
+    JuMP.set_string_names_on_creation(m, use_model_names)
     m
 end
 
@@ -423,7 +454,7 @@ _parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
 
-_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
+_do_create_model(mip_solver, use_direct_model, add_bridges) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver; add_bridges = add_bridges)
 
 struct SpineOptExt
     instance::Object
