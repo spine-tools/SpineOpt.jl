@@ -421,7 +421,11 @@ end
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
 function node_stochastic_time_indices(
-    m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    t=anything,
 )
     (
         (node=n, stochastic_scenario=s, t=t)
@@ -439,7 +443,7 @@ function unit_stochastic_time_indices(
     m::Model;
     unit=anything,
     stochastic_scenario=anything,
-    temporal_block=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
     t=anything,
 )
     (

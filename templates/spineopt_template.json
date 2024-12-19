@@ -244,6 +244,7 @@
         ["node", "tax_net_unit_flow", null, null, "Tax costs for net incoming and outgoing `unit_flows` on this `node`. Incoming flows accrue positive net taxes, and outgoing flows accrue negative net taxes."],
         ["node", "tax_out_unit_flow", null, null, "Tax costs for outgoing `unit_flows` from this `node`. E.g. EUR/MWh."],
         ["node", "upward_reserve", false, null, "Identifier for `node`s providing upward reserves"],
+        ["node", "is_longterm_storage", false, null, "If true, `node` has a state variable for representative and non-representative timeslices"],
         ["output", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["output", "output_resolution", null, null, "Temporal resolution of the output variables associated with this `output`."],
         ["report", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
@@ -256,7 +257,8 @@
         ["temporal_block", "block_end", null, null, "The end time for the `temporal_block`. Can be given either as a `DateTime` for a static end point, or as a `Duration` for an end point relative to the start of the current optimization."],
         ["temporal_block", "block_start", null, null, "The start time for the `temporal_block`. Can be given either as a `DateTime` for a static start point, or as a `Duration` for an start point relative to the start of the current optimization."],
         ["temporal_block", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
-        ["temporal_block", "representative_periods_mapping", null, null, "Map from date time to representative temporal block name"],
+        ["temporal_block", "representative_period_index", null, null, "Index for the array of coefficients defined in `representative_periods_mapping`"],
+        ["temporal_block", "representative_periods_mapping", null, null, "Map from date time to representative temporal block combination (either a single block's name, or an array of coefficients for each block that has a `representative_period_index`)"],
         ["temporal_block", "resolution", {"type": "duration", "data": "1h"}, null, "Temporal resolution of the `temporal_block`. Essentially, divides the period between `block_start` and `block_end` into `TimeSlices` with the input `resolution`."],
         ["temporal_block", "weight", 1.0, null, "Weighting factor of the temporal block associated with the objective function"],
         ["unit", "benders_starting_units_invested", null, null, "Fixes the number of units invested during the first Benders iteration"],
@@ -296,7 +298,8 @@
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
         ["user_constraint", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."],
-        ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."]
+        ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."],
+        ["user_constraint", "include_in_non_representative_periods", false, "boolean_value_list", "If using representative periods, this boolean parameter determines whether or not the constraint is enforced in non-representative periods."]
     ],
     "relationship_parameters": [
         ["connection__from_node", "connection_capacity", null, null, "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."],

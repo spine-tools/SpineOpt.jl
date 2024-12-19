@@ -24,7 +24,8 @@ function _build_mp_model!(m; log_level=3)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
-    @timelog log_level 2 "Adding $model_name variables...\n" _add_mp_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name independent variables...\n" _add_mp_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name dependent variables...\n" _add_dependent_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding $model_name constraints...\n" _add_mp_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting $model_name objective..." _set_mp_objective!(m)
     _init_outputs!(m)
@@ -51,7 +52,6 @@ function _add_mp_variables!(m; log_level=3)
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
-    _expand_replacement_expressions!(m)
 end
 
 """

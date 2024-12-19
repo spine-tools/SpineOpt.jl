@@ -72,7 +72,8 @@ function build_model!(m; log_level)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
-    @timelog log_level 2 "Adding $model_name variables...\n" _add_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name independent variables...\n" _add_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name dependent variables...\n" _add_dependent_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding $model_name expressions...\n" _add_expressions!(m; log_level=log_level)
     @timelog log_level 2 "Adding $model_name constraints...\n" _add_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
@@ -127,7 +128,6 @@ function _add_variables!(m; log_level=3)
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
-    _expand_replacement_expressions!(m)
 end
 
 """
@@ -135,7 +135,7 @@ Add SpineOpt expressions to the given model.
 """
 function _add_expressions!(m; log_level=3)
     for add_expression! in (
-            add_expression_capacity_margin!,
+            add_expression_capacity_margin!,            
         )
         name = name_from_fn(add_expression!)
         @timelog log_level 3 "- [$name]" add_expression!(m)
@@ -207,7 +207,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_operating_point_rank!,
             add_constraint_ramp_down!,
             add_constraint_ramp_up!,
-            add_constraint_ratio_out_in_connection_intact_flow!,
+            add_constraint_ratio_out_in_connection_intact_flow!,            
             add_constraint_storage_lifetime!,
             add_constraint_storage_line_pack!,
             add_constraint_storages_invested_available!,
