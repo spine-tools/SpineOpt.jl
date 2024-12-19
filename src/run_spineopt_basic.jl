@@ -331,20 +331,48 @@ function _init_downstream_outputs!(st, stage_m, child_models)
                 end
                 for (ent, fix_indices) in fix_indices_by_ent
                     input = downstream_outputs[ent]
+                    penalty = slack_penalty(; stage=st, output=out, ent..., _strict=false)
+                    slack_names = if penalty !== nothing
+                        slack_names = (Symbol(join((st, out, slack), "_")) for slack in ("slack_pos", "slack_neg"))
+                        for slack_name in slack_names
+                            _add_slack_variables!(child_m, slack_name, fix_indices)
+                        end
+                        slack_names
+                    end
                     for ind in fix_indices
                         call_kwargs = (analysis_time=_analysis_time(child_m), t=ind.t)
                         call = Call(input, call_kwargs, (Symbol(st.name, :_, out_name), call_kwargs))
                         var = child_m.ext[:spineopt].variables[out_name][ind]
-                        if var isa VariableRef
-                            fix(var, call)
-                        elseif var isa GenericAffExpr
-                            set_expr_bound(var, ==, call)
+                        if penalty === nothing
+                            if var isa VariableRef
+                                fix(var, call)
+                            elseif var isa GenericAffExpr
+                                set_expr_bound(var, ==, call)
+                            end
+                        else
+                            slack_pos, slack_neg = (
+                                child_m.ext[:spineopt].variables[slack_name][ind] for slack_name in slack_names
+                            )
+                            cons = get!(
+                                child_m.ext[:spineopt].constraints, Symbol(join((st, out, "slack"), "_")), Dict()
+                            )
+                            cons[ind] = set_expr_bound(var + slack_pos - slack_neg, ==, call)
+                            set_objective_coefficient(child_m, slack_pos, penalty)
+                            set_objective_coefficient(child_m, slack_neg, penalty)
                         end
                     end
                 end
             end
         end
     end
+end
+
+function _add_slack_variables!(child_m, slack_name, inds)
+    child_m.ext[:spineopt].variables_definition[slack_name] = var_def = _variable_definition()
+    var_def[:indices] = (m; kwargs...) -> inds
+    child_m.ext[:spineopt].variables[slack_name] = Dict(
+        ind => @variable(child_m, base_name=_base_name(slack_name, ind), lower_bound=0) for ind in inds
+    )
 end
 
 function _stage_output_includes_entity(ent, objs_by_class_name)
