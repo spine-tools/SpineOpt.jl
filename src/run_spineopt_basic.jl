@@ -48,6 +48,12 @@ function do_run_spineopt!(
     end
 end
 
+function _set_value_translator()
+    vals = shared_values(model=first(model()), _strict=false)
+    translator = vals === nothing ? nothing : v -> get(vals, v, nothing)
+    set_value_translator(translator)
+end
+
 """
     build_model!(m; log_level)
 

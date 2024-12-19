@@ -266,6 +266,7 @@ function prepare_spineopt(
             end
         end
     end
+    _set_value_translator()
     create_model(mip_solver, lp_solver, use_direct_model)
 end
 

@@ -189,6 +189,7 @@
         ["model", "model_type", "spineopt_standard", "model_type_list", "The model type which gives the solution method (e.g. standerd, Benders)"],
         ["model", "roll_forward", null, null, "Defines how much the model moves ahead in time between solves in a rolling optimization. If null, everything is solved in as a single optimization."],
         ["model", "report_benders_iterations", false, "boolean_value_list", "Whether to save results from Benders iterations before convergence."],
+        ["model", "shared_values", null, null, "A map from symbol to shared value."],
         ["model", "use_connection_intact_flow", true, "boolean_value_list", "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."],
         ["model", "use_tight_compact_formulations", false, "boolean_value_list", "Whether to use tight and compact constraint formulations."],
         ["model", "window_duration", null, null, "The duration of the window in case it differs from roll_forward"],
