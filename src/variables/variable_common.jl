@@ -155,7 +155,8 @@ function _variable_definition(;
 end
 
 function _add_dependent_variables!(m; log_level)
-    for (name, def) in sort(m.ext[:spineopt].variables_definition)
+    for name in sort!(collect(keys(m.ext[:spineopt].variables_definition)))
+        def = m.ext[:spineopt].variables_definition[name]
         @fetch replacement_expressions, represented_indices, indices = def
         isempty(replacement_expressions) && isempty(represented_indices) &&continue
         @timelog log_level 3 "- [variable_$name]" begin
