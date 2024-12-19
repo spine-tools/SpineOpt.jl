@@ -78,6 +78,7 @@ include("run_spineopt.jl")
 include("generate_forced_outages.jl")
 include("run_spineopt_basic.jl")
 include("run_spineopt_mga.jl")
+include("run_spineopt_monte_carlo.jl")
 include("benders.jl")
 # Data structure
 include("data_structure/migration.jl")
