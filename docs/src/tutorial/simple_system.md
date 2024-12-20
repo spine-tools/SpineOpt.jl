@@ -19,13 +19,13 @@ In the simple system:
 
 -   Two power plants take fuel from a source node and release
     electricity to another node in order to supply a demand.
--   Power plant 'a' has a capacity of 100 MWh, a variable operating cost
+-   Power plant 'a' has a capacity of 100 MW, a variable operating cost
     of 25 euro/fuel unit, and generates 0.7 MWh of electricity per unit
     of fuel.
--   Power plant 'b' has a capacity of 200 MWh, a variable operating cost
+-   Power plant 'b' has a capacity of 200 MW, a variable operating cost
     of 50 euro/fuel unit, and generates 0.8 MWh of electricity per unit
     of fuel.
--   The demand at the electricity node is 150 MWh.
+-   The demand at the electricity node is 150 MW.
 -   The fuel node is able to provide infinite energy.
 
 ![image](figs_simple_system/simple_system_schematic.png)
