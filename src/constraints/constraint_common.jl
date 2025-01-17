@@ -75,7 +75,7 @@ function _past_indices(m, indices, param, s_path, t; kwargs...)
         (;
             ind...,
             weight=ifelse(
-                end_(t) - end_(ind.t) < align_variable_duration_unit(param(m; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), end_(t)), 1, 0
+                end_(t) - end_(ind.t) < align_variable_duration_unit(param(m; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), start(t)), 1, 0
             ),
         )
         for ind in indices(
