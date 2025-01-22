@@ -178,6 +178,10 @@ function _set_objective_mga_iteration!(
         variable = m.ext[:spineopt].variables[variable_name]
         d_diff_ub1 = get!(m.ext[:spineopt].constraints, :mga_diff_ub1, Dict())
         for ind in mga_indices()
+            weight = sum(
+                value(variable[ind_]) * scenario_weight_function(m; _drop_key(ind_, :t)...)
+                for ind_ in variable_indices_function(m; ind...)
+            ) > 0 ? 1 : 0
             # for ind_ in variable_indices_function(m; ind...) end  # ???!!!
             d_diff_ub1[(ind..., mga_current_iteration...)] = @constraint(
                 m,
@@ -189,7 +193,7 @@ function _set_objective_mga_iteration!(
                         for ind_ in variable_indices_function(m; ind...)
                     )
                 )
-                * mga_weight_iteration(; ind..., i=iteration_number)
+                * weight
             )
         end
     end
