@@ -43,8 +43,9 @@ function do_run_spineopt!(
     mga_iteration_count += 1
     add_mga_objective_constraint!(m)
     set_mga_objective!(m)
+    iter_weights = Dict()
     while mga_iteration_count <= max_mga_iters
-        set_objective_mga_iteration!(m; iteration=last(mga_iteration()), iteration_number=mga_iteration_count)
+        set_objective_mga_iteration!(m, iter_weights; iteration=last(mga_iteration()), iteration_number=mga_iteration_count)
         solve_model!(
             m;
             log_level=log_level,
@@ -108,7 +109,7 @@ function storages_invested_mga_indices(mga_iteration)
     )
 end
 
-function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
+function set_objective_mga_iteration!(m, iter_weights; iteration=nothing, iteration_number=0)
     instance = m.ext[:spineopt].instance
     _set_objective_mga_iteration!(
         m,
@@ -116,7 +117,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         units_invested_available_indices,
         unit_stochastic_scenario_weight,
         units_invested_mga_indices,
-        units_invested_mga_weight,
+        iter_weights,
         iteration,
         iteration_number
     )
@@ -126,7 +127,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         connections_invested_available_indices,
         connection_stochastic_scenario_weight,
         connections_invested_mga_indices,
-        connections_invested_mga_weight,
+        iter_weights,
         iteration,
         iteration_number
     )
@@ -136,7 +137,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         storages_invested_available_indices,
         node_stochastic_scenario_weight,
         storages_invested_mga_indices,
-        storages_invested_mga_weight,
+        iter_weights,
         iteration,
         iteration_number
     )
@@ -163,7 +164,7 @@ function _set_objective_mga_iteration!(
     variable_indices_function::Function,
     scenario_weight_function::Function,
     mga_indices::Function,
-    mga_weight_iteration::Parameter,
+    iter_weights::Dict,
     mga_current_iteration::Object,
     iteration_number::Int64,
 )
@@ -178,10 +179,13 @@ function _set_objective_mga_iteration!(
         variable = m.ext[:spineopt].variables[variable_name]
         d_diff_ub1 = get!(m.ext[:spineopt].constraints, :mga_diff_ub1, Dict())
         for ind in mga_indices()
-            weight = sum(
+            if sum(
                 value(variable[ind_]) * scenario_weight_function(m; _drop_key(ind_, :t)...)
                 for ind_ in variable_indices_function(m; ind...)
-            ) > 0 ? 1 : 0
+                ) > 0
+                iter_weights[variable_name, ind] = 1
+            end
+            
             # for ind_ in variable_indices_function(m; ind...) end  # ???!!!
             d_diff_ub1[(ind..., mga_current_iteration...)] = @constraint(
                 m,
@@ -193,7 +197,7 @@ function _set_objective_mga_iteration!(
                         for ind_ in variable_indices_function(m; ind...)
                     )
                 )
-                * weight
+                * get!(iter_weights, (variable_name, ind), 0)
             )
         end
     end
