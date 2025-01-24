@@ -130,8 +130,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                     (
                         ind
                         for s in path_out
-                        for ind in 
-                            connection_flow_indices(
+                        for ind in connection_flow_indices(
                             m;
                             connection=conn,
                             node=ng_in,
