@@ -923,7 +923,7 @@ function test_constraint_ratio_out_in_connection_flow_highest()
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
-        end   
+        end
     end
 end
 
