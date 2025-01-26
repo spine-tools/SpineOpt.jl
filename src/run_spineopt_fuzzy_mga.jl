@@ -30,16 +30,6 @@ function do_run_spineopt!(
     write_as_roll,
     resume_file_path,
 )
-    max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
-    mga_iteration = ObjectClass(:mga_iteration, [])
-    @eval mga_iteration = $mga_iteration
-    build_model!(m; log_level)
-    solve_model!(
-        m;
-        log_level=log_level,
-        update_names=update_names,
-        output_suffix=_add_mga_iteration(0),
-    )
     variable_group_parameters = Dict(
         :units_invested  => (
             units_invested_available_indices,
@@ -57,12 +47,20 @@ function do_run_spineopt!(
             storages_invested_mga_indices,
         ),
     )
-    variable_groups = keys(variable_group_parameters)
+    max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
+    mga_iteration = ObjectClass(:mga_iteration, [])
+    @eval mga_iteration = $mga_iteration
+    build_model!(m; log_level)
+    solve_model!(
+        m;
+        log_level=log_level,
+        update_names=update_names,
+        output_suffix=_add_mga_iteration(0),
+    )
     hsj_weights = update_hsj_weights!(m, last(mga_iteration()), nothing, variable_group_parameters)
     add_fuzzy_mga_objective_constraint!(m)
     for i=1:max_mga_iters
-        prepare_objective_fuzzy_mga!(m, hsj_weights, last(mga_iteration()), variable_group_parameters)
-        set_fuzzy_mga_objective!(m, variable_groups)
+        update_fuzzy_mga_objective!(m, hsj_weights, last(mga_iteration()), variable_group_parameters)
         solve_model!(
             m;
             log_level=log_level,
@@ -75,9 +73,9 @@ function do_run_spineopt!(
     m
 end
 
-function prepare_objective_fuzzy_mga!(m, hsj_weights, iteration, group_parameters)
+function update_fuzzy_mga_objective!(m, hsj_weights, iteration, group_parameters)
     for (group_name, (available_indices, scenario_weights, mga_indices)) in group_parameters
-        do_prepare_objective_fuzzy_mga!(
+        prepare_objective_fuzzy_mga!(
             m,
             group_name,
             available_indices,
@@ -87,9 +85,16 @@ function prepare_objective_fuzzy_mga!(m, hsj_weights, iteration, group_parameter
             iteration
         )
     end
+    variable_groups = keys(group_parameters)
+    instance = model=m.ext[:spineopt].instance
+    t = current_window(m)
+    weighted_mga_variables = m.ext[:spineopt].expressions[:mga_objective][(model=instance, t=t)]
+    @objective(
+        m, Min, sum(weighted_mga_variables[mga_group] for mga_group in variable_groups)
+    )
 end
 
-function do_prepare_objective_fuzzy_mga!(
+function prepare_objective_fuzzy_mga!(
     m::Model,
     variable_name::Symbol,
     variable_indices_function::Function,
@@ -102,16 +107,14 @@ function do_prepare_objective_fuzzy_mga!(
     t = current_window(m)
     objective_variables = get!(m.ext[:spineopt].expressions, :mga_objective, Dict())
     weighted_mga_variables = get!(objective_variables, (model=instance, t=t), Dict())
-    @fetch units_invested = m.ext[:spineopt].variables
-    if !isempty(mga_indices())
-        weighted_mga_variables[variable_name] = @expression(
-            m,
-            sum(
-                get_scenario_variable_average(m, variable_name, ind, variable_indices_function, scenario_weight_function) * iter_weights[(variable_name, ind)]
-                for ind in mga_indices()
-            )        
-        )
-    end
+    weighted_mga_variables[variable_name] = @expression(
+        m,
+        isempty(mga_indices()) ? 0 :
+        sum(
+            get_scenario_variable_average(m, variable_name, ind, variable_indices_function, scenario_weight_function) * iter_weights[(variable_name, ind)]
+            for ind in mga_indices()
+        )        
+    )
 end
 
 function add_fuzzy_mga_objective_constraint!(m::Model)
@@ -120,19 +123,6 @@ function add_fuzzy_mga_objective_constraint!(m::Model)
     m.ext[:spineopt].constraints[:mga_slack_constraint] = Dict(
         (instance,) => @constraint(m,
             total_costs(m, anything) <= (1 + slack) * objective_value(m)
-        )
-    )
-end
-
-function set_fuzzy_mga_objective!(m, variable_groups)
-    instance = model=m.ext[:spineopt].instance
-    t = current_window(m)
-    weighted_mga_variables = m.ext[:spineopt].expressions[:mga_objective][(model=instance, t=t)]
-    @objective(
-        m,
-        Min,
-        sum(
-            get(weighted_mga_variables, mga_group, 0) for mga_group in variable_groups
         )
     )
 end
