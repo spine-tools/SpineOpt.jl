@@ -21,7 +21,7 @@
 
 Run several migrations to update the class structure and to rename, modify and move parameters.
 """
-function major_upgrade_to_15(db_url, log_level)
+function major_upgrade_to_16(db_url, log_level)
 	@log log_level 0 string(
 		"Running several migrations to update the class structure and to rename, modify and move parameters..."
 	)
@@ -37,6 +37,9 @@ function major_upgrade_to_15(db_url, log_level)
     parameters_to_be_renamed = [
         # unit
         (("unit", "number_of_units"), "existing_units", ""),
+
+		# node
+		(("node", "balance_type"), "node_type", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
