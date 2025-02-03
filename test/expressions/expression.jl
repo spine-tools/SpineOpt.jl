@@ -108,14 +108,14 @@ end
 function test_expression_capacity_margin()
     @testset "expression_capacity_margin" begin        
         url_in = _test_expressions_setup()
-        number_of_units_b = 3
+        existing_units_b = 3
         margin_b = 1
         demand_b = 105
         group_demand_a = 10
         fractional_demand_b = 0.5
         object_parameter_values = [
             ["node", "node_b", "min_capacity_margin", margin_b],
-            ["unit", "unit_b", "number_of_units", number_of_units_b],
+            ["unit", "unit_b", "existing_units", existing_units_b],
             ["node", "node_b", "demand", demand_b],
             ["node", "node_b", "fractional_demand", fractional_demand_b],
             ["node", "node_a", "demand", group_demand_a],

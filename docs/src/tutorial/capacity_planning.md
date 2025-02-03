@@ -34,7 +34,7 @@ In principle we also need to define the default investment stochastic structure.
 ## Unit investment parameters
 
 With the infrastructure for investments in place, we can now ready units for the investment optimization. For both power plants:
-- Set the [number\_of\_units](@ref) parameter to zero so that the unit is unavailable unless invested in.
+- Set the [existing\_units](@ref) parameter to zero so that the unit is unavailable unless invested in.
 - Set the [initial\_units\_invested\_available](@ref) to zero as well for a similar reason.
 - Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
 - Set the unit's investment cost by setting the [unit\_investment\_cost](@ref) parameter to 1000.0. It is important to mention that, normally, you should use the discounted cost. In this example, the costs in 2030 and in 2035 should be discounted to the discount year, i.e., you would define a time-varying cost to reflect the economic representation.

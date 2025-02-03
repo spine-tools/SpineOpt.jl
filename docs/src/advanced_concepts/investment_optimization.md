@@ -45,7 +45,7 @@ If set to `true`, then the model will use line outage distribution factors (LODF
 ## Creating an Investment Candidate Unit Example  
 If we have model that is not currently set up for investments and we wish to create an investment candidate unit, we can take the following steps.
  - Create the unit object with all the relationships and parameters necessary to describe its function.
- - Ensure that the [number\_of\_units](@ref) parameter is set to zero so that the unit is unavailable unless invested in.
+ - Ensure that the [existing\_units](@ref) parameter is set to zero so that the unit is unavailable unless invested in.
  - Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
  - Set the [unit\_investment\_variable\_type](@ref) to `unit_investment_variable_type_integer` to specify that this is a discrete [unit](@ref) investment decision.
  - Specify the [unit\_investment\_lifetime](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
@@ -119,7 +119,7 @@ If we have model that is not currently set up for investments and we wish to cre
 | constraint_units_invested_available.jl | \constraints| constrains `units_invested_available` to be less than `candidate_units`
 | constraint_units_invested_transition.jl | \constraints| defines the relationship between `units_invested_available`, `units_invested` and `units_mothballed`. Analagous to `units_on`, `units_started` and `units_shutdown`
 | constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_tech_lifetime` - analagous to `min_up_time`.
-| constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `number_of_units` and `units_invested_available`
+| constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `existing_units` and `units_invested_available`
 | constraint_connections_invested_available.jl | \constraints| constrains `connections_invested_available` to be less than `candidate_connections`
 | constraint_connections_invested_transition.jl | \constraints| defines the relationship between `connections_invested_available`, `connections_invested` and `connections_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
 | constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_tech_lifetime` - analagous to `min_up_time`.

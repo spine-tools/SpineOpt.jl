@@ -113,7 +113,7 @@ function _test_benders_unit()
                 ["model", "instance", "max_iterations", 10],
                 ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
-                ["unit", "unit_ab_alt", "number_of_units", 0],
+                ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
                 ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
@@ -355,7 +355,7 @@ function _test_benders_unit_storage()
                 ["model", "instance", "model_type", "spineopt_benders"],
                 ["model", "instance", "max_iterations", 100],
                 ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
-                ["unit", "unit_a", "number_of_units", 0],
+                ["unit", "unit_a", "existing_units", 0],
                 ["unit", "unit_a", "candidate_units", 1],
                 ["unit", "unit_a", "unit_investment_cost", u_inv_cost],
                 ["unit", "unit_a", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
@@ -503,7 +503,7 @@ function _test_benders_rolling_representative_periods()
                 ["model", "instance", "max_iterations", 10],
                 ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
-                ["unit", "unit_ab_alt", "number_of_units", 0],
+                ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
                 ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
@@ -603,7 +603,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(6))],
             ["temporal_block", "investments_yearly", "resolution", unparse_db_value(Year(1))],
         ]
-        append!(object_parameter_values, [["unit", c, "number_of_units", 0] for c in candidates])
+        append!(object_parameter_values, [["unit", c, "existing_units", 0] for c in candidates])
         append!(object_parameter_values, [["unit", c, "candidate_units", 1] for c in candidates])
         append!(
             object_parameter_values,
@@ -695,7 +695,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "is_renewable", true],
-                ["unit", "unit_ab_alt", "number_of_units", 0],
+                ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
                 ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
@@ -815,7 +815,7 @@ function _test_benders_starting_units_invested()
                 ["model", "instance", "max_iterations", max_iters],
                 ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
-                ["unit", "unit_ab_alt", "number_of_units", 0],
+                ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
                 ["unit", "unit_ab_alt", "benders_starting_units_invested", 1],
                 ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],

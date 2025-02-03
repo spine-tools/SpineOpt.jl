@@ -75,11 +75,11 @@ function test_fom_cost_case1()
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 2
+        existing_units = 2
         candidate_units = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
             ["unit", "unit_ab", "candidate_units", candidate_units],
         ]
         relationships = [
@@ -103,7 +103,7 @@ function test_fom_cost_case1()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * duration *
         sum(             
-            (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) 
+            (existing_units + var_units_invested_available[unit(:unit_ab), s, t]) 
             for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -116,12 +116,12 @@ function test_fom_cost_case2()
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 0
-        # The template provides the parameter `number_of_units` with a default value of 1.
+        existing_units = 0
+        # The template provides the parameter `existing_units` with a default value of 1.
         candidate_units = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
             ["unit", "unit_ab", "candidate_units", candidate_units],
         ]
         relationships = [
@@ -145,7 +145,7 @@ function test_fom_cost_case2()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * duration *
         sum(             
-            (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) 
+            (existing_units + var_units_invested_available[unit(:unit_ab), s, t]) 
             for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -158,10 +158,10 @@ function test_fom_cost_case3()
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 2
+        existing_units = 2
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
@@ -178,7 +178,7 @@ function test_fom_cost_case3()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * duration *
         sum(             
-            number_of_units for (s, t) in zip(scenarios, time_slices)
+            existing_units for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj

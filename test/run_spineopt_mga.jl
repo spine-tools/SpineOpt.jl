@@ -141,8 +141,8 @@ function _test_run_spineopt_mga()
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_bc", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", 0],
-            ["unit", "unit_bc", "number_of_units", 0],
+            ["unit", "unit_ab", "existing_units", 0],
+            ["unit", "unit_bc", "existing_units", 0],
             ["unit", "unit_group_abbc", "units_invested_mga", true],
             ["unit", "unit_group_abbc", "units_invested_big_m_mga", units_invested_big_m_mga],
             ["unit", "unit_group_abbc", "units_invested__mga_weight", 1],
@@ -505,8 +505,8 @@ function _test_run_spineopt_mga_2()
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_bc", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", 0],
-            ["unit", "unit_bc", "number_of_units", 0],
+            ["unit", "unit_ab", "existing_units", 0],
+            ["unit", "unit_bc", "existing_units", 0],
             ["unit", "unit_group_abbc", "units_invested_mga", true],
             ["unit", "unit_group_abbc", "units_invested__mga_weight", mga_weights_1],
             ["unit", "unit_ab", "unit_investment_cost", 1],

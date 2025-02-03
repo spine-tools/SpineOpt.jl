@@ -22,7 +22,7 @@ The unit must be taken out of service for maintenance for a duration equal to sc
 
 ```math
 \sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t
-\geq scheduled\_outage\_duration_{(u,s,t)}number\_of\_units_u \quad \forall u \in unit, \, \forall (s,t)
+\geq scheduled\_outage\_duration_{(u,s,t)}existing\_units_u \quad \forall u \in unit, \, \forall (s,t)
 ```
 
 """
@@ -41,7 +41,7 @@ function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
         (
             + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
             * (
-                + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+                + existing_units(m; unit=u, stochastic_scenario=s, t=t)
                 + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
             )
         )

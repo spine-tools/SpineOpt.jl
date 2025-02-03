@@ -18,18 +18,18 @@
 #############################################################################
 
 @doc raw"""
-The aggregated available units are constrained by the parameter [number\_of\_units](@ref)
+The aggregated available units are constrained by the parameter [existing\_units](@ref)
 , the variable number of invested units [units\_invested\_available](@ref) less the number of units on outage [units\_out\_of\_service](@ref):
 
 ```math
 \begin{aligned}
-& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} + v^{units\_out\_of\_service}_{(u,s,t)}\\
+& v^{units\_available}_{(u,s,t)} \leq p^{existing\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} + v^{units\_out\_of\_service}_{(u,s,t)}\\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}
 ```
 
-See also [number\_of\_units](@ref).
+See also [existing\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
     _add_constraint!(m, :units_available, constraint_units_available_indices, _build_constraint_units_available)
@@ -55,8 +55,8 @@ function _build_constraint_units_available(m, u, s, t)
         <=
         # Change the default number of units so that it is zero when candidate units are present
         # and otherwise 1.
-        + ifelse(is_candidate(unit=u), number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
-            number_of_units(m; unit=u, stochastic_scenario=s, t=t) )
+        + ifelse(is_candidate(unit=u), existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
+            existing_units(m; unit=u, stochastic_scenario=s, t=t) )
         - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
     )
 end

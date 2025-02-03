@@ -61,7 +61,7 @@ The total fixed O&M costs can be expressed as:
 & {fixed\_om\_costs}
  = 
 \sum_{(u,n,d,s,t)}
- \left( p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)} \right)
+ \left( p^{existing\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)} \right)
  \cdot p^{unit\_capacity}_{(u,n,d,s,t)} \cdot p^{fom\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```

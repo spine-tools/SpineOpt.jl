@@ -34,7 +34,7 @@ function fixed_om_costs(m, t_range)
             ) 
             * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
             * (
-                + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+                + existing_units(m; unit=u, stochastic_scenario=s, t=t)
                 + (
                     u in intersect(indices(candidate_units), members(u)) ? 
                     units_invested_available[u, s, t] : 0

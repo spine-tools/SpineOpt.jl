@@ -108,7 +108,7 @@ end
 
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+        existing_units(m; unit=u, stochastic_scenario=s, t=t)
     end
 end
 
