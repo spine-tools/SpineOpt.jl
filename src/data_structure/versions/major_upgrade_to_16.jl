@@ -37,6 +37,8 @@ function major_upgrade_to_16(db_url, log_level)
     parameters_to_be_renamed = [
         # unit
         (("unit", "number_of_units"), "existing_units", ""),
+		# unit availability and outages
+    	(("unit", "fix_units_out_of_service"), "out_of_service_count_fix", ""),	
 
 		# node
 		(("node", "balance_type"), "node_type", ""),

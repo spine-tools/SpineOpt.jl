@@ -951,7 +951,7 @@ function generate_unit_commitment_parameters()
         Iterators.flatten(
             (
                 indices(scheduled_outage_duration),
-                indices(fix_units_out_of_service),
+                indices(out_of_service_count_fix),
                 (u for (st, out, u) in stage__output__unit() if out.name == :units_out_of_service),
             )
         )
