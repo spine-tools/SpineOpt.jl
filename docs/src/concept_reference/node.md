@@ -11,7 +11,7 @@ dedicated sections.
 
 Since [node](@ref)s act as the points where [commodity](@ref) balance is enforced,
 this also makes them a natural fit for implementing *storage*.
-The [has\_state](@ref) parameter controls whether a [node](@ref) has a `node_state` variable,
+The [node\_type](@ref) parameter controls whether a [node](@ref) has a `node_state` variable,
 which essentially represents the [commodity](@ref) content of the [node](@ref).
 The [state\_coeff](@ref) parameter tells how the `node_state` variable relates to all the [commodity](@ref) flows.
 Storage losses are handled via the [frac\_state\_loss](@ref) parameter,

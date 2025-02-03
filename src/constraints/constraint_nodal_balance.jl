@@ -24,9 +24,9 @@
 In **SpineOpt**, [node](@ref) is the place where an energy balance is enforced. As universal aggregators,
 they are the glue that brings all components of the energy system together.
 An energy balance is created for each [node](@ref) for all `node_stochastic_time_indices`,
-unless the [balance\_type](@ref) parameter of the node takes the value [balance\_type\_none](@ref balance_type_list)
+unless the [node\_type](@ref) parameter of the node takes the value [no\_balance](@ref node_type_list)
 or if the node in question is a member of a node group,
-for which the [balance\_type](@ref) is [balance\_type\_group](@ref balance_type_list).
+for which the [node\_type](@ref) is [balance\_group](@ref node_type_list) or [storage\_group](@ref node_type_list).
 The parameter [nodal\_balance\_sense](@ref) defaults to equality,
 but can be changed to allow overproduction ([nodal\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list))
 or underproduction ([nodal\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
@@ -49,13 +49,13 @@ v^{connection\_flow}_{(conn,n,from\_node,s,t)} \\
 \le & \text{if } p^{nodal\_balance\_sense} = "<=" \\
 \end{cases} \\
 & 0 \\
-& \forall n \in node: p^{balance\_type}_{(n)} \ne balance\_type\_none \land \nexists ng \ni n : p^{balance\_type}_{(ng)} = balance\_type\_group \\
+& \forall n \in node: p^{node\_type}_{(n)} \ne no\_balance \land \nexists ng \ni n : p^{node\_type}_{(ng)} = balance\_group, storage\_group \\
 & \forall (s,t)
 \end{aligned}
 ```
 
 See also
-[balance\_type](@ref) and [nodal\_balance\_sense](@ref).
+[node\_type](@ref) and [nodal\_balance\_sense](@ref).
 """
 function add_constraint_nodal_balance!(m::Model)
     _add_constraint!(m, :nodal_balance, constraint_nodal_balance_indices, _build_constraint_nodal_balance)
@@ -93,8 +93,8 @@ function constraint_nodal_balance_indices(m)
     (
         (node=n, stochastic_scenario=s, t=t)
         for n in node()
-        if balance_type(node=n) !== :balance_type_none
-        && !any(balance_type(node=ng) === :balance_type_group for ng in groups(n))
+        if node_type(node=n) !== :no_balance
+        && !any(node_type(node=ng) === :balance_group || node_type(node=ng) === :storage_group for ng in groups(n))
         for (n, s, t) in node_injection_indices(m; node=n)
     )
 end

@@ -7,6 +7,6 @@ e.g. having a MWh storage connected to MW flows in a model with hour as the basi
 
 Note that in order for the [state\_coeff](@ref) parameter to have an impact,
 the [node](@ref) must first have a `node_state` variable to begin with,
-defined using the [has\_state](@ref) parameter.
+defined using the [node\_type](@ref) parameter.
 By default, the [state\_coeff](@ref) is set to zero as a precaution,
 so that the user always has to set its value explicitly for it to have an impact on the model.

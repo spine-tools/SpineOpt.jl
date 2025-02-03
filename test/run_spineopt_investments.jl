@@ -76,7 +76,7 @@ function _test_run_spineopt_investments_setup()
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
             ["node", "node_b", "demand", unparse_db_value(demand_ts)],
-            ["node", "node_a", "has_state", true],
+            ["node", "node_a", "node_type", "storage_node"],
             ["node", "node_a", "initial_node_state", 0],
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
         ],

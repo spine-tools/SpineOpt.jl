@@ -69,7 +69,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 - Select *upward\_reserve\_group* in the *Object tree*.
 
-- In the *Object parameter* table, select the *balance\_type* parameter and the *Base* alternative, and enter the value *balance\_type\_none* as seen in the image below. This will establish that there is no need to create an extra balance between the members of the group.
+- In the *Object parameter* table, select the *node\_type* parameter and the *Base* alternative, and enter the value *no\_balance* as seen in the image below. This will establish that there is no need to create an extra balance between the members of the group.
 
 ![image](figs_reserves/reserves_tutorial_reserve_group_parameters.png)
 

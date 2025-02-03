@@ -297,11 +297,11 @@ In the table, select
 
 -   *entity\_by\_name*: 'fuel' node
 
--   *parameter\_name*: *balance\_type*
+-   *parameter\_name*: *node\_type*
 
 -   *alternative\_name*: *Base*
 
--   *value*: *balance\_type\_none*
+-   *value*: *no\_balance*
 
 ![image](figs_simple_system/simple_system_fuel_balance_type.png)
 

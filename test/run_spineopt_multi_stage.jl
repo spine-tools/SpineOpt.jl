@@ -82,7 +82,7 @@ function _ref_setup(storage_count)
         append!(
             test_data[:object_parameter_values],
             (
-                ("node", n, "has_state", true),
+                ("node", n, "node_type", "storage_node"),
                 ("node", n, "state_coeff", 1.0),
                 ("node", n, "initial_node_state", storage_cap / 2),
                 ("node", n, "node_state_cap", storage_cap),

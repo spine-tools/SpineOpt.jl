@@ -770,7 +770,7 @@ function _test_fix_unit_flow_with_rolling()
         values = [1, NaN, 2, NaN, 3, NaN]
         fix_unit_flow_ = unparse_db_value(TimeSeries(indexes, values, false, false))
         object_parameter_values = [
-            ["node", "node_b", "balance_type", "balance_type_none"],
+            ["node", "node_b", "node_type", "no_balance"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(6))],
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fix_unit_flow", fix_unit_flow_]]
@@ -815,7 +815,7 @@ function _test_fix_node_state_using_map_with_rolling()
         objects = [["output", "node_state"]]
         relationships = [["report__output", ["report_x", "node_state"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_state", true],
+            ["node", "node_b", "node_type", "storage_node"],
             ["node", "node_b", "fix_node_state", fix_node_state_],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
             ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(look_ahead + 1))],
