@@ -23,7 +23,7 @@
 sum (
     + res generation from subproblem
     + (units_invested_available - units_invested_available from last iteration)
-    * unit_availability_factor * unit_capacity * unit_conv_cap_to_flow
+    * availability_factor * unit_capacity * unit_conv_cap_to_flow
 ) >= mp_min_res_gen_to_demand_ratio * total demand
 """
 function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
@@ -51,7 +51,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
                     )
                     * window_sum_duration(
                         m,
-                        + unit_availability_factor(unit=u, stochastic_scenario=s)
+                        + availability_factor(unit=u, stochastic_scenario=s)
                         * unit_capacity(unit=u, node=n, direction=d, stochastic_scenario=s)
                         * unit_conv_cap_to_flow(unit=u, node=n, direction=d, stochastic_scenario=s),
                         window

@@ -26,7 +26,7 @@ Create an expression for `capacity_margin`. This represents the loat that must b
 ```math 
 \begin{aligned}
 expr^{capacity\_margin}_{n,s,t} = \\
-& + \sum_{u\in{U_{n\_to}}}(p^{unit\_capacity}_{u,s,t} \cdot p^{unit\_availability\_factor}_{u,s,t} \cdot v^{units\_available}_{u,s,t}) \\
+& + \sum_{u\in{U_{n\_to}}}(p^{unit\_capacity}_{u,s,t} \cdot p^{availability\_factor}_{u,s,t} \cdot v^{units\_available}_{u,s,t}) \\
 & + \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,to,s,t}) \\
 & - \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,from,s,t}) \\
 & - p^{demand}_{n,s,t} \\

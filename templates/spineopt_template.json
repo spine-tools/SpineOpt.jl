@@ -299,7 +299,7 @@
         ["unit", "outage_scheduled_duration", null, null, "Specifies the amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window"],
         ["unit", "shut_down_cost", null, null, "Costs of shutting down a 'sub unit', e.g. EUR/shutdown."],
         ["unit", "start_up_cost", null, null, "Costs of starting up a 'sub unit', e.g. EUR/startup."],
-        ["unit", "unit_availability_factor", 1.0, null, "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."],
+        ["unit", "availability_factor", 1.0, null, "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."],
         ["unit", "unit_investment_cost", null, null, "Investment cost per 'sub unit' built."],
         ["unit", "unit_investment_variable_type", "unit_investment_variable_type_continuous", "unit_investment_variable_type_list", "Determines whether investment variable is integer or continuous."],
         ["unit", "unit_investment_econ_lifetime", null, null, "Economic lifetime for unit investment decisions."],

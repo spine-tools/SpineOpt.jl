@@ -176,9 +176,9 @@ end
 function test_unit_online_variable_type_none()
     @testset "unit_online_variable_type_none" begin
         url_in = _test_variable_unit_setup()
-        unit_availability_factor = 0.5
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_none"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]

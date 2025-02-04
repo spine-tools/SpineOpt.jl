@@ -85,7 +85,7 @@ function _test_expressions_setup()
             ["node", "node_c", "node_state_cap", 50],
             ["node", "node_b", "demand", 105],
             ["unit", "unit_b", "online_variable_type", "unit_online_variable_type_linear"],
-            ["unit", "unit_b", "unit_availability_factor", 0.4],            
+            ["unit", "unit_b", "availability_factor", 0.4],            
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
         ],

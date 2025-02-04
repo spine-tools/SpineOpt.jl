@@ -125,11 +125,11 @@ function test_constraint_units_available()
         url_in = _test_constraint_unit_setup()
         existing_units = 4
         candidate_units = 3
-        unit_availability_factor = 0.5
+        availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_ab", "existing_units", existing_units],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -162,12 +162,12 @@ function test_constraint_units_available_units_unavailable()
         existing_units = 4
         candidate_units = 3 
         units_unavailable = 1
-        unit_availability_factor = 0.5
+        availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_ab", "existing_units", existing_units],
             ["unit", "unit_ab", "units_unavailable", units_unavailable],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -197,11 +197,11 @@ function test_constraint_units_available_units_unavailable()
         candidate_units = 3
         existing_units_when_candidates_units = 0 
         units_unavailable = 1
-        unit_availability_factor = 0.5
+        availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_ab", "units_unavailable", units_unavailable],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -319,7 +319,7 @@ function test_constraint_unit_flow_capacity()
                 url_in = _test_constraint_unit_reserves_setup()
                 mup = unparse_db_value(case_name == :min_up_time_gt_time_step ? Minute(61) : Hour(1))
                 object_parameter_values = [
-                    ["unit", "unit_ab", "unit_availability_factor", uaf],
+                    ["unit", "unit_ab", "availability_factor", uaf],
                     ["unit", "unit_ab", "min_up_time", mup],
                     ["node", "reserves_a", "downward_reserve", dr],
                     ["node", "reserves_bc", "upward_reserve", ur],
