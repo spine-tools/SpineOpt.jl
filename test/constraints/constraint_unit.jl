@@ -1030,13 +1030,13 @@ end
 function test_constraint_units_out_of_service_contiguity()
     @testset "constraint_units_out_of_service_contiguity" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-        @testset for scheduled_outage_duration_minutes in (60, 120, 210)
+        @testset for outage_scheduled_duration_minutes in (60, 120, 210)
             url_in = _test_constraint_unit_setup()
-            scheduled_outage_duration = Dict(
-                "type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m")
+            outage_scheduled_duration = Dict(
+                "type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m")
             )
             object_parameter_values = [
-                ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
+                ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
                 ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
@@ -1053,7 +1053,7 @@ function test_constraint_units_out_of_service_contiguity()
             head_hours = -(
                 length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
             )
-            tail_hours = round(Minute(scheduled_outage_duration_minutes), Hour(1)).value
+            tail_hours = round(Minute(outage_scheduled_duration_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
                 repeat([stochastic_scenario(:parent)], tail_hours)
@@ -1081,13 +1081,13 @@ end
 function test_constraint_min_scheduled_outage_duration()
     @testset "constraint_min_scheduled_outage_duration" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-        @testset for scheduled_outage_duration_minutes in (60, 120, 210)
+        @testset for outage_scheduled_duration_minutes in (60, 120, 210)
             url_in = _test_constraint_unit_setup()
-            scheduled_outage_duration = Dict(
-                "type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m")
+            outage_scheduled_duration = Dict(
+                "type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m")
             )
             object_parameter_values = [
-                ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
+                ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
                 ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
@@ -1102,9 +1102,9 @@ function test_constraint_min_scheduled_outage_duration()
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
             vars_u_oos = [var_units_out_of_service[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)]
             expected_con = @build_constraint(
-                scheduled_outage_duration_minutes / 60
+                outage_scheduled_duration_minutes / 60
                 <= sum(vars_u_oos)
-                <= ceil(scheduled_outage_duration_minutes / 60)
+                <= ceil(outage_scheduled_duration_minutes / 60)
             )
             con_key = (unit(:unit_ab), s_path, constraint_t)
             observed_con = constraint_object(constraint[con_key...])

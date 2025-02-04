@@ -296,7 +296,7 @@
         ["unit", "existing_units", 1.0, null, "Denotes the number of 'sub units' aggregated to form the modelled `unit`. The default value becomes zero if `candidate_units` has been defined."],
         ["unit", "online_variable_type", "unit_online_variable_type_linear", "unit_online_variable_type_list", "A selector for how the `units_on` variable is represented within the model."],
         ["unit", "outage_variable_type", "unit_online_variable_type_none", "unit_online_variable_type_list", "Determines whether the outage variable is integer or continuous or none(no optimisation of maintenance outages)."],
-        ["unit", "scheduled_outage_duration", null, null, "Specifies the amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window"],
+        ["unit", "outage_scheduled_duration", null, null, "Specifies the amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window"],
         ["unit", "shut_down_cost", null, null, "Costs of shutting down a 'sub unit', e.g. EUR/shutdown."],
         ["unit", "start_up_cost", null, null, "Costs of starting up a 'sub unit', e.g. EUR/startup."],
         ["unit", "unit_availability_factor", 1.0, null, "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."],

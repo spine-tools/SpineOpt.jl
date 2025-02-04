@@ -19,7 +19,7 @@
 
 @doc raw"""
 Enforces that maintenance outages are taken as a contiguous block. 
-By defining the [scheduled\_outage\_duration](@ref) parameter. This will trigger the generation of the following constraint:
+By defining the [outage\_scheduled\_duration](@ref) parameter. This will trigger the generation of the following constraint:
 
 ```math
 \begin{aligned}
@@ -27,13 +27,13 @@ By defining the [scheduled\_outage\_duration](@ref) parameter. This will trigger
 & \geq
 \sum_{t'=t-p^{schuled\_outage\_duration}_{(u,s,t)} +1 }^{t}
 v^{units\_taken\_out\_of\_service}_{(u,s,t')} \\
-& \forall u \in indices(p^{scheduled\_outage\_duration})\\
+& \forall u \in indices(p^{outage\_scheduled\_duration})\\
 & \forall (s,t)
 \end{aligned}
 ```
 
 See also
-[scheduled\_outage\_duration](@ref)
+[outage\_scheduled\_duration](@ref)
 """
 function add_constraint_units_out_of_service_contiguity!(m::Model)
     _add_constraint!(
@@ -63,13 +63,13 @@ function _build_constraint_units_out_of_service_contiguity(m::Model, u, s_path, 
 end
 
 function past_units_out_of_service_indices(m, u, s_path, t)
-    _past_indices(m, units_out_of_service_indices, scheduled_outage_duration, s_path, t; unit=u)
+    _past_indices(m, units_out_of_service_indices, outage_scheduled_duration, s_path, t; unit=u)
 end
 
 function constraint_units_out_of_service_contiguity_indices(m::Model)
     (
         (unit=u, stochastic_path=path, t=t)
-        for u in indices(scheduled_outage_duration)
+        for u in indices(outage_scheduled_duration)
         for (u, t) in unit_time_indices(m; unit=u)
         for path in active_stochastic_paths(m, past_units_out_of_service_indices(m, u, anything, t))
     )

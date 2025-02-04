@@ -18,11 +18,11 @@
 #############################################################################
 
 @doc raw"""
-The unit must be taken out of service for maintenance for a duration equal to scheduled_outage_duration:
+The unit must be taken out of service for maintenance for a duration equal to outage_scheduled_duration:
 
 ```math
 \sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t
-\geq scheduled\_outage\_duration_{(u,s,t)}existing\_units_u \quad \forall u \in unit, \, \forall (s,t)
+\geq outage\_scheduled\_duration_{(u,s,t)}existing\_units_u \quad \forall u \in unit, \, \forall (s,t)
 ```
 
 """
@@ -39,7 +39,7 @@ function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
     @fetch units_out_of_service = m.ext[:spineopt].variables
     max_sch_out_dur = maximum(
         (
-            + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
+            + outage_scheduled_duration(m; unit=u, stochastic_scenario=s, t=t)
             * (
                 + existing_units(m; unit=u, stochastic_scenario=s, t=t)
                 + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
@@ -75,7 +75,7 @@ constraint generation.
 function constraint_min_scheduled_outage_duration_indices(m::Model)
     (
         (unit=u, stochastic_path=path, t=current_window(m))
-        for u in indices(scheduled_outage_duration)
+        for u in indices(outage_scheduled_duration)
         for path in active_stochastic_paths(m, units_out_of_service_indices(m; unit=u))        
     )
 end

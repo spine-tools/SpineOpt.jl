@@ -188,7 +188,7 @@ function _required_history_duration(m)
     lookback_params = (
         min_up_time,
         min_down_time,
-        scheduled_outage_duration,
+        outage_scheduled_duration,
         connection_flow_delay,
         unit_investment_tech_lifetime,
         connection_investment_tech_lifetime,

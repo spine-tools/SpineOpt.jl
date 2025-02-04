@@ -200,7 +200,7 @@ function test_unit_history_parameters()
     @testset "unit_history_parameters" begin
         min_up_minutes = 120
         min_down_minutes = 180
-        scheduled_outage_duration_minutes = 60
+        outage_scheduled_duration_minutes = 60
         lifetime_minutes = 240
         candidate_units = 3
         
@@ -208,13 +208,13 @@ function test_unit_history_parameters()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
         min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-        scheduled_outage_duration = Dict("type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m"))
+        outage_scheduled_duration = Dict("type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m"))
         unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         object_parameter_values = [
             ["unit", "unit_ab", "min_up_time", min_up_time],
             ["unit", "unit_ab", "min_down_time", min_down_time],
             ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
+            ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
             ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
             ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
             ["model", "instance", "model_end", model_end],
