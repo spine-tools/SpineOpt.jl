@@ -64,7 +64,7 @@ function _create_set_parameters_and_relationships()
             :set_investment_indices => units_invested_available_indices,
             :set_invest_temporal_block => unit__investment_temporal_block,
             :set_invest_stoch_struct => unit__investment_stochastic_structure,
-            :set_lead_time => unit_lead_time,
+            :set_lead_time => lead_time,
             :set_tech_lifetime => lifetime_technical,
             :set_econ_lifetime => lifetime_economic,
             :set_discnt_rate_tech => discount_rate_technology_specific,
