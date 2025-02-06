@@ -306,7 +306,7 @@
         ["unit", "unit_investment_tech_lifetime", null, null, "Maximum technical lifetime for unit investment decisions."],
         ["unit", "unit_investment_lifetime_sense", ">=", "constraint_sense_list", "A selector for `unit_lifetime` constraint sense."],
         ["unit", "unit_lead_time", {"type": "duration", "data": "0h"}, null, "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."],
-        ["unit", "unit_decommissioning_time", {"type": "duration", "data": "0h"}, null, "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."],
+        ["unit", "decommissioning_time", {"type": "duration", "data": "0h"}, null, "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."],
         ["unit", "unit_decommissioning_cost", null, null, "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."],
         ["unit", "units_invested_big_m_mga", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For units_invested_mga an appropriate big_m_mga would be twice the candidate units."],
         ["unit", "units_invested_mga", false, "boolean_value_list", "Defines whether a certain variable (here: units_invested) will be considered in the maximal-differences of the mga objective"],

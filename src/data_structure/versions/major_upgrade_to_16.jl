@@ -46,6 +46,8 @@ function major_upgrade_to_16(db_url, log_level)
 		# unit online
 		(("unit", "fix_units_on"), "online_count_fix", ""),
 		(("unit", "initial_units_on"), "online_count_initial", ""),
+		# unit installing and decommissioning
+		(("unit", "unit_decommissioning_time"), "decommissioning_time", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),
