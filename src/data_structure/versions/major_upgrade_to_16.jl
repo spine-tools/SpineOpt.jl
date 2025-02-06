@@ -43,6 +43,8 @@ function major_upgrade_to_16(db_url, log_level)
 		(("unit", "scheduled_outage_duration"), "outage_scheduled_duration", ""),
 		(("unit", "unit_availability_factor"), "availability_factor", ""),
 		(("unit", "units_unavailable"), "out_of_service_count_fix", "sum"),
+		# unit online
+		(("unit", "fix_units_on"), "online_count_fix", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),

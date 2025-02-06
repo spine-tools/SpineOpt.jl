@@ -98,7 +98,7 @@ function add_variable_units_on!(m::Model)
         lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=fix_units_on,
+        fix_value=online_count_fix,
         initial_value=initial_units_on,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,

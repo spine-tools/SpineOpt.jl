@@ -106,7 +106,7 @@ merit special attention when using disconnected time periods.
 By default, when trying to access [variables](@ref Variables) Variables outside the defined [temporal\_block](@ref)s,
 *SpineOpt.jl* assumes such variables exist but allows them to take any values within specified bounds.
 If fixed initial conditions for the disconnected periods are desired,
-one needs to use parameters such as [fix\_node\_state](@ref) or [fix\_units\_on](@ref).
+one needs to use parameters such as [fix\_node\_state](@ref) or [online\_count\_fix](@ref).
 
 ##### Different regions/commodities in different resolutions
 

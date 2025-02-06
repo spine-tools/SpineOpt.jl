@@ -963,7 +963,7 @@ function generate_unit_commitment_parameters()
                 unit_with_out_of_service_variable_set,
                 indices(units_on_cost),
                 indices(units_on_non_anticipativity_time),
-                indices(fix_units_on),
+                indices(online_count_fix),
                 (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
