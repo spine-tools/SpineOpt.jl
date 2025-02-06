@@ -212,7 +212,7 @@
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
             ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "unit_decommissioning_cost", decom_cost],
             ["unit", "unit_ab", "decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
         ]
@@ -262,7 +262,7 @@
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
             ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -298,7 +298,7 @@
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
             ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -322,7 +322,7 @@
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
             ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)

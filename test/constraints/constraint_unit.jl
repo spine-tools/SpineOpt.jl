@@ -1449,10 +1449,10 @@ function test_constraint_unit_lifetime()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -1506,7 +1506,7 @@ function test_constraint_unit_lifetime_sense()
         lifetime_minutes = 240
         senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
         url_in = _test_constraint_unit_setup()
-        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
@@ -1514,7 +1514,7 @@ function test_constraint_unit_lifetime_sense()
         @testset for (sense_key, sense_value) in senses
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
                 ["unit", "unit_ab", "unit_investment_lifetime_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
             ]
@@ -1562,10 +1562,10 @@ function test_constraint_unit_lifetime_mp()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]

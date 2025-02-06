@@ -48,7 +48,7 @@ If we have model that is not currently set up for investments and we wish to cre
  - Ensure that the [existing\_units](@ref) parameter is set to zero so that the unit is unavailable unless invested in.
  - Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
  - Set the [unit\_investment\_variable\_type](@ref) to `unit_investment_variable_type_integer` to specify that this is a discrete [unit](@ref) investment decision.
- - Specify the [unit\_investment\_lifetime](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
+ - Specify the [lifetime\_technical](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
  - Specify the investment period for this [unit](@ref)'s investment decision in one of two ways:
    - Define a default investment period for all investment decisions in the model as follows:
      - create a [temporal\_block](@ref) with the appropriate [resolution](@ref) (say 1 year)
@@ -93,7 +93,7 @@ If we have model that is not currently set up for investments and we wish to cre
 |--------------------------------|------------------------------|-------------------------------------------------|
 | `candidate_units` | `unit` | The number of additional `unit`s of this type that can be invested in
 | `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
-| `unit_investment_tech_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
+| `lifetime_technical` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
 | `unit_investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
 | `fix_units_invested` | `unit`| Fix the value of `units_invested`
 | `fix_units_invested_available` | `unit` | Fix the value of `connections_invested_available`
@@ -118,7 +118,7 @@ If we have model that is not currently set up for investments and we wish to cre
 |-----------------------------|-------------------|--------------------------------------------------------------|
 | constraint_units_invested_available.jl | \constraints| constrains `units_invested_available` to be less than `candidate_units`
 | constraint_units_invested_transition.jl | \constraints| defines the relationship between `units_invested_available`, `units_invested` and `units_mothballed`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_tech_lifetime` - analagous to `min_up_time`.
+| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `lifetime_technical` - analagous to `min_up_time`.
 | constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `existing_units` and `units_invested_available`
 | constraint_connections_invested_available.jl | \constraints| constrains `connections_invested_available` to be less than `candidate_connections`
 | constraint_connections_invested_transition.jl | \constraints| defines the relationship between `connections_invested_available`, `connections_invested` and `connections_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`

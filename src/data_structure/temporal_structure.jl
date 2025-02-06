@@ -190,7 +190,7 @@ function _required_history_duration(m)
         min_down_time,
         outage_scheduled_duration,
         connection_flow_delay,
-        unit_investment_tech_lifetime,
+        lifetime_technical,
         connection_investment_tech_lifetime,
         storage_investment_tech_lifetime,
     )

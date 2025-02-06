@@ -209,14 +209,14 @@ function test_unit_history_parameters()
         min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
         min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
         outage_scheduled_duration = Dict("type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m"))
-        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         object_parameter_values = [
             ["unit", "unit_ab", "min_up_time", min_up_time],
             ["unit", "unit_ab", "min_down_time", min_down_time],
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
             ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+            ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [

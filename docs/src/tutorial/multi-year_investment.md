@@ -22,7 +22,7 @@ Once we have our setup, we can take a look at the economic representation in Spi
 - [use\_milestone\_years](@ref): this parameter is used to discount operation costs. If set to `false` (default), it means we use continous operational temporal blocks, and thus the operation cost will be discounted every year. Otherwise, it will be discounted using the investment temporal block.   
 - [discount\_rate](@ref): the rate you would like to discount your costs with.
 - [discount\_year](@ref): the year you would like to discount your costs to.
-- [unit\_investment\_tech\_lifetime](@ref): using units as an example, this is the technical lifetime of the unit.
+- [lifetime\_technical](@ref): using units as an example, this is the technical lifetime of the unit.
 - [lifetime\_economic](@ref): using units as an example, this is the economic lifetime of the unit which is used to calculate the economic parameters.
 - [optional] [discount\_rate\_technology\_specific](@ref): using units as an example, this is used if you would like to have a specific discount rate different from [discount\_rate](@ref).
 - [optional] [unit\_lead\_time](@ref): if not specified, the default lead time is 0. 

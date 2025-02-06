@@ -303,7 +303,7 @@
         ["unit", "unit_investment_cost", null, null, "Investment cost per 'sub unit' built."],
         ["unit", "unit_investment_variable_type", "unit_investment_variable_type_continuous", "unit_investment_variable_type_list", "Determines whether investment variable is integer or continuous."],
         ["unit", "lifetime_economic", null, null, "Economic lifetime for unit investment decisions."],
-        ["unit", "unit_investment_tech_lifetime", null, null, "Maximum technical lifetime for unit investment decisions."],
+        ["unit", "lifetime_technical", null, null, "Maximum technical lifetime for unit investment decisions."],
         ["unit", "unit_investment_lifetime_sense", ">=", "constraint_sense_list", "A selector for `unit_lifetime` constraint sense."],
         ["unit", "unit_lead_time", {"type": "duration", "data": "0h"}, null, "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."],
         ["unit", "decommissioning_time", {"type": "duration", "data": "0h"}, null, "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."],
