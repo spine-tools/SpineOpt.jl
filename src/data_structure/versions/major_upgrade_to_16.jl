@@ -49,6 +49,7 @@ function major_upgrade_to_16(db_url, log_level)
 		# unit installing and decommissioning
 		(("unit", "unit_decommissioning_time"), "decommissioning_time", ""),
 		(("unit", "unit_discount_rate_technology_specific"), "discount_rate_technology_specific", ""),
+		(("unit", "unit_investment_econ_lifetime"), "lifetime_economic", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),
