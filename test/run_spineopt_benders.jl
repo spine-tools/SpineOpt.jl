@@ -115,7 +115,7 @@ function _test_benders_unit()
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
-                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_ab_alt", "investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
@@ -358,7 +358,7 @@ function _test_benders_unit_storage()
                 ["unit", "unit_a", "existing_units", 0],
                 ["unit", "unit_a", "candidate_units", 1],
                 ["unit", "unit_a", "unit_investment_cost", u_inv_cost],
-                ["unit", "unit_a", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_a", "investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_a", "online_variable_type", "unit_online_variable_type_integer"],
                 ["node", "node_a", "node_type", storage_node],
                 ["node", "node_a", "node_state_cap", 1000],
@@ -505,7 +505,7 @@ function _test_benders_rolling_representative_periods()
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
-                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_ab_alt", "investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
@@ -607,7 +607,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
         append!(object_parameter_values, [["unit", c, "candidate_units", 1] for c in candidates])
         append!(
             object_parameter_values,
-            [["unit", c, "unit_investment_variable_type", "unit_investment_variable_type_integer"] for c in candidates]
+            [["unit", c, "investment_variable_type", "unit_investment_variable_type_integer"] for c in candidates]
         )
         append!(
             object_parameter_values,
@@ -697,7 +697,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["unit", "unit_ab_alt", "is_renewable", true],
                 ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
-                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_ab_alt", "investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
@@ -818,7 +818,7 @@ function _test_benders_starting_units_invested()
                 ["unit", "unit_ab_alt", "existing_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
                 ["unit", "unit_ab_alt", "benders_starting_units_invested", 1],
-                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_ab_alt", "investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],

@@ -52,6 +52,7 @@ function major_upgrade_to_16(db_url, log_level)
 		(("unit", "unit_investment_econ_lifetime"), "lifetime_economic", ""),
 		(("unit", "unit_investment_tech_lifetime"), "lifetime_technical", ""),
 		(("unit", "unit_investment_lifetime_sense"), "lifetime_constraint_sense", ""),
+		(("unit", "unit_investment_variable_type"), "investment_variable_type", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),
