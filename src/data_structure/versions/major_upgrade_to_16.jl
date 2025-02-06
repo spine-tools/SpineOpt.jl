@@ -48,6 +48,7 @@ function major_upgrade_to_16(db_url, log_level)
 		(("unit", "initial_units_on"), "online_count_initial", ""),
 		# unit installing and decommissioning
 		(("unit", "unit_decommissioning_time"), "decommissioning_time", ""),
+		(("unit", "unit_discount_rate_technology_specific"), "discount_rate_technology_specific", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),

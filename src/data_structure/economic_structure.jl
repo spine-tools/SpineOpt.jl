@@ -67,7 +67,7 @@ function _create_set_parameters_and_relationships()
             :set_lead_time => unit_lead_time,
             :set_tech_lifetime => unit_investment_tech_lifetime,
             :set_econ_lifetime => unit_investment_econ_lifetime,
-            :set_discnt_rate_tech => unit_discount_rate_technology_specific,
+            :set_discnt_rate_tech => discount_rate_technology_specific,
             :set_decom_time => decommissioning_time,
             :set_decom_cost => unit_decommissioning_cost,
             :set_capacity_transfer_factor => :unit_capacity_transfer_factor,
