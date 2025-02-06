@@ -1515,7 +1515,7 @@ function test_constraint_unit_lifetime_sense()
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
                 ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
-                ["unit", "unit_ab", "unit_investment_lifetime_sense", sense_key],
+                ["unit", "unit_ab", "lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
             ]
             SpineInterface.import_data(
