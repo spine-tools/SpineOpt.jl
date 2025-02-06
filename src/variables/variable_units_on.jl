@@ -99,7 +99,7 @@ function add_variable_units_on!(m::Model)
         bin=units_on_bin,
         int=units_on_int,
         fix_value=online_count_fix,
-        initial_value=initial_units_on,
+        initial_value=online_count_initial,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,
         required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),

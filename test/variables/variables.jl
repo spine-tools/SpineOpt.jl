@@ -152,12 +152,12 @@ function _test_variable_connection_setup()
     url_in
 end
 
-function test_initial_units_on()
-    @testset "initial_units_on" begin
+function test_online_count_initial()
+    @testset "online_count_initial" begin
         url_in = _test_variable_unit_setup()
         init_units_on = 123
         object_parameter_values = [
-            ["unit", "unit_ab", "initial_units_on", init_units_on],
+            ["unit", "unit_ab", "online_count_initial", init_units_on],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -729,7 +729,7 @@ function test_fix_ratio_out_in_connection_flow_simple_rolling()
 end
 
 @testset "variables" begin
-    test_initial_units_on()
+    test_online_count_initial()
     test_unit_online_variable_type_none()
     test_unit_history_parameters()
     test_connection_history_parameters()

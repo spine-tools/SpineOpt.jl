@@ -288,7 +288,7 @@
         ["unit", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["unit", "initial_units_invested", null, null, "Initialize the value of the `units_invested` variable."],
         ["unit", "initial_units_invested_available", null, null, "Initialize the value of the `units_invested_available` variable"],
-        ["unit", "initial_units_on", null, null, "Initialize the value of the `units_on` variable."],
+        ["unit", "online_count_initial", null, null, "Initialize the value of the `units_on` variable."],
         ["unit", "out_of_service_count_initial", null, null, "Initialize the value of the `units_out_of_service` variable."],
         ["unit", "is_renewable", false, "boolean_value_list", "Whether the unit is renewable - used in the minimum renewable generation constraint within the Benders master problem"],
         ["unit", "min_down_time", null, null, "Minimum downtime of a `unit` after it shuts down."],

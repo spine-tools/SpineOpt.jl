@@ -45,6 +45,7 @@ function major_upgrade_to_16(db_url, log_level)
 		(("unit", "units_unavailable"), "out_of_service_count_fix", "sum"),
 		# unit online
 		(("unit", "fix_units_on"), "online_count_fix", ""),
+		(("unit", "initial_units_on"), "online_count_initial", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),
