@@ -132,15 +132,15 @@ end
 function _test_run_spineopt_mga()
     @testset "run_spineopt_mga" begin
         url_in = _test_run_spineopt_mga_setup()
-        candidate_units = 1
+        investment_count_max_cumulative = 1
         candidate_connections = 1
         candidate_storages = 1
         units_invested_big_m_mga = storages_invested_big_m_mga = connections_invested_big_m_mga = 5
         fuel_cost = 5
         mga_slack = 0.05
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_bc", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["unit", "unit_ab", "existing_units", 0],
             ["unit", "unit_bc", "existing_units", 0],
             ["unit", "unit_group_abbc", "units_invested_mga", true],
@@ -491,7 +491,7 @@ end
 function _test_run_spineopt_mga_2()
     @testset "run_spineopt_mga_2" begin
         url_in = _test_run_spineopt_mga_setup()
-        candidate_units = 1
+        investment_count_max_cumulative = 1
         candidate_connections = 1
         candidate_storages = 1
         fuel_cost = 5
@@ -503,8 +503,8 @@ function _test_run_spineopt_mga_2()
         deltas = [points[1]; [points[i] - points[i - 1] for i in Iterators.drop(eachindex(points), 1)]]
         mga_weights_2 = Dict("type" => "array", "value_type" => "float", "data" => points)
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_bc", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["unit", "unit_ab", "existing_units", 0],
             ["unit", "unit_bc", "existing_units", 0],
             ["unit", "unit_group_abbc", "units_invested_mga", true],

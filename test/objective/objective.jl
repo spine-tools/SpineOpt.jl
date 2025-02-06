@@ -76,11 +76,11 @@ function test_fom_cost_case1()
         unit_capacity = 100
         fom_cost = 8
         existing_units = 2
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
             ["unit", "unit_ab", "existing_units", existing_units],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -118,11 +118,11 @@ function test_fom_cost_case2()
         fom_cost = 8
         existing_units = 0
         # The template provides the parameter `existing_units` with a default value of 1.
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
             ["unit", "unit_ab", "existing_units", existing_units],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -207,10 +207,10 @@ function test_unit_investment_cost()
     @testset "unit_investment_cost" begin
         url_in = _test_objective_setup()
         unit_investment_cost = 1000
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "unit_investment_cost", unit_investment_cost],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],

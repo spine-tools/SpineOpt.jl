@@ -42,7 +42,7 @@ function _build_constraint_min_scheduled_outage_duration(m::Model, u, s_path, t)
             + outage_scheduled_duration(m; unit=u, stochastic_scenario=s, t=t)
             * (
                 + existing_units(m; unit=u, stochastic_scenario=s, t=t)
-                + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
+                + investment_count_max_cumulative(m; unit=u, stochastic_scenario=s, t=t, _default=0)
             )
         )
         for s in s_path

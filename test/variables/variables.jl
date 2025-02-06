@@ -202,7 +202,7 @@ function test_unit_history_parameters()
         min_down_minutes = 180
         outage_scheduled_duration_minutes = 60
         lifetime_minutes = 240
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         
         url_in = _test_variable_unit_setup()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
@@ -213,7 +213,7 @@ function test_unit_history_parameters()
         object_parameter_values = [
             ["unit", "unit_ab", "min_up_time", min_up_time],
             ["unit", "unit_ab", "min_down_time", min_down_time],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
             ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
             ["unit", "unit_ab", "lifetime_technical", lifetime_technical],

@@ -78,7 +78,7 @@
             ["node", "node_c", "node_type", "storage_node"],
             ["node", "node_c", "node_state_cap", 100],
             ["node", "node_c", "candidate_storages", 2],
-            ["unit", "unit_ab", "candidate_units", 3],
+            ["unit", "unit_ab", "investment_count_max_cumulative", 3],
             ["connection", "connection_bc", "candidate_connections", 1],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],

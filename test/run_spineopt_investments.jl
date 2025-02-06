@@ -96,7 +96,7 @@ function _test_capacity_investments()
         object_parameter_values = [
             ["model", "instance", "use_connection_intact_flow", false],
             ["unit", "unit_a", "existing_units", 10],
-            ["unit", "unit_a", "candidate_units", 40],
+            ["unit", "unit_a", "investment_count_max_cumulative", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],
             ["unit", "unit_a", "investment_variable_type", "unit_investment_variable_type_continuous"],
             ["node", "node_a", "number_of_storages", 5],

@@ -28,7 +28,7 @@ and [units\_mothballed](@ref) in adjacent timeslices.
 & v^{units\_invested\_available}_{(u,s,t)} - v^{units\_invested}_{(u,s,t)}
 + v^{units\_monthballed}_{(u,s,t)}
 = v^{units\_invested\_available}_{(u,s,t-1)} \\
-& \forall u \in unit: p^{candidate\_units}_{(u)} \neq 0 \\
+& \forall u \in unit: p^{investment\_count\_max\_cumulative}_{(u)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

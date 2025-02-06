@@ -36,7 +36,7 @@ In principle we also need to define the default investment stochastic structure.
 With the infrastructure for investments in place, we can now ready units for the investment optimization. For both power plants:
 - Set the [existing\_units](@ref) parameter to zero so that the unit is unavailable unless invested in.
 - Set the [initial\_units\_invested\_available](@ref) to zero as well for a similar reason.
-- Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
+- Set the [investment\_count\_max\_cumulative](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
 - Set the unit's investment cost by setting the [unit\_investment\_cost](@ref) parameter to 1000.0. It is important to mention that, normally, you should use the discounted cost. In this example, the costs in 2030 and in 2035 should be discounted to the discount year, i.e., you would define a time-varying cost to reflect the economic representation.
 - Specify the [lifetime\_technical](@ref) of the unit to, say, 10 years (duration `10Y`) to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
 - Specify the [lifetime\_economic](@ref) to automatically adjust the investment costs. Let's set it equal to the technical lifetime here.
@@ -79,7 +79,7 @@ The demand data is seasonal (4M). We assume that the demand increases over the y
 
 ![image](figs_capacity_planning/multi-year_demand.png)
 
-We will allow investments for `power_plant_a` in both 2030 and 2035, and for `power_plant_b` only in 2035. This is realised through the definition of [candidate\_units](@ref) as a time series with variable resolution.
+We will allow investments for `power_plant_a` in both 2030 and 2035, and for `power_plant_b` only in 2035. This is realised through the definition of [investment\_count\_max\_cumulative](@ref) as a time series with variable resolution.
 
 - power_plant_a: [2030-01-01: 1, 2035-01-01: 2]. Note this means in 2030, 1 unit can be invested, and in 2035, another 1 **(instead of 2)** can invested. In other words, this parameter includes the previously available units.
 - power_plant_b: [2030-01-01: 0, 2035-01-01: 1].

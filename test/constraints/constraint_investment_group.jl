@@ -74,7 +74,7 @@ function _test_constraint_investment_group_setup()
             ["node", "node_c", "node_state_cap", 100],
             ["node", "node_c", "candidate_storages", 2],
             ["node", "node_c", "storage_investment_cost", 1000],
-            ["unit", "unit_ab", "candidate_units", 3],
+            ["unit", "unit_ab", "investment_count_max_cumulative", 3],
             ["unit", "unit_ab", "unit_investment_cost", 1000],
             ["connection", "connection_bc", "candidate_connections", 1],
             ["connection", "connection_bc", "connection_investment_cost", 1000],

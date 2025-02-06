@@ -36,7 +36,7 @@ function fixed_om_costs(m, t_range)
             * (
                 + existing_units(m; unit=u, stochastic_scenario=s, t=t)
                 + (
-                    u in intersect(indices(candidate_units), members(u)) ? 
+                    u in intersect(indices(investment_count_max_cumulative), members(u)) ? 
                     units_invested_available[u, s, t] : 0
                 )
             )
@@ -47,7 +47,7 @@ function fixed_om_costs(m, t_range)
             * duration(t) 
             for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
             for (u, s, t) in Iterators.flatten(
-                u in intersect(indices(candidate_units), members(u)) ? 
+                u in intersect(indices(investment_count_max_cumulative), members(u)) ? 
                 (units_invested_available_indices(m; unit=u, t=t_range),) :
                 ((
                     (u, s, t) for (u, _n, _d, s, t) 

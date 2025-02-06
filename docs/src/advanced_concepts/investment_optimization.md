@@ -14,9 +14,9 @@ These are the investment decisions that SpineOpt currently supports. At a high l
 In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multiplied by the investment variable which may either be continuous or integer. This is determined, for units, by setting the [investment\_variable\_type](@ref) parameter accordingly. Similary, for connections and node storages the [connection\_investment\_variable\_type](@ref) and [storage\_investment\_variable\_type](@ref) are specified.
 
 ### Identiying Investment Candidate Units, Connections and Storages
-The parameter [candidate\_units](@ref) represents the number of units of this type that may be invested in. [candidate\_units](@ref) determines the upper bound of the investment variable and setting this to a value greater than 0 identifies the unit as an investment candidate unit in the optimisation. If the [investment\_variable\_type](@ref) is set to `:unit_investment_variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [investment\_variable\_type](@ref) is `:unit_investment_variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be interpreted as the capacity of the unit rather than the number of units with [candidate\_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [investment\_variable\_type](@ref) set to `:unit_investment_variable_type_integer` with [candidate\_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
+The parameter [investment\_count\_max\_cumulative](@ref) represents the number of units of this type that may be invested in. [investment\_count\_max\_cumulative](@ref) determines the upper bound of the investment variable and setting this to a value greater than 0 identifies the unit as an investment candidate unit in the optimisation. If the [investment\_variable\_type](@ref) is set to `:unit_investment_variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [investment\_variable\_type](@ref) is `:unit_investment_variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be interpreted as the capacity of the unit rather than the number of units with [investment\_count\_max\_cumulative](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [investment\_variable\_type](@ref) set to `:unit_investment_variable_type_integer` with [investment\_count\_max\_cumulative](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
    - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit\_capacity](@ref) for units, [connection\_capacity](@ref) for connections or [node\_state\_cap](@ref) for storages.
-   - [candidate\_units](@ref) sets the upper bound on the investment variable, [candidate\_connections](@ref) for connections and [candidate\_storages](@ref) for storages
+   - [investment\_count\_max\_cumulative](@ref) sets the upper bound on the investment variable, [candidate\_connections](@ref) for connections and [candidate\_storages](@ref) for storages
    - [investment\_variable\_type](@ref) determines whether the investment variable is integer or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
 
 ### Investment Costs
@@ -46,7 +46,7 @@ If set to `true`, then the model will use line outage distribution factors (LODF
 If we have model that is not currently set up for investments and we wish to create an investment candidate unit, we can take the following steps.
  - Create the unit object with all the relationships and parameters necessary to describe its function.
  - Ensure that the [existing\_units](@ref) parameter is set to zero so that the unit is unavailable unless invested in.
- - Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
+ - Set the [investment\_count\_max\_cumulative](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
  - Set the [investment\_variable\_type](@ref) to `unit_investment_variable_type_integer` to specify that this is a discrete [unit](@ref) investment decision.
  - Specify the [lifetime\_technical](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
  - Specify the investment period for this [unit](@ref)'s investment decision in one of two ways:
@@ -91,7 +91,7 @@ If we have model that is not currently set up for investments and we wish to cre
 
 | Parameter Name                 | Object Class List            | Description                                     |
 |--------------------------------|------------------------------|-------------------------------------------------|
-| `candidate_units` | `unit` | The number of additional `unit`s of this type that can be invested in
+| `investment_count_max_cumulative` | `unit` | The number of additional `unit`s of this type that can be invested in
 | `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
 | `lifetime_technical` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
 | `investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
@@ -116,7 +116,7 @@ If we have model that is not currently set up for investments and we wish to cre
 
 | Filename                    | Relative Path     | Description                                                  |
 |-----------------------------|-------------------|--------------------------------------------------------------|
-| constraint_units_invested_available.jl | \constraints| constrains `units_invested_available` to be less than `candidate_units`
+| constraint_units_invested_available.jl | \constraints| constrains `units_invested_available` to be less than `investment_count_max_cumulative`
 | constraint_units_invested_transition.jl | \constraints| defines the relationship between `units_invested_available`, `units_invested` and `units_mothballed`. Analagous to `units_on`, `units_started` and `units_shutdown`
 | constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `lifetime_technical` - analagous to `min_up_time`.
 | constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `existing_units` and `units_invested_available`
