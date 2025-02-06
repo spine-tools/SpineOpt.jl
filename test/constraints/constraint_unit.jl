@@ -161,12 +161,12 @@ function test_constraint_units_available_units_unavailable()
         url_in = _test_constraint_unit_setup()
         existing_units = 4
         candidate_units = 3 
-        units_unavailable = 1
+        out_of_service_count_fix = 1
         availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_ab", "existing_units", existing_units],
-            ["unit", "unit_ab", "units_unavailable", units_unavailable],
+            ["unit", "unit_ab", "out_of_service_count_fix", out_of_service_count_fix],
             ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
@@ -185,7 +185,7 @@ function test_constraint_units_available_units_unavailable()
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= existing_units + var_u_inv_av - units_unavailable)
+            expected_con = @build_constraint(var_u_on <= existing_units + var_u_inv_av - out_of_service_count_fix)
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
@@ -196,11 +196,11 @@ function test_constraint_units_available_units_unavailable()
         url_in = _test_constraint_unit_setup()
         candidate_units = 3
         existing_units_when_candidates_units = 0 
-        units_unavailable = 1
+        out_of_service_count_fix = 1
         availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "units_unavailable", units_unavailable],
+            ["unit", "unit_ab", "out_of_service_count_fix", out_of_service_count_fix],
             ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
@@ -219,13 +219,16 @@ function test_constraint_units_available_units_unavailable()
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= existing_units_when_candidates_units + var_u_inv_av - units_unavailable)
+            expected_con = @build_constraint(
+                var_u_on <= existing_units_when_candidates_units + var_u_inv_av - out_of_service_count_fix
+            )
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+    # Add a test for a unit with units_out_of_service variable
 end
 
 function test_constraint_unit_state_transition()

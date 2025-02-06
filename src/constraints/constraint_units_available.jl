@@ -40,9 +40,12 @@ function _build_constraint_units_available(m, u, s, t)
     @build_constraint(
         + sum(
             + units_on[u, s, t]
-            + ifelse(units_unavailable(m; unit=u, stochastic_scenario=s, t=t) > 0, 0, 1)
-            * _get_units_out_of_service(m, u, s, t)
             for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+            init=0,
+        )
+        + sum(
+            + units_out_of_service[u, s, t]
+            for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s, t=t);
             init=0,
         )
         - sum(
@@ -55,9 +58,16 @@ function _build_constraint_units_available(m, u, s, t)
         <=
         # Change the default number of units so that it is zero when candidate units are present
         # and otherwise 1.
-        + ifelse(is_candidate(unit=u), existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
-            existing_units(m; unit=u, stochastic_scenario=s, t=t) )
-        - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
+        + ifelse(
+            is_candidate(unit=u), 
+            existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
+            existing_units(m; unit=u, stochastic_scenario=s, t=t) 
+        )
+        - ifelse(
+            !has_out_of_service_variable(unit=u), 
+            out_of_service_count_fix(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
+            0
+        )
     )
 end
 

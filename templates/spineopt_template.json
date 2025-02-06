@@ -314,7 +314,6 @@
         ["unit", "units_on_cost", null, null, "Objective function coefficient on `units_on`. An idling cost, for example"],
         ["unit", "units_on_non_anticipativity_margin", null, null, "Margin by which `units_on` variable can differ from the value in the previous window during `non_anticipativity_time`."],
         ["unit", "units_on_non_anticipativity_time", null, null, "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."],
-        ["unit", "units_unavailable", 0, null, "Represents the number of units out of service"],
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
         ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."],
         ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."]
