@@ -27,7 +27,7 @@ function add_mga_weight_factors(db_url, log_level)
 	new_data = Dict()
 	new_data[:object_parameters] = [
 		x for x in template()["object_parameters"] if x[2] in (
-			"units_invested_mga_weight",
+			"mga_investment_weight",
 			"connections_invested_mga_weight",
 			"storages_invested_mga_weight",
 			"mga_investment_big_m",

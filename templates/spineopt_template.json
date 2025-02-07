@@ -310,7 +310,7 @@
         ["unit", "unit_decommissioning_cost", null, null, "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."],
         ["unit", "mga_investment_big_m", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For a unit with mga_investment_activate, an appropriate big_m_mga would be twice the investment_count_max_cumulative."],
         ["unit", "mga_investment_activate", false, "boolean_value_list", "Defines whether a certain variable (here: units_invested) will be considered in the maximal-differences of the mga objective"],
-        ["unit", "units_invested_mga_weight", 1, null, "Used to scale mga variables. For weightd sum mga method, the length of this weight given as an Array will determine the number of iterations."],
+        ["unit", "mga_investment_weight", 1, null, "Used to scale mga variables. For weightd sum mga method, the length of this weight given as an Array will determine the number of iterations."],
         ["unit", "units_on_cost", null, null, "Objective function coefficient on `units_on`. An idling cost, for example"],
         ["unit", "units_on_non_anticipativity_margin", null, null, "Margin by which `units_on` variable can differ from the value in the previous window during `non_anticipativity_time`."],
         ["unit", "units_on_non_anticipativity_time", null, null, "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."],

@@ -45,8 +45,8 @@ function do_run_spineopt!(
     set_mga_objective!(m)
     # TODO: max_mga_iters can be different now
     if isnothing(max_mga_iters)
-        u_max = if !isempty(indices(units_invested_mga_weight))
-            maximum(length(units_invested_mga_weight(unit=u)) for u in indices(units_invested_mga_weight))
+        u_max = if !isempty(indices(mga_investment_weight))
+            maximum(length(mga_investment_weight(unit=u)) for u in indices(mga_investment_weight))
         else
             0
         end
@@ -144,7 +144,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         units_invested_available_indices,
         unit_stochastic_scenario_weight,
         units_invested_mga_indices,
-        units_invested_mga_weight,
+        mga_investment_weight,
         mga_investment_big_m,
         iteration,
         iteration_number
