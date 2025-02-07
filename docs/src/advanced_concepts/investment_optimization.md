@@ -95,7 +95,7 @@ If we have model that is not currently set up for investments and we wish to cre
 | `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
 | `lifetime_technical` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
 | `investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
-| `fix_units_invested` | `unit`| Fix the value of `units_invested`
+| `investment_count_fix_new` | `unit`| Fix the value of `units_invested`
 | `fix_units_invested_available` | `unit` | Fix the value of `connections_invested_available`
 | `candidate_connections` | `connection` | The number of additional `connection`s of this type that can be invested in
 | `connection_investment_cost` | `connection` | The total overnight investment cost per candidate `connection` over the model horizon
