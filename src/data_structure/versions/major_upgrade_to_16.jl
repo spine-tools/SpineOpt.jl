@@ -59,6 +59,7 @@ function major_upgrade_to_16(db_url, log_level)
 		(("unit", "fix_units_invested"), "investment_count_fix_new", ""),
 		(("unit", "fix_units_invested_available"), "investment_count_fix_cumulative", ""),
 		(("unit", "initial_units_invested"), "investment_count_initial_new", ""),
+		(("unit", "initial_units_invested_available"), "investment_count_initial_cumulative", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),

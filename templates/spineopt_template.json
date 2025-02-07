@@ -287,7 +287,7 @@
         ["unit", "fom_cost", null, null, "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the existing units (incl. `existing_units` and `units_invested_available`) and `unit_capacity` parameters. Currently, the value needs to be defined per duration unit (i.e. 1 hour), E.g. EUR/MW/h"],
         ["unit", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["unit", "investment_count_initial_new", null, null, "Initialize the value of the `units_invested` variable."],
-        ["unit", "initial_units_invested_available", null, null, "Initialize the value of the `units_invested_available` variable"],
+        ["unit", "investment_count_initial_cumulative", null, null, "Initialize the value of the `units_invested_available` variable"],
         ["unit", "online_count_initial", null, null, "Initialize the value of the `units_on` variable."],
         ["unit", "out_of_service_count_initial", null, null, "Initialize the value of the `units_out_of_service` variable."],
         ["unit", "is_renewable", false, "boolean_value_list", "Whether the unit is renewable - used in the minimum renewable generation constraint within the Benders master problem"],
