@@ -30,7 +30,7 @@ function add_variable_units_invested!(m::Model)
         lb=constant(0),
         int=units_invested_available_int,
         fix_value=investment_count_fix_new,
-        initial_value=initial_units_invested,
+        initial_value=investment_count_initial_new,
         required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end
