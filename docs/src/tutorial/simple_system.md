@@ -142,16 +142,13 @@ Currently, there is no output connected to the report. We'll have to do that man
     Double click the field to see the options.
     For the 'report' field we need 'report1'
     and for the 'output' field we only need 'unit\_flow'.
+    This will tell SpineOpt to write the value of the
+    *unit\_flow* optimization variable to the output
+    database, as part of *report1*.
 
 -   Press *Ok*.
 
 -   Commit (save) the changes through the **Commit** button in the toolbar.
-
--   Enter *report1* under *report*, and
-    *unit\_flow* under *output*, as seen in the image below;
-    then press *Ok*. This will tell SpineOpt to write the value of the
-    *unit\_flow* optimization variable to the output
-    database, as part of *report1*.
 
 ![image](figs_simple_system/simple_system_add_report__output_relationships.png)
 
@@ -174,7 +171,7 @@ To create the nodes:
 -   Locate the *Entity tree* in the Spine DB editor (typically
     at the top-left).
 
--   Right click on the [node] class, and select *Add objects* 
+-   Right click on the [node] class, and select *Add entities* 
     from the context menu (or press the '+' icon next to it).
     The *Add entities* dialog will pop up.
 
@@ -273,8 +270,7 @@ To enter the data we'll be using the table (typically in the center or below the
 
 Let's start with adding an electricity demand of 150 at the electricity node.
 
--   Select the 'electricity' node in the root menu, in the graph view
-    or in the list after double clicking the *entity\_by\_name* field in the table.
+Select the 'electricity' node in the root menu or in the graph view. Then, in parameter value table:
 
 -   Double click the *parameter\_name* field and select *demand*.
 
@@ -289,11 +285,16 @@ Let's start with adding an electricity demand of 150 at the electricity node.
     (or another name) you will not be able to save your data.
     Speaking of which, when is the last time you saved/committed?
 
+!!! info
+    The correctly completed row of parameter value table shows the icon in entity_class_name column of that entity class (as in entity tree). 
+    In contrast, incomplete row will have no icon and stay in parameter value window even when different entity is selected. 
+    Pay attention to the icons and entity class names to avoid mixing parameter descriptions.
+
 For the fuel node we want an infinite supply.
 Since the default behaviour of a node is to balance all incoming and outgoing flows,
 we'll have to take that balance away.
 
-In the table, select
+Select the 'fuel' node in the root menu or in the graph view. Then, in parameter value table select
 
 -   *entity\_by\_name*: 'fuel' node
 
