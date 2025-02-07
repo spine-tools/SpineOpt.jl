@@ -62,6 +62,7 @@ function major_upgrade_to_16(db_url, log_level)
 		(("unit", "initial_units_invested_available"), "investment_count_initial_cumulative", ""),
 		# unit mga
 		(("unit", "units_invested_big_m_mga"), "mga_investment_big_m", ""),
+		(("unit", "units_invested_mga"), "mga_investment_activate", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),

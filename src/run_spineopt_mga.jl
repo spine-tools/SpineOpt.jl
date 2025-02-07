@@ -105,11 +105,11 @@ function _add_mga_iteration(k)
 end
 
 function units_invested_mga_indices()
-    unique((unit=ug,) for ug in unit(units_invested_mga=true))
+    unique((unit=ug,) for ug in unit(mga_investment_activate=true))
 end
 
 function units_invested_mga_indices(mga_iteration)
-    unique((unit=ug, mga_iteration=mga_it) for ug in unit(units_invested_mga=true) for mga_it in mga_iteration)
+    unique((unit=ug, mga_iteration=mga_it) for ug in unit(mga_investment_activate=true) for mga_it in mga_iteration)
 end
 
 function connections_invested_mga_indices()
