@@ -43,7 +43,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 + sum(
                     (
                         + units_invested_available[u, s, t]
-                        - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
+                        - internal_investment_count_fix_cumulative(unit=u, stochastic_scenario=s, t=t)
                     )
                     * window_sum(units_invested_available_mv(unit=u, stochastic_scenario=s), t)
                     for (u, s, t) in units_invested_available_indices(m);

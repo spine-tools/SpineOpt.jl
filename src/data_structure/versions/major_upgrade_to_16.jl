@@ -57,6 +57,7 @@ function major_upgrade_to_16(db_url, log_level)
 		# unit investment limits
 		(("unit", "candidate_units"), "investment_count_max_cumulative", ""),
 		(("unit", "fix_units_invested"), "investment_count_fix_new", ""),
+		(("unit", "fix_units_invested_available"), "investment_count_fix_cumulative", ""),
 
 		# node
 		(("node", "balance_type"), "node_type", ""),
