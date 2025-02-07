@@ -135,7 +135,7 @@ function _test_run_spineopt_mga()
         investment_count_max_cumulative = 1
         candidate_connections = 1
         candidate_storages = 1
-        units_invested_big_m_mga = storages_invested_big_m_mga = connections_invested_big_m_mga = 5
+        mga_investment_big_m = storages_invested_big_m_mga = connections_invested_big_m_mga = 5
         fuel_cost = 5
         mga_slack = 0.05
         object_parameter_values = [
@@ -144,7 +144,7 @@ function _test_run_spineopt_mga()
             ["unit", "unit_ab", "existing_units", 0],
             ["unit", "unit_bc", "existing_units", 0],
             ["unit", "unit_group_abbc", "units_invested_mga", true],
-            ["unit", "unit_group_abbc", "units_invested_big_m_mga", units_invested_big_m_mga],
+            ["unit", "unit_group_abbc", "mga_investment_big_m", mga_investment_big_m],
             ["unit", "unit_group_abbc", "units_invested__mga_weight", 1],
             ["unit", "unit_ab", "unit_investment_cost", 1],
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -209,7 +209,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= (var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + units_invested_big_m_mga*var_mga_aux_binary[key]
+                    + mga_investment_big_m*var_mga_aux_binary[key]
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)
@@ -274,7 +274,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + units_invested_big_m_mga * (1 - var_mga_aux_binary[key])
+                    + mga_investment_big_m * (1 - var_mga_aux_binary[key])
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)

@@ -30,7 +30,7 @@ function add_mga_weight_factors(db_url, log_level)
 			"units_invested_mga_weight",
 			"connections_invested_mga_weight",
 			"storages_invested_mga_weight",
-			"units_invested_big_m_mga",
+			"mga_investment_big_m",
 			"storages_invested_big_m_mga",
 			"connections_invested_big_m_mga"
 		)

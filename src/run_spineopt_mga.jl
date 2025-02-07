@@ -77,7 +77,7 @@ function do_run_spineopt!(
         # TODO: needs to clean outputs?
         if (
             isempty(indices(connections_invested_big_m_mga))
-            && isempty(indices(units_invested_big_m_mga))
+            && isempty(indices(mga_investment_big_m))
             && isempty(indices(storages_invested_big_m_mga))
             && mga_iteration_count < max_mga_iters
         )
@@ -145,7 +145,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         unit_stochastic_scenario_weight,
         units_invested_mga_indices,
         units_invested_mga_weight,
-        units_invested_big_m_mga,
+        mga_investment_big_m,
         iteration,
         iteration_number
     )
@@ -203,7 +203,7 @@ function _set_objective_mga_iteration!(
         weighted_investments = all(
             [
                 isempty(indices(connections_invested_big_m_mga)),
-                isempty(indices(units_invested_big_m_mga)),
+                isempty(indices(mga_investment_big_m)),
                 isempty(indices(storages_invested_big_m_mga))
             ]
         )
@@ -327,7 +327,7 @@ function set_mga_objective!(m)
     weighted_investments = all(
         [
             isempty(indices(connections_invested_big_m_mga)),
-            isempty(indices(units_invested_big_m_mga)),
+            isempty(indices(mga_investment_big_m)),
             isempty(indices(storages_invested_big_m_mga))
         ]
     )
