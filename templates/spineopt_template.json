@@ -247,7 +247,7 @@
         ["node", "node_balance_penalty", null, null, "A penalty cost for `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a cost defined for them."],
         ["node", "node_state_cap", null, null, "The maximum permitted value for a `node_state` variable."],
         ["node", "node_state_min", 0.0, null, "The minimum permitted value for a `node_state` variable."],
-        ["node", "number_of_storages", 1.0, null, "Denotes the number of 'sub storages' aggregated to form the modelled `node`."],
+        ["node", "existing_storages", 1.0, null, "Denotes the number of 'sub storages' aggregated to form the modelled `node`."],
         ["node", "state_coeff", 1.0, null, "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `node_injection` constraint."],
         ["node", "storage_lead_time", {"type": "duration", "data": "0h"}, null, "A storage's lead time, i.e., the time between the moment at which a storage investment decision is takien, and the moment at which the storage investment becomes operational."],
         ["node", "storage_discount_rate_technology_specific", 0.0 , null, "storage-specific discount rate used to calculate the storage's investment costs. If not specified, the model discount rate is used."],

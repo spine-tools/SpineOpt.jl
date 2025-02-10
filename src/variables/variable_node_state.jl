@@ -35,7 +35,7 @@ end
 
 function node_state_ub(m; node, kwargs...)
     node_state_cap(m; node=node, kwargs..., _default=NaN) * (
-        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
         + something(candidate_storages(m; node=node, kwargs...), 0)
     )
 end

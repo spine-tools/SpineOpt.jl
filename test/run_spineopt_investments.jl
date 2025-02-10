@@ -99,7 +99,7 @@ function _test_capacity_investments()
             ["unit", "unit_a", "investment_count_max_cumulative", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],
             ["unit", "unit_a", "investment_variable_type", "unit_investment_variable_type_continuous"],
-            ["node", "node_a", "number_of_storages", 5],
+            ["node", "node_a", "existing_storages", 5],
             ["node", "node_a", "candidate_storages", 20],
             ["node", "node_a", "storage_investment_cost", 0],
             ["node", "node_a", "storage_investment_variable_type", "storage_investment_variable_type_continuous"],
