@@ -18,7 +18,7 @@
 #############################################################################
 
 @doc raw"""
-The capacity margin must be greater than or equal to [min\_capacity\_margin](@ref).
+The capacity margin must be greater than or equal to [capacity\_margin\_min](@ref).
 If [min\_capacity\_margin\_penalty](@ref) is specified, the [min\_capacity\_margin\_slack](@ref)
 variable is added which is penalised with the corresponding coefficient in the objective function.
 This encourages maintenance outages to be scheduled at times of higher capacity margin and can 
@@ -29,14 +29,14 @@ allow low capacity margin to influence investment decisions.
 + expr^{capacity\_margin}_{(n,s,t)} \\
 + v^{min\_capacity\_margin\_slack}_{(n,s,t)}
 & >= \\
-& p^{min\_capacity\_margin}_{(n,s,t)} \\
-& \forall n \in node: p^{min\_capacity\_margin}_{(n)}\\
+& p^{capacity\_margin\_min}_{(n,s,t)} \\
+& \forall n \in node: p^{capacity\_margin\_min}_{(n)}\\
 \end{align*}
 ```
 
 See also
 [capacity\_margin](@ref),
-[min\_capacity\_margin](@ref),
+[capacity\_margin\_min](@ref),
 [min\_capacity\_margin\_penalty](@ref)
 """
 function add_constraint_min_capacity_margin!(m::Model)
@@ -55,7 +55,7 @@ function _build_constraint_min_capacity_margin(m::Model, n, s_path, t)
         )
         >=
         + sum(
-            min_capacity_margin(m; node=n, stochastic_scenario=s, t=t)
+            capacity_margin_min(m; node=n, stochastic_scenario=s, t=t)
             for (n, s, t) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s_path, t=t);
             init=0,
         )

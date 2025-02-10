@@ -237,7 +237,7 @@
         ["node", "is_reserve_node", false, "boolean_value_list", "A boolean flag for whether a `node` is acting as a `reserve_node`"],
         ["node", "max_node_pressure", null, null, "Maximum allowed gas pressure at `node`."],
         ["node", "max_voltage_angle", null, null, "Maximum allowed voltage angle at `node`."],
-        ["node", "min_capacity_margin", null, null, "minimum capacity margin applying to the `node` or `node_group`"],
+        ["node", "capacity_margin_min", null, null, "minimum capacity margin applying to the `node` or `node_group`"],
         ["node", "min_capacity_margin_penalty", null, null, "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"],
         ["node", "min_node_pressure", null, null, "Minimum allowed gas pressure at `node`."],
         ["node", "min_voltage_angle", null, null, "Minimum allowed voltage angle at `node`. "],

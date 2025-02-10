@@ -972,7 +972,7 @@ function test_constraint_min_capacity_margin()
         demand_b = 105
         capacity = 200
         object_parameter_values = [
-            ["node", "node_b", "min_capacity_margin", margin_b],
+            ["node", "node_b", "capacity_margin_min", margin_b],
             ["node", "node_b", "demand", demand_b],
             ["unit", "unit_ab", "units_on_cost", 1],  # To have unis_on variables
         ]
@@ -1011,7 +1011,7 @@ function test_constraint_min_capacity_margin_penalty()
         capacity = 200
         penalty = 1000
         object_parameter_values = [
-            ["node", "node_b", "min_capacity_margin", margin_b],
+            ["node", "node_b", "capacity_margin_min", margin_b],
             ["node", "node_b", "min_capacity_margin_penalty", penalty],
             ["node", "node_b", "demand", demand_b],
         ]

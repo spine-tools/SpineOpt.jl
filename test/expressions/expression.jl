@@ -114,7 +114,7 @@ function test_expression_capacity_margin()
         group_demand_a = 10
         demand_fraction_b = 0.5
         object_parameter_values = [
-            ["node", "node_b", "min_capacity_margin", margin_b],
+            ["node", "node_b", "capacity_margin_min", margin_b],
             ["unit", "unit_b", "existing_units", existing_units_b],
             ["node", "node_b", "demand", demand_b],
             ["node", "node_b", "demand_fraction", demand_fraction_b],
