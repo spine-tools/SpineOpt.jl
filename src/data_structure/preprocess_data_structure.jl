@@ -541,7 +541,7 @@ end
 TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
 """
 function generate_variable_indexing_support()
-    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
+    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_balance_penalty)))
     node_with_capacity_margin_penalty = ObjectClass(
         :node_with_min_capacity_margin_slack_penalty, collect(indices(capacity_margin_penalty))
     )

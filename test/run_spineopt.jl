@@ -361,7 +361,7 @@ function _test_unit_flow_non_anticipativity_time()
             objects = [["output", "units_on"], ["temporal_block", "quarterly"]]
             object_parameter_values = [
                 ["node", "node_b", "demand", unparse_db_value(demand)],
-                ["node", "node_b", "node_slack_penalty", 1000],
+                ["node", "node_b", "node_balance_penalty", 1000],
                 ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
                 ["temporal_block", "quarterly", "resolution", Dict("type" => "duration", "data" => "15m")],
                 ["temporal_block", "quarterly", "block_end", Dict("type" => "duration", "data" => "6h")],
