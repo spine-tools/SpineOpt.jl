@@ -58,8 +58,8 @@ function _build_constraint_ratio_out_in_connection_flow(m::Model, conn, ng_out, 
     @fetch connection_flow = m.ext[:spineopt].variables
     build_sense_constraint(
         + sum(
-            + connection_flow[conn, n_out, d, s, t_short]
-            for (conn, n_out, d, s, t_short) in connection_flow_indices(
+            + connection_flow[conn, n_out, d, s, t_long]
+            for (conn, n_out, d, s, t_long) in connection_flow_indices(
                 m;
                 connection=conn,
                 node=ng_out,
@@ -115,11 +115,14 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
         if !_has_simple_fix_ratio_out_in_connection_flow(conn, ng_out, ng_in)
         for (t_out, path_out) in t_highest_resolution_path(
             m, connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))
-        )
+        ) 
         for (t, path) in t_highest_resolution_path(
             m,  Iterators.flatten(
                 (
-                    connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node)),
+                    (
+                        (connection=conn, node=ng_out, direction=direction(:to_node), stochastic_scenario=s, t=t_out) 
+                        for s in path_out
+                    ),
                     (
                         ind
                         for s in path_out
@@ -134,7 +137,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                     ),
                 )
             )
-        )                
+        )
     )
 end
 
