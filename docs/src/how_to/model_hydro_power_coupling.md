@@ -123,7 +123,7 @@ The result should look like this:
 
 To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *node\_type* as `storage_node`. Then, we need to set the capacity of the reservoir by setting the *node\_state\_cap* parameter value.
 
-Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *fix\_node\_state* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
+Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *storage\_state\_fix* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
 
 ![storage Spranget](figs_two_hydro/two_hydro_spranget_storage.png)
 ![storage Fallet](figs_two_hydro/two_hydro_fallet_storage.png)
@@ -178,7 +178,7 @@ modifications to the initial model.
 
 -   Now we need to make some changes in object parameter values.
     -   Extend the planning horizon of the model by one time step
-    -   Remove the *fix\_node\_state*
+    -   Remove the *storage\_state\_fix*
         parameter values for the end of the optimization horizon as
         you seen in the following figure: double click on the *value* cell of the *Språnget\_upper* and *Fallet\_upper* nodes, select the third
         data row, right-click, select *Remove

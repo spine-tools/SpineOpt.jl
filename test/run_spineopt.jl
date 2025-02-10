@@ -792,8 +792,8 @@ function _test_fix_unit_flow_with_rolling()
     end
 end
 
-function _test_fix_node_state_using_map_with_rolling()
-    @testset "fix_node_state_using_map_with_rolling" begin
+function _test_storage_state_fix_using_map_with_rolling()
+    @testset "storage_state_fix_using_map_with_rolling" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         rf = 2
         look_ahead = 4  # Higher than the roll forward so it's more interesting
@@ -811,12 +811,12 @@ function _test_fix_node_state_using_map_with_rolling()
             end
             push!(values, val)
         end
-        fix_node_state_ = unparse_db_value(Map(indexes, values))
+        storage_state_fix_ = unparse_db_value(Map(indexes, values))
         objects = [["output", "node_state"]]
         relationships = [["report__output", ["report_x", "node_state"]]]
         object_parameter_values = [
             ["node", "node_b", "node_type", "storage_node"],
-            ["node", "node_b", "fix_node_state", fix_node_state_],
+            ["node", "node_b", "storage_state_fix", storage_state_fix_],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
             ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(look_ahead + 1))],
         ]
@@ -931,7 +931,7 @@ end
     _test_dual_values()
     _test_dual_values_with_two_time_indices()
     _test_fix_unit_flow_with_rolling()
-    _test_fix_node_state_using_map_with_rolling()
+    _test_storage_state_fix_using_map_with_rolling()
     _test_time_limit()
     _test_only_linear_model_has_duals()
     _test_report_relative_optimality_gap()

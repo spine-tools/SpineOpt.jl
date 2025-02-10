@@ -219,7 +219,7 @@
         ["node", "demand", 0.0, null, "Demand for the `commodity` of a `node`. Energy gains can be represented using negative `demand`."],
         ["node", "downward_reserve", false, null, "Identifier for `node`s providing downward reserves"],
         ["node", "fix_node_pressure", null, null, "Fixes the corresponding `node_pressure` variable to the provided value"],
-        ["node", "fix_node_state", null, null, "Fixes the corresponding `node_state` variable to the provided value. Can be used for e.g. fixing boundary conditions."],
+        ["node", "storage_state_fix", null, null, "Fixes the corresponding `node_state` variable to the provided value. Can be used for e.g. fixing boundary conditions."],
         ["node", "fix_node_voltage_angle", null, null, "Fixes the corresponding `node_voltage_angle` variable to the provided value"],
         ["node", "fix_storages_invested", null, null, "Used to fix the value of the storages_invested variable"],
         ["node", "fix_storages_invested_available", null, null, "Used to fix the value of the storages_invested_available variable"],
