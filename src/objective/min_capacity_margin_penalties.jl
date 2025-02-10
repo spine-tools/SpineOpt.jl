@@ -18,9 +18,9 @@
 #############################################################################
 
 """
-    min_capacity_margin_penalty(m::Model)
+    min_capacity_margin_penalties(m::Model)
 
-Create an expression for min_capacity_margin_penalty.
+Create an expression for capacity margin penalties.
 """
 
 function min_capacity_margin_penalties(m::Model, t_range)
@@ -34,7 +34,7 @@ function min_capacity_margin_penalties(m::Model, t_range)
             ) 
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * min_capacity_margin_penalty(m; node=n, stochastic_scenario=s, t=t)
+            * capacity_margin_penalty(m; node=n, stochastic_scenario=s, t=t)
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (n, s, t) in min_capacity_margin_slack_indices(m; t=t_range);
             init=0,

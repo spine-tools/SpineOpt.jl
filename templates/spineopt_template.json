@@ -238,7 +238,7 @@
         ["node", "max_node_pressure", null, null, "Maximum allowed gas pressure at `node`."],
         ["node", "max_voltage_angle", null, null, "Maximum allowed voltage angle at `node`."],
         ["node", "capacity_margin_min", null, null, "minimum capacity margin applying to the `node` or `node_group`"],
-        ["node", "min_capacity_margin_penalty", null, null, "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"],
+        ["node", "capacity_margin_penalty", null, null, "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"],
         ["node", "min_node_pressure", null, null, "Minimum allowed gas pressure at `node`."],
         ["node", "min_voltage_angle", null, null, "Minimum allowed voltage angle at `node`. "],
         ["node", "minimum_reserve_activation_time", null, null, "Duration a certain reserve product needs to be online/available"],

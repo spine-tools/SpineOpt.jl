@@ -19,7 +19,7 @@
 
 @doc raw"""
 The capacity margin must be greater than or equal to [capacity\_margin\_min](@ref).
-If [min\_capacity\_margin\_penalty](@ref) is specified, the [min\_capacity\_margin\_slack](@ref)
+If [capacity\_margin\_penalty](@ref) is specified, the [min\_capacity\_margin\_slack](@ref)
 variable is added which is penalised with the corresponding coefficient in the objective function.
 This encourages maintenance outages to be scheduled at times of higher capacity margin and can 
 allow low capacity margin to influence investment decisions.
@@ -37,7 +37,7 @@ allow low capacity margin to influence investment decisions.
 See also
 [capacity\_margin](@ref),
 [capacity\_margin\_min](@ref),
-[min\_capacity\_margin\_penalty](@ref)
+[capacity\_margin\_penalty](@ref)
 """
 function add_constraint_min_capacity_margin!(m::Model)
     _add_constraint!(m, :min_capacity_margin, expression_capacity_margin_indices, _build_constraint_min_capacity_margin)

@@ -1012,7 +1012,7 @@ function test_constraint_min_capacity_margin_penalty()
         penalty = 1000
         object_parameter_values = [
             ["node", "node_b", "capacity_margin_min", margin_b],
-            ["node", "node_b", "min_capacity_margin_penalty", penalty],
+            ["node", "node_b", "capacity_margin_penalty", penalty],
             ["node", "node_b", "demand", demand_b],
         ]
         relationship_parameter_values = [

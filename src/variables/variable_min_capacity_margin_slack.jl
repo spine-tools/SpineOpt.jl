@@ -27,7 +27,7 @@ function min_capacity_margin_slack_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    node = intersect(node_with_min_capacity_margin_penalty(), node)
+    node = intersect(node_with_capacity_margin_penalty(), node)
     node_stochastic_time_indices(
         m; node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
     )
