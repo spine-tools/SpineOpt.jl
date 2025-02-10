@@ -242,7 +242,7 @@
         ["node", "min_node_pressure", null, null, "Minimum allowed gas pressure at `node`."],
         ["node", "min_voltage_angle", null, null, "Minimum allowed voltage angle at `node`. "],
         ["node", "minimum_reserve_activation_time", null, null, "Duration a certain reserve product needs to be online/available"],
-        ["node", "nodal_balance_sense", "==", "constraint_sense_list", "A selector for `nodal_balance` constraint sense."],
+        ["node", "node_balance_sense", "==", "constraint_sense_list", "A selector for `nodal_balance` constraint sense."],
         ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list", "A selector for the reference `node` (slack bus) when PTDF-based DC load-flow is enabled."],
         ["node", "node_slack_penalty", null, null, "A penalty cost for `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a cost defined for them."],
         ["node", "node_state_cap", null, null, "The maximum permitted value for a `node_state` variable."],

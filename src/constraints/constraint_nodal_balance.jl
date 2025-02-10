@@ -27,9 +27,9 @@ An energy balance is created for each [node](@ref) for all `node_stochastic_time
 unless the [node\_type](@ref) parameter of the node takes the value [no\_balance](@ref node_type_list)
 or if the node in question is a member of a node group,
 for which the [node\_type](@ref) is [balance\_group](@ref node_type_list) or [storage\_group](@ref node_type_list).
-The parameter [nodal\_balance\_sense](@ref) defaults to equality,
-but can be changed to allow overproduction ([nodal\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list))
-or underproduction ([nodal\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
+The parameter [node\_balance\_sense](@ref) defaults to equality,
+but can be changed to allow overproduction ([node\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list))
+or underproduction ([node\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The energy balance is enforced by the following constraint:
 
 ```math
@@ -44,9 +44,9 @@ v^{connection\_flow}_{(conn,n,to\_node,s,t)}
 }
 v^{connection\_flow}_{(conn,n,from\_node,s,t)} \\
 & \begin{cases}
-\ge & \text{if } p^{nodal\_balance\_sense} = ">=" \\
-= & \text{if } p^{nodal\_balance\_sense} = "==" \\
-\le & \text{if } p^{nodal\_balance\_sense} = "<=" \\
+\ge & \text{if } p^{node\_balance\_sense} = ">=" \\
+= & \text{if } p^{node\_balance\_sense} = "==" \\
+\le & \text{if } p^{node\_balance\_sense} = "<=" \\
 \end{cases} \\
 & 0 \\
 & \forall n \in node: p^{node\_type}_{(n)} \ne no\_balance \land \nexists ng \ni n : p^{node\_type}_{(ng)} = balance\_group, storage\_group \\
@@ -55,7 +55,7 @@ v^{connection\_flow}_{(conn,n,from\_node,s,t)} \\
 ```
 
 See also
-[node\_type](@ref) and [nodal\_balance\_sense](@ref).
+[node\_type](@ref) and [node\_balance\_sense](@ref).
 """
 function add_constraint_nodal_balance!(m::Model)
     _add_constraint!(m, :nodal_balance, constraint_nodal_balance_indices, _build_constraint_nodal_balance)
@@ -84,7 +84,7 @@ function _build_constraint_nodal_balance(m, n, s, t)
             if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
             init=0,
         ),
-        eval(nodal_balance_sense(node=n)),
+        eval(node_balance_sense(node=n)),
         0,
     )
 end
