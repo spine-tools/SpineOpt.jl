@@ -75,6 +75,7 @@ function major_upgrade_to_16(db_url, log_level)
 		# node storage other parameters
 		(("node", "frac_state_loss"), "storage_self_discharge", ""),
 		(("node", "number_of_storages"), "existing_storages", ""),
+		(("node", "state_coeff"), "storage_state_coefficient", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

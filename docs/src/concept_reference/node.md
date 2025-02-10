@@ -13,7 +13,7 @@ Since [node](@ref)s act as the points where [commodity](@ref) balance is enforce
 this also makes them a natural fit for implementing *storage*.
 The [node\_type](@ref) parameter controls whether a [node](@ref) has a `node_state` variable,
 which essentially represents the [commodity](@ref) content of the [node](@ref).
-The [state\_coeff](@ref) parameter tells how the `node_state` variable relates to all the [commodity](@ref) flows.
+The [storage\_state\_coefficient](@ref) parameter tells how the `node_state` variable relates to all the [commodity](@ref) flows.
 Storage losses are handled via the [storage\_self\_discharge](@ref) parameter,
 and potential diffusion of [commodity](@ref) content to other [node](@ref)s via the [diff\_coeff](@ref) parameter for the
 [node\_\_node](@ref) relationship.

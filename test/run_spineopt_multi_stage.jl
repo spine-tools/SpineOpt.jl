@@ -83,7 +83,7 @@ function _ref_setup(storage_count)
             test_data[:object_parameter_values],
             (
                 ("node", n, "node_type", "storage_node"),
-                ("node", n, "state_coeff", 1.0),
+                ("node", n, "storage_state_coefficient", 1.0),
                 ("node", n, "initial_node_state", storage_cap / 2),
                 ("node", n, "node_state_cap", storage_cap),
                 ("node", n, "node_balance_penalty", 10000),

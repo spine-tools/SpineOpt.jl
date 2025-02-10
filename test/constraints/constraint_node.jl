@@ -185,8 +185,8 @@ function test_constraint_node_injection()
         demand_fraction_c = 0.4
         storage_self_discharge_b = 0.15
         storage_self_discharge_c = 0.25
-        state_coeff_b = 0.9
-        state_coeff_c = 0.8
+        storage_state_coefficient_b = 0.9
+        storage_state_coefficient_c = 0.8
         diff_coeff_bc = 0.2
         diff_coeff_cb = 0.3
         url_in = _test_constraint_node_setup()
@@ -201,8 +201,8 @@ function test_constraint_node_injection()
             ["node", "node_c", "node_type", "storage_node"],
             ["node", "node_b", "storage_self_discharge", storage_self_discharge_b],
             ["node", "node_c", "storage_self_discharge", storage_self_discharge_c],
-            ["node", "node_b", "state_coeff", state_coeff_b],
-            ["node", "node_c", "state_coeff", state_coeff_c],
+            ["node", "node_b", "storage_state_coefficient", storage_state_coefficient_b],
+            ["node", "node_c", "storage_state_coefficient", storage_state_coefficient_c],
             ["node", "node_b", "demand_fraction", demand_fraction_b],
             ["node", "node_c", "demand_fraction", demand_fraction_c],
         ]
@@ -272,8 +272,8 @@ function test_constraint_node_injection()
                 var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
                     + var_n_inj
-                    + (state_coeff_b + storage_self_discharge_b + diff_coeff_bc) * var_n_st_b1
-                    - state_coeff_b * var_n_st_b0
+                    + (storage_state_coefficient_b + storage_self_discharge_b + diff_coeff_bc) * var_n_st_b1
+                    - storage_state_coefficient_b * var_n_st_b0
                     - diff_coeff_cb * var_n_st_c1
                     - var_u_flow
                     + demand_b + demand_group * demand_fraction_b
@@ -297,8 +297,8 @@ function test_constraint_node_injection()
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
-                    var_n_inj + (state_coeff_c + storage_self_discharge_c + diff_coeff_cb) * var_n_st_c1
-                    - state_coeff_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
+                    var_n_inj + (storage_state_coefficient_c + storage_self_discharge_c + diff_coeff_cb) * var_n_st_c1
+                    - storage_state_coefficient_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
                     demand_c +
                     demand_group * demand_fraction_c == 0
                 )
