@@ -72,6 +72,8 @@ function major_upgrade_to_16(db_url, log_level)
 		(("node", "min_capacity_margin_penalty"), "capacity_margin_penalty", ""),
 		(("node", "nodal_balance_sense"), "node_balance_sense", ""),
 		(("node", "node_slack_penalty"), "node_balance_penalty", ""),
+		# node storage other parameters
+		(("node", "frac_state_loss"), "storage_self_discharge", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

@@ -183,8 +183,8 @@ function test_constraint_node_injection()
         demand_group = 200
         demand_fraction_b = 0.6
         demand_fraction_c = 0.4
-        frac_state_loss_b = 0.15
-        frac_state_loss_c = 0.25
+        storage_self_discharge_b = 0.15
+        storage_self_discharge_c = 0.25
         state_coeff_b = 0.9
         state_coeff_c = 0.8
         diff_coeff_bc = 0.2
@@ -199,8 +199,8 @@ function test_constraint_node_injection()
             ["node", "node_group_bc", "demand", demand_group],
             ["node", "node_b", "node_type", "storage_node"],
             ["node", "node_c", "node_type", "storage_node"],
-            ["node", "node_b", "frac_state_loss", frac_state_loss_b],
-            ["node", "node_c", "frac_state_loss", frac_state_loss_c],
+            ["node", "node_b", "storage_self_discharge", storage_self_discharge_b],
+            ["node", "node_c", "storage_self_discharge", storage_self_discharge_c],
             ["node", "node_b", "state_coeff", state_coeff_b],
             ["node", "node_c", "state_coeff", state_coeff_c],
             ["node", "node_b", "demand_fraction", demand_fraction_b],
@@ -272,7 +272,7 @@ function test_constraint_node_injection()
                 var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
                     + var_n_inj
-                    + (state_coeff_b + frac_state_loss_b + diff_coeff_bc) * var_n_st_b1
+                    + (state_coeff_b + storage_self_discharge_b + diff_coeff_bc) * var_n_st_b1
                     - state_coeff_b * var_n_st_b0
                     - diff_coeff_cb * var_n_st_c1
                     - var_u_flow
@@ -297,7 +297,7 @@ function test_constraint_node_injection()
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
-                    var_n_inj + (state_coeff_c + frac_state_loss_c + diff_coeff_cb) * var_n_st_c1
+                    var_n_inj + (state_coeff_c + storage_self_discharge_c + diff_coeff_cb) * var_n_st_c1
                     - state_coeff_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
                     demand_c +
                     demand_group * demand_fraction_c == 0

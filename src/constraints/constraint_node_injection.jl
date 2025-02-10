@@ -31,7 +31,7 @@ The node injection is created for each node in the network
 & = \\
 & \left(p^{state\_coeff}_{(n, s, t-1)} \cdot v^{node\_state}_{(n, s, t-1)} - p^{state\_coeff}_{(n, s, t)} \cdot v^{node\_state}_{(n, s, t)}\right)
 / \Delta t \\
-& - p^{frac\_state\_loss}_{(n,s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
+& - p^{storage\_self\_discharge}_{(n,s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
 & + \sum_{n'} p^{diff\_coeff}_{(n',n,s,t)} \cdot v^{node\_state}_{(n', s, t)}
 - \sum_{n'} p^{diff\_coeff}_{(n,n',s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
 & + \sum_{
@@ -51,7 +51,7 @@ v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
 
 See also
 [state\_coeff](@ref),
-[frac\_state\_loss](@ref),
+[storage\_self\_discharge](@ref),
 [diff\_coeff](@ref),
 [node\_\_node](@ref),
 [unit\_\_from\_node](@ref),
@@ -93,7 +93,7 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
             ) / duration(t_after)
             # Self-discharge commodity losses
             - get(node_state, (n, s, t_after), 0)
-            * frac_state_loss(m; node=n, stochastic_scenario=s, t=t_after)
+            * storage_self_discharge(m; node=n, stochastic_scenario=s, t=t_after)
             for s in s_path;
             init=0,
         )
