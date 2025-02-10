@@ -18,7 +18,7 @@ In short, we'll create a new project in Spine Toolbox where we'll set up a simpl
     ![image](figs_recommended_workflow/Tool_Properties.png)
 6. Select the Load Template tool and press the 'Run Selection' button in the ribbon (and wait until the process is done).
     ![image](figs_recommended_workflow/Execute_Load_Template.png)
-7. Download the [data of an existing example](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json)
+7. Download the [data of an existing example](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json) (click on the link and in the upper right corner of the opened github page press icon showing downward arrow)
 8. Double click the input database to open the *spine db editor*.
     1. File > Import
     2. Navigate to the downloaded file and wait until Spine Toolbox indicates that it has imported the data
@@ -53,7 +53,7 @@ Each of the tools need to be connected to the databases. The connections we made
 
 ![image](figs_recommended_workflow/Tool_Properties.png)
 
-To summarize, we've created a workflow where we first format the spine database to a SpineOpt database by loading the SpineOpt template into that database. Remember that a SpineOpt database is a spine database but a spine database is not necessarily a SpineOpt database. In the next section we'll manually intervene at this point to add meaningfull data to this database. Once we have the input database with meaningful data in the SpineOpt format, we run SpineOpt. SpineOpt will then write its results in the output database.
+To summarize, we've created a workflow where we first format the spine database to a SpineOpt database by loading the SpineOpt template into that database. Remember that a SpineOpt database is a spine database but a spine database is not necessarily a SpineOpt database. Spine database only provides abstract data structure with entity classes, entities, parameter definitions, parameter values, alternatives, scenarios etc. SpineOpt database additionally includes entity classes (e.g., "unit", "node", "unit__from_node") and  parameter definitions (e.g., "number_of_units", "fuel_cost", etc.) that includes energy system concepts used in the SpineOpt model. In the next section we'll manually intervene at this point to add meaningfull data to this database. Once we have the input database with meaningful data in the SpineOpt format, we run SpineOpt. SpineOpt will then write its results in the output database.
 
 !!! info
     If no 'Data Store' is specified for the output, the results of SpineOpt will be written by default to the input 'Data Store'. However, it is generally preferable to define a separate output data store for results.
