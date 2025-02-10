@@ -30,7 +30,7 @@ expr^{capacity\_margin}_{n,s,t} = \\
 & + \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,to,s,t}) \\
 & - \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,from,s,t}) \\
 & - p^{demand}_{n,s,t} \\
-& - p^{fractional\_demand}_{n,s,t} \cdot p^{group\_demand}_{n_{group},s,t} \\
+& - p^{demand\_fraction}_{n,s,t} \cdot p^{group\_demand}_{n_{group},s,t} \\
 & \forall n \in node: p^{min\_capacity\_margin} \\
 \end{aligned}
 ```
@@ -43,7 +43,7 @@ See also
 [unit\_\_from\_node](@ref),
 [unit\_\_to\_node](@ref),
 [demand](@ref),
-[fractional\_demand](@ref),
+[demand\_fraction](@ref),
 [node\_type](@ref)
 
 """
@@ -61,7 +61,7 @@ function add_expression_capacity_margin!(m::Model)
                 init=0,
             )
             - sum(
-                fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
+                demand_fraction(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
                 * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything

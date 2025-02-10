@@ -181,8 +181,8 @@ function test_constraint_node_injection()
         demand_b = 20
         demand_c = -80
         demand_group = 200
-        fractional_demand_b = 0.6
-        fractional_demand_c = 0.4
+        demand_fraction_b = 0.6
+        demand_fraction_c = 0.4
         frac_state_loss_b = 0.15
         frac_state_loss_c = 0.25
         state_coeff_b = 0.9
@@ -203,8 +203,8 @@ function test_constraint_node_injection()
             ["node", "node_c", "frac_state_loss", frac_state_loss_c],
             ["node", "node_b", "state_coeff", state_coeff_b],
             ["node", "node_c", "state_coeff", state_coeff_c],
-            ["node", "node_b", "fractional_demand", fractional_demand_b],
-            ["node", "node_c", "fractional_demand", fractional_demand_c],
+            ["node", "node_b", "demand_fraction", demand_fraction_b],
+            ["node", "node_c", "demand_fraction", demand_fraction_c],
         ]
         relationship_parameter_values = [
             ["node__node", ["node_b", "node_c"], "diff_coeff", diff_coeff_bc],
@@ -276,7 +276,7 @@ function test_constraint_node_injection()
                     - state_coeff_b * var_n_st_b0
                     - diff_coeff_cb * var_n_st_c1
                     - var_u_flow
-                    + demand_b + demand_group * fractional_demand_b
+                    + demand_b + demand_group * demand_fraction_b
                     == 0
                 )
                 con = constraint[n, path, t0, t1]
@@ -300,7 +300,7 @@ function test_constraint_node_injection()
                     var_n_inj + (state_coeff_c + frac_state_loss_c + diff_coeff_cb) * var_n_st_c1
                     - state_coeff_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
                     demand_c +
-                    demand_group * fractional_demand_c == 0
+                    demand_group * demand_fraction_c == 0
                 )
                 con = constraint[n, path, t0, t1]
                 observed_con = constraint_object(con)

@@ -224,7 +224,7 @@
         ["node", "fix_storages_invested", null, null, "Used to fix the value of the storages_invested variable"],
         ["node", "fix_storages_invested_available", null, null, "Used to fix the value of the storages_invested_available variable"],
         ["node", "frac_state_loss", 0.0, null, "Self-discharge coefficient for `node_state` variables. Effectively, represents the *loss power per unit of state*."],
-        ["node", "fractional_demand", 0.0, null, "The fraction of a `node` group's `demand` applied for the `node` in question."],
+        ["node", "demand_fraction", 0.0, null, "The fraction of a `node` group's `demand` applied for the `node` in question."],
         ["node", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["node", "has_pressure", false, "boolean_value_list", "A boolean flag for whether a `node` has a `node_pressure` variable."],
         ["node", "has_voltage_angle", false, "boolean_value_list", "A boolean flag for whether a `node` has a `node_voltage_angle` variable."],

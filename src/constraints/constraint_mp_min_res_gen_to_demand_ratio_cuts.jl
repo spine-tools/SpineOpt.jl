@@ -74,12 +74,12 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
                     + sum(
                         window_sum_duration(
                             m,
-                            fractional_demand(node=n, stochastic_scenario=s) * demand(node=ng, stochastic_scenario=s),
+                            demand_fraction(node=n, stochastic_scenario=s) * demand(node=ng, stochastic_scenario=s),
                             window
                         )
                         for window in m.ext[:spineopt].temporal_structure[:sp_windows]
                         for (n, s) in _node_scenario(
-                            intersect(indices(fractional_demand), node__commodity(commodity=comm))
+                            intersect(indices(demand_fraction), node__commodity(commodity=comm))
                         )
                         for ng in groups(n);
                         init=0

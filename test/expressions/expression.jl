@@ -112,12 +112,12 @@ function test_expression_capacity_margin()
         margin_b = 1
         demand_b = 105
         group_demand_a = 10
-        fractional_demand_b = 0.5
+        demand_fraction_b = 0.5
         object_parameter_values = [
             ["node", "node_b", "min_capacity_margin", margin_b],
             ["unit", "unit_b", "existing_units", existing_units_b],
             ["node", "node_b", "demand", demand_b],
-            ["node", "node_b", "fractional_demand", fractional_demand_b],
+            ["node", "node_b", "demand_fraction", demand_fraction_b],
             ["node", "node_a", "demand", group_demand_a],
         ]        
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -153,7 +153,7 @@ function test_expression_capacity_margin()
                 + 0.4 * 30 * var_uon_b
                 + 75 * var_uon_ab
                 - demand_b
-                - fractional_demand_b * group_demand_a
+                - demand_fraction_b * group_demand_a
             )            
 
             observed_expr = expression[n, [s], t]

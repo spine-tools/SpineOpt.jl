@@ -42,7 +42,7 @@ v^{unit\_flow}_{(u,n,to\_node,s,t)}
         u
 }
 v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
-& - \left(p^{demand}_{(n,s,t)} + \sum_{ng \ni n} p^{fractional\_demand}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)}\right) \\
+& - \left(p^{demand}_{(n,s,t)} + \sum_{ng \ni n} p^{demand\_fraction}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)}\right) \\
 & + v^{node\_slack\_pos}_{(n,s,t)} - v^{node\_slack\_neg}_{(n,s,t)} \\
 & \forall n \in node: p^{node\_type=storage\_node}_{(n)}\\
 & \forall (s, t)
@@ -57,7 +57,7 @@ See also
 [unit\_\_from\_node](@ref),
 [unit\_\_to\_node](@ref),
 [demand](@ref),
-[fractional\_demand](@ref),
+[demand\_fraction](@ref),
 [node\_type](@ref).
 
 """
@@ -72,7 +72,7 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
             + node_injection[n, s, t_after]
             + demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
             + sum(
-                + fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
+                + demand_fraction(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
                 * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t_after))
                 for ng in groups(n);
                 init=0,
