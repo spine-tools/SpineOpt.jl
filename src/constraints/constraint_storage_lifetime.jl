@@ -29,7 +29,7 @@ The storage lifetime is enforced by the following constraint:
 \begin{aligned}
 & v^{storages\_invested\_available}_{(n,s,t)}
 - \sum_{
-        t\_past = t-p^{storage\_investment\_tech\_lifetime}
+        t\_past = t-p^{storage\_lifetime\_technical}
 }^{t}
 v^{storages\_invested}_{(n,s,t\_past)} \\
 & \begin{cases}
@@ -67,13 +67,13 @@ end
 function constraint_storage_lifetime_indices(m::Model)
     (
         (node=n, stochastic_path=path, t=t)
-        for (n, t) in node_investment_time_indices(m; node=indices(storage_investment_tech_lifetime))
+        for (n, t) in node_investment_time_indices(m; node=indices(storage_lifetime_technical))
         for path in active_stochastic_paths(m, _past_storages_invested_available_indices(m, n, anything, t))
     )
 end
 
 function _past_storages_invested_available_indices(m, n, s_path, t)
-    _past_indices(m, storages_invested_available_indices, storage_investment_tech_lifetime, s_path, t; node=n)
+    _past_indices(m, storages_invested_available_indices, storage_lifetime_technical, s_path, t; node=n)
 end
 
 """

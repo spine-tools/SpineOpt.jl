@@ -94,6 +94,7 @@ function major_upgrade_to_16(db_url, log_level)
 		(("node", "min_voltage_angle"), "voltage_angle_min", ""),
 		# node storage installing and decommissioning
 		(("node", "storage_investment_econ_lifetime"), "storage_lifetime_economic", ""),
+		(("node", "storage_investment_tech_lifetime"), "storage_lifetime_technical", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

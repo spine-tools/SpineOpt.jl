@@ -105,7 +105,7 @@ If we have model that is not currently set up for investments and we wish to cre
 | `fix_connections_invested_available` | `connection` | Fix the value of `connection_invested_available`
 | `candidate_storages` | `node` | The number of additional storages of this type that can be invested in at `node`
 | `storage_investment_cost` | `node` | The total overnight investment cost per candidate storage over the model horizon
-| `storage_investment_tech_lifetime` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
+| `storage_lifetime_technical` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
 | `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is continuous, integer or binary
 | `fix_storages_invested` | `node`| Fix the value of `storages_invested`
 | `fix_storages_invested_available` | `node` | Fix the value of `storages_invested_available`
@@ -125,4 +125,4 @@ If we have model that is not currently set up for investments and we wish to cre
 | constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_tech_lifetime` - analagous to `min_up_time`.
 | constraint_storages_invested_available.jl | \constraints| constrains `storages_invested_available` to be less than `candidate_storages`
 | constraint_storages_invested_transition.jl | \constraints| defines the relationship between `storages_invested_available`, `storages_invested` and `storages_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_investment_tech_lifetime` - analagous to `min_up_time`.
+| constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_lifetime_technical` - analagous to `min_up_time`.
