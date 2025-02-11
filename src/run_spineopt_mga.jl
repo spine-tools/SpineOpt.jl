@@ -57,8 +57,8 @@ function do_run_spineopt!(
         else
             0
         end
-        s_max = if !isempty(indices(storages_invested_mga_weight))
-            maximum(length(storages_invested_mga_weight(node=s)) for s in indices(storages_invested_mga_weight))
+        s_max = if !isempty(indices(mga_storage_investment_weight))
+            maximum(length(mga_storage_investment_weight(node=s)) for s in indices(mga_storage_investment_weight))
         else
             0
         end
@@ -166,7 +166,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         storages_invested_available_indices,
         node_stochastic_scenario_weight,
         storages_invested_mga_indices,
-        storages_invested_mga_weight,
+        mga_storage_investment_weight,
         mga_storage_investment_big_m,
         iteration,
         iteration_number

@@ -29,7 +29,7 @@ function add_mga_weight_factors(db_url, log_level)
 		x for x in template()["object_parameters"] if x[2] in (
 			"mga_investment_weight",
 			"connections_invested_mga_weight",
-			"storages_invested_mga_weight",
+			"mga_storage_investment_weight",
 			"mga_investment_big_m",
 			"mga_storage_investment_big_m",
 			"connections_invested_big_m_mga"
