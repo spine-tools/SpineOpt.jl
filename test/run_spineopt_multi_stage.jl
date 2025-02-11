@@ -84,7 +84,7 @@ function _ref_setup(storage_count)
             (
                 ("node", n, "node_type", "storage_node"),
                 ("node", n, "storage_state_coefficient", 1.0),
-                ("node", n, "initial_node_state", storage_cap / 2),
+                ("node", n, "storage_state_initial", storage_cap / 2),
                 ("node", n, "node_state_cap", storage_cap),
                 ("node", n, "node_balance_penalty", 10000),
             )

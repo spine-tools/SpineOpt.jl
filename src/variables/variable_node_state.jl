@@ -55,6 +55,6 @@ function add_variable_node_state!(m::Model)
         lb=node_state_min,
         ub=node_state_ub,
         fix_value=storage_state_fix,
-        initial_value=initial_node_state,
+        initial_value=storage_state_initial,
     )
 end
