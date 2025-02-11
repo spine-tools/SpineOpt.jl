@@ -477,7 +477,7 @@ function test_constraint_min_node_pressure()
         min_pressure = Dict("node_b" => 350)
         object_parameter_values = [
             ["node", "node_b", "has_pressure", has_pressure["node_b"]],
-            ["node", "node_b", "min_node_pressure", min_pressure["node_b"]]
+            ["node", "node_b", "pressure_min", min_pressure["node_b"]]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
