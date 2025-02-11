@@ -53,6 +53,6 @@ function add_variable_node_pressure!(m::Model)
         node_pressure_indices;
         lb=constant(0),
         fix_value=pressure_fix,
-        initial_value=initial_node_pressure
+        initial_value=pressure_initial
     )
 end
