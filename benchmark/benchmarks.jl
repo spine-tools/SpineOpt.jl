@@ -104,8 +104,8 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["node", "reserve", "upward_reserve", true],
     ]
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes_to))
-    append!(obj_pvs, (["node", n, "node_state_cap", 10] for n in nodes_to))
-    append!(obj_pvs, (["node", n, "has_state", true] for n in nodes_to))
+    append!(obj_pvs, (["node", n, "storage_state_max", 10] for n in nodes_to))
+    append!(obj_pvs, (["node", n, "node_type", "storage_node"] for n in nodes_to))
     append!(obj_pvs, (["connection", c, "connection_type", "connection_type_lossless_bidirectional"] for c in conns))
     append!(obj_pvs, (["connection", c, "connection_reactance", 0.1] for c in conns))
     append!(obj_pvs, (["unit", u, "min_up_time", Dict("type" => "duration", "data" => "8h")] for u in units))
@@ -120,7 +120,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         # add investment candidates
         append!(obj_pvs, (["unit", u, "investment_count_max_cumulative", 1] for u in units))
         append!(obj_pvs, (["connection", c, "candidate_connections", 1] for c in conns))
-        append!(obj_pvs, (["node", n, "candidate_storages", 1] for n in nodes_to))
+        append!(obj_pvs, (["node", n, "storage_investment_count_max_cumulative", 1] for n in nodes_to))
         # add investment stochastic structure
         append!(rels, [["model__default_investment_stochastic_structure", ["instance", "deterministic"]]])
     end
