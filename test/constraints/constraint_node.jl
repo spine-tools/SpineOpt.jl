@@ -567,10 +567,10 @@ function test_constraint_max_node_voltage_angle()
     @testset "constraint_max_node_voltage_angle" begin
         url_in = _test_constraint_node_setup()
         has_voltage_angle = Dict("node_b" => true)
-        max_voltage_angle = Dict("node_b" => 3.14)
+        voltage_angle_max = Dict("node_b" => 3.14)
         object_parameter_values = [
             ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
-            ["node", "node_b", "max_voltage_angle", max_voltage_angle["node_b"]]
+            ["node", "node_b", "voltage_angle_max", voltage_angle_max["node_b"]]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -580,7 +580,7 @@ function test_constraint_max_node_voltage_angle()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
-            @testset for (n, max_volt_ang) in max_voltage_angle
+            @testset for (n, max_volt_ang) in voltage_angle_max
                 n = node(Symbol(n))
                 var_n_voltage_key1 = (n, s, t)
                 con_key = (n, [s], t)
