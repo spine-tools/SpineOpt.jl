@@ -78,7 +78,7 @@ function do_run_spineopt!(
         if (
             isempty(indices(connections_invested_big_m_mga))
             && isempty(indices(mga_investment_big_m))
-            && isempty(indices(storages_invested_big_m_mga))
+            && isempty(indices(mga_storage_investment_big_m))
             && mga_iteration_count < max_mga_iters
         )
             for name in (:mga_objective_ub, :mga_diff_ub1)
@@ -167,7 +167,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         node_stochastic_scenario_weight,
         storages_invested_mga_indices,
         storages_invested_mga_weight,
-        storages_invested_big_m_mga,
+        mga_storage_investment_big_m,
         iteration,
         iteration_number
     )
@@ -204,7 +204,7 @@ function _set_objective_mga_iteration!(
             [
                 isempty(indices(connections_invested_big_m_mga)),
                 isempty(indices(mga_investment_big_m)),
-                isempty(indices(storages_invested_big_m_mga))
+                isempty(indices(mga_storage_investment_big_m))
             ]
         )
         t0 = start(current_window(m))
@@ -328,7 +328,7 @@ function set_mga_objective!(m)
         [
             isempty(indices(connections_invested_big_m_mga)),
             isempty(indices(mga_investment_big_m)),
-            isempty(indices(storages_invested_big_m_mga))
+            isempty(indices(mga_storage_investment_big_m))
         ]
     )
     m.ext[:spineopt].variables[:mga_objective] = Dict(

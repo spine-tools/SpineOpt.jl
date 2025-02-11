@@ -259,7 +259,7 @@
         ["node", "storage_lifetime_constraint_sense", ">=", "constraint_sense_list", "A selector for `storage_lifetime` constraint sense."],
         ["node", "storage_investment_cost", null, null, "Determines the investment cost per unit state_cap over the investment life of a storage"],
         ["node", "storage_investment_variable_type", "storage_investment_variable_type_integer", "storage_investment_variable_type_list", "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"],
-        ["node", "storages_invested_big_m_mga", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For storages_invested_mga an appropriate big_m_mga would be twice the candidate storages."],
+        ["node", "mga_storage_investment_big_m", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For storages_invested_mga an appropriate big_m_mga would be twice the candidate storages."],
         ["node", "storages_invested_mga", false, "boolean_value_list", "Defines whether a certain variable (here: storages_invested) will be considered in the maximal-differences of the mga objective"],
         ["node", "storages_invested_mga_weight", 1, null, "Used to scale mga variables. For weighted-sum mga method, the length of this weight given as an Array will determine the number of iterations."],
         ["node", "tax_in_unit_flow", null, null, "Tax costs for incoming `unit_flows` on this `node`. E.g. EUR/MWh."],

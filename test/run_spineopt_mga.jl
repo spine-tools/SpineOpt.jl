@@ -135,7 +135,7 @@ function _test_run_spineopt_mga()
         investment_count_max_cumulative = 1
         candidate_connections = 1
         storage_investment_count_max_cumulative = 1
-        mga_investment_big_m = storages_invested_big_m_mga = connections_invested_big_m_mga = 5
+        mga_investment_big_m = mga_storage_investment_big_m = connections_invested_big_m_mga = 5
         fuel_cost = 5
         mga_slack = 0.05
         object_parameter_values = [
@@ -162,7 +162,7 @@ function _test_run_spineopt_mga()
             ["node", "node_b", "storage_state_max", 0],
             ["node", "node_c", "storage_state_max", 0],
             ["node", "node_group_bc", "storages_invested_mga", true],
-            ["node", "node_group_bc", "storages_invested_big_m_mga", storages_invested_big_m_mga],
+            ["node", "node_group_bc", "mga_storage_investment_big_m", mga_storage_investment_big_m],
             ["node", "node_group_bc", "storages_invested_mga_weight", 1],
             ["model", "instance", "model_algorithm", "mga_algorithm"],
             ["model", "instance", "max_mga_slack", mga_slack],
@@ -248,7 +248,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= (var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + storages_invested_big_m_mga*var_mga_aux_binary[key]
+                    + mga_storage_investment_big_m*var_mga_aux_binary[key]
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)
@@ -314,7 +314,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + storages_invested_big_m_mga * (1 - var_mga_aux_binary[key]))
+                    + mga_storage_investment_big_m * (1 - var_mga_aux_binary[key]))
                 con = constraint[key...]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
