@@ -30,7 +30,7 @@ function add_variable_storages_invested!(m::Model)
         lb=constant(0),
         int=storages_invested_available_int,
         fix_value=storage_investment_count_fix_new,
-        initial_value=initial_storages_invested,
+        initial_value=storage_investment_count_initial_new,
         required_history_period=maximum_parameter_value(storage_lifetime_technical),
     )
 end
