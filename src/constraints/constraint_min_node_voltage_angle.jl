@@ -18,22 +18,22 @@
 #############################################################################
 
 @doc raw"""
-In order to impose a lower limit on the voltage angle at a node the parameter [min\_voltage\_angle](@ref)
+In order to impose a lower limit on the voltage angle at a node the parameter [voltage\_angle\_min](@ref)
 can be specified which triggers the following constraint:
 
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng} v^{node\_voltage\_angle}_{(n,s,t)} \leq p^{min\_voltage\_angle}_{(ng,s,t)} \\
-& \forall ng \in indices(p^{min\_voltage\_angle}) \\
+& \sum_{n \in ng} v^{node\_voltage\_angle}_{(n,s,t)} \leq p^{voltage\_angle\_min}_{(ng,s,t)} \\
+& \forall ng \in indices(p^{voltage\_angle\_min}) \\
 & \forall (s,t)
 \end{aligned}
 ```
 
-As indicated in the equation, the parameter [min\_voltage\_angle](@ref) can also be defined on a node group,
+As indicated in the equation, the parameter [voltage\_angle\_min](@ref) can also be defined on a node group,
 in order to impose a lower limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
 
-See also [min\_voltage\_angle](@ref).
+See also [voltage\_angle\_min](@ref).
 """
 function add_constraint_min_node_voltage_angle!(m::Model)
     _add_constraint!(
@@ -46,7 +46,7 @@ function _build_constraint_min_node_voltage_angle(m::Model, ng, s_path, t)
     @build_constraint(
         sum(
             + node_voltage_angle[ng, s, t]
-            - min_voltage_angle(m; node=ng, stochastic_scenario=s, t=t)
+            - voltage_angle_min(m; node=ng, stochastic_scenario=s, t=t)
             for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s_path, t=t);
             init=0,
         )
@@ -58,7 +58,7 @@ end
 function constraint_min_node_voltage_angle_indices(m::Model)
     (
         (node=ng, stochastic_path=[s], t=t)
-        for (ng, s, t) in node_voltage_angle_indices(m; node=indices(min_voltage_angle))
+        for (ng, s, t) in node_voltage_angle_indices(m; node=indices(voltage_angle_min))
     )
 end
 

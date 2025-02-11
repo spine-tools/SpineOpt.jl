@@ -536,10 +536,10 @@ function test_constraint_min_node_voltage_angle()
     @testset "constraint_min_node_voltage_angle" begin
         url_in = _test_constraint_node_setup()
         has_voltage_angle = Dict("node_b" => true)
-        min_voltage_angle = Dict("node_b" => -3.14)
+        voltage_angle_min = Dict("node_b" => -3.14)
         object_parameter_values = [
             ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
-            ["node", "node_b", "min_voltage_angle", min_voltage_angle["node_b"]]
+            ["node", "node_b", "voltage_angle_min", voltage_angle_min["node_b"]]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -549,7 +549,7 @@ function test_constraint_min_node_voltage_angle()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
-            @testset for (n, min_volt_ang) in min_voltage_angle
+            @testset for (n, min_volt_ang) in voltage_angle_min
                 n = node(Symbol(n))
                 var_n_voltage_key1 = (n, s, t)
                 con_key = (n, [s], t)

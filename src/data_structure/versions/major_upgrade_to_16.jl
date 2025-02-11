@@ -91,6 +91,7 @@ function major_upgrade_to_16(db_url, log_level)
 		(("node", "fix_node_voltage_angle"), "voltage_angle_fix", ""),
 		(("node", "initial_node_voltage_angle"), "voltage_angle_initial", ""),
 		(("node", "max_voltage_angle"), "voltage_angle_max", ""),
+		(("node", "min_voltage_angle"), "voltage_angle_min", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

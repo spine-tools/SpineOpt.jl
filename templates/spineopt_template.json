@@ -240,7 +240,7 @@
         ["node", "capacity_margin_min", null, null, "minimum capacity margin applying to the `node` or `node_group`"],
         ["node", "capacity_margin_penalty", null, null, "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"],
         ["node", "pressure_min", null, null, "Minimum allowed gas pressure at `node`."],
-        ["node", "min_voltage_angle", null, null, "Minimum allowed voltage angle at `node`. "],
+        ["node", "voltage_angle_min", null, null, "Minimum allowed voltage angle at `node`. "],
         ["node", "minimum_reserve_activation_time", null, null, "Duration a certain reserve product needs to be online/available"],
         ["node", "node_balance_sense", "==", "constraint_sense_list", "A selector for `nodal_balance` constraint sense."],
         ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list", "A selector for the reference `node` (slack bus) when PTDF-based DC load-flow is enabled."],
