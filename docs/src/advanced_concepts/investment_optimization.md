@@ -108,7 +108,7 @@ If we have model that is not currently set up for investments and we wish to cre
 | `storage_lifetime_technical` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
 | `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is continuous, integer or binary
 | `storage_investment_count_fix_new` | `node`| Fix the value of `storages_invested`
-| `fix_storages_invested_available` | `node` | Fix the value of `storages_invested_available`
+| `storage_investment_count_fix_cumulative` | `node` | Fix the value of `storages_invested_available`
 
 
 ### Related Model Files

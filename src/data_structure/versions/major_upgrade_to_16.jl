@@ -99,6 +99,7 @@ function major_upgrade_to_16(db_url, log_level)
 		# node storage investment limits
 		(("node", "candidate_storages"), "storage_investment_count_max_cumulative", ""),
 		(("node", "fix_storages_invested"), "storage_investment_count_fix_new", ""),
+		(("node", "fix_storages_invested_available"), "storage_investment_count_fix_cumulative", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
