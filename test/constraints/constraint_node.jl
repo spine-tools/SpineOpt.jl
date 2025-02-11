@@ -597,12 +597,12 @@ end
 function test_constraint_node_state_capacity_investments()
     @testset "constraint_node_state_capacity_investments" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 400
         object_parameter_values = [
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_c", "node_type", "storage_node"],
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -635,10 +635,10 @@ end
 function test_constraint_storages_invested_available()
     @testset "constraint_storages_invested_available" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
         ]
@@ -656,7 +656,7 @@ function test_constraint_storages_invested_available()
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
             var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_storages)
+            expected_con = @build_constraint(var <= storage_investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -667,10 +667,10 @@ end
 function test_constraint_storages_invested_available_mp()
     @testset "constraint_storages_invested_available_mp" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 7
+        storage_investment_count_max_cumulative = 7
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
             ["model", "instance", "model_type", "spineopt_benders"],
@@ -689,7 +689,7 @@ function test_constraint_storages_invested_available_mp()
         @testset for t in time_slices
             key = (node(:node_c), stochastic_scenario(:parent), t)
             var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_storages)
+            expected_con = @build_constraint(var <= storage_investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -700,10 +700,10 @@ end
 function test_constraint_storages_invested_transition()
     @testset "constraint_storages_invested_transition" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
         ]
@@ -742,10 +742,10 @@ end
 function test_constraint_storages_invested_transition_mp()
     @testset "constraint_storages_invested_transition_mp" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
             ["model", "instance", "model_type", "spineopt_benders"],
@@ -784,7 +784,7 @@ end
 
 function test_constraint_storage_lifetime()
     @testset "constraint_storage_lifetime" begin
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         expected_num_vars = Dict(30 => 6, 180 => 8, 240 => 9)
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
@@ -792,7 +792,7 @@ function test_constraint_storage_lifetime()
             url_in = _test_constraint_node_setup()
             storage_lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
+                ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
                 ["node", "node_c", "storage_state_max", node_capacity],
                 ["node", "node_c", "node_type", "storage_node"],
                 ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
@@ -847,7 +847,7 @@ end
 
 function test_constraint_storage_lifetime_sense()
     @testset "constraint_storage_lifetime_sense" begin
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         expected_num_vars = Dict(30 => 6, 180 => 8, 240 => 9)
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
@@ -861,7 +861,7 @@ function test_constraint_storage_lifetime_sense()
         ]
         @testset for (sense_key, sense_value) in senses
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
+                ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
                 ["node", "node_c", "storage_state_max", node_capacity],
                 ["node", "node_c", "node_type", "storage_node"],
                 ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
@@ -908,14 +908,14 @@ end
 
 function test_constraint_storage_lifetime_mp()
     @testset "constraint_storage_lifetime_mp" begin
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
             storage_lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
+                ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
                 ["node", "node_c", "storage_state_max", node_capacity],
                 ["node", "node_c", "node_type", "storage_node"],
                 ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],

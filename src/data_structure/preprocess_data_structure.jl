@@ -62,7 +62,7 @@ function generate_is_candidate()
         unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(investment_count_max_cumulative))
     )
     add_object_parameter_values!(
-        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_storages))
+        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(storage_investment_count_max_cumulative))
     )
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
@@ -602,7 +602,7 @@ function expand_model__default_investment_temporal_block()
         node__investment_temporal_block,
         [
             (n, tb)
-            for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
+            for n in setdiff(indices(storage_investment_count_max_cumulative), node__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -643,7 +643,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (n, ss)
             for n in setdiff(
-                indices(candidate_storages), node__investment_stochastic_structure(stochastic_structure=anything)
+                indices(storage_investment_count_max_cumulative), node__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -810,7 +810,7 @@ function generate_internal_fix_investments()
     for (pname, class, candidates) in (
             (:internal_investment_count_fix_cumulative, unit, investment_count_max_cumulative),
             (:internal_fix_connections_invested_available, connection, candidate_connections),
-            (:internal_fix_storages_invested_available, node, candidate_storages),
+            (:internal_fix_storages_invested_available, node, storage_investment_count_max_cumulative),
         )
         parameter = Parameter(pname, [class])
         pvals = Dict(

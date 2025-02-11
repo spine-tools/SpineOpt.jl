@@ -215,7 +215,7 @@
         ["model", "write_ptdf_file", false, "boolean_value_list", "A boolean flag for whether the PTDF values should be written to a results file."],
         ["node", "node_type", "balance_node", "node_type_list", "A selector for how the `nodal_balance` constraint should be handled."],
         ["node", "benders_starting_storages_invested", null, null, "Fixes the number of storages invested during the first Benders iteration"],
-        ["node", "candidate_storages", null, null, "Determines the maximum number of new storages which may be invested in"],
+        ["node", "storage_investment_count_max_cumulative", null, null, "Determines the maximum number of new storages which may be invested in"],
         ["node", "demand", 0.0, null, "Demand for the `commodity` of a `node`. Energy gains can be represented using negative `demand`."],
         ["node", "downward_reserve", false, null, "Identifier for `node`s providing downward reserves"],
         ["node", "pressure_fix", null, null, "Fixes the corresponding `node_pressure` variable to the provided value"],

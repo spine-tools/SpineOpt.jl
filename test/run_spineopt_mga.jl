@@ -134,7 +134,7 @@ function _test_run_spineopt_mga()
         url_in = _test_run_spineopt_mga_setup()
         investment_count_max_cumulative = 1
         candidate_connections = 1
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         mga_investment_big_m = storages_invested_big_m_mga = connections_invested_big_m_mga = 5
         fuel_cost = 5
         mga_slack = 0.05
@@ -152,8 +152,8 @@ function _test_run_spineopt_mga()
             ["connection", "connection_group_abbc", "connections_invested_mga", true],
             ["connection", "connection_group_abbc", "connections_invested_big_m_mga", connections_invested_big_m_mga],
             ["connection", "connection_group_abbc", "connections_invested_mga_weight", 1],
-            ["node", "node_b", "candidate_storages", candidate_storages],
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_a", "node_type", :no_balance],
             ["node", "node_b", "node_type", :storage_node],
             ["node", "node_c", "node_type", :storage_node],
@@ -493,7 +493,7 @@ function _test_run_spineopt_mga_2()
         url_in = _test_run_spineopt_mga_setup()
         investment_count_max_cumulative = 1
         candidate_connections = 1
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         fuel_cost = 5
         mga_slack = 0.05
         points = [0, -0.5, -1, 1, 0.5, 0]
@@ -518,8 +518,8 @@ function _test_run_spineopt_mga_2()
             ["connection", "connection_bc", "connection_investment_tech_lifetime", unparse_db_value(Hour(2))],
             ["connection", "connection_group_abbc", "connections_invested_mga", true],
             ["connection", "connection_group_abbc", "connections_invested_mga_weight",mga_weights_2],
-            ["node", "node_b", "candidate_storages", candidate_storages],
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_b", "storage_lifetime_technical", unparse_db_value(Hour(2))],
             ["node", "node_c", "storage_lifetime_technical", unparse_db_value(Hour(2))],
             ["node", "node_a", "node_type", :no_balance],

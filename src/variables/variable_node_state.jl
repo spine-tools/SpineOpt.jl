@@ -36,7 +36,7 @@ end
 function node_state_ub(m; node, kwargs...)
     storage_state_max(m; node=node, kwargs..., _default=NaN) * (
         + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
-        + something(candidate_storages(m; node=node, kwargs...), 0)
+        + something(storage_investment_count_max_cumulative(m; node=node, kwargs...), 0)
     )
 end
 

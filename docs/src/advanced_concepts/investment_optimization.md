@@ -16,7 +16,7 @@ In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maxim
 ### Identiying Investment Candidate Units, Connections and Storages
 The parameter [investment\_count\_max\_cumulative](@ref) represents the number of units of this type that may be invested in. [investment\_count\_max\_cumulative](@ref) determines the upper bound of the investment variable and setting this to a value greater than 0 identifies the unit as an investment candidate unit in the optimisation. If the [investment\_variable\_type](@ref) is set to `:unit_investment_variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [investment\_variable\_type](@ref) is `:unit_investment_variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be interpreted as the capacity of the unit rather than the number of units with [investment\_count\_max\_cumulative](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [investment\_variable\_type](@ref) set to `:unit_investment_variable_type_integer` with [investment\_count\_max\_cumulative](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
    - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit\_capacity](@ref) for units, [connection\_capacity](@ref) for connections or [storage\_state\_max](@ref) for storages.
-   - [investment\_count\_max\_cumulative](@ref) sets the upper bound on the investment variable, [candidate\_connections](@ref) for connections and [candidate\_storages](@ref) for storages
+   - [investment\_count\_max\_cumulative](@ref) sets the upper bound on the investment variable, [candidate\_connections](@ref) for connections and [storage\_investment\_count\_max\_cumulative](@ref) for storages
    - [investment\_variable\_type](@ref) determines whether the investment variable is integer or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
 
 ### Investment Costs
@@ -103,7 +103,7 @@ If we have model that is not currently set up for investments and we wish to cre
 | `connection_investment_variable_type` | `connection` | Whether the `connections_invested_available` variable is continuous, integer or binary
 | `fix_connections_invested` | `connection`| Fix the value of `connections_invested`
 | `fix_connections_invested_available` | `connection` | Fix the value of `connection_invested_available`
-| `candidate_storages` | `node` | The number of additional storages of this type that can be invested in at `node`
+| `storage_investment_count_max_cumulative` | `node` | The number of additional storages of this type that can be invested in at `node`
 | `storage_investment_cost` | `node` | The total overnight investment cost per candidate storage over the model horizon
 | `storage_lifetime_technical` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
 | `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is continuous, integer or binary
@@ -123,6 +123,6 @@ If we have model that is not currently set up for investments and we wish to cre
 | constraint_connections_invested_available.jl | \constraints| constrains `connections_invested_available` to be less than `candidate_connections`
 | constraint_connections_invested_transition.jl | \constraints| defines the relationship between `connections_invested_available`, `connections_invested` and `connections_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
 | constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_tech_lifetime` - analagous to `min_up_time`.
-| constraint_storages_invested_available.jl | \constraints| constrains `storages_invested_available` to be less than `candidate_storages`
+| constraint_storages_invested_available.jl | \constraints| constrains `storages_invested_available` to be less than `storage_investment_count_max_cumulative`
 | constraint_storages_invested_transition.jl | \constraints| defines the relationship between `storages_invested_available`, `storages_invested` and `storages_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
 | constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_lifetime_technical` - analagous to `min_up_time`.
