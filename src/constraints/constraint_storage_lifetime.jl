@@ -19,10 +19,10 @@
 
 @doc raw"""
 Constrain [storages\_invested\_available](@ref) by the investment lifetime of a storage.
-The parameter [storage\_investment\_lifetime\_sense](@ref) defaults to minimum investment
-lifetime ([storage\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list)),
-but can be changed to allow strict investment lifetime ([storage\_investment\_lifetime\_sense](@ref) [`==`](@ref constraint_sense_list))
-or maximum investment lifetime ([storage\_investment\_lifetime\_sense](@ref) [`<=`](@ref constraint_sense_list)).
+The parameter [storage\_lifetime\_constraint\_sense](@ref) defaults to minimum investment
+lifetime ([storage\_lifetime\_constraint\_sense](@ref) [`>=`](@ref constraint_sense_list)),
+but can be changed to allow strict investment lifetime ([storage\_lifetime\_constraint\_sense](@ref) [`==`](@ref constraint_sense_list))
+or maximum investment lifetime ([storage\_lifetime\_constraint\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The storage lifetime is enforced by the following constraint:
 
 ```math
@@ -33,9 +33,9 @@ The storage lifetime is enforced by the following constraint:
 }^{t}
 v^{storages\_invested}_{(n,s,t\_past)} \\
 & \begin{cases}
-\ge & \text{if } p^{storage\_investment\_lifetime\_sense} = ">=" \\
-= & \text{if } p^{storage\_investment\_lifetime\_sense} = "==" \\
-\le & \text{if } p^{storage\_investment\_lifetime\_sense} = "<=" \\
+\ge & \text{if } p^{storage\_lifetime\_constraint\_sense} = ">=" \\
+= & \text{if } p^{storage\_lifetime\_constraint\_sense} = "==" \\
+\le & \text{if } p^{storage\_lifetime\_constraint\_sense} = "<=" \\
 \end{cases} \\
 & 0 \\
 & \forall (n,s,t)
@@ -59,7 +59,7 @@ function _build_constraint_storage_lifetime(m::Model, n, s_path, t)
             storages_invested[n, s_past, t_past] * weight
             for (n, s_past, t_past, weight) in _past_storages_invested_available_indices(m, n, s_path, t)
         ),
-        eval(storage_investment_lifetime_sense(node=n)),
+        eval(storage_lifetime_constraint_sense(node=n)),
         0
     )
 end

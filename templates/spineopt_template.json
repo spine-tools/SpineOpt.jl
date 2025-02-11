@@ -256,7 +256,7 @@
         ["node", "storage_decommissioning_cost", null, null, "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."],
         ["node", "storage_lifetime_economic", null, null, "Economic lifetime for storage investment decisions."],
         ["node", "storage_lifetime_technical", null, null, "Maximum technical lifetime for storage investment decisions."],
-        ["node", "storage_investment_lifetime_sense", ">=", "constraint_sense_list", "A selector for `storage_lifetime` constraint sense."],
+        ["node", "storage_lifetime_constraint_sense", ">=", "constraint_sense_list", "A selector for `storage_lifetime` constraint sense."],
         ["node", "storage_investment_cost", null, null, "Determines the investment cost per unit state_cap over the investment life of a storage"],
         ["node", "storage_investment_variable_type", "storage_investment_variable_type_integer", "storage_investment_variable_type_list", "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"],
         ["node", "storages_invested_big_m_mga", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For storages_invested_mga an appropriate big_m_mga would be twice the candidate storages."],

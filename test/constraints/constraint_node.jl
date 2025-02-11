@@ -865,7 +865,7 @@ function test_constraint_storage_lifetime_sense()
                 ["node", "node_c", "storage_state_max", node_capacity],
                 ["node", "node_c", "node_type", "storage_node"],
                 ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
-                ["node", "node_c", "storage_investment_lifetime_sense", sense_key],
+                ["node", "node_c", "storage_lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
             ]
             SpineInterface.import_data(
