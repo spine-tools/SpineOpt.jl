@@ -52,7 +52,7 @@ function add_variable_node_state!(m::Model)
         m,
         :node_state,
         node_state_indices;
-        lb=node_state_min,
+        lb=storage_state_min,
         ub=node_state_ub,
         fix_value=storage_state_fix,
         initial_value=storage_state_initial,
