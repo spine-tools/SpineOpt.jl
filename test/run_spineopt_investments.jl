@@ -112,7 +112,7 @@ function _test_capacity_investments()
                 "connection_investment_variable_type",
                 "connection_investment_variable_type_continuous"
             ],
-            ["node", "node_a", "node_state_cap", 1]
+            ["node", "node_a", "storage_state_max", 1]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_a", "node_a"], "unit_capacity", 1],

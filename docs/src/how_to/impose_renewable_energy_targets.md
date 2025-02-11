@@ -49,7 +49,7 @@ If the desired functionality is not to cap emissions over the entire modelling h
 
 To illustrate this functionality, we will assume that there is a ficticious cap of 100 for a period of time 2025-2030, and a cap of 50 for the period of time 2030-2035. In this simple example, we will assume that one carbon-emitting unit `carbon_unit` is present with two outgoing commodity flows, e.g. here electricity and carbon.
 
-Three nodes are required to represent this system: an `electricity` node, a `carbon_cap_1` node (with `node_type=storage_node` and `node_state_cap=100`), and a `carbon_cap_2` node (with `node_type=storage_node` and `node_state_cap=50`).
+Three nodes are required to represent this system: an `electricity` node, a `carbon_cap_1` node (with `node_type=storage_node` and `storage_state_max=100`), and a `carbon_cap_2` node (with `node_type=storage_node` and `storage_state_max=50`).
 
 Further we introduce the `unit__node__node` relationships between `carbon_unit__carbon_cap1__electricity` and `carbon_unit__carbon_cap2__electricity`. On these relationships, we will define the ratio between emissions and electricity production. In this fictious example, we will assume 0.5 units of emissions per unit of electricity.
 
@@ -60,7 +60,7 @@ The `fix_ratio_out_out` parameter will now be defined as a time varying paramete
 
 This way the first emission-cap node `carbon_cap1` can only be "filled" during the 2025-2030, while `carbon_cap2` can only be "filled" during the second period 2030-2035. 
 
-Note that it would also be possible to have, e.g., one node with time-varying `node_state_cap`. However, in this case, "unused" carbon emissions in the first period of time would be availble for the second period of time.
+Note that it would also be possible to have, e.g., one node with time-varying `storage_state_max`. However, in this case, "unused" carbon emissions in the first period of time would be availble for the second period of time.
 
 ## Imposing a carbon tax
 To include carbon pricing in a model,

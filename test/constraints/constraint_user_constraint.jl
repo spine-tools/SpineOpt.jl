@@ -76,7 +76,7 @@
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
             ["node", "node_c", "node_type", "storage_node"],
-            ["node", "node_c", "node_state_cap", 100],
+            ["node", "node_c", "storage_state_max", 100],
             ["node", "node_c", "candidate_storages", 2],
             ["unit", "unit_ab", "investment_count_max_cumulative", 3],
             ["connection", "connection_bc", "candidate_connections", 1],

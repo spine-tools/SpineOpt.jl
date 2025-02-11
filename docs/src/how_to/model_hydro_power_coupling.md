@@ -121,7 +121,7 @@ The result should look like this:
 
 ### Storage in nodes
 
-To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *node\_type* as `storage_node`. Then, we need to set the capacity of the reservoir by setting the *node\_state\_cap* parameter value.
+To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *node\_type* as `storage_node`. Then, we need to set the capacity of the reservoir by setting the *storage\_state\_max* parameter value.
 
 Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *storage\_state\_fix* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
 

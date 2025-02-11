@@ -34,7 +34,7 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
 end
 
 function node_state_ub(m; node, kwargs...)
-    node_state_cap(m; node=node, kwargs..., _default=NaN) * (
+    storage_state_max(m; node=node, kwargs..., _default=NaN) * (
         + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
         + something(candidate_storages(m; node=node, kwargs...), 0)
     )

@@ -316,8 +316,8 @@ function test_constraint_cyclic_node_state()
         node_capacity = Dict("node_b" => 120, "node_c" => 400)
         cyc_cond = Dict(("node_b", "hourly") => true, ("node_c", "hourly") => true)
         object_parameter_values = [
-            ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
-            ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
+            ["node", "node_b", "storage_state_max", node_capacity["node_b"]],
+            ["node", "node_c", "storage_state_max", node_capacity["node_c"]],
             ["node", "node_b", "node_type", "storage_node"],
             ["node", "node_c", "node_type", "storage_node"],
         ]
@@ -600,7 +600,7 @@ function test_constraint_node_state_capacity_investments()
         candidate_storages = 1
         node_capacity = 400
         object_parameter_values = [
-            ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_c", "node_type", "storage_node"],
             ["node", "node_c", "candidate_storages", candidate_storages],
         ]
@@ -639,7 +639,7 @@ function test_constraint_storages_invested_available()
         node_capacity = 500
         object_parameter_values = [
             ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
         ]
         relationships = [
@@ -671,7 +671,7 @@ function test_constraint_storages_invested_available_mp()
         node_capacity = 500
         object_parameter_values = [
             ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
@@ -704,7 +704,7 @@ function test_constraint_storages_invested_transition()
         node_capacity = 500
         object_parameter_values = [
             ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
         ]
         relationships = [
@@ -746,7 +746,7 @@ function test_constraint_storages_invested_transition_mp()
         node_capacity = 500
         object_parameter_values = [
             ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_b", "node_type", "storage_node"],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
@@ -793,7 +793,7 @@ function test_constraint_storage_lifetime()
             storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
-                ["node", "node_c", "node_state_cap", node_capacity],
+                ["node", "node_c", "storage_state_max", node_capacity],
                 ["node", "node_c", "node_type", "storage_node"],
                 ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
@@ -862,7 +862,7 @@ function test_constraint_storage_lifetime_sense()
         @testset for (sense_key, sense_value) in senses
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
-                ["node", "node_c", "node_state_cap", node_capacity],
+                ["node", "node_c", "storage_state_max", node_capacity],
                 ["node", "node_c", "node_type", "storage_node"],
                 ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
                 ["node", "node_c", "storage_investment_lifetime_sense", sense_key],
@@ -916,7 +916,7 @@ function test_constraint_storage_lifetime_mp()
             storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
-                ["node", "node_c", "node_state_cap", node_capacity],
+                ["node", "node_c", "storage_state_max", node_capacity],
                 ["node", "node_c", "node_type", "storage_node"],
                 ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
                 ["model", "instance", "model_end", model_end],
