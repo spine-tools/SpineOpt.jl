@@ -83,7 +83,7 @@ function _create_set_parameters_and_relationships()
             :set_invest_stoch_struct => node__investment_stochastic_structure,
             :set_lead_time => storage_lead_time,
             :set_tech_lifetime => storage_investment_tech_lifetime,
-            :set_econ_lifetime => storage_investment_econ_lifetime,
+            :set_econ_lifetime => storage_lifetime_economic,
             :set_discnt_rate_tech => storage_discount_rate_technology_specific,
             :set_decom_time => storage_decommissioning_time,
             :set_decom_cost => storage_decommissioning_cost,
