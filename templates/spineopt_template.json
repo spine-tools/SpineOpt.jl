@@ -230,7 +230,7 @@
         ["node", "has_voltage_angle", false, "boolean_value_list", "A boolean flag for whether a `node` has a `node_voltage_angle` variable."],
         ["node", "pressure_initial", null, null, "Initializes the corresponding `node_pressure` variable to the provided value"],
         ["node", "storage_state_initial", null, null, "Initializes the corresponding `node_state` variable to the provided value."],
-        ["node", "initial_node_voltage_angle", null, null, "Initializes the corresponding `node_voltage_angle` variable to the provided value"],
+        ["node", "voltage_angle_initial", null, null, "Initializes the corresponding `node_voltage_angle` variable to the provided value"],
         ["node", "initial_storages_invested", null, null, "Used to initialze the value of the storages_invested variable"],
         ["node", "initial_storages_invested_available", null, null, "Used to initialze the value of the storages_invested_available variable"],
         ["node", "is_non_spinning", false, "boolean_value_list", "A boolean flag for whether a `node` is acting as a non-spinning reserve"],
