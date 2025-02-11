@@ -125,13 +125,13 @@ function connections_invested_mga_indices(mga_iteration)
 end
 
 function storages_invested_mga_indices()
-    unique((node=ng,) for ng in node(storages_invested_mga=true))
+    unique((node=ng,) for ng in node(mga_storage_investment_activate=true))
 end
 
 function storages_invested_mga_indices(mga_iteration)
     unique(
         (node=ng, mga_iteration=mga_it)
-        for ng in node(storages_invested_mga=true)
+        for ng in node(mga_storage_investment_activate=true)
         for mga_it in mga_iteration
     )
 end
