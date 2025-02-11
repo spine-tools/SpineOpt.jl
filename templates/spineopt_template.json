@@ -220,7 +220,7 @@
         ["node", "downward_reserve", false, null, "Identifier for `node`s providing downward reserves"],
         ["node", "pressure_fix", null, null, "Fixes the corresponding `node_pressure` variable to the provided value"],
         ["node", "storage_state_fix", null, null, "Fixes the corresponding `node_state` variable to the provided value. Can be used for e.g. fixing boundary conditions."],
-        ["node", "fix_node_voltage_angle", null, null, "Fixes the corresponding `node_voltage_angle` variable to the provided value"],
+        ["node", "voltage_angle_fix", null, null, "Fixes the corresponding `node_voltage_angle` variable to the provided value"],
         ["node", "fix_storages_invested", null, null, "Used to fix the value of the storages_invested variable"],
         ["node", "fix_storages_invested_available", null, null, "Used to fix the value of the storages_invested_available variable"],
         ["node", "storage_self_discharge", 0.0, null, "Self-discharge coefficient for `node_state` variables. Effectively, represents the *loss power per unit of state*."],

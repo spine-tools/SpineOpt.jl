@@ -48,7 +48,7 @@ function add_variable_node_voltage_angle!(m::Model)
         m,
         :node_voltage_angle,
         node_voltage_angle_indices;
-        fix_value=fix_node_voltage_angle,
+        fix_value=voltage_angle_fix,
         initial_value=initial_node_voltage_angle
     )
 end
