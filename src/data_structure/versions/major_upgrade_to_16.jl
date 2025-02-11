@@ -85,6 +85,7 @@ function major_upgrade_to_16(db_url, log_level)
 		# node pressure limits
 		(("node", "fix_node_pressure"), "pressure_fix", ""),
 		(("node", "initial_node_pressure"), "pressure_initial", ""),
+		(("node", "max_node_pressure"), "pressure_max", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
