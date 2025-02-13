@@ -57,7 +57,7 @@ function add_variable_units_invested_available!(m::Model)
         lb=constant(0),
         int=units_invested_available_int,
         fix_value=investment_count_fix_cumulative,
-        internal_fix_value=internal_investment_count_fix_cumulative,
+        internal_fix_value=internal_fix_units_invested_available,
         initial_value=investment_count_initial_cumulative,
         required_history_period=maximum_parameter_value(lifetime_technical),
     )

@@ -43,7 +43,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m::Model)
                 + sum(
                     sum(
                         + units_invested_available[u, s, t]
-                        - internal_investment_count_fix_cumulative(unit=u, stochastic_scenario=s, t=t, _default=0)
+                        - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t, _default=0)
                         for (u, s, t) in units_invested_available_indices(
                             m; unit=u, stochastic_scenario=s, t=to_time_slice(m; t=window)
                         );

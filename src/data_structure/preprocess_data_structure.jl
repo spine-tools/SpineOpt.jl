@@ -808,7 +808,7 @@ function generate_internal_fix_investments()
     dur_unit = _model_duration_unit(instance)
     scens = stochastic_scenario()
     for (pname, class, candidates) in (
-            (:internal_investment_count_fix_cumulative, unit, investment_count_max_cumulative),
+            (:internal_fix_units_invested_available, unit, investment_count_max_cumulative),
             (:internal_fix_connections_invested_available, connection, candidate_connections),
             (:internal_fix_storages_invested_available, node, storage_investment_count_max_cumulative),
         )
