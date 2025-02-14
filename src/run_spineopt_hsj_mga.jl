@@ -22,7 +22,7 @@ import DataStructures: DefaultDict
 function do_run_spineopt!(
     m,
     url_out,
-    ::Val{:fuzzy_mga_algorithm};
+    ::Val{:hsj_mga_algorithm};
     log_level,
     optimize,
     update_names,
@@ -58,9 +58,9 @@ function do_run_spineopt!(
         output_suffix=_add_mga_iteration(0),
     )
     hsj_weights = update_hsj_weights!(m, last(mga_iteration()), nothing, variable_group_parameters)
-    add_fuzzy_mga_objective_constraint!(m)
+    add_hsj_mga_objective_constraint!(m)
     for i=1:max_mga_iters
-        update_fuzzy_mga_objective!(m, hsj_weights, last(mga_iteration()), variable_group_parameters)
+        update_hsj_mga_objective!(m, hsj_weights, last(mga_iteration()), variable_group_parameters)
         solve_model!(
             m;
             log_level=log_level,
@@ -73,9 +73,9 @@ function do_run_spineopt!(
     m
 end
 
-function update_fuzzy_mga_objective!(m, hsj_weights, iteration, group_parameters)
+function update_hsj_mga_objective!(m, hsj_weights, iteration, group_parameters)
     for (group_name, (available_indices, scenario_weights, mga_indices)) in group_parameters
-        prepare_objective_fuzzy_mga!(
+        prepare_objective_hsj_mga!(
             m,
             group_name,
             available_indices,
@@ -94,7 +94,7 @@ function update_fuzzy_mga_objective!(m, hsj_weights, iteration, group_parameters
     )
 end
 
-function prepare_objective_fuzzy_mga!(
+function prepare_objective_hsj_mga!(
     m::Model,
     variable_name::Symbol,
     variable_indices_function::Function,
@@ -117,7 +117,7 @@ function prepare_objective_fuzzy_mga!(
     )
 end
 
-function add_fuzzy_mga_objective_constraint!(m::Model)
+function add_hsj_mga_objective_constraint!(m::Model)
     instance = m.ext[:spineopt].instance
     slack = objective_value(m) >= 0 ? max_mga_slack(model=instance) : -max_mga_slack(model=instance)
     m.ext[:spineopt].constraints[:mga_slack_constraint] = Dict(

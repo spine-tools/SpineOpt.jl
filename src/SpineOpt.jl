@@ -79,7 +79,7 @@ include("run_spineopt.jl")
 include("generate_forced_outages.jl")
 include("run_spineopt_basic.jl")
 include("run_spineopt_mga.jl")
-include("run_spineopt_fuzzy_mga.jl")
+include("run_spineopt_hsj_mga.jl")
 include("benders.jl")
 # Data structure
 include("data_structure/economic_structure.jl")

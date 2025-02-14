@@ -84,7 +84,7 @@ function _test_run_spineopt_mga_setup()
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
-            ["model", "instance", "model_algorithm", "fuzzy_mga_algorithm"],
+            ["model", "instance", "model_algorithm", "hsj_mga_algorithm"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
@@ -110,8 +110,8 @@ function _test_run_spineopt_mga_setup()
     url_in
 end
 
-function _test_run_fuzzy_spineopt_mga()
-    @testset "run_spineopt_fuzzy_mga" begin
+function _test_run_hsj_spineopt_mga()
+    @testset "run_spineopt_hsj_mga" begin
         url_in = _test_run_spineopt_mga_setup()
         candidate_units = 1
         candidate_connections = 1
@@ -141,7 +141,7 @@ function _test_run_fuzzy_spineopt_mga()
             ["node", "node_c", "node_state_cap", 0],
             ["node", "node_group_bc", "storages_invested_mga", true],
             ["node", "node_group_bc", "storages_invested_mga_weight", 1],
-            ["model", "instance", "model_algorithm", "fuzzy_mga_algorithm"],
+            ["model", "instance", "model_algorithm", "hsj_mga_algorithm"],
             ["model", "instance", "max_mga_slack", mga_slack],
             ["model", "instance", "max_mga_iterations", 2],
             # ["node", "node_a", "demand", 1],
@@ -164,6 +164,6 @@ function _test_run_fuzzy_spineopt_mga()
     end
 end
 
-@testset "run_spineopt_fuzzy_mga" begin
-    _test_run_fuzzy_spineopt_mga()
+@testset "run_spineopt_hsj_mga" begin
+    _test_run_hsj_spineopt_mga()
 end
