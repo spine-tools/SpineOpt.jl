@@ -97,7 +97,7 @@ function update_hsj_mga_objective!(m, hsj_weights, iteration, group_parameters)
     t = current_window(m)
     mga_weighted_groups = m.ext[:spineopt].expressions[:mga_objective_parts][(model=instance, t=t)]
     for (group_name, (available_indices, scenario_weights, mga_indices_func)) in group_parameters
-        mga_weighted_groups[variable_name] = prepare_objective_hsj_mga!(
+        mga_weighted_groups[variable_name] = prepare_objective_hsj_mga(
             m,
             m.ext[:spineopt].variables[group_name],
             available_indices,
@@ -111,13 +111,13 @@ function update_hsj_mga_objective!(m, hsj_weights, iteration, group_parameters)
     )
 end
 
-function prepare_objective_hsj_mga!(
+function prepare_objective_hsj_mga(
     m::Model,
     variable,
     variable_indices::Function,
     variable_stochastic_weights::Function,
     mga_indices::AbstractArray,
-    mga_weights::DefaultDict,
+    mga_weights::AbstractDict
 )   
     weighted_group_variables = (
         get_scenario_variable_average(variable, variable_indices(i), variable_stochastic_weights) * mga_weights[i]

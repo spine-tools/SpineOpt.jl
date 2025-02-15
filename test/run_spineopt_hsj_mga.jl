@@ -5,7 +5,8 @@ using SpineOpt:
     was_variable_active,
     update_hsj_weights!,
     get_scenario_variable_average,
-    slack_correction
+    slack_correction,
+    prepare_objective_hsj_mga
     
 using JuMP 
 
@@ -313,6 +314,28 @@ function _test_get_scenario_variable_average()
     end
 end
 
+function _test_prepare_objective_hsj_mga()
+    @testset "prepare_objective_hsj_mga" begin
+        m = Model()
+        @variable(m, x[1:6])
+        var_indxs = (i) -> [2*i+1, 2*i+2]
+        stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
+        var_stoch_weights = (i) -> stochastic_weights[i]
+        mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
+        @testset "empty mga indices" begin
+            mga_idxs = []
+            res = prepare_objective_hsj_mga(m, x, var_indxs, var_stoch_weights, mga_idxs, mga_weights)
+            @test res == 0
+        end
+        @testset "nonempty mga indices" begin
+            mga_idxs = [0, 1, 2]
+            res = prepare_objective_hsj_mga(m, x, var_indxs, var_stoch_weights, mga_idxs, mga_weights)
+            @test res == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
+        end
+        
+    end
+end
+
 @testset "run_spineopt_hsj_mga" begin
     _test_slack_correction()
     _test_init_hsj_weights()
@@ -320,5 +343,6 @@ end
     _test_was_variable_active()
     _test_update_hsj_weights()
     _test_get_scenario_variable_average()
+    _test_prepare_objective_hsj_mga()
     # _test_run_hsj_spineopt_mga()
 end
