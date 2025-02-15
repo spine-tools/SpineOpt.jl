@@ -85,8 +85,9 @@ end
 
 function get_variable_group_values(variables, variable_group_parameters)
     return Dict(
-        variable_group => Dict(
-            var_idx => value(variables[group_name][var_idx]) for i in mga_indices_func() for var_idx in available_indices(i)
+        group_name => Dict(
+            var_idx => value(variables[group_name][var_idx]) 
+            for i in mga_indices_func() for var_idx in available_indices(i)
         ) for (group_name, (available_indices, _, mga_indices_func)) in variable_group_parameters
     )
 end

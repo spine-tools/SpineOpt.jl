@@ -7,9 +7,12 @@ using SpineOpt:
     get_scenario_variable_average,
     slack_correction,
     prepare_objective_hsj_mga,
-    update_hsj_mga_objective!
+    update_hsj_mga_objective!,
+    init_mga_objective_expressions,
+    get_variable_group_values
     
 using JuMP 
+using HiGHS
 
 function _test_run_spineopt_mga_setup()
     url_in = "sqlite://"
@@ -395,6 +398,47 @@ function _test_update_hsj_mga_objective()
         end
     end 
 end
+
+function _test_init_mga_objective_expressions()
+    @testset "init_mga_objective_expressions" begin
+        expressions = init_mga_objective_expressions()
+        @test expressions[(t=1, instance=nothing)] == DefaultDict(0)
+    end
+end
+
+function _test_get_variable_group_values()
+    @testset "get_variable_group_values" begin
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2])
+        @constraint(m, x[1] == 1)
+        @constraint(m, x[2] == 2)
+        @variable(m, y[1:4])
+        @constraint(m, y[1] == 3)
+        @constraint(m, y[2] == 4)
+        @constraint(m, y[3] == 5)
+        @constraint(m, y[4] == 6)
+        optimize!(m)
+        
+        x_indxs = (i) -> [2*i+1, 2*i+2]
+        y_indxs = (i) -> [2*i+1, 2*i+2]
+        variables = Dict(:x => x, :y => y)
+        x_mga_idxs = () -> [0]
+        y_mga_idxs = () -> [0, 1]
+        
+        group_parameters = Dict(
+            :x => (x_indxs, nothing, x_mga_idxs),
+            :y => (y_indxs, nothing, y_mga_idxs),
+        )
+        res = get_variable_group_values(variables, group_parameters)
+        @test res[:x][1] == 1
+        @test res[:x][2] == 2
+        @test res[:y][1] == 3
+        @test res[:y][2] == 4
+        @test res[:y][3] == 5
+        @test res[:y][4] == 6
+    end
+end
+
 @testset "run_spineopt_hsj_mga" begin
     _test_slack_correction()
     _test_init_hsj_weights()
@@ -404,5 +448,7 @@ end
     _test_get_scenario_variable_average()
     _test_prepare_objective_hsj_mga()
     _test_update_hsj_mga_objective()
+    _test_init_mga_objective_expressions()
+    _test_get_variable_group_values()
     # _test_run_hsj_spineopt_mga()
 end
