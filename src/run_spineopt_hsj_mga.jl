@@ -132,8 +132,7 @@ end
 
 function add_hsj_mga_objective_constraint!(m::Model)
     instance = m.ext[:spineopt].instance
-    raw_slack = max_mga_slack(model=instance)
-    slack = objective_value >= 0 ? raw_slack : -raw_slack
+    slack = objective_value >= 0 ? max_mga_slack(model=instance) : -max_mga_slack(model=instance)
     m.ext[:spineopt].constraints[:mga_slack_constraint] = Dict(
         (instance,) => @constraint(m,
             total_costs(m, anything) <= (1 + slack) * objective_value(m)

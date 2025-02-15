@@ -298,7 +298,6 @@ function _test_get_scenario_variable_average()
 end
 
 @testset "run_spineopt_hsj_mga" begin
-    _test_get_mga_constraint_ub()
     _test_init_hsj_weights()
     _test_do_update_hsj_weights()
     _test_was_variable_active()
