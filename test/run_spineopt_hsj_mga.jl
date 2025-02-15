@@ -9,7 +9,8 @@ using SpineOpt:
     prepare_objective_hsj_mga,
     update_hsj_mga_objective!,
     init_mga_objective_expressions,
-    get_variable_group_values
+    get_variable_group_values,
+    iterative_mga!
     
 using JuMP 
 using HiGHS
@@ -439,6 +440,53 @@ function _test_get_variable_group_values()
     end
 end
 
+function _test_iterative_mga()
+    @testset "iterative_mga" begin
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        x_indxs = (i) -> [i+1]
+        x_stoch_weights = (i) -> 1
+        
+        @variable(m, y[1] >= 0)
+        y_indxs = (i) -> [i+1]
+        y_stoch_weights = (i) -> 1
+        variables = Dict(:x => x, :y => y)
+        @constraint(m, x[1] + x[2] + y[1] <= 1)
+        @objective(m, Min, -x[1] - x[2] - y[1])
+        x_mga_idxs = () -> [0, 1]
+        y_mga_idxs = () -> [0]
+        variable_group_parameters = Dict(
+            :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+            :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+        )
+        mga_iteration = () -> [nothing]
+        max_mga_iters = 2
+        mga_weighted_groups = Dict()
+        goal_function = (m) -> -x[1] - x[2] - y[1]
+        slack = 0.05
+        res = iterative_mga!(
+            m,
+            variables,
+            variable_group_parameters,
+            mga_iteration,
+            max_mga_iters,
+            mga_weighted_groups,
+            slack,
+            goal_function
+        )
+        atol = slack + 1e-6
+        @test isapprox(res[0][:x][1], 1, atol=atol)
+        @test isapprox(res[0][:x][2], 0, atol=atol)
+        @test isapprox(res[0][:y][1], 0, atol=atol)
+        @test isapprox(res[1][:x][1], 0, atol=atol)
+        @test isapprox(res[1][:x][2], 1, atol=atol)
+        @test isapprox(res[1][:y][1], 0, atol=atol)
+        @test isapprox(res[2][:x][1], 0, atol=atol)
+        @test isapprox(res[2][:x][2], 0, atol=atol)
+        @test isapprox(res[2][:y][1], 1, atol=atol)
+    end    
+end
+
 @testset "run_spineopt_hsj_mga" begin
     _test_slack_correction()
     _test_init_hsj_weights()
@@ -450,5 +498,6 @@ end
     _test_update_hsj_mga_objective()
     _test_init_mga_objective_expressions()
     _test_get_variable_group_values()
+    _test_iterative_mga()
     # _test_run_hsj_spineopt_mga()
 end

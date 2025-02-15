@@ -30,37 +30,57 @@ function do_run_spineopt!(
     write_as_roll,
     resume_file_path,
 )
-    variable_group_parameters = prepare_variable_groups(m)
-    max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
+    
+    instance = m.ext[:spineopt].instance
     mga_iteration = ObjectClass(:mga_iteration, [])
     @eval mga_iteration = $mga_iteration
-    build_model!(m; log_level)
-    solve_model!(
-        m;
-        log_level=log_level,
-        update_names=update_names,
-        output_suffix=_add_mga_iteration(0),
-    )
-    variables = m.ext[:spineopt].variables
-    m.ext[:spineopt].expressions[:mga_objective_parts] = init_mga_objective_expressions()
-    instance = m.ext[:spineopt].instance
     t = current_window(m)
-    mga_weighted_groups = m.ext[:spineopt].expressions[:mga_objective_parts][(model=instance, t=t)]
-    hsj_weights = init_hsj_weights()
-    update_hsj_weights!(get_variable_group_values(variables, variable_group_parameters), last(mga_iteration()), hsj_weights, variable_group_parameters)
-    m.ext[:spineopt].constraints[:mga_slack_constraint] = Dict(instance => add_hsj_mga_objective_constraint!(m))
-    for i=1:max_mga_iters
-        update_hsj_mga_objective!(m, hsj_weights, last(mga_iteration()), variables, variable_group_parameters, mga_weighted_groups)
-        solve_model!(
-            m;
-            log_level=log_level,
-            update_names=update_names,
-            output_suffix=_add_mga_iteration(i),
-        ) || break
-        update_hsj_weights!(get_variable_group_values(variables, variable_group_parameters), last(mga_iteration()), hsj_weights, variable_group_parameters)
-    end
+    mga_parts = m.ext[:spineopt].expressions[:mga_objective_parts] = init_mga_objective_expressions()
+    build_model!(m; log_level)
+    variable_group_values = iterative_mga!(
+        m, 
+        m.ext[:spineopt].variables,
+        prepare_variable_groups(m),
+        mga_iteration,
+        max_mga_iterations(instance),
+        mga_parts[(model=instance, t=t)],
+        max_mga_slack(model=nstance),
+        (m) -> total_costs(m, anything),
+        (m; iteration) ->  solve_model!(
+                m;
+                log_level=log_level,
+                update_names=update_names,
+                output_suffix=_add_mga_iteration(iteration),
+            )
+    )
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
+end
+
+function iterative_mga!(
+    m::Model, 
+    variables,
+    variable_group_parameters,
+    mga_iteration,
+    max_mga_iters,
+    mga_weighted_groups,
+    mga_slack,
+    goal_function,
+    solve_wrapper::Function = (m; iteration) -> (optimize!(m); true)
+)
+    group_variable_values = Dict()
+    hsj_weights = init_hsj_weights()
+    solve_wrapper(m; iteration=0)
+    group_variable_values[0] = get_variable_group_values(variables, variable_group_parameters)
+    update_hsj_weights!(group_variable_values[0], last(mga_iteration()), hsj_weights, variable_group_parameters)
+    add_hsj_mga_objective_constraint!(m, mga_slack, goal_function)
+    for i=1:max_mga_iters
+        update_hsj_mga_objective!(m, hsj_weights, last(mga_iteration()), variables, variable_group_parameters, mga_weighted_groups)
+        solve_wrapper(m; iteration=i) || break
+        group_variable_values[i] = get_variable_group_values(variables, variable_group_parameters)
+        update_hsj_weights!(group_variable_values[i], last(mga_iteration()), hsj_weights, variable_group_parameters)
+    end
+    return group_variable_values
 end
 
 function prepare_variable_groups(m::Model)
@@ -138,9 +158,9 @@ function get_scenario_variable_average(variable, variable_indices, scenario_weig
     return sum(variable[i] * scenario_weights(i) for i in variable_indices)
 end
 
-function add_hsj_mga_objective_constraint!(m::Model)
-    slack = slack_correction(max_mga_slack(model=m.ext[:spineopt].instance), objective_value(m))
-    return @constraint(m, total_costs(m, anything) <= (1 + slack) * objective_value(m))
+function add_hsj_mga_objective_constraint!(m::Model, raw_slack, goal_function)
+    slack = slack_correction(raw_slack, objective_value(m))
+    return @constraint(m, goal_function(m) <= (1 + slack) * objective_value(m))
 end
 
 function slack_correction(raw_slack, objective_value)
@@ -169,7 +189,7 @@ end
 
 function do_update_hsj_weights!(
     mga_indices::AbstractArray,
-    variable_values::AbstractArray,
+    variable_values,
     variable_indices::Function,
     variable_hsj_weights::AbstractDict
 )
@@ -180,6 +200,6 @@ function do_update_hsj_weights!(
     end
 end
 
-function was_variable_active(variable_values::AbstractArray, variable_indices::AbstractArray)
+function was_variable_active(variable_values, variable_indices::AbstractArray)
     return any(variable_values[i] > 0 for i in variable_indices)
 end
