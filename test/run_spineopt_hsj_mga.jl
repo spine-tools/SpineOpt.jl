@@ -1,12 +1,11 @@
 import DataStructures: DefaultDict
 using SpineOpt:
-    get_mga_constraint_ub,
     init_hsj_weights,
     do_update_hsj_weights!,
     was_variable_active,
     update_hsj_weights!,
     get_scenario_variable_average
-    
+using JuMP 
 
 function _test_run_spineopt_mga_setup()
     url_in = "sqlite://"
@@ -248,20 +247,6 @@ function _test_was_variable_active()
     end
 end
 
-function _test_get_mga_constraint_ub()
-    @testset "get_mga_constraint_ub" begin
-        @testset "objective greater than 0" begin
-            @test isapprox(get_mga_constraint_ub(0.01, 100), 101)
-        end
-        @testset "objective equal to 0" begin
-            @test isapprox(get_mga_constraint_ub(0.01, 0), 0)
-        end
-        @testset "objective lower than 0" begin
-            @test isapprox(get_mga_constraint_ub(0.01, -100), -99)
-        end
-    end
-end
-
 function _test_init_hsj_weights()
     @testset "init_hsj_weights" begin
         weights = init_hsj_weights()
@@ -301,11 +286,23 @@ function _test_update_hsj_weights()
     end
 end
 
+function _test_get_scenario_variable_average()
+    @testset "get_scenario_variable_average" begin
+        var_idxs = [1, 2, 3]
+        m = Model()
+        @variable(m, x[var_idxs])
+        scenario_weights = [0.33, 0.6, 0.07]
+        average = get_scenario_variable_average(x, var_idxs, (i) -> scenario_weights[i])
+        @test average == 0.33x[1] + 0.6x[2] + 0.07x[3]
+    end
+end
+
 @testset "run_spineopt_hsj_mga" begin
     _test_get_mga_constraint_ub()
     _test_init_hsj_weights()
     _test_do_update_hsj_weights()
     _test_was_variable_active()
     _test_update_hsj_weights()
+    _test_get_scenario_variable_average()
     # _test_run_hsj_spineopt_mga()
 end
