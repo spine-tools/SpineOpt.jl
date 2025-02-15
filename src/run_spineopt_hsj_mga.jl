@@ -43,11 +43,14 @@ function do_run_spineopt!(
     )
     variables = m.ext[:spineopt].variables
     m.ext[:spineopt].expressions[:mga_objective_parts] = init_mga_objective_expressions()
+    instance = m.ext[:spineopt].instance
+    t = current_window(m)
+    mga_weighted_groups = m.ext[:spineopt].expressions[:mga_objective_parts][(model=instance, t=t)]
     hsj_weights = init_hsj_weights()
     update_hsj_weights!(get_variable_group_values(variables, variable_group_parameters), last(mga_iteration()), hsj_weights, variable_group_parameters)
-    add_hsj_mga_objective_constraint!(m)
+    m.ext[:spineopt].constraints[:mga_slack_constraint] = Dict(instance => add_hsj_mga_objective_constraint!(m))
     for i=1:max_mga_iters
-        update_hsj_mga_objective!(m, hsj_weights, last(mga_iteration()), variable_group_parameters)
+        update_hsj_mga_objective!(m, hsj_weights, last(mga_iteration()), variables, variable_group_parameters, mga_weighted_groups)
         solve_model!(
             m;
             log_level=log_level,
@@ -92,14 +95,18 @@ function init_mga_objective_expressions()
     return DefaultDict(() -> DefaultDict(0))
 end
 
-function update_hsj_mga_objective!(m, hsj_weights, iteration, group_parameters)
-    instance = m.ext[:spineopt].instance
-    t = current_window(m)
-    mga_weighted_groups = m.ext[:spineopt].expressions[:mga_objective_parts][(model=instance, t=t)]
+function update_hsj_mga_objective!(
+    m::Model,
+    hsj_weights::AbstractDict,
+    iteration,
+    variables::AbstractDict,
+    group_parameters::AbstractDict,
+    mga_weighted_groups::AbstractDict
+)
     for (group_name, (available_indices, scenario_weights, mga_indices_func)) in group_parameters
-        mga_weighted_groups[variable_name] = prepare_objective_hsj_mga(
+        mga_weighted_groups[group_name] = prepare_objective_hsj_mga(
             m,
-            m.ext[:spineopt].variables[group_name],
+            variables[group_name],
             available_indices,
             scenario_weights,
             mga_indices_func(),
@@ -131,13 +138,8 @@ function get_scenario_variable_average(variable, variable_indices, scenario_weig
 end
 
 function add_hsj_mga_objective_constraint!(m::Model)
-    instance = m.ext[:spineopt].instance
-    slack = slack_correction(max_mga_slack(model=instance), objective_value(m))
-    m.ext[:spineopt].constraints[:mga_slack_constraint] = Dict(
-        (instance,) => @constraint(m,
-            total_costs(m, anything) <= (1 + slack) * objective_value(m)
-        )
-    )
+    slack = slack_correction(max_mga_slack(model=m.ext[:spineopt].instance), objective_value(m))
+    return @constraint(m, total_costs(m, anything) <= (1 + slack) * objective_value(m))
 end
 
 function slack_correction(raw_slack, objective_value)

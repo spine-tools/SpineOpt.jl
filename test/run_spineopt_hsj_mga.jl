@@ -6,7 +6,8 @@ using SpineOpt:
     update_hsj_weights!,
     get_scenario_variable_average,
     slack_correction,
-    prepare_objective_hsj_mga
+    prepare_objective_hsj_mga,
+    update_hsj_mga_objective!
     
 using JuMP 
 
@@ -336,6 +337,64 @@ function _test_prepare_objective_hsj_mga()
     end
 end
 
+function _test_update_hsj_mga_objective()
+    @testset "update_hsj_mga_objective" begin
+        m = Model()
+        @variable(m, x[1:6])
+        x_indxs = (i) -> [2*i+1, 2*i+2]
+        x_stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
+        x_stoch_weights = (i) -> x_stochastic_weights[i]
+        x_mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
+        
+        @variable(m, y[1:4])
+        y_indxs = (i) -> [2*i+1, 2*i+2]
+        y_stochastic_weights = [0.5, 0.5, 0.2, 0.8]
+        y_stoch_weights = (i) -> y_stochastic_weights[i]
+        y_mga_weights = Dict(0 => 0, 1=>1) 
+
+        hsj_weights = Dict(:x => x_mga_weights, :y => y_mga_weights)
+        variables = Dict(:x => x, :y => y)
+        @testset "empty variable mga indices" begin
+            x_mga_idxs = () -> []
+            y_mga_idxs = () -> [0, 1]
+            group_parameters = Dict(
+                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            )
+            mga_weighted_groups = Dict()
+            res = update_hsj_mga_objective!(m, hsj_weights, nothing, variables, group_parameters, mga_weighted_groups)
+            @test res == 0.2y[3] + 0.8y[4]
+            @test mga_weighted_groups[:x] == 0
+            @test mga_weighted_groups[:y] == 0.2y[3] + 0.8y[4]
+        end
+        @testset "all empty variable mga indices" begin
+            x_mga_idxs = () -> []
+            y_mga_idxs = () -> []
+            group_parameters = Dict(
+                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            )
+            mga_weighted_groups = Dict()
+            res = update_hsj_mga_objective!(m, hsj_weights, nothing, variables, group_parameters, mga_weighted_groups)
+            @test res == 0
+            @test mga_weighted_groups[:x] == 0
+            @test mga_weighted_groups[:y] == 0
+        end
+        @testset "nonempty variable mga indices" begin
+            x_mga_idxs = () -> [0, 1, 2]
+            y_mga_idxs = () -> [0, 1]
+            group_parameters = Dict(
+                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            )
+            mga_weighted_groups = Dict()
+            res = update_hsj_mga_objective!(m, hsj_weights, nothing, variables, group_parameters, mga_weighted_groups)
+            @test res == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6] + 0.2y[3] + 0.8y[4]
+            @test mga_weighted_groups[:x] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
+            @test mga_weighted_groups[:y] == 0.2y[3] + 0.8y[4]
+        end
+    end 
+end
 @testset "run_spineopt_hsj_mga" begin
     _test_slack_correction()
     _test_init_hsj_weights()
@@ -344,5 +403,6 @@ end
     _test_update_hsj_weights()
     _test_get_scenario_variable_average()
     _test_prepare_objective_hsj_mga()
+    _test_update_hsj_mga_objective()
     # _test_run_hsj_spineopt_mga()
 end
