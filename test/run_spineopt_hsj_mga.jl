@@ -4,7 +4,9 @@ using SpineOpt:
     do_update_hsj_weights!,
     was_variable_active,
     update_hsj_weights!,
-    get_scenario_variable_average
+    get_scenario_variable_average,
+    slack_correction
+    
 using JuMP 
 
 function _test_run_spineopt_mga_setup()
@@ -247,6 +249,20 @@ function _test_was_variable_active()
     end
 end
 
+function _test_slack_correction()
+    @testset "slack_correction" begin
+        @testset "objective greater than 0" begin
+            @test isapprox(slack_correction(0.01, 100), 0.01)
+        end
+        @testset "objective equal to 0" begin
+            @test isapprox(slack_correction(0.01, 0), 0.01)
+        end
+        @testset "objective lower than 0" begin
+            @test isapprox(slack_correction(0.01, -100), -0.01)
+        end
+    end
+end
+
 function _test_init_hsj_weights()
     @testset "init_hsj_weights" begin
         weights = init_hsj_weights()
@@ -298,6 +314,7 @@ function _test_get_scenario_variable_average()
 end
 
 @testset "run_spineopt_hsj_mga" begin
+    _test_slack_correction()
     _test_init_hsj_weights()
     _test_do_update_hsj_weights()
     _test_was_variable_active()
