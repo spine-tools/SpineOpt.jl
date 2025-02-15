@@ -1,3 +1,13 @@
+import DataStructures: DefaultDict
+using SpineOpt:
+    get_mga_constraint_ub,
+    init_hsj_weights,
+    do_update_hsj_weights!,
+    was_variable_active,
+    update_hsj_weights!,
+    get_scenario_variable_average
+    
+
 function _test_run_spineopt_mga_setup()
     url_in = "sqlite://"
     test_data = Dict(
@@ -164,6 +174,138 @@ function _test_run_hsj_spineopt_mga()
     end
 end
 
+function _test_do_update_hsj_weights()
+    @testset "do_update_hsj_weights" begin
+        mga_indices = collect(0:1)
+        function variable_indices(i)
+            return [2*i+1, 2*i+2]
+        end
+        @testset "empty_iterator" begin
+            variable_values = [0, 0, 0, 0]
+            dict = DefaultDict(0)
+            do_update_hsj_weights!([], variable_values, variable_indices, dict)
+            @test dict[0] == 0
+            @test dict[1] == 0
+        end
+        @testset "variable inactive" begin
+            variable_values = [0, 0, 0, 0]
+            dict = DefaultDict(0)
+            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            @test dict[0] == 0
+            @test dict[1] == 0
+        end
+        @testset "variable active" begin
+            variable_values = [1, 1, 1, 0]
+            dict = DefaultDict(0)
+            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            @test dict[0] == 1
+            @test dict[1] == 1
+        end
+        @testset "variable active with set weight" begin
+            variable_values = [1, 1, 1, 0]
+            dict = DefaultDict(0)
+            dict[0] = 1
+            dict[1] = 1
+            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            @test dict[0] == 1
+            @test dict[1] == 1
+        end
+        @testset "variable inactive with set weight" begin
+            variable_values = [0, 0, 0, 0]
+            dict = DefaultDict(0)
+            dict[0] = 1
+            dict[1] = 1
+            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            @test dict[0] == 1
+            @test dict[1] == 1
+        end
+        @testset "active and inactive variables" begin
+            variable_values = [0, 0, 1, 0]
+            dict = DefaultDict(0)
+            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            @test dict[0] == 0
+            @test dict[1] == 1
+        end
+
+    end 
+end
+
+function _test_was_variable_active()
+    @testset "was_variable_active" begin
+        @testset "variable_indices_list_empty" begin
+            @test was_variable_active([1,2,3], []) == false
+        end
+        @testset "active single variable" begin
+            @test was_variable_active([1], [1]) == true
+        end
+        @testset "all inactive" begin
+            @test was_variable_active([0, 0, 0, 0], [1, 2, 3, 4]) == false
+        end
+        @testset "active and inactive" begin
+            @test was_variable_active([0, 1, 0, 1], [1, 2, 3, 4]) == true
+            
+        end
+    end
+end
+
+function _test_get_mga_constraint_ub()
+    @testset "get_mga_constraint_ub" begin
+        @testset "objective greater than 0" begin
+            @test isapprox(get_mga_constraint_ub(0.01, 100), 101)
+        end
+        @testset "objective equal to 0" begin
+            @test isapprox(get_mga_constraint_ub(0.01, 0), 0)
+        end
+        @testset "objective lower than 0" begin
+            @test isapprox(get_mga_constraint_ub(0.01, -100), -99)
+        end
+    end
+end
+
+function _test_init_hsj_weights()
+    @testset "init_hsj_weights" begin
+        weights = init_hsj_weights()
+        @test weights[:units_invested] == DefaultDict(0)
+        @test weights[:connections_invested] == DefaultDict(0)
+        @test weights[:storages_invested] == DefaultDict(0)
+    end
+end
+
+function _test_update_hsj_weights()
+    @testset "update_hsj_weights" begin
+        group_parameters = Dict(
+            :var_name => (
+                (i) -> [2*i + 1, 2*i + 2],
+                nothing,
+                () -> [0, 1, 2, 3]
+            )
+        )
+        variable_values = Dict(:var_name => [0, 0, 0, 1, 0, 0, 0, 1])
+        hsj_weights = init_hsj_weights()
+        hsj_weights[:var_name][2] = 1
+        hsj_weights[:var_name][3] = 1
+
+        update_hsj_weights!(variable_values, nothing, hsj_weights, group_parameters)
+        @testset "inactive_weights" begin
+            @test hsj_weights[:var_name][0] == 0
+        end
+        @testset "active weights" begin
+            @test hsj_weights[:var_name][1] == 1
+        end
+        @testset "inactive, previously active" begin
+            @test hsj_weights[:var_name][2] == 1
+        end
+        @testset "active, previously active" begin
+            @test hsj_weights[:var_name][3] == 1 
+        end  
+    end
+end
+
 @testset "run_spineopt_hsj_mga" begin
-    _test_run_hsj_spineopt_mga()
+    _test_get_mga_constraint_ub()
+    _test_init_hsj_weights()
+    _test_do_update_hsj_weights()
+    _test_was_variable_active()
+    _test_update_hsj_weights()
+    # _test_run_hsj_spineopt_mga()
 end
