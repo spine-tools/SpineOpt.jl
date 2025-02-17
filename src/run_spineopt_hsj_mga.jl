@@ -30,6 +30,24 @@ function do_run_spineopt!(
     write_as_roll,
     resume_file_path,
 )
+    return generic_run_mga!(m, url_out, Val(:hsj_mga_algorithm), log_level, update_names, alternative)
+end
+
+function do_run_spineopt!(
+    m,
+    url_out,
+    ::Val{:fuzzy_mga_algorithm};
+    log_level,
+    optimize,
+    update_names,
+    alternative,
+    write_as_roll,
+    resume_file_path,
+)
+    return generic_run_mga!(m, url_out, Val(:fuzzy_mga_algorithm), log_level, update_names, alternative)
+end
+
+function generic_run_mga!(m::Model, url_out, algorithm_type::Val, log_level, update_names, alternative)
     instance = m.ext[:spineopt].instance 
     mga_iteration = ObjectClass(:mga_iteration, [])
     build_model!(m; log_level)
@@ -44,15 +62,16 @@ function do_run_spineopt!(
         mga_parts[(model=instance, t=t)],
         max_mga_slack(model=instance),
         (m) -> total_costs(m, anything),
+        algorithm_type,
         (m; iteration) ->  solve_model!(
                 m;
                 log_level=log_level,
                 update_names=update_names,
                 output_suffix=_add_mga_iteration(iteration, mga_iteration),
-            )
+            ),
     )
     write_report(m, url_out; alternative=alternative, log_level=log_level)
-    m
+    return m
 end
 
 function _add_mga_iteration(k, mga_iteration)
@@ -71,16 +90,18 @@ function iterative_mga!(
     mga_weighted_groups,
     mga_slack,
     goal_function::Function,
-    solve_wrapper::Function = (m; iteration) -> (optimize!(m); true)
+    algorithm_type::Val,
+    solve_wrapper::Function = (m; iteration) -> (optimize!(m); true),
 )   
     group_variable_values = Dict()
     hsj_weights = init_hsj_weights()
     solve_wrapper(m; iteration=0)
     group_variable_values[0] = get_variable_group_values(variables, variable_group_parameters)
     update_hsj_weights!(group_variable_values[0], last(mga_iteration()), hsj_weights, variable_group_parameters)
-    add_hsj_mga_objective_constraint!(m, mga_slack, goal_function)
+    slack = slack_correction(mga_slack, objective_value(m))
+    constraint = add_mga_objective_constraint!(m, slack, goal_function, algorithm_type)
     for i=1:max_mga_iters
-        update_hsj_mga_objective!(m, hsj_weights, last(mga_iteration()), variables, variable_group_parameters, mga_weighted_groups)
+        update_mga_objective!(m, hsj_weights, last(mga_iteration()), variables, group_variable_values[i-1], variable_group_parameters, mga_weighted_groups, constraint, algorithm_type)
         solve_wrapper(m; iteration=i) || break
         group_variable_values[i] = get_variable_group_values(variables, variable_group_parameters)
         update_hsj_weights!(group_variable_values[i], last(mga_iteration()), hsj_weights, variable_group_parameters)
@@ -121,36 +142,72 @@ function init_mga_objective_expressions()
     return DefaultDict(() -> DefaultDict(0))
 end
 
-function update_hsj_mga_objective!(
+function update_mga_objective!(
     m::Model,
     hsj_weights::AbstractDict,
     iteration,
     variables::AbstractDict,
+    variable_values::AbstractDict,
     group_parameters::AbstractDict,
-    mga_weighted_groups::AbstractDict
+    mga_weighted_groups::AbstractDict,
+    objective_constraint,
+    algorithm_type::Val
 )
     for (group_name, (available_indices, scenario_weights, mga_indices_func)) in group_parameters
-        mga_weighted_groups[group_name] = prepare_objective_hsj_mga(
+        mga_weighted_groups[group_name] = prepare_objective_mga!(
             m,
             variables[group_name],
+            variable_values[group_name],
             available_indices,
             scenario_weights,
             mga_indices_func(),
-            hsj_weights[group_name]
+            hsj_weights[group_name],
+            algorithm_type
         )
     end
+    return formulate_mga_objective!(m, mga_weighted_groups, keys(group_parameters), objective_constraint, algorithm_type)
+end
+
+function formulate_mga_objective!(
+    m::Model,
+    mga_weighted_groups::AbstractDict,
+    group_names,
+    objective_constraint,
+    ::Val{:hsj_mga_algorithm}
+)
+    return @objective(m, Min, sum(mga_weighted_groups[mga_group] for mga_group in group_names))
+end
+
+function formulate_mga_objective!(
+    m::Model,
+    mga_weighted_groups::AbstractDict,
+    group_names,
+    objective_constraint,
+    ::Val{:fuzzy_mga_algorithm},
+    eps=1e-4
+)
+    s_min = @variable(m)
+    for mga_group in group_names
+        @constraint(m, s_min <= mga_weighted_groups[mga_group])
+    end
+    @constraint(m, s_min <= objective_constraint)
     return @objective(
-        m, Min, sum(mga_weighted_groups[mga_group] for mga_group in keys(group_parameters))
+        m,
+        Max,
+        s_min + eps * sum(mga_weighted_groups[mga_group] for mga_group in group_names) + eps * objective_constraint
     )
 end
 
-function prepare_objective_hsj_mga(
+
+function prepare_objective_mga!(
     m::Model,
     variable,
+    variable_values,
     variable_indices::Function,
     variable_stochastic_weights::Function,
     mga_indices::AbstractArray,
-    mga_weights::AbstractDict
+    mga_weights::AbstractDict,
+    ::Val{:hsj_mga_algorithm}
 )   
     weighted_group_variables = (
         get_scenario_variable_average(variable, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
@@ -159,15 +216,58 @@ function prepare_objective_hsj_mga(
     return @expression(m, sum(weighted_group_variables, init=0))
 end
 
+function prepare_objective_mga!(
+    m::Model,
+    variable,
+    variable_values,
+    variable_indices::Function,
+    variable_stochastic_weights::Function,
+    mga_indices::AbstractArray,
+    mga_weights::AbstractDict,
+    ::Val{:fuzzy_mga_algorithm},
+    beta=0.5,
+    gamma=1.5
+)   
+    weighted_group_variables = (
+        get_scenario_variable_average(variable, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
+        for i in mga_indices
+    )
+    weighted_group_variable_values = (
+        get_scenario_variable_average(variable_values, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
+        for i in mga_indices
+    )
+    a = 0
+    y = sum(weighted_group_variables, init=0)
+    r = sum(weighted_group_variable_values, init=0)
+    return add_rpm_constraint!(m, y, a, r, beta, gamma)
+end
+
 function get_scenario_variable_average(variable, variable_indices, scenario_weights)
     return sum(variable[i] * scenario_weights(i) for i in variable_indices)
 end
 
-function add_hsj_mga_objective_constraint!(m::Model, raw_slack, goal_function)
-    slack = slack_correction(raw_slack, objective_value(m))
+function add_mga_objective_constraint!(m::Model, slack, goal_function, ::Val{:hsj_mga_algorithm})
     return @constraint(m, goal_function(m) <= (1 + slack) * objective_value(m))
 end
 
+function add_mga_objective_constraint!(m::Model, slack, goal_function, ::Val{:fuzzy_mga_algorithm}, beta=0.5, gamma=1.5)
+    y = goal_function(m)
+    a = objective_value(m)
+    r = (1 + slack) * objective_value(m)
+    return add_rpm_constraint!(m, y, a, r, beta, gamma)
+end
+
+function add_rpm_constraint!(m::Model, expression, aspiration, reservation, beta=0.5, gamma=1.5)
+    if !(0 < beta < 1 < gamma)
+        error("beta and gamma parameters not in the domain 0 < beta < 1 < gamma!")
+    end
+    s = @variable(m)
+    denom = isapprox(aspiration, reservation) ? 1 : aspiration - reservation
+    @constraint(m, s <= gamma * (expression - reservation) / denom)
+    @constraint(m, s <= (expression - reservation) / denom)
+    @constraint(m, s <=  1 + beta * (expression - aspiration) / denom)
+    return s
+end
 function slack_correction(raw_slack, objective_value)
     return objective_value >= 0 ? raw_slack : -raw_slack
 end

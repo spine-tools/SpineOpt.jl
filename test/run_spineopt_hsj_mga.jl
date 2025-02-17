@@ -6,8 +6,8 @@ using SpineOpt:
     update_hsj_weights!,
     get_scenario_variable_average,
     slack_correction,
-    prepare_objective_hsj_mga,
-    update_hsj_mga_objective!,
+    prepare_objective_mga!,
+    update_mga_objective!,
     init_mga_objective_expressions,
     get_variable_group_values,
     iterative_mga!
@@ -435,12 +435,12 @@ function _test_prepare_objective_hsj_mga()
         mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
         @testset "empty mga indices" begin
             mga_idxs = []
-            res = prepare_objective_hsj_mga(m, x, var_indxs, var_stoch_weights, mga_idxs, mga_weights)
+            res = prepare_objective_mga!(m, x, [], var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
             @test res == 0
         end
         @testset "nonempty mga indices" begin
             mga_idxs = [0, 1, 2]
-            res = prepare_objective_hsj_mga(m, x, var_indxs, var_stoch_weights, mga_idxs, mga_weights)
+            res = prepare_objective_mga!(m, x, [], var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
             @test res == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
         end
         
@@ -464,6 +464,7 @@ function _test_update_hsj_mga_objective()
 
         hsj_weights = Dict(:x => x_mga_weights, :y => y_mga_weights)
         variables = Dict(:x => x, :y => y)
+        variable_values = Dict(:x => [0, 0, 0, 0, 0, 0], :y =>[0, 0, 0, 0])
         @testset "empty variable mga indices" begin
             x_mga_idxs = () -> []
             y_mga_idxs = () -> [0, 1]
@@ -472,7 +473,7 @@ function _test_update_hsj_mga_objective()
                 :y => (y_indxs, y_stoch_weights, y_mga_idxs),
             )
             mga_weighted_groups = Dict()
-            res = update_hsj_mga_objective!(m, hsj_weights, nothing, variables, group_parameters, mga_weighted_groups)
+            res = update_mga_objective!(m, hsj_weights, nothing, variables, variable_values, group_parameters, mga_weighted_groups, nothing, Val(:hsj_mga_algorithm))
             @test res == 0.2y[3] + 0.8y[4]
             @test mga_weighted_groups[:x] == 0
             @test mga_weighted_groups[:y] == 0.2y[3] + 0.8y[4]
@@ -485,7 +486,7 @@ function _test_update_hsj_mga_objective()
                 :y => (y_indxs, y_stoch_weights, y_mga_idxs),
             )
             mga_weighted_groups = Dict()
-            res = update_hsj_mga_objective!(m, hsj_weights, nothing, variables, group_parameters, mga_weighted_groups)
+            res = update_mga_objective!(m, hsj_weights, nothing, variables, variable_values, group_parameters, mga_weighted_groups, nothing, Val(:hsj_mga_algorithm))
             @test res == 0
             @test mga_weighted_groups[:x] == 0
             @test mga_weighted_groups[:y] == 0
@@ -498,7 +499,7 @@ function _test_update_hsj_mga_objective()
                 :y => (y_indxs, y_stoch_weights, y_mga_idxs),
             )
             mga_weighted_groups = Dict()
-            res = update_hsj_mga_objective!(m, hsj_weights, nothing, variables, group_parameters, mga_weighted_groups)
+            res = update_mga_objective!(m, hsj_weights, nothing, variables, variable_values, group_parameters, mga_weighted_groups, nothing, Val(:hsj_mga_algorithm))
             @test res == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6] + 0.2y[3] + 0.8y[4]
             @test mga_weighted_groups[:x] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
             @test mga_weighted_groups[:y] == 0.2y[3] + 0.8y[4]
@@ -578,7 +579,8 @@ function _test_iterative_mga()
             max_mga_iters,
             mga_weighted_groups,
             slack,
-            goal_function
+            goal_function,
+            Val(:hsj_mga_algorithm)
         )
         atol = slack + 1e-6
         @test isapprox(res[0][:x][1], 1, atol=atol)
