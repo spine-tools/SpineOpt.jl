@@ -30,31 +30,36 @@ function do_run_spineopt!(
     write_as_roll,
     resume_file_path,
 )
-    
-    instance = m.ext[:spineopt].instance
+    instance = m.ext[:spineopt].instance 
     mga_iteration = ObjectClass(:mga_iteration, [])
-    @eval mga_iteration = $mga_iteration
+    build_model!(m; log_level)
     t = current_window(m)
     mga_parts = m.ext[:spineopt].expressions[:mga_objective_parts] = init_mga_objective_expressions()
-    build_model!(m; log_level)
     variable_group_values = iterative_mga!(
         m, 
         m.ext[:spineopt].variables,
         prepare_variable_groups(m),
         mga_iteration,
-        max_mga_iterations(instance),
+        something(max_mga_iterations(model=instance), 0),
         mga_parts[(model=instance, t=t)],
-        max_mga_slack(model=nstance),
+        max_mga_slack(model=instance),
         (m) -> total_costs(m, anything),
         (m; iteration) ->  solve_model!(
                 m;
                 log_level=log_level,
                 update_names=update_names,
-                output_suffix=_add_mga_iteration(iteration),
+                output_suffix=_add_mga_iteration(iteration, mga_iteration),
             )
     )
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
+end
+
+function _add_mga_iteration(k, mga_iteration)
+    new_mga_name = Symbol(:mga_it_, k)
+    new_mga_i = Object(new_mga_name, :mga_iteration)
+    add_object!(mga_iteration, new_mga_i)
+    (mga_iteration=mga_iteration(new_mga_name),)
 end
 
 function iterative_mga!(
@@ -65,9 +70,9 @@ function iterative_mga!(
     max_mga_iters,
     mga_weighted_groups,
     mga_slack,
-    goal_function,
+    goal_function::Function,
     solve_wrapper::Function = (m; iteration) -> (optimize!(m); true)
-)
+)   
     group_variable_values = Dict()
     hsj_weights = init_hsj_weights()
     solve_wrapper(m; iteration=0)
@@ -200,6 +205,6 @@ function do_update_hsj_weights!(
     end
 end
 
-function was_variable_active(variable_values, variable_indices::AbstractArray)
+function was_variable_active(variable_values, variable_indices)
     return any(variable_values[i] > 0 for i in variable_indices)
 end
