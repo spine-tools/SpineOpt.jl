@@ -259,15 +259,19 @@ end
 
 function add_rpm_constraint!(m::Model, expression, aspiration, reservation, beta=0.5, gamma=1.5)
     if !(0 < beta < 1 < gamma)
-        error("beta and gamma parameters not in the domain 0 < beta < 1 < gamma!")
+        throw(DomainError((beta, gamma), "parameters not in the domain 0 < beta < 1 < gamma"))
     end
     s = @variable(m)
-    denom = isapprox(aspiration, reservation) ? 1 : aspiration - reservation
-    @constraint(m, s <= gamma * (expression - reservation) / denom)
-    @constraint(m, s <= (expression - reservation) / denom)
-    @constraint(m, s <=  1 + beta * (expression - aspiration) / denom)
-    return s
+    if isapprox(aspiration, reservation)
+        c1 = c2 = c3 = @constraint(m, s <= 1)
+    else
+        c1 = @constraint(m, s <= gamma * (expression - reservation) / (aspiration - reservation))
+        c2 = @constraint(m, s <= (expression - reservation) / (aspiration - reservation))
+        c3 = @constraint(m, s <=  1 + beta * (expression - aspiration) / (aspiration - reservation))
+    end
+    return Dict(:variable => s, :threshold1 => c1, :threshold2 => c2, :threshold3 => c3)
 end
+
 function slack_correction(raw_slack, objective_value)
     return objective_value >= 0 ? raw_slack : -raw_slack
 end

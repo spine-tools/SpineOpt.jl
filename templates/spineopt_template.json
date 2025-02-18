@@ -118,6 +118,7 @@
         ["model_algorithm_list", "basic_algorithm"],
         ["model_algorithm_list", "mga_algorithm"],
         ["model_algorithm_list", "hsj_mga_algorithm"],
+        ["model_algorithm_list", "fuzzy_mga_algorithm"],
         ["model_type_list", "spineopt_benders"],
         ["model_type_list", "spineopt_other"],
         ["model_type_list", "spineopt_standard"],

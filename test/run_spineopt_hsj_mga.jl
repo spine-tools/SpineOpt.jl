@@ -10,7 +10,9 @@ using SpineOpt:
     update_mga_objective!,
     init_mga_objective_expressions,
     get_variable_group_values,
-    iterative_mga!
+    iterative_mga!,
+    add_rpm_constraint!,
+    add_mga_objective_constraint!
     
 using JuMP 
 using HiGHS
@@ -127,105 +129,53 @@ function _test_run_spineopt_mga_setup()
     url_in
 end
 
-function _test_run_spineopt_hsj_mga()
-    @testset "run_spineopt_hsj_mga_no_max_iterations" begin
-        url_in = _test_run_spineopt_mga_setup()
-        candidate_units = 1
-        candidate_connections = 1
-        candidate_storages = 1
-        fuel_cost = 5
-        mga_slack = 0.05
-        object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_bc", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", 0],
-            ["unit", "unit_bc", "number_of_units", 0],
-            ["unit", "unit_group_abbc", "units_invested_mga", true],
-            ["unit", "unit_ab", "unit_investment_cost", 1],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_bc", "candidate_connections", candidate_connections],
-            ["connection", "connection_group_abbc", "connections_invested_mga", true],
-            ["node", "node_b", "candidate_storages", candidate_storages],
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_a", "balance_type", :balance_type_none],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_b", "fix_node_state",0],
-            ["node", "node_c", "fix_node_state",0],
-            ["node", "node_b", "node_state_cap", 0],
-            ["node", "node_c", "node_state_cap", 0],
-            ["node", "node_group_bc", "storages_invested_mga", true],
-            ["model", "instance", "model_algorithm", "hsj_mga_algorithm"],
-            ["model", "instance", "max_mga_slack", mga_slack],
-            # ["node", "node_a", "demand", 1],
-            ["node", "node_b", "demand", 1],
-            ["node", "node_c", "demand", 1],
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 5],
-            ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
-            ["unit__to_node", ["unit_bc", "node_c"], "unit_capacity", 5],
-            ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
-            ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
-        ]
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
-        )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+function generate_simple_system(algorithm::String, no_iterations=nothing)
+    candidate_units = 1
+    candidate_connections = 1
+    candidate_storages = 1
+    fuel_cost = 5
+    mga_slack = 0.05
+    object_parameter_values = [
+        ["unit", "unit_ab", "candidate_units", candidate_units],
+        ["unit", "unit_bc", "candidate_units", candidate_units],
+        ["unit", "unit_ab", "number_of_units", 0],
+        ["unit", "unit_bc", "number_of_units", 0],
+        ["unit", "unit_group_abbc", "units_invested_mga", true],
+        ["unit", "unit_ab", "unit_investment_cost", 1],
+        ["connection", "connection_ab", "candidate_connections", candidate_connections],
+        ["connection", "connection_bc", "candidate_connections", candidate_connections],
+        ["connection", "connection_group_abbc", "connections_invested_mga", true],
+        ["node", "node_b", "candidate_storages", candidate_storages],
+        ["node", "node_c", "candidate_storages", candidate_storages],
+        ["node", "node_a", "balance_type", :balance_type_none],
+        ["node", "node_b", "has_state", true],
+        ["node", "node_c", "has_state", true],
+        ["node", "node_b", "fix_node_state",0],
+        ["node", "node_c", "fix_node_state",0],
+        ["node", "node_b", "node_state_cap", 0],
+        ["node", "node_c", "node_state_cap", 0],
+        ["node", "node_group_bc", "storages_invested_mga", true],
+        ["model", "instance", "model_algorithm", algorithm],
+        ["model", "instance", "max_mga_slack", mga_slack],
+        # ["node", "node_a", "demand", 1],
+        ["node", "node_b", "demand", 1],
+        ["node", "node_c", "demand", 1],
+    ]
+    if no_iterations !== nothing
+        push!(object_parameter_values, ["model", "instance", "max_mga_iterations", no_iterations])
     end
-    @testset "run_spineopt_hsj_mga" begin
-        url_in = _test_run_spineopt_mga_setup()
-        candidate_units = 1
-        candidate_connections = 1
-        candidate_storages = 1
-        fuel_cost = 5
-        mga_slack = 0.05
-        object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_bc", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", 0],
-            ["unit", "unit_bc", "number_of_units", 0],
-            ["unit", "unit_group_abbc", "units_invested_mga", true],
-            ["unit", "unit_ab", "unit_investment_cost", 1],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_bc", "candidate_connections", candidate_connections],
-            ["connection", "connection_group_abbc", "connections_invested_mga", true],
-            ["node", "node_b", "candidate_storages", candidate_storages],
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_a", "balance_type", :balance_type_none],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_b", "fix_node_state",0],
-            ["node", "node_c", "fix_node_state",0],
-            ["node", "node_b", "node_state_cap", 0],
-            ["node", "node_c", "node_state_cap", 0],
-            ["node", "node_group_bc", "storages_invested_mga", true],
-            ["model", "instance", "model_algorithm", "hsj_mga_algorithm"],
-            ["model", "instance", "max_mga_slack", mga_slack],
-            ["model", "instance", "max_mga_iterations", 2],
-            # ["node", "node_a", "demand", 1],
-            ["node", "node_b", "demand", 1],
-            ["node", "node_c", "demand", 1],
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 5],
-            ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
-            ["unit__to_node", ["unit_bc", "node_c"], "unit_capacity", 5],
-            ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
-            ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
-        ]
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
-        )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
-    end
-    @testset "run_spineopt_hsj_mga_advanced" begin
-        url_in = _test_run_spineopt_mga_setup()
-        candidate_units = 1
+    relationship_parameter_values = [
+        ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 5],
+        ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
+        ["unit__to_node", ["unit_bc", "node_c"], "unit_capacity", 5],
+        ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
+        ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
+    ]
+    return object_parameter_values, relationship_parameter_values
+end
+
+function generate_complex_system(algorithm, no_iterations)
+    candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
         fuel_cost = 5
@@ -265,9 +215,9 @@ function _test_run_spineopt_hsj_mga()
             ["node", "node_c", "node_state_cap", 0],
             ["node", "node_group_bc", "storages_invested_mga", true],
             ["node", "node_group_bc","storages_invested_mga_weight", mga_weights_1],
-            ["model", "instance", "model_algorithm", "hsj_mga_algorithm"],
+            ["model", "instance", "model_algorithm", algorithm],
             ["model", "instance", "max_mga_slack", mga_slack],
-            ["model", "instance", "max_mga_iterations", 2],
+            ["model", "instance", "max_mga_iterations", no_iterations],
             ["node", "node_b", "demand", 1],
             ["node", "node_c", "demand", 1],
         ]
@@ -278,6 +228,66 @@ function _test_run_spineopt_hsj_mga()
             ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
             ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
         ]
+        return object_parameter_values, relationship_parameter_values
+end
+
+function _test_run_spineopt_hsj_mga()
+    @testset "run_spineopt_hsj_mga_no_max_iterations" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm")
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+    @testset "run_spineopt_hsj_mga" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm", 2)
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+    @testset "run_spineopt_hsj_mga_advanced" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_complex_system("hsj_mga_algorithm", 2)
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+end
+
+function _test_run_spineopt_fuzzy_mga()
+    @testset "run_spineopt_fuzzy_mga_no_max_iterations" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm")
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+    @testset "run_spineopt_fuzzy_mga" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm", 2)
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+    @testset "run_spineopt_fuzzy_mga_advanced" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_complex_system("fuzzy_mga_algorithm", 2)
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -425,25 +435,76 @@ function _test_get_scenario_variable_average()
     end
 end
 
+function _test_get_scenario_variable_value_average()
+    @testset "get_scenario_variable_value_average" begin
+        var_idxs = [1, 2, 3]
+        variable_values = [3, 2, 4]
+        scenario_weights = [0.33, 0.6, 0.07]
+        average = get_scenario_variable_average(variable_values, var_idxs, (i) -> scenario_weights[i])
+        @test isapprox(average, 2.47)
+    end
+end
+
 function _test_prepare_objective_hsj_mga()
     @testset "prepare_objective_hsj_mga" begin
         m = Model()
-        @variable(m, x[1:6])
+        @variable(m, x[1:6] >= 0)
         var_indxs = (i) -> [2*i+1, 2*i+2]
         stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
         var_stoch_weights = (i) -> stochastic_weights[i]
+        var_values = [1, 0, 0, 0, 1, 1]
         mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
         @testset "empty mga indices" begin
             mga_idxs = []
-            res = prepare_objective_mga!(m, x, [], var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
+            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
             @test res == 0
         end
         @testset "nonempty mga indices" begin
             mga_idxs = [0, 1, 2]
-            res = prepare_objective_mga!(m, x, [], var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
+            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
             @test res == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
         end
-        
+    end
+    @testset "prepare_objective_fuzzy_mga" begin
+        var_indxs = (i) -> [2*i+1, 2*i+2]
+        stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
+        var_stoch_weights = (i) -> stochastic_weights[i]
+        var_values = [1, 0, 0, 0, 1, 1]
+        mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
+        @testset "empty mga indices" begin
+            m = Model(HiGHS.Optimizer)
+            @variable(m, 0 <= x[1:6] )
+            mga_idxs = []
+            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:fuzzy_mga_algorithm))
+            s = res[:variable]
+            mga_expression = 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
+            con1 = constraint_object(res[:threshold1])
+            benchmark1 = @build_constraint(s <= 1)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:threshold2])
+            benchmark2 = @build_constraint(s <= 1)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:threshold3])
+            benchmark3 = @build_constraint(s <= 1)
+            @test _is_constraint_equal(con3, benchmark3)
+        end
+        @testset "nonempty mga indices" begin
+            m = Model(HiGHS.Optimizer)
+            @variable(m, 0 <= x[1:6] )
+            mga_idxs = [0, 1, 2]
+            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:fuzzy_mga_algorithm))
+            s = res[:variable]
+            mga_expression = 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
+            con1 = constraint_object(res[:threshold1])
+            benchmark1 = @build_constraint(s <= 1.5 * (mga_expression - 1.5) / -1.5)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:threshold2])
+            benchmark2 = @build_constraint(s <= (mga_expression - 1.5) / -1.5)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:threshold3])
+            benchmark3 = @build_constraint(s <= 1 + 0.5 * mga_expression / -1.5)
+            @test _is_constraint_equal(con3, benchmark3)
+        end
     end
 end
 
@@ -595,6 +656,171 @@ function _test_iterative_mga()
     end    
 end
 
+function _test_add_rpm_constraint()
+    function gen_model()
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        @constraint(m, x[1] + x[2] == 1)
+        return m, x
+    end
+    @testset "add_rpm_constraint_wrong_coefficients" begin
+        m, x = gen_model()
+        y = x[1]
+        a = 2
+        r = 0
+        @test_throws DomainError add_rpm_constraint!(m, y, a, r, 1.2, 1.7)
+        @test_throws DomainError add_rpm_constraint!(m, y, a, r, 0.8, 0.9)
+        @test_throws DomainError add_rpm_constraint!(m, y, a, r, 0.9, 0.8)
+    end
+    @testset "add_rpm_constraint_minimize_expression" begin
+        m, x = gen_model()
+        y = x[1]
+        a = 0
+        r = 2
+        res = add_rpm_constraint!(m, y, a, r)
+        s = res[:variable]
+        con1 = constraint_object(res[:threshold1])
+        benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/-2)
+        @test _is_constraint_equal(con1, benchmark1)
+        con2 = constraint_object(res[:threshold2])
+        benchmark2 = @build_constraint(s <= (x[1] - 2)/-2)
+        @test _is_constraint_equal(con2, benchmark2)
+        con3 = constraint_object(res[:threshold3])
+        benchmark3 = @build_constraint(s <= 1 + 0.5 * x[1]/-2)
+        @test _is_constraint_equal(con3, benchmark3)
+
+        @objective(m, Max, res[:variable])
+        optimize!(m)
+        @test isapprox(value(x[1]), 0)
+        @test isapprox(value(x[2]), 1)
+    end
+    @testset "add_rpm_constraint_maximize_expresion" begin
+        m, x = gen_model()
+        y = x[1]
+        a = 2
+        r = 0
+        res = add_rpm_constraint!(m, y, a, r)
+        s = res[:variable]
+        con1 = constraint_object(res[:threshold1])
+        benchmark1 = @build_constraint(s <= 1.5 * (x[1])/2)
+        @test _is_constraint_equal(con1, benchmark1)
+        con2 = constraint_object(res[:threshold2])
+        benchmark2 = @build_constraint(s <= (x[1])/2)
+        @test _is_constraint_equal(con2, benchmark2)
+        con3 = constraint_object(res[:threshold3])
+        benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 2)/2)
+        @test _is_constraint_equal(con3, benchmark3)
+
+        @objective(m, Max, s)
+        optimize!(m)
+        @test isapprox(value(x[1]), 1)
+        @test isapprox(value(x[2]), 0)
+    end
+    @testset "add_rpm_constraint_reachable_past_aspiration" begin
+        m, x = gen_model()
+        y = x[1]
+        a = 0.5
+        r = 0
+        res = add_rpm_constraint!(m, y, a, r)
+        s = res[:variable]
+        con1 = constraint_object(res[:threshold1])
+        benchmark1 = @build_constraint(s <= 1.5 * (x[1])/0.5)
+        @test _is_constraint_equal(con1, benchmark1)
+        con2 = constraint_object(res[:threshold2])
+        benchmark2 = @build_constraint(s <= (x[1])/0.5)
+        @test _is_constraint_equal(con2, benchmark2)
+        con3 = constraint_object(res[:threshold3])
+        benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 0.5)/0.5)
+        @test _is_constraint_equal(con3, benchmark3)
+
+        @objective(m, Max, s)
+        optimize!(m)
+        @test isapprox(value(x[1]), 1)
+        @test isapprox(value(x[2]), 0)
+    end
+    @testset "add_rpm_constraint_unreachable_reservation" begin
+        m, x = gen_model()
+        y = x[1]
+        a = 3
+        r = 2
+        res = add_rpm_constraint!(m, y, a, r)
+        s = res[:variable]
+        con1 = constraint_object(res[:threshold1])
+        benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/1)
+        @test _is_constraint_equal(con1, benchmark1)
+        con2 = constraint_object(res[:threshold2])
+        benchmark2 = @build_constraint(s <= (x[1] - 2)/1)
+        @test _is_constraint_equal(con2, benchmark2)
+        con3 = constraint_object(res[:threshold3])
+        benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 3)/1)
+        @test _is_constraint_equal(con3, benchmark3)
+
+        @objective(m, Max, s)
+        optimize!(m)
+        @test isapprox(value(x[1]), 1)
+        @test isapprox(value(x[2]), 0)
+    end
+    @testset "add_aspiration_equal_reservation" begin
+        m, x = gen_model()
+        y = x[1]
+        a = 0
+        r = 0
+        res = add_rpm_constraint!(m, y, a, r)
+        s = res[:variable]
+        con1 = constraint_object(res[:threshold1])
+        benchmark1 = @build_constraint(s <= 1)
+        @test _is_constraint_equal(con1, benchmark1)
+        con2 = constraint_object(res[:threshold2])
+        benchmark2 = @build_constraint(s <= 1)
+        @test _is_constraint_equal(con2, benchmark2)
+        con3 = constraint_object(res[:threshold3])
+        benchmark3 = @build_constraint(s <= 1)
+        @test _is_constraint_equal(con3, benchmark3)
+
+        @objective(m, Max, s)
+        optimize!(m)
+        @test isapprox(value(x[1]), 0)
+        @test isapprox(value(x[2]), 1)
+    end
+end
+
+function _test_add_objective_constraint()
+    @testset "add_hsj_objective_constraint" begin
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        @constraint(m, x[1] + x[2] == 1)
+        goal_function(m) = 1 + x[1]
+        @objective(m, Min, goal_function(m))
+        optimize!(m)
+        slack = 0.05
+        add_mga_objective_constraint!(m, slack, goal_function, Val(:hsj_mga_algorithm))
+        @objective(m, Min, x[2])
+        optimize!(m)
+        @test isapprox(value(x[1]), 0.05)
+        @test isapprox(value(x[2]), 0.95)
+    end
+    @testset "add_fuzzy_objective_constraint" begin
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        @constraint(m, x[1] + x[2] == 1)
+        goal_function(m) = 1 + x[1]
+        @objective(m, Min, goal_function(m))
+        optimize!(m)
+        slack = 0.05
+        res = add_mga_objective_constraint!(m, slack, goal_function, Val(:fuzzy_mga_algorithm))
+        s = res[:variable]
+        con1 = constraint_object(res[:threshold1])
+        benchmark1 = @build_constraint(s <= -1.5 * (20 * x[1] - 1))
+        @test _is_constraint_equal(con1, benchmark1)
+        con2 = constraint_object(res[:threshold2])
+        benchmark2 = @build_constraint(s <= -(20x[1] - 1))
+        @test _is_constraint_equal(con2, benchmark2)
+        con3 = constraint_object(res[:threshold3])
+        benchmark3 = @build_constraint(s <= 1 - 10x[1])
+        @test _is_constraint_equal(con3, benchmark3)
+    end
+end
+
 @testset "run_spineopt_hsj_mga" begin
     _test_slack_correction()
     _test_init_hsj_weights()
@@ -602,10 +828,14 @@ end
     _test_was_variable_active()
     _test_update_hsj_weights()
     _test_get_scenario_variable_average()
+    _test_get_scenario_variable_value_average()
     _test_prepare_objective_hsj_mga()
     _test_update_hsj_mga_objective()
     _test_init_mga_objective_expressions()
     _test_get_variable_group_values()
     _test_iterative_mga()
     _test_run_spineopt_hsj_mga()
+    _test_run_spineopt_fuzzy_mga()
+    _test_add_rpm_constraint()
+    _test_add_objective_constraint()
 end
