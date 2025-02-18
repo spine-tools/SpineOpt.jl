@@ -221,15 +221,13 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             end
             # Try to fetch the description from the corresponding .md filename.
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
-            description = try
-                open(f -> read(f, String), description_path, "r")
-                while description[(end - 1):end] != "\n\n"
-                    description *= "\n"
-                end
-                description
+            try
+                f = open( description_path, "r")
+                description = read(f, String)
             catch
                 @warn "extended description for `$name` not found! consider adding one to `$description_path`."
                 ""
+                description = ""
             end
             push!(system_string, section * description)
         end
