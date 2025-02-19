@@ -8,14 +8,16 @@ using SpineOpt:
     slack_correction,
     prepare_objective_mga!,
     update_mga_objective!,
-    init_mga_objective_expressions,
     get_variable_group_values,
     iterative_mga!,
     add_rpm_constraint!,
-    add_mga_objective_constraint!
+    add_mga_objective_constraint!,
+    formulate_mga_objective!
     
 using JuMP 
 using HiGHS
+
+array_to_dict(arr::AbstractArray) = Dict(k=>v for (k,v) in enumerate(arr))
 
 function _test_run_spineopt_mga_setup()
     url_in = "sqlite://"
@@ -304,28 +306,28 @@ function _test_do_update_hsj_weights()
             return [2*i+1, 2*i+2]
         end
         @testset "empty_iterator" begin
-            variable_values = [0, 0, 0, 0]
+            variable_values = array_to_dict([0, 0, 0, 0])
             dict = DefaultDict(0)
             do_update_hsj_weights!([], variable_values, variable_indices, dict)
             @test dict[0] == 0
             @test dict[1] == 0
         end
         @testset "variable inactive" begin
-            variable_values = [0, 0, 0, 0]
+            variable_values = array_to_dict([0, 0, 0, 0])
             dict = DefaultDict(0)
             do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
             @test dict[0] == 0
             @test dict[1] == 0
         end
         @testset "variable active" begin
-            variable_values = [1, 1, 1, 0]
+            variable_values = array_to_dict([1, 1, 1, 0])
             dict = DefaultDict(0)
             do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
             @test dict[0] == 1
             @test dict[1] == 1
         end
         @testset "variable active with set weight" begin
-            variable_values = [1, 1, 1, 0]
+            variable_values = array_to_dict([1, 1, 1, 0])
             dict = DefaultDict(0)
             dict[0] = 1
             dict[1] = 1
@@ -334,7 +336,7 @@ function _test_do_update_hsj_weights()
             @test dict[1] == 1
         end
         @testset "variable inactive with set weight" begin
-            variable_values = [0, 0, 0, 0]
+            variable_values = array_to_dict([0, 0, 0, 0])
             dict = DefaultDict(0)
             dict[0] = 1
             dict[1] = 1
@@ -343,7 +345,7 @@ function _test_do_update_hsj_weights()
             @test dict[1] == 1
         end
         @testset "active and inactive variables" begin
-            variable_values = [0, 0, 1, 0]
+            variable_values = array_to_dict([0, 0, 1, 0])
             dict = DefaultDict(0)
             do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
             @test dict[0] == 0
@@ -403,12 +405,12 @@ function _test_update_hsj_weights()
                 () -> [0, 1, 2, 3]
             )
         )
-        variable_values = Dict(:var_name => [0, 0, 0, 1, 0, 0, 0, 1])
+        variable_values = Dict(:var_name => array_to_dict([0, 0, 0, 1, 0, 0, 0, 1]))
         hsj_weights = init_hsj_weights()
         hsj_weights[:var_name][2] = 1
         hsj_weights[:var_name][3] = 1
 
-        update_hsj_weights!(variable_values, nothing, hsj_weights, group_parameters)
+        update_hsj_weights!(variable_values, hsj_weights, group_parameters)
         @testset "inactive_weights" begin
             @test hsj_weights[:var_name][0] == 0
         end
@@ -452,24 +454,24 @@ function _test_prepare_objective_hsj_mga()
         var_indxs = (i) -> [2*i+1, 2*i+2]
         stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
         var_stoch_weights = (i) -> stochastic_weights[i]
-        var_values = [1, 0, 0, 0, 1, 1]
+        var_values = array_to_dict([1, 0, 0, 0, 1, 1])
         mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
         @testset "empty mga indices" begin
             mga_idxs = []
             res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
-            @test res == 0
+            @test res[:expression] == 0
         end
         @testset "nonempty mga indices" begin
             mga_idxs = [0, 1, 2]
             res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
-            @test res == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
+            @test res[:expression] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
         end
     end
     @testset "prepare_objective_fuzzy_mga" begin
         var_indxs = (i) -> [2*i+1, 2*i+2]
         stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
         var_stoch_weights = (i) -> stochastic_weights[i]
-        var_values = [1, 0, 0, 0, 1, 1]
+        var_values = array_to_dict([1, 0, 0, 0, 1, 1])
         mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
         @testset "empty mga indices" begin
             m = Model(HiGHS.Optimizer)
@@ -525,7 +527,7 @@ function _test_update_hsj_mga_objective()
 
         hsj_weights = Dict(:x => x_mga_weights, :y => y_mga_weights)
         variables = Dict(:x => x, :y => y)
-        variable_values = Dict(:x => [0, 0, 0, 0, 0, 0], :y =>[0, 0, 0, 0])
+        variable_values = Dict(:x => array_to_dict([0, 0, 0, 0, 0, 0]), :y => array_to_dict([0, 0, 0, 0]))
         @testset "empty variable mga indices" begin
             x_mga_idxs = () -> []
             y_mga_idxs = () -> [0, 1]
@@ -533,11 +535,8 @@ function _test_update_hsj_mga_objective()
                 :x => (x_indxs, x_stoch_weights, x_mga_idxs),
                 :y => (y_indxs, y_stoch_weights, y_mga_idxs),
             )
-            mga_weighted_groups = Dict()
-            res = update_mga_objective!(m, hsj_weights, nothing, variables, variable_values, group_parameters, mga_weighted_groups, nothing, Val(:hsj_mga_algorithm))
-            @test res == 0.2y[3] + 0.8y[4]
-            @test mga_weighted_groups[:x] == 0
-            @test mga_weighted_groups[:y] == 0.2y[3] + 0.8y[4]
+            res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
+            @test res[:objective] == 0.2y[3] + 0.8y[4]
         end
         @testset "all empty variable mga indices" begin
             x_mga_idxs = () -> []
@@ -546,11 +545,8 @@ function _test_update_hsj_mga_objective()
                 :x => (x_indxs, x_stoch_weights, x_mga_idxs),
                 :y => (y_indxs, y_stoch_weights, y_mga_idxs),
             )
-            mga_weighted_groups = Dict()
-            res = update_mga_objective!(m, hsj_weights, nothing, variables, variable_values, group_parameters, mga_weighted_groups, nothing, Val(:hsj_mga_algorithm))
-            @test res == 0
-            @test mga_weighted_groups[:x] == 0
-            @test mga_weighted_groups[:y] == 0
+            res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
+            @test res[:objective] == 0
         end
         @testset "nonempty variable mga indices" begin
             x_mga_idxs = () -> [0, 1, 2]
@@ -559,19 +555,90 @@ function _test_update_hsj_mga_objective()
                 :x => (x_indxs, x_stoch_weights, x_mga_idxs),
                 :y => (y_indxs, y_stoch_weights, y_mga_idxs),
             )
-            mga_weighted_groups = Dict()
-            res = update_mga_objective!(m, hsj_weights, nothing, variables, variable_values, group_parameters, mga_weighted_groups, nothing, Val(:hsj_mga_algorithm))
-            @test res == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6] + 0.2y[3] + 0.8y[4]
-            @test mga_weighted_groups[:x] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
-            @test mga_weighted_groups[:y] == 0.2y[3] + 0.8y[4]
+            res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
+            @test res[:objective] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6] + 0.2y[3] + 0.8y[4]
         end
-    end 
-end
+    end
+    @testset "update_fuzzy_mga_objective" begin
+    
+        m = Model(HiGHS.Optimizer)
+        @variable(m, 0 <= x[1:2] <= 1)
+        @variable(m, 0 <= y[1:2] <= 1)
+        f(m) = 3 -x[1] + x[2] - y[1] + y[2]
+        @objective(m, Min, f(m))
+        set_silent(m)
+        optimize!(m)
+        constr = add_mga_objective_constraint!(m, 0.5, f, Val(:fuzzy_mga_algorithm))
+        variables =  Dict(:x => x, :y => y)
 
-function _test_init_mga_objective_expressions()
-    @testset "init_mga_objective_expressions" begin
-        expressions = init_mga_objective_expressions()
-        @test expressions[(t=1, instance=nothing)] == DefaultDict(0)
+        x_indxs = (i) -> [i]
+        x_stochastic_weights = [1, 1]
+        x_stoch_weights = (i) -> x_stochastic_weights[i]
+        y_indxs = (i) -> [1, 2]
+        y_stochastic_weights = [0.5, 0.5]
+        y_stoch_weights = (i) -> y_stochastic_weights[i]
+        
+        variable_values = Dict(:x => array_to_dict([1, 0]), :y => array_to_dict([1, 0]))
+
+        @testset "Empty mga indices" begin
+            hsj_weights = Dict(:x => Dict(1 => 1, 2=> 0) , :y => Dict(1=>1))
+            x_mga_idxs = () -> []
+            y_mga_idxs = () -> []
+            group_parameters = Dict(
+                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            )
+            res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
+            optimize!(m)
+            @test value(res[:variable]) == 1
+            @test value(constr[:variable]) == 1
+        end
+        @testset "Normal groups" begin
+            hsj_weights = Dict(:x => Dict(1 => 1, 2=> 0) , :y => Dict(1=>1))
+            x_mga_idxs = () -> [1, 2]
+            y_mga_idxs = () -> [1]
+            group_parameters = Dict(
+                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            )
+            res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
+            optimize!(m)
+            @test isapprox(value(res[:variable]), 1/5)
+            @test isapprox(value(x[1]), 4/5)
+            @test isapprox(value(y[1]), 4/5)
+            @test isapprox(value(x[2]), 0)
+            @test isapprox(value(y[2]), 0)
+        end
+        @testset "Skipped group" begin
+            hsj_weights = Dict(:x => Dict(1 => 0, 2=> 0) , :y => Dict(1=>1))
+            x_mga_idxs = () -> [1, 2]
+            y_mga_idxs = () -> [1]
+            group_parameters = Dict(
+                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            )
+            res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
+            optimize!(m)
+            @test isapprox(value(res[:variable]), 1/3)
+            @test isapprox(value(x[1]), 1)
+            @test isapprox(value(y[1]), 2/3)
+            @test isapprox(value(x[2]), 0)
+            @test isapprox(value(y[2]), 0)
+        end
+        @testset "All groups skipped" begin
+            hsj_weights = Dict(:x => Dict(1 => 0, 2=> 0) , :y => Dict(1=>0))
+            x_mga_idxs = () -> [1, 2]
+            y_mga_idxs = () -> [1]
+            group_parameters = Dict(
+                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            )
+            res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
+            optimize!(m)
+            @test value(res[:variable]) == 1
+            @test value(constr[:variable]) == 1
+        end
+        
     end
 end
 
@@ -586,6 +653,7 @@ function _test_get_variable_group_values()
         @constraint(m, y[2] == 4)
         @constraint(m, y[3] == 5)
         @constraint(m, y[4] == 6)
+        set_silent(m)
         optimize!(m)
         
         x_indxs = (i) -> [2*i+1, 2*i+2]
@@ -627,18 +695,15 @@ function _test_iterative_mga()
             :x => (x_indxs, x_stoch_weights, x_mga_idxs),
             :y => (y_indxs, y_stoch_weights, y_mga_idxs),
         )
-        mga_iteration = () -> [nothing]
         max_mga_iters = 2
-        mga_weighted_groups = Dict()
         goal_function = (m) -> -x[1] - x[2] - y[1]
         slack = 0.05
+        set_silent(m)
         res = iterative_mga!(
             m,
             variables,
             variable_group_parameters,
-            mga_iteration,
             max_mga_iters,
-            mga_weighted_groups,
             slack,
             goal_function,
             Val(:hsj_mga_algorithm)
@@ -690,6 +755,7 @@ function _test_add_rpm_constraint()
         @test _is_constraint_equal(con3, benchmark3)
 
         @objective(m, Max, res[:variable])
+        set_silent(m)
         optimize!(m)
         @test isapprox(value(x[1]), 0)
         @test isapprox(value(x[2]), 1)
@@ -712,6 +778,7 @@ function _test_add_rpm_constraint()
         @test _is_constraint_equal(con3, benchmark3)
 
         @objective(m, Max, s)
+        set_silent(m)
         optimize!(m)
         @test isapprox(value(x[1]), 1)
         @test isapprox(value(x[2]), 0)
@@ -734,6 +801,7 @@ function _test_add_rpm_constraint()
         @test _is_constraint_equal(con3, benchmark3)
 
         @objective(m, Max, s)
+        set_silent(m)
         optimize!(m)
         @test isapprox(value(x[1]), 1)
         @test isapprox(value(x[2]), 0)
@@ -756,6 +824,7 @@ function _test_add_rpm_constraint()
         @test _is_constraint_equal(con3, benchmark3)
 
         @objective(m, Max, s)
+        set_silent(m)
         optimize!(m)
         @test isapprox(value(x[1]), 1)
         @test isapprox(value(x[2]), 0)
@@ -778,6 +847,7 @@ function _test_add_rpm_constraint()
         @test _is_constraint_equal(con3, benchmark3)
 
         @objective(m, Max, s)
+        set_silent(m)
         optimize!(m)
         @test isapprox(value(x[1]), 0)
         @test isapprox(value(x[2]), 1)
@@ -791,10 +861,12 @@ function _test_add_objective_constraint()
         @constraint(m, x[1] + x[2] == 1)
         goal_function(m) = 1 + x[1]
         @objective(m, Min, goal_function(m))
+        set_silent(m)
         optimize!(m)
         slack = 0.05
         add_mga_objective_constraint!(m, slack, goal_function, Val(:hsj_mga_algorithm))
         @objective(m, Min, x[2])
+        set_silent(m)
         optimize!(m)
         @test isapprox(value(x[1]), 0.05)
         @test isapprox(value(x[2]), 0.95)
@@ -805,6 +877,7 @@ function _test_add_objective_constraint()
         @constraint(m, x[1] + x[2] == 1)
         goal_function(m) = 1 + x[1]
         @objective(m, Min, goal_function(m))
+        set_silent(m)
         optimize!(m)
         slack = 0.05
         res = add_mga_objective_constraint!(m, slack, goal_function, Val(:fuzzy_mga_algorithm))
@@ -821,6 +894,45 @@ function _test_add_objective_constraint()
     end
 end
 
+function _test_formulate_mga_objective()
+    @testset "formulate_hsj_mga_objective" begin
+        m = Model()
+        @variable(m, x)
+        @variable(m, y)
+        groups = Dict(
+            :x => Dict(:expression => x),
+            :y => Dict(:expression => y)
+        )
+        formulation = formulate_mga_objective!(m, groups, keys(groups), Dict(), Val(:hsj_mga_algorithm))
+        @test formulation[:objective] == x + y
+    end
+    @testset "formulate_fuzzy_mga_objective" begin
+        m = Model()
+        @variable(m, s1)
+        @variable(m, s2)
+        groups = Dict(
+            :s1 => Dict(:variable => s1),
+            :s2 => Dict(:variable => s2)
+        )
+        @variable(m, sc)
+        constraint = Dict(
+            :variable => sc
+        )
+        formulation = formulate_mga_objective!(m, groups, keys(groups), constraint, Val(:fuzzy_mga_algorithm))
+        s_min = formulation[:variable]
+        constr1 = constraint_object(formulation[:s1])
+        benchmark1 = @build_constraint(s_min <= s1)
+        @test _is_constraint_equal(constr1, benchmark1)
+        constr2 = constraint_object(formulation[:s2])
+        benchmark2 = @build_constraint(s_min <= s2)
+        @test _is_constraint_equal(constr2, benchmark2)
+        constr3 = constraint_object(formulation[:objective_constraint])
+        benchmark3 = @build_constraint(s_min <= sc)
+        @test _is_constraint_equal(constr3, benchmark3)
+        @test formulation[:objective] == s_min + 1e-4 * (s1 + s2 + sc)
+    end
+end
+
 @testset "run_spineopt_hsj_mga" begin
     _test_slack_correction()
     _test_init_hsj_weights()
@@ -831,11 +943,11 @@ end
     _test_get_scenario_variable_value_average()
     _test_prepare_objective_hsj_mga()
     _test_update_hsj_mga_objective()
-    _test_init_mga_objective_expressions()
     _test_get_variable_group_values()
     _test_iterative_mga()
-    _test_run_spineopt_hsj_mga()
-    _test_run_spineopt_fuzzy_mga()
     _test_add_rpm_constraint()
     _test_add_objective_constraint()
+    _test_formulate_mga_objective()
+    # _test_run_spineopt_hsj_mga()
+    # _test_run_spineopt_fuzzy_mga()
 end
