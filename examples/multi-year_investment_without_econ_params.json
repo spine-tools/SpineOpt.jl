@@ -725,16 +725,6 @@
         ],
         [
             "output",
-            "nonspin_ramp_down_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "nonspin_ramp_up_unit_flow",
-            null
-        ],
-        [
-            "output",
             "nonspin_units_shut_down",
             null
         ],
@@ -751,16 +741,6 @@
         [
             "output",
             "ramp_costs",
-            null
-        ],
-        [
-            "output",
-            "ramp_down_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "ramp_up_unit_flow",
             null
         ],
         [
@@ -785,17 +765,7 @@
         ],
         [
             "output",
-            "shut_down_unit_flow",
-            null
-        ],
-        [
-            "output",
             "start_up_costs",
-            null
-        ],
-        [
-            "output",
-            "start_up_unit_flow",
             null
         ],
         [
@@ -3246,31 +3216,10 @@
         ],
         [
             "unit__from_node",
-            "fix_nonspin_ramp_up_unit_flow",
-            null,
-            null,
-            "Fix the `nonspin_ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__from_node",
             "fix_nonspin_units_started_up",
             null,
             null,
             "Fix the `nonspin_units_started_up` variable."
-        ],
-        [
-            "unit__from_node",
-            "fix_ramp_up_unit_flow",
-            null,
-            null,
-            "Fix the `ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__from_node",
-            "fix_start_up_unit_flow",
-            null,
-            null,
-            "Fix the `start_up_unit_flow` variable."
         ],
         [
             "unit__from_node",
@@ -3302,31 +3251,10 @@
         ],
         [
             "unit__from_node",
-            "initial_nonspin_ramp_up_unit_flow",
-            null,
-            null,
-            "Initialize the `nonspin_ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__from_node",
             "initial_nonspin_units_started_up",
             null,
             null,
             "Initialize the `nonspin_units_started_up` variable."
-        ],
-        [
-            "unit__from_node",
-            "initial_ramp_up_unit_flow",
-            null,
-            null,
-            "Initialize the `ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__from_node",
-            "initial_start_up_unit_flow",
-            null,
-            null,
-            "Initialize the `start_up_unit_flow` variable."
         ],
         [
             "unit__from_node",
@@ -3729,20 +3657,6 @@
         ],
         [
             "unit__to_node",
-            "fix_nonspin_ramp_down_unit_flow",
-            null,
-            null,
-            "Fix the `nonspin_ramp_down_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "fix_nonspin_ramp_up_unit_flow",
-            null,
-            null,
-            "Fix the `nonspin_ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
             "fix_nonspin_units_shut_down",
             null,
             null,
@@ -3754,34 +3668,6 @@
             null,
             null,
             "Fix the `nonspin_units_started_up` variable."
-        ],
-        [
-            "unit__to_node",
-            "fix_ramp_down_unit_flow",
-            null,
-            null,
-            "Fix the `ramp_down_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "fix_ramp_up_unit_flow",
-            null,
-            null,
-            "Fix the `ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "fix_shut_down_unit_flow",
-            null,
-            null,
-            "Fix the `shut_down_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "fix_start_up_unit_flow",
-            null,
-            null,
-            "Fix the `start_up_unit_flow` variable."
         ],
         [
             "unit__to_node",
@@ -3813,20 +3699,6 @@
         ],
         [
             "unit__to_node",
-            "initial_nonspin_ramp_down_unit_flow",
-            null,
-            null,
-            "Initialize the `nonspin_ramp_down_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "initial_nonspin_ramp_up_unit_flow",
-            null,
-            null,
-            "Initialize the `nonspin_ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
             "initial_nonspin_units_shut_down",
             null,
             null,
@@ -3838,34 +3710,6 @@
             null,
             null,
             "Initialize the `nonspin_units_started_up` variable."
-        ],
-        [
-            "unit__to_node",
-            "initial_ramp_down_unit_flow",
-            null,
-            null,
-            "Initialize the `ramp_down_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "initial_ramp_up_unit_flow",
-            null,
-            null,
-            "Initialize the `ramp_up_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "initial_shut_down_unit_flow",
-            null,
-            null,
-            "Initialize the `shut_down_unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "initial_start_up_unit_flow",
-            null,
-            null,
-            "Initialize the `start_up_unit_flow` variable."
         ],
         [
             "unit__to_node",
