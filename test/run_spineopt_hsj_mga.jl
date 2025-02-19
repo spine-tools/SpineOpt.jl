@@ -677,20 +677,20 @@ function _test_get_variable_group_values()
 end
 
 function _test_iterative_mga()
-    @testset "iterative_mga" begin
+    @testset "iterative hsj mga" begin
         m = Model(HiGHS.Optimizer)
         @variable(m, x[1:2] >= 0)
-        x_indxs = (i) -> [i+1]
+        x_indxs = (i) -> [i]
         x_stoch_weights = (i) -> 1
         
         @variable(m, y[1] >= 0)
-        y_indxs = (i) -> [i+1]
+        y_indxs = (i) -> [i]
         y_stoch_weights = (i) -> 1
         variables = Dict(:x => x, :y => y)
         @constraint(m, x[1] + x[2] + y[1] <= 1)
         @objective(m, Min, -x[1] - x[2] - y[1])
-        x_mga_idxs = () -> [0, 1]
-        y_mga_idxs = () -> [0]
+        x_mga_idxs = () -> [1, 2]
+        y_mga_idxs = () -> [1]
         variable_group_parameters = Dict(
             :x => (x_indxs, x_stoch_weights, x_mga_idxs),
             :y => (y_indxs, y_stoch_weights, y_mga_idxs),
@@ -718,6 +718,52 @@ function _test_iterative_mga()
         @test isapprox(res[2][:x][1], 0, atol=atol)
         @test isapprox(res[2][:x][2], 0, atol=atol)
         @test isapprox(res[2][:y][1], 1, atol=atol)
+    end
+    @testset "iterative fuzzy mga" begin
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        x_indxs = (i) -> [i]
+        x_stoch_weights = (i) -> 1
+        
+        @variable(m, y[1:2] >= 0)
+        y_indxs = (i) -> [i]
+        y_stoch_weights = (i) -> 1
+        variables = Dict(:x => x, :y => y)
+        goal_function = (m) -> 3 -x[1] - x[2] - y[1] - y[2]
+        @constraint(m, x[1] + x[2] <= 1)
+        @constraint(m, y[1] + y[2] <= 1)
+        @objective(m, Min, goal_function(m))
+        x_mga_idxs = () -> [1, 2]
+        y_mga_idxs = () -> [1, 2]
+        variable_group_parameters = Dict(
+            :x => (x_indxs, x_stoch_weights, x_mga_idxs),
+            :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+        )
+        max_mga_iters = 2
+        
+        slack = 0.5
+        set_silent(m)
+        res = iterative_mga!(
+            m,
+            variables,
+            variable_group_parameters,
+            max_mga_iters,
+            slack,
+            goal_function,
+            Val(:hsj_mga_algorithm)
+        )
+        atol = slack + 1e-6
+        @test isapprox(res[0][:x][1], 1, atol=atol)
+        @test isapprox(res[0][:x][2], 0, atol=atol)
+        @test isapprox(res[0][:y][1], 1, atol=atol)
+        @test isapprox(res[0][:y][2], 0, atol=atol)
+        @test isapprox(res[1][:x][1], 0, atol=atol)
+        @test isapprox(res[1][:x][2], 1, atol=atol)
+        @test isapprox(res[1][:y][1], 0, atol=atol)
+        @test isapprox(res[1][:y][2], 1, atol=atol)
+        @test isapprox(res[2][:x][1] + res[2][:x][2], 4/5, atol=atol)
+        @test isapprox(res[2][:y][1] + res[2][:y][2], 4/5, atol=atol)
+
     end    
 end
 
@@ -948,6 +994,6 @@ end
     _test_add_rpm_constraint()
     _test_add_objective_constraint()
     _test_formulate_mga_objective()
-    # _test_run_spineopt_hsj_mga()
+    _test_run_spineopt_hsj_mga()
     # _test_run_spineopt_fuzzy_mga()
 end
