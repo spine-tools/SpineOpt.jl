@@ -107,17 +107,17 @@ function prepare_variable_groups(m::Model)
     return Dict(
         :units_invested  => (
             (ind) -> units_invested_available_indices(m; ind...),
-            (stoch_ind) -> unit_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...),
+            (stoch_ind) -> realize(unit_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
             units_invested_mga_indices,
         ),
         :connections_invested  => (
             (ind) -> connections_invested_available_indices(m; ind...),
-            (stoch_ind) ->connection_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...),
+            (stoch_ind) -> realize(connection_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
             connections_invested_mga_indices,
         ),
         :storages_invested  => (
             (ind) -> storages_invested_available_indices(m; ind...),
-            (stoch_ind) -> node_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...),
+            (stoch_ind) -> realize(node_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
             storages_invested_mga_indices,
         ),
     )
@@ -224,6 +224,7 @@ function prepare_objective_mga!(
         get_scenario_variable_average(variable, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
         for i in mga_indices
     )
+    
     weighted_group_variable_values = (
         get_scenario_variable_average(variable_values, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
         for i in mga_indices
