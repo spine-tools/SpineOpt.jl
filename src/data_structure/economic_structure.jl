@@ -103,7 +103,7 @@ function _create_set_parameters_and_relationships()
             :set_econ_lifetime => connection_investment_econ_lifetime,
             :set_discnt_rate_tech => connection_discount_rate_technology_specific,
             :set_decom_time => connection_decommissioning_time,
-            :set_decom_cost => connection_decommissioning_cost,
+            :set_decom_cost => decommissioning_cost,
             :set_capacity_transfer_factor => :connection_capacity_transfer_factor,
             :set_conversion_to_discounted_annuities => :connection_conversion_to_discounted_annuities,
             :set_salvage_fraction => :connection_salvage_fraction,
