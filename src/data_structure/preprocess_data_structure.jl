@@ -303,11 +303,11 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[n_from], ix] = 1
         A[node_numbers[n_to], ix] = -1
-        reactance = max(reactance(connection=conn, _default=0), 1e-6)
+        reactance_ = max(reactance(connection=conn, _default=0), 1e-6)
         if conn in unavailable_connections
-            reactance *= 1e3
+            reactance_ *= 1e3
         end
-        inv_X[ix, ix] = reactance_base(connection=conn) / reactance
+        inv_X[ix, ix] = reactance_base(connection=conn) / reactance_
     end
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
     if i === nothing
