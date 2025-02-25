@@ -120,10 +120,10 @@ function major_upgrade_to_16(db_url, log_level)
 end
 
 # Always check the last item
-function check_run_request_return_value(value_to_be_checked, print_value=true)
+function check_run_request_return_value(value_to_be_checked, log_level, print_value=true)
 	if value_to_be_checked[end] != nothing && value_to_be_checked[end] != ""
 		if print_value
-            #@log log_level 0 string(value_to_be_checked[end])
+            @log log_level 0 string(value_to_be_checked[end])
 		end
 		throw(error())
 	end
@@ -210,7 +210,7 @@ function add_merged_alternative(db_url, alternative_name_1, alternative_name_2, 
 			check_run_request_return_value(run_request(
 				db_url, "call_method", ("add_alternative_item",), Dict(
 					"name" => alternative_updated)
-				)
+				), log_level
 			)
 		catch
 			@log log_level 0 string("Warning: Could not create alternative $alternative_updated.")
@@ -225,19 +225,19 @@ function create_superclasses_and_subclasses(db_url, log_level)
 	# Add new classes
 	try
 		check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-			"name" => "node__to_unit", "dimension_name_list" => ["node", "unit"]))
+			"name" => "node__to_unit", "dimension_name_list" => ["node", "unit"])), log_level
 		)
  		check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-			"name" => "unit_flow", "dimension_name_list" => ["unit", "node"]))
+			"name" => "unit_flow", "dimension_name_list" => ["unit", "node"])), log_level
 		)
 		check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-			"name" => "unit_flow__unit_flow", "dimension_name_list" => ["unit_flow", "unit_flow"]))
+			"name" => "unit_flow__unit_flow", "dimension_name_list" => ["unit_flow", "unit_flow"])), log_level
 		)
 		check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
-			"superclass_name" => "unit_flow", "subclass_name" => "node__to_unit"))
+			"superclass_name" => "unit_flow", "subclass_name" => "node__to_unit")), log_level
 		)
 		check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
-			"superclass_name" => "unit_flow", "subclass_name" => "unit__to_node"))
+			"superclass_name" => "unit_flow", "subclass_name" => "unit__to_node")), log_level
 		)
 	catch
 		@log log_level 0 string("Could not add superclasses and subclasses.")
@@ -255,100 +255,104 @@ function merge_has_state_and_balance_type_parameters(db_url, log_level)
 	list_value_items = run_request(db_url, "call_method", ("get_list_value_items",), Dict(
 		"parameter_value_list_name" => "balance_type_list")
 	)
-	for list_value_item in list_value_items
-		old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
-		new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
-		check_run_request_return_value(run_request(
-			db_url, "call_method", ("update_list_value_item",), Dict(
-				"id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type))
+	try
+		for list_value_item in list_value_items
+			old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
+			new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
+			check_run_request_return_value(run_request(
+				db_url, "call_method", ("update_list_value_item",), Dict(
+					"id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)), log_level
+			)
+		end
+		# Add new items to the same parameter value list items
+		for (list_value_name, list_index) in [("storage_node", 3), ("storage_group", 4)]
+			new_name_value, new_name_type = unparse_db_value(list_value_name)
+			check_run_request_return_value(run_request(
+				db_url, "call_method", ("add_list_value_item",), Dict(
+					"parameter_value_list_name" => "balance_type_list", "value" => new_name_value, "type" => new_name_type,
+					"index" => list_index)), log_level
+			)
+		end
+		# Rename the parameter value list
+		pval_list_item = run_request(db_url, "call_method", ("get_parameter_value_list_item",), Dict(
+			"name" => "balance_type_list")
 		)
-	end
-	# Add new items to the same parameter value list items
-	for (list_value_name, list_index) in [("storage_node", 3), ("storage_group", 4)]
-		new_name_value, new_name_type = unparse_db_value(list_value_name)
 		check_run_request_return_value(run_request(
-			db_url, "call_method", ("add_list_value_item",), Dict(
-				"parameter_value_list_name" => "balance_type_list", "value" => new_name_value, "type" => new_name_type,
-				"index" => list_index))
+			db_url, "call_method", ("update_parameter_value_list_item",), Dict(
+				"id" => pval_list_item["id"], "name" => "node_type_list")), log_level
 		)
-	end
-	# Rename the parameter value list
-	pval_list_item = run_request(db_url, "call_method", ("get_parameter_value_list_item",), Dict(
-		"name" => "balance_type_list")
-	)
-	check_run_request_return_value(run_request(
-		db_url, "call_method", ("update_parameter_value_list_item",), Dict(
-			"id" => pval_list_item["id"], "name" => "node_type_list"))
-	)
-	# Prepare dictionaries from has_state and balance_type parameters
-	pvals_state = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
-		"entity_class_name" => "node", "parameter_definition_name" => "has_state")
-	)
-	vals_state = create_dict_from_parameter_value_items(db_url, pvals_state)
-	pvals_type = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
-		"entity_class_name" => "node", "parameter_definition_name" => "balance_type")
-	)
-	vals_type = create_dict_from_parameter_value_items(db_url, pvals_type)
-	# Include has_state info in balance_type parameter
-	for (entity, val_state_list) in vals_state
-		if haskey(vals_type, entity)
-			val_type_list = vals_type[entity]
-			for (alternative, val_state) in val_state_list
-				if val_state == true
-					base_alternative_added = false
-					for (alternative2, val_type) in val_type_list
-						alternative_updated, base_alternative_added = add_merged_alternative(
-							db_url, alternative, alternative2, log_level
-						)
-						if val_type == "balance_group"
-							new_type = "storage_group"
-						elseif val_type == "no_balance"
-							new_type = "no_balance"
-						else
-							new_type = "storage_node"
+		# Prepare dictionaries from has_state and balance_type parameters
+		pvals_state = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+			"entity_class_name" => "node", "parameter_definition_name" => "has_state")
+		)
+		vals_state = create_dict_from_parameter_value_items(db_url, pvals_state)
+		pvals_type = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+			"entity_class_name" => "node", "parameter_definition_name" => "balance_type")
+		)
+		vals_type = create_dict_from_parameter_value_items(db_url, pvals_type)
+		# Include has_state info in balance_type parameter
+		for (entity, val_state_list) in vals_state
+			if haskey(vals_type, entity)
+				val_type_list = vals_type[entity]
+				for (alternative, val_state) in val_state_list
+					if val_state == true
+						base_alternative_added = false
+						for (alternative2, val_type) in val_type_list
+							alternative_updated, base_alternative_added = add_merged_alternative(
+								db_url, alternative, alternative2, log_level
+							)
+							if val_type == "balance_group"
+								new_type = "storage_group"
+							elseif val_type == "no_balance"
+								new_type = "no_balance"
+							else
+								new_type = "storage_node"
+							end
+							# Convert the object into a DB representation
+							db_value, db_type = unparse_db_value(new_type)
+							# Add the new parameter value into the database
+							check_run_request_return_value(run_request(
+								db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+									"entity_class_name" => "node", 
+									"parameter_definition_name" => "balance_type", 
+									"entity_byname" => entity, 
+									"alternative_name" => alternative_updated, 
+									"value" => db_value,
+									"type" => db_type)
+								), log_level
+							)
 						end
-						# Convert the object into a DB representation
-						db_value, db_type = unparse_db_value(new_type)
-						# Add the new parameter value into the database
-						check_run_request_return_value(run_request(
-							db_url, "call_method", ("add_update_parameter_value_item",), Dict(
-								"entity_class_name" => "node", 
-								"parameter_definition_name" => "balance_type", 
-								"entity_byname" => entity, 
-								"alternative_name" => alternative_updated, 
-								"value" => db_value,
-								"type" => db_type)
+						if !base_alternative_added
+							new_type = "storage_node"
+							# Convert the object into a DB representation
+							db_value, db_type = unparse_db_value(new_type)
+							# Add the new parameter value into the database
+							check_run_request_return_value(run_request(
+								db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+									"entity_class_name" => "node", 
+									"parameter_definition_name" => "balance_type", 
+									"entity_byname" => entity, 
+									"alternative_name" => alternative, 
+									"value" => db_value,
+									"type" => db_type)
+								), log_level
 							)
-						)
-					end
-					if !base_alternative_added
-						new_type = "storage_node"
-						# Convert the object into a DB representation
-						db_value, db_type = unparse_db_value(new_type)
-						# Add the new parameter value into the database
-						check_run_request_return_value(run_request(
-							db_url, "call_method", ("add_update_parameter_value_item",), Dict(
-								"entity_class_name" => "node", 
-								"parameter_definition_name" => "balance_type", 
-								"entity_byname" => entity, 
-								"alternative_name" => alternative, 
-								"value" => db_value,
-								"type" => db_type)
-							)
-						)
+						end
 					end
 				end
 			end
 		end
-	end
-	# Remove old parameter definition
-	pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
-		"entity_class_name" => "node", "name" => "has_state")
-	)
-	if length(pdef) > 0
-		check_run_request_return_value(run_request(
-			db_url, "call_method", ("remove_parameter_definition_item", pdef["id"]))
+		# Remove old parameter definition
+		pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
+			"entity_class_name" => "node", "name" => "has_state")
 		)
+		if length(pdef) > 0
+			check_run_request_return_value(run_request(
+				db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
+			)
+		end
+	catch
+		@log log_level 0 string("Could not merge has_state and balance_type.")
 	end
 end
 
@@ -360,7 +364,7 @@ function update_ordering_of_multidimensional_classes(db_url, classes_to_be_updat
         @log log_level 0 string(old_class)
 		class_item = run_request(db_url, "call_method", ("get_entity_class_item",), Dict("name" => old_class))
 		check_run_request_return_value(run_request(
-			db_url, "call_method", ("remove_entity_class_item", class_item["id"]))
+			db_url, "call_method", ("remove_entity_class_item", class_item["id"])), log_level
 		)
 	end
 end
@@ -370,7 +374,7 @@ function update_ordering_of_multidimensional_class(db_url, old_class, new_class,
 	try
 		# Create new class
 		check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-			"name" => new_class, "dimension_name_list" => dimensions))
+			"name" => new_class, "dimension_name_list" => dimensions)), log_level
 		)
 	catch
 	end
@@ -386,7 +390,7 @@ function update_ordering_of_multidimensional_class(db_url, old_class, new_class,
 				"default_value" => pdef["default_value"],
 				"default_type" => pdef["default_type"],
 				"parameter_value_list_name" => pdef["parameter_value_list_name"],
-				"description" => pdef["description"]))
+				"description" => pdef["description"])), log_level
 			)
 		catch
 		end
@@ -404,7 +408,8 @@ function update_ordering_of_multidimensional_class(db_url, old_class, new_class,
 					"entity_class_name" => new_class, 
 					"entity_byname" => new_element_name_list,
 					"description" => entity_item["description"])
-			))
+				), log_level
+			)
 			entities[entity_item["element_name_list"]] = entity_item
 		end
 		for pdef in pdefs
@@ -420,12 +425,13 @@ function update_ordering_of_multidimensional_class(db_url, old_class, new_class,
 					db_value, db_type = unparse_db_value(val)
 					check_run_request_return_value(run_request(
 						db_url, "call_method", ("add_parameter_value_item",), Dict(
-						"entity_class_name" => new_class,
-						"entity_byname" => new_element_name_list,
-						"alternative_name" => alternative,
-						"parameter_definition_name" => pdef["name"],
-						"value" => db_value,
-						"type" => db_type))
+							"entity_class_name" => new_class,
+							"entity_byname" => new_element_name_list,
+							"alternative_name" => alternative,
+							"parameter_definition_name" => pdef["name"],
+							"value" => db_value,
+							"type" => db_type)
+						), log_level
 					)
 				end
 			end
@@ -450,7 +456,7 @@ function rename_parameter(db_url, class_name, old_par_name, new_par_name, merge_
 	if length(pdef) > 0
 		try
 			check_run_request_return_value(run_request(db_url, "call_method", ("update_item", "parameter_definition"), Dict(
-				"id" => pdef["id"], "name" => new_par_name))
+				"id" => pdef["id"], "name" => new_par_name)), log_level
 			)
 		catch
 			if merge_method == "sum"
@@ -458,7 +464,7 @@ function rename_parameter(db_url, class_name, old_par_name, new_par_name, merge_
 			end
 			# Remove old parameter definition
 			check_run_request_return_value(run_request(
-				db_url, "call_method", ("remove_parameter_definition_item", pdef["id"]))
+				db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
 			)
 		end
 	end
@@ -496,7 +502,7 @@ function sum_to_existing_parameter(db_url, class_name, old_par_name, new_par_nam
 							"entity_byname" => entity, 
 							"alternative_name" => alternative_updated, 	
 							"value" => summed_pval_value, "type" => summed_pval_type)
-						)
+						), log_level
 					)
 				end
 			end
@@ -508,7 +514,7 @@ function sum_to_existing_parameter(db_url, class_name, old_par_name, new_par_nam
 						"entity_class_name" => class_name, "parameter_definition_name" => new_par_name, 
 						"entity_byname" => entity, "alternative_name" => alternative, 
 						"value" => pval_value, "type" => pval_type)
-					)
+					), log_level
 				)
 			end						
 		end
