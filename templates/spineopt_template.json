@@ -167,7 +167,7 @@
         ["connection", "monitoring_activate", false, "boolean_value_list", "A boolean flag for defining a contingency `connection`."],
         ["connection", "reactance", null, null, "The per unit reactance of a `connection`."],
         ["connection", "reactance_base", 1, null, "If the reactance is given for a p.u.  (e.g. p.u. = 100MW), the `reactance_base` can be set to perform this conversion (e.g. *100)."],
-        ["connection", "connection_resistance", null, null, "The per unit resistance of a `connection`."],
+        ["connection", "resistance", null, null, "To be implemented. The per unit resistance of a `connection`."],
         ["connection", "connection_type", "connection_type_normal", "connection_type_list", "A selector between a normal and a lossless bidirectional `connection`."],
         ["connection", "connections_invested_big_m_mga", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For connections_invested_mga an appropriate big_m_mga would be twice the candidate connections."],
         ["connection", "connections_invested_mga", false, "boolean_value_list", "Defines whether a certain variable (here: connections_invested) will be considered in the maximal-differences of the mga objective"],
