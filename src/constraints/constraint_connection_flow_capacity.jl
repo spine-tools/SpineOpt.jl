@@ -30,7 +30,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 & \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
 & <= \\
 & p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
-& \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
+& \cdot \left( p^{existing\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
@@ -40,7 +40,7 @@ See also
 [connection\_capacity](@ref),
 [availability\_factor](@ref),
 [connection\_conv\_cap\_to\_flow](@ref),
-[number\_of\_connections](@ref),
+[existing\_connections](@ref),
 [candidate\_connections](@ref)
 
 !!! note
@@ -125,7 +125,7 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
                 for s in s_path, t1 in t_in_t(m; t_short=t);
                 init=0,
             )
-            + number_of_connections(
+            + existing_connections(
                 m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
             )
         )

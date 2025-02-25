@@ -114,6 +114,7 @@ function major_upgrade_to_16(db_url, log_level)
         (("connection", "connection_reactance"), "reactance", ""),
         (("connection", "connection_reactance_base"), "reactance_base", ""),
         (("connection", "connection_resistance"), "resistance", ""),
+        (("connection", "number_of_connections"), "existing_connections", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

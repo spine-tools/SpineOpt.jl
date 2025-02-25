@@ -180,7 +180,7 @@
         ["connection", "has_binary_gas_flow", false, "boolean_value_list", "This parameter needs to be set to `true` in order to represent bidirectional pressure drive gas transfer."],
         ["connection", "initial_connections_invested", null, null, "Setting a value fixes the connections_invested variable at the beginning"],
         ["connection", "initial_connections_invested_available", null, null, "Setting a value fixes the connections_invested_available variable at the beginning"],
-        ["connection", "number_of_connections", 1.0, null, "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."],
+        ["connection", "existing_connections", 1.0, null, "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."],
         ["investment_group", "equal_investments", false, "boolean_value_list", "Whether all entities in the group must have the same investment decision."],
         ["investment_group", "maximum_capacity_invested_available", null, null, "Upper bound on the capacity invested available in the group at any point in time."],
         ["investment_group", "maximum_entities_invested_available", null, null, "Upper bound on the number of entities invested available in the group at any point in time."],

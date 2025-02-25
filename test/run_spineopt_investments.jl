@@ -103,7 +103,7 @@ function _test_capacity_investments()
             ["node", "node_a", "storage_investment_count_max_cumulative", 20],
             ["node", "node_a", "storage_investment_cost", 0],
             ["node", "node_a", "storage_investment_variable_type", "storage_investment_variable_type_continuous"],
-            ["connection", "connection_ab", "number_of_connections", 5],
+            ["connection", "connection_ab", "existing_connections", 5],
             ["connection", "connection_ab", "candidate_connections", 20],
             ["connection", "connection_ab", "connection_investment_cost", 0],
             [
