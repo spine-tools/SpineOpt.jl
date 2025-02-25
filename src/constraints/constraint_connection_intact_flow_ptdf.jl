@@ -111,7 +111,7 @@ end
 function constraint_connection_intact_flow_ptdf_indices(m::Model)
     (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
-        for conn in connection(connection_monitored=true, has_ptdf=true)
+        for conn in connection(monitoring_activate=true, has_ptdf=true)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (n_to, t) in node_time_indices(m; node=n_to)
         if _check_ptdf_duration(m, t, conn)

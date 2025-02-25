@@ -129,7 +129,7 @@ function test_save_connection_avg_throughflow()
             ["node__commodity", ["node_b", "electricity"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_monitored", true],
+            ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "connection_reactance", 0.1],
             ["connection", "connection_ab", "connection_resistance", 0.9],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
@@ -261,13 +261,13 @@ function test_save_contingency_is_binding()
             # ["report__output", ["report_y", "contingency_is_binding"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_monitored", true],
+            ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "connection_reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
-            ["connection", "connection_bc", "connection_monitored", true],
+            ["connection", "connection_bc", "monitoring_activate", true],
             ["connection", "connection_bc", "connection_reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
-            ["connection", "connection_ca", "connection_monitored", true],
+            ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "connection_reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
