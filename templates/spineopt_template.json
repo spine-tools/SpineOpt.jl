@@ -736,14 +736,8 @@
         ["output","node_slack_pos","output_type","variable","Base"],
         ["output","node_state","output_type","variable","Base"],
         ["output","node_voltage_angle","output_type","variable","Base"],
-        ["output","nonspin_ramp_down_unit_flow","output_type","variable","Base"],
-        ["output","nonspin_ramp_up_unit_flow","output_type","variable","Base"],
         ["output","nonspin_units_shut_down","output_type","variable","Base"],
         ["output","nonspin_units_started_up","output_type","variable","Base"],
-        ["output","ramp_down_unit_flow","output_type","variable","Base"],
-        ["output","ramp_up_unit_flow","output_type","variable","Base"],
-        ["output","shut_down_unit_flow","output_type","variable","Base"],
-        ["output","start_up_unit_flow","output_type","variable","Base"],
         ["output","storages_decommissioned","output_type","variable","Base"],
         ["output","storages_invested","output_type","variable","Base"],
         ["output","storages_invested_available","output_type","variable","Base"],
@@ -952,5 +946,8 @@
         ["output","constraint_investment_group_minimum_entities_invested_available","Base", true],
         ["output","constraint_unit_lifetime","Base", true],
         ["output","constraint_non_spinning_reserves_shut_down_upper_bound","Base", true]
+    ],
+    "alternatives": [
+        ["Base","Base alternative"]
     ]
 }
