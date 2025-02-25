@@ -123,13 +123,13 @@ end
 function test_constraint_units_available()
     @testset "constraint_units_available" begin
         url_in = _test_constraint_unit_setup()
-        number_of_units = 4
-        candidate_units = 3
-        unit_availability_factor = 0.5
+        existing_units = 4
+        investment_count_max_cumulative = 3
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "existing_units", existing_units],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -147,7 +147,7 @@ function test_constraint_units_available()
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= number_of_units + var_u_inv_av)
+            expected_con = @build_constraint(var_u_on <= existing_units + var_u_inv_av)
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
@@ -159,15 +159,15 @@ end
 function test_constraint_units_available_units_unavailable()
     @testset "constraint_units_available_units_unavailable" begin
         url_in = _test_constraint_unit_setup()
-        number_of_units = 4
-        candidate_units = 3 
-        units_unavailable = 1
-        unit_availability_factor = 0.5
+        existing_units = 4
+        investment_count_max_cumulative = 3 
+        out_of_service_count_fix = 1
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "units_unavailable", units_unavailable],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "existing_units", existing_units],
+            ["unit", "unit_ab", "out_of_service_count_fix", out_of_service_count_fix],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -185,7 +185,7 @@ function test_constraint_units_available_units_unavailable()
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= number_of_units + var_u_inv_av - units_unavailable)
+            expected_con = @build_constraint(var_u_on <= existing_units + var_u_inv_av - out_of_service_count_fix)
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
@@ -194,14 +194,14 @@ function test_constraint_units_available_units_unavailable()
     end
     @testset "constraint_units_available_units_unavailable_default" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 3
-        number_of_units_when_candidates_units = 0 
-        units_unavailable = 1
-        unit_availability_factor = 0.5
+        investment_count_max_cumulative = 3
+        existing_units_when_candidates_units = 0 
+        out_of_service_count_fix = 1
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "units_unavailable", units_unavailable],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "out_of_service_count_fix", out_of_service_count_fix],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -219,13 +219,16 @@ function test_constraint_units_available_units_unavailable()
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= number_of_units_when_candidates_units + var_u_inv_av - units_unavailable)
+            expected_con = @build_constraint(
+                var_u_on <= existing_units_when_candidates_units + var_u_inv_av - out_of_service_count_fix
+            )
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+    # Add a test for a unit with units_out_of_service variable
 end
 
 function test_constraint_unit_state_transition()
@@ -319,7 +322,7 @@ function test_constraint_unit_flow_capacity()
                 url_in = _test_constraint_unit_reserves_setup()
                 mup = unparse_db_value(case_name == :min_up_time_gt_time_step ? Minute(61) : Hour(1))
                 object_parameter_values = [
-                    ["unit", "unit_ab", "unit_availability_factor", uaf],
+                    ["unit", "unit_ab", "availability_factor", uaf],
                     ["unit", "unit_ab", "min_up_time", mup],
                     ["node", "reserves_a", "downward_reserve", dr],
                     ["node", "reserves_bc", "upward_reserve", ur],
@@ -1030,13 +1033,13 @@ end
 function test_constraint_units_out_of_service_contiguity()
     @testset "constraint_units_out_of_service_contiguity" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-        @testset for scheduled_outage_duration_minutes in (60, 120, 210)
+        @testset for outage_scheduled_duration_minutes in (60, 120, 210)
             url_in = _test_constraint_unit_setup()
-            scheduled_outage_duration = Dict(
-                "type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m")
+            outage_scheduled_duration = Dict(
+                "type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m")
             )
             object_parameter_values = [
-                ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
+                ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
                 ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
@@ -1053,7 +1056,7 @@ function test_constraint_units_out_of_service_contiguity()
             head_hours = -(
                 length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
             )
-            tail_hours = round(Minute(scheduled_outage_duration_minutes), Hour(1)).value
+            tail_hours = round(Minute(outage_scheduled_duration_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
                 repeat([stochastic_scenario(:parent)], tail_hours)
@@ -1081,13 +1084,13 @@ end
 function test_constraint_min_scheduled_outage_duration()
     @testset "constraint_min_scheduled_outage_duration" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-        @testset for scheduled_outage_duration_minutes in (60, 120, 210)
+        @testset for outage_scheduled_duration_minutes in (60, 120, 210)
             url_in = _test_constraint_unit_setup()
-            scheduled_outage_duration = Dict(
-                "type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m")
+            outage_scheduled_duration = Dict(
+                "type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m")
             )
             object_parameter_values = [
-                ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
+                ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
                 ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
@@ -1102,9 +1105,9 @@ function test_constraint_min_scheduled_outage_duration()
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
             vars_u_oos = [var_units_out_of_service[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)]
             expected_con = @build_constraint(
-                scheduled_outage_duration_minutes / 60
+                outage_scheduled_duration_minutes / 60
                 <= sum(vars_u_oos)
-                <= ceil(scheduled_outage_duration_minutes / 60)
+                <= ceil(outage_scheduled_duration_minutes / 60)
             )
             con_key = (unit(:unit_ab), s_path, constraint_t)
             observed_con = constraint_object(constraint[con_key...])
@@ -1178,12 +1181,12 @@ function test_constraint_min_down_time()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (45, 150, 300)
             url_in = _test_constraint_unit_setup()
-            number_of_units = 4
-            candidate_units = 3
+            existing_units = 4
+            investment_count_max_cumulative = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "number_of_units", number_of_units],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "existing_units", existing_units],
                 ["unit", "unit_ab", "min_down_time", min_down_time],
                 ["model", "instance", "model_end", model_end]
             ]
@@ -1224,7 +1227,7 @@ function test_constraint_min_down_time()
                 var_u_inv_av = var_units_invested_available[var_u_inv_av_on_key...]
                 var_u_on = var_units_on[var_u_inv_av_on_key...]
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd))
+                expected_con = @build_constraint(existing_units + var_u_inv_av - var_u_on >= sum(vars_u_sd))
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -1238,12 +1241,12 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
             url_in = _test_constraint_unit_setup()
-            number_of_units = 4
-            candidate_units = 3
+            existing_units = 4
+            investment_count_max_cumulative = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "number_of_units", number_of_units],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "existing_units", existing_units],
                 ["unit", "unit_ab", "min_down_time", min_down_time],
                 ["model", "instance", "model_end", model_end],
                 ["node", "node_a", "is_reserve_node", true],
@@ -1296,7 +1299,7 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
                 var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
                 var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
                 expected_con = @build_constraint(
-                    number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd) + var_ns_su
+                    existing_units + var_u_inv_av - var_u_on >= sum(vars_u_sd) + var_ns_su
                 )
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
@@ -1309,8 +1312,8 @@ end
 function test_constraint_units_invested_available()
     @testset "constraint_units_invested_available" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 7
-        object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
+        investment_count_max_cumulative = 7
+        object_parameter_values = [["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative]]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
@@ -1325,7 +1328,7 @@ function test_constraint_units_invested_available()
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var = var_units_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_units)
+            expected_con = @build_constraint(var <= investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1336,9 +1339,9 @@ end
 function test_constraint_units_invested_available_mp()
     @testset "constraint_units_invested_available_mp" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 7
+        investment_count_max_cumulative = 7
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -1355,7 +1358,7 @@ function test_constraint_units_invested_available_mp()
         @testset for t in time_slices
             key = (unit(:unit_ab), stochastic_scenario(:parent), t)
             var = var_units_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_units)
+            expected_con = @build_constraint(var <= investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1366,8 +1369,8 @@ end
 function test_constraint_units_invested_transition()
     @testset "constraint_units_invested_transition" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 4
-        object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
+        investment_count_max_cumulative = 4
+        object_parameter_values = [["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative]]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
@@ -1403,9 +1406,9 @@ end
 function test_constraint_units_invested_transition_mp()
     @testset "constraint_units_invested_transition_mp" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 4
+        investment_count_max_cumulative = 4
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -1442,14 +1445,14 @@ end
 
 function test_constraint_unit_lifetime()
     @testset "constraint_unit_lifetime" begin
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -1498,21 +1501,21 @@ end
 
 function test_constraint_unit_lifetime_sense()
     @testset "constraint_unit_lifetime_sense" begin
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         lifetime_minutes = 240
         senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
         url_in = _test_constraint_unit_setup()
-        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         @testset for (sense_key, sense_value) in senses
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
-                ["unit", "unit_ab", "unit_investment_lifetime_sense", sense_key],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
+                ["unit", "unit_ab", "lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
             ]
             SpineInterface.import_data(
@@ -1555,14 +1558,14 @@ end
 
 function test_constraint_unit_lifetime_mp()
     @testset "constraint_unit_lifetime_mp" begin
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]

@@ -75,12 +75,12 @@ function test_fom_cost_case1()
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 2
-        candidate_units = 3
+        existing_units = 2
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -103,7 +103,7 @@ function test_fom_cost_case1()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * duration *
         sum(             
-            (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) 
+            (existing_units + var_units_invested_available[unit(:unit_ab), s, t]) 
             for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -116,13 +116,13 @@ function test_fom_cost_case2()
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 0
-        # The template provides the parameter `number_of_units` with a default value of 1.
-        candidate_units = 3
+        existing_units = 0
+        # The template provides the parameter `existing_units` with a default value of 1.
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -145,7 +145,7 @@ function test_fom_cost_case2()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * duration *
         sum(             
-            (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) 
+            (existing_units + var_units_invested_available[unit(:unit_ab), s, t]) 
             for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -158,10 +158,10 @@ function test_fom_cost_case3()
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 2
+        existing_units = 2
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
@@ -178,7 +178,7 @@ function test_fom_cost_case3()
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * duration *
         sum(             
-            number_of_units for (s, t) in zip(scenarios, time_slices)
+            existing_units for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
@@ -207,10 +207,10 @@ function test_unit_investment_cost()
     @testset "unit_investment_cost" begin
         url_in = _test_objective_setup()
         unit_investment_cost = 1000
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "unit_investment_cost", unit_investment_cost],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -229,14 +229,14 @@ function test_unit_investment_cost()
     end
 end
 
-function test_node_slack_penalty()
-    @testset "node_slack_penalty" begin
+function test_node_balance_penalty()
+    @testset "node_balance_penalty" begin
         url_in = _test_objective_setup()
         node_a_slack_penalty = 0.6
         node_b_slack_penalty = 0.4
         object_parameter_values = [
-            ["node", "node_a", "node_slack_penalty", node_a_slack_penalty],
-            ["node", "node_b", "node_slack_penalty", node_b_slack_penalty],
+            ["node", "node_a", "node_balance_penalty", node_a_slack_penalty],
+            ["node", "node_b", "node_balance_penalty", node_b_slack_penalty],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         
@@ -398,7 +398,7 @@ end
     test_fom_cost_case3()
     test_fuel_cost()
     test_unit_investment_cost()
-    test_node_slack_penalty()
+    test_node_balance_penalty()
     test_user_constraint_slack_penalty()
     test_shut_down_cost()
     test_start_up_cost()

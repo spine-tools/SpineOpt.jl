@@ -98,8 +98,8 @@ function add_variable_units_on!(m::Model)
         lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=fix_units_on,
-        initial_value=initial_units_on,
+        fix_value=online_count_fix,
+        initial_value=online_count_initial,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,
         required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),
@@ -108,7 +108,7 @@ end
 
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+        existing_units(m; unit=u, stochastic_scenario=s, t=t)
     end
 end
 

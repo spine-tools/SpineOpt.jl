@@ -19,19 +19,19 @@
 
 @doc raw"""
 In order to impose an upper limit on the maximum voltage angle at a node
-the parameter [max\_voltage\_angle](@ref) can be specified which triggers the following constraint:
+the parameter [voltage\_angle\_max](@ref) can be specified which triggers the following constraint:
 
 ```math
 \begin{aligned}
-& \sum_{n \in ng} v^{node\_voltage\_angle}_{(n,s,t)} \geq p^{max\_voltage\_angle}_{(ng,s,t)} \\
-& \forall ng \in indices(p^{max\_voltage\_angle}) \\
+& \sum_{n \in ng} v^{node\_voltage\_angle}_{(n,s,t)} \geq p^{voltage\_angle\_max}_{(ng,s,t)} \\
+& \forall ng \in indices(p^{voltage\_angle\_max}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also be defined on a node group,
+As indicated in the equation, the parameter [voltage\_angle\_max](@ref) can also be defined on a node group,
 in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
 
-See also [max\_voltage\_angle](@ref).
+See also [voltage\_angle\_max](@ref).
 
 """
 function add_constraint_max_node_voltage_angle!(m::Model)
@@ -48,7 +48,7 @@ function _build_constraint_max_node_voltage_angle(m::Model, ng, s_path, t)
     @build_constraint(
         sum(
             + node_voltage_angle[n, s, t]
-            - max_voltage_angle(m; node=ng, stochastic_scenario=s, t=t)
+            - voltage_angle_max(m; node=ng, stochastic_scenario=s, t=t)
             for (n, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s_path, t=t);
             init=0,
         )
@@ -60,7 +60,7 @@ end
 function constraint_max_node_voltage_angle_indices(m::Model)
     (
         (node=ng, stochastic_path=[s], t=t)
-        for (ng, s, t) in node_voltage_angle_indices(m; node=indices(max_voltage_angle))
+        for (ng, s, t) in node_voltage_angle_indices(m; node=indices(voltage_angle_max))
     )
 end
 

@@ -29,7 +29,7 @@ and [storages\_decommissioned](@ref) in adjacent timeslices.
 & v^{storages\_invested\_available}_{(n,s,t)} - v^{storages\_invested}_{(n,s,t)}
 + v^{storages\_decommissioned}_{(n,s,t)}
 = v^{storages\_invested\_available}_{(n,s,t-1)} \\
-& \forall n \in node: p^{candidate\_storages}_{(n)} \neq 0 \\
+& \forall n \in node: p^{storage\_investment\_count\_max\_cumulative}_{(n)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

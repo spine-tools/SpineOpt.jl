@@ -59,10 +59,10 @@ function generate_is_candidate()
         connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_connections))
     )
     add_object_parameter_values!(
-        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_units))
+        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(investment_count_max_cumulative))
     )
     add_object_parameter_values!(
-        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_storages))
+        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(storage_investment_count_max_cumulative))
     )
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
@@ -541,9 +541,9 @@ end
 TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
 """
 function generate_variable_indexing_support()
-    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
-    node_with_min_capacity_margin_penalty = ObjectClass(
-        :node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty))
+    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_balance_penalty)))
+    node_with_capacity_margin_penalty = ObjectClass(
+        :node_with_min_capacity_margin_slack_penalty, collect(indices(capacity_margin_penalty))
     )
     unit__node__direction = RelationshipClass(
         :unit__node__direction, [:unit, :node, :direction], [unit__from_node(); unit__to_node()]
@@ -553,7 +553,7 @@ function generate_variable_indexing_support()
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
-        node_with_min_capacity_margin_penalty = $node_with_min_capacity_margin_penalty
+        node_with_capacity_margin_penalty = $node_with_capacity_margin_penalty
         unit__node__direction = $unit__node__direction
         connection__node__direction = $connection__node__direction
     end
@@ -584,7 +584,7 @@ function expand_model__default_investment_temporal_block()
         unit__investment_temporal_block,
         [
             (u, tb)
-            for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
+            for u in setdiff(indices(investment_count_max_cumulative), unit__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -602,7 +602,7 @@ function expand_model__default_investment_temporal_block()
         node__investment_temporal_block,
         [
             (n, tb)
-            for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
+            for n in setdiff(indices(storage_investment_count_max_cumulative), node__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -622,7 +622,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (u, ss)
             for u in setdiff(
-                indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
+                indices(investment_count_max_cumulative), unit__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -643,7 +643,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (n, ss)
             for n in setdiff(
-                indices(candidate_storages), node__investment_stochastic_structure(stochastic_structure=anything)
+                indices(storage_investment_count_max_cumulative), node__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -808,9 +808,9 @@ function generate_internal_fix_investments()
     dur_unit = _model_duration_unit(instance)
     scens = stochastic_scenario()
     for (pname, class, candidates) in (
-            (:internal_fix_units_invested_available, unit, candidate_units),
+            (:internal_fix_units_invested_available, unit, investment_count_max_cumulative),
             (:internal_fix_connections_invested_available, connection, candidate_connections),
-            (:internal_fix_storages_invested_available, node, candidate_storages),
+            (:internal_fix_storages_invested_available, node, storage_investment_count_max_cumulative),
         )
         parameter = Parameter(pname, [class])
         pvals = Dict(
@@ -869,7 +869,7 @@ function generate_unit_flow_capacity()
     function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
         _prod_or_nothing(
             f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
-            f(unit_availability_factor; unit=unit, kwargs...),
+            f(availability_factor; unit=unit, kwargs...),
             f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
         )
     end
@@ -950,8 +950,8 @@ function generate_unit_commitment_parameters()
     unit_with_out_of_service_variable_set = unique(
         Iterators.flatten(
             (
-                indices(scheduled_outage_duration),
-                indices(fix_units_out_of_service),
+                indices(outage_scheduled_duration),
+                indices(out_of_service_count_fix),
                 (u for (st, out, u) in stage__output__unit() if out.name == :units_out_of_service),
             )
         )
@@ -963,8 +963,8 @@ function generate_unit_commitment_parameters()
                 unit_with_out_of_service_variable_set,
                 indices(units_on_cost),
                 indices(units_on_non_anticipativity_time),
-                indices(fix_units_on),
-                (u for u in indices(candidate_units) if candidate_units(unit=u) > 0),
+                indices(online_count_fix),
+                (u for u in indices(investment_count_max_cumulative) if investment_count_max_cumulative(unit=u) > 0),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),

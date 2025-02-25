@@ -20,31 +20,32 @@
 @doc raw"""
     add_expression_capacity_margin!(m::Model)
 
-Create an expression for `capacity_margin`. This represents the loat that must be met by conventional
-    resources net of variable renewable production and storage. It is used in the `min_capacity_margin` constraint
+Create an expression for `capacity_margin`. This represents the available production capacity (considering variations
+    in variable renewables) after demand has been fulfilled and after the contribution of actual storage operation has
+    been taken into account. It is used in the `min_capacity_margin` constraint
 
 ```math 
 \begin{aligned}
 expr^{capacity\_margin}_{n,s,t} = \\
-& + \sum_{u\in{U_{n\_to}}}(p^{unit\_capacity}_{u,s,t} \cdot p^{unit\_availability\_factor}_{u,s,t} \cdot v^{units\_available}_{u,s,t}) \\
+& + \sum_{u\in{U_{n\_to}}}(p^{unit\_capacity}_{u,s,t} \cdot p^{availability\_factor}_{u,s,t} \cdot v^{units\_available}_{u,s,t}) \\
 & + \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,to,s,t}) \\
 & - \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,from,s,t}) \\
 & - p^{demand}_{n,s,t} \\
-& - p^{fractional\_demand}_{n,s,t} \cdot p^{group\_demand}_{n_{group},s,t} \\
-& \forall n \in node: p^{min\_capacity\_margin} \\
+& - p^{demand\_fraction}_{n,s,t} \cdot p^{group\_demand}_{n_{group},s,t} \\
+& \forall n \in node: p^{capacity\_margin\_min} \\
 \end{aligned}
 ```
 where ```math U_{storage_n} ``` is the set of all storage units connected to node n
 and ```math U_{n\_to} ``` is the set of all non-storage units connected to node n
 
 See also
-[min\_capacity\_margin](@ref),
-[min\_capacity\_margin\_penalty](@ref),
+[capacity\_margin\_min](@ref),
+[capacity\_margin\_penalty](@ref),
 [unit\_\_from\_node](@ref),
 [unit\_\_to\_node](@ref),
 [demand](@ref),
-[fractional\_demand](@ref),
-[has\_state](@ref)
+[demand\_fraction](@ref),
+[node\_type](@ref)
 
 """
 
@@ -61,7 +62,7 @@ function add_expression_capacity_margin!(m::Model)
                 init=0,
             )
             - sum(
-                fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
+                demand_fraction(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
                 * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t))
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
@@ -129,7 +130,7 @@ end
 function expression_capacity_margin_indices(m::Model)
     (
         (node=n, stochastic_path=path, t=t)
-        for n in indices(min_capacity_margin)
+        for n in indices(capacity_margin_min)
         for (n, t) in node_time_indices(m; node=n)
         for path in active_stochastic_paths(
             m,  
@@ -156,5 +157,5 @@ end
 Whether the unit u is attached to a node with storage or not.
 """
 function is_storage_unit(u)
-    any(has_state(node=n) for n in unit__from_node(unit=u, direction=direction(:from_node)))
+    any(node_type(node=n) in [:storage_node, :storage_group] for n in unit__from_node(unit=u, direction=direction(:from_node)))
 end
