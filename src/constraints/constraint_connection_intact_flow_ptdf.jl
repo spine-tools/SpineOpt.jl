@@ -70,7 +70,7 @@ function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_p
         ==
         + sum(
             ptdf(m; connection=conn, node=n, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
             * node_injection[n, s, t]
             for n in ptdf_connection__node(connection=conn)
             if node_opf_type(node=n) != :node_opf_type_reference
@@ -79,7 +79,7 @@ function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_p
         )
         + sum(
             ptdf(m; connection=conn, node=n, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
             * connection_flow[conn1, n1, d, s, t]
             for n in node(is_boundary_node=true)
             if n in ptdf_connection__node(connection=conn)
@@ -92,7 +92,7 @@ function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_p
         )
         - sum(
             ptdf(m; connection=conn, node=n, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
             * connection_flow[conn1, n1, d, s, t]
             for n in node(is_boundary_node=true)
             if n in ptdf_connection__node(connection=conn)

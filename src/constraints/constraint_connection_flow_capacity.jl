@@ -29,7 +29,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 \begin{aligned}
 & \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
 & <= \\
-& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
 & \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
@@ -38,7 +38,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 
 See also
 [connection\_capacity](@ref),
-[connection\_availability\_factor](@ref),
+[availability\_factor](@ref),
 [connection\_conv\_cap\_to\_flow](@ref),
 [number\_of\_connections](@ref),
 [candidate\_connections](@ref)

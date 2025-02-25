@@ -391,7 +391,7 @@ function _ptdf_unfiltered_values()
     connections = connection(has_ptdf=true)
     unavailable_connections_by_ind = Dict{Any,Set}(:nothing => Set())
     for conn in connections
-        for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+        for (ind, val) in indexed_values(availability_factor(connection=conn))
             if iszero(val)
                 push!(get!(unavailable_connections_by_ind, ind, Set()), conn)
             end
@@ -407,7 +407,7 @@ function _ptdf_unfiltered_values()
                 collect_indexed_values(
                     Dict(
                         ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
-                        for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+                        for (ind, val) in indexed_values(availability_factor(connection=conn))
                     )
                 )
             )
@@ -887,7 +887,7 @@ function generate_connection_flow_capacity()
     )
         _prod_or_nothing(
             f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
-            f(connection_availability_factor; connection=connection, kwargs...),
+            f(availability_factor; connection=connection, kwargs...),
             f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
         )
     end

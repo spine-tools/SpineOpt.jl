@@ -106,6 +106,9 @@ function major_upgrade_to_16(db_url, log_level)
         (("node", "storages_invested_big_m_mga"), "mga_storage_investment_big_m", ""),
         (("node", "storages_invested_mga"), "mga_storage_investment_activate", ""),
         (("node", "storages_invested_mga_weight"), "mga_storage_investment_weight", ""),
+
+        # connection
+        (("connection", "connection_availability_factor"), "availability_factor", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

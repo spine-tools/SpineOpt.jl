@@ -62,7 +62,7 @@ function _build_constraint_connection_flow_lodf(m::Model, conn_cont, conn_mon, s
         - connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
         <=
         + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s_path, t, sum)
-        * maximum(connection_availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t) for s in s_path)
+        * maximum(availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t) for s in s_path)
         <=
         + connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
     )
@@ -103,7 +103,7 @@ end
 function connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
     minimum(
         + connection_emergency_capacity(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
-        * connection_availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t)
+        * availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t)
         * connection_conv_cap_to_flow(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
         for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
         for s in s_path
