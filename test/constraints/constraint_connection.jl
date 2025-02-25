@@ -493,7 +493,7 @@ function test_constraint_node_voltage_angle()
             ["connection__from_node", [ "connection_ca", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ca", "connection_reactance", react],
+            ["connection", "connection_ca", "reactance", react],
             ["connection", "connection_ca", "connection_reactance_base", react_p_u],
             ["node", "node_c", "has_voltage_angle", true],
             ["node", "node_a", "has_voltage_angle", true],
@@ -568,13 +568,13 @@ function test_constraint_connection_intact_flow_ptdf()
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
@@ -652,13 +652,13 @@ function test_constraint_connection_flow_lodf()
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
@@ -799,13 +799,13 @@ function test_contraints_ptdf_lodf_duration()
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
@@ -1343,14 +1343,14 @@ function test_constraint_connection_flow_intact_flow()
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
@@ -1438,7 +1438,7 @@ function test_constraint_candidate_connection_lb()
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
             [
@@ -1448,10 +1448,10 @@ function test_constraint_candidate_connection_lb()
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
@@ -1544,7 +1544,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
             [
@@ -1554,10 +1554,10 @@ function test_constraint_ratio_out_in_connection_intact_flow()
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
@@ -1668,7 +1668,7 @@ function test_constraint_candidate_connection_ub()
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
             [
@@ -1678,10 +1678,10 @@ function test_constraint_candidate_connection_ub()
                 Dict("type" => "duration", "data" => "60m"),
             ],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],

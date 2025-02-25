@@ -19,7 +19,7 @@
 
 @doc raw"""
 To link the flow over a connection to the voltage angles of the adjacent nodes, the following constraint is imposed.
-Note that this constraint is only generated if the parameter [connection\_reactance](@ref) is defined
+Note that this constraint is only generated if the parameter [reactance](@ref) is defined
 for a [connection](@ref) object and if a [fix\_ratio\_out\_in\_connection\_flow](@ref) is defined
 for a [connection\_\_node\_\_node](@ref) relationship involving that [connection](@ref).
 
@@ -28,7 +28,7 @@ for a [connection\_\_node\_\_node](@ref) relationship involving that [connection
 & \sum_{n \in ng_{from}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}
 - \sum_{n \in ng_{to}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}\\
 & = \\
-& \left(p^{connection\_reactance\_base}_{(conn,s,t)} \middle/ p^{connection\_reactance}_{(conn,s,t)}\right) \\
+& \left(p^{connection\_reactance\_base}_{(conn,s,t)} \middle/ p^{reactance}_{(conn,s,t)}\right) \\
 & \cdot \left(\sum_{n \in ng_{from}} v^{node\_voltage\_angle}_{(n,s,t)} - \sum_{n \in ng_{to}} v^{node\_voltage\_angle}_{(n,s,t)} \right)\\
 & \forall (conn, ng_{to}, ng_{from}) \in indices(p^{fix\_ratio\_out\_in\_connection\_flow})\\
 & \forall (s,t)
@@ -36,7 +36,7 @@ for a [connection\_\_node\_\_node](@ref) relationship involving that [connection
 ```
 
 See also
-[connection\_reactance](@ref),
+[reactance](@ref),
 [connection\_reactance\_base](@ref),
 [fix\_ratio\_out\_in\_connection\_flow](@ref).
 """
@@ -65,7 +65,7 @@ function _build_constraint_node_voltage_angle(m::Model, conn, n_to, n_from, s_pa
         sum(
             (
                 + connection_reactance_base(m; connection=conn, stochastic_scenario=s, t=t)
-                / connection_reactance(m; connection=conn, stochastic_scenario=s, t=t)
+                / reactance(m; connection=conn, stochastic_scenario=s, t=t)
             )
             for s in s_path
         )
@@ -86,7 +86,7 @@ end
 function constraint_node_voltage_angle_indices(m::Model)
     (
         (connection=conn, node1=n_to, node2=n_from, stochastic_path=path, t=t)
-        for conn in indices(connection_reactance)
+        for conn in indices(reactance)
         for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow; connection=conn)
         if has_voltage_angle(node=n_from) && has_voltage_angle(node=n_to)
         for (t, path) in t_lowest_resolution_path(m, node_voltage_angle_indices(m; node=[n_to, n_from]))

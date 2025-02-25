@@ -96,13 +96,13 @@ import DelimitedFiles: readdlm
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
+            ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_bc", "monitoring_activate", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
+            ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "connection_resistance", conn_r],
             ["connection", "connection_ca", "monitoring_activate", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
+            ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
