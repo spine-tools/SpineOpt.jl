@@ -28,7 +28,7 @@ for a [connection\_\_node\_\_node](@ref) relationship involving that [connection
 & \sum_{n \in ng_{from}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}
 - \sum_{n \in ng_{to}} v^{connection\_flow}_{(conn,n,from\_node,s,t)}\\
 & = \\
-& \left(p^{connection\_reactance\_base}_{(conn,s,t)} \middle/ p^{reactance}_{(conn,s,t)}\right) \\
+& \left(p^{reactance\_base}_{(conn,s,t)} \middle/ p^{reactance}_{(conn,s,t)}\right) \\
 & \cdot \left(\sum_{n \in ng_{from}} v^{node\_voltage\_angle}_{(n,s,t)} - \sum_{n \in ng_{to}} v^{node\_voltage\_angle}_{(n,s,t)} \right)\\
 & \forall (conn, ng_{to}, ng_{from}) \in indices(p^{fix\_ratio\_out\_in\_connection\_flow})\\
 & \forall (s,t)
@@ -37,7 +37,7 @@ for a [connection\_\_node\_\_node](@ref) relationship involving that [connection
 
 See also
 [reactance](@ref),
-[connection\_reactance\_base](@ref),
+[reactance\_base](@ref),
 [fix\_ratio\_out\_in\_connection\_flow](@ref).
 """
 function add_constraint_node_voltage_angle!(m::Model)
@@ -64,7 +64,7 @@ function _build_constraint_node_voltage_angle(m::Model, conn, n_to, n_from, s_pa
         ==
         sum(
             (
-                + connection_reactance_base(m; connection=conn, stochastic_scenario=s, t=t)
+                + reactance_base(m; connection=conn, stochastic_scenario=s, t=t)
                 / reactance(m; connection=conn, stochastic_scenario=s, t=t)
             )
             for s in s_path

@@ -494,7 +494,7 @@ function test_constraint_node_voltage_angle()
         ]
         object_parameter_values = [
             ["connection", "connection_ca", "reactance", react],
-            ["connection", "connection_ca", "connection_reactance_base", react_p_u],
+            ["connection", "connection_ca", "reactance_base", react_p_u],
             ["node", "node_c", "has_voltage_angle", true],
             ["node", "node_a", "has_voltage_angle", true],
         ]

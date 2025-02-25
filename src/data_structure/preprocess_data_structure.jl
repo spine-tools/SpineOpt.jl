@@ -307,7 +307,7 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
         if conn in unavailable_connections
             reactance *= 1e3
         end
-        inv_X[ix, ix] = connection_reactance_base(connection=conn) / reactance
+        inv_X[ix, ix] = reactance_base(connection=conn) / reactance
     end
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
     if i === nothing
