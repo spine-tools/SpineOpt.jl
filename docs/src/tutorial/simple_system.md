@@ -19,13 +19,13 @@ In the simple system:
 
 -   Two power plants take fuel from a source node and release
     electricity to another node in order to supply a demand.
--   Power plant 'a' has a capacity of 100 MWh, a variable operating cost
+-   Power plant 'a' has a capacity of 100 MW, a variable operating cost
     of 25 euro/fuel unit, and generates 0.7 MWh of electricity per unit
     of fuel.
--   Power plant 'b' has a capacity of 200 MWh, a variable operating cost
+-   Power plant 'b' has a capacity of 200 MW, a variable operating cost
     of 50 euro/fuel unit, and generates 0.8 MWh of electricity per unit
     of fuel.
--   The demand at the electricity node is 150 MWh.
+-   The demand at the electricity node is 150 MW.
 -   The fuel node is able to provide infinite energy.
 
 ![image](figs_simple_system/simple_system_schematic.png)
@@ -82,7 +82,7 @@ The *Spine DB editor* is a dedicated interface within Spine Toolbox
 for visualizing and managing Spine databases. The default view shows 
 tables (see below) but for viewing energy system configurations
 it is nice to see a graph. Press the graph button in the toolbar.
-The graph view only shows what you select in the root menu 
+The entity graph only shows what you select in the entity tree
 and what your selected entities are connected to.
 
 To open the editor:
@@ -105,7 +105,7 @@ A SpineOpt database is a spine database but a spine database is not necessarily 
     click on **File -> Import...**, and then select the template file you previously
     downloaded (*spineopt\_template.json*). The contents of that file will be 
     imported into the current database, and you should then see classes like 
-    'commodity', 'connection' and 'model' under the root menu.
+    'commodity', 'connection' and 'model' in the entity tree.
 
 -   To save our changes, press the **Commit** button in the toolbar.
     Enter a commit message, e.g. 'Import SpineOpt template', in the popup dialog
@@ -141,21 +141,18 @@ Currently, there is no output connected to the report. We'll have to do that man
 -   We'll have to fill in the field for the report and the output.
     Double click the field to see the options.
     For the 'report' field we need 'report1'
-    and for the 'output' field we only need 'unit\_flow'.
+    and for the 'output' field we only need 'unit\_flow', as seen in the image below.
+    This will tell SpineOpt to write the value of the
+    *unit\_flow* optimization variable to the output
+    database, as part of *report1*.
 
 -   Press *Ok*.
 
 -   Commit (save) the changes through the **Commit** button in the toolbar.
 
--   Enter *report1* under *report*, and
-    *unit\_flow* under *output*, as seen in the image below;
-    then press *Ok*. This will tell SpineOpt to write the value of the
-    *unit\_flow* optimization variable to the output
-    database, as part of *report1*.
-
 ![image](figs_simple_system/simple_system_add_report__output_relationships.png)
 
-The resulting model structure can then be seen in the picture below (by selecting the model, the stochastic structure and the report in the root menu).
+The resulting model structure can then be seen in the picture below (by selecting the model, the stochastic structure and the report in the entity tree). The *realization* entity is a scenario, which is required in SpineOpt even for a deterministic model (details will be explained in the later [Stochastic structure](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/stochastic_system/) tutorial).
 
 ![image](figs_simple_system/simple_system_basic_model.png)
 
@@ -174,7 +171,7 @@ To create the nodes:
 -   Locate the *Entity tree* in the Spine DB editor (typically
     at the top-left).
 
--   Right click on the [node] class, and select *Add objects* 
+-   Right click on the [node] class, and select *Add entities* 
     from the context menu (or press the '+' icon next to it).
     The *Add entities* dialog will pop up.
 
@@ -192,7 +189,7 @@ To create the units we do the same thing:
 ![image](figs_simple_system/simple_system_add_units.png)
 
 !!! info
-    To modify an object after you enter it, right click on it and select
+    To modify an entity after you enter it, right click on it and select
     **Edit...** from the context menu.
 
 ### Creating relationships between the nodes and units
@@ -216,12 +213,12 @@ For the flow from the 'fuel' node to the units:
     'power\_plant\_a'-'fuel' and 'power\_plant\_b'-'fuel'.
 
 !!! info
-    Alternatively right click the objects in the *graph view* and 
-    *add relationships* will show the available relationships.
+    Alternatively right click the entities in the *entity graph* and 
+    *connect entities* will show the available entity classes.
     You can then make the desired relations visually.
     Note that this only works when the involved units/nodes/... are visible
-    in the graph view. To make an object visible, simply click on the object
-    in the list of objects/object classes. You can select multiple objects with
+    in the entity graph. To make an entity visible, simply click on the entity
+    in the entity tree. You can select multiple entities with
     ctrl or shift.
 
 ![image](figs_simple_system/simple_system_add_unit__from_node_relationships.png)
@@ -255,7 +252,8 @@ contribute to the input/output behaviour. To that end we use a *unit\_\_node\_\_
     relationship instead of a property of a unit, but this approach allows you
     to define efficiencies between any flow(s) coming in and out of the unit (e.g. CHP).
 
-The resulting system can be seen in the picture below (by selecting the node in the root menu).
+The resulting system can be seen in the picture below (by selecting the node in the
+entity tree).
 
 ![image](figs_simple_system/simple_system_entities.png)
 
@@ -263,18 +261,19 @@ The resulting system can be seen in the picture below (by selecting the node in 
 
 With the system in place, we can now enter the data as described in the beginning of this tutorial,
 i.e. the capacities, efficiencies, demand, etc.
-To enter the data we'll be using the table (typically in the center or below the graph view).
+To enter the data we'll be using the table view (typically in the center or below the graph view).
 
 !!! info
-    The table view has three tabs below the table.
+    The table view has three tabs that can be activated below the table.
     We use the *parameter value* tab to enter values
     and the *parameter definition* tab to get an overview
     of the available parameters and their default values.
 
 Let's start with adding an electricity demand of 150 at the electricity node.
 
--   Select the 'electricity' node in the root menu, in the graph view
-    or in the list after double clicking the *entity\_by\_name* field in the table.
+Select the 'electricity' node in the entity tree, in the entity graph, or in the list
+after clicking *entity\_byname* in the header row of the parameter value table. Then, in the 
+parameter value table:
 
 -   Double click the *parameter\_name* field and select *demand*.
 
@@ -289,11 +288,19 @@ Let's start with adding an electricity demand of 150 at the electricity node.
     (or another name) you will not be able to save your data.
     Speaking of which, when is the last time you saved/committed?
 
+!!! info
+    A correctly completed row of the parameter value table will show an icon in the
+    *entity\_class\_name* column, corresponding to the icon of that entity class in entity tree.
+    In contrast, an incomplete row will have no icon and will stay in the parameter value window
+    even when a different entity is selected. 
+    Pay attention to the icons and entity class names to avoid mixing parameter descriptions.
+
 For the fuel node we want an infinite supply.
 Since the default behaviour of a node is to balance all incoming and outgoing flows,
 we'll have to take that balance away.
 
-In the table, select
+Select the 'fuel' node in the entity tree or in the entity graph. Then, in the parameter
+value table, select
 
 -   *entity\_by\_name*: 'fuel' node
 
@@ -317,7 +324,7 @@ and as such to *unit\_\_to\_node* between the unit and the 'electricity' node.
 The efficiency is related to the relation between the input and the output
 and as such to *unit\_\_node\_node* between the unit, the 'electricity' node and the 'fuel' node.
 
-We enter these values again in the table.
+We enter these values again in the parameter value table.
 
 For the VOM cost of the power plants:
 
