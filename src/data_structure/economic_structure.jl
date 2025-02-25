@@ -101,7 +101,7 @@ function _create_set_parameters_and_relationships()
             :set_lead_time => connection_lead_time,
             :set_tech_lifetime => connection_investment_tech_lifetime,
             :set_econ_lifetime => connection_investment_econ_lifetime,
-            :set_discnt_rate_tech => connection_discount_rate_technology_specific,
+            :set_discnt_rate_tech => discount_rate_technology_specific,
             :set_decom_time => decommissioning_time,
             :set_decom_cost => decommissioning_cost,
             :set_capacity_transfer_factor => :connection_capacity_transfer_factor,

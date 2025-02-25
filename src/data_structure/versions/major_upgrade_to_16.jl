@@ -118,6 +118,7 @@ function major_upgrade_to_16(db_url, log_level)
         # connection installing and decommissioning
         (("connection", "connection_decommissioning_cost"), "decommissioning_cost", ""),
         (("connection", "connection_decommissioning_time"), "decommissioning_time", ""),
+        (("connection", "connection_discount_rate_technology_specific"), "discount_rate_technology_specific", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
