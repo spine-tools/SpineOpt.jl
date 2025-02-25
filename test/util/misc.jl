@@ -106,7 +106,7 @@ import DelimitedFiles: readdlm
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "connection_contingency", true],
+            ["connection", "connection_ca", "contingency_activate", true],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
         ]

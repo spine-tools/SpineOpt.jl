@@ -103,7 +103,7 @@ function save_contingency_is_binding!(m::Model)
     connection_flow === nothing && return
     m.ext[:spineopt].values[:contingency_is_binding] = Dict(
         (
-            connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t
+            contingency_activate=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t
         ) => _contingency_is_binding(m, connection_flow, conn_cont, conn_mon, s, t)
         for (conn_cont, conn_mon, s, t) in _contingency_is_binding_indices(m)
     )

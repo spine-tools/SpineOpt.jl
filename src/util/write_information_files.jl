@@ -130,7 +130,7 @@ function write_lodfs()
         print(io, string(conn_mon), ",")
     end
     print(io, "\n")
-    for conn_cont in connection(connection_contingency=true)
+    for conn_cont in connection(contingency_activate=true)
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the lodf calculation
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)

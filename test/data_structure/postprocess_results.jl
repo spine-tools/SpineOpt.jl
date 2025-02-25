@@ -272,7 +272,7 @@ function test_save_contingency_is_binding()
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "connection_contingency", true],
+            ["connection", "connection_ca", "contingency_activate", true],
             ["node", "node_c", "demand", unparse_db_value(demand_)],
             ["node", "node_b", "demand", unparse_db_value(-demand_)],
         ]
