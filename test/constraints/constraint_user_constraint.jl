@@ -79,7 +79,7 @@
             ["node", "node_c", "storage_state_max", 100],
             ["node", "node_c", "storage_investment_count_max_cumulative", 2],
             ["unit", "unit_ab", "investment_count_max_cumulative", 3],
-            ["connection", "connection_bc", "candidate_connections", 1],
+            ["connection", "connection_bc", "investment_count_max_cumulative", 1],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],

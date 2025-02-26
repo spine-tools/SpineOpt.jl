@@ -154,7 +154,7 @@
         ["commodity", "mp_min_res_gen_to_demand_ratio", null, null, "Minimum ratio of renewable generation to demand for this commodity - used in the minimum renewable generation constraint within the Benders master problem"],
         ["commodity", "mp_min_res_gen_to_demand_ratio_slack_penalty", null, null, "Penalty for violating the minimum renewable generation to demand ratio."],
         ["connection", "benders_starting_connections_invested", null, null, "Fixes the number of connections invested during the first Benders iteration"],
-        ["connection", "candidate_connections", null, null, "The number of connections that may be invested in"],
+        ["connection", "investment_count_max_cumulative", null, null, "The number of connections that may be invested in"],
         ["connection", "availability_factor", 1.0, null, "Availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."],
         ["connection", "contingency_activate", null, "boolean_value_list", "A boolean flag for defining a contingency `connection`."],
         ["connection", "connection_investment_cost", null, null, "The per unit investment cost for the connection over the `lifetime_technical`"],

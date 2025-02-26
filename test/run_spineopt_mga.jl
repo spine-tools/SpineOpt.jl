@@ -133,7 +133,7 @@ function _test_run_spineopt_mga()
     @testset "run_spineopt_mga" begin
         url_in = _test_run_spineopt_mga_setup()
         investment_count_max_cumulative = 1
-        candidate_connections = 1
+        investment_count_max_cumulative = 1
         storage_investment_count_max_cumulative = 1
         mga_investment_big_m = mga_storage_investment_big_m = connections_invested_big_m_mga = 5
         fuel_cost = 5
@@ -147,8 +147,8 @@ function _test_run_spineopt_mga()
             ["unit", "unit_group_abbc", "mga_investment_big_m", mga_investment_big_m],
             ["unit", "unit_group_abbc", "units_invested__mga_weight", 1],
             ["unit", "unit_ab", "unit_investment_cost", 1],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_bc", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["connection", "connection_group_abbc", "connections_invested_mga", true],
             ["connection", "connection_group_abbc", "connections_invested_big_m_mga", connections_invested_big_m_mga],
             ["connection", "connection_group_abbc", "connections_invested_mga_weight", 1],
@@ -492,7 +492,7 @@ function _test_run_spineopt_mga_2()
     @testset "run_spineopt_mga_2" begin
         url_in = _test_run_spineopt_mga_setup()
         investment_count_max_cumulative = 1
-        candidate_connections = 1
+        investment_count_max_cumulative = 1
         storage_investment_count_max_cumulative = 1
         fuel_cost = 5
         mga_slack = 0.05
@@ -512,8 +512,8 @@ function _test_run_spineopt_mga_2()
             ["unit", "unit_ab", "unit_investment_cost", 1],
             ["unit", "unit_ab", "lifetime_technical", unparse_db_value(Hour(2))],
             ["unit", "unit_bc", "lifetime_technical", unparse_db_value(Hour(2))],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_bc", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["connection", "connection_ab", "lifetime_technical", unparse_db_value(Hour(2))],
             ["connection", "connection_bc", "lifetime_technical", unparse_db_value(Hour(2))],
             ["connection", "connection_group_abbc", "connections_invested_mga", true],

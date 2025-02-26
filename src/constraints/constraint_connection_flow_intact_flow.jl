@@ -30,7 +30,7 @@ from investment connections that are not invested in.
 - \left(v^{connection\_intact\_flow}_{(c, n_{to}, from\_node, s, t)}
 - v^{connection\_intact\_flow}_{(c, n_{to}, to\_node, s, t)} \right) \\
 & =\\
-& \sum_{c_{cand}} p^{lodf}_{(c_{cand}, c)} \cdot \left[p^{candidate\_connections}_{(c_{cand})} \neq 0 \right] \cdot \Big( \\
+& \sum_{c_{cand}} p^{lodf}_{(c_{cand}, c)} \cdot \left[p^{investment\_count\_max\_cumulative}_{(c_{cand})} \neq 0 \right] \cdot \Big( \\
 & \qquad \left(
     v^{connection\_flow}_{(c_{cand}, n_{to\_cand}, from\_node, s, t)}
     - v^{connection\_flow}_{(c_{cand}, n_{to\_cand}, to\_node, s, t)} 
@@ -43,7 +43,7 @@ from investment connections that are not invested in.
 \right)
 \\
 & \Big) \\
-& \forall c \in connection : p^{is\_monitored}_{(c)} \land p^{candidate\_connections}_{(c)} = 0 \\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \land p^{investment\_count\_max\_cumulative}_{(c)} = 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

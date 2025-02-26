@@ -57,7 +57,7 @@ function connection_flow_ub(m; connection, node, direction, kwargs...)
     ) && return NaN
     connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
         + existing_connections(m; connection=connection, kwargs..., _default=1)
-        + something(candidate_connections(m; connection=connection, kwargs...), 0)
+        + something(investment_count_max_cumulative(m; connection=connection, kwargs...), 0)
     )
 end
 

@@ -119,7 +119,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         append!(rels, [["model__default_investment_temporal_block", ["instance", "two_year"]]])
         # add investment candidates
         append!(obj_pvs, (["unit", u, "investment_count_max_cumulative", 1] for u in units))
-        append!(obj_pvs, (["connection", c, "candidate_connections", 1] for c in conns))
+        append!(obj_pvs, (["connection", c, "investment_count_max_cumulative", 1] for c in conns))
         append!(obj_pvs, (["node", n, "storage_investment_count_max_cumulative", 1] for n in nodes_to))
         # add investment stochastic structure
         append!(rels, [["model__default_investment_stochastic_structure", ["instance", "deterministic"]]])

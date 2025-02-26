@@ -30,7 +30,7 @@ function connections_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    connection = intersect(indices(candidate_connections), members(connection))
+    connection = intersect(indices(investment_count_max_cumulative), members(connection))
     connection_investment_stochastic_time_indices(
         m; connection=connection, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )

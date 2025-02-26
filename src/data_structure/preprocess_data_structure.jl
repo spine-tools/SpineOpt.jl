@@ -56,10 +56,10 @@ Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 function generate_is_candidate()
     is_candidate = Parameter(:is_candidate, [node, unit, connection])
     add_object_parameter_values!(
-        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_connections))
+        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(investment_count_max_cumulative, connection))
     )
     add_object_parameter_values!(
-        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(investment_count_max_cumulative))
+        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(investment_count_max_cumulative, unit))
     )
     add_object_parameter_values!(
         node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(storage_investment_count_max_cumulative))
@@ -584,7 +584,7 @@ function expand_model__default_investment_temporal_block()
         unit__investment_temporal_block,
         [
             (u, tb)
-            for u in setdiff(indices(investment_count_max_cumulative), unit__investment_temporal_block(temporal_block=anything))
+            for u in setdiff(indices(investment_count_max_cumulative, unit), unit__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -593,7 +593,7 @@ function expand_model__default_investment_temporal_block()
         [
             (conn, tb)
             for conn in setdiff(
-                indices(candidate_connections), connection__investment_temporal_block(temporal_block=anything)
+                indices(investment_count_max_cumulative, connection), connection__investment_temporal_block(temporal_block=anything)
             )
             for tb in model__default_investment_temporal_block(model=anything)
         ],
@@ -622,7 +622,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (u, ss)
             for u in setdiff(
-                indices(investment_count_max_cumulative), unit__investment_stochastic_structure(stochastic_structure=anything)
+                indices(investment_count_max_cumulative, unit), unit__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -632,7 +632,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (conn, ss)
             for conn in setdiff(
-                indices(candidate_connections),
+                indices(investment_count_max_cumulative, connection),
                 connection__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
@@ -809,7 +809,7 @@ function generate_internal_fix_investments()
     scens = stochastic_scenario()
     for (pname, class, candidates) in (
             (:internal_fix_units_invested_available, unit, investment_count_max_cumulative),
-            (:internal_fix_connections_invested_available, connection, candidate_connections),
+            (:internal_fix_connections_invested_available, connection, investment_count_max_cumulative),
             (:internal_fix_storages_invested_available, node, storage_investment_count_max_cumulative),
         )
         parameter = Parameter(pname, [class])
@@ -964,7 +964,7 @@ function generate_unit_commitment_parameters()
                 indices(units_on_cost),
                 indices(units_on_non_anticipativity_time),
                 indices(online_count_fix),
-                (u for u in indices(investment_count_max_cumulative) if investment_count_max_cumulative(unit=u) > 0),
+                (u for u in indices(investment_count_max_cumulative, unit) if investment_count_max_cumulative(unit=u) > 0),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),

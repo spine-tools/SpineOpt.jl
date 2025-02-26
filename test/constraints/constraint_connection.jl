@@ -139,7 +139,7 @@ function test_constraint_connection_flow_capacity()
         ]
         object_parameter_values = [
             ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["connection", "connection_ab", "candidate_connections", 1],
+            ["connection", "connection_ab", "investment_count_max_cumulative", 1],
         ]
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]
@@ -240,7 +240,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
         ]
         object_parameter_values = [
             ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["connection", "connection_ab", "candidate_connections", 1],
+            ["connection", "connection_ab", "investment_count_max_cumulative", 1],
             ["model", "instance", "use_tight_compact_formulations", true],
         ]
         relationship_parameter_values = [
@@ -934,8 +934,8 @@ end
 function test_constraint_connections_invested_transition()
     @testset "constraint_connections_invested_transition" begin
         url_in = _test_constraint_connection_setup()
-        candidate_connections = 1
-        object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
+        investment_count_max_cumulative = 1
+        object_parameter_values = [["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
@@ -972,9 +972,9 @@ end
 function test_constraint_connections_invested_transition_mp()
     @testset "constraint_connections_invested_transition_mp" begin
         url_in = _test_constraint_connection_setup()
-        candidate_connections = 4
+        investment_count_max_cumulative = 4
         object_parameter_values = [
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -1012,13 +1012,13 @@ end
 
 function test_constraint_connection_lifetime()
     @testset "constraint_connection_lifetime" begin
-        candidate_connections = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_connection_setup()
             lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["connection", "connection_ab", "candidate_connections", candidate_connections],
+                ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
                 ["connection", "connection_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
             ]
@@ -1068,7 +1068,7 @@ end
 
 function test_constraint_connection_lifetime_sense()
     @testset "constraint_connection_lifetime_sense" begin
-        candidate_connections = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         lifetime_minutes = 240
         senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
@@ -1080,7 +1080,7 @@ function test_constraint_connection_lifetime_sense()
         ]
         @testset for (sense_key, sense_value) in senses    
             object_parameter_values = [
-                ["connection", "connection_ab", "candidate_connections", candidate_connections],
+                ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
                 ["connection", "connection_ab", "lifetime_technical", lifetime_technical],
                 ["connection", "connection_ab", "lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
@@ -1125,13 +1125,13 @@ end
 
 function test_constraint_connection_lifetime_mp()
     @testset "constraint_connection_lifetime_mp" begin
-        candidate_connections = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_connection_setup()
             lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["connection", "connection_ab", "candidate_connections", candidate_connections],
+                ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
                 ["connection", "connection_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
@@ -1183,8 +1183,8 @@ end
 function test_constraint_connections_invested_available()
     @testset "constraint_connections_invested_available" begin
         url_in = _test_constraint_connection_setup()
-        candidate_connections = 7
-        object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
+        investment_count_max_cumulative = 7
+        object_parameter_values = [["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
@@ -1199,7 +1199,7 @@ function test_constraint_connections_invested_available()
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (connection(:connection_ab), s, t)
             var = var_connections_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_connections)
+            expected_con = @build_constraint(var <= investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1210,9 +1210,9 @@ end
 function test_constraint_connections_invested_available_mp()
     @testset "constraint_connections_invested_available_mp" begin
         url_in = _test_constraint_connection_setup()
-        candidate_connections = 7
+        investment_count_max_cumulative = 7
         object_parameter_values = [
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -1229,7 +1229,7 @@ function test_constraint_connections_invested_available_mp()
         @testset for t in time_slices
             key = (connection(:connection_ab), stochastic_scenario(:parent), t)
             var = var_connections_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_connections)
+            expected_con = @build_constraint(var <= investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1322,7 +1322,7 @@ function test_constraint_connection_flow_intact_flow()
         # TODO: node_ptdf_threshold
         conn_r = 0.9
         conn_x = 0.1
-        candidate_connections = 1
+        investment_count_max_cumulative = 1
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -1345,7 +1345,7 @@ function test_constraint_connection_flow_intact_flow()
             ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["connection", "connection_bc", "monitoring_activate", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
@@ -1414,7 +1414,7 @@ function test_constraint_candidate_connection_lb()
         url_in = _test_constraint_connection_setup()
         conn_r = 0.9
         conn_x = 0.1
-        candidate_connections = 1
+        investment_count_max_cumulative = 1
         connection_capacity = 100
         objects = [["commodity", "electricity"]]
         relationships = [
@@ -1440,7 +1440,7 @@ function test_constraint_candidate_connection_lb()
             ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             [
                 "connection",
                 "connection_ab",
@@ -1490,7 +1490,7 @@ function test_constraint_candidate_connection_lb()
                 >=
                 + var_connection_intact_flow[conn, n, d, s_parent, t1h1] * duration(t1h1)
                 + var_connection_intact_flow[conn, n, d, s_child, t1h2] * duration(t1h2)
-                - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
+                - (investment_count_max_cumulative - var_connections_invested_available[conn, s_parent, t2h])
                 * cap
                 * duration(t2h)
             )
@@ -1504,7 +1504,7 @@ function test_constraint_candidate_connection_lb()
                 + var_connection_flow[conn, n, d, s_parent, t2h] * duration(t2h)
                 >=
                 + var_connection_intact_flow[conn, n, d, s_parent, t2h] * duration(t2h)
-                - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
+                - (investment_count_max_cumulative - var_connections_invested_available[conn, s_parent, t2h])
                 * cap
                 * duration(t2h)
             )
@@ -1520,7 +1520,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
         url_in = _test_constraint_connection_setup()
         conn_r = 0.9
         conn_x = 0.1
-        candidate_connections = 1
+        investment_count_max_cumulative = 1
         connection_capacity = 100
         objects = [["commodity", "electricity"]]
         relationships = [
@@ -1546,7 +1546,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             [
                 "connection",
                 "connection_ab",
@@ -1645,7 +1645,7 @@ function test_constraint_candidate_connection_ub()
         url_in = _test_constraint_connection_setup()
         conn_r = 0.9
         conn_x = 0.1
-        candidate_connections = 1
+        investment_count_max_cumulative = 1
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "two_hourly"]],
@@ -1670,7 +1670,7 @@ function test_constraint_candidate_connection_ub()
             ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             [
                 "connection",
                 "connection_ab",

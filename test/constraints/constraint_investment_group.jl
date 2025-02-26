@@ -76,7 +76,7 @@ function _test_constraint_investment_group_setup()
             ["node", "node_c", "storage_investment_cost", 1000],
             ["unit", "unit_ab", "investment_count_max_cumulative", 3],
             ["unit", "unit_ab", "unit_investment_cost", 1000],
-            ["connection", "connection_bc", "candidate_connections", 1],
+            ["connection", "connection_bc", "investment_count_max_cumulative", 1],
             ["connection", "connection_bc", "connection_investment_cost", 1000],
             ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_four_hourly", "resolution", Dict("type" => "duration", "data" => "4h")],

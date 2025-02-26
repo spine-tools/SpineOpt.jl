@@ -252,14 +252,14 @@ function test_connection_history_parameters()
         flow_ratio = 0.8
         conn_flow_minutes_delay = 180
         lifetime_minutes = 240
-        candidate_connections = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
 
         url_in = _test_variable_connection_setup()
         lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         connection_flow_delay = Dict("type" => "duration", "data" => string(conn_flow_minutes_delay, "m"))
         object_parameter_values = [
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["connection", "connection_ab", "lifetime_technical", lifetime_technical],
             ["model", "instance", "model_end", model_end],
         ]

@@ -41,7 +41,7 @@ See also
 [availability\_factor](@ref),
 [connection\_conv\_cap\_to\_flow](@ref),
 [existing\_connections](@ref),
-[candidate\_connections](@ref)
+[investment\_count\_max\_cumulative](@ref)
 
 !!! note
     For situations where the same [connection](@ref) handles flows to multiple [node](@ref)s
