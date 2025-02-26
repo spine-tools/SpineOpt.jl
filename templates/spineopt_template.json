@@ -175,7 +175,7 @@
         ["connection", "lead_time", {"type": "duration", "data": "0h"}, null, "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."],
         ["connection", "discount_rate_technology_specific", 0.0 , null, "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."],
         ["connection", "investment_count_fix_new", null, null, "Setting a value fixes the connections_invested variable accordingly"],
-        ["connection", "fix_connections_invested_available", null, null, "Setting a value fixes the connections_invested_available variable accordingly"],
+        ["connection", "investment_count_fix_cumulative", null, null, "Setting a value fixes the connections_invested_available variable accordingly"],
         ["connection", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["connection", "has_binary_gas_flow", false, "boolean_value_list", "This parameter needs to be set to `true` in order to represent bidirectional pressure drive gas transfer."],
         ["connection", "initial_connections_invested", null, null, "Setting a value fixes the connections_invested variable at the beginning"],
