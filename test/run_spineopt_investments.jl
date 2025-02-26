@@ -109,7 +109,7 @@ function _test_capacity_investments()
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_variable_type",
+                "investment_variable_type",
                 "connection_investment_variable_type_continuous"
             ],
             ["node", "node_a", "storage_state_max", 1]

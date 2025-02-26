@@ -163,7 +163,7 @@
         ["connection", "lifetime_economic", null, null, "Determines the minimum economical investment lifetime of a connection."],
         ["connection", "lifetime_technical", null, null, "Determines the maximum technical lifetime of a connection. Once invested, it remains in service for this long"],
         ["connection", "lifetime_constraint_sense", ">=", "constraint_sense_list", "A selector for `connection_lifetime` constraint sense."],
-        ["connection", "connection_investment_variable_type", "connection_investment_variable_type_integer", "connection_investment_variable_type_list", "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"],
+        ["connection", "investment_variable_type", "connection_investment_variable_type_integer", "connection_investment_variable_type_list", "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"],
         ["connection", "monitoring_activate", false, "boolean_value_list", "A boolean flag for defining a contingency `connection`."],
         ["connection", "reactance", null, null, "The per unit reactance of a `connection`."],
         ["connection", "reactance_base", 1, null, "If the reactance is given for a p.u.  (e.g. p.u. = 100MW), the `reactance_base` can be set to perform this conversion (e.g. *100)."],
