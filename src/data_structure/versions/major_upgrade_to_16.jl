@@ -128,6 +128,7 @@ function major_upgrade_to_16(db_url, log_level)
         (("connection", "candidate_connections"), "investment_count_max_cumulative", ""),
         (("connection", "fix_connections_invested"), "investment_count_fix_new", ""),
         (("connection", "fix_connections_invested_available"), "investment_count_fix_cumulative", ""),
+        (("connection", "initial_connections_invested"), "investment_count_initial_new", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
