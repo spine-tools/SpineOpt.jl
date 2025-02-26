@@ -172,7 +172,7 @@
         ["connection", "connections_invested_big_m_mga", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For connections_invested_mga an appropriate big_m_mga would be twice the candidate connections."],
         ["connection", "connections_invested_mga", false, "boolean_value_list", "Defines whether a certain variable (here: connections_invested) will be considered in the maximal-differences of the mga objective"],
         ["connection", "connections_invested_mga_weight", 1, null, "Used to scale mga variables. For weightd sum mga method, the length of this weight given as an Array will determine the number of iterations."],
-        ["connection", "connection_lead_time", {"type": "duration", "data": "0h"}, null, "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."],
+        ["connection", "lead_time", {"type": "duration", "data": "0h"}, null, "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."],
         ["connection", "discount_rate_technology_specific", 0.0 , null, "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."],
         ["connection", "fix_connections_invested", null, null, "Setting a value fixes the connections_invested variable accordingly"],
         ["connection", "fix_connections_invested_available", null, null, "Setting a value fixes the connections_invested_available variable accordingly"],
