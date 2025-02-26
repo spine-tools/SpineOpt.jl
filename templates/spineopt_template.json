@@ -179,7 +179,7 @@
         ["connection", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["connection", "has_binary_gas_flow", false, "boolean_value_list", "This parameter needs to be set to `true` in order to represent bidirectional pressure drive gas transfer."],
         ["connection", "investment_count_initial_new", null, null, "Setting a value fixes the connections_invested variable at the beginning"],
-        ["connection", "initial_connections_invested_available", null, null, "Setting a value fixes the connections_invested_available variable at the beginning"],
+        ["connection", "investment_count_initial_cumulative", null, null, "Setting a value fixes the connections_invested_available variable at the beginning"],
         ["connection", "existing_connections", 1.0, null, "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."],
         ["investment_group", "equal_investments", false, "boolean_value_list", "Whether all entities in the group must have the same investment decision."],
         ["investment_group", "maximum_capacity_invested_available", null, null, "Upper bound on the capacity invested available in the group at any point in time."],

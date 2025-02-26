@@ -60,7 +60,7 @@ function add_variable_connections_invested_available!(m::Model)
         int=connections_invested_available_int,
         fix_value=investment_count_fix_cumulative,
         internal_fix_value=internal_fix_connections_invested_available,
-        initial_value=initial_connections_invested_available,
+        initial_value=investment_count_initial_cumulative,
         required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end
