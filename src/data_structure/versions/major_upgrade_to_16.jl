@@ -120,6 +120,7 @@ function major_upgrade_to_16(db_url, log_level)
         (("connection", "connection_decommissioning_time"), "decommissioning_time", ""),
         (("connection", "connection_discount_rate_technology_specific"), "discount_rate_technology_specific", ""),
         (("connection", "connection_investment_econ_lifetime"), "lifetime_economic", ""),
+        (("connection", "connection_investment_lifetime_sense"), "lifetime_constraint_sense", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

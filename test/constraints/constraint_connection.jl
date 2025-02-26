@@ -1082,7 +1082,7 @@ function test_constraint_connection_lifetime_sense()
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
                 ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
-                ["connection", "connection_ab", "connection_investment_lifetime_sense", sense_key],
+                ["connection", "connection_ab", "lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
             ]
             SpineInterface.import_data(

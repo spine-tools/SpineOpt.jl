@@ -19,10 +19,10 @@
 
 @doc raw"""
 Constrain [connections\_invested\_available](@ref) by the investment lifetime of a connection.
-The parameter [connection\_investment\_lifetime\_sense](@ref) defaults to minimum investment 
-lifetime ([connection\_investment\_lifetime\_sense](@ref) [`>=`](@ref constraint_sense_list)),
-but can be changed to strict lifetime ([connection\_investment\_lifetime\_sense](@ref) [`==`](@ref constraint_sense_list))
-or maximum investment lifetime ([connection\_investment\_lifetime\_sense](@ref) [`<=`](@ref constraint_sense_list)).
+The parameter [lifetime\_constraint\_sense](@ref) defaults to minimum investment 
+lifetime ([lifetime\_constraint\_sense](@ref) [`>=`](@ref constraint_sense_list)),
+but can be changed to strict lifetime ([lifetime\_constraint\_sense](@ref) [`==`](@ref constraint_sense_list))
+or maximum investment lifetime ([lifetime\_constraint\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The connection lifetime is enforced by the following constraint:
 
 ```math
@@ -33,9 +33,9 @@ The connection lifetime is enforced by the following constraint:
 }^{t}
 v^{connections\_invested}_{(conn,s,t\_past)} \\
 & \begin{cases}
-\ge & \text{if } p^{connection\_investment\_lifetime\_sense} = ">=" \\
-= & \text{if } p^{connection\_investment\_lifetime\_sense} = "==" \\
-\le & \text{if } p^{connection\_investment\_lifetime\_sense} = "<=" \\
+\ge & \text{if } p^{lifetime\_constraint\_sense} = ">=" \\
+= & \text{if } p^{lifetime\_constraint\_sense} = "==" \\
+\le & \text{if } p^{lifetime\_constraint\_sense} = "<=" \\
 \end{cases} \\
 & 0 \\
 & \forall (conn,s,t)
@@ -63,7 +63,7 @@ function _build_constraint_connection_lifetime(m::Model, conn, s_path, t)
             connections_invested[conn, s_past, t_past] * weight
             for (conn, s_past, t_past, weight) in _past_connections_invested_available_indices(m, conn, s_path, t)
         ),
-        eval(connection_investment_lifetime_sense(connection=conn)),
+        eval(lifetime_constraint_sense(connection=conn)),
         0
     )
 end
