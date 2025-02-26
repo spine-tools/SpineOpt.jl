@@ -99,7 +99,7 @@ function _create_set_parameters_and_relationships()
             :set_invest_temporal_block => connection__investment_temporal_block,
             :set_invest_stoch_struct => connection__investment_stochastic_structure,
             :set_lead_time => connection_lead_time,
-            :set_tech_lifetime => connection_investment_tech_lifetime,
+            :set_tech_lifetime => lifetime_technical,
             :set_econ_lifetime => lifetime_economic,
             :set_discnt_rate_tech => discount_rate_technology_specific,
             :set_decom_time => decommissioning_time,

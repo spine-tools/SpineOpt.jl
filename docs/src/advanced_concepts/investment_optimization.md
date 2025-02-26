@@ -99,7 +99,7 @@ If we have model that is not currently set up for investments and we wish to cre
 | `investment_count_fix_cumulative` | `unit` | Fix the value of `units_invested_available`
 | `candidate_connections` | `connection` | The number of additional `connection`s of this type that can be invested in
 | `connection_investment_cost` | `connection` | The total overnight investment cost per candidate `connection` over the model horizon
-| `connection_investment_tech_lifetime` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
+| `lifetime_technical` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
 | `connection_investment_variable_type` | `connection` | Whether the `connections_invested_available` variable is continuous, integer or binary
 | `fix_connections_invested` | `connection`| Fix the value of `connections_invested`
 | `fix_connections_invested_available` | `connection` | Fix the value of `connection_invested_available`
@@ -122,7 +122,7 @@ If we have model that is not currently set up for investments and we wish to cre
 | constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `existing_units` and `units_invested_available`
 | constraint_connections_invested_available.jl | \constraints| constrains `connections_invested_available` to be less than `candidate_connections`
 | constraint_connections_invested_transition.jl | \constraints| defines the relationship between `connections_invested_available`, `connections_invested` and `connections_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `connection_investment_tech_lifetime` - analagous to `min_up_time`.
+| constraint_connection_lifetime.jl | \constraints| once a `connection` is invested-in, it must remain in existence for at least `lifetime_technical` - analagous to `min_up_time`.
 | constraint_storages_invested_available.jl | \constraints| constrains `storages_invested_available` to be less than `storage_investment_count_max_cumulative`
 | constraint_storages_invested_transition.jl | \constraints| defines the relationship between `storages_invested_available`, `storages_invested` and `storages_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
 | constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_lifetime_technical` - analagous to `min_up_time`.

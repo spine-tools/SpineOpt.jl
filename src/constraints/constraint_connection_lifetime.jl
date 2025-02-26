@@ -29,7 +29,7 @@ The connection lifetime is enforced by the following constraint:
 \begin{aligned}
 & v^{connections\_invested\_available}_{(conn,s,t)}
 - \sum_{
-        t\_past = t-p^{connection\_investment\_tech\_lifetime}
+        t\_past = t-p^{lifetime\_technical}
 }^{t}
 v^{connections\_invested}_{(conn,s,t\_past)} \\
 & \begin{cases}
@@ -71,13 +71,13 @@ end
 function constraint_connection_lifetime_indices(m::Model)
     (
         (connection=conn, stochastic_path=path, t=t)
-        for (conn, t) in connection_investment_time_indices(m; connection=indices(connection_investment_tech_lifetime))
+        for (conn, t) in connection_investment_time_indices(m; connection=indices(lifetime_technical))
         for path in active_stochastic_paths(m, _past_connections_invested_available_indices(m, conn, anything, t))
     )
 end
 
 function _past_connections_invested_available_indices(m, conn, s_path, t)
-    _past_indices(m, connections_invested_available_indices, connection_investment_tech_lifetime, s_path, t; connection=conn)
+    _past_indices(m, connections_invested_available_indices, lifetime_technical, s_path, t; connection=conn)
 end
 
 """
