@@ -45,14 +45,14 @@ function do_run_spineopt!(
     set_mga_objective!(m)
     # TODO: max_mga_iters can be different now
     if isnothing(max_mga_iters)
-        u_max = if !isempty(indices(mga_investment_weight))
-            maximum(length(mga_investment_weight(unit=u)) for u in indices(mga_investment_weight))
+        u_max = if !isempty(indices(mga_investment_weight, unit))
+            maximum(length(mga_investment_weight(unit=u)) for u in indices(mga_investment_weight, unit))
         else
             0
         end
-        c_max = if !isempty(indices(connections_invested_mga_weight))
+        c_max = if !isempty(indices(mga_investment_weight, connection))
             maximum(
-                length(connections_invested_mga_weight(connection=c)) for c in indices(connections_invested_mga_weight)
+                length(mga_investment_weight(connection=c)) for c in indices(mga_investment_weight, connection)
             )
         else
             0
@@ -154,7 +154,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         connections_invested_available_indices,
         connection_stochastic_scenario_weight,
         connections_invested_mga_indices,
-        connections_invested_mga_weight,
+        mga_investment_weight,
         mga_investment_big_m,
         iteration,
         iteration_number
