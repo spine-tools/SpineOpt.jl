@@ -112,13 +112,13 @@ function units_invested_mga_indices(mga_iteration)
 end
 
 function connections_invested_mga_indices()
-    unique((connection=cg,) for cg in connection(connections_invested_mga=true))
+    unique((connection=cg,) for cg in connection(mga_investment_activate=true))
 end
 
 function connections_invested_mga_indices(mga_iteration)
     unique(
         (connection=cg, mga_iteration=mga_it)
-        for cg in connection(connections_invested_mga=true)
+        for cg in connection(mga_investment_activate=true)
         for mga_it in mga_iteration
     )
 end
