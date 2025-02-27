@@ -135,7 +135,7 @@ function _test_run_spineopt_mga()
         investment_count_max_cumulative = 1
         investment_count_max_cumulative = 1
         storage_investment_count_max_cumulative = 1
-        mga_investment_big_m = mga_storage_investment_big_m = connections_invested_big_m_mga = 5
+        mga_investment_big_m = mga_storage_investment_big_m = 5
         fuel_cost = 5
         mga_slack = 0.05
         object_parameter_values = [
@@ -150,7 +150,7 @@ function _test_run_spineopt_mga()
             ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["connection", "connection_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["connection", "connection_group_abbc", "connections_invested_mga", true],
-            ["connection", "connection_group_abbc", "connections_invested_big_m_mga", connections_invested_big_m_mga],
+            ["connection", "connection_group_abbc", "mga_investment_big_m", mga_investment_big_m],
             ["connection", "connection_group_abbc", "connections_invested_mga_weight", 1],
             ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
@@ -231,7 +231,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= (var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + connections_invested_big_m_mga * var_mga_aux_binary[key])
+                    + mga_investment_big_m * var_mga_aux_binary[key])
                 con = constraint[key...]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -296,7 +296,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + connections_invested_big_m_mga * (1 - var_mga_aux_binary[key])
+                    + mga_investment_big_m * (1 - var_mga_aux_binary[key])
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)

@@ -76,8 +76,7 @@ function do_run_spineopt!(
         save_mga_objective_values!(m)
         # TODO: needs to clean outputs?
         if (
-            isempty(indices(connections_invested_big_m_mga))
-            && isempty(indices(mga_investment_big_m))
+            isempty(indices(mga_investment_big_m))
             && isempty(indices(mga_storage_investment_big_m))
             && mga_iteration_count < max_mga_iters
         )
@@ -156,7 +155,7 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         connection_stochastic_scenario_weight,
         connections_invested_mga_indices,
         connections_invested_mga_weight,
-        connections_invested_big_m_mga,
+        mga_investment_big_m,
         iteration,
         iteration_number
     )
@@ -202,7 +201,6 @@ function _set_objective_mga_iteration!(
     if !isempty(mga_indices())
         weighted_investments = all(
             [
-                isempty(indices(connections_invested_big_m_mga)),
                 isempty(indices(mga_investment_big_m)),
                 isempty(indices(mga_storage_investment_big_m))
             ]
@@ -326,7 +324,6 @@ end
 function set_mga_objective!(m)
     weighted_investments = all(
         [
-            isempty(indices(connections_invested_big_m_mga)),
             isempty(indices(mga_investment_big_m)),
             isempty(indices(mga_storage_investment_big_m))
         ]
