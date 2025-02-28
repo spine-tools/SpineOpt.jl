@@ -862,8 +862,8 @@ function test_contraints_ptdf_lodf_duration()
     end
 end
 
-function test_constraint_ratio_out_in_connection_flow_highest()
-    @testset "constraint_ratio_out_in_connection_flow_highest" begin
+function test_constraint_ratio_out_in_connection_flow_highest_resolution()
+    @testset "constraint_ratio_out_in_connection_flow_highest_resolution" begin
         flow_ratio = 0.8
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")
         class = "connection__node__node"
@@ -874,7 +874,6 @@ function test_constraint_ratio_out_in_connection_flow_highest()
         h_delay = 2
         connection_flow_delay = Dict("type" => "duration", "data" => string(h_delay, "h"))
         @testset for p in ("min", "fix", "max")
-            p = "fix"
             url_in = _test_constraint_connection_setup()
             sense = senses_by_prefix[p]
             ratio = string(p, "_ratio_out_in_connection_flow")
@@ -891,7 +890,6 @@ function test_constraint_ratio_out_in_connection_flow_highest()
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
             constraint = m.ext[:spineopt].constraints[Symbol(ratio)]
-        
             @test length(constraint) == 4
             conn = connection(:connection_ab)
             n_from = node(:node_a)
@@ -908,11 +906,9 @@ function test_constraint_ratio_out_in_connection_flow_highest()
             @testset for (j, t_con) in enumerate(reverse(time_slice(m; temporal_block=temporal_block(:hourly))))
                 s_from = scenarios_from[h_delay+j] # get the scenario before the delay 
                 t_from = time_slices_from[h_delay+j] # get the time slice before the delay
-                                    
                 var_conn_flow_from = var_connection_flow[conn, n_from, d_from, s_from, t_from]
                 t_to = time_slices_to[(j+1)÷2] 
                 var_conn_flow_to = var_connection_flow[conn, n_to, d_to, s_to, t_to]
-            
                 expected_con = SpineOpt.build_sense_constraint(
                     var_conn_flow_to,
                     sense,
