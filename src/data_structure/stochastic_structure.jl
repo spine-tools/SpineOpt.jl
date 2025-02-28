@@ -421,7 +421,11 @@ end
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
 function node_stochastic_time_indices(
-    m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    t=anything,
 )
     (
         (node=n, stochastic_scenario=s, t=t)
@@ -439,7 +443,7 @@ function unit_stochastic_time_indices(
     m::Model;
     unit=anything,
     stochastic_scenario=anything,
-    temporal_block=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
     t=anything,
 )
     (
@@ -511,17 +515,25 @@ function node_investment_stochastic_time_indices(
 end
 
 function node_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
+    end
 end
 
 function unit_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
+    end
 end
 
 function connection_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
+    end
 end
 
 function any_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight][(; kwargs...)]
+    _with_model_env(m) do
+        m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight][(; kwargs...)]
+    end
 end

@@ -160,28 +160,50 @@ function _run_spineopt(
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
     t_end = now()
-    elapsed_time_string = string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
+    elapsed_time_string = _elapsed_time_string(t_start, t_end)
     @log log_level 1 "Execution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     if url_out !== nothing
         stat_keys = [
             :SpineOpt_version, :SpineOpt_git_hash, :SpineInterface_version, :SpineInterface_git_hash, :elapsed_time
         ]
         stat_values = Any[so_ver, so_git_hash, si_ver, si_git_hash, elapsed_time_string]
-        m_mp = master_model(m)
-        if m_mp !== nothing
-            append!(
-                stat_keys,
-                [
-                    :benders_objective_lower_bound,
-                    :benders_objective_upper_bound,
-                    :benders_gap,
-                    :benders_iteration_count,
-                ],
-            )
-            gaps = m_mp.ext[:spineopt].benders_gaps
-            append!(stat_values, [_lb_str(m_mp), _ub_str(m_mp), isempty(gaps) ? "N/A" : _gap_str(m_mp), length(gaps)])
+        models = [m]
+        if master_model(m) !== nothing
+            push!(models, master_model(m))
         end
-        stats = Map(stat_keys, string.(stat_values))
+        append!(models, values(m.ext[:spineopt].model_by_stage))
+        for key in (:build_time, :solve_time)
+            time = merge((get(m.ext[:spineopt].extras, key, Dict()) for m in models)...)
+            if !isempty(time)
+                time_map = Map(string.(keys(time)), collect(values(time)))
+                push!(stat_keys, key)
+                push!(stat_values, time_map)
+            end
+        end
+        if master_model(m) !== nothing
+            m_mp = master_model(m)
+            gaps = m_mp.ext[:spineopt].benders_gaps
+            if !isempty(gaps)
+                append!(
+                    stat_keys,
+                    [
+                        :benders_objective_lower_bound,
+                        :benders_objective_upper_bound,
+                        :benders_gap,
+                        :benders_iteration_count,
+                    ],
+                )
+                benders_stat_values = if report_benders_iterations(model=m.ext[:spineopt].instance, _default=false)
+                    lbs = m_mp.ext[:spineopt].objective_lower_bounds
+                    ubs = m_mp.ext[:spineopt].objective_upper_bounds
+                    [lbs, ubs, gaps, length(gaps)]
+                else
+                    [_lb_str(m_mp), _ub_str(m_mp), _gap_str(m_mp), length(gaps)]
+                end
+                append!(stat_values, benders_stat_values)
+            end
+        end
+        stats = Map(stat_keys, stat_values)
         vals = Dict(:solution_stats => Dict((model=m.ext[:spineopt].instance,) => stats))
         write_parameters(vals, url_out; alternative=alternative, on_conflict="replace")
     end
@@ -190,11 +212,19 @@ function _run_spineopt(
     # possibly adapt union? + allow for conflicts if direct model is used
 end
 
-_gap_str(m_mp) = string(@sprintf("%1.4f", last(m_mp.ext[:spineopt].benders_gaps) * 100), "%")
+function _current_solution_string(m_mp)
+    if isempty(m_mp.ext[:spineopt].benders_gaps)
+        ""
+    else
+        "(lower bound: $(_lb_str(m_mp)); upper bound: $(_ub_str(m_mp)); gap: $(_gap_str(m_mp))) "
+    end
+end
 
-_lb_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])
+_gap_str(m_mp) = _percentage_str(last(m_mp.ext[:spineopt].benders_gaps))
 
-_ub_str(m_mp) = @sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])
+_lb_str(m_mp) = _number_str(last(m_mp.ext[:spineopt].objective_lower_bounds))
+
+_ub_str(m_mp) = _number_str(last(m_mp.ext[:spineopt].objective_upper_bounds))
 
 """
     prepare_spineopt(url_in; <keyword arguments>)
@@ -259,6 +289,7 @@ function prepare_spineopt(
             end
         end
     end
+    _set_value_translator()
     create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
 end
 
@@ -377,7 +408,7 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
         stage_m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; stage=st)
     end
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model, add_bridges)
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp, model_by_stage)
+    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp; model_by_stage=model_by_stage)
     JuMP.set_string_names_on_creation(m, use_model_names)
     m
 end
@@ -477,12 +508,13 @@ struct SpineOptExt
     stochastic_structure::Dict
     dual_solves::Array{Any,1}
     dual_solves_lock::ReentrantLock
-    objective_lower_bound::Base.RefValue{Float64}
-    objective_upper_bound::Base.RefValue{Float64}
+    objective_lower_bounds::Vector{Float64}
+    objective_upper_bounds::Vector{Float64}
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
     event_handlers::Dict
-    function SpineOptExt(instance, lp_solver, master_model=nothing, model_by_stage=Dict(); stage=nothing)
+    extras::Dict
+    function SpineOptExt(instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing)
         if stage === nothing
             intermediate_results_folder = tempname(; cleanup=false)
             mkpath(intermediate_results_folder)
@@ -496,10 +528,13 @@ struct SpineOptExt
             end
         else
             intermediate_results_folder = ""
-            reports_by_output = Dict(
-                (out.name, true) => []
+            outputs = (
+                out
                 for stage__output__entity in (stage__output__unit, stage__output__node, stage__output__connection)
                 for (out, _ent) in stage__output__entity(stage=stage)
+            )
+            reports_by_output = Dict(
+                (out.name, true) => [] for out in Iterators.flatten((outputs, stage__output(stage=stage)))
             )
         end
         event_handlers = Dict(
@@ -508,6 +543,7 @@ struct SpineOptExt
             :model_solved => Set(),
             :window_about_to_solve => Set(),
             :window_solved => Set(),
+            :window_failed => Set(),
         )
         new(
             instance,
@@ -530,11 +566,12 @@ struct SpineOptExt
             Dict(),  # stochastic_structure
             [],  # dual_solves
             ReentrantLock(),  # dual_solves_lock
-            Ref(0.0),  # objective_lower_bound
-            Ref(0.0),  # objective_upper_bound
+            [],  # objective_lower_bounds
+            [],  # objective_upper_bounds
             [],  # benders_gaps
             Ref(false),  # has_results
             event_handlers,
+            Dict(),  # extras
         )
     end
 end
@@ -596,6 +633,7 @@ Below is a table of events, arguments, and when do they fire.
 | `:model_solved` | `m` | Right after model `m` is solved. |
 | `:window_about_to_solve` | `(m, k)` | Right before window `k` for model `m` is solved. |
 | `:window_solved` | `(m, k)` | Right after window `k` for model `m` is solved. |
+| `:window_failed` | `(m, k)` | Right after window `k` for model `m` fails to solve. |
 
 # Example
 
@@ -614,7 +652,7 @@ function add_event_handler!(fn, m, event)
     push!(listeners, fn)
 end
 
-function _save_result!(m, k; filter_accepts_variable=(x -> true))
+function _save_result!(m, k=nothing; filter_accepts_variable=(x -> true))
     m.ext[:spineopt].results[k] = Dict(
         name => copy(m.ext[:spineopt].values[name])
         for name in keys(m.ext[:spineopt].variables)
@@ -622,10 +660,9 @@ function _save_result!(m, k; filter_accepts_variable=(x -> true))
     )
 end
 
-function _set_result!(m, k)
+function _set_result!(m, k=nothing)
     result = get(m.ext[:spineopt].results, k, nothing)
-    result === nothing && return
-    @info "reusing solution for $(_model_name(m)) - $k"
+    result === nothing && return false
     for (name, variable_result) in result
         val = m.ext[:spineopt].values[name]
         for (ind, r) in variable_result
@@ -635,11 +672,15 @@ function _set_result!(m, k)
     m.ext[:spineopt].has_results[] = true
 end
 
-function _set_starting_point!(m, k)
+function _set_starting_point!(m, k=nothing)
     for (name, variable_result) in get(m.ext[:spineopt].results, k, ())
-        var = m.ext[:spineopt].variables[name]
+        var_by_ind = m.ext[:spineopt].variables[name]
+        var_def = m.ext[:spineopt].variables_definition[name]
         for (ind, r) in variable_result
-            var[ind] isa VariableRef && set_start_value(var[ind], r)
+            for new_ind in var_def[:indices](m; _drop_key(ind, :t)..., t=to_time_slice(m; t=ind.t))
+                var = get(var_by_ind, new_ind, nothing)
+                var isa VariableRef && set_start_value(var, r)
+            end
         end
     end
 end

@@ -5,4 +5,4 @@ pkg"add PyCall"
 using PyCall
 python = PyCall.pyprogramname
 run(`$python -m pip install --user setuptools-scm`)
-run(`$python -m pip install --user git+https://github.com/spine-tools/Spine-Database-API`)
+run(`$python -m pip install --user git+https://github.com/spine-tools/Spine-Database-API@0.33.0`)

@@ -336,14 +336,14 @@ function test_constraint_cyclic_node_state()
         @test length(constraint) == 2
         scenario0 = stochastic_scenario(:parent)
         scenario1 = stochastic_scenario(:child)
-        @testset for ((n,blk), cyc) in cyc_cond
+        @testset for ((n, blk), cyc) in cyc_cond
             n = node(Symbol(n))
             blk = temporal_block(Symbol(blk))
             t0 = filter(x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=blk))))[1]
             t1 = last(time_slice(m; temporal_block=blk))
             var_n_st_key0 = (n, scenario0, t0)
             var_n_st_key1 = (n, scenario1, t1)
-            con_key = (n, [scenario0, scenario1], t0, t1)
+            con_key = (n, [scenario0, scenario1], t0, t1, temporal_block(:hourly))
             var_n_st0 = var_node_state[var_n_st_key0...]
             var_n_st1 = var_node_state[var_n_st_key1...]
             expected_con = @build_constraint(var_n_st1 >= var_n_st0)

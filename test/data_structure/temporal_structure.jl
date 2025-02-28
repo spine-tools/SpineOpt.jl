@@ -89,20 +89,26 @@ function _test_representative_time_slice()
         for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
             t_end = end_(t)
             if t_end <= m_start + Hour(4)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk1_ts[1]
+                @test _representative_time_slice(m, t) == rep_blk1_ts[1]
             elseif t_end <= m_start + Hour(8)
-                @test first(SpineOpt.representative_time_slice(m, t)) == t
+                @test _representative_time_slice(m, t) == t
             elseif t_end <= m_start + Hour(12)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[1]
+                @test _representative_time_slice(m, t) == rep_blk2_ts[1]
             elseif t_end <= m_start + Hour(16)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[2]
+                @test _representative_time_slice(m, t) == rep_blk2_ts[2]
             elseif t_end <= m_start + Hour(20)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[3]
+                @test _representative_time_slice(m, t) == rep_blk2_ts[3]
             else
-                @test first(SpineOpt.representative_time_slice(m, t)) == t
+                @test _representative_time_slice(m, t) == t
             end
         end
     end
+end
+
+function _representative_time_slice(m, t)
+    t, coef = only(only(SpineOpt.representative_time_slice_combinations(m, t)))
+    @assert isone(coef)
+    t
 end
 
 function _test_zero_resolution()
