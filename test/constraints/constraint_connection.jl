@@ -1743,7 +1743,7 @@ end
     test_constraint_connection_intact_flow_ptdf()
     test_constraint_connection_flow_lodf()
     test_contraints_ptdf_lodf_duration()
-    test_constraint_ratio_out_in_connection_flow_highest()
+    test_constraint_ratio_out_in_connection_flow_highest_resolution()
     test_constraint_connections_invested_transition()
     test_constraint_connections_invested_transition_mp()
     test_constraint_connection_lifetime()
