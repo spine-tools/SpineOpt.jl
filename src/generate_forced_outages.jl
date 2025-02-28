@@ -30,8 +30,7 @@ function _forced_outages(t_start, t_end, mttf, mttr, u; resolution)
     t = t_start
     while t < t_end
         failure_time = t + _rand_time(mttf(unit=u, t=t,_strict=false),u; resolution)
-        test_mttr = _rand_time(mttr(unit=u, t=t,_strict=false),u; resolution)
-        repair_time = failure_time + test_mttr 
+        repair_time = failure_time + _rand_time(mttr(unit=u, t=t,_strict=false),u; resolution)
         push!(times, (failure_time, repair_time))
         t = repair_time
     end
