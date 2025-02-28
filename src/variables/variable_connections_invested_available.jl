@@ -46,6 +46,10 @@ function connections_invested_available_int(x)
     connection_investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
 end
 
+function _initial_connections_invested_available(; kwargs...)
+    something(initial_connections_invested_available(; kwargs...), 0)
+end
+
 """
     add_variable_connections_invested_available!(m::Model)
 

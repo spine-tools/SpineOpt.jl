@@ -46,6 +46,10 @@ function storages_invested_available_int(x)
     storage_investment_variable_type(node=x.node) == :storage_investment_variable_type_integer
 end
 
+function _initial_storages_invested_available(; kwargs...)
+    something(initial_storages_invested_available(; kwargs...), 0)
+end
+
 """
     add_variable_storages_invested_available!(m::Model)
 

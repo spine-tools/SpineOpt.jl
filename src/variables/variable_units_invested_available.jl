@@ -44,6 +44,10 @@ Check if unit investment variable type is defined to be an integer.
 
 units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
+function _initial_units_invested_available(; kwargs...)
+    something(initial_units_invested_available(; kwargs...), 0)
+end
+
 """
     add_variable_units_invested_available!(m::Model)
 
