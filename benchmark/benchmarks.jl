@@ -98,7 +98,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["model", "instance", "duration_unit", "hour"],
         ["model", "instance", "model_type", "spineopt_standard"],
         ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-        ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
+        ["commodity", "electricity", "physics_type", "commodity_physics_lodf"],
         ["node", nodes_to[1], "node_opf_type", "node_opf_type_reference"],
         ["node", "reserve", "is_reserve_node", true],
         ["node", "reserve", "upward_reserve", true],

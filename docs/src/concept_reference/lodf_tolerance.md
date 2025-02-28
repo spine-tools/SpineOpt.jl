@@ -7,6 +7,6 @@ The LODFs are used to model contingencies on some [connection](@ref)s and their 
 To model contingencies on a [connection](@ref), set [contingency\_activate](@ref) to `true`;
 to study the impact of such contingencies on another [connection](@ref), set [monitoring\_activate](@ref) to `true`.
 
-In addition, define a [commodity](@ref) with [commodity\_physics](@ref) set to [commodity\_physics\_lodf](@ref commodity_physics_list),
+In addition, define a [commodity](@ref) with [physics\_type](@ref) set to [commodity\_physics\_lodf](@ref commodity_physics_list),
 and associate that [commodity](@ref) (via [node\_\_commodity](@ref)) to both [connection](@ref)s' [node](@ref)s
 (given by [connection\_\_to\_node](@ref) and [connection\_\_from\_node](@ref)).
