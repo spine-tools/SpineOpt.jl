@@ -216,7 +216,7 @@ function generate_node_has_ptdf()
         ptdf_durations = [physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
-        ptdf_threshold = maximum(commodity_ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
+        ptdf_threshold = maximum(ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
         Dict(
             :has_ptdf => parameter_value(!isempty(ptdf_comms)),
             :ptdf_duration => parameter_value(ptdf_duration),
@@ -421,7 +421,7 @@ end
     _filter_ptdf_values(ptdf_values)
 
 Filter the values of the `ptdf` parameter including only those with an absolute value
-greater than commodity_ptdf_threshold.
+greater than ptdf_threshold.
 """
 function _filter_ptdf_values(ptdf_values)
     comms = filter(
@@ -429,7 +429,7 @@ function _filter_ptdf_values(ptdf_values)
     )
     ptdf_threshold = if !isempty(comms)
         c = first(comms)
-        threshold = commodity_ptdf_threshold(commodity=c, _strict=false)
+        threshold = ptdf_threshold(commodity=c, _strict=false)
         if threshold !== nothing && !iszero(threshold)
             threshold
         else

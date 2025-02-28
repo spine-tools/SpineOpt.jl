@@ -1,6 +1,6 @@
 Given a [connection](@ref) and a [node](@ref), the power transfer distribution factor (PTDF)
 is the fraction of the flow injected into the [node](@ref) that will flow on the [connection](@ref).
-[commodity\_ptdf\_threshold](@ref) is the minimum absolute value of the PTDF that is considered meaningful.
+[ptdf\_threshold](@ref) is the minimum absolute value of the PTDF that is considered meaningful.
 Any value below this threshold (in absolute value) will be treated as zero.
 
 The PTDFs are used to model DC power flow on certain [connection](@ref)s.
