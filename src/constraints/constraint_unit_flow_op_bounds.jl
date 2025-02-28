@@ -29,7 +29,7 @@ besides being bounded by the segment capacity.
 ```math
 \begin{aligned}
 & v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
-& \leq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \cdot p^{unit\_availability\_factor}_{(u, s, t)} \\
+& \leq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \cdot p^{availability\_factor}_{(u, s, t)} \\
 & \cdot \left( p^{operating\_points}_{(u, n, d, op, s, t)}
 - \begin{cases}       
    p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if } op > 1\\
@@ -48,7 +48,7 @@ besides being bounded by the segment capacity.
 See also
 [unit\_capacity](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
-[unit\_availability\_factor](@ref),
+[availability\_factor](@ref),
 [operating\_points](@ref),
 [ordered\_unit\_flow\_op](@ref).
 """

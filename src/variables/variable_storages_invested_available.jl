@@ -30,7 +30,7 @@ function storages_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    node = intersect(indices(candidate_storages), members(node))
+    node = intersect(indices(storage_investment_count_max_cumulative), members(node))
     node_investment_stochastic_time_indices(
         m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
@@ -58,9 +58,9 @@ function add_variable_storages_invested_available!(m::Model)
         storages_invested_available_indices;
         lb=constant(0),
         int=storages_invested_available_int,
-        fix_value=fix_storages_invested_available,
+        fix_value=storage_investment_count_fix_cumulative,
         internal_fix_value=internal_fix_storages_invested_available,
-        initial_value=initial_storages_invested_available,
-        required_history_period=maximum_parameter_value(storage_investment_tech_lifetime),
+        initial_value=storage_investment_count_initial_cumulative,
+        required_history_period=maximum_parameter_value(storage_lifetime_technical),
     )
 end

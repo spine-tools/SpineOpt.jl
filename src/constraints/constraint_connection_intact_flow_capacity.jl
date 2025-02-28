@@ -27,9 +27,9 @@ according to [connection\_capacity](@ref)
 n \in ng
 } v^{connection\_intact\_flow}_{(conn,n,d,s,t)} \\
 & \leq \\
-& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)}
+& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)}
 \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
-& \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + p^{candidate\_connections}_{(conn,s,t)} \right)
+& \cdot \left( p^{existing\_connections}_{(conn,s,t)} + p^{investment\_count\_max\_cumulative}_{(conn,s,t)} \right)
 \\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
@@ -59,11 +59,11 @@ function _build_constraint_connection_intact_flow_capacity(m::Model, conn, ng, d
         <=
         sum(
             + connection_capacity(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
             * connection_conv_cap_to_flow(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
             * (
-                + candidate_connections(m; connection=conn, stochastic_scenario=s, t=t, _default=0)
-                + number_of_connections(
+                + investment_count_max_cumulative(m; connection=conn, stochastic_scenario=s, t=t, _default=0)
+                + existing_connections(
                     m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
                 )
             )

@@ -28,7 +28,7 @@ This constraint enforces the relationship between [connections\_invested](@ref),
 & v^{connections\_invested\_available}_{(c,s,t)} - v^{connections\_invested}_{(c,s,t)}
 + v^{connections\_decommissioned}_{(c,s,t)} \\
 & = v^{connections\_invested\_available}_{(c,s,t-1)} \\
-& \forall c \in connection: p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall c \in connection: p^{investment\_count\_max\_cumulative}_{(c)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

@@ -4,7 +4,7 @@ is the fraction of the flow injected into the [node](@ref) that will flow on the
 Any value below this threshold (in absolute value) will be treated as zero.
 
 The PTDFs are used to model DC power flow on certain [connection](@ref)s.
-To model DC power flow on a [connection](@ref), set [connection\_monitored](@ref) to `true`.
+To model DC power flow on a [connection](@ref), set [monitoring\_activate](@ref) to `true`.
 
 In addition, define a [commodity](@ref) with [commodity\_physics](@ref) set to either [commodity\_physics\_ptdf](@ref commodity_physics_list),
 or [commodity\_physics\_lodf](@ref commodity_physics_list).

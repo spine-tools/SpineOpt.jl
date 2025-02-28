@@ -27,7 +27,7 @@ and equals [connection\_intact\_flow](@ref) otherwise.
 & v^{connection\_flow}_{(c, n, d, s, t)} 
 \leq
 v^{connection\_intact\_flow}_{(c, n, d, s, t)} \\
-& \forall c \in connection : p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall c \in connection : p^{investment\_count\_max\_cumulative}_{(c)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

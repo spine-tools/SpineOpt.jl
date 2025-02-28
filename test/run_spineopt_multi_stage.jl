@@ -59,7 +59,7 @@ function _ref_setup(storage_count)
             ("model", "test_model", "max_iterations", 20),
             ("temporal_block", "flat", "resolution", unparse_db_value(res)),
             ("node", "demand_node", "demand", unparse_db_value(demand_ts)),
-            ("node", "demand_node", "node_slack_penalty", 10000),
+            ("node", "demand_node", "node_balance_penalty", 10000),
         ],
         :relationship_parameter_values => Any[
             ("unit__to_node", ("other_unit", "demand_node"), "vom_cost", unparse_db_value(cost_ts)),
@@ -82,11 +82,11 @@ function _ref_setup(storage_count)
         append!(
             test_data[:object_parameter_values],
             (
-                ("node", n, "has_state", true),
-                ("node", n, "state_coeff", 1.0),
-                ("node", n, "initial_node_state", storage_cap / 2),
-                ("node", n, "node_state_cap", storage_cap),
-                ("node", n, "node_slack_penalty", 10000),
+                ("node", n, "node_type", "storage_node"),
+                ("node", n, "storage_state_coefficient", 1.0),
+                ("node", n, "storage_state_initial", storage_cap / 2),
+                ("node", n, "storage_state_max", storage_cap),
+                ("node", n, "node_balance_penalty", 10000),
             )
         )
         append!(
@@ -125,7 +125,7 @@ function _ref_investments_setup(storage_count)
         append!(
             investment_data[:object_parameter_values],
             (
-                ("node", n, "candidate_storages", 4),
+                ("node", n, "storage_investment_count_max_cumulative", 4),
                 ("node", n, "benders_starting_storages_invested", 0.01),
                 ("node", n, "storage_investment_cost", 100),
                 ("node", n, "storage_investment_variable_type", "storage_investment_variable_type_continuous"),

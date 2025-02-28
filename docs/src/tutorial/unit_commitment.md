@@ -106,7 +106,7 @@ Let's assume that the *power\_plant\_b* has a minimum operating point of *10%*, 
   - *shut\_down\_cost* parameter and the *Base* alternative, and enter the value *7*. This will establish that there's a cost of '7' EUR per shutdown.
   - *start\_up\_cost* parameter and the *Base* alternative, and enter the value *5*. This will establish that there's a cost of '5' EUR per startup.
   - *units\_on\_cost* parameter and the *Base* alternative, and enter the value *3*. This will establish that there's a cost of '3' EUR per units on (e.g., idling cost).
-  - *initial\_units\_on* parameter and the *Base* alternative, and enter the value *0*. This will establish that there are no units 'on' before the first time step.
+  - *online\_count\_initial* parameter and the *Base* alternative, and enter the value *0*. This will establish that there are no units 'on' before the first time step.
 
 ![image](figs_unit_commitment/uc_power_plant_b_costs_definition.png)
 

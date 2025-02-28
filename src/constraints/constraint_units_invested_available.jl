@@ -22,8 +22,8 @@ The number of available invested-in units at any point in time is less than the 
 
 ```math
 \begin{aligned}
-& v^{units\_invested\_available}_{(u,s,t)} < p^{candidate\_units}_{(u)} \\
-& \forall u \in unit: p^{candidate\_units}_{(u)} \neq 0 \\
+& v^{units\_invested\_available}_{(u,s,t)} < p^{investment\_count\_max\_cumulative}_{(u)} \\
+& \forall u \in unit: p^{investment\_count\_max\_cumulative}_{(u)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```
@@ -36,5 +36,5 @@ end
 
 function _build_constraint_units_invested_available(m::Model, u, s, t)
     @fetch units_invested_available = m.ext[:spineopt].variables
-    @build_constraint(units_invested_available[u, s, t] <= candidate_units(m; unit=u, stochastic_scenario=s, t=t))
+    @build_constraint(units_invested_available[u, s, t] <= investment_count_max_cumulative(m; unit=u, stochastic_scenario=s, t=t))
 end

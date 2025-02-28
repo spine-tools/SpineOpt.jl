@@ -188,11 +188,10 @@ function _required_history_duration(m)
     lookback_params = (
         min_up_time,
         min_down_time,
-        scheduled_outage_duration,
+        outage_scheduled_duration,
         connection_flow_delay,
-        unit_investment_tech_lifetime,
-        connection_investment_tech_lifetime,
-        storage_investment_tech_lifetime,
+        lifetime_technical,
+        storage_lifetime_technical,
     )
     max_vals = (maximum_parameter_value(p) for p in lookback_params)
     init = _model_duration_unit(m)(1)  # Dynamics always require at least 1 duration unit of history

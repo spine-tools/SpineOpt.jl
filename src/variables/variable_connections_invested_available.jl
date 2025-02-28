@@ -30,7 +30,7 @@ function connections_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    connection = intersect(indices(candidate_connections), members(connection))
+    connection = intersect(indices(investment_count_max_cumulative), members(connection))
     connection_investment_stochastic_time_indices(
         m; connection=connection, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
@@ -43,7 +43,7 @@ Check if conneciton investment variable type is defined to be an integer.
 """
 
 function connections_invested_available_int(x)
-    connection_investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
+    investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
 end
 
 """
@@ -58,9 +58,9 @@ function add_variable_connections_invested_available!(m::Model)
         connections_invested_available_indices;
         lb=constant(0),
         int=connections_invested_available_int,
-        fix_value=fix_connections_invested_available,
+        fix_value=investment_count_fix_cumulative,
         internal_fix_value=internal_fix_connections_invested_available,
-        initial_value=initial_connections_invested_available,
-        required_history_period=maximum_parameter_value(connection_investment_tech_lifetime),
+        initial_value=investment_count_initial_cumulative,
+        required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end

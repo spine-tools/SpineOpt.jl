@@ -30,7 +30,7 @@ function units_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    unit = intersect(indices(candidate_units), members(unit))
+    unit = intersect(indices(investment_count_max_cumulative), members(unit))
     unit_investment_stochastic_time_indices(
         m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
@@ -42,7 +42,7 @@ end
 Check if unit investment variable type is defined to be an integer.
 """
 
-units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
+units_invested_available_int(x) = investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
 """
     add_variable_units_invested_available!(m::Model)
@@ -56,9 +56,9 @@ function add_variable_units_invested_available!(m::Model)
         units_invested_available_indices;
         lb=constant(0),
         int=units_invested_available_int,
-        fix_value=fix_units_invested_available,
+        fix_value=investment_count_fix_cumulative,
         internal_fix_value=internal_fix_units_invested_available,
-        initial_value=initial_units_invested_available,
-        required_history_period=maximum_parameter_value(unit_investment_tech_lifetime),
+        initial_value=investment_count_initial_cumulative,
+        required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end

@@ -152,12 +152,12 @@ function _test_variable_connection_setup()
     url_in
 end
 
-function test_initial_units_on()
-    @testset "initial_units_on" begin
+function test_online_count_initial()
+    @testset "online_count_initial" begin
         url_in = _test_variable_unit_setup()
         init_units_on = 123
         object_parameter_values = [
-            ["unit", "unit_ab", "initial_units_on", init_units_on],
+            ["unit", "unit_ab", "online_count_initial", init_units_on],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -176,9 +176,9 @@ end
 function test_unit_online_variable_type_none()
     @testset "unit_online_variable_type_none" begin
         url_in = _test_variable_unit_setup()
-        unit_availability_factor = 0.5
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_none"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
@@ -200,23 +200,23 @@ function test_unit_history_parameters()
     @testset "unit_history_parameters" begin
         min_up_minutes = 120
         min_down_minutes = 180
-        scheduled_outage_duration_minutes = 60
+        outage_scheduled_duration_minutes = 60
         lifetime_minutes = 240
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         
         url_in = _test_variable_unit_setup()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
         min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-        scheduled_outage_duration = Dict("type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m"))
-        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        outage_scheduled_duration = Dict("type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         object_parameter_values = [
             ["unit", "unit_ab", "min_up_time", min_up_time],
             ["unit", "unit_ab", "min_down_time", min_down_time],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
             ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+            ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [
@@ -252,15 +252,15 @@ function test_connection_history_parameters()
         flow_ratio = 0.8
         conn_flow_minutes_delay = 180
         lifetime_minutes = 240
-        candidate_connections = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
 
         url_in = _test_variable_connection_setup()
-        connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         connection_flow_delay = Dict("type" => "duration", "data" => string(conn_flow_minutes_delay, "m"))
         object_parameter_values = [
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_ab", "lifetime_technical", lifetime_technical],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [
@@ -729,7 +729,7 @@ function test_fix_ratio_out_in_connection_flow_simple_rolling()
 end
 
 @testset "variables" begin
-    test_initial_units_on()
+    test_online_count_initial()
     test_unit_online_variable_type_none()
     test_unit_history_parameters()
     test_connection_history_parameters()

@@ -78,7 +78,7 @@ function _test_constraint_node_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["node", "node_group_bc", "balance_type", "balance_type_none"],
+            ["node", "node_group_bc", "node_type", "no_balance"],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
         ],
@@ -98,7 +98,7 @@ end
 function test_constraint_nodal_balance()
     @testset "constraint_nodal_balance" begin
         url_in = _test_constraint_node_setup()
-        object_parameter_values = [["node", "node_a", "node_slack_penalty", 0.5]]
+        object_parameter_values = [["node", "node_a", "node_balance_penalty", 0.5]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
@@ -142,7 +142,7 @@ function test_constraint_nodal_balance_group()
     @testset "constraint_nodal_balance_group" begin
         url_in = _test_constraint_node_setup()
         object_parameter_values = [
-            ["node", "node_group_bc", "balance_type", "balance_type_group"]
+            ["node", "node_group_bc", "node_type", "balance_group"]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -181,30 +181,30 @@ function test_constraint_node_injection()
         demand_b = 20
         demand_c = -80
         demand_group = 200
-        fractional_demand_b = 0.6
-        fractional_demand_c = 0.4
-        frac_state_loss_b = 0.15
-        frac_state_loss_c = 0.25
-        state_coeff_b = 0.9
-        state_coeff_c = 0.8
+        demand_fraction_b = 0.6
+        demand_fraction_c = 0.4
+        storage_self_discharge_b = 0.15
+        storage_self_discharge_c = 0.25
+        storage_state_coefficient_b = 0.9
+        storage_state_coefficient_c = 0.8
         diff_coeff_bc = 0.2
         diff_coeff_cb = 0.3
         url_in = _test_constraint_node_setup()
         relationships = [["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]]
         object_parameter_values = [
-            ["node", "node_a", "node_slack_penalty", 0.5],
+            ["node", "node_a", "node_balance_penalty", 0.5],
             ["node", "node_a", "demand", demand_a],
             ["node", "node_b", "demand", demand_b],
             ["node", "node_c", "demand", demand_c],
             ["node", "node_group_bc", "demand", demand_group],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_b", "frac_state_loss", frac_state_loss_b],
-            ["node", "node_c", "frac_state_loss", frac_state_loss_c],
-            ["node", "node_b", "state_coeff", state_coeff_b],
-            ["node", "node_c", "state_coeff", state_coeff_c],
-            ["node", "node_b", "fractional_demand", fractional_demand_b],
-            ["node", "node_c", "fractional_demand", fractional_demand_c],
+            ["node", "node_b", "node_type", "storage_node"],
+            ["node", "node_c", "node_type", "storage_node"],
+            ["node", "node_b", "storage_self_discharge", storage_self_discharge_b],
+            ["node", "node_c", "storage_self_discharge", storage_self_discharge_c],
+            ["node", "node_b", "storage_state_coefficient", storage_state_coefficient_b],
+            ["node", "node_c", "storage_state_coefficient", storage_state_coefficient_c],
+            ["node", "node_b", "demand_fraction", demand_fraction_b],
+            ["node", "node_c", "demand_fraction", demand_fraction_c],
         ]
         relationship_parameter_values = [
             ["node__node", ["node_b", "node_c"], "diff_coeff", diff_coeff_bc],
@@ -272,11 +272,11 @@ function test_constraint_node_injection()
                 var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
                     + var_n_inj
-                    + (state_coeff_b + frac_state_loss_b + diff_coeff_bc) * var_n_st_b1
-                    - state_coeff_b * var_n_st_b0
+                    + (storage_state_coefficient_b + storage_self_discharge_b + diff_coeff_bc) * var_n_st_b1
+                    - storage_state_coefficient_b * var_n_st_b0
                     - diff_coeff_cb * var_n_st_c1
                     - var_u_flow
-                    + demand_b + demand_group * fractional_demand_b
+                    + demand_b + demand_group * demand_fraction_b
                     == 0
                 )
                 con = constraint[n, path, t0, t1]
@@ -297,10 +297,10 @@ function test_constraint_node_injection()
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
-                    var_n_inj + (state_coeff_c + frac_state_loss_c + diff_coeff_cb) * var_n_st_c1
-                    - state_coeff_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
+                    var_n_inj + (storage_state_coefficient_c + storage_self_discharge_c + diff_coeff_cb) * var_n_st_c1
+                    - storage_state_coefficient_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
                     demand_c +
-                    demand_group * fractional_demand_c == 0
+                    demand_group * demand_fraction_c == 0
                 )
                 con = constraint[n, path, t0, t1]
                 observed_con = constraint_object(con)
@@ -316,10 +316,10 @@ function test_constraint_cyclic_node_state()
         node_capacity = Dict("node_b" => 120, "node_c" => 400)
         cyc_cond = Dict(("node_b", "hourly") => true, ("node_c", "hourly") => true)
         object_parameter_values = [
-            ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
-            ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
+            ["node", "node_b", "storage_state_max", node_capacity["node_b"]],
+            ["node", "node_c", "storage_state_max", node_capacity["node_c"]],
+            ["node", "node_b", "node_type", "storage_node"],
+            ["node", "node_c", "node_type", "storage_node"],
         ]
         relationship_parameter_values = [
             ["node__temporal_block", ["node_b", "hourly"], "cyclic_condition", cyc_cond[("node_b", "hourly")]],
@@ -358,11 +358,11 @@ function test_constraint_storage_line_pack()
     @testset "constraint_storage_line_pack" begin
         url_in = _test_constraint_node_setup()
         pressure = Dict("node_b" => true, "node_c" => true)
-        state = Dict("node_a" => true)
+        node_type = Dict("node_a" => "storage_node")
         object_parameter_values = [
             ["node", "node_b", "has_pressure", pressure["node_b"]],
             ["node", "node_c", "has_pressure", pressure["node_c"]],
-            ["node", "node_a", "has_state", state["node_a"]],
+            ["node", "node_a", "node_type", node_type["node_a"]],
         ]
         conn_linepack = Dict(("connection_bc", "node_a", "node_group_bc") => 28)
         relationships = [
@@ -477,7 +477,7 @@ function test_constraint_min_node_pressure()
         min_pressure = Dict("node_b" => 350)
         object_parameter_values = [
             ["node", "node_b", "has_pressure", has_pressure["node_b"]],
-            ["node", "node_b", "min_node_pressure", min_pressure["node_b"]]
+            ["node", "node_b", "pressure_min", min_pressure["node_b"]]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -508,7 +508,7 @@ function test_constraint_max_node_pressure()
         max_pressure = Dict("node_b" => 470)
         object_parameter_values = [
             ["node", "node_b", "has_pressure", has_pressure["node_b"]],
-            ["node", "node_b", "max_node_pressure", max_pressure["node_b"]]
+            ["node", "node_b", "pressure_max", max_pressure["node_b"]]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -536,10 +536,10 @@ function test_constraint_min_node_voltage_angle()
     @testset "constraint_min_node_voltage_angle" begin
         url_in = _test_constraint_node_setup()
         has_voltage_angle = Dict("node_b" => true)
-        min_voltage_angle = Dict("node_b" => -3.14)
+        voltage_angle_min = Dict("node_b" => -3.14)
         object_parameter_values = [
             ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
-            ["node", "node_b", "min_voltage_angle", min_voltage_angle["node_b"]]
+            ["node", "node_b", "voltage_angle_min", voltage_angle_min["node_b"]]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -549,7 +549,7 @@ function test_constraint_min_node_voltage_angle()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
-            @testset for (n, min_volt_ang) in min_voltage_angle
+            @testset for (n, min_volt_ang) in voltage_angle_min
                 n = node(Symbol(n))
                 var_n_voltage_key1 = (n, s, t)
                 con_key = (n, [s], t)
@@ -567,10 +567,10 @@ function test_constraint_max_node_voltage_angle()
     @testset "constraint_max_node_voltage_angle" begin
         url_in = _test_constraint_node_setup()
         has_voltage_angle = Dict("node_b" => true)
-        max_voltage_angle = Dict("node_b" => 3.14)
+        voltage_angle_max = Dict("node_b" => 3.14)
         object_parameter_values = [
             ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
-            ["node", "node_b", "max_voltage_angle", max_voltage_angle["node_b"]]
+            ["node", "node_b", "voltage_angle_max", voltage_angle_max["node_b"]]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -580,7 +580,7 @@ function test_constraint_max_node_voltage_angle()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
-            @testset for (n, max_volt_ang) in max_voltage_angle
+            @testset for (n, max_volt_ang) in voltage_angle_max
                 n = node(Symbol(n))
                 var_n_voltage_key1 = (n, s, t)
                 con_key = (n, [s], t)
@@ -597,12 +597,12 @@ end
 function test_constraint_node_state_capacity_investments()
     @testset "constraint_node_state_capacity_investments" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 400
         object_parameter_values = [
-            ["node", "node_c", "node_state_cap", node_capacity],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "storage_state_max", node_capacity],
+            ["node", "node_c", "node_type", "storage_node"],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -635,12 +635,12 @@ end
 function test_constraint_storages_invested_available()
     @testset "constraint_storages_invested_available" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
-            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_state_max", node_capacity],
+            ["node", "node_b", "node_type", "storage_node"],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -656,7 +656,7 @@ function test_constraint_storages_invested_available()
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
             var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_storages)
+            expected_con = @build_constraint(var <= storage_investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -667,12 +667,12 @@ end
 function test_constraint_storages_invested_available_mp()
     @testset "constraint_storages_invested_available_mp" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 7
+        storage_investment_count_max_cumulative = 7
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
-            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_state_max", node_capacity],
+            ["node", "node_b", "node_type", "storage_node"],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -689,7 +689,7 @@ function test_constraint_storages_invested_available_mp()
         @testset for t in time_slices
             key = (node(:node_c), stochastic_scenario(:parent), t)
             var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_storages)
+            expected_con = @build_constraint(var <= storage_investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -700,12 +700,12 @@ end
 function test_constraint_storages_invested_transition()
     @testset "constraint_storages_invested_transition" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
-            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_state_max", node_capacity],
+            ["node", "node_b", "node_type", "storage_node"],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -742,12 +742,12 @@ end
 function test_constraint_storages_invested_transition_mp()
     @testset "constraint_storages_invested_transition_mp" begin
         url_in = _test_constraint_node_setup()
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_c", "node_state_cap", node_capacity],
-            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_state_max", node_capacity],
+            ["node", "node_b", "node_type", "storage_node"],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -784,18 +784,18 @@ end
 
 function test_constraint_storage_lifetime()
     @testset "constraint_storage_lifetime" begin
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         expected_num_vars = Dict(30 => 6, 180 => 8, 240 => 9)
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
-            storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            storage_lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
-                ["node", "node_c", "node_state_cap", node_capacity],
-                ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
+                ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+                ["node", "node_c", "storage_state_max", node_capacity],
+                ["node", "node_c", "node_type", "storage_node"],
+                ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -847,25 +847,25 @@ end
 
 function test_constraint_storage_lifetime_sense()
     @testset "constraint_storage_lifetime_sense" begin
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         expected_num_vars = Dict(30 => 6, 180 => 8, 240 => 9)
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         lifetime_minutes = 240
         senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
         url_in = _test_constraint_node_setup()
-        storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        storage_lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
         ]
         @testset for (sense_key, sense_value) in senses
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
-                ["node", "node_c", "node_state_cap", node_capacity],
-                ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
-                ["node", "node_c", "storage_investment_lifetime_sense", sense_key],
+                ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+                ["node", "node_c", "storage_state_max", node_capacity],
+                ["node", "node_c", "node_type", "storage_node"],
+                ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
+                ["node", "node_c", "storage_lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
             ]
             SpineInterface.import_data(
@@ -908,17 +908,17 @@ end
 
 function test_constraint_storage_lifetime_mp()
     @testset "constraint_storage_lifetime_mp" begin
-        candidate_storages = 1
+        storage_investment_count_max_cumulative = 1
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_node_setup()
-            storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            storage_lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
-                ["node", "node_c", "node_state_cap", node_capacity],
-                ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
+                ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+                ["node", "node_c", "storage_state_max", node_capacity],
+                ["node", "node_c", "node_type", "storage_node"],
+                ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]
@@ -972,7 +972,7 @@ function test_constraint_min_capacity_margin()
         demand_b = 105
         capacity = 200
         object_parameter_values = [
-            ["node", "node_b", "min_capacity_margin", margin_b],
+            ["node", "node_b", "capacity_margin_min", margin_b],
             ["node", "node_b", "demand", demand_b],
             ["unit", "unit_ab", "units_on_cost", 1],  # To have unis_on variables
         ]
@@ -1011,8 +1011,8 @@ function test_constraint_min_capacity_margin_penalty()
         capacity = 200
         penalty = 1000
         object_parameter_values = [
-            ["node", "node_b", "min_capacity_margin", margin_b],
-            ["node", "node_b", "min_capacity_margin_penalty", penalty],
+            ["node", "node_b", "capacity_margin_min", margin_b],
+            ["node", "node_b", "capacity_margin_penalty", penalty],
             ["node", "node_b", "demand", demand_b],
         ]
         relationship_parameter_values = [

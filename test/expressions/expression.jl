@@ -81,11 +81,11 @@ function _test_expressions_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_c", "node_state_cap", 50],
+            ["node", "node_c", "node_type", "storage_node"],
+            ["node", "node_c", "storage_state_max", 50],
             ["node", "node_b", "demand", 105],
             ["unit", "unit_b", "online_variable_type", "unit_online_variable_type_linear"],
-            ["unit", "unit_b", "unit_availability_factor", 0.4],            
+            ["unit", "unit_b", "availability_factor", 0.4],            
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
             ["model", "instance", "db_lp_solver", "HiGHS.jl"],
         ],
@@ -108,16 +108,16 @@ end
 function test_expression_capacity_margin()
     @testset "expression_capacity_margin" begin        
         url_in = _test_expressions_setup()
-        number_of_units_b = 3
+        existing_units_b = 3
         margin_b = 1
         demand_b = 105
         group_demand_a = 10
-        fractional_demand_b = 0.5
+        demand_fraction_b = 0.5
         object_parameter_values = [
-            ["node", "node_b", "min_capacity_margin", margin_b],
-            ["unit", "unit_b", "number_of_units", number_of_units_b],
+            ["node", "node_b", "capacity_margin_min", margin_b],
+            ["unit", "unit_b", "existing_units", existing_units_b],
             ["node", "node_b", "demand", demand_b],
-            ["node", "node_b", "fractional_demand", fractional_demand_b],
+            ["node", "node_b", "demand_fraction", demand_fraction_b],
             ["node", "node_a", "demand", group_demand_a],
         ]        
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -153,7 +153,7 @@ function test_expression_capacity_margin()
                 + 0.4 * 30 * var_uon_b
                 + 75 * var_uon_ab
                 - demand_b
-                - fractional_demand_b * group_demand_a
+                - demand_fraction_b * group_demand_a
             )            
 
             observed_expr = expression[n, [s], t]

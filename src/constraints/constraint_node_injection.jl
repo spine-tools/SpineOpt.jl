@@ -20,8 +20,8 @@
 @doc raw"""
 The node injection itself represents all local production and consumption,
 computed as the sum of all connected unit flows and the nodal demand.
-If a node corresponds to a storage node, the parameter [has\_state](@ref)
-should be set to [true](@ref boolean_value_list) for this node.
+If a node corresponds to a storage node, the parameter [node\_type](@ref)
+should be set to [storage\_node](@ref node_type_list) (or [storage\_group](@ref node_type_list)) for this node.
 The node injection is created for each node in the network
 (unless the node is only used for parameter aggregation purposes, see [Introduction to groups of objects](@ref)).
 
@@ -29,9 +29,9 @@ The node injection is created for each node in the network
 \begin{aligned}
 & v^{node\_injection}_{(n,s,t)} \\
 & = \\
-& \left(p^{state\_coeff}_{(n, s, t-1)} \cdot v^{node\_state}_{(n, s, t-1)} - p^{state\_coeff}_{(n, s, t)} \cdot v^{node\_state}_{(n, s, t)}\right)
+& \left(p^{storage\_state\_coefficient}_{(n, s, t-1)} \cdot v^{node\_state}_{(n, s, t-1)} - p^{storage\_state\_coefficient}_{(n, s, t)} \cdot v^{node\_state}_{(n, s, t)}\right)
 / \Delta t \\
-& - p^{frac\_state\_loss}_{(n,s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
+& - p^{storage\_self\_discharge}_{(n,s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
 & + \sum_{n'} p^{diff\_coeff}_{(n',n,s,t)} \cdot v^{node\_state}_{(n', s, t)}
 - \sum_{n'} p^{diff\_coeff}_{(n,n',s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
 & + \sum_{
@@ -42,23 +42,23 @@ v^{unit\_flow}_{(u,n,to\_node,s,t)}
         u
 }
 v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
-& - \left(p^{demand}_{(n,s,t)} + \sum_{ng \ni n} p^{fractional\_demand}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)}\right) \\
+& - \left(p^{demand}_{(n,s,t)} + \sum_{ng \ni n} p^{demand\_fraction}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)}\right) \\
 & + v^{node\_slack\_pos}_{(n,s,t)} - v^{node\_slack\_neg}_{(n,s,t)} \\
-& \forall n \in node: p^{has\_state}_{(n)}\\
+& \forall n \in node: p^{node\_type=storage\_node}_{(n)}\\
 & \forall (s, t)
 \end{aligned}
 ```
 
 See also
-[state\_coeff](@ref),
-[frac\_state\_loss](@ref),
+[storage\_state\_coefficient](@ref),
+[storage\_self\_discharge](@ref),
 [diff\_coeff](@ref),
 [node\_\_node](@ref),
 [unit\_\_from\_node](@ref),
 [unit\_\_to\_node](@ref),
 [demand](@ref),
-[fractional\_demand](@ref),
-[has\_state](@ref).
+[demand\_fraction](@ref),
+[node\_type](@ref).
 
 """
 function add_constraint_node_injection!(m::Model)
@@ -72,7 +72,7 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
             + node_injection[n, s, t_after]
             + demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
             + sum(
-                + fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
+                + demand_fraction(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
                 * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t_after))
                 for ng in groups(n);
                 init=0,
@@ -87,13 +87,13 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         + sum(
             (
                 + get(node_state, (n, s, t_before), 0)
-                * state_coeff(m; node=n, stochastic_scenario=s, t=t_before)
+                * storage_state_coefficient(m; node=n, stochastic_scenario=s, t=t_before)
                 - get(node_state, (n, s, t_after), 0)
-                * state_coeff(m; node=n, stochastic_scenario=s, t=t_after)
+                * storage_state_coefficient(m; node=n, stochastic_scenario=s, t=t_after)
             ) / duration(t_after)
             # Self-discharge commodity losses
             - get(node_state, (n, s, t_after), 0)
-            * frac_state_loss(m; node=n, stochastic_scenario=s, t=t_after)
+            * storage_self_discharge(m; node=n, stochastic_scenario=s, t=t_after)
             for s in s_path;
             init=0,
         )
