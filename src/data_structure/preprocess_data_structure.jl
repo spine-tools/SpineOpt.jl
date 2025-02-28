@@ -275,7 +275,7 @@ function generate_connection_has_lodf()
         Dict(
             :has_lodf => parameter_value(!isempty(lodf_comms)),
             :connnection_lodf_tolerance => parameter_value(
-                reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05),
+                reduce(max, (lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05),
             )
         )
     end
