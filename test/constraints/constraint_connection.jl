@@ -842,7 +842,7 @@ function test_contraints_ptdf_lodf_duration()
         @testset for physics_duration in (nothing, Hour(1), Hour(6), Day(1))
             all_object_parameter_values = [
                 object_parameter_values;
-                [["commodity", "electricity", "commodity_physics_duration", unparse_db_value(physics_duration)]]
+                [["commodity", "electricity", "physics_duration", unparse_db_value(physics_duration)]]
             ]
             SpineInterface.import_data(
                 url_in;

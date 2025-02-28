@@ -213,7 +213,7 @@ function generate_node_has_ptdf()
             for c in node__commodity(node=n)
             if physics_type(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
-        ptdf_durations = [commodity_physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
+        ptdf_durations = [physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
         ptdf_threshold = maximum(commodity_ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
