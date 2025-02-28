@@ -39,7 +39,7 @@ function _forced_outages(t_start, t_end, mttf, mttr, u; resolution)
 end
 _forced_outages(t_start, t_end, ::Nothing, mttr, u; resolution) = []  # never fails
 _forced_outages(t_start, t_end, ::Nothing, ::Nothing, u; resolution) = []  # never fails
-_forced_outages(t_start, t_end, mttf, ::Nothing, u; resolution) = [(t_start + _rand_time(mttf; resolution), t_end)] #TODO: fix me too
+_forced_outages(t_start, t_end, mttf, ::Nothing, u; resolution) = [(t_start + _rand_time(mttf; resolution), t_end)] # How do address this for time-dependent outage rate?
 
 function forced_outage_time_series(t_start, t_end, mttf, mttr, u; seed=nothing, resolution=Hour)
     seed === nothing || Random.seed!(seed)
@@ -87,16 +87,16 @@ Parameter `units_unavailable` will be written for those units in the output DB h
 """
 function generate_forced_outages(url_in, url_out=url_in; alternative="Base", on_conflict="replace")
     #Added the "on_conflict = replace" argument: In most cases, I believe we'd want to overwrite outages rahter than append
-    # e.g. I could see running this script twixe would add overproportional amount of outages to the timeseries
-    using_spinedb(url_in)
+    # e.g. I could see running this script twice would add overproportional amount of outages to the timeseries
+    using_spinedb(url_in, @__MODULE__)
     m_start = minimum(model_start(model=m) for m in model())
     m_end = maximum(model_end(model=m) for m in model())
     forced_outage_ts = Dict(
         (unit = u,) => forced_outage_time_series(
-            m_start, #model start
-            m_end, #model end
-            mean_time_to_failure,#(unit=u, _strict=false),
-            mean_time_to_repair,#(unit=u, _strict=false)
+            m_start,
+            m_end,
+            mean_time_to_failure,
+            mean_time_to_repair,
             u,
         )
         for u in indices(mean_time_to_failure)
