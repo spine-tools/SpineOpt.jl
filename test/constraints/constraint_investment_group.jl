@@ -131,7 +131,7 @@ function _test_min_max_entities_invested_available()
         url_in = _test_constraint_investment_group_setup()
         object_parameter_values = [
             ["investment_group", "ig", "minimum_entities_invested_available", 3],
-            ["investment_group", "ig", "maximum_entities_invested_available", 8],
+            ["investment_group", "ig", "investment_count_total_max_cumulative", 8],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -166,7 +166,7 @@ function _test_min_max_capacity_invested_available()
         url_in = _test_constraint_investment_group_setup()
         object_parameter_values = [
             ["investment_group", "ig", "minimum_capacity_invested_available", 300],
-            ["investment_group", "ig", "maximum_capacity_invested_available", 800],
+            ["investment_group", "ig", "investment_capacity_total_max_cumulative", 800],
         ]
         relationships = [
             ("unit__from_node__investment_group", ("unit_ab", "node_a", "ig")),

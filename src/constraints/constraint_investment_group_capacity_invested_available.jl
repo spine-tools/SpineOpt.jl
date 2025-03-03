@@ -65,14 +65,14 @@ function _build_constraint_investment_group_maximum_capacity_invested_available(
     @build_constraint(
         _group_capacity_invested_available(m, ig, s, t)
         <=
-        maximum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
+        investment_capacity_total_max_cumulative(m; investment_group=ig, stochastic_scenario=s, t=t)
     )
 end
 
 function constraint_investment_group_maximum_capacity_invested_available_indices(m::Model)
     (
         (investment_group=ig, stochastic_scenario=s, t=t)
-        for ig in indices(maximum_capacity_invested_available)
+        for ig in indices(investment_capacity_total_max_cumulative)
         for (s, t) in _capacity_entities_invested_available_s_t(m)
     )
 end
