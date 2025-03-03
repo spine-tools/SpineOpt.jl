@@ -35,14 +35,14 @@ function _build_constraint_investment_group_minimum_capacity_invested_available(
     @build_constraint(
         _group_capacity_invested_available(m, ig, s, t)
         >=
-        minimum_capacity_invested_available(m; investment_group=ig, stochastic_scenario=s, t=t)
+        investment_capacity_total_min_cumulative(m; investment_group=ig, stochastic_scenario=s, t=t)
     )
 end
 
 function constraint_investment_group_minimum_capacity_invested_available_indices(m::Model)
     (
         (investment_group=ig, stochastic_scenario=s, t=t)
-        for ig in indices(minimum_capacity_invested_available)
+        for ig in indices(investment_capacity_total_min_cumulative)
         for (s, t) in _capacity_entities_invested_available_s_t(m)
     )
 end
