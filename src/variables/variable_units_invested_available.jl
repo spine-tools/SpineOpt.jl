@@ -61,7 +61,7 @@ function add_variable_units_invested_available!(m::Model)
         lb=constant(0),
         int=units_invested_available_int,
         fix_value=fix_units_invested_available,
-        initial_value=initial_units_invested_available,
+        initial_value=_initial_units_invested_available,
         required_history_period=maximum_parameter_value(unit_investment_tech_lifetime),
     )
 end
