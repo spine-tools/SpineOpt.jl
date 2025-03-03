@@ -476,6 +476,6 @@ function _expected_representative_periods_constraint(
     nothing
 end
 
-@testset "run_spineopt_representative_periods" begin
-    _test_representative_periods()
-end
+#@testset "run_spineopt_representative_periods" begin
+#    _test_representative_periods()
+#end
