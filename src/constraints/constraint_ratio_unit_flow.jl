@@ -294,18 +294,18 @@ end
 
 function _ratio_to_d1_d2(ratio)
     Dict(
-        fix_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node)),
-        max_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node)),
-        min_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node)),
-        fix_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node)),
-        max_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node)),
-        min_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node)),
-        fix_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node)),
-        max_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node)),
-        min_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node)),
-        fix_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node)),
-        max_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node)),
-        min_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node)),
+        fix_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node), ==),
+        max_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node), <=),
+        min_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node), >=),
+        fix_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node), ==),
+        max_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node), <=),
+        min_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node), >=),
+        fix_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node), ==),
+        max_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node), <=),
+        min_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node), >=),
+        fix_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node), ==),
+        max_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node), <=),
+        min_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node), >=),
     )[ratio]
 end
 

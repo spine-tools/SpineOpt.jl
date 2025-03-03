@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    node_slack_indices(filtering_options...)
+    node_state_indices(filtering_options...)
 """
 function node_slack_indices(
     m::Model;

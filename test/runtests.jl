@@ -65,36 +65,19 @@ end
 
 function _is_constraint_equal(left, right)
     if !_is_constraint_equal_kernel(left, right)
-        println("LEFT")
-        _show_constraint(left)
-        println("RIGHT")
-        _show_constraint(right)
+        @show left
+        @show right
         false
     else
         true
     end
 end
 
-function _show_constraint(con)
-    for (var, coef) in sort(con.func.terms; by=name)
-        println(_signed_string(coef), " ", var)
-    end
-    println(_signed_string(con.func.constant))
-    println(_sense_string(con.set))
-    println(_signed_string(con.set))
-    println("")
-end
-
-_signed_string(x) = string(x >= 0 ? "+" : "-", " ", abs(x))
-_signed_string(s::MOI.LessThan) = _signed_string(s.upper)
-_signed_string(s::MOI.EqualTo) = _signed_string(s.value)
-_signed_string(s::MOI.GreaterThan) = _signed_string(s.lower)
-
-_sense_string(::MOI.LessThan) = "<="
-_sense_string(::MOI.EqualTo) = "=="
-_sense_string(::MOI.GreaterThan) = ">="
-
 function _is_constraint_equal_kernel(left, right)
+    if left.set != right.set
+        @error string(left.set, " != ", right.set)
+        return false
+    end
     left_terms, right_terms = left.func.terms, right.func.terms
     missing_in_right = setdiff(keys(left_terms), keys(right_terms))
     if !isempty(missing_in_right)
@@ -106,18 +89,13 @@ function _is_constraint_equal_kernel(left, right)
         @error string("missing in left constraint: ", missing_in_left)
         return false
     end
-    result = true
     for k in keys(left_terms)
         if !isapprox(left_terms[k], right_terms[k])
             @error string(left_terms[k], " != ", right_terms[k])
-            result = false
+            return false
         end
     end
-    if left.set != right.set
-        @error string(left.set, " != ", right.set)
-        result = false
-    end
-    result
+    return true
 end
 
 function _is_expression_equal(x, y)
@@ -174,8 +152,6 @@ end
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
     include("run_spineopt_mga.jl")
-    include("run_spineopt_monte_carlo.jl")
-    include("run_spineopt_representative_periods.jl")
     include("run_examples.jl")
     include("run_benchmark_data.jl")
 end

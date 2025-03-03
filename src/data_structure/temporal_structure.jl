@@ -132,7 +132,7 @@ function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
-            res = resolution(temporal_block=block, i=i, s=time_slice_start, _strict=false)
+            res = resolution(temporal_block=block, i=i, _strict=false)
             res !== nothing || break
             if iszero(res)
                 # TODO: Try to move this to a check...
@@ -296,34 +296,21 @@ end
 Generate a `Dict` mapping all non-representative to representative time-slices
 """
 function _generate_representative_time_slice!(m::Model)
-    m.ext[:spineopt].temporal_structure[:representative_time_slice_combinations] = d = Dict()
+    m.ext[:spineopt].temporal_structure[:representative_time_slice] = d = Dict()
     model_blocks = Set(members(temporal_block()))
-    representative_blk_by_index = Dict(
-        round(Int, representative_period_index(temporal_block=blk)) => blk
-        for blk in indices(representative_period_index)
-    )
     for represented_blk in indices(representative_periods_mapping)
-        for (represented_t_start, representative_combination) in representative_periods_mapping(
+        for (represented_t_start, representative_blk_name) in representative_periods_mapping(
             temporal_block=represented_blk
         )
-            representative_blk_to_coef = _representative_block_to_coefficient(
-                representative_combination, representative_blk_by_index
-            )
-            invalid_blks = setdiff(keys(representative_blk_to_coef), model_blocks)
-            if !isempty(invalid_blks)
-                error("representative temporal block(s) $invalid_blks are not defined")
+            representative_blk = temporal_block(representative_blk_name)
+            if !(representative_blk in model_blocks)
+                error("representative temporal block $representative_blk is not in model $(m.ext[:spineopt].instance)")
             end
-            blks = keys(representative_blk_to_coef)
-            coefs = values(representative_blk_to_coef)
-            coefs_sum = sum(coefs)
-            if !isapprox(coefs_sum, 1)
-                error("sum of coefficients for $represented_blk, $represented_t_start must be 1 - not $coefs_sum")
-            end
-            for representative_ts in zip((time_slice(m; temporal_block=blk) for blk in blks)...)
-                representative_t_duration = minimum(end_(t) - start(t) for t in representative_ts)
+            for representative_t in time_slice(m, temporal_block=representative_blk)
+                representative_t_duration = end_(representative_t) - start(representative_t)
                 represented_t_end = represented_t_start + representative_t_duration
                 new_d = Dict(
-                    represented_t => [Dict(zip(representative_ts, coefs))]
+                    represented_t => [representative_t]
                     for represented_t in to_time_slice(m, t=TimeSlice(represented_t_start, represented_t_end))
                     if represented_blk in represented_t.blocks
                 )
@@ -334,42 +321,17 @@ function _generate_representative_time_slice!(m::Model)
     end
 end
 
-function _representative_block_to_coefficient(representative_combination::Symbol, _representative_blk_by_index)
-    Dict(temporal_block(representative_combination) => 1)
-end
-function _representative_block_to_coefficient(representative_combination::Array, representative_blk_by_index)
-    invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
-    if !isempty(invalid_indexes)
-        error("there's no representative temporal block(s) with indexes $invalid_indexes") 
-    end
-    Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
-end
-
 function _generate_as_number_or_call!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
     algo = model_algorithm(model=m.ext[:spineopt].instance)
     temp_struct[:as_number_or_call] = if (
-        needs_auto_updating(Val(algo))
-        || temp_struct[:window_count] > 1
-        || _is_benders_subproblem(m)
-        || (_is_child_stage(m) && !_is_benders_master(m))
-    )
+            needs_auto_updating(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
+        )
         as_call
     else
         as_number
     end
 end
-
-function _is_child_stage(m)
-    st = m.ext[:spineopt].stage
-    parent_stages = if st === nothing
-        setdiff(stage(), stage__child_stage(stage2=anything))
-    else
-        stage__child_stage(stage2=st)
-    end
-    !isempty(parent_stages)
-end
-
 
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
@@ -390,25 +352,16 @@ _to_time_slice(time_slices::Array{TimeSlice,1}, t::TimeSlice) = _to_time_slice(t
 Roll a `TimeSliceSet` in time by a period specified by `forward`.
 """
 function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
-    updates = collect(_roll_many!(t_set.time_slices, forward))
-    append!(updates, _roll_many!(values(t_set.gaps), forward))
-    append!(updates, _roll_many!(values(t_set.bridges), forward))
-    updates
+    roll!.(t_set.time_slices, forward)
+    roll!.(values(t_set.gaps), forward)
+    roll!.(values(t_set.bridges), forward)
+    nothing
 end
 
-function _roll_many!(t_iter, forward)
-    (upd for t in t_iter for upd in roll!(t, forward; return_updates=true))
-end
-
-function _time_slice_set_collect_updates(t_set::TimeSliceSet)
-    updates = collect(_collect_updates_many(t_set.time_slices))
-    append!(updates, _collect_updates_many(values(t_set.gaps)))
-    append!(updates, _collect_updates_many(values(t_set.bridges)))
-    updates
-end
-
-function _collect_updates_many(t_iter)
-    (upd for t in t_iter for upd in collect_updates(t))
+function _refresh_time_slice_set!(t_set::TimeSliceSet)
+    refresh!.(t_set.time_slices)
+    refresh!.(values(t_set.gaps))
+    refresh!.(values(t_set.bridges))
 end
 
 function generate_time_slice!(m::Model)
@@ -487,7 +440,7 @@ Create the Benders master problem temporal structure for given model.
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window!(m_mp)
     generate_time_slice!(m_mp)
-    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice_combinations] = Dict()
+    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice] = Dict()
 end
 
 """
@@ -519,11 +472,9 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     !rev && any(
         x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
     ) && return false
-    updates = roll!(current_window, rf; return_updates=true)
-    append!(updates, _roll_time_slice_set!(temp_struct[:time_slice], rf))
-    append!(updates, _roll_time_slice_set!(temp_struct[:history_time_slice], rf))
-    unique!(updates)
-    _call_many(updates)
+    roll!(current_window, rf)
+    _roll_time_slice_set!(temp_struct[:time_slice], rf)
+    _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
     true
 end
 
@@ -540,20 +491,10 @@ function rewind_temporal_structure!(m::Model)
         _update_variable_names!(m)
         _update_constraint_names!(m)
     else
-        updates = collect_updates(temp_struct[:current_window])
-        append!(updates, _time_slice_set_collect_updates(temp_struct[:time_slice]))
-        append!(updates, _time_slice_set_collect_updates(temp_struct[:history_time_slice]))
-        unique!(updates)
-        _call_many(updates)
+        refresh!(temp_struct[:current_window])
+        _refresh_time_slice_set!(temp_struct[:time_slice])
+        _refresh_time_slice_set!(temp_struct[:history_time_slice])
     end
-end
-
-function _call_many(updates)
-    _do_call.(updates)
-end
-
-function _do_call(upd)
-    upd()
 end
 
 """
@@ -616,11 +557,7 @@ the second starting when the first ends.
   - `t_before`: if given, return an `Array` of `TimeSlice`s that start when `t_before` ends.
   - `t_after`: if given, return an `Array` of `TimeSlice`s that end when `t_after` starts.
 """
-function t_before_t(m::Model; kwargs...)
-    _with_model_env(m) do
-        m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
-    end
-end
+t_before_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
 
 """
     t_in_t(m; t_short=anything, t_long=anything)
@@ -632,11 +569,7 @@ the second containing the first.
   - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short`.
   - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long`.
 """
-function t_in_t(m::Model; kwargs...)
-    _with_model_env(m) do
-        m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
-    end
-end
+t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
 
 """
     t_in_t_excl(m; t_short=anything, t_long=anything)
@@ -647,11 +580,7 @@ Same as [t_in_t](@ref) but exclude tuples of the same `TimeSlice`.
   - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short` (other than `t_short` itself).
   - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long` (other than `t_long` itself).
 """
-function t_in_t_excl(m::Model; kwargs...)
-    _with_model_env(m) do
-        m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
-    end
-end
+t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
 
 """
     t_overlaps_t(m; t)
@@ -660,15 +589,9 @@ An `Array` of `TimeSlice`s in model `m` that overlap the given `t`, where `t` *m
 """
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
 
-function representative_time_slice_combinations(m, t)
-    get(m.ext[:spineopt].temporal_structure[:representative_time_slice_combinations], t, [Dict(t => 1)])
-end
+representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, [t])
 
-_first_repr_t_comb(m, t) = first(representative_time_slice_combinations(m, t))
-
-function _is_representative(t)
-    any(representative_periods_mapping(temporal_block=blk) === nothing for blk in blocks(t))
-end
+_first_repr_t(m, t) = first(representative_time_slice(m, t))
 
 function output_time_slice(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slice], output, nothing)
@@ -689,24 +612,11 @@ end
 
 Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword arguments that allow filtering.
 """
-function node_time_indices(
-    m::Model;
-    node=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
-    t=anything,
-)
+function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     (
         (node=n, t=t1)
-        for n in intersect(node, SpineOpt.node())
-        for t1 in time_slice(
-            m;
-            temporal_block=[
-                tb
-                for (_n, tbg) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)
-                for tb in members(tbg)
-            ],
-            t=t,
-        )
+        for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -715,22 +625,11 @@ end
 
 Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with keyword arguments that allow filtering.
 """
-function node_dynamic_time_indices(
-    m::Model;
-    node=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
-    t_before=anything,
-    t_after=anything,
-)
+function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     (
         (node=n, t_before=tb, t_after=ta)
         for n in intersect(node, SpineOpt.node())
-        for (tb, ta) in dynamic_time_indices(
-            m,
-            (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false));
-            t_before=t_before,
-            t_after=t_after,
-        )
+        for (tb, ta) in dynamic_time_indices(m, node__temporal_block(node=n); t_before=t_before, t_after=t_after)
     )
 end
 
@@ -747,16 +646,8 @@ function unit_time_indices(
 )
     (
         (unit=u, t=t1)
-        for u in intersect(unit, SpineOpt.unit())
-        for t1 in time_slice(
-            m;
-            temporal_block=[
-                tb
-                for (_u, tbg) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false)
-                for tb in members(tbg)
-            ],
-            t=t,
-        )
+        for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -768,19 +659,13 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 function unit_dynamic_time_indices(
     m::Model;
     unit=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
     t_before=anything,
     t_after=anything,
 )
     (
         (unit=u, t_before=tb, t_after=ta)
         for u in intersect(unit, SpineOpt.unit())
-        for (tb, ta) in dynamic_time_indices(
-            m,
-            (blk for (_u, blk) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false));
-            t_before=t_before,
-            t_after=t_after
-        )
+        for (tb, ta) in dynamic_time_indices(m, units_on__temporal_block(unit=u); t_before=t_before, t_after=t_after)
     )
 end
 
@@ -790,7 +675,6 @@ end
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment variables with filter keywords.
 """
 function unit_investment_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
-    unit = intersect(unit, SpineOpt.unit(is_candidate=true))
     (
         (unit=u, t=t1)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
@@ -804,7 +688,6 @@ end
 Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection` investment variables with filter keywords.
 """
 function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
-    connection = intersect(connection, SpineOpt.connection(is_candidate=true))
     (
         (connection=conn, t=t1)
         for (conn, tb) in connection__investment_temporal_block(
@@ -820,7 +703,6 @@ end
 Generate an `Array` of all valid `(node, t)` `NamedTuples` for `node` investment variables (storages) with filter keywords.
 """
 function node_investment_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
-    node = intersect(node, SpineOpt.node(is_candidate=true))
     (
         (node=n, t=t1)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
@@ -836,7 +718,7 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything)
     (
         (unit=u, t_before=tb, t_after=ta)
-        for u in intersect(unit, SpineOpt.unit(is_candidate=true))
+        for u in intersect(unit, SpineOpt.unit())
         for (tb, ta) in dynamic_time_indices(
             m, unit__investment_temporal_block(unit=u); t_before=t_before, t_after=t_after
         )
@@ -851,7 +733,7 @@ Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples`
 function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
     (
         (connection=conn, t_before=tb, t_after=ta)
-        for conn in intersect(connection, SpineOpt.connection(is_candidate=true))
+        for conn in intersect(connection, SpineOpt.connection())
         for (tb, ta) in dynamic_time_indices(
             m, connection__investment_temporal_block(connection=conn); t_before=t_before, t_after=t_after
         )
@@ -867,7 +749,7 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` for `
 function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     (
         (node=n, t_before=tb, t_after=ta)
-        for n in intersect(node, SpineOpt.node(is_candidate=true))
+        for n in intersect(node, SpineOpt.node())
         for (tb, ta) in dynamic_time_indices(
             m, node__investment_temporal_block(node=n); t_before=t_before, t_after=t_after
         )

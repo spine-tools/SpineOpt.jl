@@ -25,7 +25,6 @@ Preprocess input data structure for SpineOpt.
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure()
-    check_model_object()
     generate_is_candidate()
     update_use_connection_intact_flow()
     expand_model_default_relationships()
@@ -41,7 +40,8 @@ function preprocess_data_structure()
     generate_direction()
     generate_ptdf_lodf()
     generate_variable_indexing_support()
-    generate_benders_iteration()
+    generate_internal_fix_investments()
+    generate_benders_structure()
     generate_is_boundary()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
@@ -56,13 +56,13 @@ Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 function generate_is_candidate()
     is_candidate = Parameter(:is_candidate, [node, unit, connection])
     add_object_parameter_values!(
-        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_connections))
+        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_connections))
     )
     add_object_parameter_values!(
-        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_units))
+        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_units))
     )
     add_object_parameter_values!(
-        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_storages))
+        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_storages))
     )
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
@@ -72,10 +72,8 @@ function generate_is_candidate()
     end
 end
 
-_nz_indices(p::Parameter) = (first(x) for x in indices_as_tuples(p) if !iszero(p(; x...)))
-
 function update_use_connection_intact_flow()
-    if isempty(connection(is_candidate=true))
+    if isempty(connection(is_candidate=true)) && !isempty(model())
         instance = first(model())
         add_object_parameter_values!(
             model, Dict(instance => Dict(:use_connection_intact_flow => parameter_value(false)))
@@ -206,7 +204,7 @@ end
 """
     generate_node_has_ptdf()
 
-Generate `has_ptdf` and `ptdf_duration` parameters associated to the `node` `ObjectClass`.
+Generate `has_ptdf`, `ptdf_duration` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
 """
 function generate_node_has_ptdf()
     function _new_node_pvals(n)
@@ -218,18 +216,22 @@ function generate_node_has_ptdf()
         ptdf_durations = [commodity_physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
+        ptdf_threshold = maximum(commodity_ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
         Dict(
             :has_ptdf => parameter_value(!isempty(ptdf_comms)),
             :ptdf_duration => parameter_value(ptdf_duration),
+            :node_ptdf_threshold => parameter_value(ptdf_threshold),
         )
     end
 
     add_object_parameter_values!(node, Dict(n => _new_node_pvals(n) for n in node()))
     has_ptdf = Parameter(:has_ptdf, [node])
     ptdf_duration = Parameter(:ptdf_duration, [node])
+    node_ptdf_threshold = Parameter(:node_ptdf_threshold, [node])
     @eval begin
         has_ptdf = $has_ptdf
         ptdf_duration = $ptdf_duration
+        node_ptdf_threshold = $node_ptdf_threshold
     end
 end
 
@@ -525,8 +527,12 @@ function generate_ptdf_lodf()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    write_ptdf_file(model=first(model())) && write_ptdfs()
-    write_lodf_file(model=first(model())) && write_lodfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_ptdf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_ptdfs()
+    !isempty(model(model_type=:spineopt_standard)) && write_lodf_file(
+        model=first(model(model_type=:spineopt_standard))
+    ) && write_lodfs()
 end
 
 """
@@ -738,7 +744,6 @@ function add_required_outputs()
     required_output_names = Dict(
         :connection_avg_throughflow => :connection_flow,
         :connection_avg_intact_throughflow => :connection_intact_flow,
-        :contingency_is_binding => :connection_flow,
     )
     for r in report()
         new_output_names = (get(required_output_names, out.name, nothing) for out in report__output(report=r))
@@ -750,21 +755,73 @@ function add_required_outputs()
 end
 
 """
-    generate_benders_iteration()
+    generate_benders_structure()
 
-Create the `benders_iteration` object class. Benders cuts have the Benders iteration as an index. A new
+Creates the `benders_iteration` object class. Benders cuts have the Benders iteration as an index. A new
 benders iteration object is pushed on each master problem iteration.
 """
-function generate_benders_iteration()
-    current_bi = _make_bi(1)
+function generate_benders_structure()
+    bi_name = :benders_iteration
+    current_bi = Object(:bi_1, bi_name)
     benders_iteration = ObjectClass(
-        :benders_iteration, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
+        bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
     )
+    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
+    units_invested_available_mv = Parameter(:units_invested_available_mv, [unit])
+    connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection])
+    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node])
+    sp_unit_flow = Parameter(:sp_unit_flow, [unit__to_node, unit__from_node])
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
+        sp_objective_value_bi = $sp_objective_value_bi
+        units_invested_available_mv = $units_invested_available_mv
+        connections_invested_available_mv = $connections_invested_available_mv
+        storages_invested_available_mv = $storages_invested_available_mv
+        sp_unit_flow = $sp_unit_flow
         export benders_iteration
         export current_bi
+        export sp_objective_value_bi
+        export units_invested_available_mv
+        export connections_invested_available_mv
+        export storages_invested_available_mv
+        export sp_unit_flow
+    end
+end
+
+"""
+    generate_internal_fix_investments()
+
+Creates parameters to be used as `internal_fix_value` for investment variables.
+The value is set to zero for one hour before the model starts, so the model doesn't create free investments
+during the history.
+
+The benders algorithm also uses these parameters to fix the subproblem investment variables to the master problem
+solution.
+"""
+function generate_internal_fix_investments()
+    models = model()
+    isempty(models) && return
+    starts = [model_start(model=m) for m in models]
+    instance = models[argmin(starts)]
+    t = model_start(model=instance)
+    dur_unit = _model_duration_unit(instance)
+    scens = stochastic_scenario()
+    for (pname, class, candidates) in (
+            (:internal_fix_units_invested_available, unit, candidate_units),
+            (:internal_fix_connections_invested_available, connection, candidate_connections),
+            (:internal_fix_storages_invested_available, node, candidate_storages),
+        )
+        parameter = Parameter(pname, [class])
+        pvals = Dict(
+            obj => Dict(
+                pname => parameter_value(Map(scens, [TimeSeries([t - dur_unit(1), t], [0.0, NaN]) for _s in scens]))
+            )
+            for obj in indices(candidates)
+        )
+        add_object_parameter_values!(class, pvals)
+        add_object_parameter_defaults!(class, Dict(pname => parameter_value(nothing)))
+        @eval $pname = $parameter
     end
 end
 
@@ -880,12 +937,13 @@ function generate_unit_commitment_parameters()
                 indices(shut_down_cost),
                 (x.unit for x in indices(start_up_limit)),
                 (x.unit for x in indices(shut_down_limit)),
+                # ramp_up constraint needs units_started_up variable to avoid being infeasible 
                 (x.unit for x in indices(ramp_up_limit)),
+                # ramp_down constraint needs units_shut_down variable to avoid being infeasible 
                 (x.unit for x in indices(ramp_down_limit)),
                 (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
                 (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
-                (u for (st, u) in stage__output__unit(output=output.((:units_started_up, :units_shut_down)))),
-                !isempty(stage__output(output=output.((:units_started_up, :units_shut_down)))) ? unit() : (),
+                (u for (st, out, u) in stage__output__unit() if out.name in (:units_started_up, :units_shut_down)),
             )
         )
     )
@@ -894,8 +952,7 @@ function generate_unit_commitment_parameters()
             (
                 indices(scheduled_outage_duration),
                 indices(fix_units_out_of_service),
-                (u for (st, u) in stage__output__unit(output=output(:units_out_of_service))),
-                !isempty(stage__output(output=output(:units_out_of_service))) ? unit() : (),
+                (u for (st, out, u) in stage__output__unit() if out.name == :units_out_of_service),
             )
         )
     )
@@ -912,8 +969,7 @@ function generate_unit_commitment_parameters()
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),
                 (x.unit for x in indices(ramp_down_limit)),
-                (u for (st, u) in stage__output__unit(output=output(:units_on))),
-                !isempty(stage__output(output=output(:units_on))) ? unit() : (),
+                (u for (st, out, u) in stage__output__unit() if out.name == :units_on),
                 (
                     u
                     for u in indices(online_variable_type)

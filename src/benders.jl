@@ -24,8 +24,7 @@ function _build_mp_model!(m; log_level=3)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
-    @timelog log_level 2 "Adding $model_name independent variables...\n" _add_mp_variables!(m; log_level=log_level)
-    @timelog log_level 2 "Adding $model_name dependent variables...\n" _add_dependent_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Adding $model_name variables...\n" _add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding $model_name constraints...\n" _add_mp_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting $model_name objective..." _set_mp_objective!(m)
     _init_outputs!(m)
@@ -52,6 +51,7 @@ function _add_mp_variables!(m; log_level=3)
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
     end
+    _expand_replacement_expressions!(m)
 end
 
 """
@@ -114,15 +114,15 @@ end
 """
 Add benders cuts to master problem.
 """
-function _add_mp_cuts!(m_mp, m; log_level=3)
+function _add_mp_cuts!(m; log_level=3)
     for add_constraint! in (
             add_constraint_mp_any_invested_cuts!,
             add_constraint_mp_min_res_gen_to_demand_ratio_cuts!,
         )
         name = name_from_fn(add_constraint!)
-        @timelog log_level 3 "- [$name]" add_constraint!(m_mp, m)
+        @timelog log_level 3 "- [$name]" add_constraint!(m)
     end
-    _update_constraint_names!(m_mp)
+    _update_constraint_names!(m)
 end
 
 """
@@ -161,93 +161,146 @@ function _do_force_starting_investments!(m::Model, variable_name::Symbol, bender
     callbacks
 end
 
-function _init_benders_invested_available!(m_mp, m)
-    for var_name in (:units_invested_available, :connections_invested_available, :storages_invested_available)
-        var_indices = m_mp.ext[:spineopt].variables_definition[var_name][:indices](m_mp)
-        unique_entities = unique(_drop_key(ind, :t) for ind in var_indices)
-        model_very_end = maximum(end_.(ind.t for ind in var_indices); init=DateTime(0))
-        x_invested_available_by_ent = m_mp.ext[:spineopt].downstream_outputs[var_name] = Dict(
-            ent => parameter_value(TimeSeries([model_very_end + Minute(1)], [NaN])) for ent in unique_entities
-        )
-        isempty(var_indices) && continue
-        for m_sp in [m; collect(values(m.ext[:spineopt].model_by_stage))]
-            fix_indices_by_ent = Dict()
-            for ind in m_sp.ext[:spineopt].variables_definition[var_name][:indices](m_sp)
-                ent = _drop_key(ind, :t)
-                push!(get!(fix_indices_by_ent, ent, []), ind)
-            end
-            for (ent, fix_indices) in fix_indices_by_ent
-                x_invested_available = x_invested_available_by_ent[ent]
-                for ind in fix_indices
-                    call_kwargs = (t=ind.t,)
-                    call = Call(x_invested_available, call_kwargs, (Symbol(:benders_, var_name), call_kwargs))
-                    fix(m_sp.ext[:spineopt].variables[var_name][ind], call)
-                end
-            end
+"""
+    _pval_by_entity(vals)
+
+Take the given Dict, which should be a mapping from variable indices to their value,
+and return another Dict mapping entities to `ParameterValue`s.
+
+The keys in the result are the keys of the input, without the stochastic_scenario and the t (i.e., just the entity).
+The values are `ParameterValue{Map}`s mapping the `stochastic_scenario` of the variable key,
+to a `TimeSeries` mapping the `t` of the key, to the 'realized' variable value.
+"""
+function _pval_by_entity(vals, t_end=nothing)
+    by_ent = Dict()
+    for (ind, val) in vals
+        ent = _drop_key(ind, :stochastic_scenario, :t)
+        by_s = get!(by_ent, ent, Dict())
+        by_t = get!(by_s, ind.stochastic_scenario, Dict())
+        realized_val = realize(val)
+        if t_end !== nothing && t_end < end_(ind.t)
+            realized_val *= (t_end - start(ind.t)) / (end_(ind.t) - start(ind.t))
         end
+        by_t[ind.t] = realized_val
     end
+    Dict(
+        ent => parameter_value(Map(collect(keys(by_s)), [_window_time_series(by_t) for by_t in values(by_s)]))
+        for (ent, by_s) in by_ent
+    )
+end
+
+"""
+    _window_time_series(by_t)
+
+A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Float64`, with an explicit NaN at the end.
+The NaN is there because we want to merge marginal values from different windows of the Benders subproblem
+into one `TimeSeries`.
+
+Without the NaN, the last value of one window would apply until the next window, which wouldn't be correct
+if there were gaps between the windows (as in rolling representative periods Benders).
+With the NaN, the gap is correctly skipped in the Benders cuts.
+"""
+function _window_time_series(by_t)
+    time_slices, vals = collect(keys(by_t)), collect(values(by_t))
+    inds = start.(time_slices)
+    push!(inds, maximum(end_.(time_slices)))
+    push!(vals, NaN)
+    TimeSeries(inds, vals)
 end
 
 function process_master_problem_solution(m_mp, m)
-    _do_save_outputs!(
-        m_mp, (:units_invested_available, :connections_invested_available, :storages_invested_available), (;)
-    )
-    _update_benders_invested_available!(m_mp)
+    _save_mp_values!(unit, m_mp, m, :units_invested_available)
+    _save_mp_values!(connection, m_mp, m, :connections_invested_available)
+    _save_mp_values!(node, m_mp, m, :storages_invested_available)
 end
 
-function _update_benders_invested_available!(m_mp)
-    for (var_name, current_benders_invested_available) in m_mp.ext[:spineopt].downstream_outputs
-        new_benders_invested_available = Dict(
-            ent => parameter_value(val)
-            for (ent, val) in _output_value_by_entity(
-                m_mp.ext[:spineopt].outputs[var_name], model_end(model=m_mp.ext[:spineopt].instance)
-            )
-        )
-        mergewith!(merge!, current_benders_invested_available, new_benders_invested_available)
+function _save_mp_values!(obj_cls, m_mp, m, var_name)
+    benders_param_name = Symbol(:internal_fix_, var_name)
+    pval_by_ent = _pval_by_entity(m_mp.ext[:spineopt].values[var_name])
+    pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
+    add_object_parameter_values!(obj_cls, pvals; merge_values=true)
+    for st in keys(m.ext[:spineopt].model_by_stage)
+        with_env(stage_scenario(stage=st)) do
+            add_object_parameter_values!(obj_cls, pvals; merge_values=true)
+        end
     end
 end
 
 function process_subproblem_solution(m, k)
     win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
     win_weight = win_weight !== nothing ? win_weight : 1.0
+    _save_sp_marginal_values(m, k, win_weight)
+    _save_sp_objective_value(m, k, win_weight)
+    _save_sp_unit_flow(m)
+end
+
+function _save_sp_marginal_values(m, k, win_weight)
     _wait_for_dual_solves(m)
-    _do_save_outputs!(
-        m,
-        (
-            :bound_units_invested_available,
-            :bound_connections_invested_available,
-            :bound_storages_invested_available,
-            :unit_flow,
-        ),
-        (;);
-        weight=win_weight,
+    _save_sp_marginal_values!(unit, m, :bound_units_invested_available, :units_invested_available_mv, k, win_weight)
+    _save_sp_marginal_values!(
+        connection, m, :bound_connections_invested_available, :connections_invested_available_mv, k, win_weight
     )
-    if k == 1
-        m.ext[:spineopt].extras[:sp_objective_value_bi] = 0
-    end
-    m.ext[:spineopt].extras[:sp_objective_value_bi] += win_weight * sum(values(m.ext[:spineopt].values[:total_costs]))
-    if _is_last_window(m, k)
-        m.ext[:spineopt].extras[:sp_objective_value_bi] += (
-            win_weight * sum(values(m.ext[:spineopt].values[:total_costs_tail]))
-        )
-    end
+    _save_sp_marginal_values!(
+        node, m, :bound_storages_invested_available, :storages_invested_available_mv, k, win_weight
+    )
 end
 
 function _is_last_window(m, k)
     k == m.ext[:spineopt].temporal_structure[:window_count]
 end
 
-function _val_by_ent(m, var_name)
-    _output_value_by_entity(m.ext[:spineopt].outputs[var_name], model_end(model=m.ext[:spineopt].instance))
+function _save_sp_marginal_values!(obj_cls, m, var_name, param_name, k, win_weight)
+    vals = Dict(
+        k => win_weight * realize(v)
+        for (k, v) in m.ext[:spineopt].values[var_name]
+        if start(current_window(m)) <= start(k.t) < end_(current_window(m))
+    )
+    if _is_last_window(m, k)
+        merge!(
+            vals,
+            Dict(
+                k => realize(v) for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= end_(current_window(m))
+            )
+        )
+    end
+    pval_by_ent = _pval_by_entity(vals, _is_last_window(m, k) ? nothing : end_(current_window(m)))
+    pvals = Dict(only(ent) => Dict(param_name => pval) for (ent, pval) in pval_by_ent)
+    add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function save_mp_objective_bounds_and_gap!(m_mp, m)
-    obj_lb = objective_value(m_mp)
-    obj_ub = m.ext[:spineopt].extras[:sp_objective_value_bi] + value(realize(investment_costs(m_mp)))
+function _save_sp_objective_value(m, k, win_weight)
+    current_sp_obj_val = win_weight * sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
+    if _is_last_window(m, k)
+        current_sp_obj_val += sum(values(m.ext[:spineopt].values[:total_costs_tail]); init=0)
+    end
+    previous_sp_obj_val = k == 1 ? 0 : sp_objective_value_bi(benders_iteration=current_bi, _default=0)
+    total_sp_obj_val = previous_sp_obj_val + current_sp_obj_val
+    add_object_parameter_values!(
+        benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
+    )
+end
+
+function _save_sp_unit_flow(m)
+    window_values = Dict(
+        k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
+    )
+    pval_by_ent = _pval_by_entity(window_values)
+    pvals_to_node = Dict(
+        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:to_node)
+    )
+    pvals_from_node = Dict(
+        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:from_node)
+    )
+    add_relationship_parameter_values!(unit__to_node, pvals_to_node; merge_values=true)
+    add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
+end
+
+function save_mp_objective_bounds_and_gap!(m_mp)
+    obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = objective_value(m_mp)
+    sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
+    obj_ub = m_mp.ext[:spineopt].objective_upper_bound[] = sp_obj_val + value(realize(investment_costs(m_mp)))
     gap = (obj_ub == obj_lb) ? 0 : 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)
     push!(m_mp.ext[:spineopt].benders_gaps, gap)
-    push!(m_mp.ext[:spineopt].objective_lower_bounds, obj_lb)
-    push!(m_mp.ext[:spineopt].objective_upper_bounds, obj_ub)
 end
 
 function investment_costs(m_mp)
@@ -255,23 +308,25 @@ function investment_costs(m_mp)
 end
 
 function add_benders_iteration(j)
-    new_bi = _make_bi(j)
+    new_bi = Object(Symbol(:bi_, j))
     add_object!(benders_iteration, new_bi)
     new_bi
 end
 
 function _collect_outputs!(
-    m, m_mp; log_level, update_names, write_as_roll, output_suffix, log_prefix, calculate_duals
+    m, m_mp; log_level, update_names, write_as_roll, resume_file_path, output_suffix, log_prefix, calculate_duals
 )
-    _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, save_outputs=true)
+    _do_solve_model!(m_mp; log_level, update_names, output_suffix, log_prefix, rewind=false, save_outputs=true)
     _do_solve_model!(
         m;
         log_level,
         update_names,
         write_as_roll,
+        resume_file_path,
         output_suffix,
         calculate_duals,
-        log_prefix,
         save_outputs=true,
+        log_prefix="$(log_prefix)Benders converged - collecting outputs - ",
     )
 end
+

@@ -51,9 +51,7 @@ end
 
 function connection_flow_ub(m; connection, node, direction, kwargs...)
     (
-        realize(
-            connection_flow_capacity(m; connection=connection, node=node, direction=direction, _strict=false)
-        ) === nothing
+        connection_flow_capacity(connection=connection, node=node, direction=direction, _strict=false) === nothing
         || is_candidate(connection=connection)
         || members(node) != [node]
     ) && return NaN
@@ -88,14 +86,9 @@ function add_variable_connection_flow!(m::Model)
     fix_ratio_d1_d2 = ((fix_ratio_out_in_connection_flow, direction(:to_node), direction(:from_node)),)
     replacement_expressions = OrderedDict(
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t) => Dict(
-            :connection_flow => Dict(
-                (
-                    connection=conn,
-                    node=n_ref,
-                    direction=d_ref,
-                    stochastic_scenario=s,
-                    t=t,
-                ) => _fix_ratio_connection_flow(m, conn, n, n_ref, s, t, fix_ratio, direct)
+            :connection_flow => (
+                (connection=conn, node=n_ref, direction=d_ref, stochastic_scenario=s, t=t),
+                _fix_ratio_connection_flow(m, conn, n, n_ref, s, t, fix_ratio, direct),
             )
         )
         for (conn, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)

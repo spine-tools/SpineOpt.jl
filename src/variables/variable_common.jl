@@ -34,9 +34,8 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
     or nothing
   - `required_history_period::Union{Period,Nothing}=nothing`: given an index, return the required history period
     or nothing
-  - `replacement_expressions::OrderedDict=OrderedDict()`: mapping some of the indices of the variable -
-    as returned by the given `indices` function - to another Dict that defines an expression to use
-    instead of the variable for that index.
+  - `replacement_expressions::Dict=Dict()`: mapping some of the indices of the variable - as returned by the given
+    `indices` function - to another Dict that defines an expression to use instead of the variable for that index.
     The expression Dict simply maps variable names to a tuple of reference index and coefficient.
     The expression is then built as the sum of the coefficient and the variable for the reference index,
     over the entire Dict.
@@ -49,31 +48,31 @@ function add_variable!(
     int::Union{Function,Nothing}=nothing,
     lb::Union{Parameter,Function,Nothing}=nothing,
     ub::Union{Parameter,Function,Nothing}=nothing,
-    initial_value::Union{Parameter,Function,Nothing}=nothing,
+    initial_value::Union{Parameter,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
+    internal_fix_value::Union{Parameter,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
     required_history_period::Union{Period,Nothing}=nothing,
-    replacement_expressions=OrderedDict(),
+    replacement_expressions=Dict(),
 )
     lb = _nothing_if_empty(lb)
     ub = _nothing_if_empty(ub)
     initial_value = _nothing_if_empty(initial_value)
     fix_value = _nothing_if_empty(fix_value)
+    internal_fix_value = _nothing_if_empty(internal_fix_value)
     if required_history_period === nothing
         required_history_period = _model_duration_unit(m.ext[:spineopt].instance)(1)
     end
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
-    represented_indices =_represented_indices(m, indices, replacement_expressions)
-    first_ind = iterate(indices(m))
+    t = vcat(history_time_slices, time_slice(m))
+    first_ind = iterate(indices(m; t=t))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
-        ind => _add_variable!(m, name, ind)
-        for kwargs in ((t=history_time_slices, temporal_block=anything), (t=time_slice(m),))
-        for ind in setdiff(indices(m; kwargs...), represented_indices, keys(replacement_expressions))
+        ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
     )
     history_vars_by_ind = Dict(
         ind => [
@@ -93,12 +92,12 @@ function add_variable!(
         lb=lb,
         ub=ub,
         fix_value=fix_value,
+        internal_fix_value=internal_fix_value,
         non_anticipativity_time=non_anticipativity_time,
         non_anticipativity_margin=non_anticipativity_margin,
         history_vars_by_ind=history_vars_by_ind,
         history_time_slices=history_time_slices,
         replacement_expressions=replacement_expressions,
-        represented_indices=represented_indices,
     )
     _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
@@ -114,6 +113,9 @@ function add_variable!(
             fix(var, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
         end
     end
+    isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
+        vars, _representative_periods_mapping(m, vars, indices)
+    )
     vars
 end
 
@@ -131,12 +133,12 @@ function _variable_definition(;
     lb=nothing,
     ub=nothing,
     fix_value=nothing,
+    internal_fix_value=nothing,
     non_anticipativity_time=nothing,
     non_anticipativity_margin=nothing,
     history_time_slices=[],
     history_vars_by_ind=Dict(),
-    replacement_expressions=OrderedDict(),
-    represented_indices=[],
+    replacement_expressions=Dict(),
 )
     Dict(
         :indices => indices,
@@ -145,43 +147,28 @@ function _variable_definition(;
         :lb => lb,
         :ub => ub,
         :fix_value => fix_value,
+        :internal_fix_value => internal_fix_value,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
         :history_time_slices => history_time_slices,
         :history_vars_by_ind => history_vars_by_ind,
         :replacement_expressions => replacement_expressions,
-        :represented_indices => represented_indices,
     )
 end
 
-function _add_dependent_variables!(m; log_level)
-    for name in sort!(collect(keys(m.ext[:spineopt].variables_definition)))
-        def = m.ext[:spineopt].variables_definition[name]
-        @fetch replacement_expressions, represented_indices, indices = def
-        isempty(replacement_expressions) && isempty(represented_indices) &&continue
-        @timelog log_level 3 "- [variable_$name]" begin
-            vars = m.ext[:spineopt].variables[name]
-            exprs = Dict()
-            for (ind, formula) in replacement_expressions
-                vars[ind] = exprs[ind] = _resolve_formula(m, formula)
-            end
-            _finalize_expressions!(m, exprs, name, def)
-            for ind in represented_indices
-                vars[ind] = sum(
-                    coef * vars[representative_ind]
-                    for (representative_ind, coef) in _representative_index_to_coefficient(m, ind, indices)
-                )
-            end
+function _expand_replacement_expressions!(m)
+    for (name, def) in m.ext[:spineopt].variables_definition
+        replacement_expressions = def[:replacement_expressions]
+        isempty(replacement_expressions) && continue
+        vars = m.ext[:spineopt].variables[name]
+        exprs = Dict()
+        for (ind, formula) in replacement_expressions
+            vars[ind] = exprs[ind] = sum(
+                coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in formula
+            )
         end
+        _finalize_expressions!(m, exprs, name, def)
     end
-end
-
-function _resolve_formula(m, formula)
-    sum(
-        coeff * _get_var_with_replacement(m, ref_name, ref_ind)
-        for (ref_name, reference_index_to_coef) in formula
-        for (ref_ind, coeff) in reference_index_to_coef
-    )
 end
 
 function _get_var_with_replacement(m, var_name, ind)
@@ -204,6 +191,7 @@ function _finalize_variables!(m, var_by_ind, def)
     _set_integer.(vars, getindex.(info, :int))
     _set_lower_bound.(vars, getindex.(info, :lb))
     _set_upper_bound.(vars, getindex.(info, :ub))
+    _fix.(vars, getindex.(info, :internal_fix_value))
     _fix.(vars, getindex.(info, :fix_value))
 end
 
@@ -216,11 +204,14 @@ function _finalize_expressions!(m, expr_by_ind, name, def)
     cons = m.ext[:spineopt].constraints
     cons[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, getindex.(info, :lb))))
     cons[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, getindex.(info, :ub))))
+    cons[Symbol(name, :_internal_fix)] = Dict(
+        zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :internal_fix_value)))
+    )
     cons[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :fix_value))))
 end
 
 function _collect_info(m, inds, def)
-    @fetch bin, int, lb, ub, fix_value = def
+    @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
     info = NamedTuple[(;) for i in eachindex(inds)]
     Threads.@threads for i in eachindex(inds)
         ind = inds[i]
@@ -230,6 +221,7 @@ function _collect_info(m, inds, def)
             lb=_resolve(lb, m, ind),
             ub=_resolve(ub, m, ind),
             fix_value=_resolve(fix_value, m, ind),
+            internal_fix_value=_resolve(internal_fix_value, m, ind),
         )
     end
     info
@@ -265,48 +257,45 @@ function _fix(var::VariableRef, value::Number)
 end
 
 """
-A collection of represented indices.
-"""
-function _represented_indices(m::Model, indices::Function, replacement_expressions::OrderedDict)
-    isempty(SpineInterface.indices(representative_periods_mapping)) && return []
-    # By default, `indices` skips represented time slices for operational variables other than node_state,
-    # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
-    # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
-    # To include represented time slices, we need to specify `temporal_block=anything`.
-    # Note that for node_state and investment variables, the result will be empty.
-    representative_indices = indices(m)
-    all_indices = indices(m; temporal_block=anything)
-    setdiff(all_indices, representative_indices, keys(replacement_expressions))
-end
+    _representative_index(ind)
 
+The representative index corresponding to the given one.
 """
-A `Dict` mapping representative indidces to coefficient.
-"""
-function _representative_index_to_coefficient(m, ind, indices)
-    representative_t_to_coef_arr = representative_time_slice_combinations(m, ind.t)
-    representative_inds_to_coef_arr = [
-        Dict(indices(m; ind..., t=representative_t) => coef for (representative_t, coef) in representative_t_to_coef)
-        for representative_t_to_coef in representative_t_to_coef_arr
-    ]
-    filter!(representative_inds_to_coef_arr) do representative_inds_to_coef
-        !any(isempty.(keys(representative_inds_to_coef)))
-    end
-    if isempty(representative_inds_to_coef_arr)
+function _representative_index(m, ind, indices)
+    representative_t = representative_time_slice(m, ind.t)
+    representative_inds = indices(m; ind..., t=representative_t)
+    if isempty(representative_inds)
         representative_blocks = unique(
             blk
-            for representative_t_to_coef in representative_t_to_coef_arr
-            for t in keys(representative_t_to_coef)
+            for t in representative_t
             for blk in blocks(t)
             if representative_periods_mapping(temporal_block=blk) === nothing
         )
         node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
         error(
-            "can't find a linear representative index combination for $ind -",
+            "can't find a representative index for $ind -",
             " this is probably because ",
             node_or_unit,
             " is not associated to any of the representative temporal_blocks ",
             join(("'$blk'" for blk in representative_blocks), ", "),
         )
     end
-    Dict(first(inds) => coef for (inds, coef) in first(representative_inds_to_coef_arr))
+    first(representative_inds)
+end
+
+"""
+    _representative_periods_mapping(v::Dict{VariableRef}, indices::Function)
+
+A `Dict` mapping non representative indices to the variable for the representative index.
+"""
+function _representative_periods_mapping(m::Model, vars::Dict, indices::Function)
+    # By default, `indices` skips represented time slices for operational variables other than node_state,
+    # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
+    # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
+    # To include represented time slices, we need to specify `temporal_block=anything`.
+    # Note that for node_state and investment variables, `represented_indices`, below, will be empty.
+    representative_indices = indices(m)
+    all_indices = indices(m, temporal_block=anything)
+    represented_indices = setdiff(all_indices, representative_indices)
+    Dict(ind => vars[_representative_index(m, ind, indices)] for ind in represented_indices)
 end

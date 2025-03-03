@@ -131,6 +131,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
                             node=ng_in,
                             direction=direction(:from_node),
                             t=to_time_slice(m; t=_t_look_behind(conn, ng_out, ng_in, (s,), t)),
+                            temporal_block=anything,
                         )
                     ),
                 )
