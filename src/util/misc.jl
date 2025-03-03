@@ -24,7 +24,6 @@ macro log(level, threshold, msg)
     quote
         if $(esc(level)) >= $(esc(threshold))
             printstyled($(esc(msg)), "\n"; bold=true)
-            yield()
         end
     end
 end
@@ -34,24 +33,57 @@ end
 """
 macro timelog(level, threshold, msg, expr)
     quote
+        @timelog $(esc(level)) $(esc(threshold)) $(esc(msg)) nothing $(esc(expr))
+    end
+end
+macro timelog(level, threshold, msg, stats, expr)
+    quote
         if $(esc(level)) >= $(esc(threshold))
-            @timemsg $(esc(msg)) $(esc(expr))
+            @timemsg $(esc(msg)) $(esc(stats)) $(esc(expr))
         else
             $(esc(expr))
         end
     end
 end
 
-"""
-    @timemsg(msg, expr)
-"""
-macro timemsg(msg, expr)
+const _SENTINEL = "SpineOptSentinel"
+
+macro timemsg(msg, stats, expr)
     quote
-        printstyled($(esc(msg)); bold=true)
-        r = @time $(esc(expr))
-        yield()
-        r
+        msg = $(esc(msg))
+        stats = $(esc(stats))
+        printstyled(stderr, msg; bold=true)
+        pipe = Pipe()
+        task = @Threads.spawn _drain(pipe)
+        val = redirect_stdout(pipe) do
+            val = @time $(esc(expr))
+            println(_SENTINEL)
+            val
+        end
+        last_str = fetch(task)
+        if stats isa Dict
+            seconds = parse(Float64, strip(split(last_str, "seconds")[1]))
+            push!(get!(stats, strip(msg), []), seconds)
+        end
+        val
     end
+end
+
+function _drain(pipe)
+    last_str = ""
+    while true
+        str = try
+            readline(pipe)
+        catch err
+            err isa ArgumentError || rethrow()
+            sleep(0.02)
+            continue
+        end
+        str == _SENTINEL && break
+        println(stderr, str)
+        last_str = str
+    end
+    last_str
 end
 
 """
@@ -162,18 +194,6 @@ function print_solution(m, variable_patterns...)
     end
     println()
 end
-
-function window_sum_duration(m, ts::TimeSeries, window; init=0)
-    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-    time_slice_value_iter = (
-        (TimeSlice(t1, t2; duration_unit=dur_unit), v) for (t1, t2, v) in zip(ts.indexes, ts.indexes[2:end], ts.values)
-    )
-    sum(v * duration(t) for (t, v) in time_slice_value_iter if iscontained(start(t), window) && !isnan(v); init=init)
-end
-window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
-
-window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
-window_sum(x::Number, window; init=0) = x + init
 
 """
     align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead::Bool=true)
@@ -339,6 +359,8 @@ end
 
 _div_or_zero(x, y) = iszero(y) ? zero(y) : x / y
 
+_make_bi(j) = Object(Symbol(:bi_, lpad(j, 3, "0")), :benders_iteration)
+
 """
     _get_max_duration(m::Model, lookback_params::Vector{Parameter})
 
@@ -352,6 +374,23 @@ end
 
 _force_fix(v::VariableRef, x) = fix(v, x; force=true)
 _force_fix(::Call, x) = nothing
+
+_percentage_str(x::Number) = string(@sprintf("%1.4f", x * 100), "%")
+
+_number_str(x::Number) = @sprintf("%.5e", x)
+
+function _with_model_env(f, m)
+    st = m.ext[:spineopt].stage
+    scen = stage_scenario(stage=st, _strict=false)
+    scen === nothing && return f()
+    with_env(scen) do
+        f()
+    end
+end
+
+function _elapsed_time_string(t_start, t_end)
+    string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
+end
 
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
