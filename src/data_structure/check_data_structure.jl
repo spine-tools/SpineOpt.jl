@@ -44,7 +44,6 @@ _check_warn(cond, msg_parts...) = cond || @warn string(msg_parts...)
 Check if the data structure provided from the db results in a valid model.
 """
 function check_data_structure()
-    check_model_object()
     check_temporal_block_object()
     check_node_object()
     check_node__temporal_block()
@@ -82,12 +81,9 @@ end
 Check if at least one `node` is defined.
 """
 function check_node_object()
-    for m in model(model_type=:spineopt_standard)
-        _check(
-            !isempty(node()),
-            "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model",
-        )
-    end
+    _check(
+        !isempty(node()), "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model"
+    )
 end
 
 """
