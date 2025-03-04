@@ -33,6 +33,7 @@ See also [number\_of\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
     _add_constraint!(m, :units_available, constraint_units_available_indices, _build_constraint_units_available)
+    _add_constraint!(m, :min_units_on, constraint_min_units_on_indices, _build_constraint_min_units_on)
 end
 
 function _build_constraint_units_available(m, u, s, t)
@@ -61,6 +62,34 @@ function _build_constraint_units_available(m, u, s, t)
     )
 end
 
+function _build_constraint_min_units_on(m, u, s, t)
+    @fetch units_on, units_out_of_service, units_invested_available = m.ext[:spineopt].variables
+    @build_constraint(
+        + sum(
+            + units_on[u, s, t]
+            + ifelse(units_unavailable(m; unit=u, stochastic_scenario=s, t=t) > 0, 0, 1)
+            * _get_units_out_of_service(m, u, s, t)
+            for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+            init=0,
+        )
+        - min_units_on_share(m; unit = u, stochastic_scenario=s, t=t) *  
+            sum(
+            units_invested_available[u, s, t1]
+            for (u, s, t1) in units_invested_available_indices(
+                m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+            );
+            init=0,
+        )
+        >=
+        # Change the default number of units so that it is zero when candidate units are present
+        # and otherwise 1.
+        + min_units_on_share(m; unit = u, stochastic_scenario=s, t=t) * 
+        ifelse(is_candidate(unit=u), number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
+            number_of_units(m; unit=u, stochastic_scenario=s, t=t) )
+        - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
+    )
+end
+
 """
     constraint_units_available_indices(m::Model, unit, t)
     
@@ -80,3 +109,12 @@ function constraint_units_available_indices(m::Model)
         for s in path
     )
 end
+
+function constraint_min_units_on_indices(m::Model)
+    (
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, s, t) in constraint_units_available_indices(m)
+            if u in indices(min_units_on_share)
+    )
+end
+

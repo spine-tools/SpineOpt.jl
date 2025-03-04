@@ -33,33 +33,34 @@ function add_constraint_cyclic_node_state!(m::Model)
     _add_constraint!(m, :cyclic_node_state, constraint_cyclic_node_state_indices, _build_constraint_cyclic_node_state)
 end
 
-function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end, blk)
+function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end)
     @fetch node_state = m.ext[:spineopt].variables
-    build_sense_constraint(
+    @build_constraint(
         sum(
             node_state[n, s, t_end]
             for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_end);
             init=0,
-        ),        
-        eval(cyclic_condition_sense(node=n, temporal_block=blk)),
+        )
+        >=
         sum(
             node_state[n, s, t_start]
             for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_start);
             init=0,
-        )        
+        )
     )
 end
 
 function constraint_cyclic_node_state_indices(m::Model)
     (
-        (node=n, stochastic_path=path, t_start=t_start, t_end=t_end, temporal_block=blk)
+        (node=n, stochastic_path=path, t_start=t_start, t_end=t_end)
         for (n, blk) in indices(cyclic_condition)
         if cyclic_condition(node=n, temporal_block=blk)
-        for t_start in filter(
-            x -> blk in blocks(x), t_before_t(m; t_after=first(collect(time_slice(m; temporal_block=members(blk)))))
-        )
-        for t_end in last(collect(time_slice(m; temporal_block=members(blk))))
-        for path in active_stochastic_paths(m, node_state_indices(m; node=n, t=[t_start, t_end]))
+        #for t_start in filter(
+        #    x -> blk in blocks(x), t_before_t(m; t_after=first(collect(time_slice(m; temporal_block=members(blk)))))
+        #)
+            for t_start in t_before_t(m; t_after=first(collect(time_slice(m; temporal_block=members(blk)))))
+                for t_end in last(collect(time_slice(m; temporal_block=members(blk))))
+                    for path in active_stochastic_paths(m, node_state_indices(m; node=n, t=[t_start, t_end]))
     )
 end
 
