@@ -12,7 +12,8 @@ using SpineOpt:
     iterative_mga!,
     add_rpm_constraint!,
     add_mga_objective_constraint!,
-    formulate_mga_objective!
+    formulate_mga_objective!,
+    mga_group
     
 using JuMP 
 using HiGHS
@@ -358,16 +359,16 @@ end
 function _test_was_variable_active()
     @testset "was_variable_active" begin
         @testset "variable_indices_list_empty" begin
-            @test was_variable_active([1,2,3], []) == false
+            @test was_variable_active(array_to_dict([1,2,3]), []) == false
         end
         @testset "active single variable" begin
-            @test was_variable_active([1], [1]) == true
+            @test was_variable_active(array_to_dict([1]), [1]) == true
         end
         @testset "all inactive" begin
-            @test was_variable_active([0, 0, 0, 0], [1, 2, 3, 4]) == false
+            @test was_variable_active(array_to_dict([0, 0, 0, 0]), [1, 2, 3, 4]) == false
         end
         @testset "active and inactive" begin
-            @test was_variable_active([0, 1, 0, 1], [1, 2, 3, 4]) == true
+            @test was_variable_active(array_to_dict([0, 1, 0, 1]), [1, 2, 3, 4]) == true
             
         end
     end
@@ -399,10 +400,10 @@ end
 function _test_update_hsj_weights()
     @testset "update_hsj_weights" begin
         group_parameters = Dict(
-            :var_name => (
+            :var_name => mga_group(
                 (i) -> [2*i + 1, 2*i + 2],
-                nothing,
-                () -> [0, 1, 2, 3]
+                () -> nothing,
+                [0, 1, 2, 3]
             )
         )
         variable_values = Dict(:var_name => array_to_dict([0, 0, 0, 1, 0, 0, 0, 1]))
@@ -529,31 +530,31 @@ function _test_update_hsj_mga_objective()
         variables = Dict(:x => x, :y => y)
         variable_values = Dict(:x => array_to_dict([0, 0, 0, 0, 0, 0]), :y => array_to_dict([0, 0, 0, 0]))
         @testset "empty variable mga indices" begin
-            x_mga_idxs = () -> []
-            y_mga_idxs = () -> [0, 1]
+            x_mga_idxs = []
+            y_mga_idxs = [0, 1]
             group_parameters = Dict(
-                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
             @test res[:objective] == 0.2y[3] + 0.8y[4]
         end
         @testset "all empty variable mga indices" begin
-            x_mga_idxs = () -> []
-            y_mga_idxs = () -> []
+            x_mga_idxs = []
+            y_mga_idxs = []
             group_parameters = Dict(
-                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
             @test res[:objective] == 0
         end
         @testset "nonempty variable mga indices" begin
-            x_mga_idxs = () -> [0, 1, 2]
-            y_mga_idxs = () -> [0, 1]
+            x_mga_idxs = [0, 1, 2]
+            y_mga_idxs = [0, 1]
             group_parameters = Dict(
-                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
             @test res[:objective] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6] + 0.2y[3] + 0.8y[4]
@@ -582,11 +583,11 @@ function _test_update_hsj_mga_objective()
 
         @testset "Empty mga indices" begin
             hsj_weights = Dict(:x => Dict(1 => 1, 2=> 0) , :y => Dict(1=>1))
-            x_mga_idxs = () -> []
-            y_mga_idxs = () -> []
+            x_mga_idxs = []
+            y_mga_idxs = []
             group_parameters = Dict(
-                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -595,11 +596,11 @@ function _test_update_hsj_mga_objective()
         end
         @testset "Normal groups" begin
             hsj_weights = Dict(:x => Dict(1 => 1, 2=> 0) , :y => Dict(1=>1))
-            x_mga_idxs = () -> [1, 2]
-            y_mga_idxs = () -> [1]
+            x_mga_idxs = [1, 2]
+            y_mga_idxs = [1]
             group_parameters = Dict(
-                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -611,11 +612,11 @@ function _test_update_hsj_mga_objective()
         end
         @testset "Skipped group" begin
             hsj_weights = Dict(:x => Dict(1 => 0, 2=> 0) , :y => Dict(1=>1))
-            x_mga_idxs = () -> [1, 2]
-            y_mga_idxs = () -> [1]
+            x_mga_idxs = [1, 2]
+            y_mga_idxs = [1]
             group_parameters = Dict(
-                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -627,11 +628,11 @@ function _test_update_hsj_mga_objective()
         end
         @testset "All groups skipped" begin
             hsj_weights = Dict(:x => Dict(1 => 0, 2=> 0) , :y => Dict(1=>0))
-            x_mga_idxs = () -> [1, 2]
-            y_mga_idxs = () -> [1]
+            x_mga_idxs = [1, 2]
+            y_mga_idxs = [1]
             group_parameters = Dict(
-                :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -659,12 +660,12 @@ function _test_get_variable_group_values()
         x_indxs = (i) -> [2*i+1, 2*i+2]
         y_indxs = (i) -> [2*i+1, 2*i+2]
         variables = Dict(:x => x, :y => y)
-        x_mga_idxs = () -> [0]
-        y_mga_idxs = () -> [0, 1]
+        x_mga_idxs = [0]
+        y_mga_idxs = [0, 1]
         
         group_parameters = Dict(
-            :x => (x_indxs, nothing, x_mga_idxs),
-            :y => (y_indxs, nothing, y_mga_idxs),
+            :x => mga_group(x_indxs, () -> nothing, x_mga_idxs),
+            :y => mga_group(y_indxs, () -> nothing, y_mga_idxs),
         )
         res = get_variable_group_values(variables, group_parameters)
         @test res[:x][1] == 1
@@ -689,11 +690,11 @@ function _test_iterative_mga()
         variables = Dict(:x => x, :y => y)
         @constraint(m, x[1] + x[2] + y[1] <= 1)
         @objective(m, Min, -x[1] - x[2] - y[1])
-        x_mga_idxs = () -> [1, 2]
-        y_mga_idxs = () -> [1]
+        x_mga_idxs = [1, 2]
+        y_mga_idxs = [1]
         variable_group_parameters = Dict(
-            :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-            :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+            :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
         )
         max_mga_iters = 2
         goal_function = (m) -> -x[1] - x[2] - y[1]
@@ -733,11 +734,11 @@ function _test_iterative_mga()
         @constraint(m, x[1] + x[2] <= 1)
         @constraint(m, y[1] + y[2] <= 1)
         @objective(m, Min, goal_function(m))
-        x_mga_idxs = () -> [1, 2]
-        y_mga_idxs = () -> [1, 2]
+        x_mga_idxs = [1, 2]
+        y_mga_idxs = [1, 2]
         variable_group_parameters = Dict(
-            :x => (x_indxs, x_stoch_weights, x_mga_idxs),
-            :y => (y_indxs, y_stoch_weights, y_mga_idxs),
+            :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
+            :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
         )
         max_mga_iters = 2
         

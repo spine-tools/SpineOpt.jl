@@ -103,22 +103,28 @@ function iterative_mga!(
     return group_variable_values
 end
 
+struct mga_group
+    stochastic_indices_of_variable::Function
+    scenario_weights::Function
+    variable_indices::AbstractArray
+end
+
 function prepare_variable_groups(m::Model)
     return Dict(
-        :units_invested  => (
+        :units_invested  => mga_group(
             (ind) -> units_invested_available_indices(m; ind...),
             (stoch_ind) -> realize(unit_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
-            units_invested_mga_indices,
+            units_invested_mga_indices()
         ),
-        :connections_invested  => (
+        :connections_invested  => mga_group(
             (ind) -> connections_invested_available_indices(m; ind...),
             (stoch_ind) -> realize(connection_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
-            connections_invested_mga_indices,
+            connections_invested_mga_indices(),
         ),
-        :storages_invested  => (
+        :storages_invested  => mga_group(
             (ind) -> storages_invested_available_indices(m; ind...),
             (stoch_ind) -> realize(node_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
-            storages_invested_mga_indices,
+            storages_invested_mga_indices(),
         ),
     )
 end
@@ -127,8 +133,8 @@ function get_variable_group_values(variables, variable_group_parameters)
     return Dict(
         group_name => Dict(
             var_idx => value(variables[group_name][var_idx]) 
-            for i in mga_indices_func() for var_idx in available_indices(i)
-        ) for (group_name, (available_indices, _, mga_indices_func)) in variable_group_parameters
+            for i in group.variable_indices for var_idx in group.stochastic_indices_of_variable(i)
+        ) for (group_name, group) in variable_group_parameters
     )
 end
 
@@ -146,12 +152,12 @@ function update_mga_objective!(
             m,
             variables[group_name],
             variable_values[group_name],
-            available_indices,
-            scenario_weights,
-            mga_indices_func(),
+            group.stochastic_indices_of_variable,
+            group.scenario_weights,
+            group.variable_indices,
             hsj_weights[group_name],
             algorithm_type
-        ) for (group_name, (available_indices, scenario_weights, mga_indices_func)) in group_parameters
+        ) for (group_name, group) in group_parameters
     )
     return formulate_mga_objective!(m, mga_weighted_groups, keys(group_parameters), objective_constraint, algorithm_type)
 end
@@ -196,13 +202,13 @@ function prepare_objective_mga!(
     variable,
     variable_values::AbstractDict,
     variable_indices::Function,
-    variable_stochastic_weights::Function,
+    variable_scenario_weights::Function,
     mga_indices::AbstractArray,
     mga_weights::AbstractDict,
     ::Val{:hsj_mga_algorithm}
 )   
     weighted_group_variables = (
-        get_scenario_variable_average(variable, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
+        get_scenario_variable_average(variable, variable_indices(i), variable_scenario_weights) * mga_weights[i]
         for i in mga_indices
     )
     return Dict(:expression => @expression(m, sum(weighted_group_variables, init=0)))
@@ -213,7 +219,7 @@ function prepare_objective_mga!(
     variable,
     variable_values::AbstractDict,
     variable_indices::Function,
-    variable_stochastic_weights::Function,
+    variable_scenario_weights::Function,
     mga_indices::AbstractArray,
     mga_weights::AbstractDict,
     ::Val{:fuzzy_mga_algorithm},
@@ -221,12 +227,12 @@ function prepare_objective_mga!(
     gamma=1.5
 )   
     weighted_group_variables = (
-        get_scenario_variable_average(variable, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
+        get_scenario_variable_average(variable, variable_indices(i), variable_scenario_weights) * mga_weights[i]
         for i in mga_indices
     )
     
     weighted_group_variable_values = (
-        get_scenario_variable_average(variable_values, variable_indices(i), variable_stochastic_weights) * mga_weights[i]
+        get_scenario_variable_average(variable_values, variable_indices(i), variable_scenario_weights) * mga_weights[i]
         for i in mga_indices
     )
     a = 0
@@ -278,29 +284,29 @@ function update_hsj_weights!(
     variable_hsj_weights::AbstractDict,
     group_parameters::AbstractDict
 )
-    for (group_name, (available_indices, _, mga_indices_func)) in group_parameters
+    for (group_name, group) in group_parameters
         do_update_hsj_weights!(
-            mga_indices_func(),
+            group.variable_indices,
             variable_values[group_name],
-            available_indices,
+            group.stochastic_indices_of_variable,
             variable_hsj_weights[group_name]
         )
     end
 end
 
 function do_update_hsj_weights!(
-    mga_indices::AbstractArray,
-    variable_values::AbstractDict,
-    variable_indices::Function,
+    variable_indices::AbstractArray,
+    all_variable_values::AbstractDict,
+    variable_scenario_indices::Function,
     variable_hsj_weights::AbstractDict
 )
-    for i in mga_indices
-        if was_variable_active(variable_values, variable_indices(i))
-            variable_hsj_weights[i] = 1
-        end
+    active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
+    for i in active_variables
+        variable_hsj_weights[i] = 1
     end
+
 end
 
-function was_variable_active(variable_values, variable_indices)
-    return any(variable_values[i] > 0 for i in variable_indices)
+function was_variable_active(all_variable_values::AbstractDict, variable_indices)
+    return any(all_variable_values[i] > 0 for i in variable_indices)
 end
