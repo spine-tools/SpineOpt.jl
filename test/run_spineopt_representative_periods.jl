@@ -196,25 +196,26 @@ function _test_representative_periods()
         @test isempty(errors)
         merge!(vals, _vals_from_data(test_data))
         rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out; log_level=3)
+        m = run_spineopt(url_in, url_out; optimize=false, log_level=3)
         rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 4), temporal_block(:operations), temporal_block(:rp1))
         rt2 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 8), temporal_block(:operations), temporal_block(:rp2))
         all_rt = [rt1, rt2]
         t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
-        @testset for con_name in keys(m.ext[:spineopt].constraints)
+        # @testset for con_name in keys(m.ext[:spineopt].constraints)
+        @testset for con_name in [:min_up_time, :min_down_time]
             cons = m.ext[:spineopt].constraints[con_name]
             @testset for ind in keys(cons)
                 con = cons[ind]
                 _test_representative_periods_constraint(m, con_name, ind, con, vals, rt1, rt2, all_rt, t_invest)
             end
         end
-        @testset for var_name in keys(m.ext[:spineopt].variables)
-            vars = m.ext[:spineopt].variables[var_name]
-            @testset for ind in keys(vars)
-                var = vars[ind]
-                _test_representative_periods_variable(m, var_name, ind, var, vars, vals, rt1, rt2, all_rt, t_invest)
-            end
-        end
+        # @testset for var_name in keys(m.ext[:spineopt].variables)
+        #     vars = m.ext[:spineopt].variables[var_name]
+        #     @testset for ind in keys(vars)
+        #         var = vars[ind]
+        #         _test_representative_periods_variable(m, var_name, ind, var, vars, vals, rt1, rt2, all_rt, t_invest)
+        #     end
+        # end
     end
 end
 
@@ -469,6 +470,49 @@ function _expected_representative_periods_constraint(
     @build_constraint(units_invested_available[u, s, t] <= cu)
 end
 function _expected_representative_periods_constraint(
+    m, ::Val{:min_up_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+)
+    u, s_path, t = ind
+    @test u == unit(:h2_gen)
+    @test s_path == [stochastic_scenario(:realisation)]
+    @test t in all_rt
+    @test min_up_time(unit=u) == Hour(1) && duration_unit(model=model(:instance)) == :hour
+    # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
+    # triggered by setting "online_variable_type" to be "unit_online_variable_type_integer" in the test dataset.
+    s = only(s_path)
+    @fetch units_on, units_started_up = m.ext[:spineopt].variables
+    @build_constraint(
+        units_on[u, s, t]
+        >=
+        sum(
+            units_started_up[u, s_past, t_past] * weight
+            for (u, s_past, t_past, weight) in SpineOpt.past_units_on_indices(m, min_up_time, u, s_path, t)
+        )
+    )
+end
+function _expected_representative_periods_constraint(
+    m, ::Val{:min_down_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+)
+    u, s_path, t = ind
+    @test u == unit(:h2_gen)
+    @test s_path == [stochastic_scenario(:realisation)]
+    @test t in all_rt
+    @test min_down_time(unit=u) == Hour(1) && duration_unit(model=model(:instance)) == :hour
+    # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
+    # triggered by setting "online_variable_type" to be "unit_online_variable_type_integer" in the test dataset.
+    s = only(s_path)
+    nou = vals["unit", string(u), "number_of_units"]
+    @fetch units_invested_available, units_on, units_shut_down = m.ext[:spineopt].variables
+    @build_constraint(
+        nou + units_invested_available[u, s, t_invest] - units_on[u, s, t] 
+        >= 
+        sum(
+            units_shut_down[u, s_past, t_past] * weight
+            for (u, s_past, t_past, weight) in SpineOpt.past_units_on_indices(m, min_down_time, u, s_path, t)
+        )
+    )
+end
+function _expected_representative_periods_constraint(
     m, ::Val{X}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
 ) where X
     @info "unexpected constraint $X"
@@ -476,6 +520,6 @@ function _expected_representative_periods_constraint(
     nothing
 end
 
-#@testset "run_spineopt_representative_periods" begin
-#    _test_representative_periods()
-#end
+@testset "run_spineopt_representative_periods" begin
+   _test_representative_periods()
+end
