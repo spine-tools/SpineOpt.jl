@@ -920,17 +920,17 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
     _save_bound_marginal_values!(m, reduced_cost_fallback)
-    if isdefined(Threads, Symbol("@spawn"))
-        task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-        lock(m.ext[:spineopt].dual_solves_lock)
-        try
-            push!(m.ext[:spineopt].dual_solves, task)
-        finally
-            unlock(m.ext[:spineopt].dual_solves_lock)
-        end
-    else
-        @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-    end
+    # if isdefined(Threads, Symbol("@spawn"))
+    #     task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+    #     lock(m.ext[:spineopt].dual_solves_lock)
+    #     try
+    #         push!(m.ext[:spineopt].dual_solves, task)
+    #     finally
+    #         unlock(m.ext[:spineopt].dual_solves_lock)
+    #     end
+    # else
+    #     @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+    # end
 end
 
 function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; fix_variables=())
