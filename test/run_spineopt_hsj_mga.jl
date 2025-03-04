@@ -13,7 +13,7 @@ using SpineOpt:
     add_rpm_constraint!,
     add_mga_objective_constraint!,
     formulate_mga_objective!,
-    mga_group
+    mga_group_param
     
 using JuMP 
 using HiGHS
@@ -309,21 +309,21 @@ function _test_do_update_hsj_weights()
         @testset "empty_iterator" begin
             variable_values = array_to_dict([0, 0, 0, 0])
             dict = DefaultDict(0)
-            do_update_hsj_weights!([], variable_values, variable_indices, dict)
+            do_update_hsj_weights!([], variable_indices, variable_values, dict)
             @test dict[0] == 0
             @test dict[1] == 0
         end
         @testset "variable inactive" begin
             variable_values = array_to_dict([0, 0, 0, 0])
             dict = DefaultDict(0)
-            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            do_update_hsj_weights!(mga_indices, variable_indices, variable_values, dict)
             @test dict[0] == 0
             @test dict[1] == 0
         end
         @testset "variable active" begin
             variable_values = array_to_dict([1, 1, 1, 0])
             dict = DefaultDict(0)
-            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            do_update_hsj_weights!(mga_indices, variable_indices, variable_values, dict)
             @test dict[0] == 1
             @test dict[1] == 1
         end
@@ -332,7 +332,7 @@ function _test_do_update_hsj_weights()
             dict = DefaultDict(0)
             dict[0] = 1
             dict[1] = 1
-            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            do_update_hsj_weights!(mga_indices, variable_indices, variable_values, dict)
             @test dict[0] == 1
             @test dict[1] == 1
         end
@@ -341,14 +341,14 @@ function _test_do_update_hsj_weights()
             dict = DefaultDict(0)
             dict[0] = 1
             dict[1] = 1
-            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            do_update_hsj_weights!(mga_indices, variable_indices, variable_values, dict)
             @test dict[0] == 1
             @test dict[1] == 1
         end
         @testset "active and inactive variables" begin
             variable_values = array_to_dict([0, 0, 1, 0])
             dict = DefaultDict(0)
-            do_update_hsj_weights!(mga_indices, variable_values, variable_indices, dict)
+            do_update_hsj_weights!(mga_indices, variable_indices, variable_values, dict)
             @test dict[0] == 0
             @test dict[1] == 1
         end
@@ -400,7 +400,7 @@ end
 function _test_update_hsj_weights()
     @testset "update_hsj_weights" begin
         group_parameters = Dict(
-            :var_name => mga_group(
+            :var_name => mga_group_param(
                 (i) -> [2*i + 1, 2*i + 2],
                 () -> nothing,
                 [0, 1, 2, 3]
@@ -459,12 +459,12 @@ function _test_prepare_objective_hsj_mga()
         mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
         @testset "empty mga indices" begin
             mga_idxs = []
-            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
+            res = prepare_objective_mga!(m, var_indxs, var_stoch_weights, mga_idxs, x, var_values, mga_weights, Val(:hsj_mga_algorithm))
             @test res[:expression] == 0
         end
         @testset "nonempty mga indices" begin
             mga_idxs = [0, 1, 2]
-            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:hsj_mga_algorithm))
+            res = prepare_objective_mga!(m, var_indxs, var_stoch_weights, mga_idxs, x, var_values, mga_weights, Val(:hsj_mga_algorithm))
             @test res[:expression] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
         end
     end
@@ -478,7 +478,7 @@ function _test_prepare_objective_hsj_mga()
             m = Model(HiGHS.Optimizer)
             @variable(m, 0 <= x[1:6] )
             mga_idxs = []
-            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:fuzzy_mga_algorithm))
+            res = prepare_objective_mga!(m, var_indxs, var_stoch_weights, mga_idxs, x, var_values, mga_weights, Val(:fuzzy_mga_algorithm))
             s = res[:variable]
             mga_expression = 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
             con1 = constraint_object(res[:threshold1])
@@ -495,7 +495,7 @@ function _test_prepare_objective_hsj_mga()
             m = Model(HiGHS.Optimizer)
             @variable(m, 0 <= x[1:6] )
             mga_idxs = [0, 1, 2]
-            res = prepare_objective_mga!(m, x, var_values, var_indxs, var_stoch_weights, mga_idxs, mga_weights, Val(:fuzzy_mga_algorithm))
+            res = prepare_objective_mga!(m, var_indxs, var_stoch_weights, mga_idxs, x, var_values, mga_weights, Val(:fuzzy_mga_algorithm))
             s = res[:variable]
             mga_expression = 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
             con1 = constraint_object(res[:threshold1])
@@ -533,8 +533,8 @@ function _test_update_hsj_mga_objective()
             x_mga_idxs = []
             y_mga_idxs = [0, 1]
             group_parameters = Dict(
-                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
             @test res[:objective] == 0.2y[3] + 0.8y[4]
@@ -543,8 +543,8 @@ function _test_update_hsj_mga_objective()
             x_mga_idxs = []
             y_mga_idxs = []
             group_parameters = Dict(
-                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
             @test res[:objective] == 0
@@ -553,8 +553,8 @@ function _test_update_hsj_mga_objective()
             x_mga_idxs = [0, 1, 2]
             y_mga_idxs = [0, 1]
             group_parameters = Dict(
-                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, Dict(), Val(:hsj_mga_algorithm))
             @test res[:objective] == 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6] + 0.2y[3] + 0.8y[4]
@@ -586,8 +586,8 @@ function _test_update_hsj_mga_objective()
             x_mga_idxs = []
             y_mga_idxs = []
             group_parameters = Dict(
-                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -599,8 +599,8 @@ function _test_update_hsj_mga_objective()
             x_mga_idxs = [1, 2]
             y_mga_idxs = [1]
             group_parameters = Dict(
-                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -615,8 +615,8 @@ function _test_update_hsj_mga_objective()
             x_mga_idxs = [1, 2]
             y_mga_idxs = [1]
             group_parameters = Dict(
-                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -631,8 +631,8 @@ function _test_update_hsj_mga_objective()
             x_mga_idxs = [1, 2]
             y_mga_idxs = [1]
             group_parameters = Dict(
-                :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-                :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+                :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+                :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
             )
             res = update_mga_objective!(m, hsj_weights, variables, variable_values, group_parameters, constr, Val(:fuzzy_mga_algorithm))
             optimize!(m)
@@ -664,8 +664,8 @@ function _test_get_variable_group_values()
         y_mga_idxs = [0, 1]
         
         group_parameters = Dict(
-            :x => mga_group(x_indxs, () -> nothing, x_mga_idxs),
-            :y => mga_group(y_indxs, () -> nothing, y_mga_idxs),
+            :x => mga_group_param(x_indxs, () -> nothing, x_mga_idxs),
+            :y => mga_group_param(y_indxs, () -> nothing, y_mga_idxs),
         )
         res = get_variable_group_values(variables, group_parameters)
         @test res[:x][1] == 1
@@ -693,8 +693,8 @@ function _test_iterative_mga()
         x_mga_idxs = [1, 2]
         y_mga_idxs = [1]
         variable_group_parameters = Dict(
-            :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-            :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+            :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+            :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
         )
         max_mga_iters = 2
         goal_function = (m) -> -x[1] - x[2] - y[1]
@@ -737,8 +737,8 @@ function _test_iterative_mga()
         x_mga_idxs = [1, 2]
         y_mga_idxs = [1, 2]
         variable_group_parameters = Dict(
-            :x => mga_group(x_indxs, x_stoch_weights, x_mga_idxs),
-            :y => mga_group(y_indxs, y_stoch_weights, y_mga_idxs),
+            :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+            :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
         )
         max_mga_iters = 2
         
@@ -775,129 +775,131 @@ function _test_add_rpm_constraint()
         @constraint(m, x[1] + x[2] == 1)
         return m, x
     end
-    @testset "add_rpm_constraint_wrong_coefficients" begin
-        m, x = gen_model()
-        y = x[1]
-        a = 2
-        r = 0
-        @test_throws DomainError add_rpm_constraint!(m, y, a, r, 1.2, 1.7)
-        @test_throws DomainError add_rpm_constraint!(m, y, a, r, 0.8, 0.9)
-        @test_throws DomainError add_rpm_constraint!(m, y, a, r, 0.9, 0.8)
-    end
-    @testset "add_rpm_constraint_minimize_expression" begin
-        m, x = gen_model()
-        y = x[1]
-        a = 0
-        r = 2
-        res = add_rpm_constraint!(m, y, a, r)
-        s = res[:variable]
-        con1 = constraint_object(res[:threshold1])
-        benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/-2)
-        @test _is_constraint_equal(con1, benchmark1)
-        con2 = constraint_object(res[:threshold2])
-        benchmark2 = @build_constraint(s <= (x[1] - 2)/-2)
-        @test _is_constraint_equal(con2, benchmark2)
-        con3 = constraint_object(res[:threshold3])
-        benchmark3 = @build_constraint(s <= 1 + 0.5 * x[1]/-2)
-        @test _is_constraint_equal(con3, benchmark3)
+    @testset "add_rpm_constraint" begin
+        @testset "add_rpm_constraint_wrong_coefficients" begin
+            m, x = gen_model()
+            y = x[1]
+            a::Float64 = 2
+            r::Float64 = 0
+            @test_throws DomainError add_rpm_constraint!(m, y, a, r, 1.2, 1.7)
+            @test_throws DomainError add_rpm_constraint!(m, y, a, r, 0.8, 0.9)
+            @test_throws DomainError add_rpm_constraint!(m, y, a, r, 0.9, 0.8)
+        end
+        @testset "add_rpm_constraint_minimize_expression" begin
+            m, x = gen_model()
+            y = x[1]
+            a::Float64 = 0
+            r::Float64 = 2
+            res = add_rpm_constraint!(m, y, a, r)
+            s = res[:variable]
+            con1 = constraint_object(res[:threshold1])
+            benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/-2)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:threshold2])
+            benchmark2 = @build_constraint(s <= (x[1] - 2)/-2)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:threshold3])
+            benchmark3 = @build_constraint(s <= 1 + 0.5 * x[1]/-2)
+            @test _is_constraint_equal(con3, benchmark3)
 
-        @objective(m, Max, res[:variable])
-        set_silent(m)
-        optimize!(m)
-        @test isapprox(value(x[1]), 0)
-        @test isapprox(value(x[2]), 1)
-    end
-    @testset "add_rpm_constraint_maximize_expresion" begin
-        m, x = gen_model()
-        y = x[1]
-        a = 2
-        r = 0
-        res = add_rpm_constraint!(m, y, a, r)
-        s = res[:variable]
-        con1 = constraint_object(res[:threshold1])
-        benchmark1 = @build_constraint(s <= 1.5 * (x[1])/2)
-        @test _is_constraint_equal(con1, benchmark1)
-        con2 = constraint_object(res[:threshold2])
-        benchmark2 = @build_constraint(s <= (x[1])/2)
-        @test _is_constraint_equal(con2, benchmark2)
-        con3 = constraint_object(res[:threshold3])
-        benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 2)/2)
-        @test _is_constraint_equal(con3, benchmark3)
+            @objective(m, Max, res[:variable])
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 0)
+            @test isapprox(value(x[2]), 1)
+        end
+        @testset "add_rpm_constraint_maximize_expresion" begin
+            m, x = gen_model()
+            y = x[1]
+            a::Float64 = 2
+            r::Float64 = 0
+            res = add_rpm_constraint!(m, y, a, r)
+            s = res[:variable]
+            con1 = constraint_object(res[:threshold1])
+            benchmark1 = @build_constraint(s <= 1.5 * (x[1])/2)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:threshold2])
+            benchmark2 = @build_constraint(s <= (x[1])/2)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:threshold3])
+            benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 2)/2)
+            @test _is_constraint_equal(con3, benchmark3)
 
-        @objective(m, Max, s)
-        set_silent(m)
-        optimize!(m)
-        @test isapprox(value(x[1]), 1)
-        @test isapprox(value(x[2]), 0)
-    end
-    @testset "add_rpm_constraint_reachable_past_aspiration" begin
-        m, x = gen_model()
-        y = x[1]
-        a = 0.5
-        r = 0
-        res = add_rpm_constraint!(m, y, a, r)
-        s = res[:variable]
-        con1 = constraint_object(res[:threshold1])
-        benchmark1 = @build_constraint(s <= 1.5 * (x[1])/0.5)
-        @test _is_constraint_equal(con1, benchmark1)
-        con2 = constraint_object(res[:threshold2])
-        benchmark2 = @build_constraint(s <= (x[1])/0.5)
-        @test _is_constraint_equal(con2, benchmark2)
-        con3 = constraint_object(res[:threshold3])
-        benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 0.5)/0.5)
-        @test _is_constraint_equal(con3, benchmark3)
+            @objective(m, Max, s)
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 1)
+            @test isapprox(value(x[2]), 0)
+        end
+        @testset "add_rpm_constraint_reachable_past_aspiration" begin
+            m, x = gen_model()
+            y = x[1]
+            a::Float64 = 0.5
+            r::Float64 = 0
+            res = add_rpm_constraint!(m, y, a, r)
+            s = res[:variable]
+            con1 = constraint_object(res[:threshold1])
+            benchmark1 = @build_constraint(s <= 1.5 * (x[1])/0.5)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:threshold2])
+            benchmark2 = @build_constraint(s <= (x[1])/0.5)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:threshold3])
+            benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 0.5)/0.5)
+            @test _is_constraint_equal(con3, benchmark3)
 
-        @objective(m, Max, s)
-        set_silent(m)
-        optimize!(m)
-        @test isapprox(value(x[1]), 1)
-        @test isapprox(value(x[2]), 0)
-    end
-    @testset "add_rpm_constraint_unreachable_reservation" begin
-        m, x = gen_model()
-        y = x[1]
-        a = 3
-        r = 2
-        res = add_rpm_constraint!(m, y, a, r)
-        s = res[:variable]
-        con1 = constraint_object(res[:threshold1])
-        benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/1)
-        @test _is_constraint_equal(con1, benchmark1)
-        con2 = constraint_object(res[:threshold2])
-        benchmark2 = @build_constraint(s <= (x[1] - 2)/1)
-        @test _is_constraint_equal(con2, benchmark2)
-        con3 = constraint_object(res[:threshold3])
-        benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 3)/1)
-        @test _is_constraint_equal(con3, benchmark3)
+            @objective(m, Max, s)
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 1)
+            @test isapprox(value(x[2]), 0)
+        end
+        @testset "add_rpm_constraint_unreachable_reservation" begin
+            m, x = gen_model()
+            y = x[1]
+            a::Float64 = 3
+            r::Float64 = 2
+            res = add_rpm_constraint!(m, y, a, r)
+            s = res[:variable]
+            con1 = constraint_object(res[:threshold1])
+            benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/1)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:threshold2])
+            benchmark2 = @build_constraint(s <= (x[1] - 2)/1)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:threshold3])
+            benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 3)/1)
+            @test _is_constraint_equal(con3, benchmark3)
 
-        @objective(m, Max, s)
-        set_silent(m)
-        optimize!(m)
-        @test isapprox(value(x[1]), 1)
-        @test isapprox(value(x[2]), 0)
-    end
-    @testset "add_aspiration_equal_reservation" begin
-        m, x = gen_model()
-        y = x[1]
-        a = 0
-        r = 0
-        res = add_rpm_constraint!(m, y, a, r)
-        s = res[:variable]
-        con1 = constraint_object(res[:threshold1])
-        benchmark1 = @build_constraint(s <= 1)
-        @test _is_constraint_equal(con1, benchmark1)
-        con2 = constraint_object(res[:threshold2])
-        benchmark2 = @build_constraint(s <= 1)
-        @test _is_constraint_equal(con2, benchmark2)
-        con3 = constraint_object(res[:threshold3])
-        benchmark3 = @build_constraint(s <= 1)
-        @test _is_constraint_equal(con3, benchmark3)
+            @objective(m, Max, s)
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 1)
+            @test isapprox(value(x[2]), 0)
+        end
+        @testset "add_aspiration_equal_reservation" begin
+            m, x = gen_model()
+            y = x[1]
+            a::Float64 = 0
+            r::Float64 = 0
+            res = add_rpm_constraint!(m, y, a, r)
+            s = res[:variable]
+            con1 = constraint_object(res[:threshold1])
+            benchmark1 = @build_constraint(s <= 1)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:threshold2])
+            benchmark2 = @build_constraint(s <= 1)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:threshold3])
+            benchmark3 = @build_constraint(s <= 1)
+            @test _is_constraint_equal(con3, benchmark3)
 
-        @objective(m, Max, s)
-        set_silent(m)
-        optimize!(m)
-        @test isapprox(value(x[1]), 0)
-        @test isapprox(value(x[2]), 1)
+            @objective(m, Max, s)
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 0)
+            @test isapprox(value(x[2]), 1)
+        end
     end
 end
 
