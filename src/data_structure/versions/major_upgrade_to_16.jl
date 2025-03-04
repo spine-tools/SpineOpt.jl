@@ -147,6 +147,12 @@ function major_upgrade_to_16(db_url, log_level)
         (("investment_group", "maximum_entities_invested_available"), "investment_count_total_max_cumulative", ""),
         (("investment_group", "minimum_capacity_invested_available"), "investment_capacity_total_min_cumulative", ""),
         (("investment_group", "minimum_entities_invested_available"), "investment_count_total_min_cumulative", ""),
+
+        # model
+        (("model", "db_lp_solver"), "solver_lp", ""),
+        (("model", "db_lp_solver_options"), "solver_lp_options", ""),
+        (("model", "db_mip_solver"), "solver_mip", ""),
+        (("model", "db_mip_solver_options"), "solver_mip_options", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

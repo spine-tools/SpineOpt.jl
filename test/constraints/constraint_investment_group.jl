@@ -80,8 +80,8 @@ function _test_constraint_investment_group_setup()
             ["connection", "connection_bc", "connection_investment_cost", 1000],
             ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_four_hourly", "resolution", Dict("type" => "duration", "data" => "4h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [

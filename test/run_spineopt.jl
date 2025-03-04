@@ -64,8 +64,8 @@ function _test_run_spineopt_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "unit_flow", "output_resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"]
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"]
         ],
     )
     _load_test_data(url_in, test_data)
@@ -620,8 +620,8 @@ function _test_db_solvers()
         )
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
-            ["model", "instance", "db_mip_solver_options", mip_solver_options],
-            ["model", "instance", "db_lp_solver_options", lp_solver_options]
+            ["model", "instance", "solver_mip_options", mip_solver_options],
+            ["model", "instance", "solver_lp_options", lp_solver_options]
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
         SpineInterface.import_data(
@@ -687,7 +687,7 @@ function _test_dual_values()
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
             # Uncomment to test for a particular solver, e.g., CPLEX
-            # ["model", "instance", "db_mip_solver", "CPLEX.jl"],
+            # ["model", "instance", "solver_mip", "CPLEX.jl"],
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
@@ -854,7 +854,7 @@ function _test_time_limit()
             ),
         )
         object_parameter_values = [
-            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "solver_mip_options", mip_solver_options],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(6))]
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 1000]]

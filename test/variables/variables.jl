@@ -65,8 +65,8 @@ function _test_variable_unit_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
             ["unit", "unit_ab", "units_on_cost", 1],  # Just to have units_on variables
         ],
         :relationship_parameter_values => [
@@ -136,8 +136,8 @@ function _test_variable_connection_setup()
             ["model", "instance", "max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [
@@ -314,8 +314,8 @@ function test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
             ["model", "instance", "model_start", unparse_db_value(m_start)],
             ["model", "instance", "model_end", unparse_db_value(m_end)],
             ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
         ],
     )
@@ -646,8 +646,8 @@ function test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
             ["model", "instance", "model_start", unparse_db_value(m_start)],
             ["model", "instance", "model_end", unparse_db_value(m_end)],
             ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
     )
     _load_test_data(url_in, test_data)

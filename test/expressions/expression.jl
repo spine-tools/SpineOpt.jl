@@ -86,8 +86,8 @@ function _test_expressions_setup()
             ["node", "node_b", "demand", 105],
             ["unit", "unit_b", "online_variable_type", "unit_online_variable_type_linear"],
             ["unit", "unit_b", "availability_factor", 0.4],            
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [

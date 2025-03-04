@@ -160,8 +160,8 @@ end
             ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_ab],
