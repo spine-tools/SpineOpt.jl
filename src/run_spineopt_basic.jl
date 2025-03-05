@@ -925,9 +925,11 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     # that determines whether multi-threading is activated (has a value) or not (no value) in Julia.
     # isdefined(Threads, Symbol("@spawn")) is always true in the current version of Julia (1.11) 
     # no matter whether multi-threading is activated or not i.e. Threads.nthreads()=1 by default.
-        println("Having a `println` here allows the LP optimization to be done despite suspending on its finishing.")
+        #TODO: This command would suspend the running of `m = run_spineopt(...; optimize=true, ...)`
+        # in the unit test `run_spineopt_representative_periods.jl`. Suspension comes at launching the `optimize!()`.
+        # Add an arbitraty command, either before or after this command, could shift the suspension 
+        # to the completion of the `optimize!()`.
         task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-        println("The original `task=...` command suspends before the LP optimization begins.")
         lock(m.ext[:spineopt].dual_solves_lock) 
         try
             push!(m.ext[:spineopt].dual_solves, task)
