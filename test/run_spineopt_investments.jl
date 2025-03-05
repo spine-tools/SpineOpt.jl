@@ -94,7 +94,7 @@ function _test_capacity_investments()
     @testset "capacity_investments" begin
         url_in, url_out, file_path_out = _test_run_spineopt_investments_setup()
         object_parameter_values = [
-            ["model", "instance", "use_connection_intact_flow", false],
+            ["model", "instance", "connection_investment_power_flow_impact_activate", false],
             ["unit", "unit_a", "existing_units", 10],
             ["unit", "unit_a", "investment_count_max_cumulative", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],

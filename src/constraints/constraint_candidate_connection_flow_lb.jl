@@ -35,7 +35,7 @@ equals [connection\_intact\_flow](@ref) otherwise.
 ```
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :candidate_connection_flow_lb,

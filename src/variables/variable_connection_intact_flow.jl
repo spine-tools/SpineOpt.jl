@@ -37,7 +37,7 @@ function connection_intact_flow_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return ()
+    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return ()
     connection_flow_indices(
         m;
         connection=connection,

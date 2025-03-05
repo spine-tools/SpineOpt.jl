@@ -49,7 +49,7 @@ from investment connections that are not invested in.
 ```
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :connection_flow_intact_flow,

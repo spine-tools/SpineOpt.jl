@@ -26,7 +26,7 @@ Runs a number of other functions processing different aspecs of the input data i
 """
 function preprocess_data_structure()
     generate_is_candidate()
-    update_use_connection_intact_flow()
+    update_connection_investment_power_flow_impact_activate()
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
@@ -72,11 +72,11 @@ function generate_is_candidate()
     end
 end
 
-function update_use_connection_intact_flow()
+function update_connection_investment_power_flow_impact_activate()
     if isempty(connection(is_candidate=true)) && !isempty(model())
         instance = first(model())
         add_object_parameter_values!(
-            model, Dict(instance => Dict(:use_connection_intact_flow => parameter_value(false)))
+            model, Dict(instance => Dict(:connection_investment_power_flow_impact_activate => parameter_value(false)))
         )
     end
 end

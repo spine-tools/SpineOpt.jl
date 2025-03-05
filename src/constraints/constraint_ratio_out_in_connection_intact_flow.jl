@@ -32,7 +32,7 @@ v^{connection\_intact\_flow}_{(c, n_{in}, d_{from}, s, t)} \\
 ```
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :ratio_out_in_connection_intact_flow,

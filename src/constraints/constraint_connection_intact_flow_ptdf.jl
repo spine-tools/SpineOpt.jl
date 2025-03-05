@@ -57,7 +57,7 @@ end
 
 function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_path, t)
     @fetch connection_intact_flow, node_injection, connection_flow = m.ext[:spineopt].variables
-    if !use_connection_intact_flow(model=m.ext[:spineopt].instance)
+    if !connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance)
         connection_intact_flow = connection_flow
     end
     @build_constraint(

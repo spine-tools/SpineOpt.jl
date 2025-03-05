@@ -38,7 +38,7 @@ Specifying any of the above relationships will override the corresponding [model
 
 ### Impact of connection investments on network characteristics
 
-The [model](@ref) parameter [use\_connection\_intact\_flow](@ref) is available to control whether or not the impact of connection investments on the network
+The [model](@ref) parameter [connection\_investment\_power\_flow\_impact\_activate](@ref) is available to control whether or not the impact of connection investments on the network
 characteristics should be captured.
 If set to `true`, then the model will use line outage distribution factors (LODF) to compute the impact of each [connection](@ref) investment over the flow across the network. Note that this introduces another variable, [connection\_intact\_flow](@ref), representing the hypothetical flow on a [connection](@ref) in case all [connection](@ref) investments were in place. Also note that the impact of each connection is captured **individually**.
 
