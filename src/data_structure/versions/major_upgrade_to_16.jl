@@ -153,6 +153,8 @@ function major_upgrade_to_16(db_url, log_level)
         (("model", "db_lp_solver_options"), "solver_lp_options", ""),
         (("model", "db_mip_solver"), "solver_mip", ""),
         (("model", "db_mip_solver_options"), "solver_mip_options", ""),
+        (("model", "max_gap"), "decomposition_max_gap", ""),
+        (("model", "max_iterations"), "decomposition_max_iterations", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

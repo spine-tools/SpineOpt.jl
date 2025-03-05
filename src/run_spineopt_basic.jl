@@ -399,7 +399,7 @@ function solve_model!(
         m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
         undo_force_starting_investments! = _force_starting_investments!(m_mp)
         min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
-        max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+        max_benders_iterations = decomposition_max_iterations(model=m_mp.ext[:spineopt].instance)
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
@@ -429,7 +429,7 @@ function solve_model!(
             @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))"
             @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
-            termination_msg = if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
+            termination_msg = if gap <= decomposition_max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
                 "Benders tolerance satisfied"
             elseif j >= max_benders_iterations
                 "Maximum number of iterations reached ($j)"

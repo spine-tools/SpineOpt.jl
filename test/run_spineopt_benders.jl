@@ -110,7 +110,7 @@ function _test_benders_unit()
             object_parameter_values = [
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
                 ["model", "instance", "model_type", "spineopt_benders"],
-                ["model", "instance", "max_iterations", 10],
+                ["model", "instance", "decomposition_max_iterations", 10],
                 ["model", "instance", "solver_mip_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "existing_units", 0],
@@ -224,7 +224,7 @@ function _test_benders_storage()
             object_parameter_values = [
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
                 ["model", "instance", "model_type", "spineopt_benders"],
-                ["model", "instance", "max_iterations", 10],
+                ["model", "instance", "decomposition_max_iterations", 10],
                 ["model", "instance", "solver_mip_options", mip_solver_options_benders],
                 ["node", "node_a", "node_type", "storage_node"],
                 ["node", "node_a", "storage_state_max", 1000],
@@ -353,7 +353,7 @@ function _test_benders_unit_storage()
             object_parameter_values = [
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
                 ["model", "instance", "model_type", "spineopt_benders"],
-                ["model", "instance", "max_iterations", 100],
+                ["model", "instance", "decomposition_max_iterations", 100],
                 ["model", "instance", "solver_mip_options", mip_solver_options_benders],
                 ["unit", "unit_a", "existing_units", 0],
                 ["unit", "unit_a", "investment_count_max_cumulative", 1],
@@ -500,7 +500,7 @@ function _test_benders_rolling_representative_periods()
                 ["model", "instance", "roll_forward", unparse_db_value([Hour(2 * rf)])],  # 12
                 ["model", "instance", "window_weight", unparse_db_value([wd / rf, wd / rf])],  # 1.5, 1.5
                 ["model", "instance", "model_type", "spineopt_benders"],
-                ["model", "instance", "max_iterations", 10],
+                ["model", "instance", "decomposition_max_iterations", 10],
                 ["model", "instance", "solver_mip_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "existing_units", 0],
@@ -595,7 +595,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             ["model", "instance", "roll_forward", unparse_db_value([Day(14) for k in 1:23])],
             ["model", "instance", "window_weight", unparse_db_value([14.0 for k in 1:24])],
             ["model", "instance", "model_type", "spineopt_benders"],
-            ["model", "instance", "max_iterations", 10],
+            ["model", "instance", "decomposition_max_iterations", 10],
             ["model", "instance", "solver_mip_options", mip_solver_options_benders],
             ["node", "node_b", "demand", dem],
             ["node", "node_b", "node_balance_penalty", 10000],
@@ -691,7 +691,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["commodity", "electricity", "mp_min_res_gen_to_demand_ratio_slack_penalty", 10000],
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
                 ["model", "instance", "model_type", "spineopt_benders"],
-                ["model", "instance", "max_iterations", 10],
+                ["model", "instance", "decomposition_max_iterations", 10],
                 ["model", "instance", "solver_mip_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "is_renewable", true],
@@ -812,7 +812,7 @@ function _test_benders_starting_units_invested()
             object_parameter_values = [
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
                 ["model", "instance", "model_type", "spineopt_benders"],
-                ["model", "instance", "max_iterations", max_iters],
+                ["model", "instance", "decomposition_max_iterations", max_iters],
                 ["model", "instance", "solver_mip_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "existing_units", 0],

@@ -56,7 +56,7 @@ function _ref_setup(storage_count)
         :object_parameter_values => Any[
             ("model", "test_model", "model_start", unparse_db_value(m_start)),
             ("model", "test_model", "model_end", unparse_db_value(m_end)),
-            ("model", "test_model", "max_iterations", 20),
+            ("model", "test_model", "decomposition_max_iterations", 20),
             ("temporal_block", "flat", "resolution", unparse_db_value(res)),
             ("node", "demand_node", "demand", unparse_db_value(demand_ts)),
             ("node", "demand_node", "node_balance_penalty", 10000),
