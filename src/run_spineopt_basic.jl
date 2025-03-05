@@ -920,17 +920,23 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
     _save_bound_marginal_values!(m, reduced_cost_fallback)
-    # if isdefined(Threads, Symbol("@spawn"))
-    #     task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-    #     lock(m.ext[:spineopt].dual_solves_lock)
-    #     try
-    #         push!(m.ext[:spineopt].dual_solves, task)
-    #     finally
-    #         unlock(m.ext[:spineopt].dual_solves_lock)
-    #     end
-    # else
-    #     @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-    # end
+    if isdefined(Threads, Symbol("@spawn")) && haskey(ENV, "JULIA_NUM_THREADS")
+    # JULIA_NUM_THREADS: system environment variable 
+    # that determines whether multi-threading is activated (has a value) or not (no value) in Julia.
+    # isdefined(Threads, Symbol("@spawn")) is always true in the current version of Julia (1.11) 
+    # no matter whether multi-threading is activated or not i.e. Threads.nthreads()=1 by default.
+        println("Having a `println` here allows the LP optimization to be done despite suspending on its finishing.")
+        task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+        println("The original `task=...` command suspends before the LP optimization begins.")
+        lock(m.ext[:spineopt].dual_solves_lock) 
+        try
+            push!(m.ext[:spineopt].dual_solves, task)
+        finally
+            unlock(m.ext[:spineopt].dual_solves_lock)
+        end
+    else
+        @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+    end
 end
 
 function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; fix_variables=())
