@@ -29,7 +29,7 @@ function connection_flow_costs(m::Model, t_range)
         sum(
             connection_flow[conn, n, d, s, t]
             * duration(t)
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+            * (economic_parameter_preprocessing_activate(model=m.ext[:spineopt].instance) ?
                connection_discounted_duration[(connection=conn, stochastic_scenario=s, t=t)] : 1
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))

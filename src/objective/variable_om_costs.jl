@@ -28,7 +28,7 @@ function variable_om_costs(m::Model, t_range)
         m,
         sum(
             + unit_flow[u, n, d, s, t]
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+            * (economic_parameter_preprocessing_activate(model=m.ext[:spineopt].instance) ?
                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
             ) 
             * duration(t)

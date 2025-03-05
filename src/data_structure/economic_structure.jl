@@ -21,19 +21,19 @@
     generate_economic_structure!(m)
 """
 function generate_economic_structure!(m; log_level=3)
-    use_economic_representation(model=m.ext[:spineopt].instance) || return
+    economic_parameter_preprocessing_activate(model=m.ext[:spineopt].instance) || return
     if !isnothing(roll_forward(model=m.ext[:spineopt].instance))
-        error("Using economic representation with rolling horizon is currently not supported.")
+        error("Using economic parameter preprocessing with rolling horizon is currently not supported.")
     elseif model_type(model=m.ext[:spineopt].instance) === :spineopt_benders 
-        error("Using economic representation with Benders' decomposition is currently not supported.")
+        error("Using economic parameter preprocessing with Benders' decomposition is currently not supported.")
     end
-    # use_economic_representation == true without defining investment temporal blocks will break the investment cost calculation
+    # economic_parameter_preprocessing_activate == true without defining investment temporal blocks will break the investment cost calculation
     # in such cases, user would only need to discount operational costs manually
     if isempty(model__default_investment_temporal_block()) &&
        isempty(node__investment_temporal_block()) &&
        isempty(unit__investment_temporal_block()) &&
        isempty(connection__investment_temporal_block())
-        error("Using economic representation without defining investment temporal blocks is currently not supported.")
+        error("Using economic parameter preprocessing without defining investment temporal blocks is currently not supported.")
     end
     economic_parameters = _create_set_parameters_and_relationships()
     for (obj, name) in [(unit, :unit), (node, :storage), (connection, :connection)]

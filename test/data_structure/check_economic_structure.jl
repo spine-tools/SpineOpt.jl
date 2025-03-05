@@ -160,7 +160,7 @@
             express,
             var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]],
         )
-        object_parameter_values = [["model", "instance", "use_economic_representation", true]]
+        object_parameter_values = [["model", "instance", "economic_parameter_preprocessing_activate", true]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -187,7 +187,7 @@
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -224,7 +224,7 @@
         expected_coe_obj = inv_cost
         @test expected_coe_obj == observed_coe_obj
         object_parameter_values = [
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=3)
@@ -257,7 +257,7 @@
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
             ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
@@ -292,7 +292,7 @@
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
             ["model", "instance", "roll_forward", Dict("type" =>"duration","data"=>"1D")],
             ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
@@ -316,7 +316,7 @@
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
             ["model", "instance", "model_type", "spineopt_benders"],
             ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
