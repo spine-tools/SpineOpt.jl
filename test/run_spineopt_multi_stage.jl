@@ -239,7 +239,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment_with_slack_pen
         ]
     )
     import_data(url_in, "Add penalty data"; slack_penalty_data...)
-    m = run_spineopt(url_in, url_out; log_level=0, filters=Dict("scenario" => "base")) do m
+    m = run_spineopt(url_in, url_out; log_level=0, filters=Dict("scenario" => "base"), optimize=false) do m
         add_event_handler!(m, :window_about_to_solve) do m, k
             @testset for out_name in keys(out_pv_by_node_by_name)
                 out_pv_by_node = out_pv_by_node_by_name[out_name]

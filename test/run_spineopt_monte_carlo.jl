@@ -112,6 +112,7 @@ function _test_monte_carlo()
         import_data(url_in, "Add test data"; test_data...)
         rm(file_path_out; force=true)
         run_spineopt(url_in, url_out; log_level=3)
+        # FIXME: Tasku: There are no actual tests besides that nothing crashes?
     end
 end
 

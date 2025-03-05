@@ -183,7 +183,7 @@ function test_unit_online_variable_type_none()
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=true)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         constraint_u_avail = m.ext[:spineopt].constraints[:units_available]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))

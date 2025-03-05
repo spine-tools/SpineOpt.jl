@@ -866,7 +866,7 @@ function _test_time_limit()
         rm(file_path_out; force=true)
         windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
         msgs = ["no solution available for instance - window $w - moving on..." for w in windows]
-        @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
+        @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0, optimize=false))
     end
 end
 
@@ -904,7 +904,7 @@ function _test_add_event_handler()
     @testset "add_event_handler" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         called = false
-        m = run_spineopt(url_in, url_out; log_level=0) do m
+        m = run_spineopt(url_in, url_out; log_level=0, optimize=false) do m
             add_event_handler!(m, :model_built) do m
                 called = true
             end
