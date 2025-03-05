@@ -196,7 +196,7 @@ function _test_representative_periods()
         @test isempty(errors)
         merge!(vals, _vals_from_data(test_data))
         rm(file_path_out; force=true)
-        m = run_spineopt(url_in, nothing; optimize=true, log_level=3)
+        m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
         rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 4), temporal_block(:operations), temporal_block(:rp1))
         rt2 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 8), temporal_block(:operations), temporal_block(:rp2))
         all_rt = [rt1, rt2]
