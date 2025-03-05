@@ -196,26 +196,25 @@ function _test_representative_periods()
         @test isempty(errors)
         merge!(vals, _vals_from_data(test_data))
         rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out; optimize=false, log_level=3)
+        m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
         rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 4), temporal_block(:operations), temporal_block(:rp1))
         rt2 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 8), temporal_block(:operations), temporal_block(:rp2))
         all_rt = [rt1, rt2]
         t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
-        # @testset for con_name in keys(m.ext[:spineopt].constraints)
-        @testset for con_name in [:min_up_time, :min_down_time]
+        @testset for con_name in keys(m.ext[:spineopt].constraints)
             cons = m.ext[:spineopt].constraints[con_name]
             @testset for ind in keys(cons)
                 con = cons[ind]
                 _test_representative_periods_constraint(m, con_name, ind, con, vals, rt1, rt2, all_rt, t_invest)
             end
         end
-        # @testset for var_name in keys(m.ext[:spineopt].variables)
-        #     vars = m.ext[:spineopt].variables[var_name]
-        #     @testset for ind in keys(vars)
-        #         var = vars[ind]
-        #         _test_representative_periods_variable(m, var_name, ind, var, vars, vals, rt1, rt2, all_rt, t_invest)
-        #     end
-        # end
+        @testset for var_name in keys(m.ext[:spineopt].variables)
+            vars = m.ext[:spineopt].variables[var_name]
+            @testset for ind in keys(vars)
+                var = vars[ind]
+                _test_representative_periods_variable(m, var_name, ind, var, vars, vals, rt1, rt2, all_rt, t_invest)
+            end
+        end
     end
 end
 
