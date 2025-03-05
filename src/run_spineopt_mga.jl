@@ -30,7 +30,7 @@ function do_run_spineopt!(
 )
     outputs = Dict()
     mga_iteration_count = 0
-    max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
+    max_mga_iters = mga_max_iterations(model=m.ext[:spineopt].instance)
     mga_iteration = ObjectClass(:mga_iteration, [])
     @eval mga_iteration = $mga_iteration
     build_model!(m; log_level)
@@ -307,7 +307,7 @@ function add_mga_objective_constraint!(m::Model)
             m,
             total_costs(m, anything)
             <=
-            (1 + max_mga_slack(model=instance)) * objective_value(m)
+            (1 + mga_max_slack(model=instance)) * objective_value(m)
         )
     )
 end
