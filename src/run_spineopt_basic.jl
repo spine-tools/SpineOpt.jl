@@ -398,7 +398,7 @@ function solve_model!(
         end
         m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
         undo_force_starting_investments! = _force_starting_investments!(m_mp)
-        min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
+        min_benders_iterations = decomposition_min_iterations(model=m_mp.ext[:spineopt].instance)
         max_benders_iterations = decomposition_max_iterations(model=m_mp.ext[:spineopt].instance)
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
