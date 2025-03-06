@@ -930,7 +930,7 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
         # Add an arbitraty command, either before or after this command, could shift the suspension 
         # to the completion of the `optimize!()`.
         task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-        lock(m.ext[:spineopt].dual_solves_lock) 
+        lock(m.ext[:spineopt].dual_solves_lock)
         try
             push!(m.ext[:spineopt].dual_solves, task)
         finally

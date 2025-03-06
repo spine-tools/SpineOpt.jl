@@ -471,43 +471,93 @@ end
 function _expected_representative_periods_constraint(
     m, ::Val{:min_up_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
 )
-    u, s_path, t = ind
-    @test u == unit(:h2_gen)
-    @test s_path == [stochastic_scenario(:realisation)]
-    @test t in all_rt
-    @test min_up_time(unit=u) == Hour(1) && duration_unit(model=model(:instance)) == :hour
     # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
     # triggered by setting "online_variable_type" to be "unit_online_variable_type_integer" in the test dataset.
+    u, s_path, t_con = ind
+    
+    @test u == unit(:h2_gen)
+    @test s_path == [stochastic_scenario(:realisation)]
+    @test t_con in all_rt
+
+    look_behind = maximum(
+        maximum_parameter_value(min_up_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path)
+    )
+    @test look_behind == min_up_time(unit=u)
+    
+    # The min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit.
+    @test min_up_time(unit=u) == Hour(1)
+    @test duration_unit(model=model(:instance)) == :hour
+    
+    past_units_on_indices = units_on_indices(
+        m;
+        unit=u,
+        stochastic_scenario=s_path,
+        t=to_time_slice(m; t=TimeSlice(end_(t_con) - look_behind, end_(t_con))),
+        temporal_block=anything,
+    )
+
+    past_scenarios = [ind.stochastic_scenario for ind in past_units_on_indices]
+    @test past_scenarios == [stochastic_scenario(:realisation)]
+    past_time_slices = [ind.t for ind in past_units_on_indices]
+    @test past_time_slices == [t_con]
+
     s = only(s_path)
+    weight = 1
+
     @fetch units_on, units_started_up = m.ext[:spineopt].variables
     @build_constraint(
-        units_on[u, s, t]
+        units_on[u, s, t_con]
         >=
         sum(
             units_started_up[u, s_past, t_past] * weight
-            for (u, s_past, t_past, weight) in SpineOpt.past_units_on_indices(m, min_up_time, u, s_path, t)
+            for (u, s_past, t_past) in past_units_on_indices
         )
     )
 end
 function _expected_representative_periods_constraint(
     m, ::Val{:min_down_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
 )
-    u, s_path, t = ind
-    @test u == unit(:h2_gen)
-    @test s_path == [stochastic_scenario(:realisation)]
-    @test t in all_rt
-    @test min_down_time(unit=u) == Hour(1) && duration_unit(model=model(:instance)) == :hour
     # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
     # triggered by setting "online_variable_type" to be "unit_online_variable_type_integer" in the test dataset.
+    u, s_path, t_con = ind
+    
+    @test u == unit(:h2_gen)
+    @test s_path == [stochastic_scenario(:realisation)]
+    @test t_con in all_rt
+
+    look_behind = maximum(
+        maximum_parameter_value(min_down_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path)
+    )
+    @test look_behind == min_down_time(unit=u)
+    
+    # The min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit.
+    @test min_down_time(unit=u) == Hour(1)
+    @test duration_unit(model=model(:instance)) == :hour
+    
+    past_units_on_indices = units_on_indices(
+        m;
+        unit=u,
+        stochastic_scenario=s_path,
+        t=to_time_slice(m; t=TimeSlice(end_(t_con) - look_behind, end_(t_con))),
+        temporal_block=anything,
+    )
+
+    past_scenarios = [ind.stochastic_scenario for ind in past_units_on_indices]
+    @test past_scenarios == [stochastic_scenario(:realisation)]
+    past_time_slices = [ind.t for ind in past_units_on_indices]
+    @test past_time_slices == [t_con]
+
     s = only(s_path)
     nou = vals["unit", string(u), "number_of_units"]
+    weight = 1
+
     @fetch units_invested_available, units_on, units_shut_down = m.ext[:spineopt].variables
     @build_constraint(
-        nou + units_invested_available[u, s, t_invest] - units_on[u, s, t] 
+        nou + units_invested_available[u, s, t_invest] - units_on[u, s, t_con] 
         >= 
         sum(
             units_shut_down[u, s_past, t_past] * weight
-            for (u, s_past, t_past, weight) in SpineOpt.past_units_on_indices(m, min_down_time, u, s_path, t)
+            for (u, s_past, t_past) in past_units_on_indices
         )
     )
 end
