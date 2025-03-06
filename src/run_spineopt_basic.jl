@@ -920,7 +920,15 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
     _save_bound_marginal_values!(m, reduced_cost_fallback)
-    if isdefined(Threads, Symbol("@spawn"))
+    if isdefined(Threads, Symbol("@spawn")) && haskey(ENV, "JULIA_NUM_THREADS")
+    # JULIA_NUM_THREADS: system environment variable 
+    # that determines whether multi-threading is activated (has a value) or not (no value) in Julia.
+    # isdefined(Threads, Symbol("@spawn")) is always true in the current version of Julia (1.11) 
+    # no matter whether multi-threading is activated or not i.e. Threads.nthreads()=1 by default.
+        #TODO: This command would suspend the running of `m = run_spineopt(...; optimize=true, ...)`
+        # in the unit test `run_spineopt_representative_periods.jl`. Suspension comes at launching the `optimize!()`.
+        # Add an arbitraty command, either before or after this command, could shift the suspension 
+        # to the completion of the `optimize!()`.
         task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
         lock(m.ext[:spineopt].dual_solves_lock)
         try
