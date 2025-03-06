@@ -161,6 +161,7 @@ function major_upgrade_to_16(db_url, log_level)
         (("model", "use_connection_intact_flow"), "connection_investment_power_flow_impact_activate", ""),
         (("model", "use_economic_representation"), "economic_parameter_preprocessing_activate", ""),
         (("model", "use_milestone_years"), "milestone_years_activate", ""),
+        (("model", "use_tight_compact_formulations"), "tight_compact_formulations_activate", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")

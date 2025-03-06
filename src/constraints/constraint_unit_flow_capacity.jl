@@ -88,7 +88,7 @@ See also
 [shut\_down\_limit](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    if use_tight_compact_formulations(model=m.ext[:spineopt].instance, _default=false)
+    if tight_compact_formulations_activate(model=m.ext[:spineopt].instance, _default=false)
         _add_constraint_unit_flow_capacity_tight_compact!(m)
     else
         _add_constraint_unit_flow_capacity_simple!(m)

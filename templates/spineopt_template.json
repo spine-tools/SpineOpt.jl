@@ -205,7 +205,7 @@
         ["model", "model_type", "spineopt_standard", "model_type_list", "The model type which gives the solution method (e.g. standerd, Benders)"],
         ["model", "roll_forward", null, null, "Defines how much the model moves ahead in time between solves in a rolling optimization. If null, everything is solved in as a single optimization."],
         ["model", "connection_investment_power_flow_impact_activate", true, "boolean_value_list", "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."],
-        ["model", "use_tight_compact_formulations", false, "boolean_value_list", "Whether to use tight and compact constraint formulations."],
+        ["model", "tight_compact_formulations_activate", false, "boolean_value_list", "Whether to use tight and compact constraint formulations."],
         ["model", "window_duration", null, null, "The duration of the window in case it differs from roll_forward"],
         ["model", "window_weight", 1, null, "The weight of the window in the rolling subproblem"],
         ["model", "milestone_years_activate", false, "boolean_value_list", "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."],

@@ -192,7 +192,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
             ["connection__to_node", ["connection_ab", "node_a"]],
             ["connection__to_node", ["connection_ab", "node_a_bis"]],
         ]
-        object_parameter_values = [["model", "instance", "use_tight_compact_formulations", true]]
+        object_parameter_values = [["model", "instance", "tight_compact_formulations_activate", true]]
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_group_a"], "connection_capacity", conn_cap_from_a],
             ["connection__to_node", ["connection_ab", "node_group_a"], "connection_capacity", conn_cap_to_a],
@@ -241,7 +241,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
         object_parameter_values = [
             ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
             ["connection", "connection_ab", "investment_count_max_cumulative", 1],
-            ["model", "instance", "use_tight_compact_formulations", true],
+            ["model", "instance", "tight_compact_formulations_activate", true],
         ]
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_from_a],

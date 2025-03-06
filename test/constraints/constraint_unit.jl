@@ -326,7 +326,7 @@ function test_constraint_unit_flow_capacity()
                     ["unit", "unit_ab", "min_up_time", mup],
                     ["node", "reserves_a", "downward_reserve", dr],
                     ["node", "reserves_bc", "upward_reserve", ur],
-                    ["model", "instance", "use_tight_compact_formulations", true],
+                    ["model", "instance", "tight_compact_formulations_activate", true],
                 ]
                 SpineInterface.import_data(
                     url_in;
