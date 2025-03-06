@@ -2844,6 +2844,13 @@
             "boolean_value_list",
             "Whether to use tight and compact constraint formulations."
         ],
+        [   
+            "model", 
+            "use_highest_resolution_constraint_ratio_out_in_connection_flow", 
+            true, 
+            "boolean_value_list", 
+            "Whether to use highest resolution for constraint ratio out in connection flow."
+        ],
         [
             "model",
             "window_duration",
