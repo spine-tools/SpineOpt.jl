@@ -32,8 +32,8 @@ The node injection is created for each node in the network
 & \left(p^{storage\_state\_coefficient}_{(n, s, t-1)} \cdot v^{node\_state}_{(n, s, t-1)} - p^{storage\_state\_coefficient}_{(n, s, t)} \cdot v^{node\_state}_{(n, s, t)}\right)
 / \Delta t \\
 & - p^{storage\_self\_discharge}_{(n,s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
-& + \sum_{n'} p^{diff\_coeff}_{(n',n,s,t)} \cdot v^{node\_state}_{(n', s, t)}
-- \sum_{n'} p^{diff\_coeff}_{(n,n',s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
+& + \sum_{n'} p^{diffusion\_coefficient}_{(n',n,s,t)} \cdot v^{node\_state}_{(n', s, t)}
+- \sum_{n'} p^{diffusion\_coefficient}_{(n,n',s,t)} \cdot v^{node\_state}_{(n, s, t)} \\
 & + \sum_{
         u
 }
@@ -52,7 +52,7 @@ v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
 See also
 [storage\_state\_coefficient](@ref),
 [storage\_self\_discharge](@ref),
-[diff\_coeff](@ref),
+[diffusion\_coefficient](@ref),
 [node\_\_node](@ref),
 [unit\_\_from\_node](@ref),
 [unit\_\_to\_node](@ref),
@@ -100,7 +100,7 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         # Diffusion of commodity from other nodes to this one
         + sum(
             get(node_state, (other_node, s, t_after), 0)
-            * diff_coeff(m; node1=other_node, node2=n, stochastic_scenario=s, t=t_after)
+            * diffusion_coefficient(m; node1=other_node, node2=n, stochastic_scenario=s, t=t_after)
             for other_node in node__node(node2=n)
             for s in s_path;
             init=0,
@@ -108,7 +108,7 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         # Diffusion of commodity from this node to other nodes
         - sum(
             get(node_state, (n, s, t_after), 0)
-            * diff_coeff(m; node1=n, node2=other_node, stochastic_scenario=s, t=t_after)
+            * diffusion_coefficient(m; node1=n, node2=other_node, stochastic_scenario=s, t=t_after)
             for other_node in node__node(node1=n)
             for s in s_path;
             init=0,
