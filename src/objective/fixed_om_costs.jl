@@ -34,11 +34,13 @@ function fixed_om_costs(m, t_range)
             ) 
             * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
             * (
-                + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
-                + (
-                    u in intersect(indices(candidate_units), members(u)) ? 
-                    units_invested_available[u, s, t] : 0
-                )
+                is_candidate(unit=u) ? 
+                number_of_units(
+                    m; unit=u, stochastic_scenario=s, t=t, _default=0
+                ) + units_invested_available[u, s, t] : 
+                number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+                # Default value of `number_of_units` is 1 in the template: assumption for non-investable units.
+                # For investable unit, we assume the `number_of_units``=0 (existing ones) unless explicitly specified.
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             # This term is activated when there is a representative temporal block that includes t.
