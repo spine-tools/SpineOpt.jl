@@ -2289,13 +2289,6 @@
             null,
             "The duration of the window in case it differs from roll_forward"
         ],
-        [   
-            "model", 
-            "use_highest_resolution_constraint_ratio_out_in_connection_flow", 
-            true, 
-            "boolean_value_list", 
-            "Whether to use highest resolution for constraint ratio out in connection flow."
-        ],
         [
             "model",
             "window_weight",
