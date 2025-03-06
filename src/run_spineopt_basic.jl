@@ -920,8 +920,8 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
     _save_bound_marginal_values!(m, reduced_cost_fallback)
-    if isdefined(Threads, Symbol("@spawn")) && haskey(ENV, "JULIA_NUM_THREADS")
-    # JULIA_NUM_THREADS: system environment variable 
+    if isdefined(Threads, Symbol("@spawn")) && (haskey(ENV, "JULIA_NUM_THREADS") || Threads.nthreads() > 1)
+    # JULIA_NUM_THREADS: system environment variable (as of Julia 1.7)
     # that determines whether multi-threading is activated (has a value) or not (no value) in Julia.
     # isdefined(Threads, Symbol("@spawn")) is always true in the current version of Julia (1.11) 
     # no matter whether multi-threading is activated or not i.e. Threads.nthreads()=1 by default.
