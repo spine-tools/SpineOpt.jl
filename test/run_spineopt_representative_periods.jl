@@ -162,6 +162,8 @@ function _test_representative_periods()
                 ["unit", "h2_gen", "number_of_units", 0],
                 ["unit", "h2_gen", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "h2_gen", "start_up_cost", 1000],
+                ["unit", "h2_gen", "min_up_time", Dict("type" => "duration", "data" => string(60, "m"))],
+                ["unit", "h2_gen", "min_down_time", Dict("type" => "duration", "data" => string(60, "m"))],
                 ["unit", "h2_gen", "unit_investment_cost", 3000000],
                 ["unit", "h2_gen", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
                 ["unit", "pv", "candidate_units", 100],
