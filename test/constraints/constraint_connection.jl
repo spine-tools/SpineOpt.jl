@@ -863,12 +863,76 @@ function test_contraints_ptdf_lodf_duration()
 end
 
 function test_constraint_ratio_out_in_connection_flow()
+    @testset "constraint_ratio_out_in_connection_flow_highest_resolution" begin
+        flow_ratio = 0.8
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")
+        class = "connection__node__node"
+        relationship = ["connection_ab", "node_b", "node_a"]
+        object_parameter_values = [
+            ["model", "instance", "model_end", model_end],
+            ["model", "instance", "use_highest_resolution_constraint_ratio_out_in_connection_flow", true] # this is the default value
+        ]
+        relationships = [[class, relationship]]
+        senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
+        h_delay = 2
+        connection_flow_delay = Dict("type" => "duration", "data" => string(h_delay, "h"))
+        @testset for p in ("min", "fix", "max")
+            url_in = _test_constraint_connection_setup()
+            sense = senses_by_prefix[p]
+            ratio = string(p, "_ratio_out_in_connection_flow")
+            relationship_parameter_values = [
+                [class, relationship, "connection_flow_delay", connection_flow_delay],
+                [class, relationship, ratio, flow_ratio],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+            constraint = m.ext[:spineopt].constraints[Symbol(ratio)]
+            @test length(constraint) == 4
+            conn = connection(:connection_ab)
+            n_from = node(:node_a)
+            n_to = node(:node_b)
+            d_from = direction(:from_node)
+            d_to = direction(:to_node)
+            scenarios_from = [repeat([stochastic_scenario(:child)], 3); repeat([stochastic_scenario(:parent)], 3)]
+            time_slices_from = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ]
+            time_slices_to = reverse(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+            s_to = stochastic_scenario(:parent)
+            @testset for (j, t_con) in enumerate(reverse(time_slice(m; temporal_block=temporal_block(:hourly))))
+                s_from = scenarios_from[h_delay+j] # get the scenario before the delay 
+                t_from = time_slices_from[h_delay+j] # get the time slice before the delay
+                var_conn_flow_from = var_connection_flow[conn, n_from, d_from, s_from, t_from]
+                t_to = time_slices_to[(j+1)÷2] 
+                var_conn_flow_to = var_connection_flow[conn, n_to, d_to, s_to, t_to]
+                expected_con = SpineOpt.build_sense_constraint(
+                    var_conn_flow_to,
+                    sense,
+                    flow_ratio * var_conn_flow_from,
+                )
+                path = unique([s_to; s_from])
+                con_key = (conn, n_to, n_from, path, t_con)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
     @testset "constraint_ratio_out_in_connection_flow" begin
         flow_ratio = 0.8
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")
         class = "connection__node__node"
         relationship = ["connection_ab", "node_b", "node_a"]
-        object_parameter_values = [["model", "instance", "model_end", model_end]]
+        object_parameter_values = [
+            ["model", "instance", "model_end", model_end],
+            ["model", "instance", "use_highest_resolution_constraint_ratio_out_in_connection_flow", false] 
+        ]
         relationships = [[class, relationship]]
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
         @testset for conn_flow_minutes_delay in (150, 180, 225)
