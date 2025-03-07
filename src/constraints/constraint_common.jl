@@ -146,7 +146,10 @@ function _default_parameter_value(p::Parameter, entity_class::Union{ObjectClass,
     _default = try
         entity_class.parameter_defaults[p.name]
     catch
-        @error("Parameter $p is not defined in $entity_class, \\but in these entity classes $(p.classes).")
+        @error(
+            "Parameter `$p` is only defined in `$(join(p.classes, "`, `"))`.\n
+            `$entity_class` does not contain the parameter."
+        )
         ParameterValue(nothing)
     end
     return _default.value
