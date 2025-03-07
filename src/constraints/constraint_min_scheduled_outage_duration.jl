@@ -78,11 +78,7 @@ function _max_sch_out_dur(m::Model, u, s_path, t)
         (
             + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
             * round(
-                + (
-                    is_candidate(unit=u) ? 
-                    number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=0) : 
-                    number_of_units(m; unit=u, stochastic_scenario=s, t=t)
-                )
+                + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
                 + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
             )
         )
