@@ -46,6 +46,10 @@ function storages_invested_available_int(x)
     storage_investment_variable_type(node=x.node) == :storage_investment_variable_type_integer
 end
 
+function _initial_storages_invested_available(; kwargs...)
+    something(storage_investment_count_initial_cumulative(; kwargs...), 0)
+end
+
 """
     add_variable_storages_invested_available!(m::Model)
 
@@ -59,8 +63,7 @@ function add_variable_storages_invested_available!(m::Model)
         lb=constant(0),
         int=storages_invested_available_int,
         fix_value=storage_investment_count_fix_cumulative,
-        internal_fix_value=internal_fix_storages_invested_available,
-        initial_value=storage_investment_count_initial_cumulative,
+        initial_value=_initial_storages_invested_available,
         required_history_period=maximum_parameter_value(storage_lifetime_technical),
     )
 end

@@ -50,7 +50,7 @@ end
 
 function unit_flow_ub(m; unit, node, direction, kwargs...)
     (
-        unit_flow_capacity(unit=unit, node=node, direction=direction, _strict=false) === nothing
+        realize(unit_flow_capacity(m; unit=unit, node=node, direction=direction, _strict=false)) === nothing
         || has_online_variable(unit=unit)
         || members(node) != [node]
     ) && return NaN
@@ -128,16 +128,20 @@ function add_variable_unit_flow!(m::Model)
     fix_ratio_d1_d2 = ((r, _ratio_to_d1_d2(r)...) for r in _fix_unit_flow_ratios())
     replacement_expressions = OrderedDict(
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t) => Dict(
-            :unit_flow => (
-                (unit=u, node=n_ref, direction=d_ref, stochastic_scenario=s, t=t),
-                _fix_ratio_unit_flow(m, u, n, n_ref, s, t, fix_ratio, direct),
+            :unit_flow => Dict(
+                (
+                    unit=u,
+                    node=n_ref,
+                    direction=d_ref,
+                    stochastic_scenario=s,
+                    t=t,
+                ) => _fix_ratio_unit_flow(m, u, n, n_ref, s, t, fix_ratio, direct)
             ),
-            :units_on => (
-                (unit=u, stochastic_scenario=s, t=t), _fix_units_on_coeff(m, u, n, n_ref, s, t, fix_ratio, direct)
+            :units_on => Dict(
+                (unit=u, stochastic_scenario=s, t=t) => _fix_units_on_coeff(m, u, n, n_ref, s, t, fix_ratio, direct)
             ),
-            :units_started_up => (
-                (unit=u, stochastic_scenario=s, t=t),
-                _signed_unit_start_flow(m, u, n, n_ref, s, t, fix_ratio, direct),
+            :units_started_up => Dict(
+                (unit=u, stochastic_scenario=s, t=t) => _signed_unit_start_flow(m, u, n, n_ref, s, t, fix_ratio, direct)
             ),
         )
         for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)

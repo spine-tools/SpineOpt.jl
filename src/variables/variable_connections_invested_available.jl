@@ -46,6 +46,10 @@ function connections_invested_available_int(x)
     investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
 end
 
+function _initial_connections_invested_available(; kwargs...)
+    something(investment_count_initial_cumulative(; kwargs...), 0)
+end
+
 """
     add_variable_connections_invested_available!(m::Model)
 
@@ -59,8 +63,7 @@ function add_variable_connections_invested_available!(m::Model)
         lb=constant(0),
         int=connections_invested_available_int,
         fix_value=investment_count_fix_cumulative,
-        internal_fix_value=internal_fix_connections_invested_available,
-        initial_value=investment_count_initial_cumulative,
+        initial_value=_initial_connections_invested_available,
         required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end

@@ -116,9 +116,8 @@ function constraint_connection_flow_lodf_indices(m::Model)
         for (conn_cont, conn_mon) in lodf_connection__connection()
         if all(
             [
-                contingency_activate(connection=conn_cont) === true,
-                monitoring_activate(connection=conn_mon) === true,
-                has_lodf(connection=conn_cont),
+                contingency_activate(connection=conn_cont, _default=false),
+                monitoring_activate(connection=conn_mon, _default=false),                has_lodf(connection=conn_cont),
                 has_lodf(connection=conn_mon)
             ]
         )
