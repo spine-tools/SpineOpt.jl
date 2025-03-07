@@ -5,6 +5,11 @@ objective_function_reference_values = Dict(
     "simple_system.json" => 160714.28571428574,
     "unit_commitment.json" => 98637.42857142858,
     "rolling_horizon.json" => 65164.8571429,
+    "multi-year_investment_with_econ_params_with_milestones" => 41025092.819187716,
+    "multi-year_investment_with_econ_params_without_milestones" => 71720404.84378022,
+    "multi-year_investment_without_econ_params" => 203360142.85714287,
+    "capacity_planning" => 352127000,
+    "stochastic" => 126964.2857142857,
 )
 
 @testset for path in readdir(joinpath(dirname(@__DIR__), "examples"); join=true)

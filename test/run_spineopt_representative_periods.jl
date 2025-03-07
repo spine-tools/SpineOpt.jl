@@ -328,7 +328,7 @@ function _expected_representative_periods_constraint(
     @test t in all_rt
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
     s = only(s_path)
-    nsc = vals["node", string(n), "node_state_cap"]
+    nsc = vals["node", string(n), "storage_state_max"]
     @build_constraint(node_state[n, s, t] <= nsc * storages_invested_available[n, s, t_invest])
 end
 function _expected_representative_periods_constraint(
@@ -356,7 +356,7 @@ function _expected_representative_periods_constraint(
     @test s == stochastic_scenario(:realisation)
     @test t == t_invest
     @fetch storages_invested_available = m.ext[:spineopt].variables
-    cs = vals["node", string(n), "candidate_storages"]
+    cs = vals["node", string(n), "storage_investment_count_max_cumulative"]
     @build_constraint(storages_invested_available[n, s, t] <= cs)
 end
 function _expected_representative_periods_constraint(
@@ -410,7 +410,7 @@ function _expected_representative_periods_constraint(
         rhs *= units_on[u, s, t]
     end
     if u in (unit(:pv), unit(:wind))
-        uaf = parameter_value(vals["unit", string(u), "unit_availability_factor"])
+        uaf = parameter_value(vals["unit", string(u), "availability_factor"])
         rhs *= uaf(t=t)
     end
     @build_constraint(24 * unit_flow[u, n, d, s, t] <= 24 * rhs)
@@ -467,7 +467,7 @@ function _expected_representative_periods_constraint(
     @test s == stochastic_scenario(:realisation)
     @test t == t_invest
     @fetch units_invested_available = m.ext[:spineopt].variables
-    cu = vals["unit", string(u), "candidate_units"]
+    cu = vals["unit", string(u), "investment_count_max_cumulative"]
     @build_constraint(units_invested_available[u, s, t] <= cu)
 end
 function _expected_representative_periods_constraint(
@@ -550,7 +550,7 @@ function _expected_representative_periods_constraint(
     @test past_time_slices == [t_con]
 
     s = only(s_path)
-    nou = vals["unit", string(u), "number_of_units"]
+    nou = vals["unit", string(u), "existing_units"]
     weight = 1
 
     @fetch units_invested_available, units_on, units_shut_down = m.ext[:spineopt].variables
