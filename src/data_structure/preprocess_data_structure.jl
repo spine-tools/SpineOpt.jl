@@ -216,11 +216,11 @@ function generate_node_has_ptdf()
         ptdf_durations = [physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
-        ptdf_threshold = maximum(ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
+        ptdf_threshold_max = maximum(ptdf_threshold(commodity=c) for c in ptdf_comms; init=0.001)
         Dict(
             :has_ptdf => parameter_value(!isempty(ptdf_comms)),
             :ptdf_duration => parameter_value(ptdf_duration),
-            :node_ptdf_threshold => parameter_value(ptdf_threshold),
+            :node_ptdf_threshold => parameter_value(ptdf_threshold_max),
         )
     end
 
@@ -427,7 +427,7 @@ function _filter_ptdf_values(ptdf_values)
     comms = filter(
         c -> physics_type(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf), commodity()
     )
-    ptdf_threshold = if !isempty(comms)
+    ptdf_threshold_with_default = if !isempty(comms)
         c = first(comms)
         threshold = ptdf_threshold(commodity=c, _strict=false)
         if threshold !== nothing && !iszero(threshold)
@@ -441,7 +441,7 @@ function _filter_ptdf_values(ptdf_values)
     Dict(
         (conn, n) => Dict(:ptdf => vals[:ptdf_unfiltered])
         for ((conn, n), vals) in ptdf_values
-        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold)
+        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold_with_default)
     )
 end
 
