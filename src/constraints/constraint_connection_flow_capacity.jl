@@ -135,8 +135,6 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
     )
 end
 
-_default_nb_of_conns(conn) = is_candidate(connection=conn) ? 0 : 1
-
 function constraint_connection_flow_capacity_indices(m::Model)    
     (
         (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)

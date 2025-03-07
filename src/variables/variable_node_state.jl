@@ -41,8 +41,6 @@ function node_state_ub(m; node, kwargs...)
     )
 end
 
-_default_nb_of_storages(n) = is_candidate(node=n) ? 0 : 1
-
 """
     add_variable_node_state!(m::Model)
 
