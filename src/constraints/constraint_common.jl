@@ -137,6 +137,29 @@ in "src\\data_structure\\preprocess_data_structure.jl".
 """
 _d_reverse(d::Object) = d.name == :to_node ? direction(:from_node) : direction(:to_node)
 
+"""
+    _default_parameter_value(p::Parameter, entity_class::Union{ObjectClass,RelationshipClass})
+
+Obtain the default value of parameter `p` defined in `entity_class` as specified in the input DB.
+"""
+function _default_parameter_value(p::Parameter, entity_class::Union{ObjectClass,RelationshipClass})
+    _default = try
+        entity_class.parameter_defaults[p.name]
+    catch
+        @error(
+            "Parameter `$p` is only defined in `$(join(p.classes, "`, `"))`.\n
+            `$entity_class` does not contain the parameter."
+        )
+        ParameterValue(nothing)
+    end
+    return _default.value
+end
+
+_default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(number_of_storages, node)
+_default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(number_of_units, unit)
+_default_nb_of_conns(conn::Object) = is_candidate(connection=conn) ? 
+    0 : _default_parameter_value(number_of_connections, connection)
+
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
 
 function _check_ptdf_duration(m, t, conns...)
