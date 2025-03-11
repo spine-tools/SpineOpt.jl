@@ -21,7 +21,8 @@ $$ f(x) \leq (1 + \varepsilon) f(x^*)$$
 4. Update the weights to be also set to 1 when a variable was greater than 0 in the MGA problem solution
 5. GOTO 3
 ## Fuzzy MGA
-In fuzzy MGA %TODO: add doi% reformulates the original MGA into an multiobjective problem with:
+In fuzzy MGA [Modeling to generate alternatives: a fuzzy approach](https://doi.org/10.1016/S0165-0114(83)80014-1) 
+reformulates the original MGA into an multiobjective problem with:
 - objective(s) measuring heterogeneousness of solutions
 - objective measuring how far away we are
 We achieve it by defining sets:
@@ -53,7 +54,7 @@ We might also want to create many sets $$X^1_o, X^2_o,...$$
 corresponding to satisfactory heterogeneity on subsets of variables e.g., unit investments, connection investments, storage investments.
 
 ## RPM Fuzzy MGA
-Instead of the original fuzzy MGA formulation we utilize a similiar one using the Reference Point Method %TODO% which, unlike the original formulation,
+Instead of the original fuzzy MGA formulation we utilize a similiar one using the Reference Point Method [Reference Point Approaches](https://doi.org/10.1007/978-1-4615-5025-9_9) which, unlike the original formulation,
 guarantees Pareto-optimality and works even with ill-defined sets of satisfying solutions.
 $$
 lex \max_{x \in X} (\min\{s_{o}(x),s_{c}(x)\}, \quad  s_{o}(x) + s_{c}(x))
