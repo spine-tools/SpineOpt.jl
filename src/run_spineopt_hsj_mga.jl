@@ -47,6 +47,20 @@ function do_run_spineopt!(
     return generic_run_mga!(m, url_out, Val(:fuzzy_mga_algorithm), log_level, update_names, alternative)
 end
 
+function do_run_spineopt!(
+    m,
+    url_out,
+    ::Val{:multithreshold_mga_algorithm};
+    log_level,
+    optimize,
+    update_names,
+    alternative,
+    write_as_roll,
+    resume_file_path,
+)
+    return generic_run_mga!(m, url_out, Val(:multithreshold_mga_algorithm), log_level, update_names, alternative)
+end
+
 function generic_run_mga!(m::Model, url_out, algorithm_type::Val, log_level, update_names, alternative)
     instance = m.ext[:spineopt].instance 
     mga_iteration = ObjectClass(:mga_iteration, [])
@@ -252,6 +266,9 @@ function formulate_mga_objective!(
     return formulation
 end
 
+
+formulate_mga_objective!(m, groups, names, constr, ::Val{:multithreshold_mga_algorithm}) = formulate_mga_objective!(m, groups, names, constr, Val(:fuzzy_mga_algorithm)) 
+
 """
     Creates a weighted mga for variables from a single mga group
     
@@ -326,6 +343,34 @@ function prepare_objective_mga!(
     return add_rpm_constraint!(m, y, a, r, beta, gamma)
 end
 
+
+function prepare_objective_mga!(
+    m::Model,
+    stochastic_indices_of_variable::Function,
+    variable_scenario_weights::Function,
+    variable_indices::AbstractArray,
+    variable,
+    variable_values::AbstractDict,
+    mga_weights::AbstractDict,
+    ::Val{:multithreshold_mga_algorithm},
+    beta=0.5,
+    gamma=1.5
+)   
+    return prepare_objective_mga!(
+        m,
+        stochastic_indices_of_variable,
+        variable_scenario_weights,
+        variable_indices,
+        variable,
+        variable_values,
+        mga_weights,
+        Val(:fuzzy_mga_algorithm),
+        beta,
+        gamma
+    )
+end
+
+
 """
     Gets scenario variables averaged with their weights
 
@@ -369,6 +414,26 @@ function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::
 end
 
 """
+    Adds constraints used by the multithreshold Reference Point Method. Additional variable corresponds to achievement criterion
+
+    # Arguments
+    - m::Model - JuMP model
+    - expression - a JuMP expression that corresponds to a single goal function
+    - aspiration - value that we would like to achieve on that goal function
+    - reservation - minimal value of the expression that starts to satisfy us
+    - beta - constant to control the slope of the achievement function after reaching aspiration
+    - gamma - constant to control the slope of the achievement function before reaching reservation 
+"""
+function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:multithreshold_mga_algorithm}, no_thresh=4)
+    y = goal_function(m)
+    a = objective_value(m) # we aspire to reach the best possible value
+    slacks = [slack / 2^i for i in 0:no_thresh-1]
+    ts = [(1+eps) * objective_value(m) for eps in slacks]
+    push!(ts, objective_value(m)) # we aspire to reach the best possible value
+    return add_rpm_constraint!(m, y, ts, beta, gamma)
+end
+
+"""
     Adds constraints used by the Reference Point Method. Additional variable corresponds to achievement criterion
 
     # Arguments
@@ -393,6 +458,52 @@ function add_rpm_constraint!(m::Model, expression, aspiration::Float64, reservat
         c3 = @constraint(m, s <=  1 + beta * (expression - aspiration) / (aspiration - reservation))
     end
     return Dict(:variable => s, :threshold1 => c1, :threshold2 => c2, :threshold3 => c3)
+end
+
+"""
+    Adds multithreshold constraints used by the Reference Point Method. Additional variable corresponds to achievement criterion
+
+    # Arguments
+    - m::Model - JuMP model
+    - expression - a JuMP expression that corresponds to a single goal function
+    - thresholds - values of the expression that cross an appropriate threshold of satisfaction, from the worst to the best
+    - beta - constant to control the slope of the achievement function after reaching aspiration
+    - gamma - constant to control the slope of the achievement function before reaching reservation 
+"""
+function add_rpm_constraint!(m::Model, expression, thresholds::Vector{Float64}, beta::Float64=0.5, gamma::Float64=1.5)
+    if !(0 < beta < 1 < gamma)
+        throw(DomainError((beta, gamma), "parameters not in the domain 0 < beta < 1 < gamma"))
+    end
+    no_thresholds = length(thresholds)
+    if no_thresholds < 2
+        throw(DomainError(thresholds, "there should be at least two thresholds!"))
+    end
+    if !issorted(thresholds, rev=true) && !issorted(thresholds)
+        throw(DomainError(thresholds, "thresholds should be sorted!"))
+    end
+    s = @variable(m)
+    # If the values of aspiration and reservation are too close, we ensure that the objective is always fully satisfiable
+    if isapprox(aspiration, reservation[0])
+        thresh_constraints = Dict(i=>@constraint(m, s <= 1) for i=0:no_thresholds)
+    else
+        normalization_coef = abs(thresholds[0] - thresholds[end]) / sum((thresholds[i] - thresholds[i-1])^2 for i=1:no_thresholds)
+        betas = Dict(j=>normalization_coef * abs(thresholds[j+1] - thresholds[j]) for j=1:no_thresholds-1)
+        betas[0] = gamma * betas[1]
+        betas[no_thresholds] = beta * betas[end]
+        thresh_constraints = Dict(
+            j=>@constraint(
+                m,
+                s <= betas[j] * (expression - thresholds[j])/(thresholds[end]-thresholds[1]) +
+                sum(betas[k-1] * (thresholds[k] - thresholds[k-1])/(thresholds[end]-thresholds[1]) for k=2:j)
+            ) 
+            for j=1:no_thresholds
+        )
+        thresh_constraints[0] = @constraint(
+            m,
+            s <= betas[0] * (expression - thresholds[1])/(thresholds[end]-thresholds[1])
+        )
+    end
+    return Dict(:variable => s, :thresholds => thresh_constraints)
 end
 
 "If the objective value was negative, the f(x) <= (1+slack) * f(x_optim_ would be infeasible unless we negate the value of slack"
