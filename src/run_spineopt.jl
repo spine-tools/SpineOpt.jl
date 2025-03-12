@@ -361,7 +361,7 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    if model_algorithm(model=instance) in (:mga_algorithm, :hsj_mga_algorithm, :fuzzy_mga_algorithm) && !add_bridges
+    if needs_bridges(model_algorithm(model=instance)) && !add_bridges
         add_bridges = true
         @warn "Bridges are required for MGA algorithm - adding them"
     end
@@ -381,6 +381,9 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     JuMP.set_string_names_on_creation(m, use_model_names)
     m
 end
+
+"Bridges are required for MGA algorithm"
+needs_bridges(model_algorithm) = model_algorithm in (:mga_algorithm, :hsj_mga_algorithm, :fuzzy_mga_algorithm, :multithreshold_mga_algorithm)
 
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.

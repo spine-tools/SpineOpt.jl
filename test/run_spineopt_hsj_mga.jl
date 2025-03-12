@@ -300,6 +300,39 @@ function _test_run_spineopt_fuzzy_mga()
     end
 end
 
+function _test_run_spineopt_multithreshold_mga()
+    @testset "run_spineopt_multithreshold_mga_no_max_iterations" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_simple_system("multithreshold_mga_algorithm")
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+    @testset "run_spineopt_multithreshold_mga" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_simple_system("multithreshold_mga_algorithm", 2)
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+    @testset "run_spineopt_multithreshold_mga_advanced" begin
+        url_in = _test_run_spineopt_mga_setup()
+        object_parameter_values, relationship_parameter_values = generate_complex_system("multithreshold_mga_algorithm", 2)
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+    end
+end
+
 function _test_do_update_hsj_weights()
     @testset "do_update_hsj_weights" begin
         mga_indices = collect(0:1)
@@ -751,9 +784,9 @@ function _test_iterative_mga()
             max_mga_iters,
             slack,
             goal_function,
-            Val(:hsj_mga_algorithm)
+            Val(:fuzzy_mga_algorithm)
         )
-        atol = slack + 1e-6
+        atol = 1e-6
         @test isapprox(res[0][:x][1], 1, atol=atol)
         @test isapprox(res[0][:x][2], 0, atol=atol)
         @test isapprox(res[0][:y][1], 1, atol=atol)
@@ -765,7 +798,52 @@ function _test_iterative_mga()
         @test isapprox(res[2][:x][1] + res[2][:x][2], 4/5, atol=atol)
         @test isapprox(res[2][:y][1] + res[2][:y][2], 4/5, atol=atol)
 
-    end    
+    end   
+    @testset "multithreshold iterative MGA" begin
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        x_indxs = (i) -> [i]
+        x_stoch_weights = (i) -> 1
+        
+        @variable(m, y[1:2] >= 0)
+        y_indxs = (i) -> [i]
+        y_stoch_weights = (i) -> 1
+        variables = Dict(:x => x, :y => y)
+        goal_function = (m) -> 3 -x[1] - x[2] - y[1] - y[2]
+        @constraint(m, x[1] + x[2] <= 1)
+        @constraint(m, y[1] + y[2] <= 1)
+        @objective(m, Min, goal_function(m))
+        x_mga_idxs = [1, 2]
+        y_mga_idxs = [1, 2]
+        variable_group_parameters = Dict(
+            :x => mga_group_param(x_indxs, x_stoch_weights, x_mga_idxs),
+            :y => mga_group_param(y_indxs, y_stoch_weights, y_mga_idxs),
+        )
+        max_mga_iters = 2
+        
+        slack = 0.5
+        set_silent(m)
+        res = iterative_mga!(
+            m,
+            variables,
+            variable_group_parameters,
+            max_mga_iters,
+            slack,
+            goal_function,
+            Val(:multithreshold_mga_algorithm)
+        )
+        atol = 1e-1
+        @test isapprox(res[0][:x][1], 1, atol=atol)
+        @test isapprox(res[0][:x][2], 0, atol=atol)
+        @test isapprox(res[0][:y][1], 1, atol=atol)
+        @test isapprox(res[0][:y][2], 0, atol=atol)
+        @test isapprox(res[1][:x][1], 0, atol=atol)
+        @test isapprox(res[1][:x][2], 1, atol=atol)
+        @test isapprox(res[1][:y][1], 0, atol=atol)
+        @test isapprox(res[1][:y][2], 1, atol=atol)
+        @test isapprox(res[2][:x][1] + res[2][:x][2], 4/5, atol=atol)
+        @test isapprox(res[2][:y][1] + res[2][:y][2], 4/5, atol=atol)
+    end
 end
 
 function _test_add_rpm_constraint()
@@ -941,6 +1019,31 @@ function _test_add_objective_constraint()
         benchmark3 = @build_constraint(s <= 1 - 10x[1])
         @test _is_constraint_equal(con3, benchmark3)
     end
+    @testset "add multithreshold objective constraint" begin
+        # FIXME - tests do not pass because of numerical issues
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        @constraint(m, x[1] + x[2] == 1)
+        goal_function(m) = 1 + x[1]
+        @objective(m, Min, goal_function(m))
+        set_silent(m)
+        optimize!(m)
+        slack = 1.
+        res = add_mga_objective_constraint!(m, slack, goal_function, Val(:multithreshold_mga_algorithm), 1/3, 1.5, 2)
+        s = res[:variable]
+        con1 = constraint_object(res[:thresholds][0])
+        benchmark1 = @build_constraint( s <= -1.8x[1] + 1.8)
+        @test _is_constraint_equal(con1, benchmark1)
+        con2 = constraint_object(res[:thresholds][1])
+        benchmark2 = @build_constraint(s <= -1.2x[1] + 1.2)
+        @test _is_constraint_equal(con2, benchmark2)
+        con3 = constraint_object(res[:thresholds][2])
+        benchmark3 = @build_constraint(s <= -0.6x[1] + 1)
+        @test _is_constraint_equal(con3, benchmark3)
+        con4 = constraint_object(res[:thresholds][3])
+        benchmark4 = @build_constraint(s <= -0.2x[1] + 1)
+        @test _is_constraint_equal(con4, benchmark4)
+    end
 end
 
 function _test_formulate_mga_objective()
@@ -1081,7 +1184,7 @@ end
     _test_add_objective_constraint()
     _test_formulate_mga_objective()
     _test_add_rpm_constraint_multithreshold()
-    # _test_run_spineopt_hsj_mga()
-    # _test_run_spineopt_fuzzy_mga()
-    
+    _test_run_spineopt_hsj_mga()
+    _test_run_spineopt_fuzzy_mga()
+    _test_run_spineopt_multithreshold_mga()
 end

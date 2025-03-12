@@ -423,12 +423,11 @@ end
     - reservation - minimal value of the expression that starts to satisfy us
     - beta - constant to control the slope of the achievement function after reaching aspiration
     - gamma - constant to control the slope of the achievement function before reaching reservation
-    - n_thresholds - number of tresholds to be added
+    - n_eps - number of slacks generates
 """
-function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:multithreshold_mga_algorithm}, beta=0.5, gamma=1.5, n_thresholds=4)
+function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:multithreshold_mga_algorithm}, beta=0.5, gamma=1.5, n_slack=3)
     y = goal_function(m)
-    a = objective_value(m) # we aspire to reach the best possible value
-    slacks = [slack / 2^i for i in 0:n_thresholds-1]
+    slacks = [slack / 3^i for i in 0:n_slack-1]
     ts = [(1+eps) * objective_value(m) for eps in slacks]
     push!(ts, objective_value(m)) # we aspire to reach the best possible value
     return add_rpm_constraint!(m, y, ts, beta, gamma)
