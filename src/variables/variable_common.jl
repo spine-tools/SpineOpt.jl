@@ -65,7 +65,9 @@ function add_variable!(
     end
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
-    history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
+    # enable history variables in the middle of the model window
+    #history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
+    history_time_slices = history_time_slice(m)
     represented_indices =_represented_indices(m, indices, replacement_expressions)
     first_ind = iterate(indices(m))
     K = first_ind === nothing ? Any : typeof(first_ind[1])

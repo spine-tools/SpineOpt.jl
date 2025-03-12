@@ -242,20 +242,14 @@ function history_time_slices_blockwise(m)
     history_time_slices = Array{TimeSlice,1}()
     t_history_t = Dict{TimeSlice, TimeSlice}()
 
-    for blk in temporal_block()
+    for blk in members(temporal_block())
         block_time_slices = time_slice(m, temporal_block = blk)
         a, b = _history_time_slices(m, start(first(block_time_slices)), 
                 end_(last(block_time_slices)), block_time_slices)
 
-            if isdefined(Main, :Infiltrator)
-                Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
-            end
-
         history_time_slices = vcat(history_time_slices, a)
         t_history_t = merge(t_history_t, b)
     end
-
-   
     history_time_slices, t_history_t
 end
 
