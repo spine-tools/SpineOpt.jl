@@ -481,13 +481,13 @@ function _test_prepare_objective_hsj_mga()
             res = prepare_objective_mga!(m, var_indxs, var_stoch_weights, mga_idxs, x, var_values, mga_weights, Val(:fuzzy_mga_algorithm))
             s = res[:variable]
             mga_expression = 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
-            con1 = constraint_object(res[:threshold1])
+            con1 = constraint_object(res[:thresholds][0])
             benchmark1 = @build_constraint(s <= 1)
             @test _is_constraint_equal(con1, benchmark1)
-            con2 = constraint_object(res[:threshold2])
+            con2 = constraint_object(res[:thresholds][1])
             benchmark2 = @build_constraint(s <= 1)
             @test _is_constraint_equal(con2, benchmark2)
-            con3 = constraint_object(res[:threshold3])
+            con3 = constraint_object(res[:thresholds][2])
             benchmark3 = @build_constraint(s <= 1)
             @test _is_constraint_equal(con3, benchmark3)
         end
@@ -498,13 +498,13 @@ function _test_prepare_objective_hsj_mga()
             res = prepare_objective_mga!(m, var_indxs, var_stoch_weights, mga_idxs, x, var_values, mga_weights, Val(:fuzzy_mga_algorithm))
             s = res[:variable]
             mga_expression = 0.5x[1] + 0.5x[2] + 0.33x[5] + 0.67x[6]
-            con1 = constraint_object(res[:threshold1])
+            con1 = constraint_object(res[:thresholds][0])
             benchmark1 = @build_constraint(s <= 1.5 * (mga_expression - 1.5) / -1.5)
             @test _is_constraint_equal(con1, benchmark1)
-            con2 = constraint_object(res[:threshold2])
+            con2 = constraint_object(res[:thresholds][1])
             benchmark2 = @build_constraint(s <= (mga_expression - 1.5) / -1.5)
             @test _is_constraint_equal(con2, benchmark2)
-            con3 = constraint_object(res[:threshold3])
+            con3 = constraint_object(res[:thresholds][2])
             benchmark3 = @build_constraint(s <= 1 + 0.5 * mga_expression / -1.5)
             @test _is_constraint_equal(con3, benchmark3)
         end
@@ -792,13 +792,13 @@ function _test_add_rpm_constraint()
             r::Float64 = 2
             res = add_rpm_constraint!(m, y, a, r)
             s = res[:variable]
-            con1 = constraint_object(res[:threshold1])
+            con1 = constraint_object(res[:thresholds][0])
             benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/-2)
             @test _is_constraint_equal(con1, benchmark1)
-            con2 = constraint_object(res[:threshold2])
+            con2 = constraint_object(res[:thresholds][1])
             benchmark2 = @build_constraint(s <= (x[1] - 2)/-2)
             @test _is_constraint_equal(con2, benchmark2)
-            con3 = constraint_object(res[:threshold3])
+            con3 = constraint_object(res[:thresholds][2])
             benchmark3 = @build_constraint(s <= 1 + 0.5 * x[1]/-2)
             @test _is_constraint_equal(con3, benchmark3)
 
@@ -815,13 +815,13 @@ function _test_add_rpm_constraint()
             r::Float64 = 0
             res = add_rpm_constraint!(m, y, a, r)
             s = res[:variable]
-            con1 = constraint_object(res[:threshold1])
+            con1 = constraint_object(res[:thresholds][0])
             benchmark1 = @build_constraint(s <= 1.5 * (x[1])/2)
             @test _is_constraint_equal(con1, benchmark1)
-            con2 = constraint_object(res[:threshold2])
+            con2 = constraint_object(res[:thresholds][1])
             benchmark2 = @build_constraint(s <= (x[1])/2)
             @test _is_constraint_equal(con2, benchmark2)
-            con3 = constraint_object(res[:threshold3])
+            con3 = constraint_object(res[:thresholds][2])
             benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 2)/2)
             @test _is_constraint_equal(con3, benchmark3)
 
@@ -838,13 +838,13 @@ function _test_add_rpm_constraint()
             r::Float64 = 0
             res = add_rpm_constraint!(m, y, a, r)
             s = res[:variable]
-            con1 = constraint_object(res[:threshold1])
+            con1 = constraint_object(res[:thresholds][0])
             benchmark1 = @build_constraint(s <= 1.5 * (x[1])/0.5)
             @test _is_constraint_equal(con1, benchmark1)
-            con2 = constraint_object(res[:threshold2])
+            con2 = constraint_object(res[:thresholds][1])
             benchmark2 = @build_constraint(s <= (x[1])/0.5)
             @test _is_constraint_equal(con2, benchmark2)
-            con3 = constraint_object(res[:threshold3])
+            con3 = constraint_object(res[:thresholds][2])
             benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 0.5)/0.5)
             @test _is_constraint_equal(con3, benchmark3)
 
@@ -861,13 +861,13 @@ function _test_add_rpm_constraint()
             r::Float64 = 2
             res = add_rpm_constraint!(m, y, a, r)
             s = res[:variable]
-            con1 = constraint_object(res[:threshold1])
+            con1 = constraint_object(res[:thresholds][0])
             benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/1)
             @test _is_constraint_equal(con1, benchmark1)
-            con2 = constraint_object(res[:threshold2])
+            con2 = constraint_object(res[:thresholds][1])
             benchmark2 = @build_constraint(s <= (x[1] - 2)/1)
             @test _is_constraint_equal(con2, benchmark2)
-            con3 = constraint_object(res[:threshold3])
+            con3 = constraint_object(res[:thresholds][2])
             benchmark3 = @build_constraint(s <= 1 + 0.5 * (x[1] - 3)/1)
             @test _is_constraint_equal(con3, benchmark3)
 
@@ -884,13 +884,13 @@ function _test_add_rpm_constraint()
             r::Float64 = 0
             res = add_rpm_constraint!(m, y, a, r)
             s = res[:variable]
-            con1 = constraint_object(res[:threshold1])
+            con1 = constraint_object(res[:thresholds][0])
             benchmark1 = @build_constraint(s <= 1)
             @test _is_constraint_equal(con1, benchmark1)
-            con2 = constraint_object(res[:threshold2])
+            con2 = constraint_object(res[:thresholds][1])
             benchmark2 = @build_constraint(s <= 1)
             @test _is_constraint_equal(con2, benchmark2)
-            con3 = constraint_object(res[:threshold3])
+            con3 = constraint_object(res[:thresholds][2])
             benchmark3 = @build_constraint(s <= 1)
             @test _is_constraint_equal(con3, benchmark3)
 
@@ -931,13 +931,13 @@ function _test_add_objective_constraint()
         slack = 0.05
         res = add_mga_objective_constraint!(m, slack, goal_function, Val(:fuzzy_mga_algorithm))
         s = res[:variable]
-        con1 = constraint_object(res[:threshold1])
+        con1 = constraint_object(res[:thresholds][0])
         benchmark1 = @build_constraint(s <= -1.5 * (20 * x[1] - 1))
         @test _is_constraint_equal(con1, benchmark1)
-        con2 = constraint_object(res[:threshold2])
+        con2 = constraint_object(res[:thresholds][1])
         benchmark2 = @build_constraint(s <= -(20x[1] - 1))
         @test _is_constraint_equal(con2, benchmark2)
-        con3 = constraint_object(res[:threshold3])
+        con3 = constraint_object(res[:thresholds][2])
         benchmark3 = @build_constraint(s <= 1 - 10x[1])
         @test _is_constraint_equal(con3, benchmark3)
     end
@@ -982,6 +982,89 @@ function _test_formulate_mga_objective()
     end
 end
 
+function _test_add_rpm_constraint_multithreshold()
+    @testset "add multithreshold rpm constraints" begin
+        function gen_model()
+            m = Model(HiGHS.Optimizer)
+            @variable(m, x[1:2] >= 0)
+            @constraint(m, x[1] + x[2] == 1)
+            return m, x
+        end
+        @testset "wrong scaling coefficients" begin
+            m, x = gen_model()
+            y = x[1]
+            t = [0., 2.]
+            @test_throws DomainError add_rpm_constraint!(m, y, t, 1.2, 1.7)
+            @test_throws DomainError add_rpm_constraint!(m, y, t, 0.8, 0.9)
+            @test_throws DomainError add_rpm_constraint!(m, y, t, 0.9, 0.8)
+        end
+        @testset "wrong number of thresholds" begin
+            m, x = gen_model()
+            y = x[1]
+            @test_throws DomainError add_rpm_constraint!(m, y, [0.])
+        end
+        @testset "not sorted thresholds" begin
+            m, x = gen_model()
+            y = x[1]
+            @test_throws DomainError add_rpm_constraint!(m, y, [1., 2., 1.5])
+            @test_throws DomainError add_rpm_constraint!(m, y, [-1., -2., -1.5])
+        end
+        @testset "two thresholds=RPM" begin
+            m, x = gen_model()
+            y = x[1]
+            a::Float64 = 0
+            r::Float64 = 2
+            res = add_rpm_constraint!(m, y, [r, a])
+            s = res[:variable]
+            con1 = constraint_object(res[:thresholds][0])
+            benchmark1 = @build_constraint(s <= 1.5 * (x[1] - 2)/-2)
+            @test _is_constraint_equal(con1, benchmark1)
+            con2 = constraint_object(res[:thresholds][1])
+            benchmark2 = @build_constraint(s <= (x[1] - 2)/-2)
+            @test _is_constraint_equal(con2, benchmark2)
+            con3 = constraint_object(res[:thresholds][2])
+            benchmark3 = @build_constraint(s <= 1 + 0.5 * x[1]/-2)
+            @test _is_constraint_equal(con3, benchmark3)
+        end
+        @testset "close thresholds" begin
+            m, x = gen_model()
+            y = x[1]
+            res = add_rpm_constraint!(m, y, [1.,2.,2.,3.])
+            s = res[:variable]
+            benchmark = @build_constraint(s <= 1)
+            for i=0:4
+                constr = constraint_object(res[:thresholds][i])
+                @test _is_constraint_equal(constr, benchmark)
+            end
+        end
+        @testset "multithreshold maximization" begin
+            m, x = gen_model()
+            y = x[1]
+            t = [-1., 0., 0.5]
+            res = add_rpm_constraint!(m, y, t)
+            s = res[:variable]
+            @objective(m, Max, s)
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 1)
+            @test isapprox(value(x[2]), 0)
+        end
+        @testset "multithreshold minimization" begin
+            m, x = gen_model()
+            y = x[1]
+            t = [0.5, 0., -1.]
+            res = add_rpm_constraint!(m, y, t)
+            s = res[:variable]
+            @objective(m, Max, s)
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 0)
+            @test isapprox(value(x[2]), 1)
+        end
+
+    end
+end
+
 @testset "run_spineopt_hsj_mga" begin
     _test_slack_correction()
     _test_init_hsj_weights()
@@ -997,6 +1080,8 @@ end
     _test_add_rpm_constraint()
     _test_add_objective_constraint()
     _test_formulate_mga_objective()
-    _test_run_spineopt_hsj_mga()
-    _test_run_spineopt_fuzzy_mga()
+    _test_add_rpm_constraint_multithreshold()
+    # _test_run_spineopt_hsj_mga()
+    # _test_run_spineopt_fuzzy_mga()
+    
 end

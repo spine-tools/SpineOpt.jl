@@ -422,12 +422,13 @@ end
     - aspiration - value that we would like to achieve on that goal function
     - reservation - minimal value of the expression that starts to satisfy us
     - beta - constant to control the slope of the achievement function after reaching aspiration
-    - gamma - constant to control the slope of the achievement function before reaching reservation 
+    - gamma - constant to control the slope of the achievement function before reaching reservation
+    - n_thresholds - number of tresholds to be added
 """
-function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:multithreshold_mga_algorithm}, no_thresh=4)
+function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:multithreshold_mga_algorithm}, beta=0.5, gamma=1.5, n_thresholds=4)
     y = goal_function(m)
     a = objective_value(m) # we aspire to reach the best possible value
-    slacks = [slack / 2^i for i in 0:no_thresh-1]
+    slacks = [slack / 2^i for i in 0:n_thresholds-1]
     ts = [(1+eps) * objective_value(m) for eps in slacks]
     push!(ts, objective_value(m)) # we aspire to reach the best possible value
     return add_rpm_constraint!(m, y, ts, beta, gamma)
@@ -451,13 +452,15 @@ function add_rpm_constraint!(m::Model, expression, aspiration::Float64, reservat
     s = @variable(m)
     # If the values of aspiration and reservation are too close, we ensure that the objective is always fully satisfiable
     if isapprox(aspiration, reservation)
-        c1 = c2 = c3 = @constraint(m, s <= 1)
+        thresholds = Dict(i => @constraint(m, s <= 1) for i=0:2)
     else
-        c1 = @constraint(m, s <= gamma * (expression - reservation) / (aspiration - reservation))
-        c2 = @constraint(m, s <= (expression - reservation) / (aspiration - reservation))
-        c3 = @constraint(m, s <=  1 + beta * (expression - aspiration) / (aspiration - reservation))
+        thresholds = Dict(
+            0 => @constraint(m, s <= gamma * (expression - reservation) / (aspiration - reservation)),
+            1 => @constraint(m, s <= (expression - reservation) / (aspiration - reservation)),
+            2 => @constraint(m, s <=  1 + beta * (expression - aspiration) / (aspiration - reservation))
+        )
     end
-    return Dict(:variable => s, :threshold1 => c1, :threshold2 => c2, :threshold3 => c3)
+    return Dict(:variable => s, :thresholds => thresholds)
 end
 
 """
@@ -474,29 +477,29 @@ function add_rpm_constraint!(m::Model, expression, thresholds::Vector{Float64}, 
     if !(0 < beta < 1 < gamma)
         throw(DomainError((beta, gamma), "parameters not in the domain 0 < beta < 1 < gamma"))
     end
-    no_thresholds = length(thresholds)
-    if no_thresholds < 2
+    n_thresholds = length(thresholds)
+    if n_thresholds < 2
         throw(DomainError(thresholds, "there should be at least two thresholds!"))
     end
     if !issorted(thresholds, rev=true) && !issorted(thresholds)
         throw(DomainError(thresholds, "thresholds should be sorted!"))
     end
     s = @variable(m)
-    # If the values of aspiration and reservation are too close, we ensure that the objective is always fully satisfiable
-    if isapprox(aspiration, reservation[0])
-        thresh_constraints = Dict(i=>@constraint(m, s <= 1) for i=0:no_thresholds)
+    # If the values of two thresholds are too close, we ensure that the objective is always fully satisfiable
+    if any(isapprox(thresholds[j+1], thresholds[j]) for j=1:n_thresholds-1)
+        thresh_constraints = Dict(i=>@constraint(m, s <= 1) for i=0:n_thresholds)
     else
-        normalization_coef = abs(thresholds[0] - thresholds[end]) / sum((thresholds[i] - thresholds[i-1])^2 for i=1:no_thresholds)
-        betas = Dict(j=>normalization_coef * abs(thresholds[j+1] - thresholds[j]) for j=1:no_thresholds-1)
+        normalization_coef = abs(thresholds[end]-thresholds[1]) / sum((thresholds[i] - thresholds[i-1])^2 for i=2:n_thresholds)
+        betas = Dict(j=>normalization_coef * abs(thresholds[j+1] - thresholds[j]) for j=1:n_thresholds-1)
         betas[0] = gamma * betas[1]
-        betas[no_thresholds] = beta * betas[end]
+        betas[n_thresholds] = beta * betas[n_thresholds-1]
         thresh_constraints = Dict(
             j=>@constraint(
                 m,
                 s <= betas[j] * (expression - thresholds[j])/(thresholds[end]-thresholds[1]) +
                 sum(betas[k-1] * (thresholds[k] - thresholds[k-1])/(thresholds[end]-thresholds[1]) for k=2:j)
             ) 
-            for j=1:no_thresholds
+            for j=1:n_thresholds
         )
         thresh_constraints[0] = @constraint(
             m,
