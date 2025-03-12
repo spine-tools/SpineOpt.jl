@@ -237,6 +237,28 @@ function _history_time_slices(m, window_start, window_end, window_time_slices)
     history_time_slices, t_history_t
 end
 
+
+function history_time_slices_blockwise(m)
+    history_time_slices = Array{TimeSlice,1}()
+    t_history_t = Dict{TimeSlice, TimeSlice}()
+
+    for blk in temporal_block()
+        block_time_slices = time_slice(m, temporal_block = blk)
+        a, b = _history_time_slices(m, start(first(block_time_slices)), 
+                end_(last(block_time_slices)), block_time_slices)
+
+            if isdefined(Main, :Infiltrator)
+                Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
+            end
+
+        history_time_slices = vcat(history_time_slices, a)
+        t_history_t = merge(t_history_t, b)
+    end
+
+   
+    history_time_slices, t_history_t
+end
+
 """
     _generate_time_slice!(m::Model)
 
@@ -245,16 +267,24 @@ Create a `TimeSliceSet` containing `TimeSlice`s in the current window.
 See [@TimeSliceSet()](@ref).
 """
 function _generate_time_slice!(m::Model)
+    history_slices_method = "blockwise"
     window = current_window(m)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(m, window_start, window_end)
     _add_padding_time_slice!(window_time_slices, m, window_end)
-    history_time_slices, t_history_t = _history_time_slices(m, window_start, window_end, window_time_slices)
+    
     dur_unit = _model_duration_unit(m)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
+
+    if history_slices_method == "blockwise"
+        history_time_slices, t_history_t = history_time_slices_blockwise(m)
+    else
+        history_time_slices, t_history_t = _history_time_slices(m, window_start, window_end, window_time_slices)
+    end
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
+
 end
 
 """
@@ -579,7 +609,9 @@ function to_time_slice(m::Model; t::TimeSlice)
     else
         ()
     end
-    unique(Iterators.flatten((in_blocks, in_gaps)))
+    #remove the gaps mapping
+    #unique(Iterators.flatten((in_blocks, in_gaps)))
+    unique(in_blocks)
 end
 
 """
