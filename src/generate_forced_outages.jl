@@ -94,7 +94,7 @@ function generate_forced_outages(url_in, url_out=url_in; alternative="Base")
             m_end,
             mean_time_to_failure(unit=u, _strict=false),
             mean_time_to_repair(unit=u, _strict=false),
-            number_of_units(unit=u),
+            existing_units(unit=u, _default=_default_nb_of_units(u)),
         )
         for u in indices(mean_time_to_failure)
     )

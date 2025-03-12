@@ -44,7 +44,7 @@ function _build_constraint_min_down_time(m::Model, u, s_path, t)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables
     @build_constraint(
         + sum(
-            + existing_units(m; unit=u, stochastic_scenario=s, t=t)
+            + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
             + sum(
                 units_invested_available[u, s, t1]
                 for (u, s, t1) in units_invested_available_indices(

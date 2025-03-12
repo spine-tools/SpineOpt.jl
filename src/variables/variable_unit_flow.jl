@@ -55,7 +55,7 @@ function unit_flow_ub(m; unit, node, direction, kwargs...)
         || members(node) != [node]
     ) && return NaN
     unit_flow_capacity(m; unit=unit, node=node, direction=direction, kwargs..., _default=NaN) * (
-        + existing_units(m; unit=unit, kwargs..., _default=1)
+        + existing_units(m; unit=unit, kwargs..., _default=_default_nb_of_units(unit))
         + something(investment_count_max_cumulative(m; unit=unit, kwargs...), 0)
     )
 end

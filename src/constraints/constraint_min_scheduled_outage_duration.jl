@@ -78,7 +78,7 @@ function _max_sch_out_dur(m::Model, u, s_path, t)
         (
             + outage_scheduled_duration(m; unit=u, stochastic_scenario=s, t=t)
             * round(
-                + existing_units(m; unit=u, stochastic_scenario=s, t=t)
+                + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
                 + investment_count_max_cumulative(m; unit=u, stochastic_scenario=s, t=t, _default=0)
             )
         )
