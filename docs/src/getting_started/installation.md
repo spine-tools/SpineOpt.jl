@@ -123,7 +123,7 @@ Pkg.update()
 
 !!! warning
     If you have other packages in your julia environment and you only want to update SpineOpt, you should also update the SpineInterface dependency as well:
-    ```
+    ```julia
     import Pkg
     Pkg.activate("jenv") # only needed if you used a virtual environment
     Pkg.update("SpineInterface")
