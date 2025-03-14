@@ -1184,6 +1184,7 @@ end
     _test_add_objective_constraint()
     _test_formulate_mga_objective()
     _test_add_rpm_constraint_multithreshold()
+    # TODO add actual tests?
     _test_run_spineopt_hsj_mga()
     _test_run_spineopt_fuzzy_mga()
     _test_run_spineopt_multithreshold_mga()
