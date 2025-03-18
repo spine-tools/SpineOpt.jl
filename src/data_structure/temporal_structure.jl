@@ -301,8 +301,8 @@ function _generate_representative_time_slice!(m::Model)
         round(Int, representative_period_index(temporal_block=blk)) => blk
         for blk in indices(representative_period_index)
     )
-    for represented_blk in indices(representative_periods_mapping)
-        for (represented_t_start, representative_combination) in representative_periods_mapping(
+    for represented_blk in indices(representative_blocks_by_period)
+        for (represented_t_start, representative_combination) in representative_blocks_by_period(
             temporal_block=represented_blk
         )
             representative_blk_to_coef = _representative_block_to_coefficient(
@@ -569,7 +569,7 @@ function to_time_slice(m::Model; t::TimeSlice)
         for time_slices in values(t_set.block_time_slices)
         for s in _to_time_slice(time_slices, t)
     )
-    in_gaps = if isempty(indices(representative_periods_mapping))
+    in_gaps = if isempty(indices(representative_blocks_by_period))
         (
             s
             for t_set in t_sets
@@ -666,7 +666,7 @@ end
 _first_repr_t_comb(m, t) = first(representative_time_slice_combinations(m, t))
 
 function _is_representative(t)
-    any(representative_periods_mapping(temporal_block=blk) === nothing for blk in blocks(t))
+    any(representative_blocks_by_period(temporal_block=blk) === nothing for blk in blocks(t))
 end
 
 function output_time_slice(m::Model; output::Object)
@@ -691,7 +691,7 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 function node_time_indices(
     m::Model;
     node=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
     t=anything,
 )
     (
@@ -717,7 +717,7 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with 
 function node_dynamic_time_indices(
     m::Model;
     node=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
     t_before=anything,
     t_after=anything,
 )
@@ -741,7 +741,7 @@ Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online var
 function unit_time_indices(
     m::Model;
     unit=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
     t=anything,
 )
     (
@@ -767,7 +767,7 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 function unit_dynamic_time_indices(
     m::Model;
     unit=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
     t_before=anything,
     t_after=anything,
 )

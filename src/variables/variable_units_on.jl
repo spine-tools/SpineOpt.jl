@@ -28,7 +28,7 @@ function units_on_indices(
     unit=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     unit = intersect(unit, _unit_with_online_variable())
     unit_stochastic_time_indices(
@@ -46,7 +46,7 @@ function units_switched_indices(
     unit=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     unit = intersect(unit, _unit_with_switched_variable())
     (

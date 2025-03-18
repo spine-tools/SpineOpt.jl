@@ -34,7 +34,7 @@ function binary_gas_connection_flow_indices(
     direction=direction(:to_node),
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     connection_flow_indices(
         m;

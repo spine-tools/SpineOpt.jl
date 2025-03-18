@@ -82,7 +82,7 @@ function _test_representative_periods_setup()
             ["temporal_block", "rp2", "block_end", unparse_db_value(rp2_start + Day(1))],
             ["temporal_block", "rp2", "weight", 5],
             ["temporal_block", "rp2", "representative_period_index", 2],
-            ["temporal_block", "operations", "representative_periods_mapping", unparse_db_value(repr_periods_mapping)],
+            ["temporal_block", "operations", "representative_blocks_by_period", unparse_db_value(repr_periods_mapping)],
         ],
     )
     _load_test_data(url_in, test_data)
@@ -221,7 +221,7 @@ function _test_representative_periods()
 end
 
 function _test_representative_periods_variable(m, var_name, ind, var, vars, vals, rt1, rt2, all_rt, t_invest)
-    rpm = vals["temporal_block", "operations", "representative_periods_mapping"]
+    rpm = vals["temporal_block", "operations", "representative_blocks_by_period"]
     (ind.t in all_rt || ind.t == t_invest || var_name == :node_state) && return
     coefs = get(rpm, start(ind.t), nothing)
     if coefs !== nothing

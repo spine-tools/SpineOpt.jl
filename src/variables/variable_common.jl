@@ -268,10 +268,10 @@ end
 A collection of represented indices.
 """
 function _represented_indices(m::Model, indices::Function, replacement_expressions::OrderedDict)
-    isempty(SpineInterface.indices(representative_periods_mapping)) && return []
+    isempty(SpineInterface.indices(representative_blocks_by_period)) && return []
     # By default, `indices` skips represented time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
-    # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
+    # to `temporal_block(representative_blocks_by_period=nothing)` - so any blocks that define a mapping are ignored.
     # To include represented time slices, we need to specify `temporal_block=anything`.
     # Note that for node_state and investment variables, the result will be empty.
     representative_indices = indices(m)
@@ -297,7 +297,7 @@ function _representative_index_to_coefficient(m, ind, indices)
             for representative_t_to_coef in representative_t_to_coef_arr
             for t in keys(representative_t_to_coef)
             for blk in blocks(t)
-            if representative_periods_mapping(temporal_block=blk) === nothing
+            if representative_blocks_by_period(temporal_block=blk) === nothing
         )
         node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
         error(
