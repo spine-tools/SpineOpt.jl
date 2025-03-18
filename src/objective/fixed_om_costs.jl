@@ -43,15 +43,18 @@ function fixed_om_costs(m, t_range)
             # This term is activated when there is a representative temporal block that includes t.
             # We assume only one representative temporal structure available, of which the termporal blocks represent
             # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
+            * (
+                is_candidate(unit=u) ? 
+                unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s) : 
+                node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
+            )
             * duration(t) 
             for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
             for (u, s, t) in Iterators.flatten(
-                u in intersect(indices(investment_count_max_cumulative, unit), members(u)) ? 
-                (units_invested_available_indices(m; unit=u, t=t_range),) :
-                ((
-                    (u, s, t) for (u, _n, _d, s, t) 
-                    in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)
-                ),)
+                is_candidate(unit=u) ? (units_invested_available_indices(m; unit=u, t=t_range),) :
+                (
+                    ((u, s, t) for (u, _n, _d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)),
+                )
             );
             init=0,
         )
