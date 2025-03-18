@@ -298,8 +298,8 @@ function _generate_representative_time_slice!(m::Model)
     m.ext[:spineopt].temporal_structure[:representative_time_slice_combinations] = d = Dict()
     model_blocks = Set(members(temporal_block()))
     representative_blk_by_index = Dict(
-        round(Int, representative_period_index(temporal_block=blk)) => blk
-        for blk in indices(representative_period_index)
+        round(Int, representative_block_index(temporal_block=blk)) => blk
+        for blk in indices(representative_block_index)
     )
     for represented_blk in indices(representative_blocks_by_period)
         for (represented_t_start, representative_combination) in representative_blocks_by_period(

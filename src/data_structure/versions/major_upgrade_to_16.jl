@@ -168,6 +168,7 @@ function major_upgrade_to_16(db_url, log_level)
 
         # temporal_block
         (("temporal_block", "representative_periods_mapping"), "representative_blocks_by_period", ""),
+        (("temporal_block", "representative_period_index"), "representative_block_index", ""),
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
