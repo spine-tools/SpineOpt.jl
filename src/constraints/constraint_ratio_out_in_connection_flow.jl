@@ -44,7 +44,7 @@ exist for the other two cases.
 See also [fix\_ratio\_out\_in\_connection\_flow](@ref).
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
-    if use_highest_resolution_constraint_ratio_out_in_connection_flow(model=m.ext[:spineopt].instance)
+    if connection_flow_highest_resolution_activate(model=m.ext[:spineopt].instance)
         _add_constraint!(
             m,
             ratio_out_in.name,

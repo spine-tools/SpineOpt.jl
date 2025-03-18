@@ -211,7 +211,7 @@
         ["model", "shared_values", null, null, "A map from symbol to shared value."],
         ["model", "connection_investment_power_flow_impact_activate", true, "boolean_value_list", "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."],
         ["model", "tight_compact_formulations_activate", false, "boolean_value_list", "Whether to use tight and compact constraint formulations."],
-        ["model", "use_highest_resolution_constraint_ratio_out_in_connection_flow", true, "boolean_value_list", "Whether to use highest resolution for constraint ratio out in connection flow."],
+        ["model", "connection_flow_highest_resolution_activate", true, "boolean_value_list", "Whether to use highest resolution for constraint ratio out in connection flow."],
         ["model", "window_duration", null, null, "The duration of the window in case it differs from roll_forward"],
         ["model", "window_weight", 1, null, "The weight of the window in the rolling subproblem"],
         ["model", "milestone_years_activate", false, "boolean_value_list", "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."],

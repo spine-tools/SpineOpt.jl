@@ -870,7 +870,7 @@ function test_constraint_ratio_out_in_connection_flow()
         relationship = ["connection_ab", "node_b", "node_a"]
         object_parameter_values = [
             ["model", "instance", "model_end", model_end],
-            ["model", "instance", "use_highest_resolution_constraint_ratio_out_in_connection_flow", true] # this is the default value
+            ["model", "instance", "connection_flow_highest_resolution_activate", true] # this is the default value
         ]
         relationships = [[class, relationship]]
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
@@ -931,7 +931,7 @@ function test_constraint_ratio_out_in_connection_flow()
         relationship = ["connection_ab", "node_b", "node_a"]
         object_parameter_values = [
             ["model", "instance", "model_end", model_end],
-            ["model", "instance", "use_highest_resolution_constraint_ratio_out_in_connection_flow", false] 
+            ["model", "instance", "connection_flow_highest_resolution_activate", false] 
         ]
         relationships = [[class, relationship]]
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)

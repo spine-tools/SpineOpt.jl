@@ -162,6 +162,7 @@ function major_upgrade_to_16(db_url, log_level)
         (("model", "use_economic_representation"), "economic_parameter_preprocessing_activate", ""),
         (("model", "use_milestone_years"), "milestone_years_activate", ""),
         (("model", "use_tight_compact_formulations"), "tight_compact_formulations_activate", ""),
+        (("model", "use_highest_resolution_constraint_ratio_out_in_connection_flow"), "connection_flow_highest_resolution_activate", ""),
 
         # node__node
         (("node__node", "diff_coeff"), "diffusion_coefficient", ""),
