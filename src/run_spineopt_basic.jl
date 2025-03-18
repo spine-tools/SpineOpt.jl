@@ -455,7 +455,7 @@ function solve_model!(
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
-            extra_kwargs = if report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+            extra_kwargs = if benders_iterations_reporting_activate(model=m_mp.ext[:spineopt].instance)
                 (save_outputs=true, output_suffix=(output_suffix..., benders_iteration=current_bi,))
             else
                 (save_outputs=false, output_suffix=output_suffix)
@@ -483,7 +483,7 @@ function solve_model!(
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
-                if !report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+                if !benders_iterations_reporting_activate(model=m_mp.ext[:spineopt].instance)
                     final_log_prefix = string(
                         log_prefix, "$termination_msg $(_current_solution_string(m_mp)) - collecting outputs - "
                     )
