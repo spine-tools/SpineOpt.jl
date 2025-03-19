@@ -69,7 +69,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         # ["temporal_block", "two_year"], # to create economic parameters
         ["stochastic_structure", "deterministic"],
         ["stochastic_scenario", "parent"],
-        ["commodity", "electricity"],
+        ["grid", "electricity"],
         ["node", "reserve"],
         ["node", "node_group_reserve"],
     ]
@@ -87,7 +87,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     append!(rels, (["unit__from_node", (u, n)] for (u, n) in zip(units, nodes_from)))
     append!(rels, (["unit__node__node", (u, n1, n2)] for (u, n1, n2) in zip(units, nodes_to, nodes_from)))
     append!(rels, (["unit__from_node", (u, "reserve")] for u in units))
-    append!(rels, (["node__commodity", (n, "electricity")] for n in nodes_to))
+    append!(rels, (["node__grid", (n, "electricity")] for n in nodes_to))
     append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, conns_from)))
     append!(rels, (["connection__to_node", (c, n)] for (c, n) in zip(conns, conns_to)))
     append!(rels, (["connection__node__node", (c, n1, n2)] for (c, n1, n2) in zip(conns, conns_to, conns_from)))
@@ -98,7 +98,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["model", "instance", "duration_unit", "hour"],
         ["model", "instance", "model_type", "spineopt_standard"],
         ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-        ["commodity", "electricity", "physics_type", "commodity_physics_lodf"],
+        ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
         ["node", nodes_to[1], "node_opf_type", "node_opf_type_reference"],
         ["node", "reserve", "is_reserve_node", true],
         ["node", "reserve", "upward_reserve", true],

@@ -33,7 +33,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
     merge!(
         get!(m_mp.ext[:spineopt].constraints, :mp_min_res_gen_to_demand_ratio_cuts, Dict()),
         Dict(
-            (benders_iteration=bi, commodity=comm) => @constraint(
+            (benders_iteration=bi, grid=comm) => @constraint(
                 m_mp,
                 + sum(
                     window_sum_duration(
@@ -41,7 +41,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
                     )
                     for window in m_mp.ext[:spineopt].temporal_structure[:sp_windows]
                     for (u, s) in _unit_scenario(unit(is_renewable=true))
-                    for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
+                    for (u, n, d) in unit__to_node(unit=u, node=node__grid(grid=comm), _compact=false);
                     init=0
                 )
                 + sum(
@@ -62,17 +62,17 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
                     )
                     for window in m_mp.ext[:spineopt].temporal_structure[:sp_windows]
                     for (u, s) in _unit_scenario(unit(is_renewable=true)) 
-                    for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
+                    for (u, n, d) in unit__to_node(unit=u, node=node__grid(grid=comm), _compact=false);
                     init=0,
                 )
                 + get(mp_min_res_gen_to_demand_ratio_slack, (comm,), 0)
                 >=
-                + mp_min_res_gen_to_demand_ratio(commodity=comm)
+                + mp_min_res_gen_to_demand_ratio(grid=comm)
                 * (
                     sum(
                         window_sum_duration(m_mp, demand(node=n, stochastic_scenario=s), window)
                         for window in m_mp.ext[:spineopt].temporal_structure[:sp_windows]
-                        for (n, s) in _node_scenario(intersect(indices(demand), node__commodity(commodity=comm)));
+                        for (n, s) in _node_scenario(intersect(indices(demand), node__grid(grid=comm)));
                         init=0
                     )
                     + sum(
@@ -83,7 +83,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
                         )
                         for window in m_mp.ext[:spineopt].temporal_structure[:sp_windows]
                         for (n, s) in _node_scenario(
-                            intersect(indices(demand_fraction), node__commodity(commodity=comm))
+                            intersect(indices(demand_fraction), node__grid(grid=comm))
                         )
                         for ng in groups(n);
                         init=0

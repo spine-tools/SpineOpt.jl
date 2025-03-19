@@ -76,7 +76,7 @@ import DelimitedFiles: readdlm
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
         _load_test_data(url_in, test_data)
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
             ["connection__to_node", ["connection_ab", "node_a"]],
@@ -84,9 +84,9 @@ import DelimitedFiles: readdlm
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -104,7 +104,7 @@ import DelimitedFiles: readdlm
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_lodf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
             ["model", "instance", "solver_mip", "HiGHS.jl"],

@@ -42,13 +42,13 @@ Before we can create the hydro power system, we'll have to define a model, tempo
 
 As for the report, we are typically interested in the outputs *node\_state*, *unit\_flows* and *connection\_flows*.
 
-### Nodes and commodities
+### Nodes and grids
 
 Nodes are at the center of a SpineOpt system, so let's start with that. There are other ways to model hydro power plants but here we represent each hydro power plant with 2 nodes, an 'upper' node to represent the water arriving at each plant and a 'lower' node to represent the water that is discharged and becomes available to the next plant. The general idea of splitting these in 2 nodes is to be able to simulate a time delay between the entrance and the exit (although in this tutorial we will not go in detail in this time delay).
 
 Additionally we need a node for electricity.
 
-Optionally, we can indicate that we are dealing with water flows and electricity production through *commodities*. Note that commodities are only indicative and are not strictly necessary. As in the picture below, we define a 'water' and an 'electricity' commodity and we connect these to the nodes with *node\_\_commodity* relations.
+Optionally, we can indicate that we are dealing with water flows and electricity production through *grids*. Note that grids are only indicative and are not strictly necessary. As in the picture below, we define a 'water' and an 'electricity' grid and we connect these to the nodes with *node\_\_grid* relations.
 
 ![Two hydro power plants in SpineOpt](figs_two_hydro/two_hydro_commodities_graph.png)
 
@@ -151,7 +151,7 @@ modifications to the initial model.
     name (e.g., *stored\_water*). This
     node will accumulate the water stored in the reservoirs at the end
     of the planning horizon. Associate the node with the water
-    commodity (see [node__commodity](../index.md#Assinging-commodities-to-nodes)).
+    grid (see [node__grid](../index.md#Assinging-commodities-to-nodes)).
 
 -   Add three more units (see [adding units](../index.md#Units)); two will
     transfer the water at the end of the planning horizon in the new

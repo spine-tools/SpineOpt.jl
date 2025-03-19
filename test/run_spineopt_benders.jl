@@ -661,7 +661,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
             mrg2d_ratio = should_invest ? 0.8 : 0.0
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
-                ["commodity", "electricity"],
+                ["grid", "electricity"],
                 ["unit", "unit_ab_alt"],
                 ["output", "total_costs"],
                 ["output", "units_invested"],
@@ -672,7 +672,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["temporal_block", "investments_hourly"],
             ]
             relationships = [
-                ["node__commodity", ["node_b", "electricity"]],
+                ["node__grid", ["node_b", "electricity"]],
                 ["unit__to_node", ["unit_ab_alt", "node_b"]],
                 ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
@@ -687,8 +687,8 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["report__output", ["report_x", "value_constraint_mp_min_res_gen_to_demand_ratio_cuts"]],
             ]
             object_parameter_values = [
-                ["commodity", "electricity", "mp_min_res_gen_to_demand_ratio", mrg2d_ratio],
-                ["commodity", "electricity", "mp_min_res_gen_to_demand_ratio_slack_penalty", 10000],
+                ["grid", "electricity", "mp_min_res_gen_to_demand_ratio", mrg2d_ratio],
+                ["grid", "electricity", "mp_min_res_gen_to_demand_ratio_slack_penalty", 10000],
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
                 ["model", "instance", "model_type", "spineopt_benders"],
                 ["model", "instance", "decomposition_max_iterations", 10],
@@ -764,8 +764,8 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 end
             end
             t0 = DateTime(2000, 1, 1)
-            @test Y.mp_min_res_gen_to_demand_ratio_slack(commodity=Y.commodity(:electricity), t=t0) == 0
-            val_con = Y.value_constraint_mp_min_res_gen_to_demand_ratio_cuts(commodity=Y.commodity(:electricity), t=t0)
+            @test Y.mp_min_res_gen_to_demand_ratio_slack(grid=Y.grid(:electricity), t=t0) == 0
+            val_con = Y.value_constraint_mp_min_res_gen_to_demand_ratio_cuts(grid=Y.grid(:electricity), t=t0)
             @test val_con == (should_invest ? 240 : 0)
         end
     end

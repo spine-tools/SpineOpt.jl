@@ -1,7 +1,7 @@
 # [Pressure driven gas transfer](@id pressure-driven-gas-transfer)
 
 The generic formulation of SpineOpt is based on a trade based model. However,
-network physics can be different depending on the traded commodity.
+network physics can be different depending on the grid.
 This chapter specifically addresses the use of pressure driven gas transfer
 models and enabling linepack flexibility in SpineOpt. To this date, investments in pressure driven pipelines are not yet supported within SpineOpt. The use of multiple feed-in nodes, e.g. to represent multiple commodity flows through a pipeline is not yet supported.
 

@@ -1,6 +1,6 @@
 The [storage\_state\_coefficient](@ref) parameter acts as a coefficient for the `node_state` variable
 in the [node injection constraint](@ref constraint_node_injection).
-Essentially, it tells how the `node_state` variable should be treated in relation to the [commodity](@ref) flows
+Essentially, it tells how the `node_state` variable should be treated in relation to the commodity flows
 and [demand](@ref), and can be used for e.g. scaling or unit conversions.
 For most use-cases a [storage\_state\_coefficient](@ref) parameter value of `1.0` should suffice,
 e.g. having a MWh storage connected to MW flows in a model with hour as the basic unit of time.

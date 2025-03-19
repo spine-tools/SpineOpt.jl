@@ -95,7 +95,7 @@ end
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["commodity", "electricity"],
+            ["grid", "electricity"],
             ["model", "instance"],
             ["temporal_block", "hourly"],
             ["temporal_block", "investments_hourly"],
@@ -119,9 +119,9 @@ end
             ["connection__to_node", ["connection_bc", "node_c"]],
             ["connection__from_node", ["connection_ca", "node_c"]],
             ["connection__to_node", ["connection_ca", "node_a"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
             ["model__stochastic_structure", ["instance", "deterministic"]],
@@ -157,7 +157,7 @@ end
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
             ["model", "instance", "solver_mip", "HiGHS.jl"],

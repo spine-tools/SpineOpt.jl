@@ -172,6 +172,16 @@ function major_upgrade_to_16(db_url, log_level)
         (("temporal_block", "representative_period_index"), "representative_block_index", ""),
         (("temporal_block", "representative_periods_mapping"), "representative_blocks_by_period", ""),
     ]
+
+    # original class, new class
+    classes_to_be_renamed = [
+	    ("commodity", "grid")
+    ]
+
+    # original class,
+    classes_to_be_removed = [
+        "unit__commodity"
+    ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
     #create_superclasses_and_subclasses(db_url, log_level)
@@ -181,6 +191,10 @@ function major_upgrade_to_16(db_url, log_level)
     #update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
     @log log_level 0 string("Renaming parameters...")
     rename_parameters(db_url, parameters_to_be_renamed, log_level)
+    @log log_level 0 string("Renaming classes...")
+    rename_classes(db_url, classes_to_be_renamed, log_level)
+    @log log_level 0 string("Removing classes...")
+    remove_classes(db_url, classes_to_be_removed, log_level)
     true
 end
 
@@ -584,4 +598,34 @@ function sum_to_existing_parameter(db_url, class_name, old_par_name, new_par_nam
             end						
         end
     end
+end
+
+# Go through the classes, rename them and commit session
+function rename_classes(db_url, classes_to_be_renamed, log_level)
+	for (old_class_name, new_class_name) in classes_to_be_renamed
+		class_item = run_request(db_url, "call_method", ("get_item", "entity_class"), Dict(
+			"name" => old_class_name)
+		)
+		if length(class_item) > 0
+			check_run_request_return_value(run_request(db_url, "call_method", ("update_item", "entity_class"), Dict(
+				"id" => class_item["id"], "name" => new_class_name)), log_level
+			)
+		end
+	end
+end
+
+# Remove classes and commit session
+function remove_classes(db_url, classes_to_be_removed, log_level)
+	for class_name in classes_to_be_removed
+		try
+			entity_class = run_request(db_url, "call_method", ("get_entity_class_item",), Dict(
+				"name" => class_name)
+			)
+			check_run_request_return_value(run_request(
+				db_url, "call_method", ("remove_entity_class_item", entity_class["id"])), log_level
+			)
+		catch
+            @log log_level 0 string("Could not remove class $class_name.")
+		end
+	end
 end

@@ -1,0 +1,3 @@
+`node__grid` is a two-dimensional relationship between a [node](@ref) and a [grid](@ref) and specifies the grid that the node belongs to or the type of commodity that `flows` to or from the node. Generally, since flows are not dimensioned by [grid](@ref), this has no meaning in terms of the variables and constraint equations. However, there are two specific uses for this relationship:
+1. To specify that specific network physics should apply to the network formed by the member nodes for that grid. See [powerflow](@ref ptdf-based-powerflow)
+2. Only connection flows that are between nodes of the same or no [grid](@ref) are included in the `node_balance` constraint.

@@ -18,13 +18,13 @@
 #############################################################################
 
 """
-mp_min_res_gen_to_demand_ratio_slack_indices(commodity=anything, temporal_block=anything, t=anything)
+mp_min_res_gen_to_demand_ratio_slack_indices(grid=anything, temporal_block=anything, t=anything)
 
 A list of `NamedTuple`s corresponding to indices of the `mp_min_res_gen_to_demand_ratio_slack` variable where the keyword arguments act as filters
 for each dimension.
 """
-function mp_min_res_gen_to_demand_ratio_slack_indices(m::Model; commodity=anything, kwargs...)
-    collect(indices_as_tuples(mp_min_res_gen_to_demand_ratio_slack_penalty; commodity=commodity))
+function mp_min_res_gen_to_demand_ratio_slack_indices(m::Model; grid=anything, kwargs...)
+    collect(indices_as_tuples(mp_min_res_gen_to_demand_ratio_slack_penalty; grid=grid))
 end
 
 """

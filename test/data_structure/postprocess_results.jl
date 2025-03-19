@@ -122,17 +122,17 @@ function test_save_connection_avg_throughflow()
         # The case where the connection between node a and b is bidirectional, including the ptdf calculation.
         url_in = _test_save_connection_avg_throughflow_setup()
         objects = [
-            ["commodity", "electricity"],
+            ["grid", "electricity"],
         ]
         relationships = [
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
         ]
         object_parameter_values = [
             ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "reactance", 0.1],
             ["connection", "connection_ab", "resistance", 0.9],
-            ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
         ]
@@ -234,7 +234,7 @@ function test_save_contingency_is_binding()
         d_values = [100, 50, 200, 75, 100]
         demand_ = TimeSeries(d_timestamps, d_values, false, false)
         objects = [
-            ["commodity", "electricity"],
+            ["grid", "electricity"],
             ["report", "report_x"],
             #FIXME: Another report with the same output will fail the test by an error
             # Uncomment the following line and that in "relationships" to see the error
@@ -248,9 +248,9 @@ function test_save_contingency_is_binding()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -270,7 +270,7 @@ function test_save_contingency_is_binding()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_lodf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
             ["node", "node_c", "demand", unparse_db_value(demand_)],

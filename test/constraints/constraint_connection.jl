@@ -548,7 +548,7 @@ function test_constraint_connection_intact_flow_ptdf()
         # TODO: node_ptdf_threshold
         conn_r = 0.9
         conn_x = 0.1
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
             ["connection__to_node", ["connection_ab", "node_a"]],
@@ -556,9 +556,9 @@ function test_constraint_connection_intact_flow_ptdf()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -576,7 +576,7 @@ function test_constraint_connection_intact_flow_ptdf()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -632,7 +632,7 @@ function test_constraint_connection_flow_lodf()
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
             ["connection__to_node", ["connection_ab", "node_a"]],
@@ -640,9 +640,9 @@ function test_constraint_connection_flow_lodf()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -660,7 +660,7 @@ function test_constraint_connection_flow_lodf()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_lodf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
         ]
@@ -779,7 +779,7 @@ function test_contraints_ptdf_lodf_duration()
         conn_emergency_cap_ca = 150
         m_start = DateTime(2000)  # From setup
         block_end = Day(3)
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
             ["connection__to_node", ["connection_ab", "node_a"]],
@@ -787,9 +787,9 @@ function test_contraints_ptdf_lodf_duration()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -807,7 +807,7 @@ function test_contraints_ptdf_lodf_duration()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_lodf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
             ["temporal_block", "hourly", "block_end", unparse_db_value(block_end)],
@@ -842,7 +842,7 @@ function test_contraints_ptdf_lodf_duration()
         @testset for physics_duration in (nothing, Hour(1), Hour(6), Day(1))
             all_object_parameter_values = [
                 object_parameter_values;
-                [["commodity", "electricity", "physics_duration", unparse_db_value(physics_duration)]]
+                [["grid", "electricity", "physics_duration", unparse_db_value(physics_duration)]]
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1387,7 +1387,7 @@ function test_constraint_connection_flow_intact_flow()
         conn_r = 0.9
         conn_x = 0.1
         investment_count_max_cumulative = 1
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
             ["connection__to_node", ["connection_ab", "node_a"]],
@@ -1395,9 +1395,9 @@ function test_constraint_connection_flow_intact_flow()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -1416,7 +1416,7 @@ function test_constraint_connection_flow_intact_flow()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -1480,7 +1480,7 @@ function test_constraint_candidate_connection_lb()
         conn_x = 0.1
         investment_count_max_cumulative = 1
         connection_capacity = 100
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "two_hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
@@ -1490,9 +1490,9 @@ function test_constraint_candidate_connection_lb()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -1517,7 +1517,7 @@ function test_constraint_candidate_connection_lb()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -1586,7 +1586,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
         conn_x = 0.1
         investment_count_max_cumulative = 1
         connection_capacity = 100
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "two_hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
@@ -1596,9 +1596,9 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -1623,7 +1623,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -1710,7 +1710,7 @@ function test_constraint_candidate_connection_ub()
         conn_r = 0.9
         conn_x = 0.1
         investment_count_max_cumulative = 1
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "two_hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
@@ -1720,9 +1720,9 @@ function test_constraint_candidate_connection_ub()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -1747,7 +1747,7 @@ function test_constraint_candidate_connection_ub()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["commodity", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [

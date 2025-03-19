@@ -213,11 +213,11 @@ Generate `has_ptdf` and `ptdf_duration` parameters associated to the `node` `Obj
 function generate_node_has_ptdf()
     function _new_node_pvals(n)
         ptdf_comms = Tuple(
-            c
-            for c in node__commodity(node=n)
-            if physics_type(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
+            g
+            for g in node__grid(node=n)
+            if physics_type(grid=g) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
-        ptdf_durations = [physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
+        ptdf_durations = [physics_duration(grid=g, _strict=false) for g in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
         Dict(
@@ -268,14 +268,14 @@ Generate `has_lodf` and `connnection_lodf_tolerance` parameters associated to th
 function generate_connection_has_lodf()
     function _new_connection_pvals(conn)
         lodf_comms = Tuple(
-            c
-            for c in commodity(physics_type=:commodity_physics_lodf)
-            if issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
+            g
+            for g in grid(physics_type=:commodity_physics_lodf)
+            if issubset(connection__from_node(connection=conn, direction=anything), node__grid(grid=g))
         )
         Dict(
             :has_lodf => parameter_value(!isempty(lodf_comms)),
             :connnection_lodf_tolerance => parameter_value(
-                reduce(max, (lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05),
+                reduce(max, (lodf_tolerance(grid=g) for g in lodf_comms); init=0.05),
             )
         )
     end
@@ -425,11 +425,11 @@ greater than ptdf_threshold.
 """
 function _filter_ptdf_values(ptdf_values)
     comms = filter(
-        c -> physics_type(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf), commodity()
+        g -> physics_type(grid=g) in (:commodity_physics_lodf, :commodity_physics_ptdf), grid()
     )
     ptdf_threshold_with_default = if !isempty(comms)
-        c = first(comms)
-        threshold = ptdf_threshold(commodity=c, _strict=false)
+        g = first(comms)
+        threshold = ptdf_threshold(grid=g, _strict=false)
         if threshold !== nothing && !iszero(threshold)
             threshold
         else
@@ -781,17 +781,17 @@ function generate_is_boundary()
     is_boundary_connection = Parameter(:is_boundary_connection, [connection])
     add_object_parameter_defaults!(node, Dict(:is_boundary_node => parameter_value(false)))
     add_object_parameter_defaults!(connection, Dict(:is_boundary_connection => parameter_value(false)))
-    for (n, c) in node__commodity()
-        physics_type(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf) || continue
+    for (n, g) in node__grid()
+        physics_type(grid=g) in (:commodity_physics_lodf, :commodity_physics_ptdf) || continue
         has_boundary_conn = false
         for (conn, _d) in connection__from_node(node=n)
             remote_commodities = unique(
-                c 
+                g 
                 for (remote_n, _d) in connection__to_node(connection=conn)
                 if remote_n != n
-                for c in node__commodity(node=remote_n)
+                for g in node__grid(node=remote_n)
             )
-            if !(c in remote_commodities)
+            if !(g in remote_commodities)
                 has_boundary_conn = true
                 add_object_parameter_values!(
                     connection, Dict(conn => Dict(:is_boundary_connection => parameter_value(true)))
