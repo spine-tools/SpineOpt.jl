@@ -132,7 +132,7 @@ function test_save_connection_avg_throughflow()
             ["connection", "connection_ab", "monitoring_activate", true],
             ["connection", "connection_ab", "reactance", 0.1],
             ["connection", "connection_ab", "resistance", 0.9],
-            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "grid_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
         ]
@@ -270,7 +270,7 @@ function test_save_contingency_is_binding()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
+            ["grid", "electricity", "physics_type", "grid_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
             ["node", "node_c", "demand", unparse_db_value(demand_)],

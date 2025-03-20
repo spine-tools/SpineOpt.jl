@@ -576,7 +576,7 @@ function test_constraint_connection_intact_flow_ptdf()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "grid_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -660,7 +660,7 @@ function test_constraint_connection_flow_lodf()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
+            ["grid", "electricity", "physics_type", "grid_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
         ]
@@ -807,7 +807,7 @@ function test_contraints_ptdf_lodf_duration()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_lodf"],
+            ["grid", "electricity", "physics_type", "grid_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
             ["temporal_block", "hourly", "block_end", unparse_db_value(block_end)],
@@ -1416,7 +1416,7 @@ function test_constraint_connection_flow_intact_flow()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "grid_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -1517,7 +1517,7 @@ function test_constraint_candidate_connection_lb()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "grid_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -1623,7 +1623,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "grid_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
@@ -1747,7 +1747,7 @@ function test_constraint_candidate_connection_ub()
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "commodity_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "grid_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [

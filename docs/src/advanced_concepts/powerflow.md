@@ -22,7 +22,7 @@ Here we discuss the method of using power transfer distribution factors (PTDF) f
    - Set the [connection\_\_to\_node](@ref) and [connection\_\_from\_node](@ref) relationships to define the topology of each connection along with the [connection\_capacity](@ref) parameter on one or both of these relationships.
    - Set the [connection\_emergency\_capacity](@ref) parameter to define the post contingency rating if lodf-based N-1 security constraints are to be included
    - Create a [grid](@ref) object and [node__grid](@ref) relationships for all the nodes that comprise the electrical network for which PTDFs are to be calculated.
-   - Specify the [physics_type](@ref) parameter for the grid to `:commodity_physics_ptdf` if ptdf-based DC load flow is desired with no N-1 security constraints or to `:commodity_physics_lodf` if it is desired to include lodf-based N-1 security constraints
+   - Specify the [physics_type](@ref) parameter for the grid to `:grid_physics_ptdf` if ptdf-based DC load flow is desired with no N-1 security constraints or to `:grid_physics_lodf` if it is desired to include lodf-based N-1 security constraints
    - To identify the reference bus([node](@ref)) specify the [node\_opf\_type](@ref) parameter for the appropriate [node](@ref) with the value `node_opf_type_reference`.
 4. **Controlling problem size**
    - The lines to be monitored are specified by setting the [monitoring\_activate](@ref) property for each connection for which a flow constraint is to be generated

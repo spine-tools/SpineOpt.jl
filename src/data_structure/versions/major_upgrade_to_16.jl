@@ -175,12 +175,27 @@ function major_upgrade_to_16(db_url, log_level)
 
     # original class, new class
     classes_to_be_renamed = [
-	    ("commodity", "grid")
+        ("commodity", "grid")
     ]
 
     # original class,
     classes_to_be_removed = [
         "unit__commodity"
+    ]
+    # (original parameter value list, new parameter value list)
+    lists_to_be_renamed = [
+        ("commodity_physics_list", "grid_physics_list")
+    ]
+
+    # (parameter value list, Dict of renamings)
+    list_values_to_be_renamed = [
+        (
+            "grid_physics_list", Dict(
+                "commodity_physics_lodf" => "grid_physics_lodf",
+                "commodity_physics_none" => "grid_physics_none",
+                "commodity_physics_ptdf" => "grid_physics_ptdf"
+            )
+        )
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
@@ -195,6 +210,10 @@ function major_upgrade_to_16(db_url, log_level)
     rename_classes(db_url, classes_to_be_renamed, log_level)
     @log log_level 0 string("Removing classes...")
     remove_classes(db_url, classes_to_be_removed, log_level)
+    @log log_level 0 string("Renaming parameter value lists...")
+    rename_classes(db_url, lists_to_be_renamed, log_level)
+    @log log_level 0 string("Renaming list values...")
+    remove_classes(db_url, list_values_to_be_renamed, log_level)
     true
 end
 
@@ -628,4 +647,48 @@ function remove_classes(db_url, classes_to_be_removed, log_level)
             @log log_level 0 string("Could not remove class $class_name.")
 		end
 	end
+end
+
+# Rename a parameter value list
+function rename_pval_list(db_url, old_name, new_name, log_level)
+    # Rename the parameter value list
+    pval_list_item = run_request(db_url, "call_method", ("parameter_value_list",), Dict(
+        "name" => old_name)
+    )
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("update_parameter_value_list_item",), Dict(
+            "id" => pval_list_item["id"], "name" => new_name)), log_level
+    )
+end
+
+# Rename parameter value list values
+function rename_pval_list_values(db_url, list_name, name_mapping, log_level)
+    # Update parameter value list item names based on the mapping
+    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => list_name)
+    )
+    for list_value_item in list_value_items
+        old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
+        new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("update_list_value_item",), Dict(
+                "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)), log_level
+        )
+    end
+end
+
+# Rename lists and commit session
+function rename_parameter_value_lists(db_url, lists_to_be_renamed)
+    for (old_list_name, new_list_name) in lists_to_be_renamed
+        rename_pval_list(db_url, old_list_name, new_list_name, log_level)
+    end
+    run_request(db_url, "call_method", ("commit_session", "Rename parameter value lists."))
+end
+
+# Rename list values and commit session
+function rename_list_values(db_url, list_values_to_be_renamed)
+    for (list_name, name_mapping) in list_values_to_be_renamed
+        rename_pval_list_values(db_url, list_name, name_mapping, log_level)
+    end
+    run_request(db_url, "call_method", ("commit_session", "Rename list values."))
 end
