@@ -184,7 +184,9 @@ function major_upgrade_to_16(db_url, log_level)
     ]
     # (original parameter value list, new parameter value list)
     lists_to_be_renamed = [
-        ("commodity_physics_list", "grid_physics_list")
+        ("commodity_physics_list", "grid_physics_list"),
+        ("db_lp_solver_list", "solver_lp_list"),
+        ("db_mip_solver_list", "solver_mip_list")
     ]
 
     # (parameter value list, Dict of renamings)
