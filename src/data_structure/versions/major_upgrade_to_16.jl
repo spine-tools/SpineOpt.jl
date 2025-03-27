@@ -213,9 +213,9 @@ function major_upgrade_to_16(db_url, log_level)
     @log log_level 0 string("Removing classes...")
     remove_classes(db_url, classes_to_be_removed, log_level)
     @log log_level 0 string("Renaming parameter value lists...")
-    rename_classes(db_url, lists_to_be_renamed, log_level)
+    rename_parameter_value_lists(db_url, lists_to_be_renamed, log_level)
     @log log_level 0 string("Renaming list values...")
-    remove_classes(db_url, list_values_to_be_renamed, log_level)
+    rename_list_values(db_url, list_values_to_be_renamed, log_level)
     @log log_level 0 string("Merging variable type lists...")
 	merge_variable_type_lists(db_url, log_level)
     true
@@ -689,19 +689,17 @@ function rename_pval_list_values(db_url, list_name, name_mapping, log_level)
 end
 
 # Rename lists and commit session
-function rename_parameter_value_lists(db_url, lists_to_be_renamed)
+function rename_parameter_value_lists(db_url, lists_to_be_renamed, log_level)
     for (old_list_name, new_list_name) in lists_to_be_renamed
         rename_pval_list(db_url, old_list_name, new_list_name, log_level)
     end
-    run_request(db_url, "call_method", ("commit_session", "Rename parameter value lists."))
 end
 
 # Rename list values and commit session
-function rename_list_values(db_url, list_values_to_be_renamed)
+function rename_list_values(db_url, list_values_to_be_renamed, log_level)
     for (list_name, name_mapping) in list_values_to_be_renamed
         rename_pval_list_values(db_url, list_name, name_mapping, log_level)
     end
-    run_request(db_url, "call_method", ("commit_session", "Rename list values."))
 end
 
 function merge_variable_type_lists(db_url, log_level)
