@@ -216,6 +216,8 @@ function major_upgrade_to_16(db_url, log_level)
     rename_classes(db_url, lists_to_be_renamed, log_level)
     @log log_level 0 string("Renaming list values...")
     remove_classes(db_url, list_values_to_be_renamed, log_level)
+    @log log_level 0 string("Merging variable type lists...")
+	merge_variable_type_lists(db_url, log_level)
     true
 end
 
@@ -653,29 +655,36 @@ end
 
 # Rename a parameter value list
 function rename_pval_list(db_url, old_name, new_name, log_level)
-    # Rename the parameter value list
-    pval_list_item = run_request(db_url, "call_method", ("parameter_value_list",), Dict(
-        "name" => old_name)
-    )
-    check_run_request_return_value(run_request(
-        db_url, "call_method", ("update_parameter_value_list_item",), Dict(
-            "id" => pval_list_item["id"], "name" => new_name)), log_level
-    )
+    try
+        pval_list_item = run_request(db_url, "call_method", ("parameter_value_list",), Dict(
+            "name" => old_name)
+        )
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("update_parameter_value_list_item",), Dict(
+                "id" => pval_list_item["id"], "name" => new_name)), log_level
+        )
+    catch
+        @log log_level 0 string("Could not rename list $old_name.")
+    end
 end
 
 # Rename parameter value list values
 function rename_pval_list_values(db_url, list_name, name_mapping, log_level)
-    # Update parameter value list item names based on the mapping
-    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
-        "parameter_value_list_name" => list_name)
-    )
-    for list_value_item in list_value_items
-        old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
-        new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
-        check_run_request_return_value(run_request(
-            db_url, "call_method", ("update_list_value_item",), Dict(
-                "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)), log_level
+    try
+        # Update parameter value list item names based on the mapping
+        list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+            "parameter_value_list_name" => list_name)
         )
+        for list_value_item in list_value_items
+            old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
+            new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_list_value_item",), Dict(
+                    "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)), log_level
+            )
+        end
+    catch
+        @log log_level 0 string("Could not rename list values of list $list_name.")
     end
 end
 
@@ -693,4 +702,159 @@ function rename_list_values(db_url, list_values_to_be_renamed)
         rename_pval_list_values(db_url, list_name, name_mapping, log_level)
     end
     run_request(db_url, "call_method", ("commit_session", "Rename list values."))
+end
+
+function merge_variable_type_lists(db_url, log_level)
+    pval_list_old_name = "unit_online_variable_type_list"
+    pval_list_new_name = "variable_type_list"
+    name_mapping = Dict(
+        "unit_online_variable_type_binary" => "binary",
+        "unit_online_variable_type_integer" => "integer",
+        "unit_online_variable_type_linear" => "linear",
+        "unit_online_variable_type_none" => "none"
+    )    
+    rename_pval_list_values(db_url, pval_list_old_name, name_mapping, log_level)
+    rename_pval_list(db_url, pval_list_old_name, pval_list_new_name, log_level)
+    lists_to_be_updated = (
+        ("connection", "investment_count_max_cumulative", "variable_type_list", 
+            "investment_variable_type", "investment_variable_type2", "connection_investment_variable_type_list"),
+        ("node", "storage_investment_count_max_cumulative", "variable_type_list", 
+            "storage_investment_variable_type", "investment_variable_type2", "storage_investment_variable_type_list"),
+        ("unit", "investment_count_max_cumulative", "variable_type_list", 
+            "investment_variable_type", "investment_variable_type2", "unit_investment_variable_type_list")
+    )
+    for (class_name, max_cum_par_name, type_list, old_par_name, temp_par_name, list_old) in lists_to_be_updated
+        # Add new parameter for investment variable type, connect to value list
+        try
+            check_run_request_return_value(run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
+                "entity_class_name" => class_name, "name" => temp_par_name, 
+                "parameter_value_list_name" => type_list)), log_level
+            )
+        catch
+        end
+        # Get investment_count_max_cumulative and old investment_variable_type parameter values
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => class_name, "parameter_definition_name" => max_cum_par_name)
+        )
+        vals_max = create_dict_from_parameter_value_items(db_url, pvals)
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => class_name, "parameter_definition_name" => old_par_name)
+        )
+        vals_type = create_dict_from_parameter_value_items(db_url, pvals)
+        # Old default: if there is investment_count_max_cumulative, new investment variable is variable_type_continuous
+        # (or none if investment_count_max_cumulative set to none)
+        for (entity, val_list) in vals_max
+            for (alternative, val) in val_list
+                if isnothing(val)
+                    pval = "none"
+                else
+                    pval = "linear"
+                end
+                pval_value, pval_type = unparse_db_value(pval)
+                # Add the new parameter value into the database
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                        "entity_class_name" => class_name, "parameter_definition_name" => temp_par_name, 
+                        "entity_byname" => entity, 
+                        "alternative_name" => alternative, 	
+                        "value" => pval_value, "type" => pval_type)
+                    ), log_level
+                )
+            end
+        end
+        # If investment_count_max_cumulative is specified, it overrides the old default
+        for (entity, val_list) in vals_type
+            for (alternative, val) in val_list
+                if occursin("integer", val)
+                    pval = "integer"
+                else
+                    pval = "linear"
+                end
+                pval_value, pval_type = unparse_db_value(pval)
+                # Add the new parameter value into the database
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                        "entity_class_name" => class_name, "parameter_definition_name" => temp_par_name, 
+                        "entity_byname" => entity, 
+                        "alternative_name" => alternative, 	
+                        "value" => pval_value, "type" => pval_type)
+                    ), log_level
+                )
+            end
+        end
+        # Merged alternatives are created for those investment_variable_types that don't have 
+        # investment_count_max_cumulative directly associated to them
+        pvals_existing = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => class_name, "parameter_definition_name" => max_cum_par_name)
+        )
+        existing_values = create_dict_from_parameter_value_items(db_url, pvals_existing)
+        existing_types = Dict()
+        for (entity, val_list) in vals_type
+            for (alternative, val) in val_list
+                existing_types[(entity, alternative)] = val
+            end
+        end
+        existing_values2 = Dict()
+        for (entity, val_list) in existing_values
+            for (alternative, val) in val_list
+                existing_values2[(entity, alternative)] = val
+            end
+        end
+        for (entity, val_list) in vals_type
+            for (alternative, val) in val_list
+                # Find if entity in existing_values
+                if !haskey(existing_values2, (entity, alternative))
+                    # Loop over alternatives in existing_values[entity]
+                    for existing_value in existing_values[entity]
+                        if !haskey(existing_types, (entity, existing_value[1]))
+                            alternative_updated, base_alternative_added = add_merged_alternative(
+                                db_url, alternative, existing_value[1], log_level
+                            )
+                            if occursin("integer", val)
+                                pval = "integer"
+                            else
+                                pval = "linear"
+                            end
+                            pval_value, pval_type = unparse_db_value(pval)
+                            # Add the new parameter value into the database
+                            check_run_request_return_value(run_request(
+                                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                                    "entity_class_name" => class_name, "parameter_definition_name" => temp_par_name, 
+                                    "entity_byname" => entity, 
+                                    "alternative_name" => alternative_updated, 	
+                                    "value" => pval_value, "type" => pval_type)
+                                ), log_level
+                            )
+                        end
+                    end
+                end			
+            end
+        end
+        # Remove old parameter definition and list
+        pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
+            "entity_class_name" => class_name, "name" => old_par_name)
+        )
+        if length(pdef) > 0
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
+            )
+        end
+        # Remove old parameter definition
+        pval_list = run_request(db_url, "call_method", ("get_parameter_value_list_item",), Dict("name" => list_old))
+        if length(pval_list) > 0
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("remove_parameter_value_list_item", pval_list["id"])), log_level
+            )
+        end
+        # Rename the parameter
+        pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
+            "entity_class_name" => class_name, "name" => temp_par_name)
+        )
+        if length(pdef) > 0
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_parameter_definition_item",), Dict(
+                    "id" => pdef["id"], "name" => old_par_name)), log_level
+            )
+        end
+    end
 end

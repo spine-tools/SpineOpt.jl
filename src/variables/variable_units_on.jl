@@ -76,14 +76,14 @@ _unit_with_switched_variable() = unit(has_switched_variable=true)
 
 Check if unit online variable type is defined as a binary.
 """
-units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
+units_on_bin(x) = online_variable_type(unit=x.unit) == :binary
 
 """
     units_on_int(x)
 
 Check if unit online variable type is defined as an integer.
 """
-units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
+units_on_int(x) = online_variable_type(unit=x.unit) == :integer
 
 """
     add_variable_units_on!(m::Model)

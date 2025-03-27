@@ -128,7 +128,7 @@ function _ref_investments_setup(storage_count)
                 ("node", n, "storage_investment_count_max_cumulative", 4),
                 ("node", n, "benders_starting_storages_invested", 0.01),
                 ("node", n, "storage_investment_cost", 100),
-                ("node", n, "storage_investment_variable_type", "storage_investment_variable_type_continuous"),
+                ("node", n, "storage_investment_variable_type", "linear"),
             )
         )
     end

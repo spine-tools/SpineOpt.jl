@@ -179,7 +179,7 @@ function test_unit_online_variable_type_none()
         availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "availability_factor", availability_factor],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_none"],
+            ["unit", "unit_ab", "online_variable_type", "none"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -215,7 +215,7 @@ function test_unit_history_parameters()
             ["unit", "unit_ab", "min_down_time", min_down_time],
             ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
-            ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "outage_variable_type", "integer"],
             ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
             ["model", "instance", "model_end", model_end],
         ]
@@ -316,7 +316,7 @@ function test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
             ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
             ["model", "instance", "solver_mip", "HiGHS.jl"],
             ["model", "instance", "solver_lp", "HiGHS.jl"],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "online_variable_type", "integer"],
         ],
     )
     _load_test_data(url_in, test_data)
@@ -331,7 +331,7 @@ function test_unit_flow_simple_bounds()
         cap_to_node = 200
         url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_linear"],
+            ["unit", "unit_ab", "online_variable_type", "linear"],
         ]
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],

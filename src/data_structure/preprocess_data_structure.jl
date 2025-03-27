@@ -858,7 +858,7 @@ function generate_unit_commitment_parameters()
 
     for u in indices(online_variable_type)
         unit_var_type = online_variable_type(unit=u)   
-        if unit_var_type in (:unit_online_variable_type_binary, :unit_online_variable_type_integer)
+        if unit_var_type in (:binary, :integer)
             min_up = min_up_time(unit=u)
             min_down = min_down_time(unit=u)
             params_to_add = Dict() 
@@ -920,17 +920,17 @@ function generate_unit_commitment_parameters()
                     u
                     for u in indices(online_variable_type)
                     if online_variable_type(unit=u) in (
-                        :unit_online_variable_type_binary, :unit_online_variable_type_integer
+                        :binary, :integer
                     )
                 ),
             )
         )
     )
     unit_without_online_variable_iter = (
-        u for u in unit() if online_variable_type(unit=u) == :unit_online_variable_type_none
+        u for u in unit() if online_variable_type(unit=u) == :none
     )
     unit_without_out_of_service_variable_iter = (
-        u for u in unit() if outage_variable_type(unit=u) == :unit_online_variable_type_none
+        u for u in unit() if outage_variable_type(unit=u) == :none
     )
     setdiff!(unit_with_switched_variable_set, unit_without_online_variable_iter)
     setdiff!(unit_with_out_of_service_variable_set, unit_without_out_of_service_variable_iter)

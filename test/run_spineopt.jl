@@ -690,7 +690,7 @@ function _test_dual_values()
             # ["model", "instance", "solver_mip", "CPLEX.jl"],
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "binary"]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
@@ -728,7 +728,7 @@ function _test_dual_values_with_two_time_indices()
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "binary"]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
@@ -881,14 +881,14 @@ function _test_only_linear_model_has_duals()
         @test has_duals(m)
     end
     object_parameter_values = [
-        ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+        ["unit", "unit_ab", "online_variable_type", "binary"]
     ]
     @testset "integer_model_doesnt_have_duals" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         objects = [["output", "bound_units_on"]]
         relationships = [["report__output", ["report_x", "bound_units_on"]]]
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"],
+            ["unit", "unit_ab", "online_variable_type", "binary"],
             ["unit", "unit_ab", "units_on_cost", 1],  # To have units_on variables
         ]
         SpineInterface.import_data(

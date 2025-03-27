@@ -98,11 +98,11 @@ function _test_capacity_investments()
             ["unit", "unit_a", "existing_units", 10],
             ["unit", "unit_a", "investment_count_max_cumulative", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],
-            ["unit", "unit_a", "investment_variable_type", "unit_investment_variable_type_continuous"],
+            ["unit", "unit_a", "investment_variable_type", "linear"],
             ["node", "node_a", "existing_storages", 5],
             ["node", "node_a", "storage_investment_count_max_cumulative", 20],
             ["node", "node_a", "storage_investment_cost", 0],
-            ["node", "node_a", "storage_investment_variable_type", "storage_investment_variable_type_continuous"],
+            ["node", "node_a", "storage_investment_variable_type", "linear"],
             ["connection", "connection_ab", "existing_connections", 5],
             ["connection", "connection_ab", "investment_count_max_cumulative", 20],
             ["connection", "connection_ab", "connection_investment_cost", 0],
@@ -110,7 +110,7 @@ function _test_capacity_investments()
                 "connection",
                 "connection_ab",
                 "investment_variable_type",
-                "connection_investment_variable_type_continuous"
+                "linear"
             ],
             ["node", "node_a", "storage_state_max", 1]
         ]

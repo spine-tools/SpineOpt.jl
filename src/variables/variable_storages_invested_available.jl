@@ -37,13 +37,21 @@ function storages_invested_available_indices(
 end
 
 """
+    storages_invested_available_bin(x)
+
+Check if storage investment variable type is defined to be binary.
+"""
+function storages_invested_available_bin(x)
+    storage_investment_variable_type(node=x.node) == :binary
+end
+
+"""
     storages_invested_available_int(x)
 
 Check if storage investment variable type is defined to be an integer.
 """
-
 function storages_invested_available_int(x)
-    storage_investment_variable_type(node=x.node) == :storage_investment_variable_type_integer
+    storage_investment_variable_type(node=x.node) == :integer
 end
 
 function _initial_storages_invested_available(; kwargs...)
@@ -61,6 +69,7 @@ function add_variable_storages_invested_available!(m::Model)
         :storages_invested_available,
         storages_invested_available_indices;
         lb=constant(0),
+        bin=storages_invested_available_bin,
         int=storages_invested_available_int,
         fix_value=storage_investment_count_fix_cumulative,
         initial_value=_initial_storages_invested_available,

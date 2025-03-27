@@ -144,7 +144,7 @@ function _test_representative_periods()
                 ["node", "batt_node", "storage_state_max", 200],
                 ["node", "batt_node", "existing_storages", 0],
                 ["node", "batt_node", "storage_investment_cost", 2000000],
-                ["node", "batt_node", "storage_investment_variable_type", "storage_investment_variable_type_integer"],
+                ["node", "batt_node", "storage_investment_variable_type", "integer"],
                 ["node", "h2_node", "node_type", "storage_node"],
                 ["node", "h2_node", "is_longterm_storage", true],
                 ["node", "h2_node", "node_balance_penalty", 10000],
@@ -153,29 +153,29 @@ function _test_representative_periods()
                 ["unit", "batt_unit", "investment_count_max_cumulative", 100],
                 ["unit", "batt_unit", "existing_units", 0],
                 ["unit", "batt_unit", "unit_investment_cost", 750000],
-                ["unit", "batt_unit", "investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "batt_unit", "investment_variable_type", "integer"],
                 ["unit", "electrolizer", "investment_count_max_cumulative", 100],
                 ["unit", "electrolizer", "existing_units", 0],
                 ["unit", "electrolizer", "unit_investment_cost", 40000000],
-                ["unit", "electrolizer", "investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "electrolizer", "investment_variable_type", "integer"],
                 ["unit", "h2_gen", "investment_count_max_cumulative", 100],
                 ["unit", "h2_gen", "existing_units", 0],
-                ["unit", "h2_gen", "online_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "h2_gen", "online_variable_type", "integer"],
                 ["unit", "h2_gen", "start_up_cost", 1000],
                 ["unit", "h2_gen", "min_up_time", Dict("type" => "duration", "data" => string(60, "m"))],
                 ["unit", "h2_gen", "min_down_time", Dict("type" => "duration", "data" => string(60, "m"))],
                 ["unit", "h2_gen", "unit_investment_cost", 3000000],
-                ["unit", "h2_gen", "investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "h2_gen", "investment_variable_type", "integer"],
                 ["unit", "pv", "investment_count_max_cumulative", 100],
                 ["unit", "pv", "existing_units", 0],
                 ["unit", "pv", "availability_factor", unparse_db_value(pv_af_ts)],
                 ["unit", "pv", "unit_investment_cost", 9000000],
-                ["unit", "pv", "investment_variable_type", "unit_investment_variable_type_continuous"],
+                ["unit", "pv", "investment_variable_type", "linear"],
                 ["unit", "wind", "investment_count_max_cumulative", 100],
                 ["unit", "wind", "existing_units", 0],
                 ["unit", "wind", "availability_factor", unparse_db_value(wind_af_ts)],
                 ["unit", "wind", "unit_investment_cost", 18000000],
-                ["unit", "wind", "investment_variable_type", "unit_investment_variable_type_continuous"],
+                ["unit", "wind", "investment_variable_type", "linear"],
             ],
             :relationship_parameter_values => [
                 ["unit__from_node", ["batt_unit", "elec_node"], "unit_capacity", 50],
@@ -474,7 +474,7 @@ function _expected_representative_periods_constraint(
     m, ::Val{:min_up_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
 )
     # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
-    # triggered by setting "online_variable_type" to be "unit_online_variable_type_integer" in the test dataset.
+    # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
     
     @test u == unit(:h2_gen)
@@ -520,7 +520,7 @@ function _expected_representative_periods_constraint(
     m, ::Val{:min_down_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
 )
     # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
-    # triggered by setting "online_variable_type" to be "unit_online_variable_type_integer" in the test dataset.
+    # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
     
     @test u == unit(:h2_gen)

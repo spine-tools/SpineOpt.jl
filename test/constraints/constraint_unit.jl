@@ -235,7 +235,7 @@ function test_constraint_unit_state_transition()
     @testset "constraint_unit_state_transition" begin
         url_in = _test_constraint_unit_setup()
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "online_variable_type", "integer"],
             ["unit", "unit_ab", "start_up_cost", 1],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -270,8 +270,8 @@ function test_units_out_of_service_transition()
     @testset "constraint_units_out_of_service_transition" begin
         url_in = _test_constraint_unit_setup()
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
-            ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "online_variable_type", "integer"],
+            ["unit", "unit_ab", "outage_variable_type", "integer"],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -1040,7 +1040,7 @@ function test_constraint_units_out_of_service_contiguity()
             )
             object_parameter_values = [
                 ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
-                ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "unit_ab", "outage_variable_type", "integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -1091,7 +1091,7 @@ function test_constraint_min_scheduled_outage_duration()
             )
             object_parameter_values = [
                 ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
-                ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "unit_ab", "outage_variable_type", "integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)

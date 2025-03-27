@@ -10,7 +10,7 @@ Here, we briefly describe the key concepts involved in the representation of (cl
 
 - [units\_on\_\_temporal\_block](@ref) is a relationship linking the `units_on` variable of this unit to a specific [temporal\_block](@ref) object. The temporal block holds information on the temporal scope and resolution for which the variable should be optimized.
 
-- [online\_variable\_type](@ref) is a method parameter and can take the values `unit_online_variable_type_binary`, `unit_online_variable_type_integer`, `unit_online_variable_type_linear`. If the binary value is chosen, the units status is modelled as a binary (classic UC). For clustered unit commitment units, the integer type is applicable. Note that if the parameter is not defined, the default will be linear. If the units status is not crucial, this can reduce the computational burden.
+- [online\_variable\_type](@ref) is a method parameter and can take the values `binary`, `integer`, `linear` or `none`. If the binary value is chosen, the units status is modelled as a binary (classic UC). For clustered unit commitment units, the integer type is applicable. Note that if the parameter is not defined, the default will be linear. If the units status is not crucial, this can reduce the computational burden.
 
 - [existing\_units](@ref) defines how many units of a certain unit type are available. Typically this parameter takes a binary (UC) or integer (clustered UC) value. To avoid confusion the following distinction will be made in this document:  `unit` will be used to identify a Spine unit object, which can have multiple `members`. Together with the `availability_factor`, this will determine the maximum number of members that can be online at any given time. (Thus restricting the `units_on` variable). The default value for this parameter is ``1``. It is possible to allow the model to increase the `existing_units` itself, through [Investment Optimization](@ref)
 
@@ -37,7 +37,7 @@ And we link the unit to a certain `node_1` with a [unit\_\_to\_node](@ref) relat
 The single Spine unit defined here, now represents two members. This means that a single [unit_flow](@ref Variables) variable will be created for this unit, but the restrictions as imposed by the [Ramping](@ref) and [Reserves](@ref) framework will be adapted to reflect the fact that there are two members present, thus doubling the total capacity.
 
 ### Step 2: choosing the online\_variable\_type
-Next, we have to decide the [online\_variable\_type](@ref) for this unit, which will restrict the kind of values that the [units_on](@ref Variables) variable can take. This basically comes down to deciding if we are working in a classical UC framework (`unit_online_variable_type_binary`), a clustered UC framework (`unit_online_variable_type_integer`), or a relaxed clustered UC framework (`unit_online_variable_type_linear`), in which a non-integer number of units can be online.
+Next, we have to decide the [online\_variable\_type](@ref) for this unit, which will restrict the kind of values that the [units_on](@ref Variables) variable can take. This basically comes down to deciding if we are working in a classical UC framework (`binary`), a clustered UC framework (`integer`), or a relaxed clustered UC framework (`linear`), in which a non-integer number of units can be online.
 
 The classical UC framework can only be applied when the `existing_units` equals 1.
 
@@ -46,7 +46,7 @@ The output of an online unit to a specific node can be restricted to be above a 
 
 * `unit_1`
   * `existing_units`: 2
-  * `unit_online_variable_type`: "unit\_online\_variable\_type\_integer"
+  * `unit_online_variable_type`: "integer"
 * `unit_1_to__node_1`
   * `minimum_operating_point`: 0.2
   * `unit_capacity`: 200
@@ -57,7 +57,7 @@ Spine units can also be restricted in their commitment status with minimum up- o
 
 * `unit_1`
   * `existing_units`: 2
-  * `unit_online_variable_type`: "unit\_online\_variable\_type\_integer"
+  * `unit_online_variable_type`: "integer"
   * `min_up_time`: 2h
 * `unit_1_to__node_1`
   * `minimum_operating_point`: 0.2

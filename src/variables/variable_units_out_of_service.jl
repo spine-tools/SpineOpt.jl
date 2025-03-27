@@ -42,14 +42,14 @@ _unit_with_out_of_service_variable() = unit(has_out_of_service_variable=true)
 
 Check if unit online variable type is defined as a binary.
 """
-units_out_of_service_bin(x) = outage_variable_type(unit=x.unit) == :unit_online_variable_type_binary
+units_out_of_service_bin(x) = outage_variable_type(unit=x.unit) == :binary
 
 """
     units_out_of_service_int(x)
 
 Check if unit online variable type is defined as an integer.
 """
-units_out_of_service_int(x) = outage_variable_type(unit=x.unit) == :unit_online_variable_type_integer
+units_out_of_service_int(x) = outage_variable_type(unit=x.unit) == :integer
 
 """
     add_variable_units_out_of_service!(m::Model)

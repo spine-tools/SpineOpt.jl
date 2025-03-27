@@ -37,12 +37,18 @@ function units_invested_available_indices(
 end
 
 """
+    units_invested_available_bin(x)
+
+Check if unit investment variable type is defined to be binary.
+"""
+units_invested_available_bin(x) = investment_variable_type(unit=x.unit) == :binary
+
+"""
     units_invested_available_int(x)
 
 Check if unit investment variable type is defined to be an integer.
 """
-
-units_invested_available_int(x) = investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
+units_invested_available_int(x) = investment_variable_type(unit=x.unit) == :integer
 
 function _initial_units_invested_available(; kwargs...)
     something(investment_count_initial_cumulative(; kwargs...), 0)
@@ -59,6 +65,7 @@ function add_variable_units_invested_available!(m::Model)
         :units_invested_available,
         units_invested_available_indices;
         lb=constant(0),
+        bin=units_invested_available_bin,
         int=units_invested_available_int,
         fix_value=investment_count_fix_cumulative,
         initial_value=_initial_units_invested_available,

@@ -102,7 +102,7 @@ Let's assume that the *power\_plant\_b* has a minimum operating point of *10%*, 
 - Locate the *Object tree* (typically at the top-left). Expand the [root] element if not expanded.
 - Expand the [unit] class, and select the *power\_plant\_b* from the expanded tree.
 - In the *Object parameter* table (typically at the top-center), select the following parameter as seen in the image below:
-  - *online\_variable\_type* parameter and the *Base* alternative, and select the value *unit\_online\_variable\_type\_binary*. This will define that the unit commitment variables will be binary. SpineOpt identifies this situation from the input data and internally changes the model from LP to MIP.
+  - *online\_variable\_type* parameter and the *Base* alternative, and select the value *binary*. This will define that the unit commitment variables will be binary. SpineOpt identifies this situation from the input data and internally changes the model from LP to MIP.
   - *shut\_down\_cost* parameter and the *Base* alternative, and enter the value *7*. This will establish that there's a cost of '7' EUR per shutdown.
   - *start\_up\_cost* parameter and the *Base* alternative, and enter the value *5*. This will establish that there's a cost of '5' EUR per startup.
   - *units\_on\_cost* parameter and the *Base* alternative, and enter the value *3*. This will establish that there's a cost of '3' EUR per units on (e.g., idling cost).
