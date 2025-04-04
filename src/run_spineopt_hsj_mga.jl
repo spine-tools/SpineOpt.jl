@@ -380,7 +380,7 @@ end
     - scenario_weights - returns the weight of scenario
 """
 function get_scenario_variable_average(variable, variable_indices, scenario_weights::Function)
-    return sum(variable[i] * scenario_weights(i) for i in variable_indices)
+    return sum(variable[i] * scenario_weights(i) for i in variable_indices; init=0)
 end
 
 """
