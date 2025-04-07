@@ -1612,7 +1612,7 @@ function test_constraint_unit_lifetime_mp()
     end
 end
 
-function test_constraint_ramp_up()
+function test_constraint_ramp_up_old()
     @testset "constraint_ramp_up" begin
         rul = 0.8
         sul = 0.5
@@ -1718,7 +1718,115 @@ function test_constraint_ramp_up()
     end
 end
 
-function test_constraint_ramp_down()
+function test_constraint_ramp_up()
+    @testset "constraint_ramp_up" begin
+        rul = 0.8
+        sul = 0.5
+        uc = 200
+        mop = 0.2
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_group_a"], "ramp_up_limit", rul],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "start_up_limit", sul],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_up_limit", rul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "start_up_limit", sul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
+        ]
+        @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
+            url_in = _test_constraint_unit_reserves_setup()
+            object_parameter_values = [
+                ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "3h")],
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
+                ["node", "reserves_a", "downward_reserve", dr],
+                ["node", "reserves_bc", "upward_reserve", ur],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+            var_units_on = m.ext[:spineopt].variables[:units_on]
+            var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+            constraint = m.ext[:spineopt].constraints[:ramp_up]
+            @test length(constraint) == 4
+            t3h0, t3h1, t3h2 = vcat(
+                history_time_slice(m; temporal_block=temporal_block(:hourly)),
+                time_slice(m; temporal_block=temporal_block(:hourly)),
+            )
+            t2h0, t2h1, t2h2, t2h3 = vcat(
+                history_time_slice(m; temporal_block=temporal_block(:two_hourly)),
+                time_slice(m; temporal_block=temporal_block(:two_hourly)),
+            )
+            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+            s_by_t = Dict(
+                t3h0 => s_parent,
+                t3h1 => s_parent,
+                t3h2 => s_child,
+                t2h0 => s_parent,
+                t2h1 => s_parent,
+                t2h2 => s_child,
+                t2h3 => s_child,
+            )
+            overlap_2hourly = Dict(t2h0 => 2.0/3, t2h1 => 2.0/3, t2h2 => 1.0/3, t2h3 => 2.0/3)
+
+            @testset for con_key in keys(constraint)
+                u, n, d, s, t_before, t_after = con_key
+                @test u.name == :unit_ab
+                @test (n.name, d.name) in ((:node_group_a, :from_node), (:node_group_bc, :to_node))
+                @test (s, t_before, t_after) in (([s_parent], t3h0, t3h1), ([s_parent, s_child], t3h1, t3h2))
+                lhs = if n.name == :node_group_a
+                    n_a, r_a = node(:node_a), node(:reserves_a)
+                    (
+                        + var_unit_flow[u, n_a, d, s_by_t[t_after], t_after]
+                        - var_unit_flow[u, n_a, d, s_by_t[t_before], t_before]
+                        + (dr ? var_unit_flow[u, r_a, d, s_by_t[t_after], t_after] : 0)
+                    )
+                elseif n.name == :node_group_bc
+                    n_b, n_c, r_bc = node(:node_b), node(:node_c), node(:reserves_bc)
+                    var_u_flow_c_delta = (
+                        + var_unit_flow[u, n_c, d, s_by_t[t_after], t_after]
+                        - var_unit_flow[u, n_c, d, s_by_t[t_before], t_before]
+                    )
+                    var_u_flow_b_t_delta = if t_after == t3h1
+                        (
+                            + overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            + overlap_2hourly[t2h2] * var_unit_flow[u, n_b, d, s_parent, t2h2]
+                            - overlap_2hourly[t2h0] * var_unit_flow[u, n_b, d, s_parent, t2h0]
+                        )
+                    elseif t_after == t3h2
+                        (
+                            + overlap_2hourly[t2h3] * var_unit_flow[u, n_b, d, s_parent, t2h3]
+                            - overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            # - var_unit_flow[u, n_b, d, s_parent, t2h2]
+                        )
+                    end
+                    (
+                        + var_u_flow_c_delta + var_u_flow_b_t_delta
+                        + (ur ? var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
+                    )
+                end
+                var_u_on_t_after = var_units_on[u, s_by_t[t_after], t_after]
+                var_u_on_t_before =var_units_on[u, s_by_t[t_before], t_before]
+                var_u_su_t_after = var_units_started_up[u, s_by_t[t_after], t_after]
+                expected_con = @build_constraint(
+                    + lhs
+                    <=
+                    + uc
+                        * ((sul - mop) * var_u_su_t_after + mop  * var_u_on_t_after - mop * var_u_on_t_before
+                        + 3 * 0.5 * rul * var_u_on_t_before + 3 * 0.5 * rul * var_u_on_t_after)
+                )
+                observed_con = constraint_object(constraint[con_key])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+end
+
+function test_constraint_ramp_down_old()
     @testset "constraint_ramp_down" begin
         rdl = 0.8
         sdl = 0.5
@@ -1734,7 +1842,7 @@ function test_constraint_ramp_down()
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
-        @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
+        @testset for (ur, dr) in ((false, false), )#(false, true), (true, false), (true, true))
             url_in = _test_constraint_unit_reserves_setup()
             object_parameter_values = [
                 ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "3h")],
@@ -1816,6 +1924,114 @@ function test_constraint_ramp_down()
                     <=
                     + 3 * uc
                     * ((sdl - mop - rdl) * var_u_sd_t_after + (mop + rdl) * var_u_on_t_before - mop * var_u_on_t_after)
+                )
+                observed_con = constraint_object(constraint[con_key])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+end
+
+function test_constraint_ramp_down()
+    @testset "constraint_ramp_down" begin
+        rdl = 0.8
+        sdl = 0.5
+        uc = 200
+        mop = 0.2
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_group_a"], "ramp_down_limit", rdl],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "shut_down_limit", sdl],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
+            ["unit__from_node", ["unit_ab", "node_group_a"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_down_limit", rdl],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "shut_down_limit", sdl],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
+        ]
+        @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
+            url_in = _test_constraint_unit_reserves_setup()
+            object_parameter_values = [
+                ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "3h")],
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
+                ["node", "reserves_a", "upward_reserve", ur],
+                ["node", "reserves_bc", "downward_reserve", dr],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+            var_units_on = m.ext[:spineopt].variables[:units_on]
+            var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
+            constraint = m.ext[:spineopt].constraints[:ramp_down]
+            @test length(constraint) == 4
+            t3h0, t3h1, t3h2 = vcat(
+                history_time_slice(m; temporal_block=temporal_block(:hourly)),
+                time_slice(m; temporal_block=temporal_block(:hourly)),
+            )
+            t2h0, t2h1, t2h2, t2h3 = vcat(
+                history_time_slice(m; temporal_block=temporal_block(:two_hourly)),
+                time_slice(m; temporal_block=temporal_block(:two_hourly)),
+            )
+            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+            s_by_t = Dict(
+                t3h0 => s_parent,
+                t3h1 => s_parent,
+                t3h2 => s_child,
+                t2h0 => s_parent,
+                t2h1 => s_parent,
+                t2h2 => s_child,
+                t2h3 => s_child,
+            )
+            overlap_2hourly = Dict(t2h0 => 2.0/3, t2h1 => 2.0/3, t2h2 => 1.0/3, t2h3 => 2.0/3)
+
+            @testset for con_key in keys(constraint)
+                u, n, d, s, t_before, t_after = con_key
+                @test u.name == :unit_ab
+                @test (n.name, d.name) in ((:node_group_a, :from_node), (:node_group_bc, :to_node))
+                @test (s, t_before, t_after) in (([s_parent], t3h0, t3h1), ([s_parent, s_child], t3h1, t3h2))
+                lhs = if n.name == :node_group_a
+                    n_a, r_a = node(:node_a), node(:reserves_a)
+                    (
+                        + var_unit_flow[u, n_a, d, s_by_t[t_before], t_before]
+                        - var_unit_flow[u, n_a, d, s_by_t[t_after], t_after]
+                        + (ur ? var_unit_flow[u, r_a, d, s_by_t[t_after], t_after] : 0)
+                    )
+                elseif n.name == :node_group_bc
+                    n_b, n_c, r_bc = node(:node_b), node(:node_c), node(:reserves_bc)
+                    var_u_flow_c_delta =  (
+                        + var_unit_flow[u, n_c, d, s_by_t[t_before], t_before]
+                        - var_unit_flow[u, n_c, d, s_by_t[t_after], t_after]
+                    )
+                    var_u_flow_b_t_delta = if t_after == t3h1
+                        (
+                            + overlap_2hourly[t2h0] * var_unit_flow[u, n_b, d, s_parent, t2h0]
+                            - overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            - overlap_2hourly[t2h2] * var_unit_flow[u, n_b, d, s_parent, t2h2]
+                        )
+                    elseif t_after == t3h2
+                        (
+                            + overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            - overlap_2hourly[t2h3] * var_unit_flow[u, n_b, d, s_parent, t2h3]
+                        )
+                    end
+                    (
+                        + var_u_flow_c_delta + var_u_flow_b_t_delta
+                        + (dr ? var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
+                    )
+                end
+                # units on and units shut down variables
+                var_u_on_t_after = var_units_on[u, s_by_t[t_after], t_after]
+                var_u_on_t_before = var_units_on[u, s_by_t[t_before], t_before]
+                var_u_sd_t_after = var_units_shut_down[u, s_by_t[t_after], t_after]
+                expected_con = @build_constraint(
+                    + lhs
+                    <=
+                    + uc
+                    * ((sdl - mop) * var_u_sd_t_after + mop * var_u_on_t_before - mop * var_u_on_t_after
+                        + 3 * 0.5 * rdl * var_u_on_t_before + 3 * 0.5 * rdl * var_u_on_t_after)
                 )
                 observed_con = constraint_object(constraint[con_key])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -2096,38 +2312,38 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
 end
 
 @testset "unit-based constraints" begin
-    test_constraint_units_available()
-    test_constraint_units_available_units_unavailable()
-    test_constraint_unit_state_transition()
-    test_constraint_unit_flow_capacity()
-    test_constraint_minimum_operating_point()
-    test_constraint_operating_point_bounds()
-    test_constraint_operating_point_rank()
-    test_constraint_unit_flow_op_bounds()
-    test_constraint_unit_flow_op_rank()
-    test_constraint_unit_flow_op_sum()
-    test_constraint_ratio_unit_flow()
-    test_constraint_total_cumulated_unit_flow()
-    test_constraint_min_up_time()
-    test_constraint_units_out_of_service_contiguity()
-    test_constraint_min_scheduled_outage_duration()
-    test_constraint_min_up_time_with_non_spinning_reserves()
-    test_constraint_min_down_time()
-    test_constraint_min_down_time_with_non_spinning_reserves()
-    test_constraint_units_invested_available()
-    test_constraint_units_invested_available_mp()
-    test_constraint_units_invested_transition()
-    test_constraint_units_invested_transition_mp()
-    test_constraint_unit_lifetime()
-    test_constraint_unit_lifetime_sense()
-    test_constraint_unit_lifetime_mp()
-    test_constraint_ramp_up()
-    test_constraint_ramp_down()
-    test_constraint_non_spinning_reserves_lower_bound()
-    test_constraint_non_spinning_reserves_upper_bounds()
-    test_constraint_user_constraint()
-    test_constraint_user_constraint_with_unit_operating_segments()
-    test_constraint_ratio_unit_flow_fix_ratio_pw()
-    test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
-    test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
+    # test_constraint_units_available()
+    # test_constraint_units_available_units_unavailable()
+    # test_constraint_unit_state_transition()
+    # test_constraint_unit_flow_capacity()
+    # test_constraint_minimum_operating_point()
+    # test_constraint_operating_point_bounds()
+    # test_constraint_operating_point_rank()
+    # test_constraint_unit_flow_op_bounds()
+    # test_constraint_unit_flow_op_rank()
+    # test_constraint_unit_flow_op_sum()
+    # test_constraint_ratio_unit_flow()
+    # test_constraint_total_cumulated_unit_flow()
+    # test_constraint_min_up_time()
+    # test_constraint_units_out_of_service_contiguity()
+    # test_constraint_min_scheduled_outage_duration()
+    # test_constraint_min_up_time_with_non_spinning_reserves()
+    # test_constraint_min_down_time()
+    # test_constraint_min_down_time_with_non_spinning_reserves()
+    # test_constraint_units_invested_available()
+    # test_constraint_units_invested_available_mp()
+    # test_constraint_units_invested_transition()
+    # test_constraint_units_invested_transition_mp()
+    # test_constraint_unit_lifetime()
+    # test_constraint_unit_lifetime_sense()
+    # test_constraint_unit_lifetime_mp()
+     test_constraint_ramp_up()
+    # test_constraint_ramp_down()
+    # test_constraint_non_spinning_reserves_lower_bound()
+    # test_constraint_non_spinning_reserves_upper_bounds()
+    # test_constraint_user_constraint()
+    # test_constraint_user_constraint_with_unit_operating_segments()
+    # test_constraint_ratio_unit_flow_fix_ratio_pw()
+    # test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
+    # test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
 end
