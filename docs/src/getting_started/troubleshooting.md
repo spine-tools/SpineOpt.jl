@@ -66,6 +66,9 @@ The solution is to update the julia registry and install SpineOpt again.
 
 2. Try to install SpineOpt again.
 
+Note that `SpineJuliaRegistry` has been discontinued, and SpineOpt is available in the general julia registry.
+The above instructions make mention of it for backwards compatibility only.
+
 ## Windows 7
 
 On Windows 7, installation fails with the following message (or similar):
