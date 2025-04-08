@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2024  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
