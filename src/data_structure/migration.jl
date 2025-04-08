@@ -66,7 +66,7 @@ _upgrade_functions = [
 	add_model_algorithm,
 	rename_lifetime_to_tech_lifetime,
 	translate_heatrate_parameters,
-    add_stage_output,
+	add_stage_output,
 ]
 
 """
