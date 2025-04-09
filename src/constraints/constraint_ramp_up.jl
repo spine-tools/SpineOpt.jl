@@ -25,35 +25,35 @@ to the [start\_up\_limit](@ref) and [ramp\_up\_limit](@ref) parameter values.
 ```math
 \begin{aligned}
 & \frac{\sum_{n \in ng, \: t' \in overlapping(t)}
-v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t') \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] }{\Delta(overlapping(t))} \\
+v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] }{\Delta(overlapping(t))} \\
 
 & - \frac{\sum_{n \in ng, \: t' \in overlapping(t-1)}
-v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t')  \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] }{\Delta(overlapping(t-1))} \\
+v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t-1)  \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right] }{\Delta(overlapping(t-1))} \\
 
 & + \frac{\sum_{
         n \in ng, \: t' \in overlapping(t)}
-v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t') \cdot \left[ p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \right]}{\Delta(overlapping(t))} \\
+v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \right]}{\Delta(overlapping(t))} \\
 
 & \le ( \\
 
 & \qquad \frac{\sum_{t' \in overlapping(t)}\left(p^{start\_up\_limit}_{(u,ng,d,s,t')} - p^{minimum\_operating\_point}_{(u,ng,d,s,t')}
-\right) \cdot v^{units\_started\_up}_{(u,s,t)} \cdot \Delta(t')}{\Delta(overlapping(t))}\\
+\right) \cdot v^{units\_started\_up}_{(u,s,t)} \cdot \Delta(t'\cap t)}{\Delta(overlapping(t))}\\
 
 & \qquad + 
 \frac{\sum_{t' \in overlapping(t)} \left( p^{minimum\_operating\_point}_{(u,ng,d,s,t)}
- \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t') \right) }{\Delta(overlapping(t))}   \\
+ \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t) \right) }{\Delta(overlapping(t))}   \\
 
 & \qquad - 
 \frac{\sum_{t' \in overlapping(t-1)} \left( p^{minimum\_operating\_point}_{(u,ng,d,s,t)}
- \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t') \right) }{\Delta(overlapping(t))}   \\
+ \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t-1) \right) }{\Delta(overlapping(t))}   \\
 
 & \qquad + \frac{1}{2} \cdot
 \sum_{t' \in overlapping(t)} \left( p^{ramp\_up\_limit}_{(u,ng,d,s,t)}
- \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t') \right)    \\
+ \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t) \right)    \\
 
 & \qquad + \frac{1}{2} \cdot
 \sum_{t' \in overlapping(t-1)} \left( p^{ramp\_up\_limit}_{(u,ng,d,s,t)}
- \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t') \right)    \\
+ \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t-1) \right)    \\
 
 & ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 
@@ -70,6 +70,9 @@ where
 0 & \text{otherwise.}
 \end{cases}
 ```
+
+Here``overlapping(t)`` is the set of time slices which overlap ``t``, and
+``t'\cap t`` is the intersection of time slices ``t'`` and ``t``. 
 
 See also
 [is\_reserve\_node](@ref),
