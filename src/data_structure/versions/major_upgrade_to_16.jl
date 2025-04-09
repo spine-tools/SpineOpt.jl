@@ -710,7 +710,7 @@ function merge_variable_type_lists(db_url, log_level)
         "unit_online_variable_type_integer" => "integer",
         "unit_online_variable_type_linear" => "linear",
         "unit_online_variable_type_none" => "none"
-    )    
+    )
     rename_pval_list_values(db_url, pval_list_old_name, name_mapping, log_level)
     rename_pval_list(db_url, pval_list_old_name, pval_list_new_name, log_level)
     lists_to_be_updated = (
@@ -720,6 +720,11 @@ function merge_variable_type_lists(db_url, log_level)
             "storage_investment_variable_type", "investment_variable_type2", "storage_investment_variable_type_list"),
         ("unit", "investment_count_max_cumulative", "variable_type_list", 
             "investment_variable_type", "investment_variable_type2", "unit_investment_variable_type_list")
+    )
+    old_default_mapping = Dict(
+        "connection" => "integer",
+        "node" => "integer",
+        "unit" => "linear",
     )
     for (class_name, max_cum_par_name, type_list, old_par_name, temp_par_name, list_old) in lists_to_be_updated
         # Add new parameter for investment variable type, connect to value list
@@ -739,14 +744,14 @@ function merge_variable_type_lists(db_url, log_level)
             "entity_class_name" => class_name, "parameter_definition_name" => old_par_name)
         )
         vals_type = create_dict_from_parameter_value_items(db_url, pvals)
-        # Old default: if there is investment_count_max_cumulative, new investment variable is variable_type_continuous
+        # Old default: if there is investment_count_max_cumulative, new investment variable is the old default
         # (or none if investment_count_max_cumulative set to none)
         for (entity, val_list) in vals_max
             for (alternative, val) in val_list
                 if isnothing(val)
                     pval = "none"
                 else
-                    pval = "linear"
+                    pval = old_default_mapping[class_name]
                 end
                 pval_value, pval_type = unparse_db_value(pval)
                 # Add the new parameter value into the database
@@ -760,7 +765,7 @@ function merge_variable_type_lists(db_url, log_level)
                 )
             end
         end
-        # If investment_count_max_cumulative is specified, it overrides the old default
+        # If investment_variable_type is specified, it overrides the old default
         for (entity, val_list) in vals_type
             for (alternative, val) in val_list
                 if occursin("integer", val)
