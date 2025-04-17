@@ -1,6 +1,5 @@
 using Pkg
 pkg"registry add General"
-pkg"registry add https://github.com/spine-tools/SpineJuliaRegistry"
 pkg"add PyCall"
 using PyCall
 python = PyCall.pyprogramname

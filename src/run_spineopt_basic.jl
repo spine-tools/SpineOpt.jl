@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -920,11 +921,8 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
     _save_bound_marginal_values!(m, reduced_cost_fallback)
-    if isdefined(Threads, Symbol("@spawn")) && (haskey(ENV, "JULIA_NUM_THREADS") || Threads.nthreads() > 1)
-    # JULIA_NUM_THREADS: system environment variable (as of Julia 1.7)
-    # that determines whether multi-threading is activated (has a value) or not (no value) in Julia.
-    # isdefined(Threads, Symbol("@spawn")) is always true in the current version of Julia (1.11) 
-    # no matter whether multi-threading is activated or not i.e. Threads.nthreads()=1 by default.
+    if isdefined(Threads, Symbol("@spawn")) && Threads.nthreads() > 1
+    # `Threads.@spawn` only since Julia v1.3. Only attempt parallelization if multiple threads are in use to avoid issues.
         #TODO: This command would suspend the running of `m = run_spineopt(...; optimize=true, ...)`
         # in the unit test `run_spineopt_representative_periods.jl`. Suspension comes at launching the `optimize!()`.
         # Add an arbitraty command, either before or after this command, could shift the suspension 

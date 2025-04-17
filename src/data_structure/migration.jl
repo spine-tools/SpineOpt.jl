@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -40,9 +41,14 @@ include("versions/update_investment_variable_type.jl")
 include("versions/add_model_algorithm.jl")
 include("versions/rename_lifetime_to_tech_lifetime.jl")
 include("versions/translate_heatrate_parameters.jl")
-include("versions/major_upgrade_to_16.jl")
+include("versions/major_upgrade_to_17.jl")
 
 function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	true
+end
+
+function add_stage_output(db_url, log_level)
 	# No changes, just make sure we load the newest template
 	true
 end
@@ -62,7 +68,8 @@ _upgrade_functions = [
 	add_model_algorithm,
 	rename_lifetime_to_tech_lifetime,
 	translate_heatrate_parameters,
-	major_upgrade_to_16,
+	add_stage_output,
+	major_upgrade_to_17,
 ]
 
 """

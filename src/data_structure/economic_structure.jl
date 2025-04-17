@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2026  Spine and Mopo Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -130,6 +131,12 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, econ
     invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     param_name = economic_parameters[obj_cls][:set_capacity_transfer_factor]
 
+    # Default value of 1 for all (investable + non-investable)
+    for id in obj_cls()
+        pvals = parameter_value(1)
+        add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
+    end
+
     for id in invest_temporal_block(temporal_block=anything)
         if (
             !isnothing(tech_lifetime(; Dict(obj_cls.name => id)...)) ||
@@ -238,12 +245,15 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
     discnt_year = discount_year(model=instance)
     conversion_to_discounted_annuities = Dict()
     investment_indices = economic_parameters[obj_cls][:set_investment_indices]
+    invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     lead_time = economic_parameters[obj_cls][:set_lead_time]
     econ_lifetime = economic_parameters[obj_cls][:set_econ_lifetime]
     param_name = economic_parameters[obj_cls][:set_conversion_to_discounted_annuities] # this is MARKUP^AN
 
     for id in obj_cls()
-        if (discount_rate(model=model()[1]) == 0 || isnothing(discount_rate(model=model()[1])))
+        # if the discount rate is 0 or not defined, the conversion factor is 1
+        # or if the object is not investable, the conversion factor is also 1
+        if (discount_rate(model=model()[1]) == 0 || isnothing(discount_rate(model=model()[1])) || !(id in invest_temporal_block(temporal_block=anything)))
             pvals = parameter_value(1)
         else
             stochastic_map_vector = unique([x.stochastic_scenario for x in investment_indices(m)])
@@ -366,7 +376,14 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_par
     econ_lifetime = economic_parameters[obj_cls][:set_econ_lifetime]
     invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     param_name = economic_parameters[obj_cls][:set_salvage_fraction]
+     
+    # Default value of 0 for all (investable + non-investable)
+    for id in obj_cls()
+        pvals = parameter_value(0)
+        add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
+    end
 
+    # Only for investable objects
     for id in invest_temporal_block(temporal_block=anything)
         if id in indices(econ_lifetime)
             stochastic_map_vector = unique([x.stochastic_scenario for x in investment_indices(m)])
@@ -599,6 +616,12 @@ function generate_decommissioning_conversion_to_discounted_annuities!(
     decom_time = economic_parameters[obj_cls][:set_decom_time]
     decom_cost = economic_parameters[obj_cls][:set_decom_cost]
     param_name = economic_parameters[obj_cls][:set_decommissioning_conversion_to_discounted_annuities]
+
+    # Default value of 1 for all (decommissionable + non-decommissionable)
+    for id in obj_cls()
+        pvals = parameter_value(1)
+        add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
+    end
 
     for id in indices(decom_cost)
         stochastic_map_vector = unique([x.stochastic_scenario for x in investment_indices(m)])
