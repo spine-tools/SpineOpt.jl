@@ -69,7 +69,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         # ["temporal_block", "two_year"], # to create economic parameters
         ["stochastic_structure", "deterministic"],
         ["stochastic_scenario", "parent"],
-        ["commodity", "electricity"],
+        ["grid", "electricity"],
         ["node", "reserve"],
         ["node", "node_group_reserve"],
     ]
@@ -87,7 +87,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     append!(rels, (["unit__from_node", (u, n)] for (u, n) in zip(units, nodes_from)))
     append!(rels, (["unit__node__node", (u, n1, n2)] for (u, n1, n2) in zip(units, nodes_to, nodes_from)))
     append!(rels, (["unit__from_node", (u, "reserve")] for u in units))
-    append!(rels, (["node__commodity", (n, "electricity")] for n in nodes_to))
+    append!(rels, (["node__grid", (n, "electricity")] for n in nodes_to))
     append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, conns_from)))
     append!(rels, (["connection__to_node", (c, n)] for (c, n) in zip(conns, conns_to)))
     append!(rels, (["connection__node__node", (c, n1, n2)] for (c, n1, n2) in zip(conns, conns_to, conns_from)))
@@ -98,29 +98,29 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["model", "instance", "duration_unit", "hour"],
         ["model", "instance", "model_type", "spineopt_standard"],
         ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-        ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
+        ["grid", "electricity", "physics_type", "grid_physics_lodf"],
         ["node", nodes_to[1], "node_opf_type", "node_opf_type_reference"],
         ["node", "reserve", "is_reserve_node", true],
         ["node", "reserve", "upward_reserve", true],
     ]
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes_to))
-    append!(obj_pvs, (["node", n, "node_state_cap", 10] for n in nodes_to))
-    append!(obj_pvs, (["node", n, "has_state", true] for n in nodes_to))
+    append!(obj_pvs, (["node", n, "storage_state_max", 10] for n in nodes_to))
+    append!(obj_pvs, (["node", n, "node_type", "storage_node"] for n in nodes_to))
     append!(obj_pvs, (["connection", c, "connection_type", "connection_type_lossless_bidirectional"] for c in conns))
-    append!(obj_pvs, (["connection", c, "connection_reactance", 0.1] for c in conns))
+    append!(obj_pvs, (["connection", c, "reactance", 0.1] for c in conns))
     append!(obj_pvs, (["unit", u, "min_up_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     append!(obj_pvs, (["unit", u, "min_down_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     if add_investment
         # activate multi-year investments
-        append!(obj_pvs, [["model", "instance", "use_economic_representation", true]])
+        append!(obj_pvs, [["model", "instance", "economic_parameter_preprocessing_activate", true]])
         # add investment temporal block
         append!(objs, [["temporal_block", "two_year"]])
         append!(obj_pvs, [["temporal_block", "two_year", "resolution", unparse_db_value(Year(2))]])
         append!(rels, [["model__default_investment_temporal_block", ["instance", "two_year"]]])
         # add investment candidates
-        append!(obj_pvs, (["unit", u, "candidate_units", 1] for u in units))
-        append!(obj_pvs, (["connection", c, "candidate_connections", 1] for c in conns))
-        append!(obj_pvs, (["node", n, "candidate_storages", 1] for n in nodes_to))
+        append!(obj_pvs, (["unit", u, "investment_count_max_cumulative", 1] for u in units))
+        append!(obj_pvs, (["connection", c, "investment_count_max_cumulative", 1] for c in conns))
+        append!(obj_pvs, (["node", n, "storage_investment_count_max_cumulative", 1] for n in nodes_to))
         # add investment stochastic structure
         append!(rels, [["model__default_investment_stochastic_structure", ["instance", "deterministic"]]])
     end

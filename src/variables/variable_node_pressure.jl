@@ -31,7 +31,7 @@ function node_pressure_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     node_stochastic_time_indices(
         m;
@@ -53,7 +53,7 @@ function add_variable_node_pressure!(m::Model)
         :node_pressure,
         node_pressure_indices;
         lb=constant(0),
-        fix_value=fix_node_pressure,
-        initial_value=initial_node_pressure
+        fix_value=pressure_fix,
+        initial_value=pressure_initial
     )
 end

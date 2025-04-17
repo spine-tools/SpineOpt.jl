@@ -425,7 +425,7 @@ function node_stochastic_time_indices(
     m::Model;
     node=anything,
     stochastic_scenario=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
     t=anything,
 )
     (
@@ -444,7 +444,7 @@ function unit_stochastic_time_indices(
     m::Model;
     unit=anything,
     stochastic_scenario=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
     t=anything,
 )
     (

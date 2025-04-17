@@ -29,7 +29,7 @@ function units_on_indices(
     unit=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     unit = intersect(unit, _unit_with_online_variable())
     unit_stochastic_time_indices(
@@ -47,7 +47,7 @@ function units_switched_indices(
     unit=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     unit = intersect(unit, _unit_with_switched_variable())
     (
@@ -77,14 +77,14 @@ _unit_with_switched_variable() = unit(has_switched_variable=true)
 
 Check if unit online variable type is defined as a binary.
 """
-units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
+units_on_bin(x) = online_variable_type(unit=x.unit) == :binary
 
 """
     units_on_int(x)
 
 Check if unit online variable type is defined as an integer.
 """
-units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
+units_on_int(x) = online_variable_type(unit=x.unit) == :integer
 
 """
     add_variable_units_on!(m::Model)
@@ -99,8 +99,8 @@ function add_variable_units_on!(m::Model)
         lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=fix_units_on,
-        initial_value=initial_units_on,
+        fix_value=online_count_fix,
+        initial_value=online_count_initial,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,
         required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),
@@ -109,7 +109,7 @@ end
 
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(unit=u, _default=_default_nb_of_units(u))
+        existing_units(unit=u, _default=_default_nb_of_units(u))
     end
 end
 

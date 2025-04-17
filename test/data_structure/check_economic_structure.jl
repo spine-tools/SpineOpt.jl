@@ -194,7 +194,7 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
+            ["model", "instance", "milestone_years_activate", use_mlstne_year],
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", cost]]
         SpineInterface.import_data(
@@ -211,7 +211,7 @@ end
             express,
             var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]],
         )
-        object_parameter_values = [["model", "instance", "use_economic_representation", true]]
+        object_parameter_values = [["model", "instance", "economic_parameter_preprocessing_activate", true]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -237,8 +237,8 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "milestone_years_activate", use_mlstne_year],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -258,14 +258,14 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["model", "instance", "milestone_years_activate", use_mlstne_year],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "unit_decommissioning_cost", decom_cost],
-            ["unit", "unit_ab", "unit_decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
+            ["unit", "unit_ab", "decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=3)
@@ -275,7 +275,7 @@ end
         expected_coe_obj = inv_cost
         @test expected_coe_obj == observed_coe_obj
         object_parameter_values = [
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=3)
@@ -307,14 +307,14 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["model", "instance", "milestone_years_activate", use_mlstne_year],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -342,15 +342,15 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "milestone_years_activate", use_mlstne_year],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
             ["model", "instance", "roll_forward", Dict("type" =>"duration","data"=>"1D")],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
@@ -366,15 +366,15 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "milestone_years_activate", use_mlstne_year],
+            ["model", "instance", "economic_parameter_preprocessing_activate", true],
             ["model", "instance", "model_type", "spineopt_benders"],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)

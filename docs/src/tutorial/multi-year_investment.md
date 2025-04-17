@@ -18,27 +18,27 @@ To avoid repetition, we only consider one unit instead of the two units from the
 Since we are working with investments, we are going to make a distinction between investments and operation in the time blocks. We retain the original time block but adjust the resolution to 4 months ('4M'). Additionally we add an investment time block with a resolution of 5 years ('5Y') between 2000 and 2006. We have to adjust the time horizon of the model entity accordingly.
 
 Once we have our setup, we can take a look at the economic representation in SpineOpt. Below is a list of parameters you would need:
-- [use\_economic\_represention](@ref): if set to true, it means the model will use its internally-calculated parameters for discounting investment and operation costs. The default value is `false`.
-- [use\_milestone\_years](@ref): this parameter is used to discount operation costs. If set to `false` (default), it means we use continous operational temporal blocks, and thus the operation cost will be discounted every year. Otherwise, it will be discounted using the investment temporal block.   
+- [economic\_parameter\_preprocessing\_activate](@ref): if set to true, it means the model will use its internally-calculated parameters for discounting investment and operation costs. The default value is `false`.
+- [milestone\_years\_activate](@ref): this parameter is used to discount operation costs. If set to `false` (default), it means we use continous operational temporal blocks, and thus the operation cost will be discounted every year. Otherwise, it will be discounted using the investment temporal block.   
 - [discount\_rate](@ref): the rate you would like to discount your costs with.
 - [discount\_year](@ref): the year you would like to discount your costs to.
-- [unit\_investment\_tech\_lifetime](@ref): using units as an example, this is the technical lifetime of the unit.
-- [unit\_investment\_econ\_lifetime](@ref): using units as an example, this is the economic lifetime of the unit which is used to calculate the economic parameters.
-- [optional] [unit\_discount\_rate\_technology\_specific](@ref): using units as an example, this is used if you would like to have a specific discount rate different from [discount\_rate](@ref).
-- [optional] [unit\_lead\_time](@ref): if not specified, the default lead time is 0. 
-- [unit\_investment\_cost](@ref): using unit as an example, this is the investment cost for the investment year. Suppose you set [use\_economic\_represention](@ref) to `false`, then this cost that you put will not be discounted at all. However, if you set it to `true`, then SpineOpt will discount this cost to the [discount\_year](@ref) using [discount\_rate](@ref).
+- [lifetime\_technical](@ref): using units as an example, this is the technical lifetime of the unit.
+- [lifetime\_economic](@ref): using units as an example, this is the economic lifetime of the unit which is used to calculate the economic parameters.
+- [optional] [discount\_rate\_technology\_specific](@ref): using units as an example, this is used if you would like to have a specific discount rate different from [discount\_rate](@ref).
+- [optional] [lead\_time](@ref): if not specified, the default lead time is 0. 
+- [unit\_investment\_cost](@ref): using unit as an example, this is the investment cost for the investment year. Suppose you set [economic\_parameter\_preprocessing\_activate](@ref) to `false`, then this cost that you put will not be discounted at all. However, if you set it to `true`, then SpineOpt will discount this cost to the [discount\_year](@ref) using [discount\_rate](@ref).
 
 To be able to see the values of the economic parameters after a run, you have to add them to the report. 
 
 ![image](figs_multi-year/report.png)
 
 ## Not using economic parameters
-We start with the case if [use\_economic\_represention](@ref) is set to `false`, which means SpineOpt will not create and use its internally-calculated parameters for discounting investment and operation costs. A [unit\_investment\_cost](@ref) of 100 and a [vom\_cost](@ref) of 25 are not discouted at all. See the set-up below.
+We start with the case if [economic\_parameter\_preprocessing\_activate](@ref) is set to `false`, which means SpineOpt will not create and use its internally-calculated parameters for discounting investment and operation costs. A [unit\_investment\_cost](@ref) of 100 and a [vom\_cost](@ref) of 25 are not discouted at all. See the set-up below.
 
 ![image](figs_multi-year/use_economic_rep_false.png)
 
 ## Using economic parameters but not using milestone years
-Now we only change [use\_economic\_represention](@ref) to `true` while still keep [use\_milestone\_years](@ref) as `false` (default). This set-up indicates that we will use the internally-calculated parameters and continous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05.
+Now we only change [economic\_parameter\_preprocessing\_activate](@ref) to `true` while still keep [milestone\_years\_activate](@ref) as `false` (default). This set-up indicates that we will use the internally-calculated parameters and continous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05.
 
 `unit_discounted_duration` is used to discount operation costs so it has the resolution of the operational temporal block. However, since we only discount per year, this parameter value is constant within a year.
 
@@ -49,7 +49,7 @@ The rest is for discounting investment costs with the resolution of the investme
 ![image](figs_multi-year/unit_conversion_to_discounted_annuities.png)
 
 ## Using economic parameters and using milestone years
-Now we also change [use\_milestone\_years](@ref) to `true`. This indicates that we want operational temporal block to be discontinous and use the same milestone years as the investment temporal block. In this case, we need to change the definition of temporal blocks, see below picture. 
+Now we also change [milestone\_years\_activate](@ref) to `true`. This indicates that we want operational temporal block to be discontinous and use the same milestone years as the investment temporal block. In this case, we need to change the definition of temporal blocks, see below picture. 
 
 !!! info
     If you get confused why the temporal blocks are defined this way, I recommend going back to [Multi-year investments](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/capacity_planning/#Multi-year-investments) for details.

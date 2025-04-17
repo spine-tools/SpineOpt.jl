@@ -42,13 +42,13 @@ Before we can create the hydro power system, we'll have to define a model, tempo
 
 As for the report, we are typically interested in the outputs *node\_state*, *unit\_flows* and *connection\_flows*.
 
-### Nodes and commodities
+### Nodes and grids
 
 Nodes are at the center of a SpineOpt system, so let's start with that. There are other ways to model hydro power plants but here we represent each hydro power plant with 2 nodes, an 'upper' node to represent the water arriving at each plant and a 'lower' node to represent the water that is discharged and becomes available to the next plant. The general idea of splitting these in 2 nodes is to be able to simulate a time delay between the entrance and the exit (although in this tutorial we will not go in detail in this time delay).
 
 Additionally we need a node for electricity.
 
-Optionally, we can indicate that we are dealing with water flows and electricity production through *commodities*. Note that commodities are only indicative and are not strictly necessary. As in the picture below, we define a 'water' and an 'electricity' commodity and we connect these to the nodes with *node\_\_commodity* relations.
+Optionally, we can indicate that we are dealing with water flows and electricity production through *grids*. Note that grids are only indicative and are not strictly necessary. As in the picture below, we define a 'water' and an 'electricity' grid and we connect these to the nodes with *node\_\_grid* relations.
 
 ![Two hydro power plants in SpineOpt](figs_two_hydro/two_hydro_commodities_graph.png)
 
@@ -121,9 +121,9 @@ The result should look like this:
 
 ### Storage in nodes
 
-To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *has\_state* as True (be careful to not set it as a string but select the boolean true value). Then, we need to set the capacity of the reservoir by setting the *node\_state\_cap* parameter value.
+To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *node\_type* as `storage_node`. Then, we need to set the capacity of the reservoir by setting the *storage\_state\_max* parameter value.
 
-Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *fix\_node\_state* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
+Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *storage\_state\_fix* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
 
 ![storage Spranget](figs_two_hydro/two_hydro_spranget_storage.png)
 ![storage Fallet](figs_two_hydro/two_hydro_fallet_storage.png)
@@ -151,7 +151,7 @@ modifications to the initial model.
     name (e.g., *stored\_water*). This
     node will accumulate the water stored in the reservoirs at the end
     of the planning horizon. Associate the node with the water
-    commodity (see [node__commodity](../index.md#Assinging-commodities-to-nodes)).
+    grid (see [node__grid](../index.md#Assinging-commodities-to-nodes)).
 
 -   Add three more units (see [adding units](../index.md#Units)); two will
     transfer the water at the end of the planning horizon in the new
@@ -178,7 +178,7 @@ modifications to the initial model.
 
 -   Now we need to make some changes in object parameter values.
     -   Extend the planning horizon of the model by one time step
-    -   Remove the *fix\_node\_state*
+    -   Remove the *storage\_state\_fix*
         parameter values for the end of the optimization horizon as
         you seen in the following figure: double click on the *value* cell of the *Språnget\_upper* and *Fallet\_upper* nodes, select the third
         data row, right-click, select *Remove

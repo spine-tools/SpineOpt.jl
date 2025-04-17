@@ -11,7 +11,7 @@ SpineOpt offers flexibility to the users so that different things can be modeled
 ## Economic representation
 
 ### Parameters
-It can be tricky to put the correct cost parameters into the model since factors like discounting and end-of-lifetime effects have to be taken into account. For that purpose, SpineOpt has incorporated some dedicated parameters for economic representation. Set `use_economic_representation` to `true` will activate these paramters.
+It can be tricky to put the correct cost parameters into the model since factors like discounting and end-of-lifetime effects have to be taken into account. For that purpose, SpineOpt has incorporated some dedicated parameters for economic representation. Set `economic_parameter_preprocessing_activate` to `true` will activate these paramters.
 
 **Discounted annuities**
 
@@ -35,7 +35,7 @@ The technology specific discount factor can be used, if e.g. investments in a ce
 
 ### Adaptions objective terms
 
-When `use_economic_representation` is set to `true`:
+When `economic_parameter_preprocessing_activate` is set to `true`:
 
 - Investment costs are multiplied with discounted annuties conversion factor and the technological discount factor and (1 - salvage fraction).
 
@@ -45,9 +45,9 @@ When `use_economic_representation` is set to `true`:
 
 More information can be found in the following files.
 
-- [Economic representation in SpineOpt](https://github.com/Spine-project/SpineOpt.jl/files/9130471/Spine_invest.3.pdf) contains the details of the calculation of the economic prameters. Note that this document covers more concepts than what is currently available in SpineOpt (the available ones are the parameters listed above and the adaptions in the objective), the rest is under development.
+- [Economic representation in SpineOpt](https://github.com/Spine-project/SpineOpt.jl/files/9130471/Spine_invest.3.pdf) contains the details of the calculation of the economic parameters. Note that this document covers more concepts than what is currently available in SpineOpt (the available ones are the parameters listed above and the adaptions in the objective), the rest is under development.
 
 - [Economic parameters calculation tool](https://github.com/Spine-project/SpineOpt.jl/files/9130469/parameter_illustration.2.xlsx) is an excel tool that you can use to calculate the economic parameters on your own.
 
 !!! warning
-    Please also note that the use of economic representation in SpineOpt does not support rolling horizon and Benders' decomposition, which warrants future improvements.
+    Please also note that the use of economic representation in SpineOpt (that is, setting `economic_parameter_preprocessing_activate` to `true`) does not support rolling horizon and Benders' decomposition, which warrants future improvements.

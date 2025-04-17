@@ -30,7 +30,7 @@ function nonspin_units_started_up_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     node = intersect(SpineOpt.node(is_reserve_node=true, is_non_spinning=true), members(node))
     (

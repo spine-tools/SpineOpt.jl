@@ -36,7 +36,7 @@ function connection_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     node = members(node)
     (
@@ -59,8 +59,8 @@ function connection_flow_ub(m; connection, node, direction, kwargs...)
         || members(node) != [node]
     ) && return NaN
     connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
-        + number_of_connections(m; connection=connection, kwargs..., _default=1)
-        + something(candidate_connections(m; connection=connection, kwargs...), 0)
+        + existing_connections(m; connection=connection, kwargs..., _default=1)
+        + something(investment_count_max_cumulative(m; connection=connection, kwargs...), 0)
     )
 end
 

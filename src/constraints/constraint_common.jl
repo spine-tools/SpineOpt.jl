@@ -156,10 +156,10 @@ function _default_parameter_value(p::Parameter, entity_class::Union{ObjectClass,
     return _default.value
 end
 
-_default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(number_of_storages, node)
-_default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(number_of_units, unit)
+_default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(existing_storages, node)
+_default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(existing_units, unit)
 _default_nb_of_conns(conn::Object) = is_candidate(connection=conn) ? 
-    0 : _default_parameter_value(number_of_connections, connection)
+    0 : _default_parameter_value(existing_connections, connection)
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
 

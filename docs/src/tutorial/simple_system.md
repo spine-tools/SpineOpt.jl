@@ -105,7 +105,7 @@ A SpineOpt database is a spine database but a spine database is not necessarily 
     click on **File -> Import...**, and then select the template file you previously
     downloaded (*spineopt\_template.json*). The contents of that file will be 
     imported into the current database, and you should then see classes like 
-    'commodity', 'connection' and 'model' in the entity tree.
+    'connection', 'grid' and 'model' in the entity tree.
 
 -   To save our changes, press the **Commit** button in the toolbar.
     Enter a commit message, e.g. 'Import SpineOpt template', in the popup dialog
@@ -304,11 +304,11 @@ value table, select
 
 -   *entity\_by\_name*: 'fuel' node
 
--   *parameter\_name*: *balance\_type*
+-   *parameter\_name*: *node\_type*
 
 -   *alternative\_name*: *Base*
 
--   *value*: *balance\_type\_none*
+-   *value*: *no\_balance*
 
 ![image](figs_simple_system/simple_system_fuel_balance_type.png)
 

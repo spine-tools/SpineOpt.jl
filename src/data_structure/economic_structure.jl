@@ -22,19 +22,19 @@
     generate_economic_structure!(m)
 """
 function generate_economic_structure!(m; log_level=3)
-    use_economic_representation(model=m.ext[:spineopt].instance) || return
+    economic_parameter_preprocessing_activate(model=m.ext[:spineopt].instance) || return
     if !isnothing(roll_forward(model=m.ext[:spineopt].instance))
-        error("Using economic representation with rolling horizon is currently not supported.")
+        error("Using economic parameter preprocessing with rolling horizon is currently not supported.")
     elseif model_type(model=m.ext[:spineopt].instance) === :spineopt_benders 
-        error("Using economic representation with Benders' decomposition is currently not supported.")
+        error("Using economic parameter preprocessing with Benders' decomposition is currently not supported.")
     end
-    # use_economic_representation == true without defining investment temporal blocks will break the investment cost calculation
+    # economic_parameter_preprocessing_activate == true without defining investment temporal blocks will break the investment cost calculation
     # in such cases, user would only need to discount operational costs manually
     if isempty(model__default_investment_temporal_block()) &&
        isempty(node__investment_temporal_block()) &&
        isempty(unit__investment_temporal_block()) &&
        isempty(connection__investment_temporal_block())
-        error("Using economic representation without defining investment temporal blocks is currently not supported.")
+        error("Using economic parameter preprocessing without defining investment temporal blocks is currently not supported.")
     end
     economic_parameters = _create_set_parameters_and_relationships()
     for (obj, name) in [(unit, :unit), (node, :storage), (connection, :connection)]
@@ -65,11 +65,11 @@ function _create_set_parameters_and_relationships()
             :set_investment_indices => units_invested_available_indices,
             :set_invest_temporal_block => unit__investment_temporal_block,
             :set_invest_stoch_struct => unit__investment_stochastic_structure,
-            :set_lead_time => unit_lead_time,
-            :set_tech_lifetime => unit_investment_tech_lifetime,
-            :set_econ_lifetime => unit_investment_econ_lifetime,
-            :set_discnt_rate_tech => unit_discount_rate_technology_specific,
-            :set_decom_time => unit_decommissioning_time,
+            :set_lead_time => lead_time,
+            :set_tech_lifetime => lifetime_technical,
+            :set_econ_lifetime => lifetime_economic,
+            :set_discnt_rate_tech => discount_rate_technology_specific,
+            :set_decom_time => decommissioning_time,
             :set_decom_cost => unit_decommissioning_cost,
             :set_capacity_transfer_factor => :unit_capacity_transfer_factor,
             :set_conversion_to_discounted_annuities => :unit_conversion_to_discounted_annuities,
@@ -83,8 +83,8 @@ function _create_set_parameters_and_relationships()
             :set_invest_temporal_block => node__investment_temporal_block,
             :set_invest_stoch_struct => node__investment_stochastic_structure,
             :set_lead_time => storage_lead_time,
-            :set_tech_lifetime => storage_investment_tech_lifetime,
-            :set_econ_lifetime => storage_investment_econ_lifetime,
+            :set_tech_lifetime => storage_lifetime_technical,
+            :set_econ_lifetime => storage_lifetime_economic,
             :set_discnt_rate_tech => storage_discount_rate_technology_specific,
             :set_decom_time => storage_decommissioning_time,
             :set_decom_cost => storage_decommissioning_cost,
@@ -99,12 +99,12 @@ function _create_set_parameters_and_relationships()
             :set_investment_indices => connections_invested_available_indices,
             :set_invest_temporal_block => connection__investment_temporal_block,
             :set_invest_stoch_struct => connection__investment_stochastic_structure,
-            :set_lead_time => connection_lead_time,
-            :set_tech_lifetime => connection_investment_tech_lifetime,
-            :set_econ_lifetime => connection_investment_econ_lifetime,
-            :set_discnt_rate_tech => connection_discount_rate_technology_specific,
-            :set_decom_time => connection_decommissioning_time,
-            :set_decom_cost => connection_decommissioning_cost,
+            :set_lead_time => lead_time,
+            :set_tech_lifetime => lifetime_technical,
+            :set_econ_lifetime => lifetime_economic,
+            :set_discnt_rate_tech => discount_rate_technology_specific,
+            :set_decom_time => decommissioning_time,
+            :set_decom_cost => decommissioning_cost,
             :set_capacity_transfer_factor => :connection_capacity_transfer_factor,
             :set_conversion_to_discounted_annuities => :connection_conversion_to_discounted_annuities,
             :set_salvage_fraction => :connection_salvage_fraction,
@@ -512,7 +512,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
     invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     param_name = economic_parameters[obj_cls][:set_discounted_duration]
 
-    if use_milestone_years(model=instance)
+    if milestone_years_activate(model=instance)
         for id in obj_cls()
             if isempty(invest_temporal_block()) || isempty(invest_temporal_block(; Dict(obj_cls.name => id)...))
                 invest_temporal_block_ = model__default_investment_temporal_block(model=instance)

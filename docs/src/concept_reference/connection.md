@@ -1,8 +1,8 @@
-A [connection](@ref) represents a transfer of one [commodity](@ref) over space.
+A [connection](@ref) represents a transfer of one commodity over space.
 For example, an electricity transmission line, a gas pipe, a river branch,
 can be modelled using a [connection](@ref).
 
-A [connection](@ref) always takes [commodities](@ref commodity) from one or more [node](@ref)s, and releases them to
+A [connection](@ref) always takes commodities from one or more [node](@ref)s, and releases them to
 one or more (possibly the same) [node](@ref)s.
 The former are specificed through the [connection\_\_from\_node](@ref) relationship,
 and the latter through [connection\_\_to\_node](@ref).
