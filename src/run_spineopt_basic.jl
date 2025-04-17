@@ -920,7 +920,9 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
     _save_bound_marginal_values!(m, reduced_cost_fallback)
-    if isdefined(Threads, Symbol("@spawn"))
+    #if isdefined(Threads, Symbol("@spawn"))
+    # threading doesn't seem to work
+    if 1 == 0
         task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
         lock(m.ext[:spineopt].dual_solves_lock)
         try
