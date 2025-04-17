@@ -114,25 +114,6 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
                 for (u, s, t) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t1);
                 init=0)    
     
-    
-    println("NEW CONSTRAINT")
-    println(t_after)
-    for (u, n, d, s, t) in unit_flow_indices(
-        m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
-    )
-        # println("t_before")
-        # println(t_before)
-        # println(t)
-        # println("overlap duration")
-        # println(overlap_duration(t_before, t))
-        # println("overlap_duration_flow")
-        # println(overlap_duration_flow(t_before))
-        println(n)
-        println(t)
-        println(s)
-    end
-    
-
     @build_constraint(
         + sum(
             + unit_flow[u, n, d, s, t] * overlap_duration(t_before, t)
