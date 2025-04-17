@@ -290,7 +290,7 @@ function test_connection_history_parameters()
     end
 end
  
-function test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+function _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -330,7 +330,7 @@ function test_unit_flow_simple_bounds()
         m_end = m_start + Hour(2)
         fruf = 0.8
         cap_to_node = 200
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_linear"],
         ]
@@ -622,7 +622,7 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
     end
 end
  
-function test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+function _test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -660,7 +660,7 @@ function test_fix_ratio_out_in_connection_flow_simple()
         m_start = DateTime(2000, 1, 1, 0)
         m_end = m_start + Hour(2)
         frcf = 0.8
-        url_in = test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+        url_in = _test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
         rel_pvals = [
             ["connection__node__node", ["conn_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", frcf],
         ]
@@ -734,6 +734,7 @@ end
     test_unit_online_variable_type_none()
     test_unit_history_parameters()
     test_connection_history_parameters()
+    test_unit_flow_simple_bounds()
     test_fix_ratio_out_in_unit_flow_simple()
     test_fix_ratio_in_out_unit_flow_simple()
     test_two_fix_ratio_out_in_unit_flow_simple()
