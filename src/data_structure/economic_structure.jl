@@ -22,7 +22,7 @@
     generate_economic_structure!(m)
 """
 function generate_economic_structure!(m; log_level=3)
-    use_economic_representation(model=m.ext[:spineopt].instance) || return
+    !isnothing(use_economic_representation(model=m.ext[:spineopt].instance)) || return
     if !isnothing(roll_forward(model=m.ext[:spineopt].instance))
         error("Using economic representation with rolling horizon is currently not supported.")
     elseif model_type(model=m.ext[:spineopt].instance) === :spineopt_benders 
@@ -512,7 +512,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
     invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     param_name = economic_parameters[obj_cls][:set_discounted_duration]
 
-    if use_milestone_years(model=instance)
+    if use_economic_representation(model=instance) == :milestone_years
         for id in obj_cls()
             if isempty(invest_temporal_block()) || isempty(invest_temporal_block(; Dict(obj_cls.name => id)...))
                 invest_temporal_block_ = model__default_investment_temporal_block(model=instance)
@@ -546,7 +546,8 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
             end
             add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
         end
-    else # if not using milestone years, we only need a discount rate for each year 
+    elseif  use_economic_representation(model=instance) == :consecutive_years 
+    # if using consecutive years, we only need a discount rate for each year 
         for id in obj_cls()
             timeseries_ind = []
             timeseries_val = []
