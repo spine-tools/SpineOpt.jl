@@ -1,1389 +1,4 @@
 {
-    "parameter_values": [
-        [
-            "model",
-            "simple",
-            "discount_rate",
-            0.05,
-            "Base"
-        ],
-        [
-            "model",
-            "simple",
-            "discount_year",
-            {
-                "data": "1990-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "model",
-            "simple",
-            "model_end",
-            {
-                "data": "2006-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "model",
-            "simple",
-            "model_start",
-            {
-                "data": "2000-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "model",
-            "simple",
-            "use_economic_representation",
-            "milestone_years",
-            "Base"
-        ],
-        [
-            "node",
-            "electricity",
-            "demand",
-            {
-                "data": {
-                    "2000-01-01T00:00:00.0": 100.0,
-                    "2000-05-01T00:00:00.0": 100.0,
-                    "2000-09-01T00:00:00.0": 100.0,
-                    "2001-01-01T00:00:00.0": 0.0,
-                    "2001-05-01T00:00:00.0": 0.0,
-                    "2001-09-01T00:00:00.0": 0.0,
-                    "2002-01-01T00:00:00.0": 0.0,
-                    "2002-05-01T00:00:00.0": 0.0,
-                    "2002-09-01T00:00:00.0": 0.0,
-                    "2003-01-01T00:00:00.0": 0.0,
-                    "2003-05-01T00:00:00.0": 0.0,
-                    "2003-09-01T00:00:00.0": 0.0,
-                    "2004-01-01T00:00:00.0": 0.0,
-                    "2004-05-01T00:00:00.0": 0.0,
-                    "2004-09-01T00:00:00.0": 0.0,
-                    "2005-01-01T00:00:00.0": 100.0,
-                    "2005-05-01T00:00:00.0": 100.0,
-                    "2005-09-01T00:00:00.0": 100.0
-                },
-                "type": "time_series"
-            },
-            "Base"
-        ],
-        [
-            "node",
-            "fuel",
-            "balance_type",
-            "balance_type_none",
-            "Base"
-        ],
-        [
-            "output",
-            "binary_gas_connection_flow",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_binary_gas_connection_flow",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_connection_flow",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_connection_intact_flow",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_connections_decommissioned",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_connections_invested",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_connections_invested_available",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_min_capacity_margin_slack",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_node_injection",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_node_pressure",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_node_slack_neg",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_node_slack_pos",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_node_state",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_node_voltage_angle",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_nonspin_units_shut_down",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_nonspin_units_started_up",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_storages_decommissioned",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_storages_invested",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_storages_invested_available",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_unit_flow",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_unit_flow_op",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_unit_flow_op_active",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_invested",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_invested_available",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_mothballed",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_on",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_out_of_service",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_returned_to_service",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_shut_down",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_started_up",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_units_taken_out_of_service",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_user_constraint_slack_neg",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "bound_user_constraint_slack_pos",
-            "output_type",
-            "variable_reduced_cost",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_avg_intact_throughflow",
-            "output_type",
-            "postprocess_value",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_avg_throughflow",
-            "output_type",
-            "postprocess_value",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_conversion_to_discounted_annuities",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_discounted_duration",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_flow",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_flow_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_intact_flow",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_investment_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_salvage_fraction",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "connection_tech_discount_factor",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "connections_decommissioned",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "connections_invested",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "connections_invested_available",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_compression_ratio",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connection_flow_capacity",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connection_flow_gas_capacity",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connection_flow_lodf",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connection_intact_flow_ptdf",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connection_lifetime",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connection_unitary_gas_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connections_invested_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_connections_invested_transition",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_cyclic_node_state",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_node_pressure_point",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_in_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_in_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_out_in_connection_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_out_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_out_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_investment_group_equal_investments",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_investment_group_maximum_capacity_invested_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_investment_group_maximum_entities_invested_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_investment_group_minimum_capacity_invested_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_investment_group_minimum_entities_invested_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_node_pressure",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_node_voltage_angle",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_in_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_in_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_out_in_connection_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_out_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_out_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_total_cumulated_unit_flow_from_node",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_total_cumulated_unit_flow_to_node",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_capacity_margin",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_down_time",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_node_pressure",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_node_voltage_angle",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_ratio_in_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_ratio_in_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_ratio_out_in_connection_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_ratio_out_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_ratio_out_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_scheduled_outage_duration",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_total_cumulated_unit_flow_from_node",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_total_cumulated_unit_flow_to_node",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_up_time",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_minimum_operating_point",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_nodal_balance",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_node_injection",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_node_state_capacity",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_node_voltage_angle",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_non_spinning_reserves_lower_bound",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_non_spinning_reserves_shut_down_upper_bound",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_non_spinning_reserves_start_up_upper_bound",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_operating_point_bounds",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_operating_point_rank",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_ramp_down",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_ramp_up",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_storage_lifetime",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_storage_line_pack",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_storages_invested_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_storages_invested_transition",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_unit_flow_capacity",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_unit_flow_op_bounds",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_unit_flow_op_rank",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_unit_flow_op_sum",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_unit_lifetime",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_unit_state_transition",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_units_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_units_invested_available",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_units_invested_transition",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_units_out_of_service_contiguity",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_units_out_of_service_transition",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_user_constraint",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "contingency_is_binding",
-            "output_type",
-            "postprocess_value",
-            "Base"
-        ],
-        [
-            "output",
-            "fixed_om_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "fuel_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "mga_objective",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "mp_objective_lowerbound",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "node_injection",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "node_pressure",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "node_slack_neg",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "node_slack_pos",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "node_state",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "node_voltage_angle",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "nonspin_units_shut_down",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "nonspin_units_started_up",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "objective_penalties",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "relative_optimality_gap",
-            "output_type",
-            "solving_info",
-            "Base"
-        ],
-        [
-            "output",
-            "renewable_curtailment_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "res_proc_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "shut_down_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "start_up_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "storage_conversion_to_discounted_annuities",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "storage_discounted_duration",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "storage_investment_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "storage_salvage_fraction",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "storage_tech_discount_factor",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "storages_decommissioned",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "storages_invested",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "storages_invested_available",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "taxes",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "total_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_conversion_to_discounted_annuities",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_discounted_duration",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_flow",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_flow_op",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_flow_op_active",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_investment_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_salvage_fraction",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "unit_tech_discount_factor",
-            "output_type",
-            "derived_parameter",
-            "Base"
-        ],
-        [
-            "output",
-            "units_invested",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "units_invested_available",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "units_mothballed",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "units_on",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "units_on_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "output",
-            "units_shut_down",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "units_started_up",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "variable_om_costs",
-            "output_type",
-            "objective",
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "investment",
-            "block_end",
-            {
-                "data": "2006-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "investment",
-            "block_start",
-            {
-                "data": "2000-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "investment",
-            "resolution",
-            {
-                "data": "5Y",
-                "type": "duration"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "operation1",
-            "block_end",
-            {
-                "data": "2001-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "operation1",
-            "block_start",
-            {
-                "data": "2000-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "operation1",
-            "resolution",
-            {
-                "data": "4M",
-                "type": "duration"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "operation2",
-            "block_end",
-            {
-                "data": "2004-09-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "operation2",
-            "block_start",
-            {
-                "data": "2006-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "operation2",
-            "resolution",
-            {
-                "data": "4M",
-                "type": "duration"
-            },
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant",
-            "candidate_units",
-            1,
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant",
-            "number_of_units",
-            0,
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant",
-            "unit_discount_rate_technology_specific",
-            0.07,
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant",
-            "unit_investment_cost",
-            100,
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant",
-            "unit_investment_econ_lifetime",
-            {
-                "data": "10Y",
-                "type": "duration"
-            },
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant",
-            "unit_investment_tech_lifetime",
-            {
-                "data": "10Y",
-                "type": "duration"
-            },
-            "Base"
-        ],
-        [
-            "unit__from_node",
-            [
-                "power_plant",
-                "fuel"
-            ],
-            "vom_cost",
-            25,
-            "Base"
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant",
-                "electricity",
-                "fuel"
-            ],
-            "fix_ratio_out_in_unit_flow",
-            1,
-            "Base"
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant",
-                "electricity"
-            ],
-            "unit_capacity",
-            100,
-            "Base"
-        ]
-    ],
     "entity_classes": [
         [
             "commodity",
@@ -1957,10 +572,1551 @@
             true
         ]
     ],
-    "alternatives": [
+    "entities": [
         [
+            "model",
+            "simple",
+            null
+        ],
+        [
+            "node",
+            "electricity",
+            null
+        ],
+        [
+            "node",
+            "fuel",
+            null
+        ],
+        [
+            "output",
+            "binary_gas_connection_flow",
+            null
+        ],
+        [
+            "output",
+            "bound_binary_gas_connection_flow",
+            null
+        ],
+        [
+            "output",
+            "bound_connection_flow",
+            null
+        ],
+        [
+            "output",
+            "bound_connection_intact_flow",
+            null
+        ],
+        [
+            "output",
+            "bound_connections_decommissioned",
+            null
+        ],
+        [
+            "output",
+            "bound_connections_invested",
+            null
+        ],
+        [
+            "output",
+            "bound_connections_invested_available",
+            null
+        ],
+        [
+            "output",
+            "bound_min_capacity_margin_slack",
+            null
+        ],
+        [
+            "output",
+            "bound_node_injection",
+            null
+        ],
+        [
+            "output",
+            "bound_node_pressure",
+            null
+        ],
+        [
+            "output",
+            "bound_node_slack_neg",
+            null
+        ],
+        [
+            "output",
+            "bound_node_slack_pos",
+            null
+        ],
+        [
+            "output",
+            "bound_node_state",
+            null
+        ],
+        [
+            "output",
+            "bound_node_voltage_angle",
+            null
+        ],
+        [
+            "output",
+            "bound_nonspin_units_shut_down",
+            null
+        ],
+        [
+            "output",
+            "bound_nonspin_units_started_up",
+            null
+        ],
+        [
+            "output",
+            "bound_storages_decommissioned",
+            null
+        ],
+        [
+            "output",
+            "bound_storages_invested",
+            null
+        ],
+        [
+            "output",
+            "bound_storages_invested_available",
+            null
+        ],
+        [
+            "output",
+            "bound_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "bound_unit_flow_op",
+            null
+        ],
+        [
+            "output",
+            "bound_unit_flow_op_active",
+            null
+        ],
+        [
+            "output",
+            "bound_units_invested",
+            null
+        ],
+        [
+            "output",
+            "bound_units_invested_available",
+            null
+        ],
+        [
+            "output",
+            "bound_units_mothballed",
+            null
+        ],
+        [
+            "output",
+            "bound_units_on",
+            null
+        ],
+        [
+            "output",
+            "bound_units_out_of_service",
+            null
+        ],
+        [
+            "output",
+            "bound_units_returned_to_service",
+            null
+        ],
+        [
+            "output",
+            "bound_units_shut_down",
+            null
+        ],
+        [
+            "output",
+            "bound_units_started_up",
+            null
+        ],
+        [
+            "output",
+            "bound_units_taken_out_of_service",
+            null
+        ],
+        [
+            "output",
+            "bound_user_constraint_slack_neg",
+            null
+        ],
+        [
+            "output",
+            "bound_user_constraint_slack_pos",
+            null
+        ],
+        [
+            "output",
+            "connection_avg_intact_throughflow",
+            null
+        ],
+        [
+            "output",
+            "connection_avg_throughflow",
+            null
+        ],
+        [
+            "output",
+            "connection_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "connection_discounted_duration",
+            null
+        ],
+        [
+            "output",
+            "connection_flow",
+            null
+        ],
+        [
+            "output",
+            "connection_flow_costs",
+            null
+        ],
+        [
+            "output",
+            "connection_intact_flow",
+            null
+        ],
+        [
+            "output",
+            "connection_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "connection_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "connection_tech_discount_factor",
+            null
+        ],
+        [
+            "output",
+            "connections_decommissioned",
+            null
+        ],
+        [
+            "output",
+            "connections_invested",
+            null
+        ],
+        [
+            "output",
+            "connections_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_compression_ratio",
+            null
+        ],
+        [
+            "output",
+            "constraint_connection_flow_capacity",
+            null
+        ],
+        [
+            "output",
+            "constraint_connection_flow_gas_capacity",
+            null
+        ],
+        [
+            "output",
+            "constraint_connection_flow_lodf",
+            null
+        ],
+        [
+            "output",
+            "constraint_connection_intact_flow_ptdf",
+            null
+        ],
+        [
+            "output",
+            "constraint_connection_lifetime",
+            null
+        ],
+        [
+            "output",
+            "constraint_connection_unitary_gas_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_connections_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_connections_invested_transition",
+            null
+        ],
+        [
+            "output",
+            "constraint_cyclic_node_state",
+            null
+        ],
+        [
+            "output",
+            "constraint_fix_node_pressure_point",
+            null
+        ],
+        [
+            "output",
+            "constraint_fix_ratio_in_in_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_fix_ratio_in_out_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_fix_ratio_out_in_connection_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_fix_ratio_out_in_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_fix_ratio_out_out_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_investment_group_equal_investments",
+            null
+        ],
+        [
+            "output",
+            "constraint_investment_group_maximum_capacity_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_investment_group_maximum_entities_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_investment_group_minimum_capacity_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_investment_group_minimum_entities_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_node_pressure",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_node_voltage_angle",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_ratio_in_in_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_ratio_in_out_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_ratio_out_in_connection_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_ratio_out_in_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_ratio_out_out_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_total_cumulated_unit_flow_from_node",
+            null
+        ],
+        [
+            "output",
+            "constraint_max_total_cumulated_unit_flow_to_node",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_capacity_margin",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_down_time",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_node_pressure",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_node_voltage_angle",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_ratio_in_in_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_ratio_in_out_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_ratio_out_in_connection_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_ratio_out_in_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_ratio_out_out_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_scheduled_outage_duration",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_total_cumulated_unit_flow_from_node",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_total_cumulated_unit_flow_to_node",
+            null
+        ],
+        [
+            "output",
+            "constraint_min_up_time",
+            null
+        ],
+        [
+            "output",
+            "constraint_minimum_operating_point",
+            null
+        ],
+        [
+            "output",
+            "constraint_nodal_balance",
+            null
+        ],
+        [
+            "output",
+            "constraint_node_injection",
+            null
+        ],
+        [
+            "output",
+            "constraint_node_state_capacity",
+            null
+        ],
+        [
+            "output",
+            "constraint_node_voltage_angle",
+            null
+        ],
+        [
+            "output",
+            "constraint_non_spinning_reserves_lower_bound",
+            null
+        ],
+        [
+            "output",
+            "constraint_non_spinning_reserves_shut_down_upper_bound",
+            null
+        ],
+        [
+            "output",
+            "constraint_non_spinning_reserves_start_up_upper_bound",
+            null
+        ],
+        [
+            "output",
+            "constraint_operating_point_bounds",
+            null
+        ],
+        [
+            "output",
+            "constraint_operating_point_rank",
+            null
+        ],
+        [
+            "output",
+            "constraint_ramp_down",
+            null
+        ],
+        [
+            "output",
+            "constraint_ramp_up",
+            null
+        ],
+        [
+            "output",
+            "constraint_storage_lifetime",
+            null
+        ],
+        [
+            "output",
+            "constraint_storage_line_pack",
+            null
+        ],
+        [
+            "output",
+            "constraint_storages_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_storages_invested_transition",
+            null
+        ],
+        [
+            "output",
+            "constraint_unit_flow_capacity",
+            null
+        ],
+        [
+            "output",
+            "constraint_unit_flow_op_bounds",
+            null
+        ],
+        [
+            "output",
+            "constraint_unit_flow_op_rank",
+            null
+        ],
+        [
+            "output",
+            "constraint_unit_flow_op_sum",
+            null
+        ],
+        [
+            "output",
+            "constraint_unit_lifetime",
+            null
+        ],
+        [
+            "output",
+            "constraint_unit_state_transition",
+            null
+        ],
+        [
+            "output",
+            "constraint_units_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_units_invested_available",
+            null
+        ],
+        [
+            "output",
+            "constraint_units_invested_transition",
+            null
+        ],
+        [
+            "output",
+            "constraint_units_out_of_service_contiguity",
+            null
+        ],
+        [
+            "output",
+            "constraint_units_out_of_service_transition",
+            null
+        ],
+        [
+            "output",
+            "constraint_user_constraint",
+            null
+        ],
+        [
+            "output",
+            "contingency_is_binding",
+            null
+        ],
+        [
+            "output",
+            "fixed_om_costs",
+            null
+        ],
+        [
+            "output",
+            "fuel_costs",
+            null
+        ],
+        [
+            "output",
+            "mga_objective",
+            null
+        ],
+        [
+            "output",
+            "mp_objective_lowerbound",
+            null
+        ],
+        [
+            "output",
+            "node_injection",
+            null
+        ],
+        [
+            "output",
+            "node_pressure",
+            null
+        ],
+        [
+            "output",
+            "node_slack_neg",
+            null
+        ],
+        [
+            "output",
+            "node_slack_pos",
+            null
+        ],
+        [
+            "output",
+            "node_state",
+            null
+        ],
+        [
+            "output",
+            "node_voltage_angle",
+            null
+        ],
+        [
+            "output",
+            "nonspin_units_shut_down",
+            null
+        ],
+        [
+            "output",
+            "nonspin_units_started_up",
+            null
+        ],
+        [
+            "output",
+            "objective_penalties",
+            null
+        ],
+        [
+            "output",
+            "relative_optimality_gap",
+            null
+        ],
+        [
+            "output",
+            "renewable_curtailment_costs",
+            null
+        ],
+        [
+            "output",
+            "res_proc_costs",
+            null
+        ],
+        [
+            "output",
+            "shut_down_costs",
+            null
+        ],
+        [
+            "output",
+            "start_up_costs",
+            null
+        ],
+        [
+            "output",
+            "storage_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "storage_discounted_duration",
+            null
+        ],
+        [
+            "output",
+            "storage_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "storage_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "storage_tech_discount_factor",
+            null
+        ],
+        [
+            "output",
+            "storages_decommissioned",
+            null
+        ],
+        [
+            "output",
+            "storages_invested",
+            null
+        ],
+        [
+            "output",
+            "storages_invested_available",
+            null
+        ],
+        [
+            "output",
+            "taxes",
+            null
+        ],
+        [
+            "output",
+            "total_costs",
+            null
+        ],
+        [
+            "output",
+            "unit_conversion_to_discounted_annuities",
+            null
+        ],
+        [
+            "output",
+            "unit_discounted_duration",
+            null
+        ],
+        [
+            "output",
+            "unit_flow",
+            null
+        ],
+        [
+            "output",
+            "unit_flow_op",
+            null
+        ],
+        [
+            "output",
+            "unit_flow_op_active",
+            null
+        ],
+        [
+            "output",
+            "unit_investment_costs",
+            null
+        ],
+        [
+            "output",
+            "unit_salvage_fraction",
+            null
+        ],
+        [
+            "output",
+            "unit_tech_discount_factor",
+            null
+        ],
+        [
+            "output",
+            "units_invested",
+            null
+        ],
+        [
+            "output",
+            "units_invested_available",
+            null
+        ],
+        [
+            "output",
+            "units_mothballed",
+            null
+        ],
+        [
+            "output",
+            "units_on",
+            null
+        ],
+        [
+            "output",
+            "units_on_costs",
+            null
+        ],
+        [
+            "output",
+            "units_shut_down",
+            null
+        ],
+        [
+            "output",
+            "units_started_up",
+            null
+        ],
+        [
+            "output",
+            "variable_om_costs",
+            null
+        ],
+        [
+            "report",
+            "report1",
+            null
+        ],
+        [
+            "stochastic_scenario",
+            "realization",
+            null
+        ],
+        [
+            "stochastic_structure",
+            "deterministic",
+            null
+        ],
+        [
+            "temporal_block",
+            "investment",
+            null
+        ],
+        [
+            "temporal_block",
+            "operation1",
+            null
+        ],
+        [
+            "temporal_block",
+            "operation2",
+            null
+        ],
+        [
+            "unit",
+            "power_plant",
+            null
+        ],
+        [
+            "model__default_investment_temporal_block",
+            [
+                "simple",
+                "investment"
+            ],
+            null
+        ],
+        [
+            "model__default_stochastic_structure",
+            [
+                "simple",
+                "deterministic"
+            ],
+            null
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "operation1"
+            ],
+            null
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "operation2"
+            ],
+            null
+        ],
+        [
+            "model__report",
+            [
+                "simple",
+                "report1"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "total_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_conversion_to_discounted_annuities"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_discounted_duration"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_investment_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_salvage_fraction"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_tech_discount_factor"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_invested"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "variable_om_costs"
+            ],
+            null
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            [
+                "deterministic",
+                "realization"
+            ],
+            null
+        ],
+        [
+            "unit__from_node",
+            [
+                "power_plant",
+                "fuel"
+            ],
+            null
+        ],
+        [
+            "unit__investment_temporal_block",
+            [
+                "power_plant",
+                "investment"
+            ],
+            null
+        ],
+        [
+            "unit__to_node",
+            [
+                "power_plant",
+                "electricity"
+            ],
+            null
+        ],
+        [
+            "unit__node__node",
+            [
+                "power_plant",
+                "electricity",
+                "fuel"
+            ],
+            null
+        ]
+    ],
+    "entity_alternatives": [
+        [
+            "model",
+            [
+                "simple"
+            ],
             "Base",
-            "Base alternative"
+            true
+        ],
+        [
+            "model__default_investment_temporal_block",
+            [
+                "simple",
+                "investment"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "model__default_stochastic_structure",
+            [
+                "simple",
+                "deterministic"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "operation1"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "operation2"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "model__report",
+            [
+                "simple",
+                "report1"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "node",
+            [
+                "electricity"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "node",
+            [
+                "fuel"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "report",
+            [
+                "report1"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_conversion_to_discounted_annuities"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_discounted_duration"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_salvage_fraction"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_tech_discount_factor"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_invested"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "stochastic_scenario",
+            [
+                "realization"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "stochastic_structure",
+            [
+                "deterministic"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            [
+                "deterministic",
+                "realization"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "temporal_block",
+            [
+                "investment"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "temporal_block",
+            [
+                "operation1"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "temporal_block",
+            [
+                "operation2"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "unit",
+            [
+                "power_plant"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "unit__from_node",
+            [
+                "power_plant",
+                "fuel"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "unit__investment_temporal_block",
+            [
+                "power_plant",
+                "investment"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "unit__node__node",
+            [
+                "power_plant",
+                "electricity",
+                "fuel"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "unit__to_node",
+            [
+                "power_plant",
+                "electricity"
+            ],
+            "Base",
+            true
+        ]
+    ],
+    "parameter_value_lists": [
+        [
+            "balance_type_list",
+            "balance_type_group"
+        ],
+        [
+            "balance_type_list",
+            "balance_type_node"
+        ],
+        [
+            "balance_type_list",
+            "balance_type_none"
+        ],
+        [
+            "boolean_value_list",
+            false
+        ],
+        [
+            "boolean_value_list",
+            true
+        ],
+        [
+            "commodity_physics_list",
+            "commodity_physics_lodf"
+        ],
+        [
+            "commodity_physics_list",
+            "commodity_physics_none"
+        ],
+        [
+            "commodity_physics_list",
+            "commodity_physics_ptdf"
+        ],
+        [
+            "connection_investment_variable_type_list",
+            "connection_investment_variable_type_continuous"
+        ],
+        [
+            "connection_investment_variable_type_list",
+            "connection_investment_variable_type_integer"
+        ],
+        [
+            "connection_type_list",
+            "connection_type_lossless_bidirectional"
+        ],
+        [
+            "connection_type_list",
+            "connection_type_normal"
+        ],
+        [
+            "constraint_sense_list",
+            "<="
+        ],
+        [
+            "constraint_sense_list",
+            "=="
+        ],
+        [
+            "constraint_sense_list",
+            ">="
+        ],
+        [
+            "db_lp_solver_list",
+            "CDCS.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "CDDLib.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "Clp.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "COSMO.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "CPLEX.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "CSDP.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "ECOS.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "GLPK.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "Gurobi.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "HiGHS.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "Hypatia.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "Ipopt.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "KNITRO.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "MadNLP.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "MosekTools.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "NLopt.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "OSQP.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "ProxSDP.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "SCIP.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "SCS.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "SDPA.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "SDPNAL.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "SDPT3.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "SeDuMi.jl"
+        ],
+        [
+            "db_lp_solver_list",
+            "Xpress.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "Cbc.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "CPLEX.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "GLPK.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "Gurobi.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "HiGHS.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "Juniper.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "KNITRO.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "MosekTools.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "SCIP.jl"
+        ],
+        [
+            "db_mip_solver_list",
+            "Xpress.jl"
+        ],
+        [
+            "duration_unit_list",
+            "hour"
+        ],
+        [
+            "duration_unit_list",
+            "minute"
+        ],
+        [
+            "economic_representation_value_list",
+            "consecutive_years"
+        ],
+        [
+            "economic_representation_value_list",
+            "milestone_years"
+        ],
+        [
+            "model_algorithm_list",
+            "basic_algorithm"
+        ],
+        [
+            "model_algorithm_list",
+            "mga_algorithm"
+        ],
+        [
+            "model_algorithm_list",
+            "monte_carlo_algorithm"
+        ],
+        [
+            "model_type_list",
+            "spineopt_benders"
+        ],
+        [
+            "model_type_list",
+            "spineopt_other"
+        ],
+        [
+            "model_type_list",
+            "spineopt_standard"
+        ],
+        [
+            "node_opf_type_list",
+            "node_opf_type_normal"
+        ],
+        [
+            "node_opf_type_list",
+            "node_opf_type_reference"
+        ],
+        [
+            "output_type_list",
+            "constraint_dual"
+        ],
+        [
+            "output_type_list",
+            "derived_parameter"
+        ],
+        [
+            "output_type_list",
+            "objective"
+        ],
+        [
+            "output_type_list",
+            "postprocess_value"
+        ],
+        [
+            "output_type_list",
+            "variable"
+        ],
+        [
+            "output_type_list",
+            "variable_reduced_cost"
+        ],
+        [
+            "output_type_list",
+            "solving_info"
+        ],
+        [
+            "storage_investment_variable_type_list",
+            "storage_investment_variable_type_continuous"
+        ],
+        [
+            "storage_investment_variable_type_list",
+            "storage_investment_variable_type_integer"
+        ],
+        [
+            "unit_investment_variable_type_list",
+            "unit_investment_variable_type_continuous"
+        ],
+        [
+            "unit_investment_variable_type_list",
+            "unit_investment_variable_type_integer"
+        ],
+        [
+            "unit_online_variable_type_list",
+            "unit_online_variable_type_binary"
+        ],
+        [
+            "unit_online_variable_type_list",
+            "unit_online_variable_type_integer"
+        ],
+        [
+            "unit_online_variable_type_list",
+            "unit_online_variable_type_linear"
+        ],
+        [
+            "unit_online_variable_type_list",
+            "unit_online_variable_type_none"
+        ],
+        [
+            "write_mps_file_list",
+            "write_mps_always"
+        ],
+        [
+            "write_mps_file_list",
+            "write_mps_never"
+        ],
+        [
+            "write_mps_file_list",
+            "write_mps_on_no_solve"
         ]
     ],
     "parameter_definitions": [
@@ -4463,1490 +4619,1351 @@
             "A penalty for violating a user constraint."
         ]
     ],
-    "entities": [
+    "parameter_values": [
         [
             "model",
             "simple",
-            null
+            "discount_rate",
+            0.05,
+            "Base"
+        ],
+        [
+            "model",
+            "simple",
+            "discount_year",
+            {
+                "data": "1990-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "model",
+            "simple",
+            "model_end",
+            {
+                "data": "2006-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "model",
+            "simple",
+            "model_start",
+            {
+                "data": "2000-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "model",
+            "simple",
+            "use_economic_representation",
+            "milestone_years",
+            "Base"
         ],
         [
             "node",
             "electricity",
-            null
+            "demand",
+            {
+                "data": {
+                    "2000-01-01T00:00:00.0": 100.0,
+                    "2000-05-01T00:00:00.0": 100.0,
+                    "2000-09-01T00:00:00.0": 100.0,
+                    "2001-01-01T00:00:00.0": 0.0,
+                    "2001-05-01T00:00:00.0": 0.0,
+                    "2001-09-01T00:00:00.0": 0.0,
+                    "2002-01-01T00:00:00.0": 0.0,
+                    "2002-05-01T00:00:00.0": 0.0,
+                    "2002-09-01T00:00:00.0": 0.0,
+                    "2003-01-01T00:00:00.0": 0.0,
+                    "2003-05-01T00:00:00.0": 0.0,
+                    "2003-09-01T00:00:00.0": 0.0,
+                    "2004-01-01T00:00:00.0": 0.0,
+                    "2004-05-01T00:00:00.0": 0.0,
+                    "2004-09-01T00:00:00.0": 0.0,
+                    "2005-01-01T00:00:00.0": 100.0,
+                    "2005-05-01T00:00:00.0": 100.0,
+                    "2005-09-01T00:00:00.0": 100.0
+                },
+                "type": "time_series"
+            },
+            "Base"
         ],
         [
             "node",
             "fuel",
-            null
+            "balance_type",
+            "balance_type_none",
+            "Base"
         ],
         [
             "output",
             "binary_gas_connection_flow",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "bound_binary_gas_connection_flow",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_connection_flow",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_connection_intact_flow",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_connections_decommissioned",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_connections_invested",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_connections_invested_available",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_min_capacity_margin_slack",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_node_injection",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_node_pressure",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_node_slack_neg",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_node_slack_pos",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_node_state",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_node_voltage_angle",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_nonspin_units_shut_down",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_nonspin_units_started_up",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_storages_decommissioned",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_storages_invested",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_storages_invested_available",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_unit_flow",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_unit_flow_op",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_unit_flow_op_active",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_invested",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_invested_available",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_mothballed",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_on",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_out_of_service",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_returned_to_service",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_shut_down",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_started_up",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_units_taken_out_of_service",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_user_constraint_slack_neg",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "bound_user_constraint_slack_pos",
-            null
+            "output_type",
+            "variable_reduced_cost",
+            "Base"
         ],
         [
             "output",
             "connection_avg_intact_throughflow",
-            null
+            "output_type",
+            "postprocess_value",
+            "Base"
         ],
         [
             "output",
             "connection_avg_throughflow",
-            null
+            "output_type",
+            "postprocess_value",
+            "Base"
         ],
         [
             "output",
             "connection_conversion_to_discounted_annuities",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "connection_discounted_duration",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "connection_flow",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "connection_flow_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "connection_intact_flow",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "connection_investment_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "connection_salvage_fraction",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "connection_tech_discount_factor",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "connections_decommissioned",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "connections_invested",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "connections_invested_available",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "constraint_compression_ratio",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connection_flow_capacity",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connection_flow_gas_capacity",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connection_flow_lodf",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connection_intact_flow_ptdf",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connection_lifetime",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connection_unitary_gas_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connections_invested_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_connections_invested_transition",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_cyclic_node_state",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_fix_node_pressure_point",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_fix_ratio_in_in_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_fix_ratio_in_out_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_fix_ratio_out_in_connection_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_fix_ratio_out_in_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_fix_ratio_out_out_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_investment_group_equal_investments",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_investment_group_maximum_capacity_invested_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_investment_group_maximum_entities_invested_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_investment_group_minimum_capacity_invested_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_investment_group_minimum_entities_invested_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_node_pressure",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_node_voltage_angle",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_ratio_in_in_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_ratio_in_out_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_ratio_out_in_connection_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_ratio_out_in_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_ratio_out_out_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_total_cumulated_unit_flow_from_node",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_max_total_cumulated_unit_flow_to_node",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_capacity_margin",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_down_time",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_node_pressure",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_node_voltage_angle",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_ratio_in_in_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_ratio_in_out_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_ratio_out_in_connection_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_ratio_out_in_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_ratio_out_out_unit_flow",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_scheduled_outage_duration",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_total_cumulated_unit_flow_from_node",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_total_cumulated_unit_flow_to_node",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_min_up_time",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_minimum_operating_point",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_nodal_balance",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_node_injection",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_node_state_capacity",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_node_voltage_angle",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_non_spinning_reserves_lower_bound",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_non_spinning_reserves_shut_down_upper_bound",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_non_spinning_reserves_start_up_upper_bound",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_operating_point_bounds",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_operating_point_rank",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_ramp_down",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_ramp_up",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_storage_lifetime",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_storage_line_pack",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_storages_invested_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_storages_invested_transition",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_unit_flow_capacity",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_unit_flow_op_bounds",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_unit_flow_op_rank",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_unit_flow_op_sum",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_unit_lifetime",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_unit_state_transition",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_units_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_units_invested_available",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_units_invested_transition",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_units_out_of_service_contiguity",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_units_out_of_service_transition",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "constraint_user_constraint",
-            null
+            "output_type",
+            "constraint_dual",
+            "Base"
         ],
         [
             "output",
             "contingency_is_binding",
-            null
+            "output_type",
+            "postprocess_value",
+            "Base"
         ],
         [
             "output",
             "fixed_om_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "fuel_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "mga_objective",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "mp_objective_lowerbound",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "node_injection",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "node_pressure",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "node_slack_neg",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "node_slack_pos",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "node_state",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "node_voltage_angle",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "nonspin_units_shut_down",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "nonspin_units_started_up",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "objective_penalties",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "relative_optimality_gap",
-            null
+            "output_type",
+            "solving_info",
+            "Base"
         ],
         [
             "output",
             "renewable_curtailment_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "res_proc_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "shut_down_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "start_up_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "storage_conversion_to_discounted_annuities",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "storage_discounted_duration",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "storage_investment_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "storage_salvage_fraction",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "storage_tech_discount_factor",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "storages_decommissioned",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "storages_invested",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "storages_invested_available",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "taxes",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "total_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "unit_conversion_to_discounted_annuities",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "unit_discounted_duration",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "unit_flow",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "unit_flow_op",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "unit_flow_op_active",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "unit_investment_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "unit_salvage_fraction",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "unit_tech_discount_factor",
-            null
+            "output_type",
+            "derived_parameter",
+            "Base"
         ],
         [
             "output",
             "units_invested",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "units_invested_available",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "units_mothballed",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "units_on",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "units_on_costs",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "output",
             "units_shut_down",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "units_started_up",
-            null
+            "output_type",
+            "variable",
+            "Base"
         ],
         [
             "output",
             "variable_om_costs",
-            null
-        ],
-        [
-            "report",
-            "report1",
-            null
-        ],
-        [
-            "stochastic_scenario",
-            "realization",
-            null
-        ],
-        [
-            "stochastic_structure",
-            "deterministic",
-            null
+            "output_type",
+            "objective",
+            "Base"
         ],
         [
             "temporal_block",
             "investment",
-            null
+            "block_end",
+            {
+                "data": "2006-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "investment",
+            "block_start",
+            {
+                "data": "2000-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "investment",
+            "resolution",
+            {
+                "data": "5Y",
+                "type": "duration"
+            },
+            "Base"
         ],
         [
             "temporal_block",
             "operation1",
-            null
+            "block_end",
+            {
+                "data": "2001-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation1",
+            "block_start",
+            {
+                "data": "2000-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation1",
+            "resolution",
+            {
+                "data": "4M",
+                "type": "duration"
+            },
+            "Base"
         ],
         [
             "temporal_block",
             "operation2",
-            null
+            "block_end",
+            {
+                "data": "2004-09-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2",
+            "block_start",
+            {
+                "data": "2006-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2",
+            "resolution",
+            {
+                "data": "4M",
+                "type": "duration"
+            },
+            "Base"
         ],
         [
             "unit",
             "power_plant",
-            null
-        ],
-        [
-            "model__default_investment_temporal_block",
-            [
-                "simple",
-                "investment"
-            ],
-            null
-        ],
-        [
-            "model__default_stochastic_structure",
-            [
-                "simple",
-                "deterministic"
-            ],
-            null
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "simple",
-                "operation1"
-            ],
-            null
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "simple",
-                "operation2"
-            ],
-            null
-        ],
-        [
-            "model__report",
-            [
-                "simple",
-                "report1"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_conversion_to_discounted_annuities"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_discounted_duration"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_salvage_fraction"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_tech_discount_factor"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "units_invested"
-            ],
-            null
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            [
-                "deterministic",
-                "realization"
-            ],
-            null
-        ],
-        [
-            "unit__from_node",
-            [
-                "power_plant",
-                "fuel"
-            ],
-            null
-        ],
-        [
-            "unit__investment_temporal_block",
-            [
-                "power_plant",
-                "investment"
-            ],
-            null
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant",
-                "electricity"
-            ],
-            null
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant",
-                "electricity",
-                "fuel"
-            ],
-            null
-        ]
-    ],
-    "parameter_value_lists": [
-        [
-            "balance_type_list",
-            "balance_type_group"
-        ],
-        [
-            "balance_type_list",
-            "balance_type_node"
-        ],
-        [
-            "balance_type_list",
-            "balance_type_none"
-        ],
-        [
-            "boolean_value_list",
-            false
-        ],
-        [
-            "boolean_value_list",
-            true
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_lodf"
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_none"
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_ptdf"
-        ],
-        [
-            "connection_investment_variable_type_list",
-            "connection_investment_variable_type_continuous"
-        ],
-        [
-            "connection_investment_variable_type_list",
-            "connection_investment_variable_type_integer"
-        ],
-        [
-            "connection_type_list",
-            "connection_type_lossless_bidirectional"
-        ],
-        [
-            "connection_type_list",
-            "connection_type_normal"
-        ],
-        [
-            "constraint_sense_list",
-            "<="
-        ],
-        [
-            "constraint_sense_list",
-            "=="
-        ],
-        [
-            "constraint_sense_list",
-            ">="
-        ],
-        [
-            "db_lp_solver_list",
-            "CDCS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CDDLib.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Clp.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "COSMO.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CPLEX.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CSDP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "ECOS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "GLPK.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Gurobi.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "HiGHS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Hypatia.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Ipopt.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "KNITRO.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "MadNLP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "MosekTools.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "NLopt.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "OSQP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "ProxSDP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SCIP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SCS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPA.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPNAL.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPT3.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SeDuMi.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Xpress.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Cbc.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "CPLEX.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "GLPK.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Gurobi.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "HiGHS.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Juniper.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "KNITRO.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "MosekTools.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "SCIP.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Xpress.jl"
-        ],
-        [
-            "duration_unit_list",
-            "hour"
-        ],
-        [
-            "duration_unit_list",
-            "minute"
-        ],
-        [
-            "economic_representation_value_list",
-            "consecutive_years"
-        ],
-        [
-            "economic_representation_value_list",
-            "milestone_years"
-        ],
-        [
-            "model_algorithm_list",
-            "basic_algorithm"
-        ],
-        [
-            "model_algorithm_list",
-            "mga_algorithm"
-        ],
-        [
-            "model_algorithm_list",
-            "monte_carlo_algorithm"
-        ],
-        [
-            "model_type_list",
-            "spineopt_benders"
-        ],
-        [
-            "model_type_list",
-            "spineopt_other"
-        ],
-        [
-            "model_type_list",
-            "spineopt_standard"
-        ],
-        [
-            "node_opf_type_list",
-            "node_opf_type_normal"
-        ],
-        [
-            "node_opf_type_list",
-            "node_opf_type_reference"
-        ],
-        [
-            "output_type_list",
-            "constraint_dual"
-        ],
-        [
-            "output_type_list",
-            "derived_parameter"
-        ],
-        [
-            "output_type_list",
-            "objective"
-        ],
-        [
-            "output_type_list",
-            "postprocess_value"
-        ],
-        [
-            "output_type_list",
-            "variable"
-        ],
-        [
-            "output_type_list",
-            "variable_reduced_cost"
-        ],
-        [
-            "output_type_list",
-            "solving_info"
-        ],
-        [
-            "storage_investment_variable_type_list",
-            "storage_investment_variable_type_continuous"
-        ],
-        [
-            "storage_investment_variable_type_list",
-            "storage_investment_variable_type_integer"
-        ],
-        [
-            "unit_investment_variable_type_list",
-            "unit_investment_variable_type_continuous"
-        ],
-        [
-            "unit_investment_variable_type_list",
-            "unit_investment_variable_type_integer"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_binary"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_integer"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_linear"
-        ],
-        [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_none"
-        ],
-        [
-            "write_mps_file_list",
-            "write_mps_always"
-        ],
-        [
-            "write_mps_file_list",
-            "write_mps_never"
-        ],
-        [
-            "write_mps_file_list",
-            "write_mps_on_no_solve"
-        ]
-    ],
-    "entity_alternatives": [
-        [
-            "model",
-            [
-                "simple"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__default_investment_temporal_block",
-            [
-                "simple",
-                "investment"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__default_stochastic_structure",
-            [
-                "simple",
-                "deterministic"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "simple",
-                "operation1"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "simple",
-                "operation2"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__report",
-            [
-                "simple",
-                "report1"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "node",
-            [
-                "electricity"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "node",
-            [
-                "fuel"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report",
-            [
-                "report1"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_conversion_to_discounted_annuities"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_discounted_duration"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_salvage_fraction"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_tech_discount_factor"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "units_invested"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "stochastic_scenario",
-            [
-                "realization"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "stochastic_structure",
-            [
-                "deterministic"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            [
-                "deterministic",
-                "realization"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "temporal_block",
-            [
-                "investment"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "temporal_block",
-            [
-                "operation1"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "temporal_block",
-            [
-                "operation2"
-            ],
-            "Base",
-            true
+            "candidate_units",
+            1,
+            "Base"
         ],
         [
             "unit",
-            [
-                "power_plant"
-            ],
-            "Base",
-            true
+            "power_plant",
+            "unit_discount_rate_technology_specific",
+            0.07,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant",
+            "unit_investment_cost",
+            100,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant",
+            "unit_investment_econ_lifetime",
+            {
+                "data": "10Y",
+                "type": "duration"
+            },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant",
+            "unit_investment_tech_lifetime",
+            {
+                "data": "10Y",
+                "type": "duration"
+            },
+            "Base"
         ],
         [
             "unit__from_node",
@@ -5954,17 +5971,9 @@
                 "power_plant",
                 "fuel"
             ],
-            "Base",
-            true
-        ],
-        [
-            "unit__investment_temporal_block",
-            [
-                "power_plant",
-                "investment"
-            ],
-            "Base",
-            true
+            "vom_cost",
+            25,
+            "Base"
         ],
         [
             "unit__node__node",
@@ -5973,8 +5982,9 @@
                 "electricity",
                 "fuel"
             ],
-            "Base",
-            true
+            "fix_ratio_out_in_unit_flow",
+            1,
+            "Base"
         ],
         [
             "unit__to_node",
@@ -5982,8 +5992,15 @@
                 "power_plant",
                 "electricity"
             ],
+            "unit_capacity",
+            100,
+            "Base"
+        ]
+    ],
+    "alternatives": [
+        [
             "Base",
-            true
+            "Base alternative"
         ]
     ]
 }

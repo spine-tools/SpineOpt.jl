@@ -25,7 +25,7 @@ Once we have our setup, we can take a look at the economic representation in Spi
 - [unit\_investment\_econ\_lifetime](@ref): using units as an example, this is the economic lifetime of the unit which is used to calculate the economic parameters.
 - [optional] [unit\_discount\_rate\_technology\_specific](@ref): using units as an example, this is used if you would like to have a specific discount rate different from [discount\_rate](@ref).
 - [optional] [unit\_lead\_time](@ref): if not specified, the default lead time is 0. 
-- [unit\_investment\_cost](@ref): using unit as an example, this is the investment cost for the investment year. Suppose you set [use\_economic\_represention](@ref) to `false`, then this cost that you put will not be discounted at all. However, if you set it to `true`, then SpineOpt will discount this cost to the [discount\_year](@ref) using [discount\_rate](@ref).
+- [unit\_investment\_cost](@ref): using unit as an example, this is the investment cost for the investment year. When [use\_economic\_represention](@ref) is not used (i.e. with the default value `null`), then this cost that you put will not be discounted at all. However, when you choose a valid value of [use\_economic\_represention](@ref), SpineOpt will discount this cost to the [discount\_year](@ref) using [discount\_rate](@ref).
 
 To be able to see the values of the economic parameters after a run, you have to add them to the report. 
 
@@ -60,3 +60,7 @@ Now we set [use\_milestone\_years](@ref) to `milestone_years`. This indicates th
 The values for the output parameter `unit_discounted_duration` are shown below. Note now in 2000, the value becomes 2.79. This parameter value acts as a weight taking into account the discount per year and the resolution of the milestone years. In order words, now the operation costs for the in-between years have also been included.
 
 ![image](figs_multi-year/unit_discounted_duration_milestone.png)
+
+The rest is for discounting investment costs with the resolution of the investment temporal block.
+
+![image](figs_multi-year/unit_conversion_to_discounted_annuities_milestone.png)
