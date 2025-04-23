@@ -50,12 +50,16 @@ The rest is for discounting investment costs with the resolution of the investme
 ![image](figs_multi-year/unit_conversion_to_discounted_annuities.png)
 
 ## Using economic parameters with milestone investment years
-Now we set [use\_milestone\_years](@ref) to `milestone_years`. This indicates that we want operational temporal block to be discontinous and use the same milestone years as the investment temporal block. In this case, we need to change the definition of temporal blocks, see below picture. 
+Now we set [use\_milestone\_years](@ref) to `milestone_years`. This indicates that we want operational temporal block to be discontinous and use the same milestone years as the investment temporal block. In this case, we need to change the definition of temporal blocks, see below picture:
+
+![image](figs_multi-year/use_economic_rep_milestone.png)
+
+where the demand `TimeSeries` is defined as follows:
+
+![image](figs_multi-year/demand_ts_milestone.png)
 
 !!! info
     If you get confused why the temporal blocks are defined this way, I recommend going back to [Multi-year investments](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/capacity_planning/#Multi-year-investments) for details.
-
-![image](figs_multi-year/use_economic_rep_milestone.png)
 
 The values for the output parameter `unit_discounted_duration` are shown below. Note now in 2000, the value becomes 2.79. This parameter value acts as a weight taking into account the discount per year and the resolution of the milestone years. In order words, now the operation costs for the in-between years have also been included.
 
