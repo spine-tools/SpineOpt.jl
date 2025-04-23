@@ -189,12 +189,11 @@ end
         url_in = test_data_example_economic_representation()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
-        use_mlstne_year = true
+        economic_representation = "milestone_years"
         cost = 1
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", cost]]
         SpineInterface.import_data(
@@ -211,7 +210,7 @@ end
             express,
             var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]],
         )
-        object_parameter_values = [["model", "instance", "use_economic_representation", true]]
+        object_parameter_values = [["model", "instance", "use_economic_representation", economic_representation]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -229,16 +228,15 @@ end
             var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]],
         ) rtol = 1e-6
     end
-    @testset "test discounted duration - w/o using milestone years" begin
+    @testset "test discounted duration - using consecutive years" begin
         url_in = test_data_example_economic_representation()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
-        use_mlstne_year = false
+        economic_representation = "consecutive_years"
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "use_economic_representation", economic_representation],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -251,14 +249,13 @@ end
         url_in = test_data_example_economic_representation()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
-        use_mlstne_year = false
+        economic_representation = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         decom_cost = 1
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
@@ -275,7 +272,7 @@ end
         expected_coe_obj = inv_cost
         @test expected_coe_obj == observed_coe_obj
         object_parameter_values = [
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "use_economic_representation", economic_representation],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=3)
@@ -301,14 +298,13 @@ end
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        use_mlstne_year = false
+        economic_representation = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "use_economic_representation", economic_representation],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
@@ -336,14 +332,13 @@ end
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        use_mlstne_year = false
+        economic_representation = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "use_economic_representation", economic_representation],
             ["model", "instance", "roll_forward", Dict("type" =>"duration","data"=>"1D")],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
@@ -360,14 +355,13 @@ end
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        use_mlstne_year = false
+        economic_representation = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", true],
+            ["model", "instance", "use_economic_representation", economic_representation],
             ["model", "instance", "model_type", "spineopt_benders"],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
@@ -384,8 +378,7 @@ end
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        use_eco_re = true
-        use_mlstne_year = false
+        economic_representation = "consecutive_years"
         candidate_unts = 1
         num_of_units = 0
         inv_cost = 2
@@ -406,8 +399,7 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_milestone_years", use_mlstne_year],
-            ["model", "instance", "use_economic_representation", use_eco_re],
+            ["model", "instance", "use_economic_representation", economic_representation],
             ["node", "node_b", "demand", 100],
             ["node", "node_a", "balance_type_list", "balance_type_none"],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
