@@ -37,9 +37,11 @@ We start with the case where [use\_economic\_represention](@ref) is not used wit
 ![image](figs_multi-year/use_economic_rep_default.png)
 
 ## Using economic parameters with consecutive operation years
-Now we set [use\_economic\_represention](@ref) to `consecutive_years`. This set-up indicates that the model will use the internally-calculated parameters and continous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05.
+Now we set [use\_economic\_represention](@ref) to `consecutive_years`. This set-up indicates that the model will use the internally-calculated parameters and continous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05. See the set-up below.
 
-`unit_discounted_duration` is used to discount operation costs so it has the resolution of the operational temporal block. However, since we only discount per year, this parameter value is constant within a year.
+![image](figs_multi-year/use_economic_rep_consecutive.png)
+
+The values for the output parameter `unit_discounted_duration` are shown below. It is used to discount operation costs so it has the resolution of the operational temporal block. However, since we only discount per year, this parameter value is constant within a year.
 
 ![image](figs_multi-year/unit_discounted_duration.png)
 
@@ -55,6 +57,6 @@ Now we set [use\_milestone\_years](@ref) to `milestone_years`. This indicates th
 
 ![image](figs_multi-year/use_economic_rep_milestone.png)
 
-The values for the parameter `unit_discounted_duration` are shown below. Note now in 2000, the value becomes 2.79. This parameter value acts as a weight taking into account the discount per year and the resolution of the milestone years. In order words, now the operation costs for the in-between years have also been included.
+The values for the output parameter `unit_discounted_duration` are shown below. Note now in 2000, the value becomes 2.79. This parameter value acts as a weight taking into account the discount per year and the resolution of the milestone years. In order words, now the operation costs for the in-between years have also been included.
 
 ![image](figs_multi-year/unit_discounted_duration_milestone.png)
