@@ -7,7 +7,7 @@ objective_function_reference_values = Dict(
     "rolling_horizon.json" => 65164.8571429,
     "multi-year_investment_with_econ_params_with_milestones.json" => 41025092.819187716,
     "multi-year_investment_with_econ_params_without_milestones.json" => 71720404.84378022,
-    "multi-year_investment_without_econ_params.json" => 203360142.85714287,
+    "multi-year_investment_without_econ_params.json" => 328503000.0,
     "capacity_planning.json" => 352127000,
     "stochastic.json" => 126964.2857142857,
 )

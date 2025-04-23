@@ -65,6 +65,8 @@ To make this work, some adjustments are needed to:
 
 For the temporal structure, we need a separate operation temporal block for 2030 and 2035 (each with a resolution of `4M`). To obtain a discontinuous gap between the years in the model we set the `block_start` and `block_end` to the start and end of the respective years. Note that for the temporal block of 2035 we already start in the last season of the previous year. That is to be able to set the boundary conditions for that block.
 
+Note that we use the temporal block `operation2030` to represent the operations during 2030-2034, so a `weight` of 5 is assigned to the block such that the operational costs cover the entire period. The `weight` of the temporal block `operation2035` is set to 1, as it only covers the last year 2035 of the model horizon.
+
 ![image](figs_capacity_planning/multi-year_temporal.png)
 
 !!! warning 
