@@ -516,7 +516,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
         for id in obj_cls()
             if isempty(invest_temporal_block()) || isempty(invest_temporal_block(; Dict(obj_cls.name => id)...))
                 invest_temporal_block_ = model__default_investment_temporal_block(model=instance)
-                @warn "No dedicated investment temporal block is defined for $id, use the default investment temporal block."
+                @warn "No specific investment temporal block is defined for $id, use the default investment temporal block."
             else
                 invest_temporal_block_ = invest_temporal_block(; Dict(obj_cls.name => id)...) # set specific investment temporal block
             end

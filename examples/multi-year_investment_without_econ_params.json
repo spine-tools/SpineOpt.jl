@@ -2794,7 +2794,7 @@
             "discount_year",
             null,
             null,
-            "The year to which all cashflows are discounted."
+            "The year to which all cashflows are discounted. Can be given either as a `DateTime` for a static point, or as a `Duration` for an point relative to the `model_start`."
         ],
         [
             "model",
@@ -2917,16 +2917,16 @@
         [
             "model",
             "use_economic_representation",
-            false,
-            "boolean_value_list",
-            "If set to true, the investment models uses economic represenation, i.e., multi-year investments will be modeled considering discounts etc."
+            null,
+            "economic_representation_value_list",
+            "If set, the investment models uses economic represenation for modelling multi-year investments with discounts under either `consecutive_years` mode or `milestone_years` mode."
         ],
         [
             "model",
-            "use_milestone_years",
-            false,
+            "use_highest_resolution_constraint_ratio_out_in_connection_flow",
+            true,
             "boolean_value_list",
-            "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."
+            "Whether to use highest resolution for constraint ratio out in connection flow."
         ],
         [
             "model",
@@ -2934,13 +2934,6 @@
             false,
             "boolean_value_list",
             "Whether to use tight and compact constraint formulations."
-        ],
-        [
-            "model", 
-            "use_highest_resolution_constraint_ratio_out_in_connection_flow", 
-            true, 
-            "boolean_value_list", 
-            "Whether to use highest resolution for constraint ratio out in connection flow."
         ],
         [
             "model",
@@ -5920,6 +5913,14 @@
         [
             "duration_unit_list",
             "minute"
+        ],
+        [
+            "economic_representation_value_list",
+            "consecutive_years"
+        ],
+        [
+            "economic_representation_value_list",
+            "milestone_years"
         ],
         [
             "model_algorithm_list",

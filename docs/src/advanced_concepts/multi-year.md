@@ -11,7 +11,7 @@ SpineOpt offers flexibility to the users so that different things can be modeled
 ## Economic representation
 
 ### Parameters
-It can be tricky to put the correct cost parameters into the model since factors like discounting and end-of-lifetime effects have to be taken into account. For that purpose, SpineOpt has incorporated some dedicated parameters for economic representation. Set `use_economic_representation` to `true` will activate these paramters.
+It can be tricky to put the correct cost parameters into the model since factors like discounting and end-of-lifetime effects have to be taken into account. For that purpose, SpineOpt has incorporated some dedicated parameters for economic representation. Set the parameter `use_economic_representation` with a corresponding valid value will activate these paramters.
 
 **Discounted annuities**
 
@@ -19,7 +19,7 @@ This factor translates the overnight costs of investment into discounted (to the
 
 ![image](figs_multi-year/discounted_annuities.png)
 
-For this purpose, we first calculate first the fraction of payment per year (e.g. something like 0.25, 0.5, 0.75,1 over the lead time; 1 for the economic lifetime minus the lead time, and 0.75, 0.5, 0.25 and 0 for the remaining economic lifetime). Each payment fraction is then multiplied by the discounting factor of the payment year with respect to the discounting year (e.g. start of optimization).
+For this purpose, we first calculate first the fraction of payment per year (e.g. something like 0.25, 0.5, 0.75, 1 over the lead time; 1 for the economic lifetime minus the lead time, and 0.75, 0.5, 0.25 and 0 for the remaining economic lifetime). Each payment fraction is then multiplied by the discounting factor of the payment year with respect to the discounting year (e.g. start of optimization).
 
 **Salvage fraction**
 
@@ -35,7 +35,7 @@ The technology specific discount factor can be used, if e.g. investments in a ce
 
 ### Adaptions objective terms
 
-When `use_economic_representation` is set to `true`:
+When `use_economic_representation` is set to a valid value:
 
 - Investment costs are multiplied with discounted annuties conversion factor and the technological discount factor and (1 - salvage fraction).
 
