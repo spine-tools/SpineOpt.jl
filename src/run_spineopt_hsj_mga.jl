@@ -293,10 +293,8 @@ function prepare_objective_mga!(
         get_scenario_variable_average(variable, stochastic_indices_of_variable(i), variable_scenario_weights) * mga_weights[i]
         for i in variable_indices
     )
-    s = @expression(m, sum(weighted_group_variables, init=0))
-    @info s
     # our objective is a sum of all the mga weighted variables
-    return Dict(:expression => s)
+    return Dict(:expression => @expression(m, sum(weighted_group_variables, init=0)))
 end
 
 """
@@ -337,7 +335,6 @@ function prepare_objective_mga!(
     )
     a::Float64 = 0 # we aspire to zero out all of the nonzero variables
     y = sum(weighted_group_variables, init=0) # mga sum expression
-    @info y
     r::Float64 = sum(weighted_group_variable_values, init=0) # we start to get satsfied after the point of no change
     # we create an achievement function for every variable group
     return add_rpm_constraint!(m, y, a, r, beta, gamma)
@@ -391,9 +388,7 @@ end
     - slack::Float64 - how many percents can we stray from the optimal value
 """
 function add_mga_objective_constraint!(m::Model, slack, ::Val{:hsj_mga_algorithm})
-    c = @constraint(m, objective_function(m) <= (1 + slack) * objective_value(m))
-    @info c
-    return Dict(:eps_constraint => c)
+    return Dict(:eps_constraint => @constraint(m, objective_function(m) <= (1 + slack) * objective_value(m)))
 end
 
 """
@@ -558,9 +553,6 @@ function do_update_hsj_weights!(
 )
     active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
     for i in active_variables
-        val = sum(all_variable_values[j] for j in variable_scenario_indices(i))
-        @info i, val
-        # variable_hsj_weights[i] = 1 / val
         variable_hsj_weights[i] = 1
     end
 
@@ -576,10 +568,7 @@ function do_update_hsj_weights!(
     active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
     for i in active_variables
         val = sum(all_variable_values[j] for j in variable_scenario_indices(i))
-        @info i, val
-        
         variable_hsj_weights[i] = 1 / val
-        # variable_hsj_weights[i] = 1
     end
 
 end
@@ -594,10 +583,6 @@ function do_update_hsj_weights!(
 )
     active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
     for i in active_variables
-        val = sum(all_variable_values[j] for j in variable_scenario_indices(i))
-        @info i, val
-        
-        #variable_hsj_weights[i] = 1 / val
         variable_hsj_weights[i] += 1
     end
 
