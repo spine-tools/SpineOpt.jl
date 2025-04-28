@@ -71,14 +71,13 @@ function generic_run_mga!(m::Model, url_out, algorithm_type::Val, log_level, upd
         prepare_variable_groups(m),
         something(max_mga_iterations(model=instance), 0),
         max_mga_slack(model=instance),
-        (m) -> total_costs(m, anything),
         algorithm_type,
         (m; iteration) ->  solve_model!(
                 m;
                 log_level=log_level,
                 update_names=update_names,
                 output_suffix=_add_mga_iteration(iteration, mga_iteration),
-            ),
+            ) && primal_status(m) == FEASIBLE_POINT,
     )
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     return m
@@ -104,9 +103,8 @@ end
     - m::Model - JuMP model
     - variables::AbstractDict - dict that returns a dict with scenario variable for an mga group
     - group_parameters::AbstractDict - dict of parameters for every mga variable group
-    - max_mga_iters::Int - no mga iterations
-    - mga_slack::Float64 - slack for near optimality exploration
-    - goal_function::Function - function returning an expression for the objective funtcion
+    - max_mga_iters - no mga iterations
+    - mga_slack - slack for near optimality exploration
     - algorithm_type::Val - value for multiple dispatch
     - solve_wrapper::Function - wrapper that runs the optimization and returns boolean value with status
 """
@@ -114,9 +112,8 @@ function iterative_mga!(
     m::Model, 
     variables,
     group_parameters::AbstractDict{Symbol, mga_group_param},
-    max_mga_iters::Int,
-    mga_slack::Float64,
-    goal_function::Function,
+    max_mga_iters,
+    mga_slack,
     algorithm_type::Val,
     solve_wrapper::Function = (m; iteration) -> (optimize!(m); true),
 )   
@@ -124,14 +121,14 @@ function iterative_mga!(
     hsj_weights = init_hsj_weights()
     solve_wrapper(m; iteration=0)
     group_variable_values[0] = get_variable_group_values(variables, group_parameters)
-    update_hsj_weights!(group_variable_values[0], hsj_weights, group_parameters)
+    update_hsj_weights!(group_variable_values[0], hsj_weights, group_parameters, algorithm_type)
     slack = slack_correction(mga_slack, objective_value(m))
-    constraint = add_mga_objective_constraint!(m, slack, goal_function, algorithm_type)
+    constraint = add_mga_objective_constraint!(m, slack, algorithm_type)
     for i=1:max_mga_iters
         update_mga_objective!(m, hsj_weights, variables, group_variable_values[i-1], group_parameters, constraint, algorithm_type)
         solve_wrapper(m; iteration=i) || break
         group_variable_values[i] = get_variable_group_values(variables, group_parameters)
-        update_hsj_weights!(group_variable_values[i], hsj_weights, group_parameters)
+        update_hsj_weights!(group_variable_values[i], hsj_weights, group_parameters, algorithm_type)
     end
     return group_variable_values
 end
@@ -296,8 +293,10 @@ function prepare_objective_mga!(
         get_scenario_variable_average(variable, stochastic_indices_of_variable(i), variable_scenario_weights) * mga_weights[i]
         for i in variable_indices
     )
+    s = @expression(m, sum(weighted_group_variables, init=0))
+    @info s
     # our objective is a sum of all the mga weighted variables
-    return Dict(:expression => @expression(m, sum(weighted_group_variables, init=0)))
+    return Dict(:expression => s)
 end
 
 """
@@ -338,6 +337,7 @@ function prepare_objective_mga!(
     )
     a::Float64 = 0 # we aspire to zero out all of the nonzero variables
     y = sum(weighted_group_variables, init=0) # mga sum expression
+    @info y
     r::Float64 = sum(weighted_group_variable_values, init=0) # we start to get satsfied after the point of no change
     # we create an achievement function for every variable group
     return add_rpm_constraint!(m, y, a, r, beta, gamma)
@@ -389,10 +389,11 @@ end
     # Arguments
     - m::Model - JuMP model
     - slack::Float64 - how many percents can we stray from the optimal value
-    - goal_function - function that return the objective value expression for our model
 """
-function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:hsj_mga_algorithm})
-    return Dict(:eps_constraint => @constraint(m, goal_function(m) <= (1 + slack) * objective_value(m)))
+function add_mga_objective_constraint!(m::Model, slack, ::Val{:hsj_mga_algorithm})
+    c = @constraint(m, objective_function(m) <= (1 + slack) * objective_value(m))
+    @info c
+    return Dict(:eps_constraint => c)
 end
 
 """
@@ -406,8 +407,8 @@ end
     - beta - constant to control the slope of the achievement function after reaching aspiration
     - gamma - constant to control the slope of the achievement function before reaching reservation 
 """
-function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:fuzzy_mga_algorithm}, beta=0.5, gamma=1.5)
-    y = goal_function(m)
+function add_mga_objective_constraint!(m::Model, slack, ::Union{Val{:fuzzy_mga_algorithm},Val{:multithreshold_mga_algorithm}} , beta=0.5, gamma=1.5)
+    y = objective_function(m)
     a = objective_value(m) # we aspire to reach the best possible value
     r = (1 + slack) * objective_value(m) # we start to get satsfied when reaching nearly optimal solution
     return add_rpm_constraint!(m, y, a, r, beta, gamma)
@@ -425,8 +426,8 @@ end
     - gamma - constant to control the slope of the achievement function before reaching reservation
     - n_eps - number of slacks generates
 """
-function add_mga_objective_constraint!(m::Model, slack::Float64, goal_function::Function, ::Val{:multithreshold_mga_algorithm}, beta=0.5, gamma=1.5, n_slack=3)
-    y = goal_function(m)
+function add_mga_objective_constraint!(m::Model, slack, ::Val{:xmultithreshold_mga_algorithm}, beta=0.5, gamma=1.5, n_slack=3)
+    y = objective_function(m)
     slacks = [slack / 3^i for i in 0:n_slack-1]
     ts = [(1+eps) * objective_value(m) for eps in slacks]
     push!(ts, objective_value(m)) # we aspire to reach the best possible value
@@ -509,7 +510,7 @@ function add_rpm_constraint!(m::Model, expression, thresholds::Vector{Float64}, 
 end
 
 "If the objective value was negative, the f(x) <= (1+slack) * f(x_optim_ would be infeasible unless we negate the value of slack"
-slack_correction(raw_slack::Float64, objective_value) = objective_value >= 0 ? raw_slack : -raw_slack
+slack_correction(raw_slack, objective_value) = objective_value >= 0 ? raw_slack : -raw_slack
 
 init_hsj_weights() = DefaultDict{Symbol, AbstractDict}(() -> DefaultDict(0))
 
@@ -524,14 +525,16 @@ init_hsj_weights() = DefaultDict{Symbol, AbstractDict}(() -> DefaultDict(0))
 function update_hsj_weights!(
     variable_values::AbstractDict,
     variable_hsj_weights::AbstractDict{Symbol, AbstractDict},
-    group_parameters::AbstractDict{Symbol, mga_group_param}
+    group_parameters::AbstractDict{Symbol, mga_group_param},
+    algorithm_type::Val
 )
     for (group_name, group) in group_parameters
         do_update_hsj_weights!(
             group.variable_indices,
             group.stochastic_indices_of_variable,
             variable_values[group_name],
-            variable_hsj_weights[group_name]
+            variable_hsj_weights[group_name],
+            algorithm_type
         )
     end
 end
@@ -550,11 +553,52 @@ function do_update_hsj_weights!(
     variable_indices::AbstractArray,
     variable_scenario_indices::Function,
     all_variable_values::AbstractDict,
-    variable_hsj_weights::AbstractDict
+    variable_hsj_weights::AbstractDict,
+    ::Val{:hsj_mga_algorithm}
 )
     active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
     for i in active_variables
+        val = sum(all_variable_values[j] for j in variable_scenario_indices(i))
+        @info i, val
+        # variable_hsj_weights[i] = 1 / val
         variable_hsj_weights[i] = 1
+    end
+
+end
+
+function do_update_hsj_weights!(
+    variable_indices::AbstractArray,
+    variable_scenario_indices::Function,
+    all_variable_values::AbstractDict,
+    variable_hsj_weights::AbstractDict,
+    ::Val{:fuzzy_mga_algorithm}
+)
+    active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
+    for i in active_variables
+        val = sum(all_variable_values[j] for j in variable_scenario_indices(i))
+        @info i, val
+        
+        variable_hsj_weights[i] = 1 / val
+        # variable_hsj_weights[i] = 1
+    end
+
+end
+
+
+function do_update_hsj_weights!(
+    variable_indices::AbstractArray,
+    variable_scenario_indices::Function,
+    all_variable_values::AbstractDict,
+    variable_hsj_weights::AbstractDict,
+    :: Val{:multithreshold_mga_algorithm}
+)
+    active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
+    for i in active_variables
+        val = sum(all_variable_values[j] for j in variable_scenario_indices(i))
+        @info i, val
+        
+        #variable_hsj_weights[i] = 1 / val
+        variable_hsj_weights[i] += 1
     end
 
 end
