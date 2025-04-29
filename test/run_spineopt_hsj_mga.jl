@@ -309,7 +309,7 @@ function _test_do_update_hsj_weights()
         @testset "empty_iterator" begin
             variable_values = array_to_dict([0, 0, 0, 0])
             dict = DefaultDict(0)
-            group = VariableGroupParameters(variable_indices, i->1, [])
+            group = VariableGroupParameters(variable_indices, i->1/2, [])
             do_update_hsj_weights!(group, variable_values, dict, Val(:hsj_mga_algorithm))
             @test dict[0] == 0
             @test dict[1] == 0
@@ -317,7 +317,7 @@ function _test_do_update_hsj_weights()
         @testset "variable inactive" begin
             variable_values = array_to_dict([0, 0, 0, 0])
             dict = DefaultDict(0)
-            group = VariableGroupParameters(variable_indices, i->1, mga_indices)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
             do_update_hsj_weights!(group, variable_values, dict, Val(:hsj_mga_algorithm))
             @test dict[0] == 0
             @test dict[1] == 0
@@ -325,7 +325,7 @@ function _test_do_update_hsj_weights()
         @testset "variable active" begin
             variable_values = array_to_dict([1, 1, 1, 0])
             dict = DefaultDict(0)
-            group = VariableGroupParameters(variable_indices, i->1, mga_indices)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
             do_update_hsj_weights!(group, variable_values, dict, Val(:hsj_mga_algorithm))
             @test dict[0] == 1
             @test dict[1] == 1
@@ -335,7 +335,7 @@ function _test_do_update_hsj_weights()
             dict = DefaultDict(0)
             dict[0] = 1
             dict[1] = 1
-            group = VariableGroupParameters(variable_indices, i->1, mga_indices)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
             do_update_hsj_weights!(group, variable_values, dict, Val(:hsj_mga_algorithm))
             @test dict[0] == 1
             @test dict[1] == 1
@@ -345,7 +345,7 @@ function _test_do_update_hsj_weights()
             dict = DefaultDict(0)
             dict[0] = 1
             dict[1] = 1
-            group = VariableGroupParameters(variable_indices, i->1, mga_indices)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
             do_update_hsj_weights!(group, variable_values, dict, Val(:hsj_mga_algorithm))
             @test dict[0] == 1
             @test dict[1] == 1
@@ -353,10 +353,69 @@ function _test_do_update_hsj_weights()
         @testset "active and inactive variables" begin
             variable_values = array_to_dict([0, 0, 1, 0])
             dict = DefaultDict(0)
-            group = VariableGroupParameters(variable_indices, i->1, mga_indices)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
             do_update_hsj_weights!(group, variable_values, dict, Val(:hsj_mga_algorithm))
             @test dict[0] == 0
             @test dict[1] == 1
+        end
+    end
+    @testset "do_update_fuzzy_hsj_weights" begin
+        mga_indices = collect(0:1)
+        function variable_indices(i)
+            return [2*i+1, 2*i+2]
+        end 
+
+        @testset "empty_iterator" begin
+            variable_values = array_to_dict([0, 0, 0, 0])
+            dict = DefaultDict(0)
+            group = VariableGroupParameters(variable_indices, i->1/2, [])
+            do_update_hsj_weights!(group, variable_values, dict, Val(:fuzzy_mga_algorithm))
+            @test dict[0] == 0
+            @test dict[1] == 0
+        end
+        @testset "variable inactive" begin
+            variable_values = array_to_dict([0, 0, 0, 0])
+            dict = DefaultDict(0)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
+            do_update_hsj_weights!(group, variable_values, dict, Val(:fuzzy_mga_algorithm))
+            @test dict[0] == 0
+            @test dict[1] == 0
+        end
+        @testset "variable active" begin
+            variable_values = array_to_dict([1, 1, 1, 0])
+            dict = DefaultDict(0)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
+            do_update_hsj_weights!(group, variable_values, dict, Val(:fuzzy_mga_algorithm))
+            @test dict[0] == 1
+            @test dict[1] == 2
+        end
+        @testset "variable active with set weight" begin
+            variable_values = array_to_dict([1, 1, 1, 0])
+            dict = DefaultDict(0)
+            dict[0] = 1
+            dict[1] = 1
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
+            do_update_hsj_weights!(group, variable_values, dict, Val(:fuzzy_mga_algorithm))
+            @test dict[0] == 1
+            @test dict[1] == 2
+        end
+        @testset "variable inactive with set weight" begin
+            variable_values = array_to_dict([0, 0, 0, 0])
+            dict = DefaultDict(0)
+            dict[0] = 1
+            dict[1] = 1
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
+            do_update_hsj_weights!(group, variable_values, dict, Val(:fuzzy_mga_algorithm))
+            @test dict[0] == 1
+            @test dict[1] == 1
+        end
+        @testset "active and inactive variables" begin
+            variable_values = array_to_dict([0, 0, 1, 0])
+            dict = DefaultDict(0)
+            group = VariableGroupParameters(variable_indices, i->1/2, mga_indices)
+            do_update_hsj_weights!(group, variable_values, dict, Val(:fuzzy_mga_algorithm))
+            @test dict[0] == 0
+            @test dict[1] == 2
         end
     end 
 end
