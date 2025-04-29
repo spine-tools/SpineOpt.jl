@@ -76,62 +76,61 @@ function _add_mga_iteration(k, mga_iteration)
     (mga_iteration=mga_iteration(new_mga_name),)
 end
 
-struct mga_group_param
-    stochastic_indices_of_variable::Function
-    scenario_weights::Function
-    variable_indices::AbstractArray
+struct VariableGroupParameters
+    variable_scenario_indices::Function # returns scenario indices for a given variable
+    scenario_weights::Function # weight of the scenario
+    variable_indices::AbstractArray # index per single variable, spread across scenarios 
 end
 
 """
-    Runs the itertive mga process.
+    Runs the iterative mga process.
 
     # Arguments:
     - m::Model - JuMP model
     - variables::AbstractDict - dict that returns a dict with scenario variable for an mga group
     - group_parameters::AbstractDict - dict of parameters for every mga variable group
-    - max_mga_iters - no mga iterations
-    - mga_slack - slack for near optimality exploration
+    - max_mga_iters - no. mga iterations
+    - mga_slack - slack for near-optimal exploration
     - algorithm_type::Val - value for multiple dispatch
-    - solve_wrapper::Function - wrapper that runs the optimization and returns boolean value with status
+    - solve_wrapper::Function - wrapper that runs the optimization and returns boolean value with the status
 """
 function iterative_mga!(
     m::Model, 
     variables,
-    group_parameters::AbstractDict{Symbol, mga_group_param},
+    group_parameters::AbstractDict{Symbol, VariableGroupParameters},
     max_mga_iters,
     mga_slack,
     algorithm_type::Val,
     solve_wrapper::Function = (m; iteration) -> (optimize!(m); true),
 )   
-    group_variable_values = Dict()
     hsj_weights = init_hsj_weights()
     solve_wrapper(m; iteration=0)
-    group_variable_values[0] = get_variable_group_values(variables, group_parameters)
-    update_hsj_weights!(group_variable_values[0], hsj_weights, group_parameters, algorithm_type)
+    variable_group_values = Dict(0 => get_variable_group_values(variables, group_parameters))
+    update_hsj_weights!(variable_group_values[0], hsj_weights, group_parameters, algorithm_type)
     slack = slack_correction(mga_slack, objective_value(m))
     constraint = add_mga_objective_constraint!(m, slack, algorithm_type)
     for i=1:max_mga_iters
-        update_mga_objective!(m, hsj_weights, variables, group_variable_values[i-1], group_parameters, constraint, algorithm_type)
+        update_mga_objective!(m, hsj_weights, variables, variable_group_values[i-1], group_parameters, constraint, algorithm_type)
         solve_wrapper(m; iteration=i) || break
-        group_variable_values[i] = get_variable_group_values(variables, group_parameters)
-        update_hsj_weights!(group_variable_values[i], hsj_weights, group_parameters, algorithm_type)
+        variable_group_values[i] = get_variable_group_values(variables, group_parameters)
+        update_hsj_weights!(variable_group_values[i], hsj_weights, group_parameters, algorithm_type)
     end
-    return group_variable_values
+    return variable_group_values
 end
 
 function prepare_variable_groups(m::Model)
     return Dict(
-        :units_invested  => mga_group_param(
+        :units_invested  => VariableGroupParameters(
             (ind) -> units_invested_available_indices(m; ind...),
             (stoch_ind) -> realize(unit_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
             units_invested_mga_indices()
         ),
-        :connections_invested  => mga_group_param(
+        :connections_invested  => VariableGroupParameters(
             (ind) -> connections_invested_available_indices(m; ind...),
             (stoch_ind) -> realize(connection_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
             connections_invested_mga_indices(),
         ),
-        :storages_invested  => mga_group_param(
+        :storages_invested  => VariableGroupParameters(
             (ind) -> storages_invested_available_indices(m; ind...),
             (stoch_ind) -> realize(node_stochastic_scenario_weight(m; _drop_key(stoch_ind, :t)...)),
             storages_invested_mga_indices(),
@@ -145,13 +144,13 @@ end
 
     # Arguments
     - variables::Dict{Symbol, Any} - dict of variable group indexed variables
-    - group_parameters::Dict{Symbol, mga_group_param} - dict of parameters for every mga variable group
+    - group_parameters::Dict{Symbol, VariableGroupParameters} - dict of parameters for every mga variable group
 """
-function get_variable_group_values(variables::AbstractDict, group_parameters::AbstractDict{Symbol, mga_group_param})
+function get_variable_group_values(variables::AbstractDict, group_parameters::AbstractDict{Symbol, VariableGroupParameters})
     return Dict(
         group_name => Dict(
             var_idx => value(variables[group_name][var_idx]) 
-            for i in group.variable_indices for var_idx in group.stochastic_indices_of_variable(i)
+            for i in group.variable_indices for var_idx in group.variable_scenario_indices(i)
         ) for (group_name, group) in group_parameters
     )
 end
@@ -165,7 +164,7 @@ end
     - variables::AbstractDict - dict that returns a dict with scenario variable for an mga group
     - variable_values::AbstractDict - dict that returns a dict with scenario variable values for an mga group
     - group_parameters::AbstractDict - dict that returns mga params for an mga group
-    - objective_constraint::AbstractDict - dict that describes mga near optimality constraint
+    - objective_constraint - objective constraint (can be an expression in case of the fuzzy formulation)
     - algorithm_type::Val - value for multiple dispatch
 """
 function update_mga_objective!(
@@ -173,23 +172,20 @@ function update_mga_objective!(
     hsj_weights::AbstractDict,
     variables::AbstractDict,
     variable_values::AbstractDict,
-    group_parameters::AbstractDict{Symbol, mga_group_param},
-    objective_constraint::AbstractDict,
+    groups_parameters::AbstractDict{Symbol, VariableGroupParameters},
+    objective_constraint,
     algorithm_type::Val
 )
     mga_weighted_groups = Dict(
         group_name => prepare_objective_mga!(
-            m,
-            group.stochastic_indices_of_variable,
-            group.scenario_weights,
-            group.variable_indices,
+            group,
             variables[group_name],
             variable_values[group_name],
             hsj_weights[group_name],
             algorithm_type
-        ) for (group_name, group) in group_parameters
+        ) for (group_name, group) in groups_parameters
     )
-    return formulate_mga_objective!(m, mga_weighted_groups, keys(group_parameters), objective_constraint, algorithm_type)
+    return formulate_mga_objective!(m, mga_weighted_groups, objective_constraint, algorithm_type)
 end
 
 """
@@ -205,13 +201,12 @@ end
 function formulate_mga_objective!(
     m::Model,
     mga_weighted_groups::AbstractDict,
-    group_names,
-    objective_constraint::AbstractDict,
+    objective_constraint,
     ::Val{:hsj_mga_algorithm}
 )
     # we minimize the sum of all variable group weighted sums
     return Dict(
-        :objective => @objective(m, Min, sum(mga_weighted_groups[mga_group][:expression] for mga_group in group_names))
+        :objective => @objective(m, Min, sum(values(mga_weighted_groups)))
     )
 end
 
@@ -228,33 +223,27 @@ end
 function formulate_mga_objective!(
     m::Model,
     mga_weighted_groups::AbstractDict,
-    group_names,
-    objective_constraint::AbstractDict,
+    objective_constraint,
     ::Val{:fuzzy_mga_algorithm},
     eps=1e-4    
 )   
-    formulation = Dict()
-    # we maximize the minimum of all the achievement functions
-    formulation[:variable] = s_min = @variable(m)
-    for mga_group in group_names
-        formulation[mga_group] = @constraint(m, s_min <= mga_weighted_groups[mga_group][:variable])
-    end
-    formulation[:objective_constraint] = @constraint(m, s_min <= objective_constraint[:variable])
-    # RPM objective function - an implementation of lexmax of the minimum of achievement functions, regularized with a sum
-    formulation[:objective] = @objective(
-        m,
-        Max,
-        s_min + eps * sum(mga_weighted_groups[mga_group][:variable] for mga_group in group_names) + eps * objective_constraint[:variable]
+    s_min = @variable(m)
+    return Dict(
+        :variable => s_min,
+        :heterogeneity_metric => Dict(
+            group_name => @constraint(m, s_min <= group_sum) for (group_name, group_sum) in mga_weighted_groups
+        ),
+        :objective_metric => @constraint(m, s_min <= objective_constraint),
+        :objective => @objective(m, Max, s_min + eps * (sum(values(mga_weighted_groups)) + objective_constraint))
     )
-    return formulation
 end
 
 """
     Creates a weighted mga for variables from a single mga group
     
     # Arguments
-    - m::Model - JuMP model
-    - stochastic_indices_of_variable::Function - returns iterator of scenario variable indices for a variable
+
+    - variable_scenario_indices::Function - returns iterator of scenario variable indices for a variable
     - variable_scenario_weights::Function - returns scenario weights
     - variable_indices::AbstractArray - all variable indices from a variable group
     - variable - dict with JuMP scenario variables
@@ -262,22 +251,19 @@ end
     - mga_weights::AbstractDict - mga weights from a previous iteration
 """
 function prepare_objective_mga!(
-    m::Model,
-    stochastic_indices_of_variable::Function,
-    variable_scenario_weights::Function,
-    variable_indices::AbstractArray,
+    group_parameters::VariableGroupParameters,
     variable,
     variable_values::AbstractDict,
     mga_weights::AbstractDict,
     ::Val{:hsj_mga_algorithm}
 )   
     # mga variables with appropriate weights
-    weighted_group_variables = (
-        get_scenario_variable_average(variable, stochastic_indices_of_variable(i), variable_scenario_weights) * mga_weights[i]
-        for i in variable_indices
+    weighted_variable_groups = (
+        get_scenario_variable_average(variable, group_parameters.variable_scenario_indices(i), group_parameters.scenario_weights) * mga_weights[i]
+        for i in group_parameters.variable_indices
     )
     # our objective is a sum of all the mga weighted variables
-    return Dict(:expression => @expression(m, sum(weighted_group_variables, init=0)))
+    return sum(weighted_variable_groups, init=0)
 end
 
 """
@@ -285,42 +271,35 @@ end
     
     # Arguments
     - m::Model - JuMP model
-    - stochastic_indices_of_variable::Function - returns iterator of scenario variable indices for a variable
+    - variable_scenario_indices::Function - returns iterator of scenario variable indices for a variable
     - variable_scenario_weights::Function - returns scenario weights
     - variable_indices::AbstractArray - all variable indices from a variable group
     - variable - dict with JuMP scenario variables
     - variable_values::AbstractDict - dict with values of variables from previous iteration
     - mga_weights::AbstractDict - mga weights from a previous iteration
-    - beta - constant to control the slope of the achievement function after reaching aspiration
-    - gamma - constant to control the slope of the achievement function before reaching reservation 
 """
 function prepare_objective_mga!(
-    m::Model,
-    stochastic_indices_of_variable::Function,
-    variable_scenario_weights::Function,
-    variable_indices::AbstractArray,
+    group_parameters::VariableGroupParameters,
     variable,
     variable_values::AbstractDict,
     mga_weights::AbstractDict,
-    ::Val{:fuzzy_mga_algorithm},
-    beta=0.5,
-    gamma=1.5
+    ::Val{:fuzzy_mga_algorithm}
 )   
     # mga variables with appropriate weights
-    weighted_group_variables = (
-        get_scenario_variable_average(variable, stochastic_indices_of_variable(i), variable_scenario_weights) * mga_weights[i]
-        for i in variable_indices
+    weighted_variable_groups = (
+        get_scenario_variable_average(variable, group_parameters.variable_scenario_indices(i), group_parameters.scenario_weights) * mga_weights[i]
+        for i in group_parameters.variable_indices
     )
     # values of mga expressions in current point
-    weighted_group_variable_values = (
-        get_scenario_variable_average(variable_values, stochastic_indices_of_variable(i), variable_scenario_weights) * mga_weights[i]
-        for i in variable_indices
+    weighted_variable_group_values = (
+        get_scenario_variable_average(variable_values, group_parameters.variable_scenario_indices(i), group_parameters.scenario_weights) * mga_weights[i]
+        for i in group_parameters.variable_indices
     )
     a::Float64 = 0 # we aspire to zero out all of the nonzero variables
-    y = sum(weighted_group_variables, init=0) # mga sum expression
-    r::Float64 = sum(weighted_group_variable_values, init=0) # we start to get satsfied after the point of no change
+    y = sum(weighted_variable_groups, init=0) # mga sum expression
+    r::Float64 = sum(weighted_variable_group_values, init=0) # we start to get satsfied after the point of no change
     # we create an achievement function for every variable group
-    return add_rpm_constraint!(m, y, a, r, beta, gamma)
+    return isapprox(a, r) ? 1 : (y-r)/(a-r)
 end
 
 """
@@ -343,54 +322,21 @@ end
     - slack::Float64 - how many percents can we stray from the optimal value
 """
 function add_mga_objective_constraint!(m::Model, slack, ::Val{:hsj_mga_algorithm})
-    return Dict(:eps_constraint => @constraint(m, objective_function(m) <= (1 + slack) * objective_value(m)))
+    return @constraint(m, objective_function(m) <= (1 + slack) * objective_value(m))
 end
 
 """
-    Adds constraints used by the Reference Point Method. Additional variable corresponds to achievement criterion
+    Adds constraints used by the Reference Point Method.
 
     # Arguments
     - m::Model - JuMP model
-    - expression - a JuMP expression that corresponds to a single goal function
-    - aspiration - value that we would like to achieve on that goal function
-    - reservation - minimal value of the expression that starts to satisfy us
-    - beta - constant to control the slope of the achievement function after reaching aspiration
-    - gamma - constant to control the slope of the achievement function before reaching reservation 
+    - slack - the mga slack
 """
-function add_mga_objective_constraint!(m::Model, slack, ::Val{:fuzzy_mga_algorithm} , beta=0.5, gamma=1.5)
+function add_mga_objective_constraint!(m::Model, slack, ::Val{:fuzzy_mga_algorithm})
     y = objective_function(m)
     a = objective_value(m) # we aspire to reach the best possible value
     r = (1 + slack) * objective_value(m) # we start to get satsfied when reaching nearly optimal solution
-    return add_rpm_constraint!(m, y, a, r, beta, gamma)
-end
-
-"""
-    Adds constraints used by the Reference Point Method. Additional variable corresponds to achievement criterion
-
-    # Arguments
-    - m::Model - JuMP model
-    - expression - a JuMP expression that corresponds to a single goal function
-    - aspiration - value that we would like to achieve on that goal function
-    - reservation - minimal value of the expression that starts to satisfy us
-    - beta - constant to control the slope of the achievement function after reaching aspiration
-    - gamma - constant to control the slope of the achievement function before reaching reservation 
-"""
-function add_rpm_constraint!(m::Model, expression, aspiration::Float64, reservation::Float64, beta::Float64=0.5, gamma::Float64=1.5)
-    if !(0 < beta < 1 < gamma)
-        throw(DomainError((beta, gamma), "parameters not in the domain 0 < beta < 1 < gamma"))
-    end
-    s = @variable(m)
-    # If the values of aspiration and reservation are too close, we ensure that the objective is always fully satisfiable
-    if isapprox(aspiration, reservation)
-        thresholds = Dict(i => @constraint(m, s <= 1) for i=0:2)
-    else
-        thresholds = Dict(
-            0 => @constraint(m, s <= gamma * (expression - reservation) / (aspiration - reservation)),
-            1 => @constraint(m, s <= (expression - reservation) / (aspiration - reservation)),
-            2 => @constraint(m, s <=  1 + beta * (expression - aspiration) / (aspiration - reservation))
-        )
-    end
-    return Dict(:variable => s, :thresholds => thresholds)
+    return isapprox(a, r) ? 1 : (y-r)/(a-r)
 end
 
 "If the objective value was negative, the f(x) <= (1+slack) * f(x_optim_ would be infeasible unless we negate the value of slack"
@@ -404,18 +350,17 @@ init_hsj_weights() = DefaultDict{Symbol, AbstractDict}(() -> DefaultDict(0))
     # Arguments
     - variable_values::AbstractDict{Symbol, AbstractDict} - dict of all variable_values from previous iteration
     - variable_hsj_weights::AbstractDict{Symbol, AbstractDict} - dict of all mga weights
-    - group_parameters::AbstractDict{Symbol, mga_group_param} - dict of all group parameters
+    - group_parameters::AbstractDict{Symbol, VariableGroupParameters} - dict of all group parameters
 """
 function update_hsj_weights!(
     variable_values::AbstractDict,
     variable_hsj_weights::AbstractDict{Symbol, AbstractDict},
-    group_parameters::AbstractDict{Symbol, mga_group_param},
+    groups_parameters::AbstractDict{Symbol, VariableGroupParameters},
     algorithm_type::Val
 )
-    for (group_name, group) in group_parameters
+    for (group_name, group) in groups_parameters
         do_update_hsj_weights!(
-            group.variable_indices,
-            group.stochastic_indices_of_variable,
+            group,
             variable_values[group_name],
             variable_hsj_weights[group_name],
             algorithm_type
@@ -434,13 +379,12 @@ end
     - variable_hsj_weights::AbstractDict - dict of mga weights to be updated
 """
 function do_update_hsj_weights!(
-    variable_indices::AbstractArray,
-    variable_scenario_indices::Function,
+    group::VariableGroupParameters,
     all_variable_values::AbstractDict,
     variable_hsj_weights::AbstractDict,
     ::Val{:hsj_mga_algorithm}
 )
-    active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
+    active_variables = filter(i -> was_variable_active(all_variable_values, group.variable_scenario_indices(i)), group.variable_indices)
     for i in active_variables
         variable_hsj_weights[i] = 1
     end
@@ -448,16 +392,15 @@ function do_update_hsj_weights!(
 end
 
 function do_update_hsj_weights!(
-    variable_indices::AbstractArray,
-    variable_scenario_indices::Function,
+    group::VariableGroupParameters,
     all_variable_values::AbstractDict,
     variable_hsj_weights::AbstractDict,
     ::Val{:fuzzy_mga_algorithm}
 )
-    active_variables = filter(i -> was_variable_active(all_variable_values, variable_scenario_indices(i)), variable_indices)
+    active_variables = filter(i -> was_variable_active(all_variable_values, group.variable_scenario_indices(i)), group.variable_indices)
     for i in active_variables
-        val = sum(all_variable_values[j] for j in variable_scenario_indices(i))
-        variable_hsj_weights[i] = 1 / val
+        variable_value = get_scenario_variable_average(all_variable_values, group.variable_scenario_indices(i), group.scenario_weights)
+        variable_hsj_weights[i] = 1 / variable_value
     end
 end
 
