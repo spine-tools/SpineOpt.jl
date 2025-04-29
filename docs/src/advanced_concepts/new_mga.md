@@ -72,9 +72,6 @@ f(x) \geq (1 + \varepsilon) f(x^*) &\implies s_c(x) \leq 0 \\
 \end{align*}
 $$
 
-## Multithreshold MGA
-An extension of RPM Fuzzy MGA has been proposed which involves using multiple values of exponentially decreasing slacks
-
 ## How to set up an MGA problem
 - [model](@ref): In order to explore an MGA model, you will need an algorith of type [hsj_mga_algorithm](@ref model_algorithm_list) or [fuzzy_mga_algorithm](@ref model_algorithm_list). You should also define the number of iterations [max\_mga\_iterations](@ref), and the maximum allowed deviation from the original objective function ([max\_mga\_slack](@ref)).
 - at least one investment candidate of type [unit](@ref), [connection](@ref), or [node](@ref). For more details on how to set up an investment problem please see: [Investment Optimization](@ref).
