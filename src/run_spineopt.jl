@@ -361,9 +361,10 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    if needs_bridges(Val(model_algorithm(model=instance))) && !add_bridges
+    algorithm = model_algorithm(model=instance)
+    if needs_bridges(Val(algorithm)) && !add_bridges
         add_bridges = true
-        @warn "Bridges are required for MGA algorithm - adding them"
+        @warn "Bridges are required for $algorithm algorithm - adding them"
     end
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model, add_bridges)
