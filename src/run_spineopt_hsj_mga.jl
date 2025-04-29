@@ -47,6 +47,10 @@ function do_run_spineopt!(
     return generic_run_mga!(m, url_out, Val(:fuzzy_mga_algorithm), log_level, update_names, alternative)
 end
 
+"Bridges are required for MGA algorithm"
+needs_bridges(::Val{:hsj_mga_algorithm}) = true
+needs_bridges(::Val{:fuzzy_mga_algorithm}) = true
+
 function generic_run_mga!(m::Model, url_out, algorithm_type::Val, log_level, update_names, alternative)
     instance = m.ext[:spineopt].instance 
     mga_iteration = ObjectClass(:mga_iteration, [])
