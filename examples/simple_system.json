@@ -1467,6 +1467,13 @@
         ],
         [
             "model",
+            "use_highest_resolution_constraint_ratio_out_in_connection_flow",
+            true,
+            "boolean_value_list",
+            "Whether to use highest resolution for constraint ratio out in connection flow."
+        ],
+        [
+            "model",
             "use_milestone_years",
             false,
             "boolean_value_list",
@@ -1478,13 +1485,6 @@
             false,
             "boolean_value_list",
             "Whether to use tight and compact constraint formulations."
-        ],
-        [
-            "model", 
-            "use_highest_resolution_constraint_ratio_out_in_connection_flow", 
-            true, 
-            "boolean_value_list", 
-            "Whether to use highest resolution for constraint ratio out in connection flow."
         ],
         [
             "model",
@@ -1751,6 +1751,13 @@
             "==",
             "constraint_sense_list",
             "A selector for `nodal_balance` constraint sense."
+        ],
+        [
+            "node",
+            "node_availability_factor",
+            1,
+            null,
+            "Availability of the `node`, acting as a multiplier on its `node_state_cap`. Typically between 0-1."
         ],
         [
             "node",
