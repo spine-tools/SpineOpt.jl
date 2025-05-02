@@ -51,7 +51,7 @@ function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
         )
         <=
         + sum(
-            + node_state_cap(m; node=ng, stochastic_scenario=s, t=t)
+            + node_state_capacity(m; node=ng, stochastic_scenario=s, t=t)
             * (
                 + number_of_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
                 + sum(
