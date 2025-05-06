@@ -22,19 +22,17 @@
     generate_economic_structure!(m)
 """
 function generate_economic_structure!(m; log_level=3)
-    !isnothing(use_economic_representation(model=m.ext[:spineopt].instance)) || return
+    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) || return
     if !isnothing(roll_forward(model=m.ext[:spineopt].instance))
-        error("Using economic representation with rolling horizon is currently not supported.")
+        error("Using multiyear economic discounting with rolling horizon is currently not supported.")
     elseif model_type(model=m.ext[:spineopt].instance) === :spineopt_benders 
-        error("Using economic representation with Benders' decomposition is currently not supported.")
+        error("Using multiyear economic discounting with Benders' decomposition is currently not supported.")
     end
-    # use_economic_representation == true without defining investment temporal blocks will break the investment cost calculation
-    # in such cases, user would only need to discount operational costs manually
     if isempty(model__default_investment_temporal_block()) &&
        isempty(node__investment_temporal_block()) &&
        isempty(unit__investment_temporal_block()) &&
        isempty(connection__investment_temporal_block())
-        error("Using economic representation without defining investment temporal blocks is currently not supported.")
+        error("Using multiyear economic discounting without defining investment temporal blocks is currently not supported.")
     end
     economic_parameters = _create_set_parameters_and_relationships()
     for (obj, name) in [(unit, :unit), (node, :storage), (connection, :connection)]
@@ -512,7 +510,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
     invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     param_name = economic_parameters[obj_cls][:set_discounted_duration]
 
-    if use_economic_representation(model=instance) == :milestone_years
+    if multiyear_economic_discounting(model=instance) == :milestone_years
         for id in obj_cls()
             if isempty(invest_temporal_block()) || isempty(invest_temporal_block(; Dict(obj_cls.name => id)...))
                 invest_temporal_block_ = model__default_investment_temporal_block(model=instance)
@@ -546,7 +544,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
             end
             add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
         end
-    elseif  use_economic_representation(model=instance) == :consecutive_years 
+    elseif  multiyear_economic_discounting(model=instance) == :consecutive_years 
     # if using consecutive years, we only need a discount rate for each year 
         for id in obj_cls()
             timeseries_ind = []

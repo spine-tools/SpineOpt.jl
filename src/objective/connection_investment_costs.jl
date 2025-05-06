@@ -41,7 +41,7 @@ function connection_investment_costs(m::Model, t_range)
 end
 
 function _connection_weight_for_economic_representation(m; c, s, t)
-    if !isnothing(use_economic_representation(model=m.ext[:spineopt].instance))
+    if !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance))
         return (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, t=t)]) * 
                 connection_tech_discount_factor[(connection=c, stochastic_scenario=s, t=t)] * 
                 connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, t=t)]
