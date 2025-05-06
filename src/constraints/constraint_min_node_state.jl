@@ -81,15 +81,3 @@ function constraint_min_node_state_indices(m::Model)
         )
     )
 end
-
-"""
-    constraint_min_node_state_indices_filtered(m::Model; filtering_options...)
-
-Form the stochastic index array for the `:constraint_min_node_state` constraint.
-
-Uses stochastic path indices of the `node_state` variables. Keyword arguments can be used to filter the resulting
-"""
-function constraint_min_node_state_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
-    f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
-    filter(f, constraint_min_node_state_indices(m))
-end
