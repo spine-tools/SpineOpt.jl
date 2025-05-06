@@ -845,6 +845,37 @@ function generate_connection_flow_capacity()
     end
 end
 
+function generate_node_state_capacity()
+    function _node_state_capacity(f; node=node, _default=nothing, kwargs...)
+        _prod_or_nothing(
+            f(node_state_cap; node=node, _default=_default, kwargs...),
+            f(node_availability_factor; node=node, kwargs...),
+        )
+    end
+
+    node_state_capacity = ParameterFunction(_node_state_capacity)
+    @eval begin
+        node_state_capacity = $node_state_capacity
+        export node_state_capacity
+    end
+end
+
+function generate_node_state_lower_limit()
+    function _node_state_lower_limit(f; node=node, _default=nothing, kwargs...)
+        maximum([_prod_or_nothing(
+            f(node_state_cap; node=node, _default=_default, kwargs...),
+            f(node_state_min_factor; node=node, kwargs...)),
+            f(node_state_min; node=node, kwargs...)]
+        )
+    end
+
+    node_state_lower_limit = ParameterFunction(_node_state_lower_limit)
+    @eval begin
+        node_state_lower_limit = $node_state_lower_limit
+        export node_state_lower_limit
+    end
+end
+
 _prod_or_nothing(args...) = _prod_or_nothing(collect(args))
 _prod_or_nothing(args::Vector) = any(isnothing.(args)) ? nothing : *(args...)
 _prod_or_nothing(args::Vector{T}) where T<:Call = Call(_prod_or_nothing, args)
