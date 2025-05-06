@@ -18,28 +18,28 @@ To avoid repetition, we only consider one unit instead of the two units from the
 Since we are working with investments, we are going to make a distinction between investments and operation in the time blocks. We retain the original time block but adjust the resolution to 4 months ('4M'). Additionally we add an investment time block with a resolution of 5 years ('5Y') between 2000 and 2006. We have to adjust the time horizon of the model entity accordingly.
 
 Once we have our setup, we can take a look at the economic representation in SpineOpt. Below is a list of parameters you would need:
-- [use\_economic\_represention](@ref): activation value in a choice between `consecutive_years` and `milestone_years`, with the default value being `null` (`nothing` in Julia). If a valid value is chosen, it means the model will use its internally-calculated parameters for discounting investment and operation costs. Specifically, choosing `consecutive_years` requires the model to use continous operational temporal blocks, and thus the operation cost will be discounted every year. In constrast, choosing `milestone_years` means the model will discount the operation cost as per the investment temporal block.  
+- [multiyear\_economic\_discounting](@ref): activation value in a choice between `consecutive_years` and `milestone_years`, with the default value being `null` (`None` in a SpineDB and `nothing` in Julia). When a valid value is selected, the model will use its internally-calculated parameters for discounting investment and operation costs. Specifically, choosing `consecutive_years` requires the model to use continous operational temporal blocks, and thus the operation cost will be discounted every year. In constrast, choosing `milestone_years` means the model will discount the operation cost as per the investment temporal block.  
 - [discount\_rate](@ref): the rate you would like to discount your costs with.
 - [discount\_year](@ref): the year you would like to discount your costs to.
 - [unit\_investment\_tech\_lifetime](@ref): using units as an example, this is the technical lifetime of the unit.
 - [unit\_investment\_econ\_lifetime](@ref): using units as an example, this is the economic lifetime of the unit which is used to calculate the economic parameters.
 - [optional] [unit\_discount\_rate\_technology\_specific](@ref): using units as an example, this is used if you would like to have a specific discount rate different from [discount\_rate](@ref).
 - [optional] [unit\_lead\_time](@ref): if not specified, the default lead time is 0. 
-- [unit\_investment\_cost](@ref): using unit as an example, this is the investment cost for the investment year. When [use\_economic\_represention](@ref) is not used (i.e. with the default value `null`), then this cost that you put will not be discounted at all. However, when you choose a valid value of [use\_economic\_represention](@ref), SpineOpt will discount this cost to the [discount\_year](@ref) using [discount\_rate](@ref).
+- [unit\_investment\_cost](@ref): using unit as an example, this is the investment cost for the investment year. When [multiyear\_economic\_discounting](@ref) is not used (i.e. with the default value `null`), then this cost that you put will not be discounted at all. However, when you choose a valid value of [multiyear\_economic\_discounting](@ref), SpineOpt will discount this cost to the [discount\_year](@ref) using [discount\_rate](@ref).
 
 To be able to see the values of the economic parameters after a run, you have to add them to the report. 
 
 ![image](figs_multi-year/report.png)
 
-## Not using economic parameters
-We start with the case where [use\_economic\_represention](@ref) is not used with the default value `null`, which means SpineOpt will not create and use its internally-calculated parameters for discounting investment and operation costs. A [unit\_investment\_cost](@ref) of 100 and a [vom\_cost](@ref) of 25 are not discouted at all. See the set-up below.
+## Not using economic discounting
+We start with the case where [multiyear\_economic\_discounting](@ref) is not used with the default value `null`, which means SpineOpt will not create and use its internally-calculated parameters for discounting investment and operation costs. A [unit\_investment\_cost](@ref) of 100 and a [vom\_cost](@ref) of 25 are not discouted at all. See the set-up below.
 
-![image](figs_multi-year/use_economic_rep_default.png)
+![image](figs_multi-year/economic_disounting_no_use.png)
 
 ## Using economic parameters with consecutive operation years
-Now we set [use\_economic\_represention](@ref) to `consecutive_years`. This set-up indicates that the model will use the internally-calculated parameters and continous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05. See the set-up below.
+Now we set [multiyear\_economic\_discounting](@ref) to `consecutive_years`. This set-up indicates that the model will use the internally-calculated parameters and continous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05. See the set-up below.
 
-![image](figs_multi-year/use_economic_rep_consecutive.png)
+![image](figs_multi-year/economic_discounting_consecutive.png)
 
 The values for the output parameter `unit_discounted_duration` are shown below. It is used to discount operation costs so it has the resolution of the operational temporal block. However, since we only discount per year, this parameter value is constant within a year.
 
@@ -52,7 +52,7 @@ The rest is for discounting investment costs with the resolution of the investme
 ## Using economic parameters with milestone investment years
 Now we set [use\_milestone\_years](@ref) to `milestone_years`. This indicates that we want operational temporal block to be discontinous and use the same milestone years as the investment temporal block. In this case, we need to change the definition of temporal blocks, see below picture:
 
-![image](figs_multi-year/use_economic_rep_milestone.png)
+![image](figs_multi-year/economic_discounting_milestone.png)
 
 where the demand `TimeSeries` is defined as follows:
 
