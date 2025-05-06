@@ -47,6 +47,7 @@ function preprocess_data_structure()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
     generate_node_state_capacity()
+    generate_node_state_lower_limit()
     generate_unit_commitment_parameters()
 end
 
@@ -841,21 +842,6 @@ function generate_connection_flow_capacity()
     @eval begin
         connection_flow_capacity = $connection_flow_capacity
         export connection_flow_capacity
-    end
-end
-
-function generate_node_state_capacity()
-    function _node_state_capacity(f; node=node, _default=nothing, kwargs...)
-        _prod_or_nothing(
-            f(node_state_cap; node=node, _default=_default, kwargs...),
-            f(node_availability_factor; node=node, kwargs...),
-        )
-    end
-
-    node_state_capacity = ParameterFunction(_node_state_capacity)
-    @eval begin
-        node_state_capacity = $node_state_capacity
-        export node_state_capacity
     end
 end
 
