@@ -19,7 +19,8 @@ This factor translates the overnight costs of investment into discounted (to the
 
 ![image](figs_multi-year/discounted_annuities.png)
 
-For this purpose, we first calculate first the fraction of payment per year (e.g. something like 0.25, 0.5, 0.75, 1 over the lead time; 1 for the economic lifetime minus the lead time, and 0.75, 0.5, 0.25 and 0 for the remaining economic lifetime). Each payment fraction is then multiplied by the discounting factor of the payment year with respect to the discounting year (e.g. start of optimization).
+For this purpose, we first calculate the fraction of payment per year (e.g. something like 0.25, 0.5, 0.75, 1 over the lead time; 1 for the economic lifetime minus the lead time, and 0.75, 0.5, 0.25 and 0 for the remaining economic lifetime). Each payment fraction is then multiplied by the discounting factor of the payment year with respect to the discounting year (e.g. start of optimization).
+
 
 **Salvage fraction**
 
