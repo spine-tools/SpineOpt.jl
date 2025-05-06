@@ -1785,7 +1785,14 @@
             "node_state_min",
             0,
             null,
-            "The minimum permitted value for a `node_state` variable."
+            "The minimum permitted absolute value for a `node_state` variable."
+        ],
+        [
+            "node",
+            "node_state_min_factor",
+            0,
+            null,
+            "The minimum permitted per unit value for a `node_state` variable."
         ],
         [
             "node",
@@ -4809,17 +4816,17 @@
         [
             "node",
             "electricity_node",
-            "node_state_cap",
-            100,
+            "node_availability_factor",
+            1,
             "Base"
         ],
         [
             "node",
             "electricity_node",
-            "node_availability_factor",
-            1,
+            "node_state_cap",
+            100,
             "Base"
-        ],        
+        ],
         [
             "node",
             "electricity_node",
