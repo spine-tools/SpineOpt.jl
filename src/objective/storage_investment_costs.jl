@@ -30,7 +30,7 @@ function storage_investment_costs(m::Model, t_range)
         m,
         + sum(
             + storages_invested[n, s, t]
-            * _storage_weight_for_economic_representation(m; n, s, t)
+            * _storage_weight_for_multiyear_economic_discounting(m; n, s, t)
             * storage_investment_cost(m; node=n, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
@@ -40,7 +40,7 @@ function storage_investment_costs(m::Model, t_range)
     )
 end
     
-function _storage_weight_for_economic_representation(m; n, s, t)
+function _storage_weight_for_multiyear_economic_discounting(m; n, s, t)
     if !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance))
         return (1- storage_salvage_fraction[(node=n, stochastic_scenario=s, t=t)]) * 
                 storage_tech_discount_factor[(node=n, stochastic_scenario=s, t=t)] * 

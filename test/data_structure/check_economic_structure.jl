@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function test_data_example_economic_representation()
+function test_data_example_multiyear_economic_discounting()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -139,7 +139,7 @@ function test_data_example_economic_representation()
     url_in
 end
 
-function test_data_minimal_feasible_example_economic_representation()
+function test_data_minimal_feasible_example_multiyear_economic_discounting()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -186,10 +186,10 @@ end
 
 @testset "economic structure" begin
     @testset "test discounted duration - using milestone years, w/o inv. blocks" begin
-        url_in = test_data_example_economic_representation()
+        url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
-        economic_representation = "milestone_years"
+        multiyear_economic_discounting = "milestone_years"
         cost = 1
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
@@ -210,7 +210,7 @@ end
             express,
             var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]],
         )
-        object_parameter_values = [["model", "instance", "use_economic_representation", economic_representation]]
+        object_parameter_values = [["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -229,14 +229,14 @@ end
         ) rtol = 1e-6
     end
     @testset "test discounted duration - using consecutive years" begin
-        url_in = test_data_example_economic_representation()
+        url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
-        economic_representation = "consecutive_years"
+        multiyear_economic_discounting = "consecutive_years"
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_economic_representation", economic_representation],
+            ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -246,10 +246,10 @@ end
     end
 
     @testset "test investment costs, salvage fraction, capacity transfer factor, decommissioning" begin
-        url_in = test_data_example_economic_representation()
+        url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
-        economic_representation = "consecutive_years"
+        multiyear_economic_discounting = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         decom_cost = 1
@@ -272,7 +272,7 @@ end
         expected_coe_obj = inv_cost
         @test expected_coe_obj == observed_coe_obj
         object_parameter_values = [
-            ["model", "instance", "use_economic_representation", economic_representation],
+            ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=3)
@@ -294,17 +294,17 @@ end
     end
 
     @testset "test technological discount factor, investment costs, salvage fraction" begin
-        url_in = test_data_example_economic_representation()
+        url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        economic_representation = "consecutive_years"
+        multiyear_economic_discounting = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_economic_representation", economic_representation],
+            ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
             ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
@@ -328,17 +328,17 @@ end
         @test expected_coe_obj ≈ observed_coe_obj rtol = 1e-6
     end
     @testset "test rolling error exception" begin
-        url_in = test_data_example_economic_representation()
+        url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        economic_representation = "consecutive_years"
+        multiyear_economic_discounting = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_economic_representation", economic_representation],
+            ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
             ["model", "instance", "roll_forward", Dict("type" =>"duration","data"=>"1D")],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
@@ -351,17 +351,17 @@ end
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
     end
     @testset "test Benders error exception" begin
-        url_in = test_data_example_economic_representation()
+        url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        economic_representation = "consecutive_years"
+        multiyear_economic_discounting = "consecutive_years"
         candidate_unts = 1
         inv_cost = 2
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_economic_representation", economic_representation],
+            ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
             ["model", "instance", "model_type", "spineopt_benders"],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
@@ -374,11 +374,11 @@ end
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
     end
     @testset "test saving outputs" begin
-        url_in = test_data_minimal_feasible_example_economic_representation()
+        url_in = test_data_minimal_feasible_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
         tech_discnt_rate = 0.85
-        economic_representation = "consecutive_years"
+        multiyear_economic_discounting = "consecutive_years"
         candidate_unts = 1
         num_of_units = 0
         inv_cost = 2
@@ -399,7 +399,7 @@ end
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["model", "instance", "use_economic_representation", economic_representation],
+            ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
             ["node", "node_b", "demand", 100],
             ["node", "node_a", "balance_type_list", "balance_type_none"],
             ["unit", "unit_ab", "candidate_units", candidate_unts],
