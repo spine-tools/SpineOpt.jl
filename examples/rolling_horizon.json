@@ -712,21 +712,21 @@
             "connection_investment_econ_lifetime",
             null,
             null,
-            "Determines the minimum economical investment lifetime of a connection."
+            "Economic lifetime for connection investment decisions: the duration for investment cost payment."
         ],
         [
             "connection",
             "connection_investment_lifetime_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `connection_lifetime` constraint sense."
+            "Formula sense of the constraint `connection_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
         ],
         [
             "connection",
             "connection_investment_tech_lifetime",
             null,
             null,
-            "Determines the maximum technical lifetime of a connection. Once invested, it remains in service for this long"
+            "Technical lifetime for connection investment decisions: the duration for the invested connection to be available."
         ],
         [
             "connection",
@@ -1338,7 +1338,7 @@
             "discount_year",
             null,
             null,
-            "The year to which all cashflows are discounted."
+            "The year to which all cashflows are discounted. Can be given either as a `DateTime` for a static point, or as a `Duration` for an point relative to the `model_start`."
         ],
         [
             "model",
@@ -1432,6 +1432,13 @@
         ],
         [
             "model",
+            "multiyear_economic_discounting",
+            null,
+            "multiyear_economic_discounting_value_list",
+            "If set, the model automatically calculates the discounting effect of given costs for multi-year investments under either `consecutive_years` or `milestone_years` mode."
+        ],
+        [
+            "model",
             "report_benders_iterations",
             false,
             "boolean_value_list",
@@ -1460,24 +1467,10 @@
         ],
         [
             "model",
-            "use_economic_representation",
-            false,
-            "boolean_value_list",
-            "If set to true, the investment models uses economic represenation, i.e., multi-year investments will be modeled considering discounts etc."
-        ],
-        [
-            "model",
             "use_highest_resolution_constraint_ratio_out_in_connection_flow",
             true,
             "boolean_value_list",
             "Whether to use highest resolution for constraint ratio out in connection flow."
-        ],
-        [
-            "model",
-            "use_milestone_years",
-            false,
-            "boolean_value_list",
-            "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."
         ],
         [
             "model",
@@ -1851,21 +1844,21 @@
             "storage_investment_econ_lifetime",
             null,
             null,
-            "Economic lifetime for storage investment decisions."
+            "Economic lifetime for storage investment decisions: the duration for investment cost payment."
         ],
         [
             "node",
             "storage_investment_lifetime_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `storage_lifetime` constraint sense."
+            "Formula sense of the constraint `storage_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
         ],
         [
             "node",
             "storage_investment_tech_lifetime",
             null,
             null,
-            "Maximum technical lifetime for storage investment decisions."
+            "Technical lifetime for storage investment decisions: the duration for the invested straoge to be available."
         ],
         [
             "node",
@@ -2399,21 +2392,21 @@
             "unit_investment_econ_lifetime",
             null,
             null,
-            "Economic lifetime for unit investment decisions."
+            "Economic lifetime for unit investment decisions: the duration for investment cost payment."
         ],
         [
             "unit",
             "unit_investment_lifetime_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `unit_lifetime` constraint sense."
+            "Formula sense of the constraint `unit_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
         ],
         [
             "unit",
             "unit_investment_tech_lifetime",
             null,
             null,
-            "Maximum technical lifetime for unit investment decisions."
+            "Technical lifetime for unit investment decisions: the duration for the invested unit to be available."
         ],
         [
             "unit",
@@ -4502,6 +4495,14 @@
         [
             "model_type_list",
             "spineopt_other"
+        ],
+        [
+            "multiyear_economic_discounting_value_list",
+            "consecutive_years"
+        ],
+        [
+            "multiyear_economic_discounting_value_list",
+            "milestone_years"
         ],
         [
             "node_opf_type_list",

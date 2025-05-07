@@ -24,7 +24,18 @@
             "node",
             "electricity_node",
             "demand",
-            150,
+            {
+                "data": {
+                    "2030-01-01T00:00:00.0": 100.0,
+                    "2030-05-01T00:00:00.0": 100.0,
+                    "2030-09-01T00:00:00.0": 100.0,
+                    "2034-09-01T00:00:00.0": 0.0,
+                    "2035-01-01T00:00:00.0": 400.0,
+                    "2035-05-01T00:00:00.0": 400.0,
+                    "2035-09-01T00:00:00.0": 400.0
+                },
+                "type": "time_series"
+            },
             "Base"
         ],
         [
@@ -1180,7 +1191,27 @@
         ],
         [
             "temporal_block",
-            "operation",
+            "operation2030",
+            "block_end",
+            {
+                "data": "2031-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2030",
+            "block_start",
+            {
+                "data": "2030-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2030",
             "resolution",
             {
                 "data": "4M",
@@ -1189,23 +1220,66 @@
             "Base"
         ],
         [
-            "unit",
-            "power_plant_a",
-            "candidate_units",
+            "temporal_block",
+            "operation2030",
+            "weight",
+            5,
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2035",
+            "block_end",
+            {
+                "data": "2036-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2035",
+            "block_start",
+            {
+                "data": "2034-09-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2035",
+            "resolution",
+            {
+                "data": "4M",
+                "type": "duration"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2035",
+            "weight",
             1,
             "Base"
         ],
         [
             "unit",
             "power_plant_a",
-            "initial_units_invested_available",
-            0,
+            "candidate_units",
+            {
+                "data": {
+                    "2030-01-01T00:00:00.0": 1.0,
+                    "2035-01-01T00:00:00.0": 2.0
+                },
+                "type": "time_series"
+            },
             "Base"
         ],
         [
             "unit",
             "power_plant_a",
-            "number_of_units",
+            "initial_units_invested_available",
             0,
             "Base"
         ],
@@ -1224,6 +1298,13 @@
                 "data": "10Y",
                 "type": "duration"
             },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_a",
+            "unit_investment_lifetime_sense",
+            ">=",
             "Base"
         ],
         [
@@ -1254,20 +1335,19 @@
             "unit",
             "power_plant_b",
             "candidate_units",
-            1,
+            {
+                "data": {
+                    "2030-01-01T00:00:00.0": 0.0,
+                    "2035-01-01T00:00:00.0": 1.0
+                },
+                "type": "time_series"
+            },
             "Base"
         ],
         [
             "unit",
             "power_plant_b",
             "initial_units_invested_available",
-            0,
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant_b",
-            "number_of_units",
             0,
             "Base"
         ],
@@ -1381,14 +1461,14 @@
             [],
             "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...",
             281473533932880,
-            false
+            true
         ],
         [
             "connection",
             [],
             "A transfer of commodities between nodes. E.g. electricity line, gas pipeline...",
             280378317271233,
-            false
+            true
         ],
         [
             "investment_group",
@@ -1402,28 +1482,28 @@
             [],
             "An instance of SpineOpt, that specifies general parameters such as the temporal horizon.",
             281107035648412,
-            false
+            true
         ],
         [
             "node",
             [],
             "A universal aggregator of commodify flows over units and connections, with storage capabilities.",
             280740554077951,
-            false
+            true
         ],
         [
             "output",
             [],
             "A variable name from SpineOpt whose value can be included in a report.",
             280743406202948,
-            false
+            true
         ],
         [
             "report",
             [],
             "A results report from a particular SpineOpt run, including the value of specific variables.",
             281108461711708,
-            false
+            true
         ],
         [
             "settings",
@@ -1437,42 +1517,42 @@
             [],
             "An additional stage in the optimisation problem (EXPERIMENTAL)",
             281107035649533,
-            false
+            true
         ],
         [
             "stochastic_scenario",
             [],
             "A scenario for stochastic optimisation in SpineOpt.",
             280743389491710,
-            false
+            true
         ],
         [
             "stochastic_structure",
             [],
             "A group of stochastic scenarios that represent a structure.",
             281470681806146,
-            false
+            true
         ],
         [
             "temporal_block",
             [],
             "A length of time with a particular resolution.",
             280376891207703,
-            false
+            true
         ],
         [
             "unit",
             [],
             "A conversion of one/many commodities between nodes.",
             281470681805429,
-            false
+            true
         ],
         [
             "user_constraint",
             [],
             "A generic data-driven custom constraint.",
             281473533931636,
-            false
+            true
         ],
         [
             "connection__from_node",
@@ -2088,21 +2168,21 @@
             "connection_investment_econ_lifetime",
             null,
             null,
-            "Determines the minimum economical investment lifetime of a connection."
+            "Economic lifetime for connection investment decisions: the duration for investment cost payment."
         ],
         [
             "connection",
             "connection_investment_lifetime_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `connection_lifetime` constraint sense."
+            "Formula sense of the constraint `connection_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
         ],
         [
             "connection",
             "connection_investment_tech_lifetime",
             null,
             null,
-            "Determines the maximum technical lifetime of a connection. Once invested, it remains in service for this long"
+            "Technical lifetime for connection investment decisions: the duration for the invested connection to be available."
         ],
         [
             "connection",
@@ -2714,7 +2794,7 @@
             "discount_year",
             null,
             null,
-            "The year to which all cashflows are discounted."
+            "The year to which all cashflows are discounted. Can be given either as a `DateTime` for a static point, or as a `Duration` for an point relative to the `model_start`."
         ],
         [
             "model",
@@ -2808,6 +2888,13 @@
         ],
         [
             "model",
+            "multiyear_economic_discounting",
+            null,
+            "multiyear_economic_discounting_value_list",
+            "If set, the model automatically calculates the discounting effect of given costs for multi-year investments under either `consecutive_years` or `milestone_years` mode."
+        ],
+        [
+            "model",
             "report_benders_iterations",
             false,
             "boolean_value_list",
@@ -2836,24 +2923,10 @@
         ],
         [
             "model",
-            "use_economic_representation",
-            false,
-            "boolean_value_list",
-            "If set to true, the investment models uses economic represenation, i.e., multi-year investments will be modeled considering discounts etc."
-        ],
-        [
-            "model",
             "use_highest_resolution_constraint_ratio_out_in_connection_flow",
             true,
             "boolean_value_list",
             "Whether to use highest resolution for constraint ratio out in connection flow."
-        ],
-        [
-            "model",
-            "use_milestone_years",
-            false,
-            "boolean_value_list",
-            "If set to true, the investment models uses milestone years. In other words, operational temporal blocks for one (milestone) year will be scaled up by the discounted duration to represent the entire investment period."
         ],
         [
             "model",
@@ -3227,21 +3300,21 @@
             "storage_investment_econ_lifetime",
             null,
             null,
-            "Economic lifetime for storage investment decisions."
+            "Economic lifetime for storage investment decisions: the duration for investment cost payment."
         ],
         [
             "node",
             "storage_investment_lifetime_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `storage_lifetime` constraint sense."
+            "Formula sense of the constraint `storage_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
         ],
         [
             "node",
             "storage_investment_tech_lifetime",
             null,
             null,
-            "Maximum technical lifetime for storage investment decisions."
+            "Technical lifetime for storage investment decisions: the duration for the invested straoge to be available."
         ],
         [
             "node",
@@ -3775,21 +3848,21 @@
             "unit_investment_econ_lifetime",
             null,
             null,
-            "Economic lifetime for unit investment decisions."
+            "Economic lifetime for unit investment decisions: the duration for investment cost payment."
         ],
         [
             "unit",
             "unit_investment_lifetime_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `unit_lifetime` constraint sense."
+            "Formula sense of the constraint `unit_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
         ],
         [
             "unit",
             "unit_investment_tech_lifetime",
             null,
             null,
-            "Maximum technical lifetime for unit investment decisions."
+            "Technical lifetime for unit investment decisions: the duration for the invested unit to be available."
         ],
         [
             "unit",
@@ -4107,7 +4180,7 @@
             "use_unit_capacity_for_investment_cost_scaling",
             false,
             "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. Ã¢â€šÂ¬/MW)"
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬/MW)"
         ],
         [
             "unit__from_node",
@@ -4506,7 +4579,7 @@
             "use_unit_capacity_for_investment_cost_scaling",
             false,
             "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. Ã¢â€šÂ¬/MW)"
+            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬/MW)"
         ],
         [
             "unit__to_node",
@@ -5465,7 +5538,12 @@
         ],
         [
             "temporal_block",
-            "operation",
+            "operation2030",
+            null
+        ],
+        [
+            "temporal_block",
+            "operation2035",
             null
         ],
         [
@@ -5506,7 +5584,15 @@
             "model__default_temporal_block",
             [
                 "simple",
-                "operation"
+                "operation2030"
+            ],
+            null
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "operation2035"
             ],
             null
         ],
@@ -5538,7 +5624,31 @@
             "model__temporal_block",
             [
                 "simple",
-                "operation"
+                "operation2030"
+            ],
+            null
+        ],
+        [
+            "model__temporal_block",
+            [
+                "simple",
+                "operation2035"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "fixed_om_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "total_costs"
             ],
             null
         ],
@@ -5547,6 +5657,14 @@
             [
                 "report1",
                 "unit_flow"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_investment_costs"
             ],
             null
         ],
@@ -5563,6 +5681,22 @@
             [
                 "report1",
                 "units_on"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_on_costs"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "variable_om_costs"
             ],
             null
         ],
@@ -5852,11 +5986,23 @@
         ],
         [
             "model_type_list",
+            "spineopt_mga"
+        ],
+        [
+            "model_type_list",
             "spineopt_other"
         ],
         [
             "model_type_list",
             "spineopt_standard"
+        ],
+        [
+            "multiyear_economic_discounting_value_list",
+            "consecutive_years"
+        ],
+        [
+            "multiyear_economic_discounting_value_list",
+            "milestone_years"
         ],
         [
             "node_opf_type_list",
@@ -5956,6 +6102,14 @@
             "temporal_block",
             [
                 "investment"
+            ],
+            "Base",
+            true
+        ],
+        [
+            "temporal_block",
+            [
+                "operation2035"
             ],
             "Base",
             true
