@@ -600,10 +600,16 @@ function test_constraint_min_node_state_investments()
         url_in = _test_constraint_node_setup()
         candidate_storages = 1
         node_capacity = 400
-        node_state_min = 0.1
+        node_state_min = 60
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        node_state_min_factor = Dict("type" => "time_series", 
+                                     "data" => [0.1, 0.2], 
+                                     "index" => index,
+                                )
         object_parameter_values = [
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_c", "node_state_min", node_state_min],
+            ["node", "node_c", "node_state_min_factor", node_state_min_factor],
             ["node", "node_c", "has_state", true],
             ["node", "node_c", "candidate_storages", candidate_storages],
         ]
@@ -620,14 +626,17 @@ function test_constraint_min_node_state_investments()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
+        @testset for (k, (s, t)) in enumerate(zip(scenarios, time_slices))
             n = node(:node_c)
             var_n_st_key = (n, s, t)
             var_s_in_av_key = (n, s, t)
             con_key = (n, [s], t)
             var_n_st = var_node_state[var_n_st_key...]
             var_s_inv_av = var_storages_invested_available[var_s_in_av_key...]
-            expected_con = @build_constraint(var_n_st >= node_capacity * node_state_min * var_s_inv_av)
+            expected_con = @build_constraint(var_n_st >= maximum([node_capacity * node_state_min_factor["data"][k],
+                                                                  node_state_min]
+                                                        ) * var_s_inv_av
+                                            )
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)

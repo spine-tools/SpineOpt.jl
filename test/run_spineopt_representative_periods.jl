@@ -143,7 +143,8 @@ function _test_representative_periods()
                 ["node", "batt_node", "initial_node_state", 0],
                 ["node", "batt_node", "node_slack_penalty", 10000],
                 ["node", "batt_node", "node_state_cap", 200],
-                ["node", "batt_node", "node_state_min", 0.1],
+                ["node", "batt_node", "node_state_min", 10],
+                ["node", "batt_node", "node_state_min_factor", 0.2],
                 ["node", "batt_node", "number_of_storages", 0],
                 ["node", "batt_node", "storage_investment_cost", 2000000],
                 ["node", "batt_node", "storage_investment_variable_type", "storage_investment_variable_type_integer"],
@@ -344,7 +345,8 @@ function _expected_representative_periods_constraint(
     s = only(s_path)
     nsc = vals["node", string(n), "node_state_cap"]
     nsm = vals["node", string(n), "node_state_min"]
-    @build_constraint(node_state[n, s, t] >= nsc * nsm * storages_invested_available[n, s, t_invest])
+    nsmf = vals["node", string(n), "node_state_min_factor"]
+    @build_constraint(node_state[n, s, t] >= maximum([nsc * nsmf, nsm]) * storages_invested_available[n, s, t_invest])
 end
 function _expected_representative_periods_constraint(
     m, ::Val{:storages_invested_transition}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
