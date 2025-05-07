@@ -184,8 +184,49 @@ function test_data_minimal_feasible_example_multiyear_economic_discounting()
     url_in
 end
 
-@testset "economic structure" begin
-    @testset "test discounted duration - using milestone years, w/o inv. blocks" begin
+function test_data_no_investment_temporal_block_error_exception()
+    url_in = "sqlite://"
+    test_data = Dict(
+        :objects => [
+            ["model", "instance"],
+            ["temporal_block", "hourly"],
+            ["stochastic_structure", "realisation"],
+            ["unit", "unit_ab"],
+            ["node", "node_a"],
+            ["node", "node_b"],
+            ["stochastic_scenario", "deterministic"],
+        ],
+        :relationships => [
+            ["model__default_investment_stochastic_structure", ["instance", "realisation"]],
+            ["model__default_stochastic_structure", ["instance", "deterministic"]],
+            ["model__default_temporal_block", ["instance", "hourly"]],
+            ["stochastic_structure__stochastic_scenario", ["realisation", "deterministic"]],
+            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["unit__to_node", ["unit_ab", "node_b"]],
+        ],
+        :object_parameter_values => [
+            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2030-01-01T00:00:00")],
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2032-01-01T00:00:00")],
+            ["model", "instance", "duration_unit", "hour"],
+            ["model", "instance", "model_type", "spineopt_standard"],
+            ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["temporal_block", "hourly", "block_start", Dict("type" => "date_time", "data" => "2031-01-01T00:00:00")],
+        ],
+        :relationship_parameter_values => [
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "1h"),
+            ],
+        ],
+    )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function _test_discounted_duration_milestone_years()
+    @testset "test discounted duration - using milestone years" begin
         url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
         discnt_rate = 0.05
@@ -228,6 +269,9 @@ end
             var_unit_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:parent), u_ts[1]],
         ) rtol = 1e-6
     end
+end
+
+function _test_discounted_duration_consecutive_years()
     @testset "test discounted duration - using consecutive years" begin
         url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
@@ -244,7 +288,9 @@ end
         key_param = Dict(unit.name => unit(:unit_ab), stochastic_scenario.name => stochastic_scenario(:parent))
         @test 0.5846792890864373 ≈ SpineOpt.unit_discounted_duration(; key_param..., t=u_ts[1]) rtol = 1e-6
     end
+end
 
+function _test_investment_costs__salvage_fraction__capacity_transfer_factor__decommissioning()
     @testset "test investment costs, salvage fraction, capacity transfer factor, decommissioning" begin
         url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
@@ -292,7 +338,9 @@ end
         expected_coe_obj = (1 - salvage_frac) * conv_to_disc_annuities * inv_cost
         @test expected_coe_obj ≈ observed_coe_obj rtol = 1e-6
     end
+end
 
+function _test_technological_discount_factor__investment_costs__salvage_fraction()
     @testset "test technological discount factor, investment costs, salvage fraction" begin
         url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
@@ -327,6 +375,9 @@ end
         expected_coe_obj = (1 - salvage_frac) * conv_to_disc_annuities * tech_fac * inv_cost
         @test expected_coe_obj ≈ observed_coe_obj rtol = 1e-6
     end
+end
+
+function _test_rolling_error_exception()
     @testset "test rolling error exception" begin
         url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
@@ -350,6 +401,9 @@ end
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
     end
+end
+
+function _test_Benders_error_exception()
     @testset "test Benders error exception" begin
         url_in = test_data_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
@@ -373,6 +427,36 @@ end
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
     end
+end
+
+function _test_no_investment_temporal_block_error_exception()
+    @testset "test no investment temporal block error exception" begin
+        url_in = test_data_no_investment_temporal_block_error_exception()
+        discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
+        discnt_rate = 0.05
+        tech_discnt_rate = 0.85
+        candidate_unts = 1
+        inv_cost = 2
+
+        for value in ["consecutive_years", "milestone_years"]
+            object_parameter_values = [
+                ["model", "instance", "discount_rate", discnt_rate],
+                ["model", "instance", "discount_year", discnt_year],
+                ["model", "instance", "multiyear_economic_discounting", value],
+                ["unit", "unit_ab", "candidate_units", candidate_unts],
+                ["unit", "unit_ab", "unit_investment_cost", inv_cost],
+                ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
+                ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
+                ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+                ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ]
+            SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+            @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
+        end
+    end
+end
+
+function _test_saving_outputs()
     @testset "test saving outputs" begin
         url_in = test_data_minimal_feasible_example_multiyear_economic_discounting()
         discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
@@ -437,4 +521,15 @@ end
         @test length(unit()) == length(unit_conversion_to_discounted_annuities) 
         @test length(unit()) == length(unit_tech_discount_factor)       
     end
+end
+
+@testset "economic structure" begin
+    _test_discounted_duration_milestone_years()
+    _test_discounted_duration_consecutive_years()
+    _test_investment_costs__salvage_fraction__capacity_transfer_factor__decommissioning()
+    _test_technological_discount_factor__investment_costs__salvage_fraction()
+    _test_rolling_error_exception()
+    _test_Benders_error_exception()
+    _test_no_investment_temporal_block_error_exception()
+    _test_saving_outputs()
 end
