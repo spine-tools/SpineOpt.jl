@@ -3150,7 +3150,14 @@
             "node_state_min",
             0,
             null,
-            "The minimum permitted value for a `node_state` variable."
+            "The minimum permitted absolute value for a `node_state` variable."
+        ],
+        [
+            "node",
+            "node_state_min_factor",
+            0,
+            null,
+            "The minimum permitted per unit value for a `node_state` variable."
         ],
         [
             "node",

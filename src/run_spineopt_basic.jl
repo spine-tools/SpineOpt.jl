@@ -208,6 +208,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_nodal_balance!,
             add_constraint_node_injection!,
             add_constraint_node_state_capacity!,
+            add_constraint_min_node_state!,
             add_constraint_node_voltage_angle!,
             add_constraint_non_spinning_reserves_lower_bound!,
             add_constraint_non_spinning_reserves_shut_down_upper_bound!,
