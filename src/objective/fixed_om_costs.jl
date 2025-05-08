@@ -30,7 +30,7 @@ function fixed_om_costs(m, t_range)
         sum(
             + unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             * (
-                use_economic_representation(model=m.ext[:spineopt].instance) ? 
+                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ? 
                 unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
             ) 
             * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
