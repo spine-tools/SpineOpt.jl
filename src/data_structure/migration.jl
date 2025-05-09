@@ -41,6 +41,7 @@ include("versions/update_investment_variable_type.jl")
 include("versions/add_model_algorithm.jl")
 include("versions/rename_lifetime_to_tech_lifetime.jl")
 include("versions/translate_heatrate_parameters.jl")
+include("versions/translate_use_economic_representation__use_milestone_years.jl")
 
 function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
 	# No changes, just make sure we load the newest template
@@ -48,6 +49,11 @@ function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
 end
 
 function add_stage_output(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	true
+end
+
+function add_node_availability_factor(db_url, log_level)
 	# No changes, just make sure we load the newest template
 	true
 end
@@ -68,6 +74,8 @@ _upgrade_functions = [
 	rename_lifetime_to_tech_lifetime,
 	translate_heatrate_parameters,
 	add_stage_output,
+	add_node_availability_factor,
+	translate_use_economic_representation__use_milestone_years,
 ]
 
 """
