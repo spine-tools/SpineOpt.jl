@@ -335,6 +335,77 @@ function _test_translate_heatrate_parameters()
 	end
 end
 
+function _test_translate_use_economic_representation__use_milestone_years_setup()
+	url_in = "sqlite://"
+	data = Dict(
+		:object_classes => ["model",],
+		:objects => [
+			("model", "instance"),
+		],
+		:parameter_value_lists => [("boolean_value_list", true), ("boolean_value_list", false)],
+		:object_parameters => [
+			("model", "use_economic_representation", false, "boolean_value_list"),
+			("model", "use_milestone_years", false, "boolean_value_list"),
+		],
+	)
+	_load_test_data_without_template(url_in, data)
+	url_in
+end
+
+function _test_translate_use_economic_representation__use_milestone_years()
+	_options = (nothing, false, true)
+	cases = collect(Iterators.product(_options, _options))
+	
+	for (use_economic_representation, use_milestone_years) in cases
+		@testset "translate_use_economic_representation__use_milestone_years:
+		use_economic_representation = $use_economic_representation,
+		use_milestone_years = $use_milestone_years" begin
+			url = _test_translate_use_economic_representation__use_milestone_years_setup()		
+			object_parameter_values = [
+				["model", "instance", "use_economic_representation", use_economic_representation],
+				["model", "instance", "use_milestone_years", use_milestone_years]
+			]
+			SpineInterface.import_data(
+				url; 
+				object_parameter_values=object_parameter_values,
+			)
+
+			Y = Module()
+			using_spinedb(url, Y)
+			@test SpineOpt.translate_use_economic_representation__use_milestone_years(url, 0) === true
+			run_request(
+				url, "call_method", ("commit_session", "translate_use_economic_representation__use_milestone_years")
+			)
+
+			_check = run_request(
+				url,
+				"query",
+				("list_value_sq", "parameter_value_list_sq"),
+			)
+			@show collect(_check)
+
+			old_parameter_names = [:use_economic_representation, :use_milestone_years]
+			new_parameter_name = :multiyear_economic_discounting
+
+			using_spinedb(url, Y)
+			
+			all_parameter_names = [x.name for x in parameters(Y)]
+			@test isempty(intersect(all_parameter_names, old_parameter_names))
+			@test new_parameter_name in all_parameter_names
+			
+			if isnothing(use_economic_representation) || !use_economic_representation
+				@test isnothing(Y.multiyear_economic_discounting(model=Y.model(:instance)))
+			else
+				if isnothing(use_milestone_years) || !use_milestone_years
+					@test Y.multiyear_economic_discounting(model=Y.model(:instance)) == :consecutive_years
+				elseif use_milestone_years == true
+					@test Y.multiyear_economic_discounting(model=Y.model(:instance)) == :milestone_years
+				end
+			end
+		end
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -345,4 +416,5 @@ end
 	_test_add_model_algorithm()
 	_test_rename_lifetime_to_tech_lifetime()
 	_test_translate_heatrate_parameters()
+	_test_translate_use_economic_representation__use_milestone_years()
 end
