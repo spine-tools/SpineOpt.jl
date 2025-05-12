@@ -30,26 +30,26 @@ function translate_use_economic_representation__use_milestone_years(db_url, log_
 	
 	# Add new parameter value list for defining the new parameter
 	## Add list name
-	run_request(db_url, "call_method", ("add_parameter_value_list_item",), Dict(
+	run_request(db_url, "call_method", ("add_parameter_value_list",), Dict(
 		"name" => "multiyear_economic_discounting_value_list")
 	)
 	## Add list items for the new parameter value list
-	import_data(
-		db_url,
-		"";  # Don't commit
-		parameter_value_lists=[
-			("multiyear_economic_discounting_value_list", "consecutive_years"),
-			("multiyear_economic_discounting_value_list", "milestone_years"),
-		],
-	)
-	#FIXME: Hard to understand how to make the run_request approach work with adding list items
-	# for item in ["consecutive_years", "milestone_years"]
-	# 	val_input, typ = unparse_db_value(item)	# val_input in `bytes` format, typ="str"
-	# 	run_request(db_url, "call_method", ("add_list_value_item",), Dict(
-	# 		"parameter_value_list_name" => "multiyear_economic_discounting_value_list", 
-	# 		"value" => val_input)
-	# 	)
-	# end
+	for (index, item) in enumerate(["consecutive_years", "milestone_years"])
+		val_input, typ = unparse_db_value(item)	# val_input in `bytes` format, typ="str"
+		run_request(db_url, "call_method", ("add_list_value",), Dict(
+			"parameter_value_list_name" => "multiyear_economic_discounting_value_list", 
+			"value" => val_input, "type" => typ, "index" => index)
+		)
+	end
+	## An alternative approach (lagecy)
+	# import_data(
+	# 	db_url,
+	# 	"";  # Don't commit
+	# 	parameter_value_lists=[
+	# 		("multiyear_economic_discounting_value_list", "consecutive_years"),
+	# 		("multiyear_economic_discounting_value_list", "milestone_years"),
+	# 	],
+	# )
 	
 	# Add basic definition of the new parameter if it doesn't exist yet
 	run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
