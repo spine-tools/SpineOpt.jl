@@ -1953,7 +1953,7 @@
             "connection_availability_factor",
             1,
             null,
-            "Availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
+            "Maximum availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
         ],
         [
             "connection",
@@ -2030,6 +2030,13 @@
             },
             null,
             "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."
+        ],
+        [
+            "connection",
+            "connection_min_factor",
+            0,
+            null,
+            "Minimum availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
         ],
         [
             "connection",
