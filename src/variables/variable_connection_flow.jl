@@ -51,14 +51,7 @@ function connection_flow_indices(
 end
 
 function connection_flow_lb(m; connection, node, direction, kwargs...)
-    (
-        realize(
-            connection_flow_lower_limit(m; connection=connection, node=node, direction=direction, _strict=false)
-        ) === nothing
-        || is_candidate(connection=connection)
-        || members(node) != [node]
-    ) && return NaN
-    connection_flow_lower_limit(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
+    connection_flow_lower_limit(m; connection=connection, node=node, direction=direction, kwargs..., _default=0) * (
         + number_of_connections(m; connection=connection, kwargs..., _default=1)
     )
 end
