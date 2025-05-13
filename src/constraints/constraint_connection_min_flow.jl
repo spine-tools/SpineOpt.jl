@@ -62,7 +62,7 @@ function add_constraint_connection_min_flow!(m::Model)
     _add_constraint!(
         m,
         :connection_min_flow,
-        constraint_connection_flow_capacity_indices,
+        constraint_connection_min_flow_indices,
         _build_constraint_connection_min_flow,
     )
 end
@@ -105,5 +105,20 @@ function _term_connection_flow_lower_limit(m, conn, ng, d, s_path, t)
             init=0,
         )
         * duration(t)
+    )
+end
+
+function constraint_connection_min_flow_indices(m::Model)    
+    (
+        (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
+        for (conn, ng, d) in _connection_node_direction(m)
+        if members(ng) != [ng] || 
+           is_candidate(connection=conn)
+        for (t, path) in t_lowest_resolution_path(
+            m,
+            connection_flow_indices(m; connection=conn, node=ng, direction=d),
+            connections_invested_available_indices(m; connection=conn),
+        )
+        if !iszero(_term_connection_flow_lower_limit(m, conn, ng, d, path, t))
     )
 end
