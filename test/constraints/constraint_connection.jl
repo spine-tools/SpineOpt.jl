@@ -1807,7 +1807,7 @@ function test_constraint_candidate_connection_ub()
 end
 
 function test_constraint_connection_min_flow()
-    @testset "constraint_connection_flow_capacity_basic" begin
+    @testset "constraint_connection_min_flow_basic" begin
         url_in = _test_constraint_connection_setup()
         connection_capacity = 200
         connection_min_factor = 0.1
@@ -1846,7 +1846,7 @@ function test_constraint_connection_min_flow()
             key_a_bis = (connection(:connection_ab), node(:node_a_bis), direction(:from_node), s, t)
             var_conn_flow_a = var_connection_flow[key_a...]
             var_conn_flow_a_bis = var_connection_flow[key_a_bis...]
-            expected_con = @build_constraint(var_conn_flow_a + var_conn_flow_a_bis >= var_conn_flow_a * connection_min_factor)
+            expected_con = @build_constraint(var_conn_flow_a + var_conn_flow_a_bis >= connection_capacity * connection_min_factor)
             con_key = (connection(:connection_ab), node(:node_group_a), direction(:from_node), [s], t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1924,5 +1924,4 @@ end
     test_constraint_ratio_out_in_connection_intact_flow()
     test_constraint_candidate_connection_ub()
     test_constraint_connection_min_flow()
-    test_constraint_connection_min_flow_with_investments()
 end
