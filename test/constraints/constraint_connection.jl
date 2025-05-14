@@ -1806,6 +1806,214 @@ function test_constraint_candidate_connection_ub()
     end
 end
 
+function test_constraint_connection_min_flow()
+    @testset "constraint_connection_min_flow_basic" begin
+        url_in = _test_constraint_connection_setup()
+        connection_capacity = 200
+        connection_min_factor = 0.1
+        objects = [["node", "node_group_a"], ["node", "node_a_bis"]]
+        object_groups = [("node", "node_group_a", "node_a"), ("node", "node_group_a", "node_a_bis")]
+        relationships = [
+            ["connection__from_node", ["connection_ab", "node_group_a"]],
+            ["connection__from_node", ["connection_ab", "node_a_bis"]],
+            ["node__temporal_block", ["node_group_a", "hourly"]],
+            ["node__temporal_block", ["node_a_bis", "hourly"]],
+            ["node__stochastic_structure", ["node_group_a", "stochastic"]],
+            ["node__stochastic_structure", ["node_a_bis", "stochastic"]],
+        ]
+        relationship_parameter_values = [
+            ["connection__from_node", ["connection_ab", "node_group_a"], "connection_capacity", connection_capacity],
+        ]
+        object_parameter_values = [
+            ["connection", "connection_ab", "connection_min_factor", connection_min_factor],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            object_groups=object_groups,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        constraint = m.ext[:spineopt].constraints[:connection_min_flow]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key_a = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            key_a_bis = (connection(:connection_ab), node(:node_a_bis), direction(:from_node), s, t)
+            var_conn_flow_a = var_connection_flow[key_a...]
+            var_conn_flow_a_bis = var_connection_flow[key_a_bis...]
+            expected_con = @build_constraint(var_conn_flow_a + var_conn_flow_a_bis >= connection_capacity * connection_min_factor)
+            con_key = (connection(:connection_ab), node(:node_group_a), direction(:from_node), [s], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_connection_min_flow_with_investments" begin
+        url_in = _test_constraint_connection_setup()
+        connection_capacity = 200
+        connection_min_factor = 0.1
+        objects = [["temporal_block", "investments_daily"]]
+        relationships = [
+            ["model__temporal_block", ["instance", "investments_daily"]],
+            ["connection__investment_temporal_block", ["connection_ab", "investments_daily"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "deterministic"]],
+        ]
+        object_parameter_values = [
+            ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["connection", "connection_ab", "candidate_connections", 1],
+            ["connection", "connection_ab", "connection_min_factor", connection_min_factor],
+        ]
+        relationship_parameter_values = [
+            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        constraint = m.ext[:spineopt].constraints[:connection_min_flow]
+        @test length(constraint) == 2
+        scenarios = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        daily_t = first(time_slice(m; temporal_block=temporal_block(:investments_daily)))
+        @testset for (k, t) in enumerate(time_slices)
+            s = scenarios[k]
+            key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            invest_key = (connection(:connection_ab), stochastic_scenario(:parent), daily_t)
+            var_conn_flow = var_connection_flow[key...]
+            var_conn_invest_avail = var_connections_invested_available[invest_key...]
+            expected_con = @build_constraint(var_conn_flow >= connection_capacity * connection_min_factor * var_conn_invest_avail)
+            con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), scenarios[1:k], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+            @test JuMP.lower_bound(var_conn_flow) == connection_capacity * connection_min_factor
+        end
+    end
+end
+
+function test_constraint_connection_min_flow_bidirectional()
+    @testset "constraint_connection_min_flow_bidirectional_basic" begin
+        # When both directions are bounded by positive capacities
+        url_in = _test_constraint_connection_setup()
+        conn_cap_from_a = 100
+        conn_cap_to_a = 200
+        connection_min_factor = 0.1
+        objects = [["node", "node_group_a"], ["node", "node_a_bis"]]
+        object_groups = [("node", "node_group_a", "node_a"), ("node", "node_group_a", "node_a_bis")]
+        relationships = [
+            ["connection__from_node", ["connection_ab", "node_group_a"]],
+            ["connection__from_node", ["connection_ab", "node_a_bis"]],
+            ["node__temporal_block", ["node_group_a", "hourly"]],
+            ["node__temporal_block", ["node_a_bis", "hourly"]],
+            ["node__stochastic_structure", ["node_group_a", "stochastic"]],
+            ["node__stochastic_structure", ["node_a_bis", "stochastic"]],
+            ["connection__to_node", ["connection_ab", "node_group_a"]],
+            ["connection__to_node", ["connection_ab", "node_a"]],
+            ["connection__to_node", ["connection_ab", "node_a_bis"]],
+        ]
+        object_parameter_values = [
+            ["model", "instance", "use_tight_compact_formulations", true],
+            ["connection", "connection_ab", "connection_min_factor", connection_min_factor],
+        ]
+        relationship_parameter_values = [
+            ["connection__from_node", ["connection_ab", "node_group_a"], "connection_capacity", conn_cap_from_a],
+            ["connection__to_node", ["connection_ab", "node_group_a"], "connection_capacity", conn_cap_to_a],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            object_groups=object_groups,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        constraint = m.ext[:spineopt].constraints[:connection_min_flow]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key_from_a = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            key_from_a_bis = (connection(:connection_ab), node(:node_a_bis), direction(:from_node), s, t)
+            key_to_a = (connection(:connection_ab), node(:node_a), direction(:to_node), s, t)
+            key_to_a_bis = (connection(:connection_ab), node(:node_a_bis), direction(:to_node), s, t)
+            lhs = (
+                + sum(var_connection_flow[k...] for k in (key_from_a, key_from_a_bis)) / (conn_cap_from_a * connection_min_factor)
+                + sum(var_connection_flow[k...] for k in (key_to_a, key_to_a_bis)) / (conn_cap_to_a * connection_min_factor)
+            )
+            rhs = 1
+            expected_con = @build_constraint(lhs >= rhs)
+            con_key = (connection(:connection_ab), node(:node_group_a), direction(), [s], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_connection_min_flow_bidirectional_with_investments" begin
+        url_in = _test_constraint_connection_setup()
+        conn_cap_from_a = 100
+        conn_cap_to_a = 200
+        connection_min_factor = 0.1
+        objects = [["temporal_block", "investments_daily"]]
+        relationships = [
+            ["connection__to_node", ["connection_ab", "node_a"]],
+            ["model__temporal_block", ["instance", "investments_daily"]],
+            ["connection__investment_temporal_block", ["connection_ab", "investments_daily"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "deterministic"]],
+        ]
+        object_parameter_values = [
+            ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["connection", "connection_ab", "candidate_connections", 1],
+            ["model", "instance", "use_tight_compact_formulations", true],
+            ["connection", "connection_ab", "connection_min_factor", connection_min_factor],
+        ]
+        relationship_parameter_values = [
+            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_from_a],
+            ["connection__to_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_to_a],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        constraint = m.ext[:spineopt].constraints[:connection_min_flow]
+        @test length(constraint) == 2
+        scenarios = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        daily_t = first(time_slice(m; temporal_block=temporal_block(:investments_daily)))
+        @testset for (k, t) in enumerate(time_slices)
+            s = scenarios[k]
+            key_from = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            key_to = (connection(:connection_ab), node(:node_a), direction(:to_node), s, t)
+            invest_key = (connection(:connection_ab), stochastic_scenario(:parent), daily_t)
+            var_conn_invest_avail = var_connections_invested_available[invest_key...]
+            lhs = (
+                + var_connection_flow[key_from...] / (conn_cap_from_a * connection_min_factor)
+                + var_connection_flow[key_to...] / (conn_cap_to_a * connection_min_factor)
+            )
+            rhs = var_conn_invest_avail
+            expected_con = @build_constraint(lhs >= rhs)
+            con_key = (connection(:connection_ab), node(:node_a), direction(), scenarios[1:k], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 @testset "connection-based constraints" begin
     test_constraint_connection_flow_capacity()
     test_constraint_connection_flow_capacity_bidirectional()
@@ -1829,4 +2037,6 @@ end
     test_constraint_candidate_connection_lb()
     test_constraint_ratio_out_in_connection_intact_flow()
     test_constraint_candidate_connection_ub()
+    test_constraint_connection_min_flow()
+    test_constraint_connection_min_flow_bidirectional()
 end

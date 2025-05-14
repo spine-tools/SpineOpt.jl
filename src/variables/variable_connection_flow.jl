@@ -50,6 +50,12 @@ function connection_flow_indices(
     )
 end
 
+function connection_flow_lb(m; connection, node, direction, kwargs...)
+    connection_flow_lower_limit(m; connection=connection, node=node, direction=direction, kwargs..., _default=0) * (
+        + number_of_connections(m; connection=connection, kwargs..., _default=1)
+    )
+end
+
 function connection_flow_ub(m; connection, node, direction, kwargs...)
     (
         realize(
@@ -107,7 +113,7 @@ function add_variable_connection_flow!(m::Model)
         m,
         :connection_flow,
         connection_flow_indices;
-        lb=constant(0),
+        lb=connection_flow_lb,
         ub=connection_flow_ub,
         fix_value=fix_connection_flow,
         initial_value=initial_connection_flow,
