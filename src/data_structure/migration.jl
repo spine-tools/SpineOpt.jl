@@ -58,6 +58,16 @@ function add_node_availability_factor(db_url, log_level)
 	true
 end
 
+function add_node_state_min_factor(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	true
+end
+
+function add_connection_min_factor(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	true
+end
+
 _upgrade_functions = [
 	rename_unit_constraint_to_user_constraint,
 	move_connection_flow_cost,
@@ -75,6 +85,8 @@ _upgrade_functions = [
 	translate_heatrate_parameters,
 	add_stage_output,
 	add_node_availability_factor,
+	add_node_state_min_factor,
+	add_connection_min_factor,
 	translate_use_economic_representation__use_milestone_years,
 ]
 
