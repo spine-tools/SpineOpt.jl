@@ -42,6 +42,10 @@ A [unit](@ref) can have different commodity flows associated with it. The most s
 
 @@add_constraint_unit_flow_capacity!
 
+##### [Minimum unit flow](@id constraint_unit_min_flow)
+
+@@add_constraint_unit_min_flow!
+
 ##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
 
 @@add_constraint_minimum_operating_point!
