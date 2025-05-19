@@ -2427,6 +2427,13 @@
         ],
         [
             "unit",
+            "unit_min_factor",
+            1,
+            null,
+            "The minimum permitted per unit value for a `unit_flow` variable."
+        ],
+        [
+            "unit",
             "units_invested_big_m_mga",
             null,
             null,
@@ -2619,7 +2626,7 @@
             "min_unit_flow",
             0,
             null,
-            "Set lower bound of the `unit_flow` variable."
+            "The minimum permitted absolute value for a `unit_flow` variable."
         ],
         [
             "unit__from_node",
@@ -3011,7 +3018,7 @@
             "min_unit_flow",
             0,
             null,
-            "Set lower bound of the `unit_flow` variable."
+            "The minimum permitted absolute value for a `unit_flow` variable."
         ],
         [
             "unit__to_node",
