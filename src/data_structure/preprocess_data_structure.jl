@@ -45,6 +45,7 @@ function preprocess_data_structure()
     generate_benders_iteration()
     generate_is_boundary()
     generate_unit_flow_capacity()
+    generate_unit_flow_lower_limit()
     generate_connection_flow_capacity()
     generate_node_state_capacity()
     generate_node_state_lower_limit()
@@ -824,6 +825,24 @@ function generate_unit_flow_capacity()
     @eval begin
         unit_flow_capacity = $unit_flow_capacity
         export unit_flow_capacity
+    end
+end
+
+function generate_unit_flow_lower_limit()
+    function _unit_flow_lower_limit(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
+        maximum([_prod_or_nothing(
+            f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
+            f(unit_min_factor; unit=unit, kwargs...),
+            f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...)),
+            f(min_unit_flow; unit=unit, node=node, direction=direction, kwargs...)
+            ]
+        )
+    end
+
+    unit_flow_lower_limit = ParameterFunction(_unit_flow_lower_limit)
+    @eval begin
+        unit_flow_lower_limit = $unit_flow_lower_limit
+        export unit_flow_lower_limit
     end
 end
 
