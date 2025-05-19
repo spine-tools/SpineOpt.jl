@@ -223,6 +223,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_storages_invested_available!,
             add_constraint_storages_invested_transition!,
             add_constraint_unit_flow_capacity!,
+            add_constraint_unit_min_flow!,
             add_constraint_unit_flow_op_bounds!,
             add_constraint_unit_flow_op_rank!,
             add_constraint_unit_flow_op_sum!,
