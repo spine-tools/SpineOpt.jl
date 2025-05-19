@@ -84,6 +84,6 @@ function constraint_min_node_state_indices(m::Model)
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )
-        ) if node_state_lower_limit(m; node=ng, stochastic_scenario=path, t=t) > 0
+        ) if realize(node_state_lower_limit(m; node=ng, stochastic_scenario=path, t=t, _strict=false)) > 0
     )
 end
