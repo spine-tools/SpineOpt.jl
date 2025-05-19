@@ -46,6 +46,7 @@ function preprocess_data_structure()
     generate_is_boundary()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
+    generate_connection_flow_lower_limit()
     generate_node_state_capacity()
     generate_node_state_lower_limit()
     generate_unit_commitment_parameters()
@@ -842,6 +843,24 @@ function generate_connection_flow_capacity()
     @eval begin
         connection_flow_capacity = $connection_flow_capacity
         export connection_flow_capacity
+    end
+end
+
+function generate_connection_flow_lower_limit()
+    function _connection_flow_lower_limit(
+        f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
+    )
+        _prod_or_nothing(
+            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+            f(connection_min_factor; connection=connection, kwargs...),
+            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
+        )
+    end
+
+    connection_flow_lower_limit = ParameterFunction(_connection_flow_lower_limit)
+    @eval begin
+        connection_flow_lower_limit = $connection_flow_lower_limit
+        export connection_flow_lower_limit
     end
 end
 
