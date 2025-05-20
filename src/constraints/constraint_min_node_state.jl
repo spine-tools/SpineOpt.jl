@@ -28,6 +28,7 @@ v^{node\_state}_{(n, s, t)} \geq \max(p^{node\_state\_cap}_{(n, s, t)} \cdot p^{
 Please note that the limit represents the maximum of the two terms.
 The first term is the product of the storage capacity and the minimum factor, which is a per-unit value of the storage capacity.
 The second term is the minimum state, given in absolute values.
+The constraint is only generated if either one of the minimum state parameters is greater than zero and there are candidate storage units.
 
 See also
 [node\_state\_cap](@ref),
@@ -83,6 +84,6 @@ function constraint_min_node_state_indices(m::Model)
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )
-        )
+        ) if realize(node_state_lower_limit(m; node=ng, stochastic_scenario=path, t=t, _strict=false)) > 0
     )
 end
