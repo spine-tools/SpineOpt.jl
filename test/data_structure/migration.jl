@@ -406,6 +406,17 @@ function _test_translate_use_economic_representation__use_milestone_years()
 	end
 end
 
+function _test_dummy_migrations_functions()
+	url_in = "sqlite://"
+	@testset "dummy_migrations_functions" begin
+		@test SpineOpt.add_units_out_of_service_and_min_capacity_margin(url_in,0)
+		@test SpineOpt.add_stage_output(url_in,0)
+		@test SpineOpt.add_node_availability_factor(url_in,0)
+		@test SpineOpt.add_node_state_min_factor(url_in,0)
+		@test SpineOpt.add_connection_min_factor(url_in,0)
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -417,4 +428,5 @@ end
 	_test_rename_lifetime_to_tech_lifetime()
 	_test_translate_heatrate_parameters()
 	_test_translate_use_economic_representation__use_milestone_years()
+	_test_dummy_migrations_functions()
 end
