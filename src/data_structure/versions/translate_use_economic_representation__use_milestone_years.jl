@@ -111,6 +111,6 @@ function translate_use_economic_representation__use_milestone_years(db_url, log_
 	end
 	# Values are removed automatically when the parameter definition is removed
 
-	true
+	return true
 end
 

@@ -45,27 +45,27 @@ include("versions/translate_use_economic_representation__use_milestone_years.jl"
 
 function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
 	# No changes, just make sure we load the newest template
-	true
+	return true
 end
 
 function add_stage_output(db_url, log_level)
 	# No changes, just make sure we load the newest template
-	true
+	return true
 end
 
 function add_node_availability_factor(db_url, log_level)
 	# No changes, just make sure we load the newest template
-	true
+	return true
 end
 
 function add_node_state_min_factor(db_url, log_level)
 	# No changes, just make sure we load the newest template
-	true
+	return true
 end
 
 function add_connection_min_factor(db_url, log_level)
 	# No changes, just make sure we load the newest template
-	true
+	return true
 end
 
 _upgrade_functions = [
