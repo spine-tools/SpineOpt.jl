@@ -995,8 +995,8 @@ function _do_save_outputs!(m, output_names, output_suffix; weight=1)
         end
         by_suffix = get!(m.ext[:spineopt].outputs, out_name, Dict())
         by_window = get!(by_suffix, output_suffix, Dict())
-        by_window[w_start, w_end] = collect(Iterators.map(((ind, val),) ->
-         (_static(ind), weight * val), something(value, param)))
+        by_window[w_start, w_end] = Dict(Iterators.map(((ind, val),) ->
+            (_static(ind), weight * val), _output_value_by_ind(m, something(value, param))))
     end
 end
 
