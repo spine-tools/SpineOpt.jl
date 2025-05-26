@@ -2,9 +2,12 @@
 
 name: CI
 
-# Run workflow on every push
+# Run workflow on every push and pull request to master branch
 on:
-  push
+  push:
+  pull_request:
+    branches:
+      - master
 
 jobs:
   test:
