@@ -2,12 +2,26 @@
 
 name: CI
 
-# Run workflow on every push
+# Run workflow on every push and pull request to master branch
 on:
-  push
+  push:
+  pull_request:
+    branches:
+      - master
 
 jobs:
+  check_duplicate_actions:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          skip_after_successful_duplicate: 'true'
   test:
+    needs: check_duplicate_actions
+    if: needs.check_duplicate_actions.outputs.should_skip != 'true'
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
