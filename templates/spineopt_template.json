@@ -274,7 +274,7 @@
         ["output", "output_resolution", null, null, "Temporal resolution of the output variables associated with this `output`."],
         ["output", "output_type",null,"output_type_list","Type of this `output`."],
         ["report", "output_db_url", null, null, "Database url for SpineOpt output."],
-        ["settings", "version", 20, null, "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."],
+        ["settings", "version", 16, null, "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."],
         ["stage", "stage_scenario", null, null, "The scenario that this `stage` should run (EXPERIMENTAL)."],
         ["temporal_block", "block_end", null, null, "The end time for the `temporal_block`. Can be given either as a `DateTime` for a static end point, or as a `Duration` for an end point relative to the start of the current optimization."],
         ["temporal_block", "block_start", null, null, "The start time for the `temporal_block`. Can be given either as a `DateTime` for a static start point, or as a `Duration` for an start point relative to the start of the current optimization."],
