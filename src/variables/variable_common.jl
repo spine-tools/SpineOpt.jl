@@ -285,14 +285,35 @@ A `Dict` mapping representative indidces to coefficient.
 """
 function _representative_index_to_coefficient(m, ind, indices)
     representative_t_to_coef_arr = representative_time_slice_combinations(m, ind.t)
-    representative_inds_to_coef_arr = [
-        Dict(indices(m; ind..., t=representative_t) => coef for (representative_t, coef) in representative_t_to_coef)
-        for representative_t_to_coef in representative_t_to_coef_arr
-    ]
-    filter!(representative_inds_to_coef_arr) do representative_inds_to_coef
-        !any(isempty.(keys(representative_inds_to_coef)))
+    representative_inds_to_coef = nothing
+    # variables to cache the values so that the types can be known ahead of time
+    indCache = nothing
+    coefCache = nothing
+    for i in eachindex(representative_t_to_coef_arr)
+        representative_t_to_coef = representative_t_to_coef_arr[i]
+        # Creating a dict with specified types
+        dictKeyType = typeof(first(indices(m; ind..., t=first(keys(representative_t_to_coef)))))
+        dictValType = typeof(first(values(representative_t_to_coef)))
+        representative_inds_to_coef_temp = Dict{dictKeyType,dictValType}()
+        emptyKey::Bool = false
+        for (representative_t, coef) in representative_t_to_coef
+            inds = indices(m; ind..., t=representative_t)
+            # if any of the inds are empty then don't include
+            if isempty(inds)
+                emptyKey = true
+                break
+            end
+            firstInd = first(inds)
+            representative_inds_to_coef_temp[firstInd] = coef
+            indCache = firstInd
+            coefCache = coef
+        end
+        if !emptyKey
+            representative_inds_to_coef = representative_inds_to_coef_temp
+            break
+        end
     end
-    if isempty(representative_inds_to_coef_arr)
+    if isnothing(representative_inds_to_coef)
         representative_blocks = unique(
             blk
             for representative_t_to_coef in representative_t_to_coef_arr
@@ -309,5 +330,9 @@ function _representative_index_to_coefficient(m, ind, indices)
             join(("'$blk'" for blk in representative_blocks), ", "),
         )
     end
-    Dict(first(inds) => coef for (inds, coef) in first(representative_inds_to_coef_arr))
+    repDict = Dict{typeof(indCache), typeof(coefCache)}()
+    for (ind,coef) in representative_inds_to_coef
+        repDict[ind] = coef
+    end
+    return repDict
 end
