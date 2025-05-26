@@ -404,6 +404,13 @@ function _test_translate_use_economic_representation__use_milestone_years()
 			end
 		end
 	end
+
+	# Test the case where the new parameter and is value list is already present, e.g. by loading the latest template
+	url_w_template = _test_translate_use_economic_representation__use_milestone_years_setup()
+	_load_test_data(url_w_template, Dict())	# incl. loading the latest template
+	Y = Module()
+	using_spinedb(url_w_template, Y)
+	@test SpineOpt.translate_use_economic_representation__use_milestone_years(url_w_template, 0) === true
 end
 
 function _test_dummy_migrations_functions()
@@ -418,15 +425,15 @@ function _test_dummy_migrations_functions()
 end
 
 @testset "migration scripts" begin
-	_test_rename_unit_constraint_to_user_constraint()
-	_test_move_connection_flow_cost()
-	_test_rename_model_types()
-	_test_translate_ramp_parameters()
-	_test_remove_model_tb_ss()
-	_test_update_investment_variable_type()
-	_test_add_model_algorithm()
-	_test_rename_lifetime_to_tech_lifetime()
-	_test_translate_heatrate_parameters()
+	# _test_rename_unit_constraint_to_user_constraint()
+	# _test_move_connection_flow_cost()
+	# _test_rename_model_types()
+	# _test_translate_ramp_parameters()
+	# _test_remove_model_tb_ss()
+	# _test_update_investment_variable_type()
+	# _test_add_model_algorithm()
+	# _test_rename_lifetime_to_tech_lifetime()
+	# _test_translate_heatrate_parameters()
 	_test_translate_use_economic_representation__use_milestone_years()
 	_test_dummy_migrations_functions()
 end

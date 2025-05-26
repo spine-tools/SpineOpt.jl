@@ -28,28 +28,34 @@ function translate_use_economic_representation__use_milestone_years(db_url, log_
 	
 	# import_data(db_url, SpineOpt.template(), "Update template")	# To obtain all new parameter definitions
 	
-	# Add new parameter value list for defining the new parameter
-	## Add list name
-	run_request(db_url, "call_method", ("add_parameter_value_list",), Dict(
-		"name" => "multiyear_economic_discounting_value_list")
-	)
-	## Add list items for the new parameter value list
-	for (index, item) in enumerate(["consecutive_years", "milestone_years"])
-		val_input, typ = unparse_db_value(item)	# val_input in `bytes` format, typ="str"
-		run_request(db_url, "call_method", ("add_list_value",), Dict(
-			"parameter_value_list_name" => "multiyear_economic_discounting_value_list", 
-			"value" => val_input, "type" => typ, "index" => index)
+	# Check if the new parameter value list already exists
+	data = run_request(db_url, "query", ("parameter_value_list_sq",))
+	if !any(x -> x["name"] == "multiyear_economic_discounting_value_list", data["parameter_value_list_sq"])
+		@log log_level 0 "Creating new parameter value list `multiyear_economic_discounting_value_list`"
+		## Add new parameter value list for defining the new parameter
+		run_request(db_url, "call_method", ("add_parameter_value_list",), Dict(
+			"name" => "multiyear_economic_discounting_value_list")
 		)
+		## Add list items for the new parameter value list
+		for (index, item) in enumerate(["consecutive_years", "milestone_years"])
+			val_input, typ = unparse_db_value(item)	# val_input in `bytes` format, typ="str"
+			run_request(db_url, "call_method", ("add_list_value",), Dict(
+				"parameter_value_list_name" => "multiyear_economic_discounting_value_list", 
+				"value" => val_input, "type" => typ, "index" => index)
+			)
+		end
+		## A lagecy alternative approach
+		# import_data(
+		# 	db_url,
+		# 	"";  # Don't commit
+		# 	parameter_value_lists=[
+		# 		("multiyear_economic_discounting_value_list", "consecutive_years"),
+		# 		("multiyear_economic_discounting_value_list", "milestone_years"),
+		# 	],
+		# )
+	else
+		@log log_level 0 "Parameter value list `multiyear_economic_discounting_value_list` already exists"
 	end
-	## An alternative approach (lagecy)
-	# import_data(
-	# 	db_url,
-	# 	"";  # Don't commit
-	# 	parameter_value_lists=[
-	# 		("multiyear_economic_discounting_value_list", "consecutive_years"),
-	# 		("multiyear_economic_discounting_value_list", "milestone_years"),
-	# 	],
-	# )
 	
 	# Add basic definition of the new parameter if it doesn't exist yet
 	run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
