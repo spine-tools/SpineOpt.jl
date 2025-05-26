@@ -3313,7 +3313,7 @@
         [
             "settings",
             "version",
-            16,
+            20,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
         ],
