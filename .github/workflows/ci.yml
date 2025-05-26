@@ -18,7 +18,7 @@ jobs:
       - id: skip_check
         uses: fkirc/skip-duplicate-actions@v5
         with:
-          skip_after_successful_duplicate: 'true'
+          concurrent_skipping: 'same_content'
   test:
     needs: check_duplicate_actions
     if: needs.check_duplicate_actions.outputs.should_skip != 'true'
@@ -70,6 +70,8 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   Documenter:
+    needs: check_duplicate_actions
+    if: needs.check_duplicate_actions.outputs.should_skip != 'true'
     name: Documentation
     runs-on: ubuntu-latest
     steps:
