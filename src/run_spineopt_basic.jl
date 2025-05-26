@@ -995,13 +995,12 @@ function _do_save_outputs!(m, output_names, output_suffix; weight=1)
         end
         by_suffix = get!(m.ext[:spineopt].outputs, out_name, Dict())
         by_window = get!(by_suffix, output_suffix, Dict())
-        by_window[w_start, w_end] = Dict(
-            _static(ind) => weight * val for (ind, val) in _output_value_by_ind(m, something(value, param))
-        )
+        by_window[w_start, w_end] = Dict(Iterators.map(((ind, val),) ->
+            (_static(ind), weight * val), _output_value_by_ind(m, something(value, param))))
     end
 end
 
-_static(ind::NamedTuple) = (; (k => _static(v) for (k, v) in pairs(ind))...)
+_static(ind::NamedTuple) = NamedTuple{keys(ind)}(map(_static, values(ind)))
 _static(t::TimeSlice) = (start(t), end_(t))
 _static(x) = x
 
