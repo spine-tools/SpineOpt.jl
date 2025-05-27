@@ -30,6 +30,7 @@ using Requires
 using JuMP
 using HiGHS
 using Arrow
+using Memoize
 import TOML
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod

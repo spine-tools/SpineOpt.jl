@@ -18,6 +18,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
 
 [compat]
 Arrow = "2"

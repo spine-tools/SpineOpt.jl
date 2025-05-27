@@ -281,35 +281,30 @@ function _represented_indices(m::Model, indices::Function, replacement_expressio
 end
 
 """
-A `Dict` mapping representative indidces to coefficient.
+A function to cache the representative indices used in _representative_index_to_coefficient()
+"""
+@memoize function get_ind_cached(m::Model; ind,representative_t,indices)
+    inds = indices(m; ind..., t=representative_t)
+    isempty(inds) ? nothing : first(inds)
+end
+
+"""
+A `Dict` mapping representative indices to coefficient.
 """
 function _representative_index_to_coefficient(m, ind, indices)
     representative_t_to_coef_arr = representative_time_slice_combinations(m, ind.t)
     representative_inds_to_coef = nothing
-    # variables to cache the values so that the types can be known ahead of time
-    indCache = nothing
-    coefCache = nothing
-    for i in eachindex(representative_t_to_coef_arr)
-        representative_t_to_coef = representative_t_to_coef_arr[i]
-        # Creating a dict with specified types
-        dictKeyType = typeof(first(indices(m; ind..., t=first(keys(representative_t_to_coef)))))
-        dictValType = typeof(first(values(representative_t_to_coef)))
-        representative_inds_to_coef_temp = Dict{dictKeyType,dictValType}()
-        emptyKey::Bool = false
+    for representative_t_to_coef in representative_t_to_coef_arr
+        ind_coefs = Tuple[]
+        contains_empty_key = false
         for (representative_t, coef) in representative_t_to_coef
-            inds = indices(m; ind..., t=representative_t)
-            # if any of the inds are empty then don't include
-            if isempty(inds)
-                emptyKey = true
-                break
-            end
-            firstInd = first(inds)
-            representative_inds_to_coef_temp[firstInd] = coef
-            indCache = firstInd
-            coefCache = coef
+            ind = get_ind_cached(m; ind, representative_t,indices)
+            contains_empty_key = contains_empty_key || isnothing(ind)
+            push!(ind_coefs, (ind, coef))
         end
-        if !emptyKey
-            representative_inds_to_coef = representative_inds_to_coef_temp
+        # if any of the inds are empty then don't include
+        if !contains_empty_key
+            representative_inds_to_coef = ind_coefs
             break
         end
     end
@@ -330,9 +325,5 @@ function _representative_index_to_coefficient(m, ind, indices)
             join(("'$blk'" for blk in representative_blocks), ", "),
         )
     end
-    repDict = Dict{typeof(indCache), typeof(coefCache)}()
-    for (ind,coef) in representative_inds_to_coef
-        repDict[ind] = coef
-    end
-    return repDict
+    Dict(ind_coefs[1] => ind_coefs[2] for ind_coefs in representative_inds_to_coef)
 end
