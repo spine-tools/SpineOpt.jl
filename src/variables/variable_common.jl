@@ -293,37 +293,30 @@ A `Dict` mapping representative indices to coefficient.
 """
 function _representative_index_to_coefficient(m, ind, indices)
     representative_t_to_coef_arr = representative_time_slice_combinations(m, ind.t)
-    representative_inds_to_coef = nothing
     for representative_t_to_coef in representative_t_to_coef_arr
-        ind_coefs = Tuple[]
+        representative_inds_to_coef = Dict()
         contains_empty_key = false
         for (representative_t, coef) in representative_t_to_coef
             ind = get_ind_cached(m; ind, representative_t,indices)
             contains_empty_key = contains_empty_key || isnothing(ind)
-            push!(ind_coefs, (ind, coef))
+            representative_inds_to_coef[ind] = coef
         end
         # if any of the inds are empty then don't include
-        if !contains_empty_key
-            representative_inds_to_coef = ind_coefs
-            break
-        end
+        if !contains_empty_key return representative_inds_to_coef end
     end
-    if isnothing(representative_inds_to_coef)
-        representative_blocks = unique(
-            blk
-            for representative_t_to_coef in representative_t_to_coef_arr
-            for t in keys(representative_t_to_coef)
-            for blk in blocks(t)
-            if representative_periods_mapping(temporal_block=blk) === nothing
-        )
-        node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
-        error(
-            "can't find a linear representative index combination for $ind -",
-            " this is probably because ",
-            node_or_unit,
-            " is not associated to any of the representative temporal_blocks ",
-            join(("'$blk'" for blk in representative_blocks), ", "),
-        )
-    end
-    Dict(ind_coefs[1] => ind_coefs[2] for ind_coefs in representative_inds_to_coef)
+    representative_blocks = unique(
+        blk
+        for representative_t_to_coef in representative_t_to_coef_arr
+        for t in keys(representative_t_to_coef)
+        for blk in blocks(t)
+        if representative_periods_mapping(temporal_block=blk) === nothing
+    )
+    node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
+    error(
+        "can't find a linear representative index combination for $ind -",
+        " this is probably because ",
+        node_or_unit,
+        " is not associated to any of the representative temporal_blocks ",
+        join(("'$blk'" for blk in representative_blocks), ", "),
+    )
 end
