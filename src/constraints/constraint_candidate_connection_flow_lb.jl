@@ -29,14 +29,14 @@ equals [connection\_intact\_flow](@ref) otherwise.
 & \geq \\
 & v^{connection\_intact\_flow}_{(c, n, d, s, t)}
 - p^{connection\_capacity}_{(c, n, d, s, t)} \cdot \left(
-    p^{candidate\_connections}_{(c, s, t)} - v^{connections\_invested\_available}_{(c, s, t)} \right) \\
-& \forall c \in connection : p^{candidate\_connections}_{(c)} \neq 0 \\
+    p^{investment\_count\_max\_cumulative}_{(c, s, t)} - v^{connections\_invested\_available}_{(c, s, t)} \right) \\
+& \forall c \in connection : p^{investment\_count\_max\_cumulative}_{(c)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :candidate_connection_flow_lb,
@@ -64,7 +64,7 @@ function _build_constraint_candidate_connection_flow_lb(m::Model, conn, n, d, s_
             init=0,
         )
         - (
-            + candidate_connections(connection=conn)
+            + investment_count_max_cumulative(connection=conn)
             - sum(
                 connections_invested_available[conn, s, t1]
                 for (conn, s, t1) in connections_invested_available_indices(

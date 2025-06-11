@@ -26,7 +26,7 @@ function user_constraint_slack_indices(
     user_constraint=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     (
         (user_constraint=uc, stochastic_scenario=ind.stochastic_scenario, t=ind.t)

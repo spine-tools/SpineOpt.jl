@@ -25,7 +25,10 @@ A set of tuples for indexing the `node_state` variable where filtering options c
 for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
-    node = intersect(node, SpineOpt.node(has_state=true))
+    node = union(
+        intersect(node, SpineOpt.node(node_type=:storage_node)), 
+        intersect(node, SpineOpt.node(node_type=:storage_group))
+    )
     (
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(
@@ -37,14 +40,14 @@ end
 
 function node_state_lb(m; node, kwargs...)
     node_state_lower_limit(m; node=node, kwargs..., _default=NaN) * (
-        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
     )
 end
 
 function node_state_ub(m; node, kwargs...)
     node_state_capacity(m; node=node, kwargs..., _default=NaN) * (
-        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
-        + something(candidate_storages(m; node=node, kwargs...), 0)
+        + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + something(storage_investment_count_max_cumulative(m; node=node, kwargs...), 0)
     )
 end
 
@@ -60,7 +63,7 @@ function add_variable_node_state!(m::Model)
         node_state_indices;
         lb=node_state_lb,
         ub=node_state_ub,
-        fix_value=fix_node_state,
-        initial_value=initial_node_state,
+        fix_value=storage_state_fix,
+        initial_value=storage_state_initial,
     )
 end

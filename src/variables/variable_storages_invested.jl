@@ -30,8 +30,8 @@ function add_variable_storages_invested!(m::Model)
         storages_invested_available_indices;
         lb=constant(0),
         int=storages_invested_available_int,
-        fix_value=fix_storages_invested,
-        initial_value=initial_storages_invested,
-        required_history_period=maximum_parameter_value(storage_investment_tech_lifetime),
+        fix_value=storage_investment_count_fix_new,
+        initial_value=storage_investment_count_initial_new,
+        required_history_period=maximum_parameter_value(storage_lifetime_technical),
     )
 end

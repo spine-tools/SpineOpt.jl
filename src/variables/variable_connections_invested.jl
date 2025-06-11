@@ -29,9 +29,9 @@ function add_variable_connections_invested!(m::Model)
         :connections_invested,
         connections_invested_available_indices;
         lb=constant(0),
-        fix_value=fix_connections_invested,
-        initial_value=initial_connections_invested,
+        fix_value=investment_count_fix_new,
+        initial_value=investment_count_initial_new,
         int=connections_invested_available_int,
-        required_history_period=maximum_parameter_value(connection_investment_tech_lifetime),
+        required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end

@@ -1,0 +1,2 @@
+Grids are for trading different types of commodities. When associated with a [node](@ref) through the [node\_\_grid](@ref) relationship, a specific location can be associated with a specific grid (or form of commodity). 
+For the representation of specific grid physics, related to e.g. the representation of the electric network, designated parameters can be defined to enforce grid specific behaviour. (See also [physics\_type](@ref))

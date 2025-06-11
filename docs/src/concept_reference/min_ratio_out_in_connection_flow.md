@@ -12,4 +12,4 @@ in a left-to-right reading order.
 Note that the ratio can also be defined for [connection\_\_node\_\_node](@ref) relationships,
 where one or both of the nodes correspond to node groups in order to impose a ratio on aggregated connection flows.
 
-To enforce e.g. a minimum ratio of `0.2` for a connection `conn` between its outgoing electricity flow to [node](@ref) `commodity1` and its incoming flows from the node [node](@ref) `commodity2`, the [min\_ratio\_out\_in\_connection\_flow](@ref) parameter would be set to `0.8` for the relationship `conn__commodity1__commodity2`.
+To enforce e.g. a minimum ratio of `0.2` for a connection `conn` between its outgoing electricity flow to [node](@ref) `commodity1` and its incoming flows from the [node](@ref) `commodity2`, the [min\_ratio\_out\_in\_connection\_flow](@ref) parameter would be set to `0.8` for the relationship `conn__commodity1__commodity2`.

@@ -453,12 +453,12 @@ function solve_model!(
         end
         m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
         undo_force_starting_investments! = _force_starting_investments!(m_mp)
-        min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
-        max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+        min_benders_iterations = decomposition_min_iterations(model=m_mp.ext[:spineopt].instance)
+        max_benders_iterations = decomposition_max_iterations(model=m_mp.ext[:spineopt].instance)
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
-            extra_kwargs = if report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+            extra_kwargs = if benders_iterations_reporting_activate(model=m_mp.ext[:spineopt].instance)
                 (save_outputs=true, output_suffix=(output_suffix..., benders_iteration=current_bi,))
             else
                 (save_outputs=false, output_suffix=output_suffix)
@@ -479,14 +479,14 @@ function solve_model!(
             @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))"
             @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
-            termination_msg = if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
+            termination_msg = if gap <= decomposition_max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
                 "Benders tolerance satisfied at iter $j"
             elseif j >= max_benders_iterations
                 "Maximum number of Benders iterations reached ($j)"
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
-                if !report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+                if !benders_iterations_reporting_activate(model=m_mp.ext[:spineopt].instance)
                     final_log_prefix = string(
                         log_prefix, "$termination_msg $(_current_solution_string(m_mp)) - collecting outputs - "
                     )

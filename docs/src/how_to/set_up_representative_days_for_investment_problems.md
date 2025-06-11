@@ -12,7 +12,7 @@ Assuming you already have an investment model with a certain temporal structure 
 1. Associate these [temporal\_block](@ref)s to some [node](@ref)s and [unit](@ref)s in your system,
    via [node\_\_temporal\_block](@ref) and [units\_on\_\_temporal\_block](@ref) relationships.
 1. Finally, for each **original** [temporal\_block](@ref) associated to the [node](@ref)s and [unit](@ref)s above,
-   specify the value of the [representative\_periods\_mapping](@ref) parameter.
+   specify the value of the [representative\_blocks\_by\_period](@ref) parameter.
    This should be a `map` where each entry associates a date-time to the name of one
    of the **representative period** [temporal\_block](@ref)s created in step 3.
    More specifically, an entry with `t` as the key and `b` as the value means that time slices from the original block
@@ -23,7 +23,7 @@ In SpineOpt, this will be interpreted in the following way:
 - For each [node](@ref) and [unit](@ref) associated to any of your representative [temporal\_block](@ref)s,
   the operational variables (with the exception of [node\_state](@ref)) will be created
   **only** for the representative periods. For the non-representative periods, SpineOpt will use the variable of
-  the corresponding representative period according to the value of the [representative\_periods\_mapping](@ref)
+  the corresponding representative period according to the value of the [representative\_blocks\_by\_period](@ref)
   parameter.
 - The [node\_state](@ref) variable and the investment [variables](@ref Variables) will be created for **all** periods,
   representative and non-representative.

@@ -1,5 +1,5 @@
-A [unit](@ref) represents an energy conversion process, where energy of one [commodity](@ref) can be converted
-into energy of another [commodity](@ref). For example, a gas turbine, a power plant, or even a load,
+A [unit](@ref) represents an energy conversion process, where energy of one commodity can be converted
+into energy of another commodity. For example, a gas turbine, a power plant, or even a load,
 can be modelled using a [unit](@ref).
 
 A [unit](@ref) always takes energy from one or more [node](@ref)s, and releases energy to
