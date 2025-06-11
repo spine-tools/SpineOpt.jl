@@ -38,7 +38,7 @@ function fixed_om_costs(m, t_range)
             )
             * (
                 !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
-                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] * _discounted_duration_coeff(t) : 
+                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] * discounted_duration_base(t) : 
                 duration(t)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))

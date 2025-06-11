@@ -596,7 +596,7 @@ function create_discounted_duration(m; stochastic_scenario=nothing, invest_tempo
     timeseries_ind, timeseries_val
 end
 
-function _discounted_duration_coeff(t::TimeSlice; _exact=false)
+function discounted_duration_base(t::TimeSlice; _exact=false)
     # The economic discounting uses 1 Year as the base duration for investment (years) and operation.
     # This means that an `xx_discounted_duration` only counts the number (discounted) of years in an investment period,
     # assuming (1) the "investment period" = n years with n>=1 being an integer, 
