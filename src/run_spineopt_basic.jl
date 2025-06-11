@@ -77,7 +77,7 @@ function build_model!(m; log_level)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
-    economic_parameter_preprocessing_activate(model=m.ext[:spineopt].instance) &&
+    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) &&
         @timelog log_level 2 "Creating $model_name economic structure..." generate_economic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
@@ -167,6 +167,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_connection_intact_flow_ptdf!,
             add_constraint_connection_lifetime!,
+            add_constraint_connection_min_flow!,
             add_constraint_connection_unitary_gas_flow!,
             add_constraint_connections_invested_available!,
             add_constraint_connections_invested_transition!,
@@ -208,6 +209,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_nodal_balance!,
             add_constraint_node_injection!,
             add_constraint_node_state_capacity!,
+            add_constraint_min_node_state!,
             add_constraint_node_voltage_angle!,
             add_constraint_non_spinning_reserves_lower_bound!,
             add_constraint_non_spinning_reserves_shut_down_upper_bound!,
@@ -993,13 +995,12 @@ function _do_save_outputs!(m, output_names, output_suffix; weight=1)
         end
         by_suffix = get!(m.ext[:spineopt].outputs, out_name, Dict())
         by_window = get!(by_suffix, output_suffix, Dict())
-        by_window[w_start, w_end] = Dict(
-            _static(ind) => weight * val for (ind, val) in _output_value_by_ind(m, something(value, param))
-        )
+        by_window[w_start, w_end] = Dict(Iterators.map(((ind, val),) ->
+            (_static(ind), weight * val), _output_value_by_ind(m, something(value, param))))
     end
 end
 
-_static(ind::NamedTuple) = (; (k => _static(v) for (k, v) in pairs(ind))...)
+_static(ind::NamedTuple) = NamedTuple{keys(ind)}(map(_static, values(ind)))
 _static(t::TimeSlice) = (start(t), end_(t))
 _static(x) = x
 

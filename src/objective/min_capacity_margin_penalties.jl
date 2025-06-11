@@ -30,7 +30,7 @@ function min_capacity_margin_penalties(m::Model, t_range)
         m,
         + sum(
             min_capacity_margin_slack[n, s, t]
-            * (economic_parameter_preprocessing_activate(model=m.ext[:spineopt].instance) ?
+            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
                node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
             ) 
             * duration(t)

@@ -30,7 +30,7 @@ function unit_investment_costs(m::Model, t_range)
         m,
         + sum(
             + units_invested[u, s, t]
-            * _unit_weight_for_economic_representation(m; u, s, t)
+            * _unit_weight_for_multiyear_economic_discounting(m; u, s, t)
             * unit_investment_cost(m; unit=u, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             # This term is activated when there is a representative temporal block in those containing TimeSlice t.
@@ -43,8 +43,8 @@ function unit_investment_costs(m::Model, t_range)
     )
 end
 
-function _unit_weight_for_economic_representation(m; u, s, t)
-    if economic_parameter_preprocessing_activate(model=m.ext[:spineopt].instance)
+function _unit_weight_for_multiyear_economic_discounting(m; u, s, t)
+    if !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance))
         return (1- unit_salvage_fraction[(unit=u, stochastic_scenario=s, t=t)]) * 
                 unit_tech_discount_factor[(unit=u, stochastic_scenario=s, t=t)] * 
                 unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, t=t)]

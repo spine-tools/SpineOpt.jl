@@ -46,6 +46,9 @@ function preprocess_data_structure()
     generate_is_boundary()
     generate_unit_flow_capacity()
     generate_connection_flow_capacity()
+    generate_connection_flow_lower_limit()
+    generate_node_state_capacity()
+    generate_node_state_lower_limit()
     generate_unit_commitment_parameters()
 end
 
@@ -845,6 +848,55 @@ function generate_connection_flow_capacity()
     end
 end
 
+function generate_connection_flow_lower_limit()
+    function _connection_flow_lower_limit(
+        f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
+    )
+        _prod_or_nothing(
+            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+            f(connection_min_factor; connection=connection, kwargs...),
+            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
+        )
+    end
+
+    connection_flow_lower_limit = ParameterFunction(_connection_flow_lower_limit)
+    @eval begin
+        connection_flow_lower_limit = $connection_flow_lower_limit
+        export connection_flow_lower_limit
+    end
+end
+
+function generate_node_state_capacity()
+    function _node_state_capacity(f; node=node, _default=nothing, kwargs...)
+        _prod_or_nothing(
+            f(storage_state_max; node=node, _default=_default, kwargs...),
+            f(node_availability_factor; node=node, kwargs...),
+        )
+    end
+
+    node_state_capacity = ParameterFunction(_node_state_capacity)
+    @eval begin
+        node_state_capacity = $node_state_capacity
+        export node_state_capacity
+    end
+end
+
+function generate_node_state_lower_limit()
+    function _node_state_lower_limit(f; node=node, _default=nothing, kwargs...)
+        maximum([_prod_or_nothing(
+            f(storage_state_max; node=node, _default=_default, kwargs...),
+            f(node_state_min_factor; node=node, kwargs...)),
+            f(storage_state_min; node=node, kwargs...)]
+        )
+    end
+
+    node_state_lower_limit = ParameterFunction(_node_state_lower_limit)
+    @eval begin
+        node_state_lower_limit = $node_state_lower_limit
+        export node_state_lower_limit
+    end
+end
+
 _prod_or_nothing(args...) = _prod_or_nothing(collect(args))
 _prod_or_nothing(args::Vector) = any(isnothing.(args)) ? nothing : *(args...)
 _prod_or_nothing(args::Vector{T}) where T<:Call = Call(_prod_or_nothing, args)
@@ -910,7 +962,7 @@ function generate_unit_commitment_parameters()
                 indices(units_on_cost),
                 indices(units_on_non_anticipativity_time),
                 indices(online_count_fix),
-                (u for u in indices(investment_count_max_cumulative, unit) if investment_count_max_cumulative(unit=u) > 0),
+                (u for u in indices(investment_count_max_cumulative, unit) if is_candidate(unit=u)),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),

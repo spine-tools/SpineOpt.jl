@@ -160,9 +160,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("model", "min_iterations"), "decomposition_min_iterations", ""),
         (("model", "report_benders_iterations"), "benders_iterations_reporting_activate", ""),
         (("model", "use_connection_intact_flow"), "connection_investment_power_flow_impact_activate", ""),
-        (("model", "use_economic_representation"), "economic_parameter_preprocessing_activate", ""),
         (("model", "use_highest_resolution_constraint_ratio_out_in_connection_flow"), "connection_flow_highest_resolution_activate", ""),
-        (("model", "use_milestone_years"), "milestone_years_activate", ""),
         (("model", "use_tight_compact_formulations"), "tight_compact_formulations_activate", ""),
 
         # node__node

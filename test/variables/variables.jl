@@ -290,7 +290,7 @@ function test_connection_history_parameters()
     end
 end
  
-function test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+function _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -330,7 +330,7 @@ function test_unit_flow_simple_bounds()
         m_end = m_start + Hour(2)
         fruf = 0.8
         cap_to_node = 200
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [
             ["unit", "unit_ab", "online_variable_type", "linear"],
         ]
@@ -365,7 +365,7 @@ function test_fix_ratio_out_in_unit_flow_simple()
         fruf = 0.8
         fuoc = 1.25
         usf = 2.4
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_units_on_coefficient_out_in", fuoc],
@@ -403,7 +403,7 @@ function test_fix_ratio_in_out_unit_flow_simple()
         fruf = 0.8
         fuoc = 1.25
         usf = 2.4
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_in_out_unit_flow", fruf],
             ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_units_on_coefficient_in_out", fuoc],
@@ -440,7 +440,7 @@ function test_two_fix_ratio_out_in_unit_flow_simple()
         m_end = m_start + Hour(2)
         fruf = 0.8
         fruf2 = 0.6
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         objs = [["node", "node_b2"]]
         rels = [
             ["unit__to_node", ["unit_ab", "node_b2"]],
@@ -474,7 +474,7 @@ function test_two_fix_ratio_in_out_unit_flow_simple()
         m_end = m_start + Hour(2)
         fruf = 0.8
         fruf2 = 0.6
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         objs = [["node", "node_a2"]]
         rels = [
             ["unit__from_node", ["unit_ab", "node_a2"]],
@@ -508,7 +508,7 @@ function test_fix_ratio_out_in_and_in_out_unit_flow_simple()
         m_end = m_start + Hour(2)
         fruf = 0.8
         fruf2 = 0.9
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         objs = [["node", "node_b2"]]
         rels = [
             ["unit__to_node", ["unit_ab", "node_b2"]],
@@ -544,7 +544,7 @@ function test_two_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
         fruf = 0.8
         fruf2 = 0.6
         froouf = 0.5
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         objs = [["node", "node_b2"], ["node", "node_b3"]]
         rels = [
             ["unit__to_node", ["unit_ab", "node_b2"]],
@@ -585,7 +585,7 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
         stamps = [m_start, m_start + Hour(1)]
         fruf = unparse_db_value(TimeSeries(stamps, fruf_values))
         fuoc = unparse_db_value(TimeSeries(stamps, fuoc_values))
-        url_in = test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [("model", "instance", "roll_forward", unparse_db_value(Hour(1)))]
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
@@ -622,7 +622,7 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
     end
 end
  
-function test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+function _test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -660,7 +660,7 @@ function test_fix_ratio_out_in_connection_flow_simple()
         m_start = DateTime(2000, 1, 1, 0)
         m_end = m_start + Hour(2)
         frcf = 0.8
-        url_in = test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+        url_in = _test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
         rel_pvals = [
             ["connection__node__node", ["conn_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", frcf],
         ]
@@ -689,7 +689,7 @@ function test_fix_ratio_out_in_connection_flow_simple_rolling()
         frcf_values = [0.8, 0.9]
         stamps = [m_start, m_start + Hour(1)]
         frcf = unparse_db_value(TimeSeries(stamps, frcf_values))
-        url_in = test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
+        url_in = _test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
         obj_pvals = [("model", "instance", "roll_forward", unparse_db_value(Hour(1)))]
         rel_pvals = [
             ["connection__node__node", ["conn_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", frcf],
@@ -734,6 +734,7 @@ end
     test_unit_online_variable_type_none()
     test_unit_history_parameters()
     test_connection_history_parameters()
+    test_unit_flow_simple_bounds()
     test_fix_ratio_out_in_unit_flow_simple()
     test_fix_ratio_in_out_unit_flow_simple()
     test_two_fix_ratio_out_in_unit_flow_simple()

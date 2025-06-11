@@ -38,8 +38,14 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
     )
 end
 
+function node_state_lb(m; node, kwargs...)
+    node_state_lower_limit(m; node=node, kwargs..., _default=NaN) * (
+        + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+    )
+end
+
 function node_state_ub(m; node, kwargs...)
-    storage_state_max(m; node=node, kwargs..., _default=NaN) * (
+    node_state_capacity(m; node=node, kwargs..., _default=NaN) * (
         + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
         + something(storage_investment_count_max_cumulative(m; node=node, kwargs...), 0)
     )
@@ -55,7 +61,7 @@ function add_variable_node_state!(m::Model)
         m,
         :node_state,
         node_state_indices;
-        lb=storage_state_min,
+        lb=node_state_lb,
         ub=node_state_ub,
         fix_value=storage_state_fix,
         initial_value=storage_state_initial,

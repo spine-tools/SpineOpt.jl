@@ -112,7 +112,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     append!(obj_pvs, (["unit", u, "min_down_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     if add_investment
         # activate multi-year investments
-        append!(obj_pvs, [["model", "instance", "economic_parameter_preprocessing_activate", true]])
+        append!(obj_pvs, [["model", "instance", "multiyear_economic_discounting", "consecutive_years"]])
         # add investment temporal block
         append!(objs, [["temporal_block", "two_year"]])
         append!(obj_pvs, [["temporal_block", "two_year", "resolution", unparse_db_value(Year(2))]])

@@ -5,10 +5,10 @@ objective_function_reference_values = Dict(
     "simple_system.json" => 160714.28571428574,
     "unit_commitment.json" => 98637.42857142858,
     "rolling_horizon.json" => 65164.8571429,
-    "multi-year_investment_with_econ_params_with_milestones.json" => 41025092.819187716,
-    "multi-year_investment_with_econ_params_without_milestones.json" => 71720404.84378022,
-    "multi-year_investment_without_econ_params.json" => 203360142.85714287,
-    "capacity_planning.json" => 352127000,
+    "multi-year_investment_with_econ_discounting_milestones.json" => 71820715.12725478,
+    "multi-year_investment_with_econ_discounting_consecutives.json" => 71720404.84378022,
+    "multi-year_investment_without_econ_discounting.json" => 131520100.0,
+    "capacity_planning.json" => 328503000.0,
     "stochastic.json" => 126964.2857142857,
 )
 

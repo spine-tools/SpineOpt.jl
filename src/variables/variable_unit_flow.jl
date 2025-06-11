@@ -51,7 +51,7 @@ end
 
 function unit_flow_ub(m; unit, node, direction, kwargs...)
     (
-        realize(unit_flow_capacity(m; unit=unit, node=node, direction=direction, _strict=false)) === nothing
+        realize(unit_flow_capacity(m; unit=unit, node=node, direction=direction, kwargs..., _strict=false)) === nothing
         || has_online_variable(unit=unit)
         || members(node) != [node]
     ) && return NaN
