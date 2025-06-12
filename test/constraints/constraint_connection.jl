@@ -1328,7 +1328,7 @@ function test_constraint_user_constraint_node_connection()
                 ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
                 ["node", "node_b", "demand", demand],
-                ["node", "node_b", "node_type", "storage_node"],
+                ["node", "node_b", "has_storage", true],
             ]
             relationship_parameter_values = [
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient],

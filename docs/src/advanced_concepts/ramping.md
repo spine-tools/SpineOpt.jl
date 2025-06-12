@@ -72,7 +72,7 @@ However, it is still possible to limit the individual flows to the nodes as well
 Which now restricts the flow of the unit into that node to 15% of its capacity.
 
 **Please note that by default, node groups are balanced in the same way as individual nodes.**
-So if you're using node groups for the sole purpose of constraining flow ramps, you should set the `node_type` of the group to `no_balance`.
+So if you're using node groups for the sole purpose of constraining flow ramps, you should set the `balance_type` of the group to `none`.
 
 
 ## [Ramping with reserves](@id ramping-reserves-illustrative-example)

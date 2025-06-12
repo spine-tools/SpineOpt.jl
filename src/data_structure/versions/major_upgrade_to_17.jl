@@ -66,7 +66,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("unit", "units_invested_mga_weight"), "mga_investment_weight", ""),
 
         # node
-        (("node", "balance_type"), "node_type", ""),
+        (("node", "has_state"), "has_storage", ""),
         (("node", "fractional_demand"), "demand_fraction", ""),
         (("node", "min_capacity_margin"), "capacity_margin_min", ""),
         (("node", "min_capacity_margin_penalty"), "capacity_margin_penalty", ""),
@@ -196,12 +196,17 @@ function major_upgrade_to_17(db_url, log_level)
                 "commodity_physics_ptdf" => "grid_physics_ptdf"
             )
         )
+        (
+            "balance_type_list", Dict(
+                "balance_type_none" => "none",
+                "balance_type_node" => "node_balance",
+                "balance_type_group" => "group_balance"
+            )
+        )
     ]
     #@log log_level 0 string("Creating superclasses...")
     #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
     #create_superclasses_and_subclasses(db_url, log_level)
-    @log log_level 0 string("Merging has_state and balance_type...")
-    merge_has_state_and_balance_type_parameters(db_url, log_level)
     #@log log_level 0 string("Update ordering of multidimensional classes...")
     #update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
     @log log_level 0 string("Renaming parameters...")
@@ -341,118 +346,6 @@ function create_superclasses_and_subclasses(db_url, log_level)
         )
     catch
         @log log_level 0 string("Could not add superclasses and subclasses.")
-    end
-end
-
-# A specific function for merging has_state and balance_type parameters
-function merge_has_state_and_balance_type_parameters(db_url, log_level)
-    # Create mapping from old parameter value list item names to new ones
-    name_mapping = Dict(
-        "balance_type_none" => "no_balance", "balance_type_node" => "balance_node", 
-        "balance_type_group" => "balance_group"
-    )
-    # Update parameter value list item names based on the mapping
-    list_value_items = run_request(db_url, "call_method", ("get_list_value_items",), Dict(
-        "parameter_value_list_name" => "balance_type_list")
-    )
-    try
-        for list_value_item in list_value_items
-            old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
-            new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("update_list_value_item",), Dict(
-                    "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)), log_level
-            )
-        end
-        # Add new items to the same parameter value list items
-        for (list_value_name, list_index) in [("storage_node", 3), ("storage_group", 4)]
-            new_name_value, new_name_type = unparse_db_value(list_value_name)
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("add_list_value_item",), Dict(
-                    "parameter_value_list_name" => "balance_type_list", "value" => new_name_value, "type" => new_name_type,
-                    "index" => list_index)), log_level
-            )
-        end
-        # Rename the parameter value list
-        pval_list_item = run_request(db_url, "call_method", ("get_parameter_value_list_item",), Dict(
-            "name" => "balance_type_list")
-        )
-        check_run_request_return_value(run_request(
-            db_url, "call_method", ("update_parameter_value_list_item",), Dict(
-                "id" => pval_list_item["id"], "name" => "node_type_list")), log_level
-        )
-        # Prepare dictionaries from has_state and balance_type parameters
-        pvals_state = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
-            "entity_class_name" => "node", "parameter_definition_name" => "has_state")
-        )
-        vals_state = create_dict_from_parameter_value_items(db_url, pvals_state)
-        pvals_type = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
-            "entity_class_name" => "node", "parameter_definition_name" => "balance_type")
-        )
-        vals_type = create_dict_from_parameter_value_items(db_url, pvals_type)
-        # Include has_state info in balance_type parameter
-        for (entity, val_state_list) in vals_state
-            if haskey(vals_type, entity)
-                val_type_list = vals_type[entity]
-                for (alternative, val_state) in val_state_list
-                    if val_state == true
-                        base_alternative_added = false
-                        for (alternative2, val_type) in val_type_list
-                            alternative_updated, base_alternative_added = add_merged_alternative(
-                                db_url, alternative, alternative2, log_level
-                            )
-                            if val_type == "balance_group"
-                                new_type = "storage_group"
-                            elseif val_type == "no_balance"
-                                new_type = "no_balance"
-                            else
-                                new_type = "storage_node"
-                            end
-                            # Convert the object into a DB representation
-                            db_value, db_type = unparse_db_value(new_type)
-                            # Add the new parameter value into the database
-                            check_run_request_return_value(run_request(
-                                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
-                                    "entity_class_name" => "node", 
-                                    "parameter_definition_name" => "balance_type", 
-                                    "entity_byname" => entity, 
-                                    "alternative_name" => alternative_updated, 
-                                    "value" => db_value,
-                                    "type" => db_type)
-                                ), log_level
-                            )
-                        end
-                        if !base_alternative_added
-                            new_type = "storage_node"
-                            # Convert the object into a DB representation
-                            db_value, db_type = unparse_db_value(new_type)
-                            # Add the new parameter value into the database
-                            check_run_request_return_value(run_request(
-                                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
-                                    "entity_class_name" => "node", 
-                                    "parameter_definition_name" => "balance_type", 
-                                    "entity_byname" => entity, 
-                                    "alternative_name" => alternative, 
-                                    "value" => db_value,
-                                    "type" => db_type)
-                                ), log_level
-                            )
-                        end
-                    end
-                end
-            end
-        end
-        # Remove old parameter definition
-        pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
-            "entity_class_name" => "node", "name" => "has_state")
-        )
-        if length(pdef) > 0
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
-            )
-        end
-    catch
-        @log log_level 0 string("Could not merge has_state and balance_type.")
     end
 end
 

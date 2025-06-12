@@ -40,14 +40,7 @@ function binary_gas_connection_flow_indices(
     connection_flow_indices(
         m;
         connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
-        node=intersect(
-            members(node),
-            union(
-                SpineOpt.node(node_type=:balance_node), 
-                SpineOpt.node(node_type=:balance_group), 
-                SpineOpt.node(node_type=:no_balance)
-            )
-        ),
+        node=intersect(members(node), SpineOpt.node(has_storage=false)),
         stochastic_scenario=stochastic_scenario,
         direction=direction,
         t=t,

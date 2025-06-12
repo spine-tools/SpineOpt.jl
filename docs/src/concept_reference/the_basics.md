@@ -168,5 +168,5 @@ On the one hand, groups can be used in order to impose constraints on the aggreg
 
 On the other hand, a node group can be used to for [PTDF based powerflows](@ref ptdf-based-powerflow).
 Here a node group is used to enforce a nodal balance on system level,
-while suppressing the node balances at individual nodes. See also [node\_type](@ref)
+while suppressing the node balances at individual nodes. See also [balance\_type](@ref)
 and [the node balance constraint](@ref constraint_nodal_balance).

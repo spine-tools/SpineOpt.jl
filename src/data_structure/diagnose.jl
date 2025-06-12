@@ -38,11 +38,11 @@ function _diagnose(class::ObjectClass, issue_fn)
 end
 
 function _node_issue(n)
-	if any(node_type(node=ng) === :balance_group || node_type(node=ng) === :storage_group for ng in groups(n))
+	if any(balance_type(node=ng) === :group_balance  for ng in groups(n))
 		return nothing
 	end
-	if node_type(node=n) === :no_balance
-		return "node_type is set to no_balance"
+	if balance_type(node=n) === :none
+		return "balance_type is set to none"
 	end
 end
 

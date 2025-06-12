@@ -22,7 +22,7 @@
 To ensure a minimum storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-v^{node\_state}_{(n, s, t)} \geq \max(p^{storage\_state\_max}_{(n, s, t)} \cdot p^{node\_state\_min\_factor}_{(n, s, t)}, p^{storage\_state\_min}_{(n, s, t)}) \quad \forall n \in node : p^{node\_type}_{(n)} is storage\_node or storage\_group, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \geq \max(p^{storage\_state\_max}_{(n, s, t)} \cdot p^{node\_state\_min\_factor}_{(n, s, t)}, p^{storage\_state\_min}_{(n, s, t)}) \quad \forall n \in node : p^{has\_storage}_{(n)}, \, \forall (s,t)
 ```
 
 Please note that the limit represents the maximum of the two terms.
@@ -34,7 +34,7 @@ See also
 [storage\_state\_max](@ref),
 [storage\_state\_min](@ref),
 [node\_state\_min\_factor](@ref),
-[node\_type](@ref).
+[has\_storage](@ref).
 """
 function add_constraint_min_node_state!(m::Model)
     _add_constraint!(
@@ -75,7 +75,7 @@ function constraint_min_node_state_indices(m::Model)
         for (ng, t) in node_time_indices(
             m; node=intersect(indices(storage_state_min), indices(storage_investment_count_max_cumulative)), temporal_block=anything
         )
-        if ((node_type(node=ng) === :storage_node || node_type(node=ng) === :storage_group) && is_longterm_storage(node=ng)) || _is_representative(t)
+        if (has_storage(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
