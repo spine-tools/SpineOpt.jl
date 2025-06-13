@@ -221,6 +221,8 @@ function major_upgrade_to_17(db_url, log_level)
     rename_list_values(db_url, list_values_to_be_renamed, log_level)
     @log log_level 0 string("Merging variable type lists...")
 	merge_variable_type_lists(db_url, log_level)
+    @log log_level 0 string("Move node physics parameters to grid physics...")
+	move_parameters(db_url, log_level)
     true
 end
 
@@ -750,5 +752,77 @@ function merge_variable_type_lists(db_url, log_level)
                     "id" => pdef["id"], "name" => old_par_name)), log_level
             )
         end
+    end
+end
+
+function move_parameters(db_url, log_level)
+    node_parameters_to_be_moved = [
+        ("has_voltage_angle", "voltage_angle_physics", 3),
+        ("has_pressure", "pressure_physics", 4)
+    ]
+    for (old_par_name, new_list_value, idx) in node_parameters_to_be_moved
+        move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
+    end
+end
+
+function move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
+    pval_value, pval_type = unparse_db_value(new_list_value)
+    try
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("add_update_list_value_item",), Dict(
+                "parameter_value_list_name" => "grid_physics_list", 
+                "value" => pval_value, "type" => pval_type,
+                "index" => idx)
+            ), log_level
+        )
+    catch
+    end
+    # Find old parameters in all entities and alternatives
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => "node", "parameter_definition_name" => old_par_name)
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    for (entity, val_list) in vals
+        try
+            # Add the grid and grid__node entities into the database
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_entity_item",), Dict(
+                    "entity_class_name" => "grid", 
+                    "entity_byname" => entity)
+                ), log_level
+            )
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_entity_item",), Dict(
+                    "entity_class_name" => "node__grid", 
+                    "entity_byname" => [entity, entity])
+                ), log_level
+            )
+            for (alternative, val) in val_list
+                # Add the new parameter value into the database
+                if val
+                    pval_value, pval_type = unparse_db_value(new_list_value)
+                else
+                    pval_value, pval_type = unparse_db_value("grid_physics_none")
+                end
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                        "entity_class_name" => "grid", "parameter_definition_name" => "physics_type", 
+                        "entity_byname" => entity, 
+                        "alternative_name" => alternative, 	
+                        "value" => pval_value, "type" => pval_type)
+                    ), log_level
+                )
+            end
+        catch
+        end
+    end
+    # Remove old parameter definition
+    pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
+        "entity_class_name" => "node", "name" => old_par_name)
+    )
+    if length(pdef) > 0
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
+        )
     end
 end

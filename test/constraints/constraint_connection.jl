@@ -343,8 +343,12 @@ function test_constraint_fix_node_pressure_point()
         url_in = _test_constraint_connection_setup()    
         bigm = Dict("instance" => 10000)
         binary = Dict("connection_ca" => true)
-        has_pressure = Dict("node_a" => true, "node_c" => true)
-        relationships = [["connection__node__node", [ "connection_ca", "node_c", "node_a"]]]
+        objects = [["grid", "gas"]]
+        relationships = [
+            ["node__grid", ["node_a", "gas"]],
+            ["node__grid", ["node_c", "gas"]],
+            ["connection__node__node", [ "connection_ca", "node_c", "node_a"]]
+        ]
         fixed_pressure_constant_1_raw = [60.315, 64.993, 69.359, 0.0, 42.783, 37.252, 0.0, 0.0, 45.406]
         fixed_pressure_constant_0_raw = [53.422, 58.652, 63.456, 0.0, 32.348, 24.57, 0.0, 0.0, 35.745]
         fixed_pressure_constant_1_ = Dict(
@@ -358,8 +362,7 @@ function test_constraint_fix_node_pressure_point()
             )
         )
         object_parameter_values = [
-            ["node", "node_a", "has_pressure", has_pressure["node_a"]],
-            ["node", "node_c", "has_pressure", has_pressure["node_c"]],
+            ["grid", "gas", "physics_type", "pressure_physics"],
             ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
@@ -381,7 +384,8 @@ function test_constraint_fix_node_pressure_point()
             url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
-            relationships=relationships
+            relationships=relationships,
+            objects=objects
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
@@ -488,16 +492,17 @@ function test_constraint_node_voltage_angle()
         url_in = _test_constraint_connection_setup()
         react = 0.17
         react_p_u = 250
-        has_volt_ang = Dict("node_c" => true, "node_a" => true,)
+        objects = [["grid", "elec"]]
         relationships = [
             ["connection__node__node", [ "connection_ca", "node_a", "node_c"]],
             ["connection__from_node", [ "connection_ca", "node_a"]],
+            ["node__grid", [ "node_a", "elec"]],
+            ["node__grid", [ "node_c", "elec"]],
         ]
         object_parameter_values = [
             ["connection", "connection_ca", "reactance", react],
             ["connection", "connection_ca", "reactance_base", react_p_u],
-            ["node", "node_c", "has_voltage_angle", true],
-            ["node", "node_a", "has_voltage_angle", true],
+            ["grid", "elec", "physics_type", "voltage_angle_physics"],
         ]
         relationship_parameter_values = [
             [
@@ -511,7 +516,8 @@ function test_constraint_node_voltage_angle()
             url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
-            relationships=relationships
+            relationships=relationships,
+            objects=objects
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]

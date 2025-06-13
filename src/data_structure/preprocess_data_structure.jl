@@ -40,6 +40,8 @@ function preprocess_data_structure()
     # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
     # so we don't corrupt the lookup cache
     generate_direction()
+    generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
+    generate_node_has_physics(:has_pressure, :pressure_physics)
     generate_ptdf_lodf()
     generate_variable_indexing_support()
     generate_benders_iteration()
@@ -206,6 +208,31 @@ function generate_direction()
     @eval begin
         direction = $direction
         export direction
+    end
+end
+
+"""
+    generate_node_has_physics()
+
+Generate a boolean parameter to the `node` `ObjectClass` based on whether connected grids include a specific physics 
+type.
+"""
+function generate_node_has_physics(parameter_name::Symbol, physics_key::Symbol)
+    function _new_node_physics(n)
+        matching_grids = Tuple(
+            g
+            for g in node__grid(node=n)
+            if physics_type(grid=g) == physics_key
+        )
+        Dict(
+            parameter_name => parameter_value(!isempty(matching_grids)),
+        )
+    end
+
+    add_object_parameter_values!(node, Dict(n => _new_node_physics(n) for n in node()))
+    param = Parameter(parameter_name, [node])
+    @eval begin
+        $(parameter_name) = $param
     end
 end
 

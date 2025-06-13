@@ -360,13 +360,16 @@ function test_constraint_storage_line_pack()
         url_in = _test_constraint_node_setup()
         pressure = Dict("node_b" => true, "node_c" => true)
         storage = Dict("node_a" => true)
+        objects = [["grid", "gas"]]
         object_parameter_values = [
-            ["node", "node_b", "has_pressure", pressure["node_b"]],
-            ["node", "node_c", "has_pressure", pressure["node_c"]],
+            ["grid", "gas", "physics_type", "pressure_physics"],
             ["node", "node_a", "has_storage", storage["node_a"]],
         ]
         conn_linepack = Dict(("connection_bc", "node_a", "node_group_bc") => 28)
+
         relationships = [
+            ["node__grid", ["node_b", "gas"]],
+            ["node__grid", ["node_c", "gas"]],
             ["connection__to_node", ["connection_bc", "node_a"]],
             ["connection__from_node", ["connection_bc", "node_a"]],
             ["connection__node__node", ["connection_bc", "node_a", "node_group_bc"]],
@@ -384,6 +387,7 @@ function test_constraint_storage_line_pack()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
             relationships=relationships,
+            objects=objects
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:spineopt].variables[:node_pressure]
@@ -425,12 +429,15 @@ end
 function test_constraint_compression_ratio()
     @testset "constraint_compression_ratio" begin
         url_in = _test_constraint_node_setup()
-        has_pressure = Dict("node_b" => true, "node_c" => true)
-        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+        objects = [["grid", "gas"]]
+        relationships = [
+            ["node__grid", ["node_b", "gas"]],
+            ["node__grid", ["node_c", "gas"]],
+            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]]
+        ]
         compression_ratio = Dict(("connection_bc", "node_b", "node_c") => 1.2) # from node - to node
         object_parameter_values = [
-            ["node", "node_b", "has_pressure", has_pressure["node_b"]],
-            ["node", "node_c", "has_pressure", has_pressure["node_c"]],
+            ["grid", "gas", "physics_type", "pressure_physics"],
         ]
         relationship_parameter_values = [
             [
@@ -442,6 +449,7 @@ function test_constraint_compression_ratio()
         ]
         SpineInterface.import_data(
             url_in;
+            objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
@@ -474,13 +482,19 @@ end
 function test_constraint_min_node_pressure()
     @testset "constraint_min_node_pressure" begin
         url_in = _test_constraint_node_setup()
-        has_pressure = Dict("node_b" => true)
         min_pressure = Dict("node_b" => 350)
+        objects = [["grid", "gas"]]
+        relationships = [["node__grid", ["node_b", "gas"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_pressure", has_pressure["node_b"]],
+            ["grid", "gas", "physics_type", "pressure_physics"],
             ["node", "node_b", "pressure_min", min_pressure["node_b"]]
         ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+            objects=objects
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:spineopt].variables[:node_pressure]
         constraint = m.ext[:spineopt].constraints[:min_node_pressure]
@@ -505,13 +519,19 @@ end
 function test_constraint_max_node_pressure()
     @testset "constraint_max_node_pressure" begin
         url_in = _test_constraint_node_setup()
-        has_pressure = Dict("node_b" => true)
         max_pressure = Dict("node_b" => 470)
+        objects = [["grid", "gas"]]
+        relationships = [["node__grid", ["node_b", "gas"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_pressure", has_pressure["node_b"]],
+            ["grid", "gas", "physics_type", "pressure_physics"],
             ["node", "node_b", "pressure_max", max_pressure["node_b"]]
         ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+            objects=objects
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:spineopt].variables[:node_pressure]
         constraint = m.ext[:spineopt].constraints[:max_node_pressure]
@@ -536,13 +556,19 @@ end
 function test_constraint_min_node_voltage_angle()
     @testset "constraint_min_node_voltage_angle" begin
         url_in = _test_constraint_node_setup()
-        has_voltage_angle = Dict("node_b" => true)
         voltage_angle_min = Dict("node_b" => -3.14)
+        objects = [["grid", "elec"]]
+        relationships = [["node__grid", ["node_b", "elec"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
+            ["grid", "elec", "physics_type", "voltage_angle_physics"],
             ["node", "node_b", "voltage_angle_min", voltage_angle_min["node_b"]]
         ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+            objects=objects
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_voltage_angle = m.ext[:spineopt].variables[:node_voltage_angle]
         constraint = m.ext[:spineopt].constraints[:min_node_voltage_angle]
@@ -567,13 +593,19 @@ end
 function test_constraint_max_node_voltage_angle()
     @testset "constraint_max_node_voltage_angle" begin
         url_in = _test_constraint_node_setup()
-        has_voltage_angle = Dict("node_b" => true)
         voltage_angle_max = Dict("node_b" => 3.14)
+        objects = [["grid", "elec"]]
+        relationships = [["node__grid", ["node_b", "elec"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
+            ["grid", "elec", "physics_type", "voltage_angle_physics"],
             ["node", "node_b", "voltage_angle_max", voltage_angle_max["node_b"]]
         ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+            objects=objects
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_voltage_angle = m.ext[:spineopt].variables[:node_voltage_angle]
         constraint = m.ext[:spineopt].constraints[:max_node_voltage_angle]
