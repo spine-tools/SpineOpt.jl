@@ -30,10 +30,7 @@ function _vals_from_data(data)
     )
 end
 
-function _test_representative_periods_setup()
-    url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
-    url_out = "sqlite:///$file_path_out"
+function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
     repr_periods_mapping = Map(
         collect(DateTime(2000, 1, 1):Day(1):DateTime(2000, 1, 10)), [[0.1k, 1.0 - 0.1k] for k in 1:10]
     )
@@ -86,117 +83,137 @@ function _test_representative_periods_setup()
             ["temporal_block", "operations", "representative_periods_mapping", unparse_db_value(repr_periods_mapping)],
         ],
     )
+end
+
+function _test_representative_periods_setup()
+    url_in = "sqlite://"
+    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    url_out = "sqlite:///$file_path_out"
+    test_data = _get_representative_periods_setup_data()
     _load_test_data(url_in, test_data)
     vals = _vals_from_data(test_data)
     url_in, url_out, file_path_out, vals
 end
 
+function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
+    elec_demand_inds = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 11))
+    elec_demand_length = length(elec_demand_inds)
+    elec_demand_ts = TimeSeries(
+        elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
+    )
+    pv_af_ts = TimeSeries(
+        elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
+    )
+    wind_af_ts = TimeSeries(
+        elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
+    )
+    test_data = Dict(
+        :objects => [
+            ["node", "elec_node"],
+            ["node", "batt_node"],
+            ["node", "h2_node"],
+            ["unit", "batt_unit"],
+            ["unit", "electrolizer"],
+            ["unit", "h2_gen"],
+            ["unit", "pv"],
+            ["unit", "wind"],
+            ["unit", "conventional"],
+        ],
+        :relationships => [
+            ["unit__from_node", ["batt_unit", "batt_node"]],
+            ["unit__from_node", ["batt_unit", "elec_node"]],
+            ["unit__to_node", ["batt_unit", "batt_node"]],
+            ["unit__to_node", ["batt_unit", "elec_node"]],
+            ["unit__node__node", ["batt_unit", "batt_node", "elec_node"]],
+            ["unit__node__node", ["batt_unit", "elec_node", "batt_node"]],
+            ["unit__from_node", ["electrolizer", "elec_node"]],
+            ["unit__to_node", ["electrolizer", "h2_node"]],
+            ["unit__node__node", ["electrolizer", "elec_node", "h2_node"]],
+            ["unit__from_node", ["h2_gen", "h2_node"]],
+            ["unit__to_node", ["h2_gen", "elec_node"]],
+            ["unit__node__node", ["h2_gen", "h2_node", "elec_node"]],
+            ["unit__to_node", ["pv", "elec_node"]],
+            ["unit__to_node", ["wind", "elec_node"]],
+            ["unit__to_node", ["conventional", "elec_node"]],
+            ["node__temporal_block", ["h2_node", "operations"]],
+            ["node__temporal_block", ["h2_node", "all_rps"]],
+        ],
+        :object_parameter_values => [
+            ["node", "elec_node", "demand", unparse_db_value(elec_demand_ts)],
+            ["node", "batt_node", "candidate_storages", 100],
+            ["node", "batt_node", "has_state", true],
+            ["node", "batt_node", "initial_node_state", 0],
+            ["node", "batt_node", "node_slack_penalty", 10000],
+            ["node", "batt_node", "node_state_cap", 200],
+            ["node", "batt_node", "node_state_min", 10],
+            ["node", "batt_node", "node_state_min_factor", 0.2],
+            ["node", "batt_node", "number_of_storages", 0],
+            ["node", "batt_node", "storage_investment_cost", 2000000],
+            ["node", "batt_node", "storage_investment_variable_type", "storage_investment_variable_type_integer"],
+            ["node", "h2_node", "has_state", true],
+            ["node", "h2_node", "is_longterm_storage", true],
+            ["node", "h2_node", "node_slack_penalty", 10000],
+            ["node", "h2_node", "node_state_cap", 20000],
+            ["node", "h2_node", "number_of_storages", 100],
+            ["unit", "batt_unit", "candidate_units", 100],
+            ["unit", "batt_unit", "number_of_units", 0],
+            ["unit", "batt_unit", "unit_investment_cost", 750000],
+            ["unit", "batt_unit", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+            ["unit", "electrolizer", "candidate_units", 100],
+            ["unit", "electrolizer", "number_of_units", 0],
+            ["unit", "electrolizer", "unit_investment_cost", 40000000],
+            ["unit", "electrolizer", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+            ["unit", "h2_gen", "candidate_units", 100],
+            ["unit", "h2_gen", "number_of_units", 0],
+            ["unit", "h2_gen", "online_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "h2_gen", "start_up_cost", 1000],
+            ["unit", "h2_gen", "min_up_time", Dict("type" => "duration", "data" => string(60, "m"))],
+            ["unit", "h2_gen", "min_down_time", Dict("type" => "duration", "data" => string(60, "m"))],
+            ["unit", "h2_gen", "unit_investment_cost", 3000000],
+            ["unit", "h2_gen", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+            ["unit", "pv", "candidate_units", 100],
+            ["unit", "pv", "number_of_units", 0],
+            ["unit", "pv", "unit_availability_factor", unparse_db_value(pv_af_ts)],
+            ["unit", "pv", "unit_investment_cost", 9000000],
+            ["unit", "pv", "unit_investment_variable_type", "unit_investment_variable_type_continuous"],
+            ["unit", "wind", "candidate_units", 100],
+            ["unit", "wind", "number_of_units", 0],
+            ["unit", "wind", "unit_availability_factor", unparse_db_value(wind_af_ts)],
+            ["unit", "wind", "unit_investment_cost", 18000000],
+            ["unit", "wind", "unit_investment_variable_type", "unit_investment_variable_type_continuous"],
+        ],
+        :relationship_parameter_values => [
+            ["unit__from_node", ["batt_unit", "elec_node"], "unit_capacity", 50],
+            ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
+            ["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow", 0.9],
+            ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.8],
+            ["unit__from_node", ["electrolizer", "elec_node"], "unit_capacity", 1000],
+            ["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow", 1.5],
+            ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
+            ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.6],
+            ["unit__to_node", ["pv", "elec_node"], "unit_capacity", 300],
+            ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
+            ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
+            ["unit__to_node", ["conventional", "elec_node"], "vom_cost", 500],
+            ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition", true],
+            ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition_sense", "=="],
+        ],
+    )
+end
+
+function testDebugger()
+    url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
+    test_data = _get_representative_periods_test_data()
+    count, errors = import_data(url_in, "Add test data"; test_data...)
+    merge!(vals, _vals_from_data(test_data))
+    rm(file_path_out; force=true)
+    m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
+end
+
 function _test_representative_periods()
     @testset "representative_periods" begin
         url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
-        elec_demand_inds = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 11))
-        elec_demand_length = length(elec_demand_inds)
-        elec_demand_ts = TimeSeries(
-            elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
-        )
-        pv_af_ts = TimeSeries(
-            elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
-        )
-        wind_af_ts = TimeSeries(
-            elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
-        )
-        test_data = Dict(
-            :objects => [
-                ["node", "elec_node"],
-                ["node", "batt_node"],
-                ["node", "h2_node"],
-                ["unit", "batt_unit"],
-                ["unit", "electrolizer"],
-                ["unit", "h2_gen"],
-                ["unit", "pv"],
-                ["unit", "wind"],
-                ["unit", "conventional"],
-            ],
-            :relationships => [
-                ["unit__from_node", ["batt_unit", "batt_node"]],
-                ["unit__from_node", ["batt_unit", "elec_node"]],
-                ["unit__to_node", ["batt_unit", "batt_node"]],
-                ["unit__to_node", ["batt_unit", "elec_node"]],
-                ["unit__node__node", ["batt_unit", "batt_node", "elec_node"]],
-                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"]],
-                ["unit__from_node", ["electrolizer", "elec_node"]],
-                ["unit__to_node", ["electrolizer", "h2_node"]],
-                ["unit__node__node", ["electrolizer", "elec_node", "h2_node"]],
-                ["unit__from_node", ["h2_gen", "h2_node"]],
-                ["unit__to_node", ["h2_gen", "elec_node"]],
-                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"]],
-                ["unit__to_node", ["pv", "elec_node"]],
-                ["unit__to_node", ["wind", "elec_node"]],
-                ["unit__to_node", ["conventional", "elec_node"]],
-                ["node__temporal_block", ["h2_node", "operations"]],
-                ["node__temporal_block", ["h2_node", "all_rps"]],
-            ],
-            :object_parameter_values => [
-                ["node", "elec_node", "demand", unparse_db_value(elec_demand_ts)],
-                ["node", "batt_node", "candidate_storages", 100],
-                ["node", "batt_node", "has_state", true],
-                ["node", "batt_node", "initial_node_state", 0],
-                ["node", "batt_node", "node_slack_penalty", 10000],
-                ["node", "batt_node", "node_state_cap", 200],
-                ["node", "batt_node", "node_state_min", 10],
-                ["node", "batt_node", "node_state_min_factor", 0.2],
-                ["node", "batt_node", "number_of_storages", 0],
-                ["node", "batt_node", "storage_investment_cost", 2000000],
-                ["node", "batt_node", "storage_investment_variable_type", "storage_investment_variable_type_integer"],
-                ["node", "h2_node", "has_state", true],
-                ["node", "h2_node", "is_longterm_storage", true],
-                ["node", "h2_node", "node_slack_penalty", 10000],
-                ["node", "h2_node", "node_state_cap", 20000],
-                ["node", "h2_node", "number_of_storages", 100],
-                ["unit", "batt_unit", "candidate_units", 100],
-                ["unit", "batt_unit", "number_of_units", 0],
-                ["unit", "batt_unit", "unit_investment_cost", 750000],
-                ["unit", "batt_unit", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
-                ["unit", "electrolizer", "candidate_units", 100],
-                ["unit", "electrolizer", "number_of_units", 0],
-                ["unit", "electrolizer", "unit_investment_cost", 40000000],
-                ["unit", "electrolizer", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
-                ["unit", "h2_gen", "candidate_units", 100],
-                ["unit", "h2_gen", "number_of_units", 0],
-                ["unit", "h2_gen", "online_variable_type", "unit_online_variable_type_integer"],
-                ["unit", "h2_gen", "start_up_cost", 1000],
-                ["unit", "h2_gen", "min_up_time", Dict("type" => "duration", "data" => string(60, "m"))],
-                ["unit", "h2_gen", "min_down_time", Dict("type" => "duration", "data" => string(60, "m"))],
-                ["unit", "h2_gen", "unit_investment_cost", 3000000],
-                ["unit", "h2_gen", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
-                ["unit", "pv", "candidate_units", 100],
-                ["unit", "pv", "number_of_units", 0],
-                ["unit", "pv", "unit_availability_factor", unparse_db_value(pv_af_ts)],
-                ["unit", "pv", "unit_investment_cost", 9000000],
-                ["unit", "pv", "unit_investment_variable_type", "unit_investment_variable_type_continuous"],
-                ["unit", "wind", "candidate_units", 100],
-                ["unit", "wind", "number_of_units", 0],
-                ["unit", "wind", "unit_availability_factor", unparse_db_value(wind_af_ts)],
-                ["unit", "wind", "unit_investment_cost", 18000000],
-                ["unit", "wind", "unit_investment_variable_type", "unit_investment_variable_type_continuous"],
-            ],
-            :relationship_parameter_values => [
-                ["unit__from_node", ["batt_unit", "elec_node"], "unit_capacity", 50],
-                ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
-                ["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow", 0.9],
-                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.8],
-                ["unit__from_node", ["electrolizer", "elec_node"], "unit_capacity", 1000],
-                ["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow", 1.5],
-                ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
-                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.6],
-                ["unit__to_node", ["pv", "elec_node"], "unit_capacity", 300],
-                ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
-                ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
-                ["unit__to_node", ["conventional", "elec_node"], "vom_cost", 500],
-                ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition", true],
-                ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition_sense", "=="],
-            ],
-        )
+        test_data = _get_representative_periods_test_data()
         count, errors = import_data(url_in, "Add test data"; test_data...)
         @test isempty(errors)
         merge!(vals, _vals_from_data(test_data))
@@ -218,6 +235,42 @@ function _test_representative_periods()
             @testset for ind in keys(vars)
                 var = vars[ind]
                 _test_representative_periods_variable(m, var_name, ind, var, vars, vals, rt1, rt2, all_rt, t_invest)
+            end
+        end
+    end
+end
+
+function _test_representative_periods_no_index_found()
+    @testset "representative_periods" begin
+        @testset "no_index_found" begin
+            url_in = "sqlite://"
+            file_path_out = "$(@__DIR__)/test_out.sqlite"
+            url_out = "sqlite:///$file_path_out"
+            test_setup_data = _get_representative_periods_setup_data()
+            # Remove the association with the representative temporal_block
+            test_object_groups = test_setup_data[Symbol("object_groups")]
+            test_object_groups = [x for x in test_object_groups if x != ["temporal_block", "all_rps", "rp1"]]
+            test_setup_data[Symbol("object_groups")] = test_object_groups
+            # finish setup
+            _load_test_data(url_in, test_setup_data)
+            vals = _vals_from_data(test_setup_data)
+            test_data = _get_representative_periods_test_data()
+            count, errors = import_data(url_in, "Add test data"; test_data...)
+            @test isempty(errors)
+            merge!(vals, _vals_from_data(test_data))
+            rm(file_path_out; force=true)
+            try
+                run_spineopt(url_in, url_out; optimize=true, log_level=3)
+                # fail test if we reach this point without an error
+                @test false
+            catch e
+                buf = IOBuffer()
+                showerror(buf, e)
+                message = String(take!(buf))
+                println(message)
+                @test startswith(message,"can't find a linear representative index combination for \
+                (node = batt_node, stochastic_scenario = realisation, \
+                t = 2000-01-01T00:00~(1 day)~>2000-01-02T00:00)")
             end
         end
     end
@@ -590,4 +643,5 @@ end
 
 @testset "run_spineopt_representative_periods" begin
    _test_representative_periods()
+   _test_representative_periods_no_index_found()
 end
