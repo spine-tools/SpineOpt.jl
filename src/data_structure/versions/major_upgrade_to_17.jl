@@ -191,9 +191,9 @@ function major_upgrade_to_17(db_url, log_level)
     list_values_to_be_renamed = [
         (
             "grid_physics_list", Dict(
-                "commodity_physics_lodf" => "grid_physics_lodf",
-                "commodity_physics_none" => "grid_physics_none",
-                "commodity_physics_ptdf" => "grid_physics_ptdf"
+                "commodity_physics_lodf" => "lodf_physics",
+                "commodity_physics_none" => "none",
+                "commodity_physics_ptdf" => "ptdf_physics"
             )
         )
         (
@@ -802,7 +802,7 @@ function move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
                 if val
                     pval_value, pval_type = unparse_db_value(new_list_value)
                 else
-                    pval_value, pval_type = unparse_db_value("grid_physics_none")
+                    pval_value, pval_type = unparse_db_value("none")
                 end
                 check_run_request_return_value(run_request(
                     db_url, "call_method", ("add_update_parameter_value_item",), Dict(

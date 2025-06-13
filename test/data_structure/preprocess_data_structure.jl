@@ -158,7 +158,7 @@ end
             ["connection", "connection_ca", "monitoring_activate", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "grid_physics_ptdf"],
+            ["grid", "electricity", "physics_type", "ptdf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_activate", true],
             ["model", "instance", "solver_mip", "HiGHS.jl"],

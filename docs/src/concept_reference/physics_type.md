@@ -2,9 +2,9 @@ This parameter determines the specific formulation used to carry out flow calcul
 
 To enable power transfer distribution factor (ptdf) based dc load flow for a network of [node](@ref)s and 
 [connection](@ref)s, all [node](@ref)s must be related to a [grid](@ref) with [physics\_type](@ref) set to 
-[grid\_physics\_ptdf](@ref grid_physics_list). To enable security constraint unit comment based on ptdfs and line outage 
+[ptdf\_physics](@ref grid_physics_list). To enable security constraint unit comment based on ptdfs and line outage 
 distribution factors (lodf) all [node](@ref)s must be related to a [grid](@ref) with [physics\_type](@ref) set to 
-[grid\_physics\_lodf](@ref grid_physics_list). See also [powerflow](@ref ptdf-based-powerflow).
+[lodf\_physics](@ref grid_physics_list). See also [powerflow](@ref ptdf-based-powerflow).
 
 To enable node-based lossless DC powerflow, each node will be associated with a [node\_voltage\_angle](@ref) variable. 
 To enable the generation of the variable in the optimization model, all [node](@ref)s must be related to a [grid](@ref) 

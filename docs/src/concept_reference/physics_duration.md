@@ -4,6 +4,6 @@ This is useful when the optimisation window includes a long look-ahead where the
 necessary. In this case one can set `physics_duration` to a shorter value to reduce problem size
 and increase performace.
 
-This parameter is currently only used with `grid_physics_ptdf` and `grid_physics_lodf`.
+This parameter is currently only used with `ptdf_physics` and `lodf_physics`.
 
 See also [powerflow](@ref ptdf-based-powerflow)
