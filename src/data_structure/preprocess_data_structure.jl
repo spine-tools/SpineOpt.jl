@@ -897,7 +897,7 @@ function generate_node_state_capacity()
     function _node_state_capacity(f; node=node, _default=nothing, kwargs...)
         _prod_or_nothing(
             f(storage_state_max; node=node, _default=_default, kwargs...),
-            f(node_availability_factor; node=node, kwargs...),
+            f(storage_state_max_fraction; node=node, kwargs...),
         )
     end
 

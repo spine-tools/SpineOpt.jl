@@ -241,7 +241,7 @@
         ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list", "A selector for the reference `node` (slack bus) when PTDF-based DC load-flow is enabled."],
         ["node", "node_balance_penalty", null, null, "Penalty cost applied to violations of the `nodal_balance` constraint, i.e., to the `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a penalty defined for them."],
         ["node", "storage_state_max", null, null, "Maximum allowed storage state per 'sub storage', i.e., maximum allowed value for the `node_state` variable."],
-        ["node", "node_availability_factor", 1.0, null, "Availability of the `node`, acting as a multiplier on its `storage_state_max`. Typically between 0-1."],
+        ["node", "storage_state_max_fraction", 1.0, null, "Fraction of `storage_state_max` that is actually available. Typically between 0-1."],
         ["node", "storage_state_min", 0.0, null, "Minimum allowed storage state per 'sub storage', i.e., minimum allowed value for the `node_state` variable."],
         ["node", "node_state_min_factor", 0.0, null, "The minimum permitted per unit value for a `node_state` variable."],
         ["node", "existing_storages", 1.0, null, "The number of 'sub storages' aggregated to form the modelled `node`. The default value becomes zero if `storage_investment_count_max_cumulative` has been defined."],

@@ -22,7 +22,7 @@
 To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-v^{node\_state}_{(n, s, t)} \leq p^{storage\_state\_max}_{(n, s, t)} \cdot p^{node\_availability\_factor}_{(n, s, t)} \quad \forall n \in node : p^{has\_storage}_{(n)}, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \leq p^{storage\_state\_max}_{(n, s, t)} \cdot p^{storage\_state\_max\_fraction}_{(n, s, t)} \quad \forall n \in node : p^{has\_storage}_{(n)}, \, \forall (s,t)
 ```
 
 The discharging and charging behavior of storage nodes can be described through unit(s),
@@ -33,7 +33,7 @@ the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
 
 See also
 [storage\_state\_max](@ref),
-[node\_availability\_factor](@ref),
+[storage\_state\_max\_fraction](@ref),
 [has\_storage](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
