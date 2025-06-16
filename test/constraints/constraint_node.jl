@@ -634,14 +634,14 @@ function test_constraint_min_node_state_investments()
         node_capacity = 400
         node_state_min = 60
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
-        node_state_min_factor = Dict("type" => "time_series", 
+        storage_state_min_fraction = Dict("type" => "time_series", 
                                      "data" => [0.1, 0.2], 
                                      "index" => index,
                                 )
         object_parameter_values = [
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_c", "storage_state_min", node_state_min],
-            ["node", "node_c", "node_state_min_factor", node_state_min_factor],
+            ["node", "node_c", "storage_state_min_fraction", storage_state_min_fraction],
             ["node", "node_c", "has_storage", true],
             ["node", "node_c", "storage_investment_count_max_cumulative", candidate_storages],
         ]
@@ -665,7 +665,7 @@ function test_constraint_min_node_state_investments()
             con_key = (n, [s], t)
             var_n_st = var_node_state[var_n_st_key...]
             var_s_inv_av = var_storages_invested_available[var_s_in_av_key...]
-            expected_con = @build_constraint(var_n_st >= maximum([node_capacity * node_state_min_factor["data"][k],
+            expected_con = @build_constraint(var_n_st >= maximum([node_capacity * storage_state_min_fraction["data"][k],
                                                                   node_state_min]
                                                         ) * var_s_inv_av
                                             )

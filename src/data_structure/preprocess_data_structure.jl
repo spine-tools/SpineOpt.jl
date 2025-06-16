@@ -912,7 +912,7 @@ function generate_node_state_lower_limit()
     function _node_state_lower_limit(f; node=node, _default=nothing, kwargs...)
         maximum([_prod_or_nothing(
             f(storage_state_max; node=node, _default=_default, kwargs...),
-            f(node_state_min_factor; node=node, kwargs...)),
+            f(storage_state_min_fraction; node=node, kwargs...)),
             f(storage_state_min; node=node, kwargs...)]
         )
     end

@@ -144,7 +144,7 @@ function _test_representative_periods()
                 ["node", "batt_node", "node_balance_penalty", 10000],
                 ["node", "batt_node", "storage_state_max", 200],
                 ["node", "batt_node", "storage_state_min", 10],
-                ["node", "batt_node", "node_state_min_factor", 0.2],
+                ["node", "batt_node", "storage_state_min_fraction", 0.2],
                 ["node", "batt_node", "existing_storages", 0],
                 ["node", "batt_node", "storage_investment_cost", 2000000],
                 ["node", "batt_node", "storage_investment_variable_type", "integer"],
@@ -345,7 +345,7 @@ function _expected_representative_periods_constraint(
     s = only(s_path)
     nsc = vals["node", string(n), "storage_state_max"]
     nsm = vals["node", string(n), "storage_state_min"]
-    nsmf = vals["node", string(n), "node_state_min_factor"]
+    nsmf = vals["node", string(n), "storage_state_min_fraction"]
     @build_constraint(node_state[n, s, t] >= maximum([nsc * nsmf, nsm]) * storages_invested_available[n, s, t_invest])
 end
 function _expected_representative_periods_constraint(

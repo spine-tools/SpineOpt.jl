@@ -22,7 +22,7 @@
 To ensure a minimum storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-v^{node\_state}_{(n, s, t)} \geq \max(p^{storage\_state\_max}_{(n, s, t)} \cdot p^{node\_state\_min\_factor}_{(n, s, t)}, p^{storage\_state\_min}_{(n, s, t)}) \quad \forall n \in node : p^{has\_storage}_{(n)}, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \geq \max(p^{storage\_state\_max}_{(n, s, t)} \cdot p^{storage\_state\_min\_fraction}_{(n, s, t)}, p^{storage\_state\_min}_{(n, s, t)}) \quad \forall n \in node : p^{has\_storage}_{(n)}, \, \forall (s,t)
 ```
 
 Please note that the limit represents the maximum of the two terms.
@@ -33,7 +33,7 @@ The constraint is only generated if either one of the minimum state parameters i
 See also
 [storage\_state\_max](@ref),
 [storage\_state\_min](@ref),
-[node\_state\_min\_factor](@ref),
+[storage\_state\_min\_fraction](@ref),
 [has\_storage](@ref).
 """
 function add_constraint_min_node_state!(m::Model)

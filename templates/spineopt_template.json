@@ -243,7 +243,7 @@
         ["node", "storage_state_max", null, null, "Maximum allowed storage state per 'sub storage', i.e., maximum allowed value for the `node_state` variable."],
         ["node", "storage_state_max_fraction", 1.0, null, "Fraction of `storage_state_max` that is actually available. Typically between 0-1."],
         ["node", "storage_state_min", 0.0, null, "Minimum allowed storage state per 'sub storage', i.e., minimum allowed value for the `node_state` variable."],
-        ["node", "node_state_min_factor", 0.0, null, "The minimum permitted per unit value for a `node_state` variable."],
+        ["node", "storage_state_min_fraction", 0.0, null, "Fraction of `storage_state_max` that is the minimum allowed level. Typically between 0-1."],
         ["node", "existing_storages", 1.0, null, "The number of 'sub storages' aggregated to form the modelled `node`. The default value becomes zero if `storage_investment_count_max_cumulative` has been defined."],
         ["node", "storage_state_coefficient", 1.0, null, "The commodity content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `node_injection` constraint."],
         ["node", "storage_lead_time", {"type": "duration", "data": "0h"}, null, "The lead time of the storage, i.e., the time between the moment at which a storage investment decision is taken, and the moment at which the storage investment becomes operational."],
