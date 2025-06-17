@@ -163,7 +163,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
         # Loop over the unique names and write their information into the filename under a dedicated section.
         for name in unique!(sort!(collect(keys(concept_dict_for_key))))
             concept_dict_for_name = concept_dict_for_key[name]
-            section = "## `$name`\n\n"
+            section = "\n## `$name`\n\n"
             # If description is defined, include it into the preamble.
             description = get(concept_dict_for_name, :description, nothing)
             if description !== nothing
