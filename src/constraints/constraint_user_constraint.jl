@@ -91,7 +91,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:from_node))
             for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                 m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             );
@@ -103,7 +103,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:from_node))
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             )
@@ -116,7 +116,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:to_node))
             for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                 m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             );
@@ -128,7 +128,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:to_node))
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             )
@@ -317,12 +317,9 @@ end
 function _user_constraint_unit_flow_indices(m, uc, s, t, tb)
     (
         ind
-        for (unit__node__user_constraint, d) in (
-            (unit__from_node__user_constraint, :from_node), (unit__to_node__user_constraint, :to_node)
-        )
-        for (u, n) in unit__node__user_constraint(user_constraint=uc)
+        for (u, n, d) in unit_flow__user_constraint(user_constraint=uc)
         for ind in unit_flow_indices(
-            m; unit=u, node=n, direction=direction(d), stochastic_scenario=s, t=t, temporal_block=tb
+            m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t, temporal_block=tb
         )
     )
 end

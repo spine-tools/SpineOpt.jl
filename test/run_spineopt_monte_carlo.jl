@@ -93,8 +93,8 @@ function _test_monte_carlo()
                 ["unit__to_node", ["wind", "elec"]],
                 ["unit__to_node", ["ocgt", "elec"]],
                 ["unit__to_node", ["ccgt", "elec"]],
-                ["unit__from_node", ["ocgt", "fuel"]],
-                ["unit__from_node", ["ccgt", "fuel"]],
+                ["node__to_unit", ["fuel", "ocgt"]],
+                ["node__to_unit", ["fuel", "ccgt"]],
             ],
             :object_parameter_values => [
                 ["node", "elec", "demand", 200],

@@ -226,7 +226,7 @@ import_data(
         ("stochastic_structure__stochastic_scenario", ("two_stage", "realisation")),
         ("stochastic_structure__stochastic_scenario", ("two_stage", "forecast1")),
         ("stochastic_structure__stochastic_scenario", ("two_stage", "forecast2")),
-        ("unit__from_node", ("pwrplant", "fuel")),
+        ("node__to_unit", ("pwrplant", "fuel")),
         ("unit__to_node", ("pwrplant", "elec")),
         ("node__temporal_block", ("fuel", "3hourly")),
         ("node__temporal_block", ("elec", "hourly")),
@@ -250,7 +250,7 @@ import_data(
             "stochastic_scenario_end",
             unparse_db_value(Hour(6))
         ),
-        ("unit__from_node", ("pwrplant", "fuel"), "unit_capacity", 200),
+        ("node__to_unit", ("pwrplant", "fuel"), "unit_capacity", 200),
         ("unit__to_node", ("pwrplant", "elec"), "unit_capacity", 100),
         ("unit__to_node", ("pwrplant", "elec"), "shut_down_limit", 0.2),
     ],

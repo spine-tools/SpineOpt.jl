@@ -79,8 +79,8 @@ function test_data_example_multiyear_economic_discounting()
             ["units_on__temporal_block", ["unit_bc", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["units_on__stochastic_structure", ["unit_bc", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
-            ["unit__from_node", ["unit_bc", "node_b"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
+            ["node__to_unit", ["node_b", "unit_bc"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_bc", "node_c"]],
             ["report__output", ["report_a", "units_invested"]],
@@ -162,7 +162,7 @@ function test_data_minimal_feasible_example_multiyear_economic_discounting()
             ["node__stochastic_structure", ["node_a", "deterministic"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
         ],
@@ -201,7 +201,7 @@ function test_data_no_investment_temporal_block_error_exception()
             ["model__default_stochastic_structure", ["instance", "deterministic"]],
             ["model__default_temporal_block", ["instance", "hourly"]],
             ["stochastic_structure__stochastic_scenario", ["realisation", "deterministic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
         ],
         :object_parameter_values => [
@@ -470,12 +470,12 @@ function _test_saving_outputs()
             ["unit", "unit_ab_only_operation"],
         ]
         relationships = [
-            ["unit__from_node", ["unit_ab_only_operation", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab_only_operation"]],
             ["unit__to_node", ["unit_ab_only_operation", "node_b"]],
         ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "vom_cost", 25],
-            ["unit__from_node", ["unit_ab_only_operation", "node_a"], "vom_cost", 25],
+            ["node__to_unit", ["node_a", "unit_ab"], "vom_cost", 25],
+            ["node__to_unit", ["node_a", "unit_ab_only_operation"], "vom_cost", 25],
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 200],
             ["unit__to_node", ["unit_ab_only_operation", "node_b"], "unit_capacity", 100],
             ["unit__node__node", ["unit_ab_only_operation", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],

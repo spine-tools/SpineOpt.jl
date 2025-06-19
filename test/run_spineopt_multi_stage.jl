@@ -72,8 +72,8 @@ function _ref_setup(storage_count)
         append!(
             test_data[:relationships],
             (
-                ("unit__from_node", (u, "demand_node")),
-                ("unit__from_node", (u, n)),
+                ("node__to_unit", ("demand_node", u)),
+                ("node__to_unit", (n, u)),
                 ("unit__to_node", (u, "demand_node")),
                 ("unit__to_node", (u, n)),
                 ("unit__node__node", (u, n, "demand_node")),

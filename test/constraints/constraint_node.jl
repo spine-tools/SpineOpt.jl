@@ -46,7 +46,7 @@ function _test_constraint_node_setup()
             ["model__stochastic_structure", ["instance", "deterministic"]],
             ["model__stochastic_structure", ["instance", "stochastic"]],
             ["model__stochastic_structure", ["instance", "investments_deterministic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],

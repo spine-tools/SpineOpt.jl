@@ -528,7 +528,7 @@ function _test_write_inputs_overlapping_temporal_blocks()
         demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
         objects = [["output", "demand"], ["temporal_block", "8hourly"], ["node", "node_a"]]
         relationships = [
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["model__temporal_block", ["instance", "8hourly"]],
             ["node__temporal_block", ["node_a", "8hourly"]],  # NOTE: 8hourly is associated to the *non*-demand node
             ["node__stochastic_structure", ["node_a", "deterministic"]],

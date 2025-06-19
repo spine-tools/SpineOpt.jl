@@ -206,7 +206,7 @@ function _test_benders_storage()
             ]
             relationships = [
                 ["unit__to_node", ["unit_a", "node_a"]],
-                ["unit__from_node", ["unit_ab", "node_a"]],
+                ["node__to_unit", ["node_a", "unit_ab"]],
                 ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
                 ["units_on__stochastic_structure", ["unit_a", "deterministic"]],
                 ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
@@ -331,7 +331,7 @@ function _test_benders_unit_storage()
             ]
             relationships = [
                 ["unit__to_node", ["unit_a", "node_a"]],
-                ["unit__from_node", ["unit_ab", "node_a"]],
+                ["node__to_unit", ["node_a", "unit_ab"]],
                 ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
                 ["units_on__temporal_block", ["unit_a", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_a", "deterministic"]],

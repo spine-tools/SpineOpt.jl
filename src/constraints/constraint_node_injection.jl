@@ -112,7 +112,8 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         + sum(
             get(unit_flow, (u, n1, d, s, t_short), 0)
             for n1 in members(n)
-            for (u, d) in unit__to_node(node=n1)
+            for u in unit__node__direction(node=n1, direction=direction(:to_node))
+            for d in direction(:to_node)
             for s in s_path
             for t_short in t_in_t(m; t_long=t_after);
             init=0,
@@ -121,7 +122,8 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         - sum(
             get(unit_flow, (u, n1, d, s, t_short), 0)
             for n1 in members(n)
-            for (u, d) in unit__from_node(node=n1)
+            for u in unit__node__direction(node=n1, direction=direction(:from_node))
+            for d in direction(:from_node)
             for s in s_path
             for t_short in t_in_t(m; t_long=t_after);
             init=0,

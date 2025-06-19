@@ -49,7 +49,7 @@
             ["model__stochastic_structure", ["instance", "investments_deterministic"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["node__temporal_block", ["node_a", "hourly"]],
             ["node__temporal_block", ["node_b", "two_hourly"]],
@@ -114,8 +114,8 @@
             connection_flow_coefficient_c = 14
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
-                ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
-                ["unit__to_node__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit_flow__user_constraint", ["node_a", "unit_ab", "constraint_x"]],
+                ["unit_flow__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
                 ["unit__user_constraint", ["unit_ab", "constraint_x"]],
                 ["connection__user_constraint", ["connection_bc", "constraint_x"]],
                 ["node__user_constraint", ["node_c", "constraint_x"]],

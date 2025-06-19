@@ -39,7 +39,7 @@ function preprocess_data_structure()
     process_lossless_bidirectional_connections()
     # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
     # so we don't corrupt the lookup cache
-    generate_direction_and_reprganise_classes()
+    generate_direction_and_reorganise_classes()
     generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
     generate_node_has_physics(:has_pressure, :pressure_physics)
     generate_ptdf_lodf()
@@ -188,7 +188,7 @@ end
 
 Generate the `direction` `ObjectClass` and reorganise affected relationships.
 """
-function generate_direction()
+function generate_direction_and_reorganise_classes()
     # Create the new `direction` `ObjectClass` and its element `Objects`.
     from_node = Object(:from_node, :direction)
     to_node = Object(:to_node, :direction)
@@ -210,7 +210,7 @@ function generate_direction()
         unit_flow__unit_flow__unit__node__unit__node => [to_node, to_node],
     ]
     for (cls, d) in directions_by_class
-        add_dimension!(cls, :direction, d)
+        add_dimension!(cls, d)
     end
     # Reorganise the dimensions of some affected classes
     und_uc = [:unit, :node, :direction, :user_constraint]

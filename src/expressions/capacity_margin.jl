@@ -143,5 +143,5 @@ end
 Whether the unit u is attached to a node with storage or not.
 """
 function is_storage_unit(u)
-    any(has_storage(node=n) for n in unit__from_node(unit=u, direction=direction(:from_node)))
+    any(has_storage(node=n) for n in unit__node__direction(unit=u, direction=direction(:from_node)))
 end

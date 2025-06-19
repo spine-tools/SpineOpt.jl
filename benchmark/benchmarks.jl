@@ -84,9 +84,9 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
     ]
     append!(rels, (["unit__to_node", (u, n)] for (u, n) in zip(units, nodes_to)))
-    append!(rels, (["unit__from_node", (u, n)] for (u, n) in zip(units, nodes_from)))
+    append!(rels, (["node__to_unit", (n, u)] for (n, u) in zip(nodes_from, units)))
     append!(rels, (["unit__node__node", (u, n1, n2)] for (u, n1, n2) in zip(units, nodes_to, nodes_from)))
-    append!(rels, (["unit__from_node", (u, "reserve")] for u in units))
+    append!(rels, (["node__to_unit", ("reserve", u)] for u in units))
     append!(rels, (["node__grid", (n, "electricity")] for n in nodes_to))
     append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, conns_from)))
     append!(rels, (["connection__to_node", (c, n)] for (c, n) in zip(conns, conns_to)))

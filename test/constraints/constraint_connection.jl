@@ -1322,7 +1322,7 @@ function test_constraint_user_constraint_node_connection()
             demand = 150
             objects = [["user_constraint", "constraint_x"], ["unit", "unit_c"]]
             relationships = [
-                ["unit__to_node__user_constraint", ["unit_c", "node_c", "constraint_x"]],
+                ["unit_flow__user_constraint", ["unit_c", "node_c", "constraint_x"]],
                 ["unit__user_constraint", ["unit_c", "constraint_x"]],
                 ["connection__to_node__user_constraint", ["connection_ab", "node_b", "constraint_x"]],
                 ["node__user_constraint", ["node_b", "constraint_x"]],

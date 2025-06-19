@@ -58,7 +58,7 @@ function _test_constraint_investment_group_setup()
             ["unit__investment_stochastic_structure", ["unit_ab", "investments_deterministic"]],
             ["connection__investment_temporal_block", ["connection_bc", "investments_four_hourly"]],
             ["connection__investment_stochastic_structure", ["connection_bc", "investments_deterministic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["connection__from_node", ["connection_bc", "node_b"]],
             ["connection__to_node", ["connection_bc", "node_c"]],
@@ -174,7 +174,7 @@ function _test_min_max_capacity_invested_available()
             ("connection__to_node__investment_group", ("connection_bc", "node_c", "ig")),
         ]
         relationship_parameter_values = [
-            ("unit__from_node", ("unit_ab", "node_a"), "unit_capacity", 150),
+            ("node__to_unit", ("node_a", "unit_ab"), "unit_capacity", 150),
             ("connection__to_node", ("connection_bc", "node_c"), "connection_capacity", 250),
         ]
         SpineInterface.import_data(

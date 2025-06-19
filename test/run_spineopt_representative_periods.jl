@@ -118,16 +118,16 @@ function _test_representative_periods()
                 ["unit", "conventional"],
             ],
             :relationships => [
-                ["unit__from_node", ["batt_unit", "batt_node"]],
-                ["unit__from_node", ["batt_unit", "elec_node"]],
+                ["node__to_unit", ["batt_node", "batt_unit"]],
+                ["node__to_unit", ["elec_node", "batt_unit"]],
                 ["unit__to_node", ["batt_unit", "batt_node"]],
                 ["unit__to_node", ["batt_unit", "elec_node"]],
                 ["unit__node__node", ["batt_unit", "batt_node", "elec_node"]],
                 ["unit__node__node", ["batt_unit", "elec_node", "batt_node"]],
-                ["unit__from_node", ["electrolizer", "elec_node"]],
+                ["node__to_unit", ["elec_node", "electrolizer"]],
                 ["unit__to_node", ["electrolizer", "h2_node"]],
                 ["unit__node__node", ["electrolizer", "elec_node", "h2_node"]],
-                ["unit__from_node", ["h2_gen", "h2_node"]],
+                ["node__to_unit", ["h2_node", "h2_gen"]],
                 ["unit__to_node", ["h2_gen", "elec_node"]],
                 ["unit__node__node", ["h2_gen", "h2_node", "elec_node"]],
                 ["unit__to_node", ["pv", "elec_node"]],
@@ -181,11 +181,11 @@ function _test_representative_periods()
                 ["unit", "wind", "investment_variable_type", "linear"],
             ],
             :relationship_parameter_values => [
-                ["unit__from_node", ["batt_unit", "elec_node"], "unit_capacity", 50],
+                ["node__to_unit", ["elec_node", "batt_unit"], "unit_capacity", 50],
                 ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
                 ["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow", 0.9],
                 ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.8],
-                ["unit__from_node", ["electrolizer", "elec_node"], "unit_capacity", 1000],
+                ["node__to_unit", ["elec_node", "electrolizer"], "unit_capacity", 1000],
                 ["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow", 1.5],
                 ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
                 ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.6],
@@ -414,11 +414,11 @@ function _expected_representative_periods_constraint(
     @fetch unit_flow, units_on = m.ext[:spineopt].variables
     rhs = if u == unit(:batt_unit)
         @test d in direction()
-        cls = Dict(d_from => "unit__from_node", d_to => "unit__to_node")[d]
+        cls = Dict(d_from => "node__to_unit", d_to => "unit__to_node")[d]
         vals[cls, ["batt_unit", "elec_node"], "unit_capacity"]
     elseif u == unit(:electrolizer)
         @test d in d_from
-        vals["unit__from_node", [string(u), string(n)], "unit_capacity"]
+        vals["node__to_unit", [string(n), string(u)], "unit_capacity"]
     else
         @test d in d_to
         vals["unit__to_node", [string(u), string(n)], "unit_capacity"]

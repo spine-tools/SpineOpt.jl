@@ -40,7 +40,7 @@ function _test_variable_unit_setup()
         :relationships => [
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_ab", "node_c"]],
             ["node__temporal_block", ["node_a", "hourly"]],
@@ -306,7 +306,7 @@ function _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
             ["model__default_temporal_block", ["instance", "hourly"]],
             ["model__default_stochastic_structure", ["instance", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
             ["unit__node__node", ["unit_ab", "node_a", "node_b"]],
@@ -477,7 +477,7 @@ function test_two_fix_ratio_in_out_unit_flow_simple()
         url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         objs = [["node", "node_a2"]]
         rels = [
-            ["unit__from_node", ["unit_ab", "node_a2"]],
+            ["node__to_unit", ["node_a2", "unit_ab"]],
             ["unit__node__node", ["unit_ab", "node_a2", "node_b"]],
         ]
         rel_pvals = [
