@@ -39,7 +39,7 @@ function preprocess_data_structure()
     process_lossless_bidirectional_connections()
     # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
     # so we don't corrupt the lookup cache
-    generate_direction()
+    generate_direction_and_reprganise_classes()
     generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
     generate_node_has_physics(:has_pressure, :pressure_physics)
     generate_ptdf_lodf()
@@ -184,27 +184,50 @@ function process_lossless_bidirectional_connections()
 end
 
 """
-    generate_direction()
+    generate_direction_and_reorganise_classes()
 
-Generate the `direction` `ObjectClass` and its relationships.
+Generate the `direction` `ObjectClass` and reorganise affected relationships.
 """
 function generate_direction()
+    # Create the new `direction` `ObjectClass` and its element `Objects`.
     from_node = Object(:from_node, :direction)
     to_node = Object(:to_node, :direction)
     direction = ObjectClass(:direction, [from_node, to_node])
-    directions_by_class = Dict(
-        unit__from_node => from_node,
+    # Add `direction` to the mapped classes.
+    directions_by_class = [
+        node__to_unit => from_node,
         unit__to_node => to_node,
         connection__from_node => from_node,
         connection__to_node => to_node,
-        unit__from_node__user_constraint => from_node,
-        unit__to_node__user_constraint => to_node,        
+        unit_flow__user_constraint__node__unit__user_constraint => from_node,
+        unit_flow__user_constraint__unit__node__user_constraint => to_node,
         connection__from_node__user_constraint => from_node,
-        connection__to_node__user_constraint => to_node,        
-    )
+        connection__to_node__user_constraint => to_node,
+        # Some automatically generated subclasses need two directions.
+        unit_flow__unit_flow__node__unit__node__unit => [from_node, from_node],
+        unit_flow__unit_flow__node__unit__unit__node => [from_node, to_node],
+        unit_flow__unit_flow__unit__node__node__unit => [to_node, from_node],
+        unit_flow__unit_flow__unit__node__unit__node => [to_node, to_node],
+    ]
     for (cls, d) in directions_by_class
         add_dimension!(cls, :direction, d)
     end
+    # Reorganise the dimensions of some affected classes
+    und_uc = [:unit, :node, :direction, :user_constraint]
+    und_und = [:unit1, :node1, :direction1, :unit2, :node2, :direction2]
+    dimensions_by_class = [
+        node__to_unit => [:unit, :node, :direction],
+        unit_flow__user_constraint__node__unit__user_constraint => und_uc,
+        unit_flow__user_constraint__unit__node__user_constraint => und_uc,
+        unit_flow__unit_flow__node__unit__node__unit => und_und,
+        unit_flow__unit_flow__node__unit__unit__node => und_und,
+        unit_flow__unit_flow__unit__node__node__unit => und_und,
+        unit_flow__unit_flow__unit__node__unit__node => und_und,
+    ]
+    for (cls, dims) in dimensions_by_class
+        reorder_dimensions!(cls, dims)
+    end
+    # Eval and export the new class to the global namespace
     @eval begin
         direction = $direction
         export direction
@@ -566,17 +589,33 @@ end
     generate_variable_indexing_support()
 
 TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
+
+Tasku: this function seems to generate Object and RelationshipClasses to make
+some looping and filtering slightly more convenient later on.
+However, each of these are only used once from what I can tell.
+PENDING REMOVAL? We don't really need these,
+as the filtering can be easily done when needed without these superfluous classes.
 """
 function generate_variable_indexing_support()
+    # Tasku: Are these support ObjectClasses worth it? They are both used only once.
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_balance_penalty)))
     node_with_capacity_margin_penalty = ObjectClass(
         :node_with_min_capacity_margin_slack_penalty, collect(indices(capacity_margin_penalty))
     )
-    unit__node__direction = RelationshipClass(
-        :unit__node__direction, [:unit, :node, :direction], [unit__from_node(); unit__to_node()]
+    # Convenience superclasses (avoid duplicating underlying relationship lists)
+    unit__node__direction = ObjectClass(
+        :unit__node__direction,
+        [], # Superclasses contain no entities of their own.
+        Dict(), # Superclasses contain no parameter values of their own.
+        Dict(), # Superclasses contain no parameter definitions of their own.
+        [:node__to_unit, :unit__to_node] # Desired subclasses.
     )
-    connection__node__direction = RelationshipClass(
-        :connection__node__direction, [:connection, :node, :direction], [connection__from_node(); connection__to_node()]
+    connection__node__direction = ObjectClass(
+        :connection__node__direction,
+        [], # Superclasses contain no entities of their own.
+        Dict(), # Superclasses contain no parameter values of their own.
+        Dict(), # Superclasses contain no parameter definitions of their own.
+        [:connection__from_node, :connection__to_node] # Desired subclasses.
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
