@@ -337,7 +337,12 @@ function add_mga_objective_constraint!(m::Model, slack, ::Val{:fuzzy_mga_algorit
     y = objective_function(m)
     a = objective_value(m) # we aspire to reach the best possible value
     r = (1 + slack) * objective_value(m) # we start to get satsfied when reaching nearly optimal solution
-    return isapprox(a, r) ? 1 : (y-r)/(a-r)
+    if isapprox(a, r)
+        @constraint(m, y <= r)
+        return 1
+    else
+        return (y-r)/(a-r)
+    end
 end
 
 "If the objective value was negative, the f(x) <= (1+slack) * f(x_optim_ would be infeasible unless we negate the value of slack"
