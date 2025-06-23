@@ -28,6 +28,7 @@ function major_upgrade_to_17(db_url, log_level)
     # (original class, new class, dimensions, mapping of dimensions)
     classes_to_be_updated = [
         ("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1]),
+        ("unit__to_node_", "unit__to_node", ["unit", "node"], [1, 2]),
         ("unit__from_node__investment_group", "unit_flow__investment_group", ["node", "unit", "investment_group"], [2, 1, 3]),
         ("unit__from_node__user_constraint", "unit_flow__user_constraint", ["node", "unit", "user_constraint"], [2, 1, 3]),
         ("unit__to_node__investment_group", "unit_flow__investment_group", ["unit", "node", "investment_group"], [1, 2, 3]),
@@ -205,11 +206,12 @@ function major_upgrade_to_17(db_url, log_level)
             )
         )
     ]
-    #@log log_level 0 string("Creating superclasses...")
-    #@log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
-    #create_superclasses_and_subclasses(db_url, log_level)
-    #@log log_level 0 string("Update ordering of multidimensional classes...")
-    #update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
+    @log log_level 0 string("Creating superclasses...")
+    @log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
+    rename_classes(db_url, [("unit__to_node", "unit__to_node_")], log_level)
+    create_superclasses_and_subclasses(db_url, log_level)
+    @log log_level 0 string("Update ordering of multidimensional classes...")
+    update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
     @log log_level 0 string("Renaming parameters...")
     rename_parameters(db_url, parameters_to_be_renamed, log_level)
     @log log_level 0 string("Renaming classes...")
@@ -333,10 +335,13 @@ function create_superclasses_and_subclasses(db_url, log_level)
     # Add new classes
     try
         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
+            "name" => "unit__to_node", "dimension_name_list" => ["unit", "node"])), log_level
+        )
+        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
             "name" => "node__to_unit", "dimension_name_list" => ["node", "unit"])), log_level
         )
          check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow", "dimension_name_list" => ["unit", "node"])), log_level
+            "name" => "unit_flow", "dimension_name_list" => [])), log_level
         )
         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
             "name" => "unit_flow__unit_flow", "dimension_name_list" => ["unit_flow", "unit_flow"])), log_level
@@ -357,11 +362,12 @@ function update_ordering_of_multidimensional_classes(db_url, classes_to_be_updat
     for (old_class, new_class, dimensions, mapping) in classes_to_be_updated
         update_ordering_of_multidimensional_class(db_url, old_class, new_class, dimensions, mapping, log_level)
         # Remove old class
-        @log log_level 0 string(old_class)
         class_item = run_request(db_url, "call_method", ("get_entity_class_item",), Dict("name" => old_class))
-        check_run_request_return_value(run_request(
-            db_url, "call_method", ("remove_entity_class_item", class_item["id"])), log_level
-        )
+        if length(class_item) > 0
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("remove_entity_class_item", class_item["id"])), log_level
+            )
+        end
     end
 end
 
@@ -370,7 +376,7 @@ function update_ordering_of_multidimensional_class(db_url, old_class, new_class,
     try
         # Create new class
         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => new_class, "dimension_name_list" => dimensions)), log_level
+            "name" => new_class, "dimension_name_list" => dimensions)), log_level, false
         )
     catch
     end
