@@ -84,6 +84,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "node_state_cap"), "storage_state_max", ""),
         (("node", "node_state_min"), "storage_state_min", ""),
         (("node", "node_availability_factor"), "storage_state_max_fraction", ""),
+        (("node", "node_state_min_factor"), "storage_state_min_fraction", ""),
         # node pressure limits
         (("node", "fix_node_pressure"), "pressure_fix", ""),
         (("node", "initial_node_pressure"), "pressure_initial", ""),
