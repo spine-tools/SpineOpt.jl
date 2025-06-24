@@ -415,7 +415,8 @@ function _expected_representative_periods_constraint(
     rhs = if u == unit(:batt_unit)
         @test d in direction()
         cls = Dict(d_from => "node__to_unit", d_to => "unit__to_node")[d]
-        vals[cls, ["batt_unit", "elec_node"], "unit_capacity"]
+        entity_inds_by_class = Dict("node__to_unit" => [2,1], "unit__to_node" => [1,2])
+        vals[cls, ["batt_unit", "elec_node"][entity_inds_by_class[cls]], "unit_capacity"]
     elseif u == unit(:electrolizer)
         @test d in d_from
         vals["node__to_unit", [string(n), string(u)], "unit_capacity"]
