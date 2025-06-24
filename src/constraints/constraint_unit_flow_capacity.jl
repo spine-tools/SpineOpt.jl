@@ -22,7 +22,7 @@
 In a multi-commodity setting, there can be different commodities entering/leaving a certain
 technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
 emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) must be specified
-for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship,
+for at least one [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship,
 in order to trigger a constraint on the maximum commodity flows to this location in each time step.
 When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
 

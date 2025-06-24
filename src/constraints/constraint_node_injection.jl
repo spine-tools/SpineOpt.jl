@@ -55,7 +55,7 @@ See also
 [storage\_self\_discharge](@ref),
 [diffusion\_coefficient](@ref),
 [node\_\_node](@ref),
-[unit\_\_from\_node](@ref),
+[node\_\_to\_unit](@ref),
 [unit\_\_to\_node](@ref),
 [demand](@ref),
 [demand\_fraction](@ref),

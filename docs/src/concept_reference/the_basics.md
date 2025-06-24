@@ -78,7 +78,7 @@ This essentially defines the possible commodity flows to be modelled.
 - [connection\_\_node\_\_node](@ref) holds [Parameters](@ref) for `connections` between two `nodes`.
 - [node\_\_grid](@ref) defines which [node](@ref) is part of which [grid](@ref).
 - [node\_\_node](@ref) holds parameters for direct [node](@ref)-[node](@ref) interactions, like diffusion of `commodities`.
-- [unit\_\_from\_node](@ref) defines which [node](@ref) the [unit](@ref) can take an input commodity from.
+- [node\_\_to\_unit](@ref) defines which [node](@ref) the [unit](@ref) can take an input commodity from.
 - [unit\_\_to\_node](@ref) defines which [node](@ref) the [unit](@ref) can output a commodity to.
 - [unit\_\_node\_\_node](@ref) holds parameters for [unit](@ref) interactions between two `nodes`.
 
@@ -119,8 +119,7 @@ the following relationships are used to control which [variables](@ref Variables
 - [connection\_\_from\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [user\_constraint](@ref).
 - [connection\_\_to\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [user\_constraint](@ref).
 - [node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](#Variables) variable in the custom [user\_constraint](@ref).
-- [unit\_\_from\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [user\_constraint](@ref).
-- [unit\_\_to\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [user\_constraint](@ref).
+- [unit\_flow\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable in the custom [user\_constraint](@ref).
 
 ### Meta `relationship classes`
 
@@ -163,7 +162,7 @@ Groups of objects are used within SpineOpt for different purposes. To create a g
 [Object Class](@ref Object-Classes) in the *Spine Toolbox* database editor and select `Add object group`.
 Groups are essentially special `objects`, that act as a single handle for all of its members.
 
-On the one hand, groups can be used in order to impose constraints on the aggregation of a variable, e.g. on the sum of multiple [unit\_flow](@ref) variables. Constraints based on parameters associated with the [unit\_\_node\_\_node](@ref), [unit\_\_to\_node](@ref), [unit\_\_from\_node](@ref), [connection\_\_node\_\_node](@ref), [connection\_\_to\_node](@ref), [connection\_\_from\_node](@ref) can generally be used for this kind of flow aggregation by defining the parameters on groups of objects, typically node groups.
+On the one hand, groups can be used in order to impose constraints on the aggregation of a variable, e.g. on the sum of multiple [unit\_flow](@ref) variables. Constraints based on parameters associated with the [unit\_\_node\_\_node](@ref), [unit\_\_to\_node](@ref), [node\_\_to\_unit](@ref), [connection\_\_node\_\_node](@ref), [connection\_\_to\_node](@ref), [connection\_\_from\_node](@ref) can generally be used for this kind of flow aggregation by defining the parameters on groups of objects, typically node groups.
 (with the exception of variable fixing parameters, e.g. [fix\_unit\_flow](@ref), [fix\_connection\_flow](@ref) etc.). See for instance [constraint\_unit\_flow\_capacity](@ref).
 
 On the other hand, a node group can be used to for [PTDF based powerflows](@ref ptdf-based-powerflow).

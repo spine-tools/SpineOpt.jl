@@ -27,7 +27,7 @@ Let's begin! We will be trying to write a simplified version of the unit capacit
 ```math
 \begin{aligned}
 & v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{unit\_capacity}_{(u,n,d,s,t)} \cdot \left( v^{units\_on}_{(u,s,t)} - \left(1 - p^{shut\_down\_limit}_{u,n,d,s,t} \right) \cdot v^{units\_shut\_down}_{(u,s,t+1)} \right) \\
-& \forall (u, n, d) \in unit\_\_from\_node \cup unit\_\_to\_node: p^{unit\_capacity}_{(u,n,d)} \neq null \\
+& \forall (u, n, d) \in node\_\_to\_unit \cup unit\_\_to\_node: p^{unit\_capacity}_{(u,n,d)} \neq null \\
 & \forall (s, t)
 \end{aligned}
 ```
@@ -64,7 +64,7 @@ That's it!? Well, it actually is a bit more complex than that. Let's expand...
 This is probably the simplest part, as you just need to identify the system elements
 that would be affected by the constraint.
 In our case, it will probably be the tuples of [unit](@ref) and [node](@ref)
-associated via [unit\_\_from\_node](@ref) and/or [unit\_\_to\_node](@ref)
+associated via [node\_\_to\_unit](@ref) and/or [unit\_\_to\_node](@ref)
 for which [unit\_capacity](@ref) is specified.
 
 #### Collect the 'temporal' indices
@@ -330,31 +330,34 @@ the 'spatial' indices.
 
 We will start very slow.
 We are looking for the tuples of [unit](@ref) and [node](@ref)
-associated via [unit\_\_from\_node](@ref) and/or [unit\_\_to\_node](@ref)
+associated via [node\_\_to\_unit](@ref) and/or [unit\_\_to\_node](@ref)
 for which [unit\_capacity](@ref) is specified.
+
+Note that the `direction` dimension is added to the [node\_\_to\_unit](@ref) and [unit\_\_to\_node](@ref) classes by the 
+`generate_direction_and_reorganise_classes()` function, which also reorganises the dimensions of the classes.
 
 So we could try something like this:
 
 ```julia
 function my_unit_flow_capacity_constraint_indices(m)
-    [(unit=u, node=n, direction=d) for (u, n, d) in unit__from_node()]
+    [(unit=u, node=n, direction=d) for (u, n, d) in node__to_unit()]
 end
 ```
 
-Will the above work? Well, it's only considering flows *from* a [node](@ref) to a [unit](@ref).
+Will the above work? Well, it's only considering flows from a [node](@ref) to a [unit](@ref).
 We also need the flows in the opposite direction. Let's try again:
 
 ```julia
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in vcat(unit__from_node(), unit__to_node())
+        for (u, n, d) in unit__node__direction()
     ]
 end
 ```
 
-That seems better. We are concatenating the output of `unit__from_node()` and `unit__to_node()` using
-Julia's `vcat` function.
+That seems better. We are using the `unit__node__direction` superclass that is created by the 
+`generate_variable_indexing_support()` function.
 But we also need to make sure that the [unit\_capacity](@ref) is specified for our
 [unit](@ref)/[node](@ref)(/`direction`) combination. So we need to add a condition to our array comprehension:
 
@@ -362,7 +365,7 @@ But we also need to make sure that the [unit\_capacity](@ref) is specified for o
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in vcat(unit__from_node(), unit__to_node())
+        for (u, n, d) in unit__node__direction()
         if unit_capacity(unit=u, node=n, direction=d) != nothing
     ]
 end

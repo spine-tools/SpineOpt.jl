@@ -87,7 +87,7 @@ The result should look like this:
 
 ### Energy conversion by means of units
 
-Each hydro power plant uses a *unit* to convert the flow of water to electricity. These units are connected to the 'upper' and 'lower' nodes of the hydro power plants and the 'electricity' node. Water enters the 'upper' node, so the 'upper' node is connected to the unit through the *unit\_\_from\_node*. Water is then discharged, so the 'lower' node is connected to the unit through the *unit\_\_to\_node*. As the water discharges, electricity is produced, so the 'electricity' node is also connected to the unit through the *unit\_\_to\_node*. Below is a figure of these units. There is another unit connected to the electricity node but we'll get back to that later.
+Each hydro power plant uses a *unit* to convert the flow of water to electricity. These units are connected to the 'upper' and 'lower' nodes of the hydro power plants and the 'electricity' node. Water enters the 'upper' node, so the 'upper' node is connected to the unit through the *node\_\_to\_unit*. Water is then discharged, so the 'lower' node is connected to the unit through the *unit\_\_to\_node*. As the water discharges, electricity is produced, so the 'electricity' node is also connected to the unit through the *unit\_\_to\_node*. Below is a figure of these units. There is another unit connected to the electricity node but we'll get back to that later.
 
 ![units](figs_two_hydro/two_hydro_unit_node.png)
 
@@ -101,7 +101,7 @@ For example, the capacity of the electricity production from the unit to the 'el
 
 ![electric capacity parameters](figs_two_hydro/two_hydro_electric_capacity.png)
 
-Additionally, we add a unit to represent the income from selling the electricity production in the electricity market. The electricity price will be represented by a negative variable operation and maintenance (VOM) cost. That parameter needs to be set at the *unit\_\_from\_node* between the electricity node and the unit. Any (negative) value is fine, but we show an example below.
+Additionally, we add a unit to represent the income from selling the electricity production in the electricity market. The electricity price will be represented by a negative variable operation and maintenance (VOM) cost. That parameter needs to be set at the *node\_\_to\_unit* between the electricity node and the unit. Any (negative) value is fine, but we show an example below.
 
 ![electricity price parameter](figs_two_hydro/two_hydro_vom_cost_parameter.png)
 
@@ -184,7 +184,7 @@ modifications to the initial model.
         data row, right-click, select *Remove
         rows*, and click OK.
     -   Add an electricity price for the extra time step. Enter the
-        parameter *vom\_cost* on the *unit\_\_from\_node* relationship
+        parameter *vom\_cost* on the *node\_\_to\_unit* relationship
         between the *electricity\_node*
         and the *electricity\_load* and
         set 0 as the price of electricity for the last time step. The price is set
@@ -193,7 +193,7 @@ modifications to the initial model.
     new units:
     -   Add a *vom\_cost* parameter value
         on a *value\_stored\_water|stored\_water*
-        instance of a *unit\_\_from\_node*
+        instance of a *node\_\_to\_unit*
         relationship, as you see in the figure bellow. For the
         timeseries we have
         imposed a zero cost for all the optimisation horizon, while we

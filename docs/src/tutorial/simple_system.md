@@ -203,14 +203,14 @@ the input and the output of the units.
 
 For the flow from the 'fuel' node to the units:
 
--   Press '+' next to the *unit\_\_from\_node* class,
-    you'll see a 'unit' field and a 'node' field.
+-   Press '+' next to the *node\_\_to\_unit* class,
+    you'll see a 'node' field and a 'unit' field.
 
 -   Double click the unit or node field to see the options.
 
 -   Select each unit once and the 'fuel' node twice,
     resulting in the combinations
-    'power\_plant\_a'-'fuel' and 'power\_plant\_b'-'fuel'.
+    'fuel'-'power\_plant\_a' and 'fuel'-'power\_plant\_b'.
 
 !!! info
     Alternatively right click the entities in the *entity graph* and 
@@ -318,7 +318,7 @@ Each of these parameters are defined in different parts of the system.
 That is, again, because it is possible to define multiple inputs and outputs.
 To pinpoint the correct flows, the parameters are therefore related to the flows rather than the unit.
 In particular, the VOM cost is related to the input flow
-and as such to *unit\_\_from\_node* between the unit and the 'fuel' node.
+and as such to *node\_\_to\_unit* between the unit and the 'fuel' node.
 The capacity is related to the output flow
 and as such to *unit\_\_to\_node* between the unit and the 'electricity' node.
 The efficiency is related to the relation between the input and the output
@@ -328,9 +328,9 @@ We enter these values again in the parameter value table.
 
 For the VOM cost of the power plants:
 
--   select the *unit\_\_from\_node* entity class
+-   select the *node\_\_to\_unit* entity class
 
--   *entity\_by\_name*: 'power\_plant\_a|fuel'
+-   *entity\_by\_name*: 'fuel|power\_plant\_a'
 
 -   *parameter\_name*: *vom\_cost*
 

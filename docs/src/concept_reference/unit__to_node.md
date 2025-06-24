@@ -1,7 +1,7 @@
-The [unit\_\_to\_node](@ref) and [unit\_\_from\_node](@ref) unit relationships are core elements of SpineOpt.
-For each [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref), a [unit\_flow](@ref) variable is automatically
+The [unit\_\_to\_node](@ref) and [node\_\_to\_unit](@ref) unit relationships are core elements of SpineOpt.
+For each [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref), a [unit\_flow](@ref) variable is automatically
 added to the model, i.e.
-a commodity flow of a unit *to* or *from* a specific node, respectively.
+a commodity flow of a unit to or from a specific node, respectively.
 
 Various parameters can be defined on the [unit\_\_to\_node](@ref) relationship, in order to
 constrain the associated unit flows. In most cases a [unit\_capacity](@ref) will be defined for
