@@ -608,14 +608,14 @@ function generate_variable_indexing_support()
         [], # Superclasses contain no entities of their own.
         Dict(), # Superclasses contain no parameter values of their own.
         Dict(), # Superclasses contain no parameter definitions of their own.
-        [:node__to_unit, :unit__to_node] # Desired subclasses.
+        [node__to_unit, unit__to_node] # Desired subclasses.
     )
     connection__node__direction = ObjectClass(
         :connection__node__direction,
         [], # Superclasses contain no entities of their own.
         Dict(), # Superclasses contain no parameter values of their own.
         Dict(), # Superclasses contain no parameter definitions of their own.
-        [:connection__from_node, :connection__to_node] # Desired subclasses.
+        [connection__from_node, connection__to_node] # Desired subclasses.
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
