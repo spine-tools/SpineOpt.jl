@@ -290,6 +290,42 @@ function _test_discounted_duration_consecutive_years()
     end
 end
 
+function _test_discounted_duration_base()
+    @testset "test discounted duration base - intra-year (leap)" begin
+        t_start = Dates.DateTime(2020,1,1)
+        t_end = t_start + Dates.Month(2)
+        ts = SpineInterface.TimeSlice(t_start, t_end)
+        active_duration = SpineInterface.duration(ts)
+        @test SpineOpt.discounted_duration_base(ts) == active_duration == 1440 
+        # 1440: the number of hours in Jan and Feb of a leap year
+    end
+    @testset "test discounted duration base - intra-year (normal)" begin
+        t_start = Dates.DateTime(2021,1,1)
+        t_end = t_start + Dates.Month(2)
+        ts = SpineInterface.TimeSlice(t_start, t_end)
+        active_duration = SpineInterface.duration(ts)
+        @test SpineOpt.discounted_duration_base(ts) == active_duration == 1416
+        # 1416: the number of hours in Jan and Feb of a normal year
+    end
+    number_of_years = 5
+    @testset "test discounted duration base - multi-year (leap)" begin
+        t_start = Dates.DateTime(2020,1,1)
+        t_end = t_start + Dates.Year(number_of_years)
+        ts = SpineInterface.TimeSlice(t_start, t_end)
+        active_duration = SpineInterface.duration(ts)
+        average_year_length = active_duration / number_of_years
+        @test SpineOpt.discounted_duration_base(ts) == 8784 != active_duration
+        @test SpineOpt.discounted_duration_base(ts; _exact=true) == average_year_length != active_duration
+    end
+    @testset "test discounted duration base - multi-year (normal)" begin
+        t_start = Dates.DateTime(2021,1,1)
+        t_end = t_start + Dates.Year(number_of_years)
+        ts = SpineInterface.TimeSlice(t_start, t_end)
+        active_duration = SpineInterface.duration(ts)
+        @test SpineOpt.discounted_duration_base(ts) == 8760 != active_duration 
+    end
+end
+
 function _test_investment_costs__salvage_fraction__capacity_transfer_factor__decommissioning()
     @testset "test investment costs, salvage fraction, capacity transfer factor, decommissioning" begin
         url_in = test_data_example_multiyear_economic_discounting()
@@ -526,6 +562,7 @@ end
 @testset "economic structure" begin
     _test_discounted_duration_milestone_years()
     _test_discounted_duration_consecutive_years()
+    _test_discounted_duration_base()
     _test_investment_costs__salvage_fraction__capacity_transfer_factor__decommissioning()
     _test_technological_discount_factor__investment_costs__salvage_fraction()
     _test_rolling_error_exception()

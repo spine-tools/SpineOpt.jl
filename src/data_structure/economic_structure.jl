@@ -596,6 +596,30 @@ function create_discounted_duration(m; stochastic_scenario=nothing, invest_tempo
     timeseries_ind, timeseries_val
 end
 
+function discounted_duration_base(t::TimeSlice; _exact=false)
+    # The economic discounting uses 1 Year as the base duration for investment (years) and operation.
+    # This means that an `xx_discounted_duration` only counts the number (discounted) of years in an investment period,
+    # assuming (1) the "investment period" = n years with n>=1 being an integer, 
+    # and (2) the "operational period" = 1 Year.
+    # Hence, the product `xx_discounted_duration` and `duration(t)` is only valid when t spans no more than 1 year.
+    # When `duration(t)` > 1 Year, the product would double-counts the years in a multi-year investment period setup.
+    # In this case, we need this substituting coefficient for `duration(t)` to represent the length (in hour) of 1 Year.
+
+    # We assume the 1st year of the investment period as the base.
+    _base_duration = TimeSlice(start(t), start(t)+Year(1)) |> duration
+    # average number of years during one investment window period, rounded to integer.
+    _number_of_years = div(duration(t), _base_duration, RoundNearest)
+    
+    # This conditional is irrelevant to whether the asset is investable or not.
+    if _number_of_years <= 1
+        return duration(t)
+    else
+        # _exact=true calculates the average length of 1 Year of a multi-year investment period.
+        # _exact=false assumes the investment period consists of multiple of the base (1 Year).
+        return _exact ? duration(t)/_number_of_years : _base_duration
+    end
+end
+
 """
     generate_decommissioning_conversion_to_discounted_annuities()
 

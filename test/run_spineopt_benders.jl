@@ -180,16 +180,16 @@ function _test_benders_storage()
     @testset "benders_storage" begin
         benders_gap = 1e-6  # needed so that we get the exact master problem solution
         mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
-        res = 6
+        res = 6 # resolution
         dem = ucap = 10
-        fixuflow = 2 * dem
-        rf = 6
+        fixuflow = 2 * dem # 20
+        rf = 6 # row forward
         look_ahead = 3
         penalty = 100
-        op_cost_no_inv = (fixuflow - dem) * penalty * (24 + look_ahead)
+        op_cost_no_inv = (fixuflow - dem) * penalty * (24 + look_ahead) # (20-10)*100*(24+3) = 27000
         op_cost_inv = 0
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv # minimum cost at which investment is not profitable, 27000
+        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 26999
         @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -230,6 +230,7 @@ function _test_benders_storage()
                 ["node", "node_a", "has_storage", true],
                 ["node", "node_a", "storage_state_max", 1000],
                 ["node", "node_a", "storage_state_initial", 0],
+                # ["node", "node_a", "storage_investment_count_initial_new", 0],
                 ["node", "node_a", "storage_investment_count_max_cumulative", 1],
                 ["node", "node_a", "storage_investment_cost", s_inv_cost],
                 ["node", "node_a", "storage_investment_variable_type", "variable_type_integer"],

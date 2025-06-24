@@ -1030,6 +1030,7 @@ function generate_unit_commitment_parameters()
                 indices(online_count_fix),
                 (u for u in indices(investment_count_max_cumulative, unit) if is_candidate(unit=u)),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
+                (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),
                 (x.unit for x in indices(ramp_down_limit)),
