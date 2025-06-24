@@ -170,7 +170,7 @@ function _test_min_max_capacity_invested_available()
             ["investment_group", "ig", "investment_capacity_total_max_cumulative", 800],
         ]
         relationships = [
-            ("unit__from_node__investment_group", ("unit_ab", "node_a", "ig")),
+            ("unit_flow__investment_group", ("node_a", "unit_ab", "ig")),
             ("connection__to_node__investment_group", ("connection_bc", "node_c", "ig")),
         ]
         relationship_parameter_values = [
