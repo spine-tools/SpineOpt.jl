@@ -52,7 +52,7 @@ end
 
 function _unit_issue(u)
 	parameters = (unit_capacity, fuel_cost, vom_cost)
-	node_from_has_cap_or_cost = _has_cap_or_cost(unit__from_node(unit=u, _compact=false), parameters)
+	node_from_has_cap_or_cost = _has_cap_or_cost(node__to_unit(unit=u, _compact=false), parameters)
 	node_to_has_cap_or_cost = _has_cap_or_cost(unit__to_node(unit=u, _compact=false), parameters)
 	for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost
 		has_cap_or_cost_from || any(
