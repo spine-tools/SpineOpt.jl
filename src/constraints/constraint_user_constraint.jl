@@ -25,7 +25,7 @@ The [constraint\_sense](@ref) parameter changes the sense of the [user\_constrai
 while the [right\_hand\_side](@ref) parameter allows for defining the constant term of the constraint.
 
 Coefficients for the different [variables](@ref Variables) appearing in the [user\_constraint](@ref) are defined
-using relationships, like e.g. [unit\_\_from\_node\_\_user\_constraint](@ref) and
+using relationships, like e.g. [unit\_flow\_\_user\_constraint](@ref) and
 [connection\_\_to\_node\_\_user\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
 or [unit\_\_user\_constraint](@ref) and [node\_\_user\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
 and [node_state](@ref) variables.
@@ -91,7 +91,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:from_node))
             for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                 m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             );
@@ -103,7 +103,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:from_node))
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             )
@@ -116,7 +116,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:to_node))
             for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                 m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             );
@@ -128,7 +128,7 @@ function _operations_term(m, uc, path, t)
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
+            for (u, n) in unit_flow__user_constraint(user_constraint=uc, direction=direction(:to_node))
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=t_in_t(m; t_long=t)
             )
@@ -317,12 +317,9 @@ end
 function _user_constraint_unit_flow_indices(m, uc, s, t, tb)
     (
         ind
-        for (unit__node__user_constraint, d) in (
-            (unit__from_node__user_constraint, :from_node), (unit__to_node__user_constraint, :to_node)
-        )
-        for (u, n) in unit__node__user_constraint(user_constraint=uc)
+        for (u, n, d) in unit_flow__user_constraint(user_constraint=uc)
         for ind in unit_flow_indices(
-            m; unit=u, node=n, direction=direction(d), stochastic_scenario=s, t=t, temporal_block=tb
+            m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t, temporal_block=tb
         )
     )
 end

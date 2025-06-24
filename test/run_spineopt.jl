@@ -65,8 +65,8 @@ function _test_run_spineopt_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "unit_flow", "output_resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"]
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"]
         ],
     )
     _load_test_data(url_in, test_data)
@@ -362,7 +362,7 @@ function _test_unit_flow_non_anticipativity_time()
             objects = [["output", "units_on"], ["temporal_block", "quarterly"]]
             object_parameter_values = [
                 ["node", "node_b", "demand", unparse_db_value(demand)],
-                ["node", "node_b", "node_slack_penalty", 1000],
+                ["node", "node_b", "node_balance_penalty", 1000],
                 ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
                 ["temporal_block", "quarterly", "resolution", Dict("type" => "duration", "data" => "15m")],
                 ["temporal_block", "quarterly", "block_end", Dict("type" => "duration", "data" => "6h")],
@@ -528,7 +528,7 @@ function _test_write_inputs_overlapping_temporal_blocks()
         demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
         objects = [["output", "demand"], ["temporal_block", "8hourly"], ["node", "node_a"]]
         relationships = [
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["model__temporal_block", ["instance", "8hourly"]],
             ["node__temporal_block", ["node_a", "8hourly"]],  # NOTE: 8hourly is associated to the *non*-demand node
             ["node__stochastic_structure", ["node_a", "deterministic"]],
@@ -621,8 +621,8 @@ function _test_db_solvers()
         )
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
-            ["model", "instance", "db_mip_solver_options", mip_solver_options],
-            ["model", "instance", "db_lp_solver_options", lp_solver_options]
+            ["model", "instance", "solver_mip_options", mip_solver_options],
+            ["model", "instance", "solver_lp_options", lp_solver_options]
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
         SpineInterface.import_data(
@@ -688,10 +688,10 @@ function _test_dual_values()
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
             # Uncomment to test for a particular solver, e.g., CPLEX
-            # ["model", "instance", "db_mip_solver", "CPLEX.jl"],
+            # ["model", "instance", "solver_mip", "CPLEX.jl"],
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "binary"]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
@@ -729,7 +729,7 @@ function _test_dual_values_with_two_time_indices()
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "binary"]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
@@ -771,7 +771,7 @@ function _test_fix_unit_flow_with_rolling()
         values = [1, NaN, 2, NaN, 3, NaN]
         fix_unit_flow_ = unparse_db_value(TimeSeries(indexes, values, false, false))
         object_parameter_values = [
-            ["node", "node_b", "balance_type", "balance_type_none"],
+            ["node", "node_b", "balance_type", "none"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(6))],
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fix_unit_flow", fix_unit_flow_]]
@@ -793,8 +793,8 @@ function _test_fix_unit_flow_with_rolling()
     end
 end
 
-function _test_fix_node_state_using_map_with_rolling()
-    @testset "fix_node_state_using_map_with_rolling" begin
+function _test_storage_state_fix_using_map_with_rolling()
+    @testset "storage_state_fix_using_map_with_rolling" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         rf = 2
         look_ahead = 4  # Higher than the roll forward so it's more interesting
@@ -812,12 +812,12 @@ function _test_fix_node_state_using_map_with_rolling()
             end
             push!(values, val)
         end
-        fix_node_state_ = unparse_db_value(Map(indexes, values))
+        storage_state_fix_ = unparse_db_value(Map(indexes, values))
         objects = [["output", "node_state"]]
         relationships = [["report__output", ["report_x", "node_state"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_state", true],
-            ["node", "node_b", "fix_node_state", fix_node_state_],
+            ["node", "node_b", "has_storage", true],
+            ["node", "node_b", "storage_state_fix", storage_state_fix_],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
             ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(look_ahead + 1))],
         ]
@@ -855,7 +855,7 @@ function _test_time_limit()
             ),
         )
         object_parameter_values = [
-            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "solver_mip_options", mip_solver_options],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(6))]
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 1000]]
@@ -882,14 +882,14 @@ function _test_only_linear_model_has_duals()
         @test has_duals(m)
     end
     object_parameter_values = [
-        ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+        ["unit", "unit_ab", "online_variable_type", "binary"]
     ]
     @testset "integer_model_doesnt_have_duals" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         objects = [["output", "bound_units_on"]]
         relationships = [["report__output", ["report_x", "bound_units_on"]]]
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"],
+            ["unit", "unit_ab", "online_variable_type", "binary"],
             ["unit", "unit_ab", "units_on_cost", 1],  # To have units_on variables
         ]
         SpineInterface.import_data(
@@ -932,7 +932,7 @@ end
     _test_dual_values()
     _test_dual_values_with_two_time_indices()
     _test_fix_unit_flow_with_rolling()
-    _test_fix_node_state_using_map_with_rolling()
+    _test_storage_state_fix_using_map_with_rolling()
     _test_time_limit()
     _test_only_linear_model_has_duals()
     _test_report_relative_optimality_gap()

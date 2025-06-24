@@ -25,8 +25,8 @@ is less than the number of investment candidate storages at that node.
 ```math
 \begin{aligned}
 & v^{storages\_invested\_available}_{(n,s,t)}
-\leq p^{candidate\_storages}_{(n,s,t)} \\
-& \forall n \in node: p^{candidate\_storages}_{(n)} \neq 0 \\
+\leq p^{storage\_investment\_count\_max\_cumulative}_{(n,s,t)} \\
+& \forall n \in node: p^{storage\_investment\_count\_max\_cumulative}_{(n)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```
@@ -45,6 +45,6 @@ function _build_constraint_storages_invested_available(m::Model, n, s, t)
     @build_constraint(
         + storages_invested_available[n, s, t]
         <=
-        + candidate_storages(m; node=n, stochastic_scenario=s, t=t)
+        + storage_investment_count_max_cumulative(m; node=n, stochastic_scenario=s, t=t)
     )
 end

@@ -31,7 +31,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 & \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
 & \geq \\
 & p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_min\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
-& \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
+& \cdot \left( p^{existing\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
@@ -41,8 +41,8 @@ See also
 [connection\_capacity](@ref),
 [connection\_min\_factor](@ref),
 [connection\_conv\_cap\_to\_flow](@ref),
-[number\_of\_connections](@ref),
-[candidate\_connections](@ref)
+[existing\_connections](@ref),
+[investment\_count\_max\_cumulative](@ref)
 
 !!! note
     For situations where the same [connection](@ref) handles flows to multiple [node](@ref)s
@@ -136,7 +136,7 @@ function _connection_node_direction_for_min_flow(m)
     froms = indices(connection_capacity, connection__from_node)
     tos = indices(connection_capacity, connection__to_node)
     iter = Iterators.flatten((froms, tos))
-    if use_tight_compact_formulations(model=m.ext[:spineopt].instance)
+    if tight_compact_formulations_activate(model=m.ext[:spineopt].instance)
         bidirectional = intersect(((x.connection, x.node) for x in froms), ((x.connection, x.node) for x in tos))
         filter!(x -> _is_never_zero(_from_lower_limit(x)) && _is_never_zero(_to_lower_limit(x)), bidirectional)
         Iterators.flatten(

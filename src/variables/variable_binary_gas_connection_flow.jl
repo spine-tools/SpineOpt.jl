@@ -35,12 +35,12 @@ function binary_gas_connection_flow_indices(
     direction=direction(:to_node),
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     connection_flow_indices(
         m;
         connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
-        node=intersect(members(node), SpineOpt.node(has_state=false)),
+        node=intersect(members(node), SpineOpt.node(has_storage=false)),
         stochastic_scenario=stochastic_scenario,
         direction=direction,
         t=t,

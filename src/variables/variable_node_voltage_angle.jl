@@ -28,7 +28,7 @@ function node_voltage_angle_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     node_stochastic_time_indices(
         m;
@@ -49,7 +49,7 @@ function add_variable_node_voltage_angle!(m::Model)
         m,
         :node_voltage_angle,
         node_voltage_angle_indices;
-        fix_value=fix_node_voltage_angle,
-        initial_value=initial_node_voltage_angle
+        fix_value=voltage_angle_fix,
+        initial_value=voltage_angle_initial
     )
 end

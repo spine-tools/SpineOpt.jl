@@ -1,9 +1,9 @@
 # [How to change the solver](@id how-to-change-solver)
 
 If you want to change the solver for your optimization problem in SpineOpt, here is some guidance:
-- You can change the solvers in your input datastore using the `db_lp_solver` and `db_mip_solver` parameter values of the `model` object.
-- You can specify solver options via the `db_lp_solver_options` and `db_mip_solver_options` parameters respectively. These are map parameters where the first key is the solver name exactly as the `db_mip_solver` or `db_lp_solver` name, the second key is the solver option name and the value is the option value.
-- You can get a head start by copying the default map values for `db_lp_solver_options` and `db_mip_solver_options`. You can access the default values by clicking on the 'Object parameter definition' tab.
+- You can change the solvers in your input datastore using the `solver_lp` and `solver_mip` parameter values of the `model` object.
+- You can specify solver options via the `solver_lp_options` and `solver_mip_options` parameters respectively. These are map parameters where the first key is the solver name exactly as the `solver_mip` or `solver_lp` name, the second key is the solver option name and the value is the option value.
+- You can get a head start by copying the default map values for `solver_lp_options` and `solver_mip_options`. You can access the default values by clicking on the 'Object parameter definition' tab.
 - If you were trying to change the solver using the arguments to `run_spineopt()`, this is not the recommended way and will soon be deprecated.
 - The solver name corresponds to the name of the Julia package that you will need to install. Some like HiGHs.jl are self contained and include the binaries. Others like CPLEX.jl and Gurobi.jl you will need to point the package to your locally installed  binaries - the julia packages have the instructions to do this.
 

@@ -194,7 +194,7 @@ function _run_spineopt(
                         :benders_iteration_count,
                     ],
                 )
-                benders_stat_values = if report_benders_iterations(model=m.ext[:spineopt].instance, _default=false)
+                benders_stat_values = if benders_iterations_reporting_activate(model=m.ext[:spineopt].instance, _default=false)
                     lbs = m_mp.ext[:spineopt].objective_lower_bounds
                     ubs = m_mp.ext[:spineopt].objective_upper_bounds
                     [lbs, ubs, gaps, length(gaps)]
@@ -439,20 +439,20 @@ _solver(f::Function, ::Nothing) = f()
 
 function _db_mip_solver(instance)
     _db_solver(
-        db_mip_solver(model=instance, _strict=false),
-        db_mip_solver_options(model=instance, _strict=false)
+        solver_mip(model=instance, _strict=false),
+        solver_mip_options(model=instance, _strict=false)
     ) do
-        @warn "no `db_mip_solver` parameter was found for model `$instance` - using the default instead"
+        @warn "no `solver_mip` parameter was found for model `$instance` - using the default instead"
         optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "on", "output_flag" => false, "mip_rel_gap" => 0.01)
     end
 end
 
 function _db_lp_solver(instance)
     _db_solver(
-        db_lp_solver(model=instance, _strict=false),
-        db_lp_solver_options(model=instance, _strict=false)
+        solver_lp(model=instance, _strict=false),
+        solver_lp_options(model=instance, _strict=false)
     ) do
-        @warn "no `db_lp_solver` parameter was found for model `$instance` - using the default instead"
+        @warn "no `solver_lp` parameter was found for model `$instance` - using the default instead"
         optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "on", "output_flag" => false)
     end
 end

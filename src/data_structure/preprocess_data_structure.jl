@@ -28,7 +28,7 @@ Runs a number of other functions processing different aspecs of the input data i
 function preprocess_data_structure()
     check_model_object()
     generate_is_candidate()
-    update_use_connection_intact_flow()
+    update_connection_investment_power_flow_impact_activate()
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
@@ -39,7 +39,9 @@ function preprocess_data_structure()
     process_lossless_bidirectional_connections()
     # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
     # so we don't corrupt the lookup cache
-    generate_direction()
+    generate_direction_and_reorganise_classes()
+    generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
+    generate_node_has_physics(:has_pressure, :pressure_physics)
     generate_ptdf_lodf()
     generate_variable_indexing_support()
     generate_benders_iteration()
@@ -60,13 +62,13 @@ Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 function generate_is_candidate()
     is_candidate = Parameter(:is_candidate, [node, unit, connection])
     add_object_parameter_values!(
-        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_connections))
+        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(investment_count_max_cumulative, connection))
     )
     add_object_parameter_values!(
-        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_units))
+        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(investment_count_max_cumulative, unit))
     )
     add_object_parameter_values!(
-        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_storages))
+        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(storage_investment_count_max_cumulative))
     )
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
@@ -76,13 +78,15 @@ function generate_is_candidate()
     end
 end
 
+# Keeping an option without class in case it is needed later
 _nz_indices(p::Parameter) = (first(x) for x in indices_as_tuples(p) if !iszero(p(; x...)))
+_nz_indices(p::Parameter, class::Union{ObjectClass,RelationshipClass}) = (first(x) for x in indices_as_tuples(p, class) if !iszero(p(; x...)))
 
-function update_use_connection_intact_flow()
+function update_connection_investment_power_flow_impact_activate()
     if isempty(connection(is_candidate=true))
         instance = first(model())
         add_object_parameter_values!(
-            model, Dict(instance => Dict(:use_connection_intact_flow => parameter_value(false)))
+            model, Dict(instance => Dict(:connection_investment_power_flow_impact_activate => parameter_value(false)))
         )
     end
 end
@@ -180,30 +184,78 @@ function process_lossless_bidirectional_connections()
 end
 
 """
-    generate_direction()
+    generate_direction_and_reorganise_classes()
 
-Generate the `direction` `ObjectClass` and its relationships.
+Generate the `direction` `ObjectClass` and reorganise affected relationships.
 """
-function generate_direction()
+function generate_direction_and_reorganise_classes()
+    # Create the new `direction` `ObjectClass` and its element `Objects`.
     from_node = Object(:from_node, :direction)
     to_node = Object(:to_node, :direction)
     direction = ObjectClass(:direction, [from_node, to_node])
-    directions_by_class = Dict(
-        unit__from_node => from_node,
+    # Add `direction` to the mapped classes.
+    directions_by_class = [
+        node__to_unit => from_node,
         unit__to_node => to_node,
         connection__from_node => from_node,
         connection__to_node => to_node,
-        unit__from_node__user_constraint => from_node,
-        unit__to_node__user_constraint => to_node,        
+        unit_flow__user_constraint__node__unit__user_constraint => from_node,
+        unit_flow__user_constraint__unit__node__user_constraint => to_node,
         connection__from_node__user_constraint => from_node,
-        connection__to_node__user_constraint => to_node,        
-    )
+        connection__to_node__user_constraint => to_node,
+        # Some automatically generated subclasses need two directions.
+        unit_flow__unit_flow__node__unit__node__unit => [from_node, from_node],
+        unit_flow__unit_flow__node__unit__unit__node => [from_node, to_node],
+        unit_flow__unit_flow__unit__node__node__unit => [to_node, from_node],
+        unit_flow__unit_flow__unit__node__unit__node => [to_node, to_node],
+    ]
     for (cls, d) in directions_by_class
-        add_dimension!(cls, :direction, d)
+        add_dimension!(cls, d)
     end
+    # Reorganise the dimensions of some affected classes
+    und_uc = [:unit, :node, :direction, :user_constraint]
+    und_und = [:unit1, :node1, :direction1, :unit2, :node2, :direction2]
+    dimensions_by_class = [
+        node__to_unit => [:unit, :node, :direction],
+        unit_flow__user_constraint__node__unit__user_constraint => und_uc,
+        unit_flow__user_constraint__unit__node__user_constraint => und_uc,
+        unit_flow__unit_flow__node__unit__node__unit => und_und,
+        unit_flow__unit_flow__node__unit__unit__node => und_und,
+        unit_flow__unit_flow__unit__node__node__unit => und_und,
+        unit_flow__unit_flow__unit__node__unit__node => und_und,
+    ]
+    for (cls, dims) in dimensions_by_class
+        reorder_dimensions!(cls, dims)
+    end
+    # Eval and export the new class to the global namespace
     @eval begin
         direction = $direction
         export direction
+    end
+end
+
+"""
+    generate_node_has_physics()
+
+Generate a boolean parameter to the `node` `ObjectClass` based on whether connected grids include a specific physics 
+type.
+"""
+function generate_node_has_physics(parameter_name::Symbol, physics_key::Symbol)
+    function _new_node_physics(n)
+        matching_grids = Tuple(
+            g
+            for g in node__grid(node=n)
+            if physics_type(grid=g) == physics_key
+        )
+        Dict(
+            parameter_name => parameter_value(!isempty(matching_grids)),
+        )
+    end
+
+    add_object_parameter_values!(node, Dict(n => _new_node_physics(n) for n in node()))
+    param = Parameter(parameter_name, [node])
+    @eval begin
+        $(parameter_name) = $param
     end
 end
 
@@ -215,11 +267,11 @@ Generate `has_ptdf` and `ptdf_duration` parameters associated to the `node` `Obj
 function generate_node_has_ptdf()
     function _new_node_pvals(n)
         ptdf_comms = Tuple(
-            c
-            for c in node__commodity(node=n)
-            if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
+            g
+            for g in node__grid(node=n)
+            if physics_type(grid=g) in (:lodf_physics, :ptdf_physics)
         )
-        ptdf_durations = [commodity_physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
+        ptdf_durations = [physics_duration(grid=g, _strict=false) for g in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
         Dict(
@@ -270,14 +322,14 @@ Generate `has_lodf` and `connnection_lodf_tolerance` parameters associated to th
 function generate_connection_has_lodf()
     function _new_connection_pvals(conn)
         lodf_comms = Tuple(
-            c
-            for c in commodity(commodity_physics=:commodity_physics_lodf)
-            if issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
+            g
+            for g in grid(physics_type=:lodf_physics)
+            if issubset(connection__from_node(connection=conn, direction=anything), node__grid(grid=g))
         )
         Dict(
             :has_lodf => parameter_value(!isempty(lodf_comms)),
             :connnection_lodf_tolerance => parameter_value(
-                reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05),
+                reduce(max, (lodf_tolerance(grid=g) for g in lodf_comms); init=0.05),
             )
         )
     end
@@ -305,11 +357,11 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[n_from], ix] = 1
         A[node_numbers[n_to], ix] = -1
-        reactance = max(connection_reactance(connection=conn, _default=0), 1e-6)
+        reactance_ = max(reactance(connection=conn, _default=0), 1e-6)
         if conn in unavailable_connections
-            reactance *= 1e3
+            reactance_ *= 1e3
         end
-        inv_X[ix, ix] = connection_reactance_base(connection=conn) / reactance
+        inv_X[ix, ix] = reactance_base(connection=conn) / reactance_
     end
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
     if i === nothing
@@ -393,7 +445,7 @@ function _ptdf_unfiltered_values()
     connections = connection(has_ptdf=true)
     unavailable_connections_by_ind = Dict{Any,Set}(:nothing => Set())
     for conn in connections
-        for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+        for (ind, val) in indexed_values(availability_factor(connection=conn))
             if iszero(val)
                 push!(get!(unavailable_connections_by_ind, ind, Set()), conn)
             end
@@ -409,7 +461,7 @@ function _ptdf_unfiltered_values()
                 collect_indexed_values(
                     Dict(
                         ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
-                        for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+                        for (ind, val) in indexed_values(availability_factor(connection=conn))
                     )
                 )
             )
@@ -423,15 +475,15 @@ end
     _filter_ptdf_values(ptdf_values)
 
 Filter the values of the `ptdf` parameter including only those with an absolute value
-greater than commodity_ptdf_threshold.
+greater than ptdf_threshold.
 """
 function _filter_ptdf_values(ptdf_values)
     comms = filter(
-        c -> commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf), commodity()
+        g -> physics_type(grid=g) in (:lodf_physics, :ptdf_physics), grid()
     )
-    ptdf_threshold = if !isempty(comms)
-        c = first(comms)
-        threshold = commodity_ptdf_threshold(commodity=c, _strict=false)
+    ptdf_threshold_with_default = if !isempty(comms)
+        g = first(comms)
+        threshold = ptdf_threshold(grid=g, _strict=false)
         if threshold !== nothing && !iszero(threshold)
             threshold
         else
@@ -443,7 +495,7 @@ function _filter_ptdf_values(ptdf_values)
     Dict(
         (conn, n) => Dict(:ptdf => vals[:ptdf_unfiltered])
         for ((conn, n), vals) in ptdf_values
-        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold)
+        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold_with_default)
     )
 end
 
@@ -537,21 +589,37 @@ end
     generate_variable_indexing_support()
 
 TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
+
+Tasku: this function seems to generate Object and RelationshipClasses to make
+some looping and filtering slightly more convenient later on.
+However, each of these are only used once from what I can tell.
+PENDING REMOVAL? We don't really need these,
+as the filtering can be easily done when needed without these superfluous classes.
 """
 function generate_variable_indexing_support()
-    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
-    node_with_min_capacity_margin_penalty = ObjectClass(
-        :node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty))
+    # Tasku: Are these support ObjectClasses worth it? They are both used only once.
+    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_balance_penalty)))
+    node_with_capacity_margin_penalty = ObjectClass(
+        :node_with_min_capacity_margin_slack_penalty, collect(indices(capacity_margin_penalty))
     )
-    unit__node__direction = RelationshipClass(
-        :unit__node__direction, [:unit, :node, :direction], [unit__from_node(); unit__to_node()]
+    # Convenience superclasses (avoid duplicating underlying relationship lists)
+    unit__node__direction = ObjectClass(
+        :unit__node__direction,
+        [], # Superclasses contain no entities of their own.
+        Dict(), # Superclasses contain no parameter values of their own.
+        Dict(), # Superclasses contain no parameter definitions of their own.
+        [node__to_unit, unit__to_node] # Desired subclasses.
     )
-    connection__node__direction = RelationshipClass(
-        :connection__node__direction, [:connection, :node, :direction], [connection__from_node(); connection__to_node()]
+    connection__node__direction = ObjectClass(
+        :connection__node__direction,
+        [], # Superclasses contain no entities of their own.
+        Dict(), # Superclasses contain no parameter values of their own.
+        Dict(), # Superclasses contain no parameter definitions of their own.
+        [connection__from_node, connection__to_node] # Desired subclasses.
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
-        node_with_min_capacity_margin_penalty = $node_with_min_capacity_margin_penalty
+        node_with_capacity_margin_penalty = $node_with_capacity_margin_penalty
         unit__node__direction = $unit__node__direction
         connection__node__direction = $connection__node__direction
     end
@@ -582,7 +650,7 @@ function expand_model__default_investment_temporal_block()
         unit__investment_temporal_block,
         [
             (u, tb)
-            for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
+            for u in setdiff(indices(investment_count_max_cumulative, unit), unit__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -591,7 +659,7 @@ function expand_model__default_investment_temporal_block()
         [
             (conn, tb)
             for conn in setdiff(
-                indices(candidate_connections), connection__investment_temporal_block(temporal_block=anything)
+                indices(investment_count_max_cumulative, connection), connection__investment_temporal_block(temporal_block=anything)
             )
             for tb in model__default_investment_temporal_block(model=anything)
         ],
@@ -600,7 +668,7 @@ function expand_model__default_investment_temporal_block()
         node__investment_temporal_block,
         [
             (n, tb)
-            for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
+            for n in setdiff(indices(storage_investment_count_max_cumulative), node__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -620,7 +688,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (u, ss)
             for u in setdiff(
-                indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
+                indices(investment_count_max_cumulative, unit), unit__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -630,7 +698,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (conn, ss)
             for conn in setdiff(
-                indices(candidate_connections),
+                indices(investment_count_max_cumulative, connection),
                 connection__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
@@ -641,7 +709,7 @@ function expand_model__default_investment_stochastic_structure()
         [
             (n, ss)
             for n in setdiff(
-                indices(candidate_storages), node__investment_stochastic_structure(stochastic_structure=anything)
+                indices(storage_investment_count_max_cumulative), node__investment_stochastic_structure(stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -783,17 +851,17 @@ function generate_is_boundary()
     is_boundary_connection = Parameter(:is_boundary_connection, [connection])
     add_object_parameter_defaults!(node, Dict(:is_boundary_node => parameter_value(false)))
     add_object_parameter_defaults!(connection, Dict(:is_boundary_connection => parameter_value(false)))
-    for (n, c) in node__commodity()
-        commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf) || continue
+    for (n, g) in node__grid()
+        physics_type(grid=g) in (:lodf_physics, :ptdf_physics) || continue
         has_boundary_conn = false
         for (conn, _d) in connection__from_node(node=n)
             remote_commodities = unique(
-                c 
+                g 
                 for (remote_n, _d) in connection__to_node(connection=conn)
                 if remote_n != n
-                for c in node__commodity(node=remote_n)
+                for g in node__grid(node=remote_n)
             )
-            if !(c in remote_commodities)
+            if !(g in remote_commodities)
                 has_boundary_conn = true
                 add_object_parameter_values!(
                     connection, Dict(conn => Dict(:is_boundary_connection => parameter_value(true)))
@@ -816,7 +884,7 @@ function generate_unit_flow_capacity()
     function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
         _prod_or_nothing(
             f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
-            f(unit_availability_factor; unit=unit, kwargs...),
+            f(availability_factor; unit=unit, kwargs...),
             f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
         )
     end
@@ -834,7 +902,7 @@ function generate_connection_flow_capacity()
     )
         _prod_or_nothing(
             f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
-            f(connection_availability_factor; connection=connection, kwargs...),
+            f(availability_factor; connection=connection, kwargs...),
             f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
         )
     end
@@ -867,8 +935,8 @@ end
 function generate_node_state_capacity()
     function _node_state_capacity(f; node=node, _default=nothing, kwargs...)
         _prod_or_nothing(
-            f(node_state_cap; node=node, _default=_default, kwargs...),
-            f(node_availability_factor; node=node, kwargs...),
+            f(storage_state_max; node=node, _default=_default, kwargs...),
+            f(storage_state_max_fraction; node=node, kwargs...),
         )
     end
 
@@ -882,9 +950,9 @@ end
 function generate_node_state_lower_limit()
     function _node_state_lower_limit(f; node=node, _default=nothing, kwargs...)
         maximum([_prod_or_nothing(
-            f(node_state_cap; node=node, _default=_default, kwargs...),
-            f(node_state_min_factor; node=node, kwargs...)),
-            f(node_state_min; node=node, kwargs...)]
+            f(storage_state_max; node=node, _default=_default, kwargs...),
+            f(storage_state_min_fraction; node=node, kwargs...)),
+            f(storage_state_min; node=node, kwargs...)]
         )
     end
 
@@ -909,7 +977,7 @@ function generate_unit_commitment_parameters()
 
     for u in indices(online_variable_type)
         unit_var_type = online_variable_type(unit=u)   
-        if unit_var_type in (:unit_online_variable_type_binary, :unit_online_variable_type_integer)
+        if unit_var_type in (:binary, :integer)
             min_up = min_up_time(unit=u)
             min_down = min_down_time(unit=u)
             params_to_add = Dict() 
@@ -945,8 +1013,8 @@ function generate_unit_commitment_parameters()
     unit_with_out_of_service_variable_set = unique(
         Iterators.flatten(
             (
-                indices(scheduled_outage_duration),
-                indices(fix_units_out_of_service),
+                indices(outage_scheduled_duration),
+                indices(out_of_service_count_fix),
                 (u for (st, u) in stage__output__unit(output=output(:units_out_of_service))),
                 !isempty(stage__output(output=output(:units_out_of_service))) ? unit() : (),
             )
@@ -959,8 +1027,9 @@ function generate_unit_commitment_parameters()
                 unit_with_out_of_service_variable_set,
                 indices(units_on_cost),
                 indices(units_on_non_anticipativity_time),
-                indices(fix_units_on),
-                (u for u in indices(candidate_units) if is_candidate(unit=u)),
+                indices(online_count_fix),
+                (u for u in indices(investment_count_max_cumulative, unit) if is_candidate(unit=u)),
+                (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),
@@ -971,17 +1040,17 @@ function generate_unit_commitment_parameters()
                     u
                     for u in indices(online_variable_type)
                     if online_variable_type(unit=u) in (
-                        :unit_online_variable_type_binary, :unit_online_variable_type_integer
+                        :binary, :integer
                     )
                 ),
             )
         )
     )
     unit_without_online_variable_iter = (
-        u for u in unit() if online_variable_type(unit=u) == :unit_online_variable_type_none
+        u for u in unit() if online_variable_type(unit=u) == :none
     )
     unit_without_out_of_service_variable_iter = (
-        u for u in unit() if outage_variable_type(unit=u) == :unit_online_variable_type_none
+        u for u in unit() if outage_variable_type(unit=u) == :none
     )
     setdiff!(unit_with_switched_variable_set, unit_without_online_variable_iter)
     setdiff!(unit_with_out_of_service_variable_set, unit_without_out_of_service_variable_iter)

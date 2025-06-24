@@ -42,13 +42,13 @@ Before we can create the hydro power system, we'll have to define a model, tempo
 
 As for the report, we are typically interested in the outputs *node\_state*, *unit\_flows* and *connection\_flows*.
 
-### Nodes and commodities
+### Nodes and grids
 
 Nodes are at the center of a SpineOpt system, so let's start with that. There are other ways to model hydro power plants but here we represent each hydro power plant with 2 nodes, an 'upper' node to represent the water arriving at each plant and a 'lower' node to represent the water that is discharged and becomes available to the next plant. The general idea of splitting these in 2 nodes is to be able to simulate a time delay between the entrance and the exit (although in this tutorial we will not go in detail in this time delay).
 
 Additionally we need a node for electricity.
 
-Optionally, we can indicate that we are dealing with water flows and electricity production through *commodities*. Note that commodities are only indicative and are not strictly necessary. As in the picture below, we define a 'water' and an 'electricity' commodity and we connect these to the nodes with *node\_\_commodity* relations.
+Optionally, we can indicate that we are dealing with water flows and electricity production through *grids*. Note that grids are only indicative and are not strictly necessary. As in the picture below, we define a 'water' and an 'electricity' grid and we connect these to the nodes with *node\_\_grid* relations.
 
 ![Two hydro power plants in SpineOpt](figs_two_hydro/two_hydro_commodities_graph.png)
 
@@ -87,7 +87,7 @@ The result should look like this:
 
 ### Energy conversion by means of units
 
-Each hydro power plant uses a *unit* to convert the flow of water to electricity. These units are connected to the 'upper' and 'lower' nodes of the hydro power plants and the 'electricity' node. Water enters the 'upper' node, so the 'upper' node is connected to the unit through the *unit\_\_from\_node*. Water is then discharged, so the 'lower' node is connected to the unit through the *unit\_\_to\_node*. As the water discharges, electricity is produced, so the 'electricity' node is also connected to the unit through the *unit\_\_to\_node*. Below is a figure of these units. There is another unit connected to the electricity node but we'll get back to that later.
+Each hydro power plant uses a *unit* to convert the flow of water to electricity. These units are connected to the 'upper' and 'lower' nodes of the hydro power plants and the 'electricity' node. Water enters the 'upper' node, so the 'upper' node is connected to the unit through the *node\_\_to\_unit*. Water is then discharged, so the 'lower' node is connected to the unit through the *unit\_\_to\_node*. As the water discharges, electricity is produced, so the 'electricity' node is also connected to the unit through the *unit\_\_to\_node*. Below is a figure of these units. There is another unit connected to the electricity node but we'll get back to that later.
 
 ![units](figs_two_hydro/two_hydro_unit_node.png)
 
@@ -101,7 +101,7 @@ For example, the capacity of the electricity production from the unit to the 'el
 
 ![electric capacity parameters](figs_two_hydro/two_hydro_electric_capacity.png)
 
-Additionally, we add a unit to represent the income from selling the electricity production in the electricity market. The electricity price will be represented by a negative variable operation and maintenance (VOM) cost. That parameter needs to be set at the *unit\_\_from\_node* between the electricity node and the unit. Any (negative) value is fine, but we show an example below.
+Additionally, we add a unit to represent the income from selling the electricity production in the electricity market. The electricity price will be represented by a negative variable operation and maintenance (VOM) cost. That parameter needs to be set at the *node\_\_to\_unit* between the electricity node and the unit. Any (negative) value is fine, but we show an example below.
 
 ![electricity price parameter](figs_two_hydro/two_hydro_vom_cost_parameter.png)
 
@@ -121,9 +121,9 @@ The result should look like this:
 
 ### Storage in nodes
 
-To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *has\_state* as True (be careful to not set it as a string but select the boolean true value). Then, we need to set the capacity of the reservoir by setting the *node\_state\_cap* parameter value.
+To model the reservoirs of each hydropower plant, we leverage the *state* feature that a node can have to represent storage capability. We only need to do this for one of the two nodes that we have used to model each plant and we choose the *upper* level node. To activate the storage functionality of a node, we set the value of the parameter *has\_storage* as `true`. Then, we need to set the capacity of the reservoir by setting the *storage\_state\_max* parameter value.
 
-Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *fix\_node\_state* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
+Depending on the constraints of your hydro power plant, you can also fix the initial and final values of the reservoir by setting the parameter *storage\_state\_fix* to the respective values (use *nan* values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. 
 
 ![storage Spranget](figs_two_hydro/two_hydro_spranget_storage.png)
 ![storage Fallet](figs_two_hydro/two_hydro_fallet_storage.png)
@@ -151,7 +151,7 @@ modifications to the initial model.
     name (e.g., *stored\_water*). This
     node will accumulate the water stored in the reservoirs at the end
     of the planning horizon. Associate the node with the water
-    commodity (see [node__commodity](../index.md#Assinging-commodities-to-nodes)).
+    grid (see [node__grid](../index.md#Assinging-commodities-to-nodes)).
 
 -   Add three more units (see [adding units](../index.md#Units)); two will
     transfer the water at the end of the planning horizon in the new
@@ -178,13 +178,13 @@ modifications to the initial model.
 
 -   Now we need to make some changes in object parameter values.
     -   Extend the planning horizon of the model by one time step
-    -   Remove the *fix\_node\_state*
+    -   Remove the *storage\_state\_fix*
         parameter values for the end of the optimization horizon as
         you seen in the following figure: double click on the *value* cell of the *Språnget\_upper* and *Fallet\_upper* nodes, select the third
         data row, right-click, select *Remove
         rows*, and click OK.
     -   Add an electricity price for the extra time step. Enter the
-        parameter *vom\_cost* on the *unit\_\_from\_node* relationship
+        parameter *vom\_cost* on the *node\_\_to\_unit* relationship
         between the *electricity\_node*
         and the *electricity\_load* and
         set 0 as the price of electricity for the last time step. The price is set
@@ -193,7 +193,7 @@ modifications to the initial model.
     new units:
     -   Add a *vom\_cost* parameter value
         on a *value\_stored\_water|stored\_water*
-        instance of a *unit\_\_from\_node*
+        instance of a *node\_\_to\_unit*
         relationship, as you see in the figure bellow. For the
         timeseries we have
         imposed a zero cost for all the optimisation horizon, while we

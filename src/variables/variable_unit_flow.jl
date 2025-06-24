@@ -36,7 +36,7 @@ function unit_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     unit = members(unit)
     node = members(node)
@@ -56,8 +56,8 @@ function unit_flow_ub(m; unit, node, direction, kwargs...)
         || members(node) != [node]
     ) && return NaN
     unit_flow_capacity(m; unit=unit, node=node, direction=direction, kwargs..., _default=NaN) * (
-        + number_of_units(m; unit=unit, kwargs..., _default=_default_nb_of_units(unit))
-        + something(candidate_units(m; unit=unit, kwargs...), 0)
+        + existing_units(m; unit=unit, kwargs..., _default=_default_nb_of_units(unit))
+        + something(investment_count_max_cumulative(m; unit=unit, kwargs...), 0)
     )
 end
 

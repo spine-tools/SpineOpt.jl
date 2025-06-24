@@ -86,7 +86,7 @@ end
 function constraint_investment_group_equal_investments_indices(m::Model)
     (
         (investment_group=ig, entity1=e, entity2=other_e, stochastic_scenario=s, t=t)
-        for ig in investment_group(equal_investments=true)
+        for ig in investment_group(equal_investments_activate=true)
         for e in _first_entity_investment_group(ig)
         for other_e in setdiff(entity_investment_group(ig), e)
         for (t, path) in t_lowest_resolution_path(

@@ -82,8 +82,8 @@ function _test_run_spineopt_mga_setup()
             ["units_on__temporal_block", ["unit_bc", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["units_on__stochastic_structure", ["unit_bc", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
-            ["unit__from_node", ["unit_bc", "node_b"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
+            ["node__to_unit", ["node_b", "unit_bc"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_bc", "node_c"]],
             ["report__output",["report_a", "units_invested"]],
@@ -133,41 +133,41 @@ end
 function _test_run_spineopt_mga()
     @testset "run_spineopt_mga" begin
         url_in = _test_run_spineopt_mga_setup()
-        candidate_units = 1
-        candidate_connections = 1
-        candidate_storages = 1
-        units_invested_big_m_mga = storages_invested_big_m_mga = connections_invested_big_m_mga = 5
+        investment_count_max_cumulative = 1
+        investment_count_max_cumulative = 1
+        storage_investment_count_max_cumulative = 1
+        mga_investment_big_m = mga_storage_investment_big_m = 5
         fuel_cost = 5
         mga_slack = 0.05
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_bc", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", 0],
-            ["unit", "unit_bc", "number_of_units", 0],
-            ["unit", "unit_group_abbc", "units_invested_mga", true],
-            ["unit", "unit_group_abbc", "units_invested_big_m_mga", units_invested_big_m_mga],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "existing_units", 0],
+            ["unit", "unit_bc", "existing_units", 0],
+            ["unit", "unit_group_abbc", "mga_investment_activate", true],
+            ["unit", "unit_group_abbc", "mga_investment_big_m", mga_investment_big_m],
             ["unit", "unit_group_abbc", "units_invested__mga_weight", 1],
             ["unit", "unit_ab", "unit_investment_cost", 1],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_bc", "candidate_connections", candidate_connections],
-            ["connection", "connection_group_abbc", "connections_invested_mga", true],
-            ["connection", "connection_group_abbc", "connections_invested_big_m_mga", connections_invested_big_m_mga],
-            ["connection", "connection_group_abbc", "connections_invested_mga_weight", 1],
-            ["node", "node_b", "candidate_storages", candidate_storages],
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_a", "balance_type", :balance_type_none],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_b", "fix_node_state",0],
-            ["node", "node_c", "fix_node_state",0],
-            ["node", "node_b", "node_state_cap", 0],
-            ["node", "node_c", "node_state_cap", 0],
-            ["node", "node_group_bc", "storages_invested_mga", true],
-            ["node", "node_group_bc", "storages_invested_big_m_mga", storages_invested_big_m_mga],
-            ["node", "node_group_bc", "storages_invested_mga_weight", 1],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_group_abbc", "mga_investment_activate", true],
+            ["connection", "connection_group_abbc", "mga_investment_big_m", mga_investment_big_m],
+            ["connection", "connection_group_abbc", "mga_investment_weight", 1],
+            ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_a", "balance_type", :none],
+            ["node", "node_b", "has_storage", true],
+            ["node", "node_c", "has_storage", true],
+            ["node", "node_b", "storage_state_fix",0],
+            ["node", "node_c", "storage_state_fix",0],
+            ["node", "node_b", "storage_state_max", 0],
+            ["node", "node_c", "storage_state_max", 0],
+            ["node", "node_group_bc", "mga_storage_investment_activate", true],
+            ["node", "node_group_bc", "mga_storage_investment_big_m", mga_storage_investment_big_m],
+            ["node", "node_group_bc", "mga_storage_investment_weight", 1],
             ["model", "instance", "model_algorithm", "mga_algorithm"],
-            ["model", "instance", "max_mga_slack", mga_slack],
-            ["model", "instance", "max_mga_iterations", 2],
+            ["model", "instance", "mga_max_slack", mga_slack],
+            ["model", "instance", "mga_max_iterations", 2],
             # ["node", "node_a", "demand", 1],
             ["node", "node_b", "demand", 1],
             ["node", "node_c", "demand", 1],
@@ -210,7 +210,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= (var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + units_invested_big_m_mga*var_mga_aux_binary[key]
+                    + mga_investment_big_m*var_mga_aux_binary[key]
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)
@@ -232,7 +232,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= (var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + connections_invested_big_m_mga * var_mga_aux_binary[key])
+                    + mga_investment_big_m * var_mga_aux_binary[key])
                 con = constraint[key...]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -249,7 +249,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= (var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + storages_invested_big_m_mga*var_mga_aux_binary[key]
+                    + mga_storage_investment_big_m*var_mga_aux_binary[key]
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)
@@ -275,7 +275,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + units_invested_big_m_mga * (1 - var_mga_aux_binary[key])
+                    + mga_investment_big_m * (1 - var_mga_aux_binary[key])
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)
@@ -297,7 +297,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + connections_invested_big_m_mga * (1 - var_mga_aux_binary[key])
+                    + mga_investment_big_m * (1 - var_mga_aux_binary[key])
                 )
                 con = constraint[key...]
                 observed_con = constraint_object(con)
@@ -315,7 +315,7 @@ function _test_run_spineopt_mga()
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-                    + storages_invested_big_m_mga * (1 - var_mga_aux_binary[key]))
+                    + mga_storage_investment_big_m * (1 - var_mga_aux_binary[key]))
                 con = constraint[key...]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -492,9 +492,9 @@ end
 function _test_run_spineopt_mga_2()
     @testset "run_spineopt_mga_2" begin
         url_in = _test_run_spineopt_mga_setup()
-        candidate_units = 1
-        candidate_connections = 1
-        candidate_storages = 1
+        investment_count_max_cumulative = 1
+        investment_count_max_cumulative = 1
+        storage_investment_count_max_cumulative = 1
         fuel_cost = 5
         mga_slack = 0.05
         points = [0, -0.5, -1, 1, 0.5, 0]
@@ -504,36 +504,36 @@ function _test_run_spineopt_mga_2()
         deltas = [points[1]; [points[i] - points[i - 1] for i in Iterators.drop(eachindex(points), 1)]]
         mga_weights_2 = Dict("type" => "array", "value_type" => "float", "data" => points)
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_bc", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", 0],
-            ["unit", "unit_bc", "number_of_units", 0],
-            ["unit", "unit_group_abbc", "units_invested_mga", true],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "existing_units", 0],
+            ["unit", "unit_bc", "existing_units", 0],
+            ["unit", "unit_group_abbc", "mga_investment_activate", true],
             ["unit", "unit_group_abbc", "units_invested__mga_weight", mga_weights_1],
             ["unit", "unit_ab", "unit_investment_cost", 1],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["unit", "unit_bc", "unit_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_bc", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["connection", "connection_bc", "connection_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["connection", "connection_group_abbc", "connections_invested_mga", true],
-            ["connection", "connection_group_abbc", "connections_invested_mga_weight",mga_weights_2],
-            ["node", "node_b", "candidate_storages", candidate_storages],
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_b", "storage_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["node", "node_c", "storage_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["node", "node_a", "balance_type", :balance_type_none],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_b", "fix_node_state", 0],
-            ["node", "node_c", "fix_node_state", 0],
-            ["node", "node_b", "node_state_cap", 0],
-            ["node", "node_c", "node_state_cap", 0],
-            ["node", "node_group_bc", "storages_invested_mga", true],
-            ["node", "node_group_bc","storages_invested_mga_weight", mga_weights_1],
+            ["unit", "unit_ab", "lifetime_technical", unparse_db_value(Hour(2))],
+            ["unit", "unit_bc", "lifetime_technical", unparse_db_value(Hour(2))],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_bc", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_ab", "lifetime_technical", unparse_db_value(Hour(2))],
+            ["connection", "connection_bc", "lifetime_technical", unparse_db_value(Hour(2))],
+            ["connection", "connection_group_abbc", "mga_investment_activate", true],
+            ["connection", "connection_group_abbc", "mga_investment_weight",mga_weights_2],
+            ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ["node", "node_b", "storage_lifetime_technical", unparse_db_value(Hour(2))],
+            ["node", "node_c", "storage_lifetime_technical", unparse_db_value(Hour(2))],
+            ["node", "node_a", "balance_type", :none],
+            ["node", "node_b", "has_storage", true],
+            ["node", "node_c", "has_storage", true],
+            ["node", "node_b", "storage_state_fix", 0],
+            ["node", "node_c", "storage_state_fix", 0],
+            ["node", "node_b", "storage_state_max", 0],
+            ["node", "node_c", "storage_state_max", 0],
+            ["node", "node_group_bc", "mga_storage_investment_activate", true],
+            ["node", "node_group_bc","mga_storage_investment_weight", mga_weights_1],
             ["model", "instance", "model_algorithm", "mga_algorithm"],
-            ["model", "instance", "max_mga_slack", mga_slack],
+            ["model", "instance", "mga_max_slack", mga_slack],
             ["node", "node_b", "demand", 1],
             ["node", "node_c", "demand", 1],
         ]

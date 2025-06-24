@@ -58,7 +58,7 @@ end
 
 function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_path, t)
     @fetch connection_intact_flow, node_injection, connection_flow = m.ext[:spineopt].variables
-    if !use_connection_intact_flow(model=m.ext[:spineopt].instance)
+    if !connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance)
         connection_intact_flow = connection_flow
     end
     @build_constraint(
@@ -71,7 +71,7 @@ function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_p
         ==
         + sum(
             ptdf(m; connection=conn, node=n, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
             * node_injection[n, s, t]
             for n in ptdf_connection__node(connection=conn)
             if node_opf_type(node=n) != :node_opf_type_reference
@@ -80,7 +80,7 @@ function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_p
         )
         + sum(
             ptdf(m; connection=conn, node=n, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
             * connection_flow[conn1, n1, d, s, t]
             for n in node(is_boundary_node=true)
             if n in ptdf_connection__node(connection=conn)
@@ -93,7 +93,7 @@ function _build_constraint_connection_intact_flow_ptdf(m::Model, conn, n_to, s_p
         )
         - sum(
             ptdf(m; connection=conn, node=n, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
             * connection_flow[conn1, n1, d, s, t]
             for n in node(is_boundary_node=true)
             if n in ptdf_connection__node(connection=conn)
@@ -112,7 +112,7 @@ end
 function constraint_connection_intact_flow_ptdf_indices(m::Model)
     (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
-        for conn in connection(connection_monitored=true, has_ptdf=true)
+        for conn in connection(monitoring_activate=true, has_ptdf=true)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (n_to, t) in node_time_indices(m; node=n_to)
         if _check_ptdf_duration(m, t, conn)

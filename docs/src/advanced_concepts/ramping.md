@@ -4,7 +4,7 @@ To enable the representation of units with a high level of technical detail, the
 
 ## Relevant objects, relationships and parameters
 
-Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship (where the [node](@ref) can be a group). Generally speaking, the ramping constraints will impose restrictions on the change in the [unit\_flow](@ref) variable between two consecutive timesteps.
+Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship (where the [node](@ref) can be a group). Generally speaking, the ramping constraints will impose restrictions on the change in the [unit\_flow](@ref) variable between two consecutive timesteps.
 
 All parameters that limit the ramping abilities of a unit are expressed as a fraction of the unit capacity. This means that a value of 1 indicates the full capacity of a unit.
 
@@ -72,7 +72,7 @@ However, it is still possible to limit the individual flows to the nodes as well
 Which now restricts the flow of the unit into that node to 15% of its capacity.
 
 **Please note that by default, node groups are balanced in the same way as individual nodes.**
-So if you're using node groups for the sole purpose of constraining flow ramps, you should set the balance type of the group to `balance_type_none`.
+So if you're using node groups for the sole purpose of constraining flow ramps, you should set the `balance_type` of the group to `none`.
 
 
 ## [Ramping with reserves](@id ramping-reserves-illustrative-example)

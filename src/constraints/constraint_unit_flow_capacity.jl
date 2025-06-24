@@ -22,7 +22,7 @@
 In a multi-commodity setting, there can be different commodities entering/leaving a certain
 technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
 emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) must be specified
-for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship,
+for at least one [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship,
 in order to trigger a constraint on the maximum commodity flows to this location in each time step.
 When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
 
@@ -39,7 +39,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
         p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
     \right]\\
 & \le \\
-& p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
 & \qquad v^{units\_on}_{(u,s,t)} \\
 & \qquad - \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right)
@@ -83,13 +83,13 @@ See also
 [upward\_reserve](@ref),
 [is\_non\_spinning](@ref),
 [unit\_capacity](@ref),
-[unit\_availability\_factor](@ref),
+[availability\_factor](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
 [start\_up\_limit](@ref),
 [shut\_down\_limit](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    if use_tight_compact_formulations(model=m.ext[:spineopt].instance, _default=false)
+    if tight_compact_formulations_activate(model=m.ext[:spineopt].instance, _default=false)
         _add_constraint_unit_flow_capacity_tight_compact!(m)
     else
         _add_constraint_unit_flow_capacity_simple!(m)

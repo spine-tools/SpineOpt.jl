@@ -33,7 +33,7 @@ v^{connection\_intact\_flow}_{(c, n_{in}, d_{from}, s, t)} \\
 ```
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :ratio_out_in_connection_intact_flow,
@@ -76,7 +76,7 @@ end
 function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
     (
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
-        for conn in connection(connection_monitored=true, has_ptdf=true)
+        for conn in connection(monitoring_activate=true, has_ptdf=true)
         for (n_in, n_out) in connection__node__node(connection=conn)
         for (t, path) in t_lowest_resolution_path(
             m, 
@@ -100,7 +100,7 @@ Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_ratio_out_in_connection_intact_flow_indices_filtered(
     m::Model;
-    connection=connection(connection_monitored=true, has_ptdf=true),
+    connection=connection(monitoring_activate=true, has_ptdf=true),
     node1=anything,
     node2=anything,
     stochastic_path=anything,

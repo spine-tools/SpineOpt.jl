@@ -31,24 +31,32 @@ function connections_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    connection = intersect(indices(candidate_connections), members(connection))
+    connection = intersect(indices(investment_count_max_cumulative), members(connection))
     connection_investment_stochastic_time_indices(
         m; connection=connection, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 
 """
+    connections_invested_available_bin(x)
+
+Check if connection investment variable type is defined to be binary.
+"""
+function connections_invested_available_bin(x)
+    investment_variable_type(connection=x.connection) == :binary
+end
+
+"""
     connections_invested_available_int(x)
 
-Check if conneciton investment variable type is defined to be an integer.
+Check if connection investment variable type is defined to be an integer.
 """
-
 function connections_invested_available_int(x)
-    connection_investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
+    investment_variable_type(connection=x.connection) == :integer
 end
 
 function _initial_connections_invested_available(; kwargs...)
-    something(initial_connections_invested_available(; kwargs...), 0)
+    something(investment_count_initial_cumulative(; kwargs...), 0)
 end
 
 """
@@ -62,9 +70,10 @@ function add_variable_connections_invested_available!(m::Model)
         :connections_invested_available,
         connections_invested_available_indices;
         lb=constant(0),
+        bin=connections_invested_available_bin,
         int=connections_invested_available_int,
-        fix_value=fix_connections_invested_available,
+        fix_value=investment_count_fix_cumulative,
         initial_value=_initial_connections_invested_available,
-        required_history_period=maximum_parameter_value(connection_investment_tech_lifetime),
+        required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end

@@ -58,7 +58,7 @@ function _test_constraint_investment_group_setup()
             ["unit__investment_stochastic_structure", ["unit_ab", "investments_deterministic"]],
             ["connection__investment_temporal_block", ["connection_bc", "investments_four_hourly"]],
             ["connection__investment_stochastic_structure", ["connection_bc", "investments_deterministic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["connection__from_node", ["connection_bc", "node_b"]],
             ["connection__to_node", ["connection_bc", "node_c"]],
@@ -71,18 +71,18 @@ function _test_constraint_investment_group_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_c", "node_state_cap", 100],
-            ["node", "node_c", "candidate_storages", 2],
+            ["node", "node_c", "has_storage", true],
+            ["node", "node_c", "storage_state_max", 100],
+            ["node", "node_c", "storage_investment_count_max_cumulative", 2],
             ["node", "node_c", "storage_investment_cost", 1000],
-            ["unit", "unit_ab", "candidate_units", 3],
+            ["unit", "unit_ab", "investment_count_max_cumulative", 3],
             ["unit", "unit_ab", "unit_investment_cost", 1000],
-            ["connection", "connection_bc", "candidate_connections", 1],
+            ["connection", "connection_bc", "investment_count_max_cumulative", 1],
             ["connection", "connection_bc", "connection_investment_cost", 1000],
             ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_four_hourly", "resolution", Dict("type" => "duration", "data" => "4h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [
@@ -100,7 +100,7 @@ end
 function _test_equal_investments()
     @testset "equal_investments" begin
         url_in = _test_constraint_investment_group_setup()
-        object_parameter_values = [["investment_group", "ig", "equal_investments", true]]
+        object_parameter_values = [["investment_group", "ig", "equal_investments_activate", true]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:investment_group_equal_investments]
@@ -131,8 +131,8 @@ function _test_min_max_entities_invested_available()
     @testset "min_max_entities_invested_available" begin
         url_in = _test_constraint_investment_group_setup()
         object_parameter_values = [
-            ["investment_group", "ig", "minimum_entities_invested_available", 3],
-            ["investment_group", "ig", "maximum_entities_invested_available", 8],
+            ["investment_group", "ig", "investment_count_total_min_cumulative", 3],
+            ["investment_group", "ig", "investment_count_total_max_cumulative", 8],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -166,15 +166,15 @@ function _test_min_max_capacity_invested_available()
     @testset "min_max_capacity_invested_available" begin
         url_in = _test_constraint_investment_group_setup()
         object_parameter_values = [
-            ["investment_group", "ig", "minimum_capacity_invested_available", 300],
-            ["investment_group", "ig", "maximum_capacity_invested_available", 800],
+            ["investment_group", "ig", "investment_capacity_total_min_cumulative", 300],
+            ["investment_group", "ig", "investment_capacity_total_max_cumulative", 800],
         ]
         relationships = [
-            ("unit__from_node__investment_group", ("unit_ab", "node_a", "ig")),
+            ("unit_flow__investment_group", ("node_a", "unit_ab", "ig")),
             ("connection__to_node__investment_group", ("connection_bc", "node_c", "ig")),
         ]
         relationship_parameter_values = [
-            ("unit__from_node", ("unit_ab", "node_a"), "unit_capacity", 150),
+            ("node__to_unit", ("node_a", "unit_ab"), "unit_capacity", 150),
             ("connection__to_node", ("connection_bc", "node_c"), "connection_capacity", 250),
         ]
         SpineInterface.import_data(

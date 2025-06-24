@@ -30,8 +30,8 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 \begin{aligned}
 & \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
 & <= \\
-& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
-& \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
+& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& \cdot \left( p^{existing\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
 & \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
 & \forall (s,t)
 \end{aligned}
@@ -39,10 +39,10 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 
 See also
 [connection\_capacity](@ref),
-[connection\_availability\_factor](@ref),
+[availability\_factor](@ref),
 [connection\_conv\_cap\_to\_flow](@ref),
-[number\_of\_connections](@ref),
-[candidate\_connections](@ref)
+[existing\_connections](@ref),
+[investment\_count\_max\_cumulative](@ref)
 
 !!! note
     For situations where the same [connection](@ref) handles flows to multiple [node](@ref)s
@@ -126,7 +126,7 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
                 for s in s_path, t1 in t_in_t(m; t_short=t);
                 init=0,
             )
-            + number_of_connections(
+            + existing_connections(
                 m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
             )
         )
@@ -162,7 +162,7 @@ function _connection_node_direction(m)
     froms = indices(connection_capacity, connection__from_node)
     tos = indices(connection_capacity, connection__to_node)
     iter = Iterators.flatten((froms, tos))
-    if use_tight_compact_formulations(model=m.ext[:spineopt].instance)
+    if tight_compact_formulations_activate(model=m.ext[:spineopt].instance)
         bidirectional = intersect(((x.connection, x.node) for x in froms), ((x.connection, x.node) for x in tos))
         filter!(x -> _is_never_zero(_from_cap(x)) && _is_never_zero(_to_cap(x)), bidirectional)
         Iterators.flatten(

@@ -34,13 +34,13 @@ In principle we also need to define the default investment stochastic structure.
 ## Unit investment parameters
 
 With the infrastructure for investments in place, we can now ready units for the investment optimization. For both power plants:
-- Set the [number\_of\_units](@ref) parameter to zero so that the unit is unavailable unless invested in.
-- Set the [initial\_units\_invested\_available](@ref) to zero as well for a similar reason.
-- Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
+- Set the [existing\_units](@ref) parameter to zero so that the unit is unavailable unless invested in.
+- Set the [investment\_count\_initial\_cumulative](@ref) to zero as well for a similar reason.
+- Set the [investment\_count\_max\_cumulative](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested in by the model.
 - Set the unit's investment cost by setting the [unit\_investment\_cost](@ref) parameter to 1000.0. It is important to mention that, normally, you should use the discounted cost. In this example, the costs in 2030 and in 2035 should be discounted to the discount year, i.e., you would define a time-varying cost to reflect the economic representation.
-- Specify the [unit\_investment\_tech\_lifetime](@ref) of the unit to, say, 10 years (duration `10Y`) to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
-- Specify the [unit\_investment\_econ\_lifetime](@ref) to automatically adjust the investment costs. Let's set it equal to the technical lifetime here.
-- Specify the [unit\_investment\_variable\_type](@ref) to `unit_investment_variable_type_integer` to specify that this is a discrete [unit](@ref) investment decision. By default this is set to continuous and we would see an investment of 0.25 units for power plant b in the solution. That also shows that unit size is set by the `unit_capacity` parameter of the `unit__to_node` entity (for power plant b the unit capacity is 200 and multiplied with the investment of 0.25 units we obtain 50 which equals the flow from power plant b).
+- Specify the [lifetime\_technical](@ref) of the unit to, say, 10 years (duration `10Y`) to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
+- Specify the [lifetime\_economic](@ref) to automatically adjust the investment costs. Let's set it equal to the technical lifetime here.
+- Specify the [investment\_variable\_type](@ref) to `integer` to specify that this is a discrete [unit](@ref) investment decision. By default this is set to continuous and we would see an investment of 0.25 units for power plant b in the solution. That also shows that unit size is set by the `unit_capacity` parameter of the `unit__to_node` entity (for power plant b the unit capacity is 200 and multiplied with the investment of 0.25 units we obtain 50 which equals the flow from power plant b).
 - Specify the [units\_on\_cost](@ref) to apply a cost to units that are on. Sometimes this is necessary to ensure that the [units\_on](@ref) variables are created which are needed for the proper functioning of the constraints. Even a value of 0.0 is sufficient to trigger these variables. And that is also what we do here.
 
 ![image](figs_capacity_planning/capacity_unit.png)
@@ -83,7 +83,7 @@ The demand data is seasonal (4M). We assume that the demand increases over the y
 
 ![image](figs_capacity_planning/multi-year_demand.png)
 
-We will allow investments for `power_plant_a` in both 2030 and 2035, and for `power_plant_b` only in 2035. This is realised through the definition of [candidate\_units](@ref) as a time series with variable resolution.
+We will allow investments for `power_plant_a` in both 2030 and 2035, and for `power_plant_b` only in 2035. This is realised through the definition of [investment\_count\_max\_cumulative](@ref) as a time series with variable resolution.
 
 - power_plant_a: [2030-01-01: 1, 2035-01-01: 2]. Note this means in 2030, 1 unit can be invested, and in 2035, another 1 **(instead of 2)** can invested. In other words, this parameter includes the previously available units.
 - power_plant_b: [2030-01-01: 0, 2035-01-01: 1].

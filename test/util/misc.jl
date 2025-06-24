@@ -77,7 +77,7 @@ import DelimitedFiles: readdlm
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
         _load_test_data(url_in, test_data)
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
             ["connection__to_node", ["connection_ab", "node_a"]],
@@ -85,9 +85,9 @@ import DelimitedFiles: readdlm
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -96,20 +96,20 @@ import DelimitedFiles: readdlm
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_monitored", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
-            ["connection", "connection_ab", "connection_resistance", conn_r],
-            ["connection", "connection_bc", "connection_monitored", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
-            ["connection", "connection_bc", "connection_resistance", conn_r],
-            ["connection", "connection_ca", "connection_monitored", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
-            ["connection", "connection_ca", "connection_resistance", conn_r],
-            ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
+            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "reactance", conn_x],
+            ["connection", "connection_ab", "resistance", conn_r],
+            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "reactance", conn_x],
+            ["connection", "connection_bc", "resistance", conn_r],
+            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "reactance", conn_x],
+            ["connection", "connection_ca", "resistance", conn_r],
+            ["grid", "electricity", "physics_type", "lodf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "connection_contingency", true],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["connection", "connection_ca", "contingency_activate", true],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -145,7 +145,7 @@ import DelimitedFiles: readdlm
             relationship_parameter_values=relationship_parameter_values,
         )
         using_spinedb(url_in, SpineOpt)
-        SpineOpt.generate_direction()
+        SpineOpt.generate_direction_and_reorganise_classes()
         SpineOpt.generate_ptdf_lodf()
         SpineOpt.write_ptdfs()
         ptdfs = readdlm("ptdfs.csv", ',', Any, '\n')

@@ -34,7 +34,7 @@ function _test_objective_setup()
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
@@ -57,8 +57,8 @@ function _test_objective_setup()
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",
@@ -72,13 +72,13 @@ function _test_objective_setup()
 end
 
 function test_fom_cost_case_1a()
-    # When given a non-investable unit without defining `number_of_units`, 
-    # the model uses the template default `number_of_units`=1. 
+    # When given a non-investable unit without defining `existing_units`, 
+    # the model uses the template default `existing_units`=1. 
     @testset "fom_cost case 1a" begin
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units_template_default = 1
+        existing_units_template_default = 1
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
         ]
@@ -96,7 +96,7 @@ function test_fom_cost_case_1a()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * sum(             
-            number_of_units_template_default * length(t) for (s, t) in zip(scenarios, time_slices)
+            existing_units_template_default * length(t) for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
@@ -104,15 +104,15 @@ function test_fom_cost_case_1a()
 end
 
 function test_fom_cost_case_1b()
-    # When a non-investable unit with `number_of_units` explicitly defined ... 
+    # When a non-investable unit with `existing_units` explicitly defined ... 
     @testset "fom_cost case 1b" begin
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 2
+        existing_units = 2
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
@@ -127,7 +127,7 @@ function test_fom_cost_case_1b()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * sum(             
-            number_of_units * length(t) for (s, t) in zip(scenarios, time_slices)
+            existing_units * length(t) for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
@@ -135,17 +135,17 @@ function test_fom_cost_case_1b()
 end
 
 function test_fom_cost_case_2a()
-    # When given an investable unit without defining `number_of_units`, 
-    # the model uses the new default `number_of_units`=0. 
+    # When given an investable unit without defining `existing_units`, 
+    # the model uses the new default `existing_units`=0. 
     @testset "fom_cost case 2a" begin
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units_fomulation_default = 0
-        candidate_units = 3
+        existing_units_fomulation_default = 0
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -166,7 +166,7 @@ function test_fom_cost_case_2a()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * sum(             
-            (number_of_units_fomulation_default + var_units_invested_available[unit(:unit_ab), s, t]) * length(t)
+            (existing_units_fomulation_default + var_units_invested_available[unit(:unit_ab), s, t]) * length(t)
             for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -175,17 +175,17 @@ function test_fom_cost_case_2a()
 end
 
 function test_fom_cost_case_2b()
-    # When an investable unit with `number_of_units` explicitly defined ... 
+    # When an investable unit with `existing_units` explicitly defined ... 
     @testset "fom_cost case 2b" begin
         url_in = _test_objective_setup()
         unit_capacity = 100
         fom_cost = 8
-        number_of_units = 2
-        candidate_units = 3
+        existing_units = 2
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "existing_units", existing_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -206,7 +206,7 @@ function test_fom_cost_case_2b()
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * unit_capacity * sum(             
-            (number_of_units + var_units_invested_available[unit(:unit_ab), s, t]) * length(t)
+            (existing_units + var_units_invested_available[unit(:unit_ab), s, t]) * length(t)
             for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -236,10 +236,10 @@ function test_unit_investment_cost()
     @testset "unit_investment_cost" begin
         url_in = _test_objective_setup()
         unit_investment_cost = 1000
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "unit_investment_cost", unit_investment_cost],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -258,14 +258,14 @@ function test_unit_investment_cost()
     end
 end
 
-function test_node_slack_penalty()
-    @testset "node_slack_penalty" begin
+function test_node_balance_penalty()
+    @testset "node_balance_penalty" begin
         url_in = _test_objective_setup()
         node_a_slack_penalty = 0.6
         node_b_slack_penalty = 0.4
         object_parameter_values = [
-            ["node", "node_a", "node_slack_penalty", node_a_slack_penalty],
-            ["node", "node_b", "node_slack_penalty", node_b_slack_penalty],
+            ["node", "node_a", "node_balance_penalty", node_a_slack_penalty],
+            ["node", "node_b", "node_balance_penalty", node_b_slack_penalty],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         
@@ -428,7 +428,7 @@ end
     test_fom_cost_case_2b()
     test_fuel_cost()
     test_unit_investment_cost()
-    test_node_slack_penalty()
+    test_node_balance_penalty()
     test_user_constraint_slack_penalty()
     test_shut_down_cost()
     test_start_up_cost()

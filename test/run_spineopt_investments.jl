@@ -74,11 +74,11 @@ function _test_run_spineopt_investments_setup()
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "operations", "resolution", unparse_db_value(Hour(1))],
             ["temporal_block", "investments", "resolution", unparse_db_value(Year(1))],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
             ["node", "node_b", "demand", unparse_db_value(demand_ts)],
-            ["node", "node_a", "has_state", true],
-            ["node", "node_a", "initial_node_state", 0],
+            ["node", "node_a", "has_storage", true],
+            ["node", "node_a", "storage_state_initial", 0],
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
         ],
         :relationship_parameter_values => [
@@ -95,25 +95,25 @@ function _test_capacity_investments()
     @testset "capacity_investments" begin
         url_in, url_out, file_path_out = _test_run_spineopt_investments_setup()
         object_parameter_values = [
-            ["model", "instance", "use_connection_intact_flow", false],
-            ["unit", "unit_a", "number_of_units", 10],
-            ["unit", "unit_a", "candidate_units", 40],
+            ["model", "instance", "connection_investment_power_flow_impact_activate", false],
+            ["unit", "unit_a", "existing_units", 10],
+            ["unit", "unit_a", "investment_count_max_cumulative", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],
-            ["unit", "unit_a", "unit_investment_variable_type", "unit_investment_variable_type_continuous"],
-            ["node", "node_a", "number_of_storages", 5],
-            ["node", "node_a", "candidate_storages", 20],
+            ["unit", "unit_a", "investment_variable_type", "linear"],
+            ["node", "node_a", "existing_storages", 5],
+            ["node", "node_a", "storage_investment_count_max_cumulative", 20],
             ["node", "node_a", "storage_investment_cost", 0],
-            ["node", "node_a", "storage_investment_variable_type", "storage_investment_variable_type_continuous"],
-            ["connection", "connection_ab", "number_of_connections", 5],
-            ["connection", "connection_ab", "candidate_connections", 20],
+            ["node", "node_a", "storage_investment_variable_type", "linear"],
+            ["connection", "connection_ab", "existing_connections", 5],
+            ["connection", "connection_ab", "investment_count_max_cumulative", 20],
             ["connection", "connection_ab", "connection_investment_cost", 0],
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_variable_type",
-                "connection_investment_variable_type_continuous"
+                "investment_variable_type",
+                "linear"
             ],
-            ["node", "node_a", "node_state_cap", 1]
+            ["node", "node_a", "storage_state_max", 1]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_a", "node_a"], "unit_capacity", 1],

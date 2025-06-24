@@ -79,8 +79,8 @@ function test_data_example_multiyear_economic_discounting()
             ["units_on__temporal_block", ["unit_bc", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["units_on__stochastic_structure", ["unit_bc", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
-            ["unit__from_node", ["unit_bc", "node_b"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
+            ["node__to_unit", ["node_b", "unit_bc"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_bc", "node_c"]],
             ["report__output", ["report_a", "units_invested"]],
@@ -162,7 +162,7 @@ function test_data_minimal_feasible_example_multiyear_economic_discounting()
             ["node__stochastic_structure", ["node_a", "deterministic"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
         ],
@@ -201,7 +201,7 @@ function test_data_no_investment_temporal_block_error_exception()
             ["model__default_stochastic_structure", ["instance", "deterministic"]],
             ["model__default_temporal_block", ["instance", "hourly"]],
             ["stochastic_structure__stochastic_scenario", ["realisation", "deterministic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
         ],
         :object_parameter_values => [
@@ -338,13 +338,13 @@ function _test_investment_costs__salvage_fraction__capacity_transfer_factor__dec
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
             ["unit", "unit_ab", "unit_decommissioning_cost", decom_cost],
-            ["unit", "unit_ab", "unit_decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
+            ["unit", "unit_ab", "decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=3)
@@ -389,12 +389,12 @@ function _test_technological_discount_factor__investment_costs__salvage_fraction
             ["model", "instance", "discount_rate", discnt_rate],
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; optimize=false, log_level=1)
@@ -427,12 +427,12 @@ function _test_rolling_error_exception()
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
             ["model", "instance", "roll_forward", Dict("type" =>"duration","data"=>"1D")],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
@@ -453,12 +453,12 @@ function _test_Benders_error_exception()
             ["model", "instance", "discount_year", discnt_year],
             ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
             ["model", "instance", "model_type", "spineopt_benders"],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
@@ -479,12 +479,12 @@ function _test_no_investment_temporal_block_error_exception()
                 ["model", "instance", "discount_rate", discnt_rate],
                 ["model", "instance", "discount_year", discnt_year],
                 ["model", "instance", "multiyear_economic_discounting", value],
-                ["unit", "unit_ab", "candidate_units", candidate_unts],
+                ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
                 ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-                ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-                ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-                ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+                ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+                ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+                ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+                ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
             ]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
             @test_throws ErrorException run_spineopt(url_in; optimize=false, log_level=1)
@@ -506,12 +506,12 @@ function _test_saving_outputs()
             ["unit", "unit_ab_only_operation"],
         ]
         relationships = [
-            ["unit__from_node", ["unit_ab_only_operation", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab_only_operation"]],
             ["unit__to_node", ["unit_ab_only_operation", "node_b"]],
         ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "vom_cost", 25],
-            ["unit__from_node", ["unit_ab_only_operation", "node_a"], "vom_cost", 25],
+            ["node__to_unit", ["node_a", "unit_ab"], "vom_cost", 25],
+            ["node__to_unit", ["node_a", "unit_ab_only_operation"], "vom_cost", 25],
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 200],
             ["unit__to_node", ["unit_ab_only_operation", "node_b"], "unit_capacity", 100],
             ["unit__node__node", ["unit_ab_only_operation", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
@@ -522,13 +522,13 @@ function _test_saving_outputs()
             ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
             ["node", "node_b", "demand", 100],
             ["node", "node_a", "balance_type_list", "balance_type_none"],
-            ["unit", "unit_ab", "candidate_units", candidate_unts],
-            ["unit", "unit_ab", "number_of_units", num_of_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", candidate_unts],
+            ["unit", "unit_ab", "existing_units", num_of_units],
             ["unit", "unit_ab", "unit_investment_cost", inv_cost],
-            ["unit", "unit_ab", "unit_discount_rate_technology_specific", tech_discnt_rate],
-            ["unit", "unit_ab", "unit_lead_time", Dict("type" => "duration", "data" => "1Y")],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => "5Y")],
-            ["unit", "unit_ab", "unit_investment_econ_lifetime", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "discount_rate_technology_specific", tech_discnt_rate],
+            ["unit", "unit_ab", "lead_time", Dict("type" => "duration", "data" => "1Y")],
+            ["unit", "unit_ab", "lifetime_technical", Dict("type" => "duration", "data" => "5Y")],
+            ["unit", "unit_ab", "lifetime_economic", Dict("type" => "duration", "data" => "5Y")],
         ]
         SpineInterface.import_data(url_in; 
             relationships=relationships, 
