@@ -85,7 +85,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     ]
     append!(rels, (["unit__to_node", (u, n)] for (u, n) in zip(units, nodes_to)))
     append!(rels, (["node__to_unit", (n, u)] for (n, u) in zip(nodes_from, units)))
-    append!(rels, (["unit__node__node", (u, n1, n2)] for (u, n1, n2) in zip(units, nodes_to, nodes_from)))
+    append!(rels, (["unit_flow__unit_flow", (u, n1, n2, u)] for (u, n1, n2, u) in zip(units, nodes_to, nodes_from, units)))
     append!(rels, (["node__to_unit", ("reserve", u)] for u in units))
     append!(rels, (["node__grid", (n, "electricity")] for n in nodes_to))
     append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, conns_from)))
@@ -138,8 +138,8 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     append!(
         rel_pvs,
         (
-            ["unit__node__node", (u, n1, n2), "fix_ratio_out_in_unit_flow", 2] for
-            (u, n1, n2) in zip(units, nodes_to, nodes_from)
+            ["unit_flow__unit_flow", (u, n1, n2, u), "constraint_equality_flow_ratio", 2] for
+            (u, n1, n2, u) in zip(units, nodes_to, nodes_from, units)
         ),
     )
     append!(

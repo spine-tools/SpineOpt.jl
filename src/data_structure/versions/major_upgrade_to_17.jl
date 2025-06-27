@@ -179,6 +179,61 @@ function major_upgrade_to_17(db_url, log_level)
         ("commodity", "grid")
     ]
 
+    # (original class, original parameter name), (new class, list of dimensions, new parameter name, mapping of dimensions)
+    parameters_to_multidimensional_classes = [
+        # Unit__node1__node2 --> unit__node1, unit__node2 ratios
+        (("unit__node__node", "fix_ratio_out_in_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_equality_flow_ratio", [1, 2, 3, 1])),
+        (("unit__node__node", "fix_ratio_in_out_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_equality_flow_ratio", [2, 1, 1, 3])),
+        (("unit__node__node", "fix_ratio_in_in_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_equality_flow_ratio", [2, 1, 3, 1])),
+        (("unit__node__node", "fix_ratio_out_out_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_equality_flow_ratio", [1, 2, 1, 3])),
+        (("unit__node__node", "min_ratio_out_in_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_flow_ratio", [1, 2, 3, 1])),
+        (("unit__node__node", "min_ratio_in_out_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_flow_ratio", [2, 1, 1, 3])),
+        (("unit__node__node", "min_ratio_in_in_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_flow_ratio", [2, 1, 3, 1])),
+        (("unit__node__node", "min_ratio_out_out_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_flow_ratio", [1, 2, 1, 3])),
+        (("unit__node__node", "max_ratio_out_in_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_less_than_flow_ratio", [1, 2, 3, 1])),
+        (("unit__node__node", "max_ratio_in_out_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_less_than_flow_ratio", [2, 1, 1, 3])),
+        (("unit__node__node", "max_ratio_in_in_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_less_than_flow_ratio", [2, 1, 3, 1])),
+        (("unit__node__node", "max_ratio_out_out_unit_flow"), 
+            ("unit_flow__unit_flow", "constraint_less_than_flow_ratio", [1, 2, 1, 3])),
+
+        # Unit__node1__node2 --> unit__node1, unit__node2 coefficients
+        (("unit__node__node", "fix_units_on_coefficient_out_in"), 
+            ("unit_flow__unit_flow", "constraint_equality_online_coefficient", [1, 2, 3, 1])),
+        (("unit__node__node", "fix_units_on_coefficient_in_out"), 
+            ("unit_flow__unit_flow", "constraint_equality_online_coefficient", [2, 1, 1, 3])),
+        (("unit__node__node", "fix_units_on_coefficient_in_in"), 
+            ("unit_flow__unit_flow", "constraint_equality_online_coefficient", [2, 1, 3, 1])),
+        (("unit__node__node", "fix_units_on_coefficient_out_out"), 
+            ("unit_flow__unit_flow", "constraint_equality_online_coefficient", [1, 2, 1, 3])),
+        (("unit__node__node", "min_units_on_coefficient_out_in"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_online_coefficient", [1, 2, 3, 1])),
+        (("unit__node__node", "min_units_on_coefficient_in_out"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_online_coefficient", [2, 1, 1, 3])),
+        (("unit__node__node", "min_units_on_coefficient_in_in"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_online_coefficient", [2, 1, 3, 1])),
+        (("unit__node__node", "min_units_on_coefficient_out_out"), 
+            ("unit_flow__unit_flow", "constraint_greater_than_online_coefficient", [1, 2, 1, 3])),
+        (("unit__node__node", "max_units_on_coefficient_out_in"), 
+            ("unit_flow__unit_flow", "constraint_less_than_online_coefficient", [1, 2, 3, 1])),
+        (("unit__node__node", "max_units_on_coefficient_in_out"), 
+            ("unit_flow__unit_flow", "constraint_less_than_online_coefficient", [2, 1, 1, 3])),
+        (("unit__node__node", "max_units_on_coefficient_in_in"), 
+            ("unit_flow__unit_flow", "constraint_less_than_online_coefficient", [2, 1, 3, 1])),
+        (("unit__node__node", "max_units_on_coefficient_out_out"), 
+            ("unit_flow__unit_flow", "constraint_less_than_online_coefficient", [1, 2, 1, 3]))
+    ]
+
     # original class,
     classes_to_be_removed = [
         "unit__commodity"
@@ -217,6 +272,8 @@ function major_upgrade_to_17(db_url, log_level)
     rename_parameters(db_url, parameters_to_be_renamed, log_level)
     @log log_level 0 string("Renaming classes...")
     rename_classes(db_url, classes_to_be_renamed, log_level)
+    @log log_level 0 string("Moving parameters to multidimensional classes...")
+    move_parameters_to_multidimensional_classes(db_url, parameters_to_multidimensional_classes, log_level)
     @log log_level 0 string("Removing classes...")
     remove_classes(db_url, classes_to_be_removed, log_level)
     @log log_level 0 string("Renaming parameter value lists...")
@@ -224,9 +281,9 @@ function major_upgrade_to_17(db_url, log_level)
     @log log_level 0 string("Renaming list values...")
     rename_list_values(db_url, list_values_to_be_renamed, log_level)
     @log log_level 0 string("Merging variable type lists...")
-	merge_variable_type_lists(db_url, log_level)
+    merge_variable_type_lists(db_url, log_level)
     @log log_level 0 string("Move node physics parameters to grid physics...")
-	move_parameters(db_url, log_level)
+    move_parameters(db_url, log_level)
     true
 end
 
@@ -538,20 +595,89 @@ function rename_classes(db_url, classes_to_be_renamed, log_level)
 	end
 end
 
+# Go through the parameters and move to other classes depending on dimension list
+function move_parameters_to_multidimensional_classes(db_url, parameters_to_multidimensional_classes, log_level)
+    for (old_par_def, new_par_def) in parameters_to_multidimensional_classes
+        move_parameter_to_multidimensional_class(db_url, old_par_def[1], old_par_def[2], new_par_def[1], 
+            new_par_def[2], new_par_def[3], log_level
+        )
+        # Remove old parameter definition
+        pdef = run_request(db_url, "call_method", ("get_parameter_definition_item",), Dict(
+            "entity_class_name" => old_par_def[1], "name" => old_par_def[2])
+        )
+        if length(pdef) > 0
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
+            )
+        end
+    end
+end
+
+# Find parameter values and move them into another class
+function move_parameter_to_multidimensional_class(db_url, old_class_name, old_par_name, new_class_name, 
+    new_par_name, mapping, log_level)
+    # Add new parameter definition
+    try
+        check_run_request_return_value(run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
+            "entity_class_name" => new_class_name, "name" => new_par_name)), log_level
+        )
+    catch
+    end
+    # Find old parameters in all entities and alternatives
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => old_class_name, "parameter_definition_name" => old_par_name)
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    # Find all entities to get entity descriptions
+    entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict(
+        "entity_class_name" => old_class_name)
+    )
+    entities = Dict()
+    for entity_item in entity_items
+        entities[entity_item["element_name_list"]] = entity_item
+    end
+    for (old_entity, val_list) in vals
+        # Determine element name list
+        old_entity_item = entities[old_entity]
+        new_element_name_list = [old_entity[i] for i in mapping]
+        # Add the entity into the database if it is not there already
+        run_request(
+            db_url, "call_method", ("add_entity_item",), Dict(
+                "entity_class_name" => new_class_name, 
+                "entity_byname" => new_element_name_list,
+                "description" => old_entity_item["description"])
+        )
+        for (alternative, val) in val_list
+            db_value, db_type = unparse_db_value(val)
+            # Add the new parameter value into the database
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                    "entity_class_name" => new_class_name, 
+                    "parameter_definition_name" => new_par_name, 
+                    "entity_byname" => new_element_name_list, 
+                    "alternative_name" => alternative, 
+                    "value" => db_value, 
+                    "type" => db_type)
+                ), log_level
+            )
+        end
+    end
+end
+
 # Remove classes and commit session
 function remove_classes(db_url, classes_to_be_removed, log_level)
-	for class_name in classes_to_be_removed
-		try
-			entity_class = run_request(db_url, "call_method", ("get_entity_class_item",), Dict(
-				"name" => class_name)
-			)
-			check_run_request_return_value(run_request(
-				db_url, "call_method", ("remove_entity_class_item", entity_class["id"])), log_level
-			)
-		catch
+    for class_name in classes_to_be_removed
+        try
+            entity_class = run_request(db_url, "call_method", ("get_entity_class_item",), Dict(
+                "name" => class_name)
+            )
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("remove_entity_class_item", entity_class["id"])), log_level
+            )
+        catch
             @log log_level 0 string("Could not remove class $class_name.")
-		end
-	end
+        end
+    end
 end
 
 # Rename a parameter value list

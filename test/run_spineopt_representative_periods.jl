@@ -122,14 +122,14 @@ function _test_representative_periods()
                 ["node__to_unit", ["elec_node", "batt_unit"]],
                 ["unit__to_node", ["batt_unit", "batt_node"]],
                 ["unit__to_node", ["batt_unit", "elec_node"]],
-                ["unit__node__node", ["batt_unit", "batt_node", "elec_node"]],
-                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"]],
+                ["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"]],
+                ["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"]],
                 ["node__to_unit", ["elec_node", "electrolizer"]],
                 ["unit__to_node", ["electrolizer", "h2_node"]],
-                ["unit__node__node", ["electrolizer", "elec_node", "h2_node"]],
+                ["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"]],
                 ["node__to_unit", ["h2_node", "h2_gen"]],
                 ["unit__to_node", ["h2_gen", "elec_node"]],
-                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"]],
+                ["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"]],
                 ["unit__to_node", ["pv", "elec_node"]],
                 ["unit__to_node", ["wind", "elec_node"]],
                 ["unit__to_node", ["conventional", "elec_node"]],
@@ -183,12 +183,12 @@ function _test_representative_periods()
             :relationship_parameter_values => [
                 ["node__to_unit", ["elec_node", "batt_unit"], "unit_capacity", 50],
                 ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
-                ["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow", 0.9],
-                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.8],
+                ["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"], "constraint_equality_flow_ratio", 0.9],
+                ["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"], "constraint_equality_flow_ratio", 0.8],
                 ["node__to_unit", ["elec_node", "electrolizer"], "unit_capacity", 1000],
-                ["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow", 1.5],
+                ["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"], "constraint_equality_flow_ratio", 1.5],
                 ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
-                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.6],
+                ["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"], "constraint_equality_flow_ratio", 1.6],
                 ["unit__to_node", ["pv", "elec_node"], "unit_capacity", 300],
                 ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
                 ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
@@ -282,7 +282,7 @@ function _expected_representative_periods_constraint(
         @test t_after in time_slice(m)
     end
     if n == node(:batt_node)
-        fr_e2b = vals["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow"]
+        fr_e2b = vals["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"], "constraint_equality_flow_ratio"]
         @build_constraint(
             + node_injection[n, s, t_after]
             ==
@@ -294,8 +294,8 @@ function _expected_representative_periods_constraint(
         )
     elseif n == node(:elec_node)
         elec_demand = parameter_value(vals["node", "elec_node", "demand"])
-        fr_b2e = vals["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow"]
-        fr_e2h = vals["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow"]
+        fr_b2e = vals["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"], "constraint_equality_flow_ratio"]
+        fr_e2h = vals["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"], "constraint_equality_flow_ratio"]
         @build_constraint(
             + node_injection[n, s, t_after]
             ==
@@ -309,7 +309,7 @@ function _expected_representative_periods_constraint(
             - elec_demand(t=t_after)
         )
     else#if n == node(:h2_node)
-        fr_h2e = vals["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow"]
+        fr_h2e = vals["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"], "constraint_equality_flow_ratio"]
         @build_constraint(
             + node_injection[n, s, t_after]
             ==
@@ -389,17 +389,17 @@ function _expected_representative_periods_constraint(
         nodes = (node(:batt_node), node(:elec_node))
         @test n in nodes
         other_n = only(setdiff(nodes, n))
-        fr = vals["unit__node__node", [string(u), string(n), string(other_n)], "fix_ratio_out_in_unit_flow"]
+        fr = vals["unit_flow__unit_flow", [string(u), string(n), string(other_n), string(u)], "constraint_equality_flow_ratio"]
         @build_constraint(fr * unit_flow[u, other_n, d_from, s, t] >= 0)
     elseif u == unit(:electrolizer)
         @test d in d_from
         @test n == node(:elec_node)
-        fr = vals["unit__node__node", [string(u), string(n), "h2_node"], "fix_ratio_in_out_unit_flow"]
+        fr = vals["unit_flow__unit_flow", [string(n), string(u), string(u), "h2_node"], "constraint_equality_flow_ratio"]
         @build_constraint(fr * unit_flow[u, node(:h2_node), d_to, s, t] >= 0)
     else# u == unit(:h2_gen)
         @test d in d_from
         @test n == node(:h2_node)
-        fr = vals["unit__node__node", [string(u), string(n), "elec_node"], "fix_ratio_in_out_unit_flow"]
+        fr = vals["unit_flow__unit_flow", [string(n), string(u), string(u), "elec_node"], "constraint_equality_flow_ratio"]
         @build_constraint(fr * unit_flow[u, node(:elec_node), d_to, s, t] >= 0)
     end
 end

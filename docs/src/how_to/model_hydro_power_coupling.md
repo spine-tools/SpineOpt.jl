@@ -209,7 +209,7 @@ modifications to the initial model.
         the water from Språnget's reservoir will be used both by
         Fallet and Språnget plant, therefore we use the sum of the two
         efficiencies in the parameter value of *Språnget\_stored\_water*.
-    ![Adding fix_ratio_out_in_unit_flow parameter values on the Språnget_stored_water and Fallet_stored_water units.](figs_two_hydro/two_hydro_max_stored_water_unit_node_node.png)
+    ![Adding constraint_equality_flow_ratio parameter values on the Språnget_stored_water and Fallet_stored_water units.](figs_two_hydro/two_hydro_max_stored_water_unit_node_node.png)
 
 You can now commit your changes in the database, execute the project and
 [examine the results](../index.md#Examining-the-results)! As an exercise, try to retrieve
