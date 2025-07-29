@@ -150,7 +150,6 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
                 for (u, s, t) in units_switched_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
                 init=0,
             ) / overlap_duration_switched(t_after)
-
             + sum(
                 + _minimum_operating_point(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
@@ -159,7 +158,6 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
                 init=0,
             ) / overlap_duration_units_on(t_after)
-
             - sum(
                 + _minimum_operating_point(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
@@ -168,7 +166,6 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
                 init=0,
             ) / overlap_duration_units_on(t_before)
-
             + sum(
                 + _ramp_up_limit(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
@@ -178,7 +175,6 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
                 init=0,
             )
-
             + sum(
                 + _ramp_up_limit(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
