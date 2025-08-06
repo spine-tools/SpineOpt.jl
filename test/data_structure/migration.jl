@@ -382,7 +382,6 @@ function _test_translate_use_economic_representation__use_milestone_years()
 				"query",
 				("list_value_sq", "parameter_value_list_sq"),
 			)
-			@show collect(_check)
 
 			old_parameter_names = [:use_economic_representation, :use_milestone_years]
 			new_parameter_name = :multiyear_economic_discounting
