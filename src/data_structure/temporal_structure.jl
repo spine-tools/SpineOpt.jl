@@ -204,30 +204,30 @@ function _history_time_slices(m, window_start, window_end, window_time_slices)
     required_history_duration = _required_history_duration(m)
     # First, compute mappings from history interval to
     # (i) all the corresponding window time slices, and
-    # (ii) the snapshot duration
+    # (ii) the subwindow duration
     # (iii) the history start
     time_slices_by_history_interval = Dict()
-    snapshot_duration_by_history_interval = Dict()
+    subwindow_duration_by_history_interval = Dict()
     history_start_by_history_interval = Dict()
     for t in window_time_slices
-        snapshots = [blk for blk in blocks(t) if is_snapshot(temporal_block=blk)]
-        snapshot_start, snapshot_end = if length(snapshots) > 1
-            error("timeslice $t is in more than one snapshot: $snapshots")
-        elseif length(snapshots) == 1
-            snapshot = only(snapshots)
-            snapshot_start = _adjusted_start(window_start, block_start(temporal_block=snapshot, _strict=false))
-            snapshot_end = _adjusted_end(window_start, window_end, block_end(temporal_block=snapshot, _strict=false))
-            snapshot_start, snapshot_end
+        subwindows = [blk for blk in blocks(t) if has_free_start(temporal_block=blk)]
+        subwindow_start, subwindow_end = if length(subwindows) > 1
+            error("timeslice $t is in more than one subwindow: $subwindows")
+        elseif length(subwindows) == 1
+            subwindow = only(subwindows)
+            subwindow_start = _adjusted_start(window_start, block_start(temporal_block=subwindow, _strict=false))
+            subwindow_end = _adjusted_end(window_start, window_end, block_end(temporal_block=subwindow, _strict=false))
+            subwindow_start, subwindow_end
         else
             window_start, window_end
         end
-        t_start, t_end = start(t), min(end_(t), snapshot_end)
+        t_start, t_end = start(t), min(end_(t), subwindow_end)
         t_start < t_end || continue
-        snapshot_duration = snapshot_end - snapshot_start
-        history_interval = (t_start, t_end) .- snapshot_duration
+        subwindow_duration = subwindow_end - subwindow_start
+        history_interval = (t_start, t_end) .- subwindow_duration
         push!(get!(time_slices_by_history_interval, history_interval, Set()), t)
-        snapshot_duration_by_history_interval[history_interval] = snapshot_duration
-        history_start_by_history_interval[history_interval] = snapshot_start - required_history_duration
+        subwindow_duration_by_history_interval[history_interval] = subwindow_duration
+        history_start_by_history_interval[history_interval] = subwindow_start - required_history_duration
     end
     # Compute mapping from history interval to history time slice
     history_t_by_interval = Dict(
@@ -244,7 +244,7 @@ function _history_time_slices(m, window_start, window_end, window_time_slices)
     for (history_interval, history_t) in history_t_by_interval
         while end_(history_t) > history_start_by_history_interval[history_interval]
             pushfirst!(history_time_slices, history_t)
-            history_t -= snapshot_duration_by_history_interval[history_interval]
+            history_t -= subwindow_duration_by_history_interval[history_interval]
         end
     end
     # Compute mapping from window time slice to corresponding history time slice
