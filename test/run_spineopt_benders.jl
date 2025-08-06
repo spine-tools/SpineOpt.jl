@@ -188,7 +188,7 @@ function _test_benders_storage()
         penalty = 100
         op_cost_no_inv = (fixuflow - dem) * penalty * (24 + look_ahead) # (20-10)*100*(24+3) = 27000
         op_cost_inv = 0
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv # minimum cost at which investment is not profitable, 27000
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable, 27000
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 26999
         @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
