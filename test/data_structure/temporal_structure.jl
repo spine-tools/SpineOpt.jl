@@ -475,8 +475,8 @@ function _test_master_temporal_structure()
     end
 end
 
-function _test_snapshots()
-    @testset "snapshots" begin
+function _test_subwindows()
+    @testset "subwindows" begin
         url_in = _test_temporal_structure_setup()
         res = Day(1)
         m_start = DateTime(2001, 1, 1)
@@ -485,8 +485,8 @@ function _test_snapshots()
         object_parameter_values = [
             ["model", "instance", "model_start", unparse_db_value(m_start)],
             ["model", "instance", "model_end", unparse_db_value(m_end)],
-            ["temporal_block", "block_a", "is_snapshot", true],
-            ["temporal_block", "block_b", "is_snapshot", true],
+            ["temporal_block", "block_a", "has_free_start", true],
+            ["temporal_block", "block_b", "has_free_start", true],
             ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
             ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
             ["temporal_block", "block_a", "block_start", unparse_db_value(m_start)],
@@ -531,5 +531,5 @@ end
     _test_to_time_slice_with_rolling()
     _test_history()
     _test_master_temporal_structure()
-    _test_snapshots()
+    _test_subwindows()
 end
