@@ -270,14 +270,31 @@ A collection of represented indices.
 """
 function _represented_indices(m::Model, indices::Function, replacement_expressions::OrderedDict)
     isempty(SpineInterface.indices(representative_periods_mapping)) && return []
-    # By default, `indices` skips represented time slices for operational variables other than node_state,
+    # By default, `indices` only returns representative time slices for operational variables other than node_state
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
-    # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
-    # To include represented time slices, we need to specify `temporal_block=anything`.
+    # to `temporal_block(representative_periods_mapping=nothing)` - so only blocks that don't define a mapping are
+    # returned.
+    # To also retrieve represented time slices, we need to specify `temporal_block=anything`.
     # Note that for node_state and investment variables, the result will be empty.
     representative_indices = indices(m)
-    all_indices = indices(m; temporal_block=anything)
+    all_indices = collect(indices(m; temporal_block=anything))
+    filter!(_is_longterm_index, all_indices)
     setdiff(all_indices, representative_indices, keys(replacement_expressions))
+end
+
+function _is_longterm_index(ind)
+    if haskey(ind, :node)
+        _is_longterm_node(ind.node)
+    elseif haskey(ind, :unit)
+        nodes = (n for unit__node in (unit__from_node, unit__to_node) for (n, _d) in unit__node(unit=ind.unit))
+        any(_is_longterm_node(n) for n in nodes)
+    else
+        true
+    end
+end
+
+function _is_longterm_node(n)
+    has_state(node=n) && is_longterm_storage(node=n)
 end
 
 """
