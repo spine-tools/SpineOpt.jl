@@ -243,7 +243,7 @@ function _test_run_spineopt_hsj_mga()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=1)
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
     end
     @testset "run_spineopt_hsj_mga" begin
         url_in = _test_run_spineopt_mga_setup()
@@ -253,7 +253,7 @@ function _test_run_spineopt_hsj_mga()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=1)
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
     end
     @testset "run_spineopt_hsj_mga_advanced" begin
         url_in = _test_run_spineopt_mga_setup()
@@ -263,7 +263,7 @@ function _test_run_spineopt_hsj_mga()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=1)
+        m = run_spineopt(url_in; log_level=1, add_bridges=true)
     end
 end
 
