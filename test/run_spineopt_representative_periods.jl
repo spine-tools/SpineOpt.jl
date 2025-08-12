@@ -268,8 +268,8 @@ function _test_representative_periods_no_index_found()
                 showerror(buf, e)
                 message = String(take!(buf))
                 println(message)
-                @test startswith(message,"can't find a linear representative index combination for \
-                (node = batt_node, stochastic_scenario = realisation, \
+                @test startswith(message, "can't find a linear representative index combination for \
+                (node = h2_node, stochastic_scenario = realisation, \
                 t = 2000-01-01T00:00~(1 day)~>2000-01-02T00:00)")
             end
         end
