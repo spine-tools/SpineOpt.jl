@@ -1,14 +1,15 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -33,26 +34,26 @@ function add_constraint_cyclic_node_state!(m::Model)
     _add_constraint!(m, :cyclic_node_state, constraint_cyclic_node_state_indices, _build_constraint_cyclic_node_state)
 end
 
-function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end)
+function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end, blk)
     @fetch node_state = m.ext[:spineopt].variables
-    @build_constraint(
+    build_sense_constraint(
         sum(
             node_state[n, s, t_end]
             for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_end);
             init=0,
-        )
-        >=
+        ),        
+        eval(cyclic_condition_sense(node=n, temporal_block=blk)),
         sum(
             node_state[n, s, t_start]
             for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_start);
             init=0,
-        )
+        )        
     )
 end
 
 function constraint_cyclic_node_state_indices(m::Model)
     (
-        (node=n, stochastic_path=path, t_start=t_start, t_end=t_end)
+        (node=n, stochastic_path=path, t_start=t_start, t_end=t_end, temporal_block=blk)
         for (n, blk) in indices(cyclic_condition)
         if cyclic_condition(node=n, temporal_block=blk)
         for t_start in filter(

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -121,6 +122,7 @@ function constraint_minimum_operating_point_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(minimum_operating_point)
+        if minimum_operating_point(; unit=u, node=ng, direction=d) != 0
         for (t, path) in t_lowest_resolution_path(
             m, unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u)
         )

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -162,7 +163,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
         # Loop over the unique names and write their information into the filename under a dedicated section.
         for name in unique!(sort!(collect(keys(concept_dict_for_key))))
             concept_dict_for_name = concept_dict_for_key[name]
-            section = "## `$name`\n\n"
+            section = "\n## `$name`\n\n"
             # If description is defined, include it into the preamble.
             description = get(concept_dict_for_name, :description, nothing)
             if description !== nothing
@@ -221,15 +222,13 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             end
             # Try to fetch the description from the corresponding .md filename.
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
-            description = try
-                open(f -> read(f, String), description_path, "r")
-                while description[(end - 1):end] != "\n\n"
-                    description *= "\n"
-                end
-                description
+            try
+                f = open( description_path, "r")
+                description = read(f, String)
             catch
                 @warn "extended description for `$name` not found! consider adding one to `$description_path`."
                 ""
+                description = ""
             end
             push!(system_string, section * description)
         end

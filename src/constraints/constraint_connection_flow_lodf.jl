@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -116,8 +117,8 @@ function constraint_connection_flow_lodf_indices(m::Model)
         for (conn_cont, conn_mon) in lodf_connection__connection()
         if all(
             [
-                connection_contingency(connection=conn_cont) === true,
-                connection_monitored(connection=conn_mon) === true,
+                connection_contingency(connection=conn_cont, _default=false),
+                connection_monitored(connection=conn_mon, _default=false),
                 has_lodf(connection=conn_cont),
                 has_lodf(connection=conn_mon)
             ]

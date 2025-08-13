@@ -1,14 +1,15 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -44,6 +45,10 @@ Check if unit investment variable type is defined to be an integer.
 
 units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
+function _initial_units_invested_available(; kwargs...)
+    something(initial_units_invested_available(; kwargs...), 0)
+end
+
 """
     add_variable_units_invested_available!(m::Model)
 
@@ -57,8 +62,7 @@ function add_variable_units_invested_available!(m::Model)
         lb=constant(0),
         int=units_invested_available_int,
         fix_value=fix_units_invested_available,
-        internal_fix_value=internal_fix_units_invested_available,
-        initial_value=initial_units_invested_available,
+        initial_value=_initial_units_invested_available,
         required_history_period=maximum_parameter_value(unit_investment_tech_lifetime),
     )
 end

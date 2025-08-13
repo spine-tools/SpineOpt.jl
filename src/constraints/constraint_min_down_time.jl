@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -44,7 +45,7 @@ function _build_constraint_min_down_time(m::Model, u, s_path, t)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables
     @build_constraint(
         + sum(
-            + number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+            + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
             + sum(
                 units_invested_available[u, s, t1]
                 for (u, s, t1) in units_invested_available_indices(

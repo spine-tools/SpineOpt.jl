@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -134,8 +135,6 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
         init=0,
     )
 end
-
-_default_nb_of_conns(conn) = is_candidate(connection=conn) ? 0 : 1
 
 function constraint_connection_flow_capacity_indices(m::Model)    
     (

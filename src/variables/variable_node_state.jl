@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -25,19 +26,27 @@ for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
     node = intersect(node, SpineOpt.node(has_state=true))
-    node_stochastic_time_indices(
-        m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+    (
+        (node=n, stochastic_scenario=s, t=t)
+        for (n, s, t) in node_stochastic_time_indices(
+            m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+        )
+        if is_longterm_storage(node=n) || _is_representative(t)
+    )
+end
+
+function node_state_lb(m; node, kwargs...)
+    node_state_lower_limit(m; node=node, kwargs..., _default=NaN) * (
+        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
     )
 end
 
 function node_state_ub(m; node, kwargs...)
-    node_state_cap(m; node=node, kwargs..., _default=NaN) * (
+    node_state_capacity(m; node=node, kwargs..., _default=NaN) * (
         + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
         + something(candidate_storages(m; node=node, kwargs...), 0)
     )
 end
-
-_default_nb_of_storages(n) = is_candidate(node=n) ? 0 : 1
 
 """
     add_variable_node_state!(m::Model)
@@ -49,7 +58,7 @@ function add_variable_node_state!(m::Model)
         m,
         :node_state,
         node_state_indices;
-        lb=node_state_min,
+        lb=node_state_lb,
         ub=node_state_ub,
         fix_value=fix_node_state,
         initial_value=initial_node_state,

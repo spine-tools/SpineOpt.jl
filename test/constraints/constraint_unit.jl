@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -1096,19 +1097,21 @@ function test_constraint_min_scheduled_outage_duration()
             var_units_out_of_service = m.ext[:spineopt].variables[:units_out_of_service]            
             constraint = m.ext[:spineopt].constraints[:min_scheduled_outage_duration]
             constraint_t = current_window(m)
-            @test length(constraint) == 1
+            @test length(constraint) == 2
             s_path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
             scenarios = [[stochastic_scenario(:parent)]; repeat([stochastic_scenario(:child)], 4)]
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
             vars_u_oos = [var_units_out_of_service[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)]
-            expected_con = @build_constraint(
-                scheduled_outage_duration_minutes / 60
-                <= sum(vars_u_oos)
-                <= ceil(scheduled_outage_duration_minutes / 60)
-            )
-            con_key = (unit(:unit_ab), s_path, constraint_t)
-            observed_con = constraint_object(constraint[con_key...])
-            @test _is_constraint_equal(observed_con, expected_con)           
+            @testset for bound in (Object(:lb, :bound), Object(:ub, :bound))
+                expected_con = if bound.name == :lb
+                    @build_constraint(scheduled_outage_duration_minutes / 60 <= sum(vars_u_oos))
+                else
+                    @build_constraint(sum(vars_u_oos) <= scheduled_outage_duration_minutes / 60 + 1)
+                end
+                con_key = (unit(:unit_ab), s_path, constraint_t, bound)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end    
         end
     end
 end
@@ -1662,6 +1665,8 @@ function test_constraint_ramp_up()
                 t2h2 => s_child,
                 t2h3 => s_child,
             )
+            overlap_2hourly = Dict(t2h0 => 2.0/3, t2h1 => 2.0/3, t2h2 => 1.0/3, t2h3 => 2.0/3)
+
             @testset for con_key in keys(constraint)
                 u, n, d, s, t_before, t_after = con_key
                 @test u.name == :unit_ab
@@ -1669,44 +1674,44 @@ function test_constraint_ramp_up()
                 @test (s, t_before, t_after) in (([s_parent], t3h0, t3h1), ([s_parent, s_child], t3h1, t3h2))
                 lhs = if n.name == :node_group_a
                     n_a, r_a = node(:node_a), node(:reserves_a)
-                    3 * (
+                    (
                         + var_unit_flow[u, n_a, d, s_by_t[t_after], t_after]
                         - var_unit_flow[u, n_a, d, s_by_t[t_before], t_before]
                         + (dr ? var_unit_flow[u, r_a, d, s_by_t[t_after], t_after] : 0)
                     )
                 elseif n.name == :node_group_bc
                     n_b, n_c, r_bc = node(:node_b), node(:node_c), node(:reserves_bc)
-                    var_u_flow_c_delta = 3 * (
+                    var_u_flow_c_delta = (
                         + var_unit_flow[u, n_c, d, s_by_t[t_after], t_after]
                         - var_unit_flow[u, n_c, d, s_by_t[t_before], t_before]
                     )
                     var_u_flow_b_t_delta = if t_after == t3h1
                         (
-                            + 2 * var_unit_flow[u, n_b, d, s_parent, t2h1]
-                            + var_unit_flow[u, n_b, d, s_parent, t2h2]
-                            - 2 * var_unit_flow[u, n_b, d, s_parent, t2h0]
+                            + overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            + overlap_2hourly[t2h2] * var_unit_flow[u, n_b, d, s_parent, t2h2]
+                            - overlap_2hourly[t2h0] * var_unit_flow[u, n_b, d, s_parent, t2h0]
                         )
                     elseif t_after == t3h2
                         (
-                            # + var_unit_flow[u, n_b, d, s_parent, t2h2]
-                            + 2 * var_unit_flow[u, n_b, d, s_parent, t2h3]
-                            - 2 * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            + overlap_2hourly[t2h3] * var_unit_flow[u, n_b, d, s_parent, t2h3]
+                            - overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
                             # - var_unit_flow[u, n_b, d, s_parent, t2h2]
                         )
                     end
                     (
                         + var_u_flow_c_delta + var_u_flow_b_t_delta
-                        + (ur ? 3 * var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
+                        + (ur ? var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
                     )
                 end
-                var_u_on_t_after = 3 * var_units_on[u, s_by_t[t_after], t_after]
-                var_u_on_t_before = 3 * var_units_on[u, s_by_t[t_before], t_before]
-                var_u_su_t_after = 3 * var_units_started_up[u, s_by_t[t_after], t_after]
+                var_u_on_t_after = var_units_on[u, s_by_t[t_after], t_after]
+                var_u_on_t_before =var_units_on[u, s_by_t[t_before], t_before]
+                var_u_su_t_after = var_units_started_up[u, s_by_t[t_after], t_after]
                 expected_con = @build_constraint(
                     + lhs
                     <=
-                    + 3 * uc
-                    * ((sul - mop - rul) * var_u_su_t_after + (mop + rul) * var_u_on_t_after - mop * var_u_on_t_before)
+                    + uc
+                        * ((sul - mop) * var_u_su_t_after + mop  * var_u_on_t_after - mop * var_u_on_t_before
+                        + 3 * 0.5 * rul * var_u_on_t_before + 3 * 0.5 * rul * var_u_on_t_after)
                 )
                 observed_con = constraint_object(constraint[con_key])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -1768,6 +1773,8 @@ function test_constraint_ramp_down()
                 t2h2 => s_child,
                 t2h3 => s_child,
             )
+            overlap_2hourly = Dict(t2h0 => 2.0/3, t2h1 => 2.0/3, t2h2 => 1.0/3, t2h3 => 2.0/3)
+
             @testset for con_key in keys(constraint)
                 u, n, d, s, t_before, t_after = con_key
                 @test u.name == :unit_ab
@@ -1775,44 +1782,44 @@ function test_constraint_ramp_down()
                 @test (s, t_before, t_after) in (([s_parent], t3h0, t3h1), ([s_parent, s_child], t3h1, t3h2))
                 lhs = if n.name == :node_group_a
                     n_a, r_a = node(:node_a), node(:reserves_a)
-                    3 * (
+                    (
                         + var_unit_flow[u, n_a, d, s_by_t[t_before], t_before]
                         - var_unit_flow[u, n_a, d, s_by_t[t_after], t_after]
                         + (ur ? var_unit_flow[u, r_a, d, s_by_t[t_after], t_after] : 0)
                     )
                 elseif n.name == :node_group_bc
                     n_b, n_c, r_bc = node(:node_b), node(:node_c), node(:reserves_bc)
-                    var_u_flow_c_delta = 3 * (
+                    var_u_flow_c_delta =  (
                         + var_unit_flow[u, n_c, d, s_by_t[t_before], t_before]
                         - var_unit_flow[u, n_c, d, s_by_t[t_after], t_after]
                     )
                     var_u_flow_b_t_delta = if t_after == t3h1
                         (
-                            + 2 * var_unit_flow[u, n_b, d, s_parent, t2h0]
-                            - 2 * var_unit_flow[u, n_b, d, s_parent, t2h1]
-                            - var_unit_flow[u, n_b, d, s_parent, t2h2]
+                            + overlap_2hourly[t2h0] * var_unit_flow[u, n_b, d, s_parent, t2h0]
+                            - overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            - overlap_2hourly[t2h2] * var_unit_flow[u, n_b, d, s_parent, t2h2]
                         )
                     elseif t_after == t3h2
                         (
-                            + 2 * var_unit_flow[u, n_b, d, s_parent, t2h1]
-                            # + var_unit_flow[u, n_b, d, s_parent, t2h2]
-                            # - var_unit_flow[u, n_b, d, s_parent, t2h2]
-                            - 2 * var_unit_flow[u, n_b, d, s_parent, t2h3]
+                            + overlap_2hourly[t2h1] * var_unit_flow[u, n_b, d, s_parent, t2h1]
+                            - overlap_2hourly[t2h3] * var_unit_flow[u, n_b, d, s_parent, t2h3]
                         )
                     end
                     (
                         + var_u_flow_c_delta + var_u_flow_b_t_delta
-                        + (dr ? 3 * var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
+                        + (dr ? var_unit_flow[u, r_bc, d, s_parent, t_after] : 0)
                     )
                 end
-                var_u_on_t_after = 3 * var_units_on[u, s_by_t[t_after], t_after]
-                var_u_on_t_before = 3 * var_units_on[u, s_by_t[t_before], t_before]
-                var_u_sd_t_after = 3 * var_units_shut_down[u, s_by_t[t_after], t_after]
+                # units on and units shut down variables
+                var_u_on_t_after = var_units_on[u, s_by_t[t_after], t_after]
+                var_u_on_t_before = var_units_on[u, s_by_t[t_before], t_before]
+                var_u_sd_t_after = var_units_shut_down[u, s_by_t[t_after], t_after]
                 expected_con = @build_constraint(
                     + lhs
                     <=
-                    + 3 * uc
-                    * ((sdl - mop - rdl) * var_u_sd_t_after + (mop + rdl) * var_u_on_t_before - mop * var_u_on_t_after)
+                    + uc
+                    * ((sdl - mop) * var_u_sd_t_after + mop * var_u_on_t_before - mop * var_u_on_t_after
+                        + 3 * 0.5 * rdl * var_u_on_t_before + 3 * 0.5 * rdl * var_u_on_t_after)
                 )
                 observed_con = constraint_object(constraint[con_key])
                 @test _is_constraint_equal(observed_con, expected_con)

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -18,7 +19,7 @@
 #############################################################################
 
 """
-    node_state_indices(filtering_options...)
+    node_slack_indices(filtering_options...)
 """
 function node_slack_indices(
     m::Model;

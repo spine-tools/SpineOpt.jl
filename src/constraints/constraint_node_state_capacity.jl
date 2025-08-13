@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -21,7 +22,7 @@
 To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-v^{node\_state}_{(n, s, t)} \leq p^{node\_state\_cap}_{(n, s, t)} \quad \forall n \in node : p^{has\_state}_{(n)}, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \leq p^{node\_state\_cap}_{(n, s, t)} \cdot p^{node\_availability\_factor}_{(n, s, t)} \quad \forall n \in node : p^{has\_state}_{(n)}, \, \forall (s,t)
 ```
 
 The discharging and charging behavior of storage nodes can be described through unit(s),
@@ -32,6 +33,7 @@ the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
 
 See also
 [node\_state\_cap](@ref),
+[node\_availability\_factor](@ref),
 [has\_state](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
@@ -50,7 +52,7 @@ function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
         )
         <=
         + sum(
-            + node_state_cap(m; node=ng, stochastic_scenario=s, t=t)
+            + node_state_capacity(m; node=ng, stochastic_scenario=s, t=t)
             * (
                 + number_of_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
                 + sum(
@@ -70,7 +72,10 @@ end
 function constraint_node_state_capacity_indices(m::Model)
     (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(m; node=intersect(indices(node_state_cap), indices(candidate_storages)))
+        for (ng, t) in node_time_indices(
+            m; node=intersect(indices(node_state_cap), indices(candidate_storages)), temporal_block=anything
+        )
+        if (has_state(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

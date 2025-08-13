@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -53,22 +54,7 @@ function add_expression_capacity_margin!(m::Model)
     m.ext[:spineopt].expressions[:capacity_margin] = Dict(
         (node=n, stochastic_path=s_path, t=t) => @expression(
             m,
-            - sum(
-                + demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
-                for (n, s, t) in node_injection_indices(
-                    m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
-                );
-                init=0,
-            )
-            - sum(
-                fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t))
-                * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t))
-                for (n, s, t) in node_injection_indices(
-                    m; node=n, stochastic_scenario=s_path, t=t, temporal_block=anything
-                )
-                for ng in groups(n);
-                init=0,
-            )
+            - maximum(_total_demand(m, n, s, t) for s in s_path)
             # Commodity flows to storage units
             - sum(
                 unit_flow[u, n, d, s, t_short]
@@ -107,7 +93,7 @@ function add_expression_capacity_margin!(m::Model)
                     + sum(
                         + _get_units_on(m, u, s, t_over)
                         for (u, s, t_over) in unit_stochastic_time_indices(
-                            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t), temporal_block=anything
+                            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
                         );
                         init=0,
                     )

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -65,19 +66,36 @@ end
 
 function _is_constraint_equal(left, right)
     if !_is_constraint_equal_kernel(left, right)
-        @show left
-        @show right
+        println("LEFT")
+        _show_constraint(left)
+        println("RIGHT")
+        _show_constraint(right)
         false
     else
         true
     end
 end
 
-function _is_constraint_equal_kernel(left, right)
-    if left.set != right.set
-        @error string(left.set, " != ", right.set)
-        return false
+function _show_constraint(con)
+    for (var, coef) in sort(con.func.terms; by=name)
+        println(_signed_string(coef), " ", var)
     end
+    println(_signed_string(con.func.constant))
+    println(_sense_string(con.set))
+    println(_signed_string(con.set))
+    println("")
+end
+
+_signed_string(x) = string(x >= 0 ? "+" : "-", " ", abs(x))
+_signed_string(s::MOI.LessThan) = _signed_string(s.upper)
+_signed_string(s::MOI.EqualTo) = _signed_string(s.value)
+_signed_string(s::MOI.GreaterThan) = _signed_string(s.lower)
+
+_sense_string(::MOI.LessThan) = "<="
+_sense_string(::MOI.EqualTo) = "=="
+_sense_string(::MOI.GreaterThan) = ">="
+
+function _is_constraint_equal_kernel(left, right)
     left_terms, right_terms = left.func.terms, right.func.terms
     missing_in_right = setdiff(keys(left_terms), keys(right_terms))
     if !isempty(missing_in_right)
@@ -89,13 +107,18 @@ function _is_constraint_equal_kernel(left, right)
         @error string("missing in left constraint: ", missing_in_left)
         return false
     end
+    result = true
     for k in keys(left_terms)
         if !isapprox(left_terms[k], right_terms[k])
             @error string(left_terms[k], " != ", right_terms[k])
-            return false
+            result = false
         end
     end
-    return true
+    if left.set != right.set
+        @error string(left.set, " != ", right.set)
+        result = false
+    end
+    result
 end
 
 function _is_expression_equal(x, y)
@@ -131,29 +154,31 @@ function _dismember_function(func)
 end
 
 @testset begin
-    include("data_structure/check_economic_structure.jl") 
     include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
+    include("data_structure/check_economic_structure.jl") 
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
     include("data_structure/postprocess_results.jl")
     include("expressions/expression.jl")
-    include("constraints/constraint_unit.jl")
-    include("constraints/constraint_node.jl")
-    include("constraints/constraint_connection.jl")
+    include("constraints/constraint_unit.jl") # CRASHES with multithreading?
+    include("constraints/constraint_node.jl") # CRASHES with multithreading?
+    include("constraints/constraint_connection.jl") # CRASHES with multithreading?
     include("constraints/constraint_user_constraint.jl")
-    include("constraints/constraint_investment_group.jl")
-    include("objective/objective.jl")
+    include("constraints/constraint_investment_group.jl") # CRASHES with multithreading?
+    include("objective/objective.jl") # CRASHES with multithreading?
     include("variables/variables.jl")
     include("util/misc.jl")
-    include("run_spineopt.jl")
+    include("run_spineopt.jl") # CRASHES with multithreading?
     include("run_spineopt_benders.jl")
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
-    include("run_spineopt_mga.jl")
-    include("run_examples.jl")
-    include("run_benchmark_data.jl")
+    include("run_spineopt_mga.jl") # CRASHES with multithreading?
+    include("run_spineopt_monte_carlo.jl")
+    include("run_spineopt_representative_periods.jl") # FREEZES with multithreading?
+    include("run_examples.jl") # CRASHES with multithreading?
+    include("run_benchmark_data.jl") # CRASHES with multithreading?
     include("run_spineopt_hsj_mga.jl")
 end
 

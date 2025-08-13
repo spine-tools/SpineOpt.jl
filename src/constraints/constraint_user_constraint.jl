@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -276,6 +277,7 @@ function constraint_user_constraint_indices(m::Model)
         for (t, path) in t_lowest_resolution_path(
             m, Iterators.flatten(user_constraint_all_indices(m; user_constraint=uc))
         )
+        if _is_representative(t) || include_in_non_representative_periods(user_constraint=uc)
     )
 end
 

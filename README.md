@@ -7,7 +7,7 @@ A Julia package containing a state-of-the-art energy system optimization model.
 
 ### :loudspeaker: Community and how to ask help :rocket:
 
-There are four main ways to get help with SpineOpt.
+There are several ways to get help with SpineOpt.
 
 1. Monthly user meetings for Spine Toolbox and SpineOpt. There you can connect with other users, present problems and exchange experiences. New and old users equally welcome. The meetings are held first Tuesday of every month at 3pm CEST [:calendar: ics zip](https://github.com/spine-tools/SpineOpt.jl/blob/master/SpineTools_user_meeting.ics) and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_ZDBkZjBhNmEtMGFmZi00ZDllLWE4ZmQtMWJhMWZjYjUyNDUy%40thread.v2/0?context=%7b%22Tid%22%3a%223973589b-9e40-4eb5-800e-b0b6383d1621%22%2c%22Oid%22%3a%224c379655-31a5-4c3e-b6d6-b61817a44e14%22%7d). For meeting updates, please checkout [this discussion](https://github.com/spine-tools/SpineOpt.jl/discussions/849).
 2. [Gitter](https://app.gitter.im/#/room/#spine-tools_community:gitter.im) (i.e. Matrix) chat service. You need to register but allows to ask quick questions and hopefullly get quick answers.

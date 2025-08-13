@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -294,18 +295,18 @@ end
 
 function _ratio_to_d1_d2(ratio)
     Dict(
-        fix_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node), ==),
-        max_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node), <=),
-        min_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node), >=),
-        fix_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node), ==),
-        max_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node), <=),
-        min_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node), >=),
-        fix_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node), ==),
-        max_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node), <=),
-        min_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node), >=),
-        fix_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node), ==),
-        max_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node), <=),
-        min_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node), >=),
+        fix_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node)),
+        max_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node)),
+        min_ratio_out_in_unit_flow => (direction(:to_node), direction(:from_node)),
+        fix_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node)),
+        max_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node)),
+        min_ratio_in_in_unit_flow => (direction(:from_node), direction(:from_node)),
+        fix_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node)),
+        max_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node)),
+        min_ratio_out_out_unit_flow => (direction(:to_node), direction(:to_node)),
+        fix_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node)),
+        max_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node)),
+        min_ratio_in_out_unit_flow => (direction(:from_node), direction(:to_node)),
     )[ratio]
 end
 

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -21,7 +22,7 @@ using Random
 
 function _rand_time(mean_time; resolution)
     mean_time = round(mean_time, resolution(1))
-    resolution(round(Int, rand(Exponential(iszero(mean_time.value) ? 1e-6 : mean_time.value))))
+    resolution(ceil(rand(Exponential(mean_time.value))))
 end
 
 function _forced_outages(t_start, t_end, mttf, mttr; resolution)
@@ -39,16 +40,20 @@ _forced_outages(t_start, t_end, ::Nothing, mttr; resolution) = []  # never fails
 _forced_outages(t_start, t_end, ::Nothing, ::Nothing; resolution) = []  # never fails
 _forced_outages(t_start, t_end, mttf, ::Nothing; resolution) = [(t_start + _rand_time(mttf; resolution), t_end)]
 
-function forced_outage_time_series(t_start, t_end, mttf, mttr; seed=nothing, resolution=Hour)
-    seed === nothing || Random.seed!(seed)
+function forced_outage_time_series(t_start, t_end, mttf, mttr, nb_of_units; seed=nothing, resolution=Hour)
     indices = [t_start]
-    values = [0]
-    for (failure_time, repair_time) in _forced_outages(t_start, t_end, mttf, mttr; resolution)
-        append!(indices, [failure_time, repair_time])
-        append!(values, [1, 0])
+    values = [0.0]
+    if nb_of_units > 0
+        seed === nothing || Random.seed!(seed)
+        for (failure_time, repair_time) in _forced_outages(t_start, t_end, mttf, mttr; resolution)
+            append!(indices, [failure_time, repair_time])
+            append!(values, [nb_of_units, 0.0])
+        end
     end
-    push!(indices, t_end)
-    push!(values, 0)
+    if last(indices) < t_end
+        push!(indices, t_end)
+        push!(values, 0.0)
+    end
     TimeSeries(indices, values)
 end
 
@@ -89,7 +94,8 @@ function generate_forced_outages(url_in, url_out=url_in; alternative="Base")
             m_start,
             m_end,
             mean_time_to_failure(unit=u, _strict=false),
-            mean_time_to_repair(unit=u, _strict=false)
+            mean_time_to_repair(unit=u, _strict=false),
+            number_of_units(unit=u, _default=_default_nb_of_units(u)),
         )
         for u in indices(mean_time_to_failure)
     )

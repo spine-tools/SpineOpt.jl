@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -108,7 +109,7 @@ end
 
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+        number_of_units(unit=u, _default=_default_nb_of_units(u))
     end
 end
 
