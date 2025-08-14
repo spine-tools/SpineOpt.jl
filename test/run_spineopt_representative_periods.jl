@@ -268,8 +268,8 @@ function _test_representative_periods_no_index_found()
                 showerror(buf, e)
                 message = String(take!(buf))
                 println(message)
-                @test startswith(message,"can't find a linear representative index combination for \
-                (node = batt_node, stochastic_scenario = realisation, \
+                @test startswith(message, "can't find a linear representative index combination for \
+                (node = h2_node, stochastic_scenario = realisation, \
                 t = 2000-01-01T00:00~(1 day)~>2000-01-02T00:00)")
             end
         end
@@ -362,7 +362,12 @@ function _expected_representative_periods_constraint(
             - elec_demand(t=t_after)
         )
     else#if n == node(:h2_node)
-        fr_h2e = vals["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow"]
+        unit_flow_from_node = if t_after in all_rt
+            fr_h2e = vals["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow"]
+            fr_h2e * unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
+        else
+            unit_flow[unit(:h2_gen), node(:h2_node), d_from, s, t_after]
+        end
         @build_constraint(
             + node_injection[n, s, t_after]
             ==
@@ -371,7 +376,7 @@ function _expected_representative_periods_constraint(
             - (1 / 24) * node_state[n, s, t_after]
             + (1 / 24) * node_state[n, s, t_before]
             + unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after]
-            - fr_h2e * unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
+            - unit_flow_from_node
         )
     end
 end
