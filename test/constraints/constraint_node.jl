@@ -1098,6 +1098,48 @@ function test_constraint_min_capacity_margin_penalty()
     end
 end
 
+function test_constraint_free_start_node_state()
+    @testset "constraint_free_start_node_state" begin
+        url_in = _test_constraint_node_setup()
+        objects = [["temporal_block","discontinuous_block"]]
+        object_parameter_values = [
+            ["temporal_block","discontinuous_block","has_free_start", true],
+            ["temporal_block","discontinuous_block","resolution", Dict("type"=>"duration","data"=>"1h")],
+            ["temporal_block","discontinuous_block","block_start", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            ["temporal_block","discontinuous_block","block_end", Dict("type" => "date_time", "data" => "2000-01-02T02:00:00")],
+            ["node","node_b","has_state", true],
+            ["node","node_b","node_state_cap", 100.0],
+            ["node","node_b","initial_node_state", 50.0],
+            #["temporal_block","hourly","has_free_start", true],
+            ["temporal_block","hourly","block_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["temporal_block","two_hourly","block_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["temporal_block", "investments_hourly", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T02:00:00")],
+        ]
+        relationships = [
+            ["model__temporal_block", ["instance", "discontinuous_block"]],
+            ["node__temporal_block", ["node_b","discontinuous_block"]],
+        ]
+
+        # FOR COMPARISON AND TESTING (DELETE ME BEFORE MERGING)
+        #url_in = _test_constraint_node_setup()
+        #objects = []
+        #object_parameter_values = [
+        #    ["node","node_b","has_state", true],
+        #    ["node","node_b","node_state_cap", 100.0],
+        #    ["node","node_b","initial_node_state", 50.0],
+        #    ["temporal_block","hourly","block_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+        #    ["temporal_block","two_hourly","block_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+        #    ["temporal_block", "investments_hourly", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+        #]
+        #relationships = []
+
+        SpineInterface.import_data(url_in; objects=objects, object_parameter_values=object_parameter_values, relationships=relationships)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        @test history_time_slice(m) |> length == 1
+
+    end
+end
 
 @testset "node-based constraints" begin
     test_constraint_nodal_balance()
@@ -1121,4 +1163,5 @@ end
     test_constraint_storage_lifetime_mp()
     test_constraint_min_capacity_margin()
     test_constraint_min_capacity_margin_penalty()
+    test_constraint_free_start_node_state()
 end
