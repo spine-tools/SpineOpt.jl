@@ -37,7 +37,8 @@ function connection_flow_costs(m::Model, t_range)
             * connection_flow_cost(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (conn, n, d) in indices(connection_flow_cost)
-            for (conn, n, d, s, t) in connection_flow_indices(m; connection=conn, node=n, direction=d, t=t_range);
+            for (conn, n, d, s, t) in connection_flow_indices(m; connection=conn, node=n, direction=d, t=t_range)
+            if t ∉ history_time_slice(m, temporal_block=anything, t=anything) ;
             init=0,
         )
     )
