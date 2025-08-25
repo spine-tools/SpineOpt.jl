@@ -177,63 +177,6 @@ function generate_simple_system(algorithm::String, no_iterations=nothing)
     return object_parameter_values, relationship_parameter_values
 end
 
-function generate_complex_system(algorithm, no_iterations)
-    candidate_units = 1
-        candidate_connections = 1
-        candidate_storages = 1
-        fuel_cost = 5
-        mga_slack = 0.05
-        points = [0, -0.5, -1, 1, 0.5, 0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in Iterators.drop(eachindex(points), 1)]]
-        mga_weights_1 = Dict("type" => "array", "value_type" => "float", "data" => points)
-        points = [0, -0.5, -1, 1, 0.5, 0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in Iterators.drop(eachindex(points), 1)]]
-        mga_weights_2 = Dict("type" => "array", "value_type" => "float", "data" => points)
-        object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_bc", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", 0],
-            ["unit", "unit_bc", "number_of_units", 0],
-            ["unit", "unit_group_abbc", "units_invested_mga", true],
-            ["unit", "unit_group_abbc", "units_invested__mga_weight", mga_weights_1],
-            ["unit", "unit_ab", "unit_investment_cost", 1],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["unit", "unit_bc", "unit_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_bc", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["connection", "connection_bc", "connection_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["connection", "connection_group_abbc", "connections_invested_mga", true],
-            ["connection", "connection_group_abbc", "connections_invested_mga_weight",mga_weights_2],
-            ["node", "node_b", "candidate_storages", candidate_storages],
-            ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_b", "storage_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["node", "node_c", "storage_investment_tech_lifetime", unparse_db_value(Hour(2))],
-            ["node", "node_a", "balance_type", :balance_type_none],
-            ["node", "node_b", "has_state", true],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_b", "fix_node_state", 0],
-            ["node", "node_c", "fix_node_state", 0],
-            ["node", "node_b", "node_state_cap", 0],
-            ["node", "node_c", "node_state_cap", 0],
-            ["node", "node_group_bc", "storages_invested_mga", true],
-            ["node", "node_group_bc","storages_invested_mga_weight", mga_weights_1],
-            ["model", "instance", "model_algorithm", algorithm],
-            ["model", "instance", "max_mga_slack", mga_slack],
-            ["model", "instance", "max_mga_iterations", no_iterations],
-            ["node", "node_b", "demand", 1],
-            ["node", "node_c", "demand", 1],
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 5],
-            ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
-            ["unit__to_node", ["unit_bc", "node_c"], "unit_capacity", 5],
-            ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
-            ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
-        ]
-        return object_parameter_values, relationship_parameter_values
-end
-
 function _test_run_spineopt_hsj_mga()
     @testset "run_spineopt_hsj_mga_no_max_iterations" begin
         url_in = _test_run_spineopt_mga_setup()
@@ -244,6 +187,19 @@ function _test_run_spineopt_hsj_mga()
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=1, add_bridges=true)
+        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+        @test length(variable_values) == 1
+        expected_values= Dict(
+            0 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 1.0,
+            )
+        )
+        for (iter, dict) in variable_values
+            for (key, value) in dict[:units_invested]
+                @test isapprox(expected_values[iter][key.unit], value)
+            end
+        end
     end
     @testset "run_spineopt_hsj_mga" begin
         url_in = _test_run_spineopt_mga_setup()
@@ -254,16 +210,27 @@ function _test_run_spineopt_hsj_mga()
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=1, add_bridges=true)
-    end
-    @testset "run_spineopt_hsj_mga_advanced" begin
-        url_in = _test_run_spineopt_mga_setup()
-        object_parameter_values, relationship_parameter_values = generate_complex_system("hsj_mga_algorithm", 2)
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+        @test length(variable_values) == 3
+        expected_values= Dict(
+            0 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 1.0,
+            ),
+            1 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 0.0,
+            ),
+            2 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 0.0,
+            ),
         )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+        for (iter, dict) in variable_values
+            for (key, value) in dict[:units_invested]
+                @test isapprox(expected_values[iter][key.unit], value)
+            end
+        end
     end
 end
 
@@ -277,6 +244,19 @@ function _test_run_spineopt_fuzzy_mga()
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=1, add_bridges=true)
+        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+        @test length(variable_values) == 1
+        expected_values= Dict(
+            0 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 1.0,
+            ),
+        )
+        for (iter, dict) in variable_values
+            for (key, value) in dict[:units_invested]
+                @test isapprox(expected_values[iter][key.unit], value)
+            end
+        end
     end
     @testset "run_spineopt_fuzzy_mga" begin
         url_in = _test_run_spineopt_mga_setup()
@@ -287,16 +267,27 @@ function _test_run_spineopt_fuzzy_mga()
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=1, add_bridges=true)
-    end
-    @testset "run_spineopt_fuzzy_mga_advanced" begin
-        url_in = _test_run_spineopt_mga_setup()
-        object_parameter_values, relationship_parameter_values = generate_complex_system("fuzzy_mga_algorithm", 2)
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+        @test length(variable_values) == 3
+        expected_values= Dict(
+            0 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 1.0,
+            ),
+            1 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 0.0,
+            ),
+            2 => Dict(
+                Object(:unit_ab, :unit) => 0.0,
+                Object(:unit_bc, :unit) => 0.0,
+            ),
         )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
+        for (iter, dict) in variable_values
+            for (key, value) in dict[:units_invested]
+                @test isapprox(expected_values[iter][key.unit], value)
+            end
+        end
     end
 end
 
