@@ -26,7 +26,7 @@ end
 
 function _test_run_spineopt_setup()
     url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    file_path_out = tempname(cleanup=true)
     url_out = "sqlite:///$file_path_out"
     test_data = Dict(
         :objects => [
@@ -99,7 +99,6 @@ function _test_report_relative_optimality_gap()
             relationships=relationships,
             objects=objects
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         @testset for k in 1:24
@@ -133,7 +132,6 @@ function _test_rolling()
             relationship_parameter_values=relationship_parameter_values,
         )
         @testset for write_as_roll in (0, 1, 2, 3, 5, 8, 13, 21, 24)
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0, write_as_roll=write_as_roll)
             con = m.ext[:spineopt].constraints[:unit_flow_capacity]
             using_spinedb(url_out, Y)
@@ -195,7 +193,6 @@ function _test_rolling_with_updating_data()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -251,7 +248,6 @@ function _test_rolling_with_unused_dummy_stochastic_data()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -292,7 +288,6 @@ function _test_rolling_without_varying_terms()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -430,7 +425,6 @@ function _test_dont_overwrite_results_on_rolling()
             relationship_parameter_values=relationship_parameter_values,
             on_conflict=:replace
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0, update_names=true)
         using_spinedb(url_out, Y)
         flow_key = (
@@ -512,7 +506,6 @@ function _test_write_inputs()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
-        rm(file_path_out; force=true)
         run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -544,7 +537,6 @@ function _test_write_inputs_overlapping_temporal_blocks()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
-        rm(file_path_out; force=true)
         run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -571,7 +563,6 @@ function _test_output_resolution_for_an_input()
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
             )
-            rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0, filters=Dict())
             using_spinedb(url_out, Y)
             key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -704,7 +695,6 @@ function _test_dual_values()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -742,7 +732,6 @@ function _test_dual_values_with_two_time_indices()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -780,7 +769,6 @@ function _test_fix_unit_flow_with_rolling()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         @testset for ind in indices(Y.unit_flow)
@@ -831,7 +819,6 @@ function _test_fix_node_state_using_map_with_rolling()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         n_state = Y.node_state(; node=Y.node(:node_b))
@@ -864,7 +851,6 @@ function _test_time_limit()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        rm(file_path_out; force=true)
         windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
         msgs = ["no solution available for instance - window $w - moving on..." for w in windows]
         @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
@@ -877,7 +863,6 @@ function _test_only_linear_model_has_duals()
     @testset "linear_model_has_duals" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         SpineInterface.import_data(url_in; objects=objects, relationships=relationships)
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         @test has_duals(m)
     end
@@ -895,7 +880,6 @@ function _test_only_linear_model_has_duals()
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         @test !has_duals(m)
     end
