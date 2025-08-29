@@ -415,8 +415,7 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     m
 end
 
-"Bridges are required for MGA algorithm"
-needs_bridges(::Val{:mga_algorithm}) = true
+"Standard algorithms do not require optimizer bridges"
 needs_bridges(model_algorithm) = false
 
 """

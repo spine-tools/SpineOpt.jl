@@ -18,6 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"Optimizer bridges are required for MGA algorithm to form inequality constraints"
+needs_bridges(::Val{:mga_algorithm}) = true
+
 function do_run_spineopt!(
     m,
     url_out,
