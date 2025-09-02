@@ -47,44 +47,19 @@ macro timelog(level, threshold, msg, stats, expr)
     end
 end
 
-const _SENTINEL = "SpineOptSentinel"
-
 macro timemsg(msg, stats, expr)
-    quote
-        msg = $(esc(msg))
-        stats = $(esc(stats))
-        printstyled(stderr, msg; bold=true)
-        pipe = Pipe()
-        task = @Threads.spawn _drain(pipe)
-        val = redirect_stdout(pipe) do
-            val = @time $(esc(expr))
-            println(_SENTINEL)
-            val
-        end
-        last_str = fetch(task)
-        if stats isa Dict
-            seconds = parse(Float64, strip(split(last_str, "seconds")[1]))
-            push!(get!(stats, strip(msg), []), seconds)
-        end
-        val
-    end
+    :(timemsg($(esc(msg)), $(esc(stats)), () -> $(esc(expr))))
 end
 
-function _drain(pipe)
-    last_str = ""
-    while true
-        str = try
-            readline(pipe)
-        catch err
-            err isa ArgumentError || rethrow()
-            sleep(0.02)
-            continue
-        end
-        str == _SENTINEL && break
-        println(stderr, str)
-        last_str = str
+function timemsg(msg, stats, f)
+    printstyled(stdout, msg; bold=true)
+    if stats isa Dict
+        result = @timed @time f()
+        push!(get!(stats, strip(msg), []), result.time)
+        result.value
+    else
+        @time f()
     end
-    last_str
 end
 
 """
