@@ -47,20 +47,18 @@ macro timelog(level, threshold, msg, stats, expr)
     end
 end
 
-const _SENTINEL = "SpineOptSentinel"
-
 macro timemsg(msg, stats, expr)
-    quote
-        msg = $(esc(msg))
-        stats = $(esc(stats))
-        printstyled(stderr, msg; bold=true)
-        if stats isa Dict
-            result = @timed @time $(esc(expr))
-            push!(get!(stats, strip(msg), []), result.time)
-            result.value
-        else
-            @time $(esc(expr))
-        end
+    :(timemsg($(esc(msg)), $(esc(stats)), () -> $(esc(expr))))
+end
+
+function timemsg(msg, stats, f)
+    printstyled(stdout, msg; bold=true)
+    if stats isa Dict
+        result = @timed @time f()
+        push!(get!(stats, strip(msg), []), result.time)
+        result.value
+    else
+        @time f()
     end
 end
 
