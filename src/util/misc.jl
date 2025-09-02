@@ -54,37 +54,14 @@ macro timemsg(msg, stats, expr)
         msg = $(esc(msg))
         stats = $(esc(stats))
         printstyled(stderr, msg; bold=true)
-        pipe = Pipe()
-        task = @Threads.spawn _drain(pipe)
-        val = redirect_stdout(pipe) do
-            val = @time $(esc(expr))
-            println(_SENTINEL)
-            val
-        end
-        last_str = fetch(task)
         if stats isa Dict
-            seconds = parse(Float64, strip(split(last_str, "seconds")[1]))
-            push!(get!(stats, strip(msg), []), seconds)
+            result = @timed @time $(esc(expr))
+            push!(get!(stats, strip(msg), []), result.time)
+            result.value
+        else
+            @time $(esc(expr))
         end
-        val
     end
-end
-
-function _drain(pipe)
-    last_str = ""
-    while true
-        str = try
-            readline(pipe)
-        catch err
-            err isa ArgumentError || rethrow()
-            sleep(0.02)
-            continue
-        end
-        str == _SENTINEL && break
-        println(stderr, str)
-        last_str = str
-    end
-    last_str
 end
 
 """
