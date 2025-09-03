@@ -142,7 +142,6 @@ function _build_constraint_ratio_unit_flow(m::Model, u, ng1, ng2, s_path, t, rat
             * units_on_coeff(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
             + start_flow_sign
             * _get_units_started_up(m, u, s, t1)
-            * min(duration(t1), duration(t))
             * unit_start_flow(m; unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)
             for (u, s, t1) in unit_stochastic_time_indices(
                 m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
