@@ -19,6 +19,9 @@ python --version
 julia --version
 ```
 
+!!! warning
+    We try to keep up with the latest versions of these programming languages. But sometimes we need a little time.
+
 !!! tip
     Typically you'd install Julia from the [website](https://julialang.org/downloads/). We recommend Julia 1.10 or above.
 
