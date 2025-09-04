@@ -116,8 +116,8 @@ spinetoolbox
     For Windows, create a 'run_spinetools.bat' file (you can make a text file and change the extension from '.txt' to '.bat'). The following lines of code should be pasted in that file. Make sure to adjust the path to the actual path of the Python environment that you used to install Spine Toolbox.
 
     ```cmd
-    cd path/to/python/environment/folder
-    Scripts/activate
+    cd path/to/environments
+    penv/Scripts/activate
     spinetoolbox
     ```
 
