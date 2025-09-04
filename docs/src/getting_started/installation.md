@@ -10,7 +10,7 @@ The process consists of a few simple steps:
 * Configure Spine Toolbox for SpineOpt
 
 ## Prerequisites
-Spine Toolbox needs [Python](https://www.python.org/) and SpineOpt needs [Julia](https://julialang.org/).
+Spine Toolbox needs [Python](https://www.python.org/) (version 3.10 or above) and SpineOpt needs [Julia](https://julialang.org/) (version 1.10 or above).
 
 To check whether these are installed properly, open the terminal and type:
 
@@ -23,7 +23,7 @@ julia --version
     We try to keep up with the latest versions of these programming languages. But sometimes we need a little time.
 
 !!! tip
-    Typically you'd install Julia from the [website](https://julialang.org/downloads/). We recommend Julia 1.10 or above.
+    Typically you'd install Julia from the [website](https://julialang.org/downloads/).
 
     However, on Linux, it may be more convenient to install Julia through Python:
     ```
@@ -128,7 +128,7 @@ spinetoolbox
 
 ## Install SpineOpt
 
-The process for installing SpineOpt is very similar. If you close Spine Toolbox in the previous step, you can use the same terminal for the installation of SpineOpt. Otherwise, open a new terminal and navigate to the environments folder again.
+The process for installing SpineOpt is very similar. If you close Spine Toolbox in the previous step, you can use the same terminal for the installation of SpineOpt. The terminal should indicate that you are still in the `environments` folder (it does not matter whether the python environment is still active or not). Otherwise, open a new terminal and navigate to the `environments` folder again.
 
 For the creation of the Julia environment and the installation of SpineOpt, we will be using the Julia REPL. To activate the Julia REPL, simply call 'julia' from the terminal.
 
@@ -161,7 +161,7 @@ SpineOpt is now available as a Julia package in the jenv environment. Similar to
 
 In order to use SpineOpt from within Spine Toolbox, we need to point Spine Toolbox to the Julia environment in which we installed SpineOpt. Additionally we can install a plugin with some predefined scripts to run SpineOpt as a Spine Toolbox tool.
 
-Open the Python environment and open Spine Toolbox.
+Open the Python environment and open Spine Toolbox. If you are still in the same terminal you can simply type `spinetoolbox`. Otherwise, open a new terminal, activate the python environment and then open Spine Toolbox. For example, on Linux:
 
 ```bash
 source ~/spinetools/environments/penv/bin/activate
@@ -171,5 +171,7 @@ spinetoolbox
 We'll point Spine Toolbox to the Julia environment in the settings. Navigate to 'File > Settings > Tools'. Under 'Julia' there are two paths. The first is for the Julia installation itself. There should be no problems with this path but to be sure do check that it is correct. The second is for the Julia environment. If it is empty it shows 'Using Julia default project'. Put the path to the jenv environment here.
 
 To add the SpineOpt plugin, navigate to 'Plugins > Install plugin ...' and select the SpineOpt plugin.
+
+## Next steps
 
 That brings an end to the installation process of Spine Toolbox and SpineOpt. However, before starting a tutorial, we recommend to [verify](@ref recommended_workflow) the installation first. If there are any troubles with the installation, you can try [troubleshooting](@ref troubleshooting).
