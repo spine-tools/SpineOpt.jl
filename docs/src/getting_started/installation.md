@@ -31,17 +31,17 @@ julia --version
     jill install
     ```
 
-    And, on Windows, it may be more convenient to install Julia from the Windows store.
+    And, on Windows, it may be more convenient to install Julia from the Windows store (as that automatically configures the registry as well).
 
 ## Prepare the folder structure
 
 This step is not strictly necessary as you can install spine tools in any folder and any environment. Feel free to choose your own structure. Though for a first installation, it may be easier to follow along.
 
-Let's start with making the folder 'spinetools' in your user directory. On a system administered computer, ask IT for a folder where an application has reading and writing permissions and create the folder there.
+Let's start with making the folder `spinetools` in your user directory. On a system administered computer, ask IT for a folder where an application has reading and writing permissions and create the folder there.
 
-To ensure that spine tools do not interfere with other python/julia packages on the system, we will be installing spine tools in a [virtual environment](https://www.geeksforgeeks.org/python/python-virtual-environment/). We will need a separate environment for Python and for Julia. We will give the folders that contain these environments the original names 'penv' and 'jenv'.
+To ensure that spine tools do not interfere with other python/julia packages on the system, we'll be installing spine tools in [virtual environments](https://www.geeksforgeeks.org/python/python-virtual-environment/) and we'll store these environments in a folder originally named `environments`. We'll need a separate environment for Python and for Julia and we'll give the folders that contain these environments the equally original names `penv` and `jenv`. During the creation of the environments, the folders will be created automatically so we don't need to do that now. However, we can already make them now to have an idea of what our folder structure will look like.
 
-Your folder structure should look something like this:
+The resulting folder structure that we will use, looks something like this:
 
 * spinetools
     * environments
