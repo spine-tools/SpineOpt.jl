@@ -2,6 +2,13 @@
 
 This troubleshooting section will grow over time when more issues arise. If your problem is not listed below, please create an [issue](https://github.com/spine-tools/SpineOpt.jl/issues).
 
+## ERROR: LoadError: ArgumentError: Package SpineOpt not found in current path.
+Have you properly configured SpineOpt in the Spine Toolbox settings?
+
+`File > Settings > Tools` under Julia there should be two paths: one for the Julia executable and one for the virtual environment where you have installed SpineOpt.
+
+The tools themselves also have these paths. If the field of the project folder is empty it will automatically use the default virtual environment from the general settings. Otherwise it will be using the specified environment.
+
 ## I cannot drag tools and databases from the ribbon to the design view
 Have you created a new project? File > New project
 
