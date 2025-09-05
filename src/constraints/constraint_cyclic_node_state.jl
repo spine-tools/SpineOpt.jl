@@ -39,13 +39,17 @@ function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end
     build_sense_constraint(
         sum(
             node_state[n, s, t_end]
-            for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_end);
+            for (n, s, t_end) in node_state_indices(
+                m; node=n, stochastic_scenario=s_path, t=t_end, temporal_block=anything
+            );
             init=0,
         ),        
         eval(cyclic_condition_sense(node=n, temporal_block=blk)),
         sum(
             node_state[n, s, t_start]
-            for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_start);
+            for (n, s, t_start) in node_state_indices(
+                m; node=n, stochastic_scenario=s_path, t=t_start, temporal_block=anything
+            );
             init=0,
         )        
     )

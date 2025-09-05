@@ -284,6 +284,7 @@ function _test_representative_periods_constraint(m, con_name, ind, con, vals, al
         m, Val(con_name), ind, observed_con, vals, all_rt, t_invest, d_from, d_to
     )
     if expected_con !== nothing
+        drop_zeros!(expected_con.func)
         @test _is_constraint_equal(observed_con, expected_con)
     end
 end
