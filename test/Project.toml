@@ -1,4 +1,6 @@
 [deps]
+HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
