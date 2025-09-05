@@ -675,7 +675,9 @@ function representative_block_coefficients(m, t)
 end
 
 function _repr_t_coefs(m, t)
-    Dict(first(time_slice(m; temporal_block=blk)) => coef for (blk, coef) in representative_block_coefficients(m, t))
+    blk_coef = representative_block_coefficients(m, t)
+    isempty(blk_coef) && return Dict(t => 1)
+    Dict(first(time_slice(m; temporal_block=blk)) => coef for (blk, coef) in blk_coef)
 end
 
 function _is_representative(t)
