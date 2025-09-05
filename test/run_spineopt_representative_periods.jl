@@ -226,7 +226,6 @@ function _test_representative_periods()
         all_rt = [rt1, rt2, rt3, rt4]
         t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
         @testset for con_name in keys(m.ext[:spineopt].constraints)
-            con_name == :cyclic_node_state || continue
             cons = m.ext[:spineopt].constraints[con_name]
             @testset for ind in keys(cons)
                 con = cons[ind]
