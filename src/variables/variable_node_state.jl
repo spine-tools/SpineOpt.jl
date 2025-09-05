@@ -53,6 +53,18 @@ function node_state_ub(m; node, kwargs...)
     )
 end
 
+function _get_delta_index(m, n, s, t_after, representative_blk, first_or_last)
+    t = first_or_last(time_slice(m; temporal_block=representative_blk))
+    inds = node_state_indices(m; node=n, stochastic_scenario=s, t=t)
+    if isempty(inds)
+        error(
+            "time slice $t_after appears to be mapped to block '$representative_blk' ",
+            "but node '$n' is not associated to it",
+        )
+    end
+    only(inds)
+end
+
 """
     add_variable_node_state!(m::Model)
 
@@ -74,15 +86,11 @@ function add_variable_node_state!(m::Model)
                 (node=n, stochastic_scenario=s, t=t_before) => 1
             );
             [
-                :node_state => Dict(
-                    (node=n, stochastic_scenario=s, t=last(time_slice(m; temporal_block=blk))) => coef
-                )
+                :node_state => Dict(_get_delta_index(m, n, s, t_after, blk, last) => coef)
                 for (blk, coef) in representative_block_coefficients(m, t_after)
             ];
             [
-                :node_state => Dict(
-                    (node=n, stochastic_scenario=s, t=first(time_slice(m; temporal_block=blk))) => -coef
-                )
+                :node_state => Dict(_get_delta_index(m, n, s, t_after, blk, first) => -coef)
                 for (blk, coef) in representative_block_coefficients(m, t_after)
             ];
         ]
@@ -99,10 +107,6 @@ function add_variable_node_state!(m::Model)
             1,
         )
     )
-    for (k, v) in replacement_expressions
-        @show k
-        for (x, y) in v @show x, y end
-    end
     add_variable!(
         m,
         :node_state,
