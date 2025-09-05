@@ -10,7 +10,7 @@ The process consists of a few simple steps:
 * Install SpineOpt
 * Configure Spine Toolbox for SpineOpt
 
-The figures below are a summary of this process that will be further explained in the following sections. Take note of the path in which the terminal is openend, i.e. an environments folder in a spinetools folder, as well as the environments that are active, indicated by the brackets at the start of the line, e.g. (jenv). Also note that the code in the image is for Linux. What you need to do differently for Windows is also explained in the following sections (the principle is the same but the syntax is a bit different).
+The figures below are a summary of this process that will be further explained in the following sections. Take note of the path in which the terminal is openend, i.e. an environments folder in a spinetools folder, as well as the environments that are active, indicated by the brackets at the start of the line, e.g. (jenv). Also note that the code in the image is for Linux; for Windows the terminal will look a bit different and the line `source penv/bin/activate` needs to be replaced by `penv\Scripts\activate`.
 
 ![Install spine tools](figs_installation/install_spinetools.png)
 
