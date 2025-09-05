@@ -64,17 +64,24 @@ function add_variable!(
     if required_history_period === nothing
         required_history_period = _model_duration_unit(m.ext[:spineopt].instance)(1)
     end
-    t_start = start(first(time_slice(m)))
-    t_history = TimeSlice(t_start - required_history_period, t_start)
-    history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
+    t_starts = Set(
+        start(first(time_slice(m; temporal_block=blk))) for blk in temporal_block(has_free_start=true)
+    )
+    push!(t_starts, start(first(time_slice(m))))
+    last_history_time_slices = [TimeSlice(t_start - required_history_period, t_start) for t_start in t_starts]
+    history_time_slices = [
+        t for t in history_time_slice(m) if any(overlaps(t, t_history) for t_history in last_history_time_slices)
+    ]
+    history_indices = indices(m; t=history_time_slices, temporal_block=anything)
+    window_indices = indices(m; t=time_slice(m))
+    all_indices = Iterators.flatten((history_indices, window_indices))
     represented_indices =_represented_indices(m, indices, replacement_expressions)
     first_ind = iterate(indices(m))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
         ind => _add_variable!(m, name, ind)
-        for kwargs in ((t=history_time_slices, temporal_block=anything), (t=time_slice(m),))
-        for ind in setdiff(indices(m; kwargs...), represented_indices, keys(replacement_expressions))
+        for ind in setdiff(all_indices, represented_indices, keys(replacement_expressions))
     )
     history_vars_by_ind = Dict(
         ind => [

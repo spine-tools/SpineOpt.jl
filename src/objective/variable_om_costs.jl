@@ -37,7 +37,8 @@ function variable_om_costs(m::Model, t_range)
             * vom_cost(m; unit=ug, node=ng, direction=d, stochastic_scenario=s, t=t)
             * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             for (ug, ng, d) in indices(vom_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=ug, node=ng, direction=d, t=t_range);
+            for (u, n, d, s, t) in unit_flow_indices(m; unit=ug, node=ng, direction=d, t=t_range)
+            if t ∉ history_time_slice(m, temporal_block=anything, t=anything);
             init=0,
         )
     )
