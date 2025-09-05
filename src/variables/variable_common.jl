@@ -36,11 +36,11 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
   - `required_history_period::Union{Period,Nothing}=nothing`: given an index, return the required history period
     or nothing
   - `replacement_expressions::OrderedDict=OrderedDict()`: mapping some of the indices of the variable -
-    as returned by the given `indices` function - to another Dict that defines an expression to use
+    as returned by the given `indices` function - to an Array of Pairs defining an expression to use
     instead of the variable for that index.
-    The expression Dict simply maps variable names to a tuple of reference index and coefficient.
+    The expression Array simply maps variable names to a tuple of reference index and coefficient.
     The expression is then built as the sum of the coefficient and the variable for the reference index,
-    over the entire Dict.
+    over the entire Array.
 """
 function add_variable!(
     m::Model,
@@ -67,14 +67,13 @@ function add_variable!(
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
-    represented_indices =_represented_indices(m, indices, replacement_expressions)
     first_ind = iterate(indices(m))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
         ind => _add_variable!(m, name, ind)
         for kwargs in ((t=history_time_slices, temporal_block=anything), (t=time_slice(m),))
-        for ind in setdiff(indices(m; kwargs...), represented_indices, keys(replacement_expressions))
+        for ind in setdiff(indices(m; kwargs...), keys(replacement_expressions))
     )
     history_vars_by_ind = Dict(
         ind => [
@@ -99,7 +98,6 @@ function add_variable!(
         history_vars_by_ind=history_vars_by_ind,
         history_time_slices=history_time_slices,
         replacement_expressions=replacement_expressions,
-        represented_indices=represented_indices,
     )
     _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
@@ -137,7 +135,6 @@ function _variable_definition(;
     history_time_slices=[],
     history_vars_by_ind=Dict(),
     replacement_expressions=OrderedDict(),
-    represented_indices=[],
 )
     Dict(
         :indices => indices,
@@ -151,15 +148,14 @@ function _variable_definition(;
         :history_time_slices => history_time_slices,
         :history_vars_by_ind => history_vars_by_ind,
         :replacement_expressions => replacement_expressions,
-        :represented_indices => represented_indices,
     )
 end
 
 function _add_dependent_variables!(m; log_level)
     for name in sort!(collect(keys(m.ext[:spineopt].variables_definition)))
         def = m.ext[:spineopt].variables_definition[name]
-        @fetch replacement_expressions, represented_indices, indices = def
-        isempty(replacement_expressions) && isempty(represented_indices) &&continue
+        @fetch replacement_expressions, indices = def
+        isempty(replacement_expressions) && continue
         @timelog log_level 3 "- [variable_$name]" begin
             vars = m.ext[:spineopt].variables[name]
             exprs = Dict()
@@ -167,12 +163,6 @@ function _add_dependent_variables!(m; log_level)
                 vars[ind] = exprs[ind] = _resolve_formula(m, formula)
             end
             _finalize_expressions!(m, exprs, name, def)
-            for ind in represented_indices
-                vars[ind] = sum(
-                    coef * vars[representative_ind]
-                    for (representative_ind, coef) in _representative_index_to_coefficient(m, ind, indices)
-                )
-            end
         end
     end
 end
@@ -265,23 +255,6 @@ function _fix(var::VariableRef, value::Number)
     end
 end
 
-"""
-A collection of represented indices.
-"""
-function _represented_indices(m::Model, indices::Function, replacement_expressions::OrderedDict)
-    isempty(SpineInterface.indices(representative_periods_mapping)) && return []
-    # By default, `indices` only returns representative time slices for operational variables other than node_state
-    # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
-    # to `temporal_block(representative_periods_mapping=nothing)` - so only blocks that don't define a mapping are
-    # returned.
-    # To also retrieve represented time slices, we need to specify `temporal_block=anything`.
-    # Note that for node_state and investment variables, the result will be empty.
-    representative_indices = indices(m)
-    all_indices = collect(indices(m; temporal_block=anything))
-    filter!(_is_longterm_index, all_indices)
-    setdiff(all_indices, representative_indices, keys(replacement_expressions))
-end
-
 function _is_longterm_index(ind)
     if haskey(ind, :node)
         _is_longterm_node(ind.node)
@@ -295,36 +268,4 @@ end
 
 function _is_longterm_node(n)
     has_state(node=n) && is_longterm_storage(node=n)
-end
-
-"""
-A `Dict` mapping representative indidces to coefficient.
-"""
-function _representative_index_to_coefficient(m, ind, indices)
-    representative_t_to_coef_arr = representative_time_slice_combinations(m, ind.t)
-    representative_inds_to_coef_arr = [
-        Dict(indices(m; ind..., t=representative_t) => coef for (representative_t, coef) in representative_t_to_coef)
-        for representative_t_to_coef in representative_t_to_coef_arr
-    ]
-    filter!(representative_inds_to_coef_arr) do representative_inds_to_coef
-        !any(isempty.(keys(representative_inds_to_coef)))
-    end
-    if isempty(representative_inds_to_coef_arr)
-        representative_blocks = unique(
-            blk
-            for representative_t_to_coef in representative_t_to_coef_arr
-            for t in keys(representative_t_to_coef)
-            for blk in blocks(t)
-            if representative_periods_mapping(temporal_block=blk) === nothing
-        )
-        node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
-        error(
-            "can't find a linear representative index combination for $ind -",
-            " this is probably because ",
-            node_or_unit,
-            " is not associated to any of the representative temporal_blocks ",
-            join(("'$blk'" for blk in representative_blocks), ", "),
-        )
-    end
-    Dict(first(inds) => coef for (inds, coef) in first(representative_inds_to_coef_arr))
 end

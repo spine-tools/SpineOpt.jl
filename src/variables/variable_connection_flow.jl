@@ -94,7 +94,7 @@ Add `connection_flow` variables to model `m`.
 function add_variable_connection_flow!(m::Model)
     fix_ratio_d1_d2 = ((fix_ratio_out_in_connection_flow, direction(:to_node), direction(:from_node)),)
     replacement_expressions = OrderedDict(
-        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t) => Dict(
+        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t) => [
             :connection_flow => Dict(
                 (
                     connection=conn,
@@ -104,7 +104,7 @@ function add_variable_connection_flow!(m::Model)
                     t=t,
                 ) => _fix_ratio_connection_flow(m, conn, n, n_ref, s, t, fix_ratio, direct)
             )
-        )
+        ]
         for (conn, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)
         if _has_simple_fix_ratio_out_in_connection_flow(conn, n, n_ref, direct)
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_ref)

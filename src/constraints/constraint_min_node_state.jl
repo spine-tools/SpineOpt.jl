@@ -72,10 +72,8 @@ end
 function constraint_min_node_state_indices(m::Model)
     (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(
-            m; node=intersect(indices(node_state_cap), indices(candidate_storages)), temporal_block=anything
-        )
-        if (has_state(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
+        for ng in intersect(node(has_state=true), indices(node_state_cap), indices(candidate_storages))
+        for t in _node_state_time_slices(m, ng)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
@@ -84,6 +82,10 @@ function constraint_min_node_state_indices(m::Model)
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )
-        ) if realize(node_state_lower_limit(m; node=ng, stochastic_scenario=path, t=t, _strict=false)) > 0
+        )
+        # FIXME: The below shouldn't work because path is an Array and the stochastic_scenario argument
+        # expects a single Object. I'm surprised it doesn't fail with an error,
+        # maybe it is just returning the default_value for node_state_lower_limit?
+        if realize(node_state_lower_limit(m; node=ng, stochastic_scenario=path, t=t, _strict=false)) > 0
     )
 end

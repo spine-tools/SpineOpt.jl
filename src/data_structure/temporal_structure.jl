@@ -113,38 +113,43 @@ _adjusted_end(_w_start::DateTime, w_end::DateTime, _blk_end::Nothing) = w_end
 _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::Union{Period,CompoundPeriod}) = w_start + blk_end
 _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_start, blk_end)
 
+function _start_and_end_by_block(m::Model, window_start, window_end)
+    model_blocks = members(temporal_block())
+    isempty(model_blocks) && error("model $(_model_name(m)) doesn't have any temporal_blocks")
+    window_very_end = maximum(
+        _adjusted_end(window_start, window_end, block_end(temporal_block=tb, _strict=false)) for tb in model_blocks
+    )
+    start_and_end_by_block = Dict(
+        blk => (
+            _adjusted_start(window_start, block_start(temporal_block=blk, _strict=false)),
+            _adjusted_end(window_start, window_very_end, block_end(temporal_block=blk, _strict=false)),
+        )
+        for blk in members(temporal_block(representative_periods_mapping=nothing))
+    )
+end
 """
     _blocks_by_time_interval(m::Model, window_start, window_end)
 
 A `Dict` mapping (start, end) tuples to an Array of temporal blocks where found.
 """
-function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::DateTime)
+function _blocks_by_time_interval(m::Model, start_and_end_by_block)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
-    # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
-    model_blocks = members(temporal_block())
-    model_name = _model_name(m)
-    isempty(model_blocks) && error("model $model_name doesn't have any temporal_blocks")
-    window_very_end = maximum(
-        _adjusted_end(window_start, window_end, block_end(temporal_block=tb, _strict=false)) for tb in model_blocks
-    )
-    for block in model_blocks
-        adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
-        adjusted_end = _adjusted_end(window_start, window_very_end, block_end(temporal_block=block, _strict=false))
+    for (blk, (adjusted_start, adjusted_end)) in start_and_end_by_block
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
-            res = resolution(temporal_block=block, i=i, s=time_slice_start, _strict=false)
+            res = resolution(temporal_block=blk, i=i, s=time_slice_start, _strict=false)
             res !== nothing || break
             if iszero(res)
                 # TODO: Try to move this to a check...
-                error("`resolution` of temporal block `$(block)` cannot be zero!")
+                error("`resolution` of temporal block `$blk` cannot be zero!")
             end
             time_slice_end = time_slice_start + res
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
-                @info "the last time slice of temporal block $block has been cut to fit within the block"
+                @info "the last time slice of temporal block $blk has been cut to fit within the block"
             end
-            push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
+            push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), blk)
             time_slice_start = time_slice_end
             i += 1
         end
@@ -152,17 +157,63 @@ function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::
     blocks_by_time_interval
 end
 
-"""
-    _window_time_slices(m, window_start, window_end)
+function _representative_mapping_by_time_interval(m::Model, start_and_end_by_block, blocks_by_time_interval)
+    representative_mapping_by_time_interval = Dict{Tuple{DateTime,DateTime},Tuple{Object,Dict}}()
+    representative_blk_by_index = Dict(
+        round(Int, representative_period_index(temporal_block=blk)) => blk
+        for blk in indices(representative_period_index)
+    )
+    for represented_block in indices(representative_periods_mapping)
+        for (represented_t_start, representative_combination) in representative_periods_mapping(
+            temporal_block=represented_block
+        )
+            representative_blk_to_coef = _representative_block_to_coefficient(
+                representative_combination, representative_blk_by_index
+            )
+            invalid_blks = setdiff(keys(representative_blk_to_coef), members(temporal_block()))
+            if !isempty(invalid_blks)
+                error("representative temporal block(s) $invalid_blks are not defined")
+            end
+            coefs_sum = sum(values(representative_blk_to_coef))
+            if !isapprox(coefs_sum, 1)
+                error("sum of coefficients for $represented_block, $represented_t_start must be 1 - not $coefs_sum")
+            end
+            represented_t_end = represented_t_start + minimum(
+                start_and_end_by_block[blk][2] - start_and_end_by_block[blk][1]
+                for blk in keys(representative_blk_to_coef)
+            )
+            overlapping_blks = filter(keys(representative_blk_to_coef)) do blk
+                blk_start, blk_end = start_and_end_by_block[blk]
+                blk_end > represented_t_start && blk_start < represented_t_end
+            end
+            time_interval = (represented_t_start, represented_t_end)
+            if !isempty(overlapping_blks)
+                @info "skipping $time_interval because it overlaps with representative blocks $overlapping_blks"
+                continue
+            end
+            existing_mapping = get(representative_mapping_by_time_interval, time_interval, nothing)
+            if existing_mapping !== nothing
+                existing_represented_block = existing_mapping[1]
+                error(
+                    "cannot map $time_interval from $represented_block",
+                    "because it already belongs in another represented block $existing_represented_block",
+                )
+            end
+            representative_mapping_by_time_interval[time_interval] = (represented_block, representative_blk_to_coef)
+        end
+    end
+    representative_mapping_by_time_interval
+end
 
-A sorted `Array` of `TimeSlices` in the given window.
-"""
-function _window_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
-    window_time_slices = [
-        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
-        for (interval, blocks) in _blocks_by_time_interval(m, window_start, window_end)
-    ]
-    sort!(window_time_slices)
+function _representative_block_to_coefficient(representative_combination::Symbol, _representative_blk_by_index)
+    Dict(temporal_block(representative_combination) => 1)
+end
+function _representative_block_to_coefficient(representative_combination::Array, representative_blk_by_index)
+    invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
+    if !isempty(invalid_indexes)
+        error("there's no representative temporal block(s) with indexes $invalid_indexes") 
+    end
+    Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
 end
 
 function _add_padding_time_slice!(window_time_slices, m, window_end)
@@ -249,7 +300,21 @@ function _generate_time_slice!(m::Model)
     window = current_window(m)
     window_start = start(window)
     window_end = end_(window)
-    window_time_slices = _window_time_slices(m, window_start, window_end)
+    start_and_end_by_block = _start_and_end_by_block(m, window_start, window_end)
+    blocks_by_time_interval = _blocks_by_time_interval(m, start_and_end_by_block)
+    representative_mapping_by_time_interval = _representative_mapping_by_time_interval(
+        m, start_and_end_by_block, blocks_by_time_interval
+    )
+    window_time_slices = [
+        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
+        for (interval, blocks) in blocks_by_time_interval
+    ]
+    m.ext[:spineopt].temporal_structure[:representative_block_coefficients] = representative_block_coefficients = Dict(
+        TimeSlice(interval..., represented_blk; duration_unit=_model_duration_unit(m)) => representative_blk_to_coef
+        for (interval, (represented_blk, representative_blk_to_coef)) in representative_mapping_by_time_interval
+    )
+    append!(window_time_slices, keys(representative_block_coefficients))
+    sort!(window_time_slices)
     _add_padding_time_slice!(window_time_slices, m, window_end)
     history_time_slices, t_history_t = _history_time_slices(m, window_start, window_end, window_time_slices)
     dur_unit = _model_duration_unit(m)
@@ -289,61 +354,6 @@ function _generate_time_slice_relationships!(m::Model)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
     temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
-end
-
-"""
-    _generate_representative_time_slice!(m::Model)
-
-Generate a `Dict` mapping all non-representative to representative time-slices
-"""
-function _generate_representative_time_slice!(m::Model)
-    m.ext[:spineopt].temporal_structure[:representative_time_slice_combinations] = d = Dict()
-    model_blocks = Set(members(temporal_block()))
-    representative_blk_by_index = Dict(
-        round(Int, representative_period_index(temporal_block=blk)) => blk
-        for blk in indices(representative_period_index)
-    )
-    for represented_blk in indices(representative_periods_mapping)
-        for (represented_t_start, representative_combination) in representative_periods_mapping(
-            temporal_block=represented_blk
-        )
-            representative_blk_to_coef = _representative_block_to_coefficient(
-                representative_combination, representative_blk_by_index
-            )
-            invalid_blks = setdiff(keys(representative_blk_to_coef), model_blocks)
-            if !isempty(invalid_blks)
-                error("representative temporal block(s) $invalid_blks are not defined")
-            end
-            blks = keys(representative_blk_to_coef)
-            coefs = values(representative_blk_to_coef)
-            coefs_sum = sum(coefs)
-            if !isapprox(coefs_sum, 1)
-                error("sum of coefficients for $represented_blk, $represented_t_start must be 1 - not $coefs_sum")
-            end
-            for representative_ts in zip((time_slice(m; temporal_block=blk) for blk in blks)...)
-                representative_t_duration = minimum(end_(t) - start(t) for t in representative_ts)
-                represented_t_end = represented_t_start + representative_t_duration
-                new_d = Dict(
-                    represented_t => [Dict(zip(representative_ts, coefs))]
-                    for represented_t in to_time_slice(m, t=TimeSlice(represented_t_start, represented_t_end))
-                    if represented_blk in represented_t.blocks
-                )
-                merge!(append!, d, new_d)
-                represented_t_start = represented_t_end
-            end
-        end
-    end
-end
-
-function _representative_block_to_coefficient(representative_combination::Symbol, _representative_blk_by_index)
-    Dict(temporal_block(representative_combination) => 1)
-end
-function _representative_block_to_coefficient(representative_combination::Array, representative_blk_by_index)
-    invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
-    if !isempty(invalid_indexes)
-        error("there's no representative temporal block(s) with indexes $invalid_indexes") 
-    end
-    Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
 end
 
 function _generate_as_number_or_call!(m)
@@ -467,7 +477,6 @@ function generate_temporal_structure!(m::Model)
     _generate_current_window!(m)
     _generate_windows_and_window_count!(m)
     generate_time_slice!(m)
-    _generate_representative_time_slice!(m)
 end
 
 function _generate_master_window!(m_mp::Model)
@@ -488,7 +497,7 @@ Create the Benders master problem temporal structure for given model.
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window!(m_mp)
     generate_time_slice!(m_mp)
-    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice_combinations] = Dict()
+    m_mp.ext[:spineopt].temporal_structure[:representative_block_coefficients] = Dict()
 end
 
 """
@@ -661,14 +670,20 @@ An `Array` of `TimeSlice`s in model `m` that overlap the given `t`, where `t` *m
 """
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
 
-function representative_time_slice_combinations(m, t)
-    get(m.ext[:spineopt].temporal_structure[:representative_time_slice_combinations], t, [Dict(t => 1)])
+function representative_block_coefficients(m, t)
+    get(m.ext[:spineopt].temporal_structure[:representative_block_coefficients], t, Dict())
 end
 
-_first_repr_t_comb(m, t) = first(representative_time_slice_combinations(m, t))
+function _repr_t_coefs(m, t)
+    Dict(first(time_slice(m; temporal_block=blk)) => coef for (blk, coef) in representative_block_coefficients(m, t))
+end
 
 function _is_representative(t)
     any(representative_periods_mapping(temporal_block=blk) === nothing for blk in blocks(t))
+end
+
+function represented_time_slices(m)
+    keys(m.ext[:spineopt].temporal_structure[:representative_block_coefficients])
 end
 
 function output_time_slice(m::Model; output::Object)
