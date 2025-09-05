@@ -4,10 +4,17 @@ There are different ways to install and run SpineOpt. Here, we cover the recomme
 
 The process consists of a few simple steps:
 
-* Prepare the folder structure to contain files for spine projects and installation environments
+* Install prerequisites
+* Prepare the (optional) folder structure
 * Install Spine Toolbox
 * Install SpineOpt
 * Configure Spine Toolbox for SpineOpt
+
+The figures below are a summary of this process that will be further explained in the following sections. Take note of the path in which the terminal is openend, i.e. an environments folder in a spinetools folder, as well as the environments that are active, indicated by the brackets at the start of the line, e.g. (jenv). Also note that the code in the image is for Linux. What you need to do differently for Windows is also explained in the following sections (the principle is the same but the syntax is a bit different).
+
+![Install spine tools](figs_installation/install_spinetools.png)
+
+![Configure spine tools](figs_installation/configure_spinetools.png)
 
 ## Prerequisites
 Spine Toolbox needs [Python](https://www.python.org/) (version 3.10 or above) and SpineOpt needs [Julia](https://julialang.org/) (version 1.10 or above).
