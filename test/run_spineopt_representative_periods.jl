@@ -234,7 +234,7 @@ function _test_representative_periods()
 end
 
 function _delta_expr_from_index(m, ind, coefs, all_rt)
-    t_before = last(t_before_t(m; t_after=ind.t))
+    t_before = only(t for t in t_before_t(m; t_after=ind.t) if !(temporal_block(:investments) in blocks(t)))
     delta_coefs = vcat(([-c, c] for c in coefs)...)
     vars = m.ext[:spineopt].variables[:node_state]
     exp_var = (
