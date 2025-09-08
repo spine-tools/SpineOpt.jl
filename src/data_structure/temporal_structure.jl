@@ -113,6 +113,12 @@ _adjusted_end(_w_start::DateTime, w_end::DateTime, _blk_end::Nothing) = w_end
 _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::Union{Period,CompoundPeriod}) = w_start + blk_end
 _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_start, blk_end)
 
+"""
+    _blocks_by_time_interval(m::Model, window_start, window_end)
+
+A `Dict` mapping temporal block `Object`s to (start, end) tuples representing their end-points.
+"""
+
 function _start_and_end_by_block(m::Model, window_start, window_end)
     model_blocks = members(temporal_block())
     isempty(model_blocks) && error("model $(_model_name(m)) doesn't have any temporal_blocks")
@@ -124,9 +130,10 @@ function _start_and_end_by_block(m::Model, window_start, window_end)
             _adjusted_start(window_start, block_start(temporal_block=blk, _strict=false)),
             _adjusted_end(window_start, window_very_end, block_end(temporal_block=blk, _strict=false)),
         )
-        for blk in members(temporal_block(representative_periods_mapping=nothing))
+        for blk in members(temporal_block())
     )
 end
+
 """
     _blocks_by_time_interval(m::Model, window_start, window_end)
 
@@ -134,10 +141,11 @@ A `Dict` mapping (start, end) tuples to an Array of temporal blocks where found.
 """
 function _blocks_by_time_interval(m::Model, start_and_end_by_block)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
-    for (blk, (adjusted_start, adjusted_end)) in start_and_end_by_block
-        time_slice_start = adjusted_start
+    for blk in members(temporal_block(representative_periods_mapping=nothing))
+        blk_start, blk_end = start_and_end_by_block[blk]
+        time_slice_start = blk_start
         i = 1
-        while time_slice_start < adjusted_end
+        while time_slice_start < blk_end
             res = resolution(temporal_block=blk, i=i, s=time_slice_start, _strict=false)
             res !== nothing || break
             if iszero(res)
@@ -145,8 +153,8 @@ function _blocks_by_time_interval(m::Model, start_and_end_by_block)
                 error("`resolution` of temporal block `$blk` cannot be zero!")
             end
             time_slice_end = time_slice_start + res
-            if time_slice_end > adjusted_end
-                time_slice_end = adjusted_end
+            if time_slice_end > blk_end
+                time_slice_end = blk_end
                 @info "the last time slice of temporal block $blk has been cut to fit within the block"
             end
             push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), blk)
@@ -157,49 +165,60 @@ function _blocks_by_time_interval(m::Model, start_and_end_by_block)
     blocks_by_time_interval
 end
 
+"""
+    _blocks_by_time_interval(m::Model, window_start, window_end)
+
+A `Dict` mapping (start, end) tuples of represented periods to another tuple
+of (original block, mapping from coefficient to represented block).
+"""
 function _representative_mapping_by_time_interval(m::Model, start_and_end_by_block, blocks_by_time_interval)
     representative_mapping_by_time_interval = Dict{Tuple{DateTime,DateTime},Tuple{Object,Dict}}()
     representative_blk_by_index = Dict(
         round(Int, representative_period_index(temporal_block=blk)) => blk
         for blk in indices(representative_period_index)
     )
-    for represented_block in indices(representative_periods_mapping)
-        for (represented_t_start, representative_combination) in representative_periods_mapping(
-            temporal_block=represented_block
-        )
+    for represented_blk in indices(representative_periods_mapping)
+        blk_start, blk_end = start_and_end_by_block[represented_blk]
+        mapping = representative_periods_mapping(temporal_block=represented_blk)
+        represented_t_starts = sort!(collect(keys(mapping)))
+        filter!(represented_t_starts) do t_start
+            t_start < blk_end
+        end
+        represented_t_ends = [represented_t_starts[2:end]; blk_end]
+        for (represented_t_start, represented_t_end) in zip(represented_t_starts, represented_t_ends)
+            time_interval = (represented_t_start, represented_t_end)
+            representative_combination = mapping[represented_t_start]
             representative_blk_to_coef = _representative_block_to_coefficient(
                 representative_combination, representative_blk_by_index
             )
             invalid_blks = setdiff(keys(representative_blk_to_coef), members(temporal_block()))
             if !isempty(invalid_blks)
-                error("representative temporal block(s) $invalid_blks are not defined")
+                error("$time_interval from '$represented_blk' is mapped to unknown block(s) $invalid_blks")
             end
             coefs_sum = sum(values(representative_blk_to_coef))
             if !isapprox(coefs_sum, 1)
-                error("sum of coefficients for $represented_block, $represented_t_start must be 1 - not $coefs_sum")
+                error("sum of coefficients for $time_interval from '$represented_blk' must be 1 - not $coefs_sum")
             end
-            represented_t_end = represented_t_start + minimum(
-                start_and_end_by_block[blk][2] - start_and_end_by_block[blk][1]
-                for blk in keys(representative_blk_to_coef)
-            )
-            overlapping_blks = filter(keys(representative_blk_to_coef)) do blk
+            overlapping_representative_blks = filter(keys(representative_blk_to_coef)) do blk
                 blk_start, blk_end = start_and_end_by_block[blk]
-                blk_end > represented_t_start && blk_start < represented_t_end
+                (
+                    representative_periods_mapping(temporal_block=blk) === nothing
+                    && (blk_end > represented_t_start && blk_start < represented_t_end)
+                )
             end
-            time_interval = (represented_t_start, represented_t_end)
-            if !isempty(overlapping_blks)
-                @info "skipping $time_interval because it overlaps with representative blocks $overlapping_blks"
+            if !isempty(overlapping_representative_blks)
+                @info "skipping $time_interval from '$represented_blk' because it overlaps \
+                    with representative blocks $overlapping_representative_blks"
                 continue
             end
             existing_mapping = get(representative_mapping_by_time_interval, time_interval, nothing)
             if existing_mapping !== nothing
-                existing_represented_block = existing_mapping[1]
-                error(
-                    "cannot map $time_interval from $represented_block",
-                    "because it already belongs in another represented block $existing_represented_block",
+                existing_represented_blk = existing_mapping[1]
+                error("cannot map $time_interval from '$represented_blk' \
+                    because it already belongs in another represented block $existing_represented_blk",
                 )
             end
-            representative_mapping_by_time_interval[time_interval] = (represented_block, representative_blk_to_coef)
+            representative_mapping_by_time_interval[time_interval] = (represented_blk, representative_blk_to_coef)
         end
     end
     representative_mapping_by_time_interval

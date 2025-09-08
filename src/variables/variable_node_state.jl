@@ -72,14 +72,6 @@ Add `node_state` variables to model `m`.
 """
 function add_variable_node_state!(m::Model)
     represented_t = sort!(collect(represented_time_slices(m)))
-    # FIXME in case of disjoint blocks
-    t_before_by_t_after = Dict(zip(represented_t[2:end], represented_t))
-    function _get_t_before(t_after)
-        get(t_before_by_t_after, t_after) do
-            t_before_t(m; t_after=t_after)
-        end
-    end
-
     replacement_expressions = OrderedDict(
         (node=n, stochastic_scenario=s, t=t_after) => [
             :node_state => Dict(
@@ -101,7 +93,7 @@ function add_variable_node_state!(m::Model)
             (
                 x.t
                 for x in node_state_indices(
-                    m; node=n, stochastic_scenario=s, temporal_block=anything, t=_get_t_before(t_after)
+                    m; node=n, stochastic_scenario=s, temporal_block=anything, t=t_before_t(m; t_after=t_after)
                 )
             ),
             1,

@@ -201,15 +201,6 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
     )
 end
 
-function testDebugger()
-    url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
-    test_data = _get_representative_periods_test_data()
-    count, errors = import_data(url_in, "Add test data"; test_data...)
-    merge!(vals, _vals_from_data(test_data))
-    rm(file_path_out; force=true)
-    m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
-end
-
 function _test_representative_periods()
     @testset "representative_periods" begin
         url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
@@ -243,12 +234,7 @@ function _test_representative_periods()
 end
 
 function _delta_expr_from_index(m, ind, coefs, all_rt)
-    t_before = last(
-        t
-        for t in [history_time_slice(m); time_slice(m)]
-        if blocks(t) == (temporal_block(:operations),)
-        && end_(t) <= start(ind.t)
-    )
+    t_before = last(t_before_t(m; t_after=ind.t))
     delta_coefs = vcat(([-c, c] for c in coefs)...)
     vars = m.ext[:spineopt].variables[:node_state]
     exp_var = (
