@@ -78,7 +78,7 @@ function constraint_min_node_state_indices(m::Model)
             m,
             Iterators.flatten(
                 (
-                    node_state_indices(m; node=ng, t=t),
+                    node_state_indices(m; node=ng, t=t, temporal_block=anything),
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )
