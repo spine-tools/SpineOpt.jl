@@ -166,12 +166,12 @@ function _blocks_by_time_interval(m::Model, start_and_end_by_block)
 end
 
 """
-    _blocks_by_time_interval(m::Model, window_start, window_end)
+    _representative_mapping_by_time_interval(m::Model, start_and_end_by_block)
 
 A `Dict` mapping (start, end) tuples of represented periods to another tuple
 of (original block, mapping from coefficient to represented block).
 """
-function _representative_mapping_by_time_interval(m::Model, start_and_end_by_block, blocks_by_time_interval)
+function _representative_mapping_by_time_interval(m::Model, start_and_end_by_block)
     representative_mapping_by_time_interval = Dict{Tuple{DateTime,DateTime},Tuple{Object,Dict}}()
     representative_blk_by_index = Dict(
         round(Int, representative_period_index(temporal_block=blk)) => blk
@@ -207,8 +207,7 @@ function _representative_mapping_by_time_interval(m::Model, start_and_end_by_blo
                 )
             end
             if !isempty(overlapping_representative_blks)
-                @info "skipping $time_interval from '$represented_blk' because it overlaps \
-                    with representative blocks $overlapping_representative_blks"
+                # skipping time_interval because it is covered by a representative time slice from another block
                 continue
             end
             existing_mapping = get(representative_mapping_by_time_interval, time_interval, nothing)
@@ -321,9 +320,7 @@ function _generate_time_slice!(m::Model)
     window_end = end_(window)
     start_and_end_by_block = _start_and_end_by_block(m, window_start, window_end)
     blocks_by_time_interval = _blocks_by_time_interval(m, start_and_end_by_block)
-    representative_mapping_by_time_interval = _representative_mapping_by_time_interval(
-        m, start_and_end_by_block, blocks_by_time_interval
-    )
+    representative_mapping_by_time_interval = _representative_mapping_by_time_interval(m, start_and_end_by_block)
     window_time_slices = [
         TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
         for (interval, blocks) in blocks_by_time_interval
@@ -711,13 +708,13 @@ function output_time_slice(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slice], output, nothing)
 end
 
-function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
+function dynamic_time_indices(m, blk_after, blk_before=blk_after; t_before=anything, t_after=anything)
     (
         (tb, ta)
         for (tb, ta) in t_before_t(
-            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk), t=t_after), _compact=false
+            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk_after), t=t_after), _compact=false
         )
-        if !isempty(intersect(members(blk), blocks(tb)))
+        if !isempty(intersect(members(blk_before), blocks(tb)))
     )
 end
 
@@ -764,7 +761,15 @@ function node_dynamic_time_indices(
         for n in intersect(node, SpineOpt.node())
         for (tb, ta) in dynamic_time_indices(
             m,
-            (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false));
+            (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)),
+            (
+                blk
+                for (_n, blk) in node__temporal_block(
+                    node=n,
+                    temporal_block=(is_longterm_storage(node=n) ? anything : temporal_block),
+                    _compact=false,
+                )
+            );
             t_before=t_before,
             t_after=t_after,
         )

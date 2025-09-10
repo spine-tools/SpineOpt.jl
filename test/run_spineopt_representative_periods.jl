@@ -319,11 +319,7 @@ function _expected_representative_periods_constraint(
     @test s_path == [stochastic_scenario(:realisation)]
     s = only(s_path)
     @fetch node_injection, node_slack_pos, node_slack_neg, node_state, unit_flow = m.ext[:spineopt].variables
-    if n in (node(:batt_node), node(:elec_node))
-        @test t_after in all_rt
-    else
-        @test t_after in time_slice(m)
-    end
+    @test t_after in all_rt
     if n == node(:batt_node)
         fr_e2b = vals["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow"]
         @build_constraint(
