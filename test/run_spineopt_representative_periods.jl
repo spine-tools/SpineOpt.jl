@@ -218,6 +218,7 @@ function _test_representative_periods()
         t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
         @testset for con_name in keys(m.ext[:spineopt].constraints)
             cons = m.ext[:spineopt].constraints[con_name]
+            _test_representative_periods_constraints(m, Val(con_name), cons, vals, all_rt, t_invest)
             @testset for ind in keys(cons)
                 con = cons[ind]
                 _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
@@ -233,8 +234,12 @@ function _test_representative_periods()
     end
 end
 
+function _represented_t_before(m, representative_t)
+    only(t for t in t_before_t(m; t_after=representative_t) if !(temporal_block(:investments) in blocks(t)))
+end
+
 function _delta_expr_from_index(m, ind, coefs, all_rt)
-    t_before = only(t for t in t_before_t(m; t_after=ind.t) if !(temporal_block(:investments) in blocks(t)))
+    t_before = _represented_t_before(m, ind.t)
     delta_coefs = vcat(([-c, c] for c in coefs)...)
     vars = m.ext[:spineopt].variables[:node_state]
     exp_var = (
@@ -259,6 +264,27 @@ function _test_representative_periods_variable(m, var_name, ind, var, vals, all_
         exp_var = _delta_expr_from_index(m, ind, coefs, all_rt)
         @test var == exp_var
     end
+end
+
+function _test_representative_periods_constraints(m, ::Val{:node_injection}, cons, vals, all_rt, t_invest)
+    inds = keys(cons)
+    observed_inds = collect(keys(cons))
+    path = [stochastic_scenario(:realisation)]
+    rt1, rt2, rt3, rt4 = all_rt
+    expected_inds = [
+        (node=node(:h2_node), stochastic_path=path, t_before=_represented_t_before(m, rt1), t_after=rt1),
+        (node=node(:h2_node), stochastic_path=path, t_before=rt1, t_after=rt2),
+        (node=node(:h2_node), stochastic_path=path, t_before=_represented_t_before(m, rt3), t_after=rt3),
+        (node=node(:h2_node), stochastic_path=path, t_before=rt3, t_after=rt4),
+        (node=node(:batt_node), stochastic_path=path, t_before=rt1, t_after=rt2),
+        (node=node(:batt_node), stochastic_path=path, t_before=rt3, t_after=rt4),
+        (node=node(:elec_node), stochastic_path=path, t_before=rt1, t_after=rt2),
+        (node=node(:elec_node), stochastic_path=path, t_before=rt3, t_after=rt4),
+    ]
+    @test isempty(symdiff(expected_inds, observed_inds))
+end
+function _test_representative_periods_constraints(m, ::Val{X}, cons, vals, all_rt, t_invest) where X
+    nothing
 end
 
 function _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
