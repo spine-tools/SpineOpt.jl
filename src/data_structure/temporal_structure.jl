@@ -735,7 +735,7 @@ function dynamic_time_indices(m, blk_after, blk_before=blk_after; t_before=anyth
         for (tb, ta) in t_before_t(
             m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk_after), t=t_after), _compact=false
         )
-        if !isempty(intersect(members(blk_before), blocks(tb)))
+        if !isdisjoint(members(blk_before), blocks(tb))
     )
 end
 

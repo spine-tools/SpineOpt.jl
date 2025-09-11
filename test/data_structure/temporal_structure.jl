@@ -61,7 +61,9 @@ function _test_representative_time_slice()
             "index_type" => "date_time",
             "data" => Dict(
                 "2000-01-01T00:00:00" => "rep_blk1",
-                "2000-01-01T08:00:00" => "rep_blk2",
+                "2000-01-01T06:00:00" => "rep_blk2",
+                "2000-01-01T12:00:00" => "rep_blk1",
+                "2000-01-01T18:00:00" => "rep_blk2",
             )
         )
         objects = [["temporal_block", "rep_blk1"], ["temporal_block", "rep_blk2"]]
@@ -71,12 +73,12 @@ function _test_representative_time_slice()
         ]
         object_parameter_values = [
             ["temporal_block", "block_a", "representative_periods_mapping", representative_periods_mapping],
-            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["temporal_block", "rep_blk1", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
-            ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "4h")],
+            ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "6h")],
             ["temporal_block", "rep_blk2", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T12:00:00")],
-            ["temporal_block", "rep_blk2", "block_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-            ["temporal_block", "rep_blk2", "resolution", Dict("type" => "duration", "data" => "4h")]
+            ["temporal_block", "rep_blk2", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T18:00:00")],
+            ["temporal_block", "rep_blk2", "resolution", Dict("type" => "duration", "data" => "6h")]
         ]
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
@@ -84,21 +86,19 @@ function _test_representative_time_slice()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        rep_blk1_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1))
-        rep_blk2_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2))
+        rep_blk1_t = only(SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1)))
+        rep_blk2_t = only(SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2)))
         m_start = model_start(model=first(model(model_type=:spineopt_standard)))
         for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
             t_end = end_(t)
-            if t_end <= m_start + Hour(4)
-                @test _representative_time_slice(m, t) == rep_blk1_ts[1]
-            elseif t_end <= m_start + Hour(8)
-                @test _representative_time_slice(m, t) == t
+            if t_end <= m_start + Hour(6)
+                @test _representative_time_slice(m, t) == rep_blk1_t
             elseif t_end <= m_start + Hour(12)
-                @test _representative_time_slice(m, t) == rep_blk2_ts[1]
-            elseif t_end <= m_start + Hour(16)
-                @test _representative_time_slice(m, t) == rep_blk2_ts[2]
-            elseif t_end <= m_start + Hour(20)
-                @test _representative_time_slice(m, t) == rep_blk2_ts[3]
+                @test _representative_time_slice(m, t) == rep_blk2_t
+            elseif t_end <= m_start + Hour(18)
+                @test _representative_time_slice(m, t) == rep_blk1_t
+            elseif t_end <= m_start + Hour(24)
+                @test _representative_time_slice(m, t) == rep_blk2_t
             else
                 @test _representative_time_slice(m, t) == t
             end
@@ -107,9 +107,11 @@ function _test_representative_time_slice()
 end
 
 function _representative_time_slice(m, t)
-    t, coef = only(only(SpineOpt.representative_time_slice_combinations(m, t)))
+    blk_coef = SpineOpt.representative_block_coefficients(m, t)
+    isempty(blk_coef) && return t
+    blk, coef = only(blk_coef)
     @assert isone(coef)
-    t
+    only(time_slice(m; temporal_block=blk))
 end
 
 function _test_zero_resolution()
