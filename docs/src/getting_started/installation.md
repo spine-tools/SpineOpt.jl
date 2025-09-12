@@ -127,7 +127,7 @@ spinetoolbox
 
     ```cmd
     cd path/to/environments
-    penv/Scripts/activate
+    call penv/Scripts/activate
     spinetoolbox
     ```
 
