@@ -47,7 +47,7 @@ function _build_constraint_min_node_state(m::Model, ng, s_path, t)
     @build_constraint(
         + sum(
             + node_state[n, s, t]
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
         >=
@@ -63,7 +63,7 @@ function _build_constraint_min_node_state(m::Model, ng, s_path, t)
                     init=0,
                 )
             )
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
     )
