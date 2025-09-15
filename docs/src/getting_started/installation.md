@@ -10,7 +10,7 @@ The process consists of a few simple steps:
 * Install SpineOpt
 * Configure Spine Toolbox for SpineOpt
 
-The figures below are a summary of this process that will be further explained in the following sections. Take note of the path in which the terminal is openend, i.e. an environments folder in a spinetools folder, as well as the environments that are active, indicated by the brackets at the start of the line, e.g. (jenv). Also note that the code in the image is for Linux; for Windows the terminal will look a bit different and the line `source penv/bin/activate` needs to be replaced by `penv\Scripts\activate`.
+The figures below are a summary of this process that will be further explained in the following sections. Take note of the path in which the terminal is openend, i.e. an environments folder in a spinetools folder, as well as the environments that are active, indicated by the brackets at the start of the line, e.g. (jenv). Also note that the code in the image is for Linux; for Windows the terminal will look a bit different and the line `source penv/bin/activate` needs to be replaced by `call penv\Scripts\activate`.
 
 ![Install spine tools](figs_installation/install_spinetools.png)
 
@@ -84,10 +84,10 @@ On Linux (and mac?), we can activate the environment with the activation script 
 source penv/bin/activate
 ```
 
-On Windows, we can call the activation script directly (notice that the dashes are reversed on Windows).
+On Windows, we can call the 'call' command (notice that the dashes are reversed on Windows).
 
 ```cmd
-penv\Scripts\activate
+call penv\Scripts\activate
 ```
 
 The terminal should now show that the penv environment is active by (penv) at the start of the line. Spine Toolbox can now simply be installed with pip.
@@ -123,7 +123,7 @@ spinetoolbox
     chmod +x path/to/script_folder/run_spinetools.sh
     ```
 
-    For Windows, create a 'run_spinetools.bat' file (you can make a text file and change the extension from '.txt' to '.bat'). The following lines of code should be pasted in that file. Make sure to adjust the path to the actual path of the Python environment that you used to install Spine Toolbox.
+    For Windows, create a 'run_spinetools.bat' file (you can make a text file and change the extension from '.txt' to '.bat'). The following lines of code should be pasted in that file. Make sure to adjust the path to the actual path of the Python environment that you used to install Spine Toolbox. Note that the `call` command is necessary in a script like this whereas it is optional when you enter these commands manually, in which case you can simply type the path to the activate file.
 
     ```cmd
     cd path/to/environments
