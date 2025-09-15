@@ -107,16 +107,18 @@ function prepare_variable_groups(m::Model)
 end
 
 """
-    Runs the iterative mga process.
+    iterative_mga!(m, variables,group_parameters, max_mga_iters, mga_slack, algorithm_type, solve_wrapper) 
 
-    # Arguments:
-    - m::Model - JuMP model
-    - variables::AbstractDict - dict that returns a dict with scenario variable for an mga group
-    - group_parameters::AbstractDict - dict of parameters for every mga variable group
-    - max_mga_iters - no. mga iterations
-    - mga_slack - slack for near-optimal exploration
-    - algorithm_type::Val - value for multiple dispatch
-    - solve_wrapper::Function - wrapper that runs the optimization and returns boolean value with the status
+Runs the iterative mga process.
+
+# Arguments:
+- m::Model - JuMP model
+- variables::AbstractDict - dict that returns a dict with scenario variable for an mga group
+- group_parameters::AbstractDict - dict of parameters for every mga variable group
+- max_mga_iters - no. mga iterations
+- mga_slack - slack for near-optimal exploration
+- algorithm_type::Val - value for multiple dispatch
+- solve_wrapper::Function - wrapper that runs the optimization and returns boolean value with the status
 """
 function iterative_mga!(
     m::Model, 
@@ -143,12 +145,13 @@ function iterative_mga!(
 end
 
 """
+    get_variable_group_values(variables, group_parameters)
 
-    Retrieves values of mga variables and stores them in the returned dict.
+Retrieves values of mga variables and stores them in the returned dict.
 
-    # Arguments
-    - variables - dict of variable group indexed variables
-    - group_parameters::Dict{Symbol, VariableGroupParameters} - dict of parameters for every mga variable group
+# Arguments
+- variables - dict of variable group indexed variables
+- group_parameters::Dict{Symbol, VariableGroupParameters} - dict of parameters for every mga variable group
 """
 function get_variable_group_values(variables::AbstractDict, group_parameters::AbstractDict{Symbol, VariableGroupParameters})
     return Dict(
@@ -160,16 +163,18 @@ function get_variable_group_values(variables::AbstractDict, group_parameters::Ab
 end
 
 """
-    Reformulates mga objective based on new variable values.
+    update_mga_objective!(m, hsj_weights, variables, variable_values, groups_parameters, objective_constraint, algorithm_type)
 
-    # Arguments:
-    - m::Model - JuMP model
-    - hsj_weights::AbstractDict - dict that returns a dict with mga weights per variable for an mga group key
-    - variables::AbstractDict - dict that returns a dict with scenario variable for an mga group
-    - variable_values::AbstractDict - dict that returns a dict with scenario variable values for an mga group
-    - group_parameters::AbstractDict - dict that returns mga params for an mga group
-    - objective_constraint - objective constraint (can be an expression in case of the fuzzy formulation)
-    - algorithm_type::Val - value for multiple dispatch
+Reformulates mga objective based on new variable values.
+
+# Arguments:
+- m::Model - JuMP model
+- hsj_weights::AbstractDict - dict that returns a dict with mga weights per variable for an mga group key
+- variables::AbstractDict - dict that returns a dict with scenario variable for an mga group
+- variable_values::AbstractDict - dict that returns a dict with scenario variable values for an mga group
+- group_parameters::AbstractDict - dict that returns mga params for an mga group
+- objective_constraint - objective constraint (can be an expression in case of the fuzzy formulation)
+- algorithm_type::Val - value for multiple dispatch
 """
 function update_mga_objective!(
     m::Model,
@@ -193,13 +198,15 @@ function update_mga_objective!(
 end
 
 """
-    Minimizes the sum of all mga group sums
+    formulate_mga_objective!(m, mga_weighted_groups, objective_constraint, ::Val{:hsj_mga_algorithm})
 
-    # Arguments
-    - m::Model - JuMP model
-    - mga_weighted_groups::AbstractDict - dict with expressions representing each variable group (s_i)
-    - objective_constraint - objective constraint (can be an expression in case of the fuzzy formulation)
-    - objective_constraint::AbstractDict - dict representing the near optimality constraint
+Minimizes the sum of all mga group sums
+
+# Arguments
+- m::Model - JuMP model
+- mga_weighted_groups::AbstractDict - dict with expressions representing each variable group (s_i)
+- objective_constraint - objective constraint
+- objective_constraint::AbstractDict - dict representing the near optimality constraint
 
 """
 function formulate_mga_objective!(
@@ -217,13 +224,15 @@ function formulate_mga_objective!(
 end
 
 """
-    Creates the fuzzy rpm formulation - lexmax (min_i s_i, ∑_i s_i) where s_i is the achievement function for ith objective.
+    formulate_mga_objective!(m, mga_weighted_groups, objective_constraint, ::Val{:fuzzy_mga_algorithm}, eps=1e-4)
+     
+Creates the fuzzy rpm formulation - lexmax (min_i s_i, ∑_i s_i) where s_i is the achievement function for ith objective.
 
-    # Arguments
-    - m::Model - JuMP model
-    - mga_weighted_groups::AbstractDict - dict with expressions representing each variable group (s_i)
-    - objective_constraint - representing the near optimality constraint achievement function
-    - eps - small constant for efficient lexmax implementation
+# Arguments
+- m::Model - JuMP model
+- mga_weighted_groups::AbstractDict - dict with expressions representing each variable group (s_i)
+- objective_constraint - representing the near optimality constraint achievement function
+- eps - small constant for efficient lexmax implementation
 """
 function formulate_mga_objective!(
     m::Model,
@@ -244,14 +253,16 @@ function formulate_mga_objective!(
 end
 
 """
-    Creates a weighted mga for variables from a single mga group
-    
-    # Arguments
+    prepare_objective_mga!(group_parameters, variable, variable_values, mga_weights, ::Val{:hsj_mga_algorithm}) 
 
-    - group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
-    - variable - dict with JuMP scenario variables
-    - variable_values::AbstractDict - dict with values of variables from previous iteration
-    - mga_weights::AbstractDict - mga weights from a previous iteration
+Creates a weighted mga for variables from a single mga group
+
+# Arguments
+
+- group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
+- variable - dict with JuMP scenario variables
+- variable_values::AbstractDict - dict with values of variables from previous iteration
+- mga_weights::AbstractDict - mga weights from a previous iteration
 """
 function prepare_objective_mga!(
     group_parameters::VariableGroupParameters,
@@ -270,14 +281,16 @@ function prepare_objective_mga!(
 end
 
 """
-    Creates a fuzzy objective for one of the variable groups.
-    
-    # Arguments
-    - m::Model - JuMP model
-    - group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
-    - variable - dict with JuMP scenario variables
-    - variable_values::AbstractDict - dict with values of variables from previous iteration
-    - mga_weights::AbstractDict - mga weights from a previous iteration
+    prepare_objective_mga!(group_parameters, variable, variable_values, mga_weights, ::Val{:fuzzy_mga_algorithm}) 
+
+Creates a fuzzy objective for one of the variable groups.
+
+# Arguments
+- m::Model - JuMP model
+- group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
+- variable - dict with JuMP scenario variables
+- variable_values::AbstractDict - dict with values of variables from previous iteration
+- mga_weights::AbstractDict - mga weights from a previous iteration
 """
 function prepare_objective_mga!(
     group_parameters::VariableGroupParameters,
@@ -304,34 +317,40 @@ function prepare_objective_mga!(
 end
 
 """
-    Gets scenario variables averaged with their weights
+    get_scenario_variable_average(variable, variable_indices, scenario_weights)
 
-    # Arguments
-    - variable - dict of scenario variables
-    - variable_indices - iterator with indexes for our variable
-    - scenario_weights - returns the weight of scenario
+Gets scenario variables averaged with their weights
+
+# Arguments
+- variable - dict of scenario variables
+- variable_indices - iterator with indexes for our variable
+- scenario_weights - returns the weight of scenario
 """
 function get_scenario_variable_average(variable, variable_indices, scenario_weights::Function)
     return sum(variable[i] * scenario_weights(i) for i in variable_indices; init=0)
 end
 
 """
-    Adds a constraint that forces nearly optimal solutions
+    add_mga_objective_constraint!(m, slack, ::Val{:hsj_mga_algorithm})
 
-    # Arguments
-    - m::Model - JuMP model
-    - slack - how many percents can we stray from the optimal value
+Adds a constraint that forces nearly optimal solutions
+
+# Arguments
+- m::Model - JuMP model
+- slack - how many percents can we stray from the optimal value
 """
 function add_mga_objective_constraint!(m::Model, slack, ::Val{:hsj_mga_algorithm})
     return @constraint(m, objective_function(m) <= (1 + slack) * objective_value(m))
 end
 
 """
-    Adds constraints used by the Reference Point Method.
+    add_mga_objective_constraint!(m, slack, ::Val{:fuzzy_mga_algorithm})
 
-    # Arguments
-    - m::Model - JuMP model
-    - slack - the mga slack
+Adds constraints used by the Reference Point Method.
+
+# Arguments
+- m::Model - JuMP model
+- slack - the mga slack
 """
 function add_mga_objective_constraint!(m::Model, slack, ::Val{:fuzzy_mga_algorithm})
     y = objective_function(m)
@@ -345,18 +364,24 @@ function add_mga_objective_constraint!(m::Model, slack, ::Val{:fuzzy_mga_algorit
     end
 end
 
-"If the objective value was negative, the f(x) <= (1+slack) * f(x_optim_ would be infeasible unless we negate the value of slack"
+"""
+    slack_correction(raw_slack, objective_value) 
+
+If the objective value was negative, the f(x) <= (1+slack) * f(x_optim_ would be infeasible unless we negate the value of slack
+"""
 slack_correction(raw_slack, objective_value) = objective_value >= 0 ? raw_slack : -raw_slack
 
 init_hsj_weights() = DefaultDict{Symbol, AbstractDict}(() -> DefaultDict(0))
 
 """
-    Updates the weights in the passed dict according to the Hop Skip Jump scheme, in all mga groups
+    update_hsj_weights!(variable_values, variable_hsj_weights, groups_parameters, algorithm_type)
 
-    # Arguments
-    - variable_values::AbstractDict{Symbol, AbstractDict} - dict of all variable_values from previous iteration
-    - variable_hsj_weights::AbstractDict{Symbol, AbstractDict} - dict of all mga weights
-    - group_parameters::AbstractDict{Symbol, VariableGroupParameters} - dict of all group parameters
+Updates the weights in the passed dict according to the Hop Skip Jump scheme, in all mga groups
+
+# Arguments
+- variable_values::AbstractDict{Symbol, AbstractDict} - dict of all variable_values from previous iteration
+- variable_hsj_weights::AbstractDict{Symbol, AbstractDict} - dict of all mga weights
+- group_parameters::AbstractDict{Symbol, VariableGroupParameters} - dict of all group parameters
 """
 function update_hsj_weights!(
     variable_values::AbstractDict,
@@ -375,14 +400,16 @@ function update_hsj_weights!(
 end
 
 """    
-    Updates the weights in the passed dict according to the Hop Skip Jump scheme.
-    Variables that were nonzero in a iteration before have their weights set to 1. Previous weights aren't cleared.
+    do_update_hsj_weights!(group, all_variable_values, variable_hsj_weights, ::Val{:hsj_mga_algorithm})
 
-    # Arguments
-    - group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
-    - all_variable_values::AbstractDict - dict of all variable scenario values from a single group, from previous iteration
-    - variable_scenario_indices::Function - returns all stochastic indices for a single variable
-    - variable_hsj_weights::AbstractDict - dict of mga weights to be updated
+Updates the weights in the passed dict according to the Hop Skip Jump scheme.
+Variables that were nonzero in a iteration before have their weights set to 1. Previous weights aren't cleared.
+
+# Arguments
+- group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
+- all_variable_values::AbstractDict - dict of all variable scenario values from a single group, from previous iteration
+- variable_scenario_indices::Function - returns all stochastic indices for a single variable
+- variable_hsj_weights::AbstractDict - dict of mga weights to be updated
 """
 function do_update_hsj_weights!(
     group::VariableGroupParameters,
@@ -398,14 +425,16 @@ function do_update_hsj_weights!(
 end
 
 """    
-    Updates the weights in the passed dict according to the Hop Skip Jump scheme.
-    Variables that were nonzero in a iteration before have their weights set to 1/value to foster exploration. Previous weights aren't cleared.
+    do_update_hsj_weights!(group, all_variable_values, variable_hsj_weights, ::Val{:fuzzy_mga_algorithm})
 
-    # Arguments
-    - group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
-    - all_variable_values::AbstractDict - dict of all variable scenario values from a single group, from previous iteration
-    - variable_scenario_indices::Function - returns all stochastic indices for a single variable
-    - variable_hsj_weights::AbstractDict - dict of mga weights to be updated
+Updates the weights in the passed dict according to the Hop Skip Jump scheme.
+Variables that were nonzero in a iteration before have their weights set to 1/value to foster exploration. Previous weights aren't cleared.
+
+# Arguments
+- group_parameters::VariableGroupParameters - describes the group parameters of a given variable group
+- all_variable_values::AbstractDict - dict of all variable scenario values from a single group, from previous iteration
+- variable_scenario_indices::Function - returns all stochastic indices for a single variable
+- variable_hsj_weights::AbstractDict - dict of mga weights to be updated
 """
 function do_update_hsj_weights!(
     group::VariableGroupParameters,
@@ -421,11 +450,13 @@ function do_update_hsj_weights!(
 end
 
 """
-    Checks if variable was nonzero in any of the scenarios.
+    was_variable_active(all_variable_values, variable_indices)
 
-    # Arguments
-    - all_variable_values::AbstractDict - dict of all variable scenario values from a single group, from previous iteration
-    - variable_indices - iterator or array with stochastic indices for a single variable
+Checks if variable was nonzero in any of the scenarios.
+
+# Arguments
+- all_variable_values::AbstractDict - dict of all variable scenario values from a single group, from previous iteration
+- variable_indices - iterator or array with stochastic indices for a single variable
 """
 function was_variable_active(all_variable_values::AbstractDict, variable_indices)
     return any(all_variable_values[i] > 0 for i in variable_indices)
