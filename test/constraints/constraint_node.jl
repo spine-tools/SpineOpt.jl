@@ -1153,6 +1153,71 @@ function test_constraint_free_start_node_state()
     end
 end
 
+function test_constraint_cyclic_node_state_discontinuous()
+    @testset "constraint_cyclic_node_state_discontinuous" begin
+        url_in = _test_constraint_node_setup()
+        objects = [["temporal_block","discontinuous_block"]]
+        node_capacity = Dict("node_b" => 120, "node_c" => 400)
+        storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(180, "m"))
+        object_parameter_values = [
+            ["temporal_block", "discontinuous_block", "has_free_start", true],
+            ["temporal_block", "discontinuous_block", "resolution", unparse_db_value(Hour(1))],
+            ["temporal_block", "discontinuous_block", "block_start", unparse_db_value(DateTime("2000-01-02T00:00:00"))],
+            ["temporal_block", "discontinuous_block", "block_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+            ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
+            ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
+            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "has_state", true],
+            ["temporal_block", "hourly", "has_free_start", true],
+            ["temporal_block", "hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            ["temporal_block", "two_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            ["model", "instance", "model_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+            ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
+        ]
+        relationship_parameter_values = [
+            ["node__temporal_block", ["node_b", "discontinuous_block"], "cyclic_condition", true],
+            ["node__temporal_block", ["node_c", "discontinuous_block"], "cyclic_condition", true],
+        ]
+        relationships = [
+            ["node__temporal_block", ["node_b", "discontinuous_block"]],
+            ["node__temporal_block", ["node_c", "discontinuous_block"]],
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            objects=objects, 
+            object_parameter_values=object_parameter_values, 
+            relationship_parameter_values=relationship_parameter_values,
+            relationships=relationships
+         )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_node_state = m.ext[:spineopt].variables[:node_state]
+        constraint = m.ext[:spineopt].constraints[:cyclic_node_state]
+        middle_history_t = only(history_time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
+        middle_history_ind = (node=node(:node_b), stochastic_scenario=stochastic_scenario(:parent), t=middle_history_t)
+
+        @test length(constraint) == 2
+        scenario0 = stochastic_scenario(:parent)
+        scenario1 = stochastic_scenario(:child)
+        # Test for each node with cyclic condition on discontinuous_block
+        nodes_to_test = [node(:node_b), node(:node_c)]
+        @testset for n in nodes_to_test
+            blk = temporal_block(:discontinuous_block)
+            # For discontinuous block, we need to get the time slices properly
+            t0 = filter(x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=blk))))[1]
+            t1 = last(time_slice(m; temporal_block=blk))
+            var_n_st_key0 = (n, scenario0, t0)
+            var_n_st_key1 = (n, scenario1, t1)
+            con_key = (n, [scenario0, scenario1], t0, t1, blk)
+            var_n_st0 = var_node_state[var_n_st_key0...]
+            var_n_st1 = var_node_state[var_n_st_key1...]
+            expected_con = @build_constraint(var_n_st1 >= var_n_st0)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 @testset "node-based constraints" begin
     test_constraint_nodal_balance()
     test_constraint_nodal_balance_group()
@@ -1176,4 +1241,5 @@ end
     test_constraint_min_capacity_margin()
     test_constraint_min_capacity_margin_penalty()
     test_constraint_free_start_node_state()
+    test_constraint_cyclic_node_state_discontinuous()
 end
