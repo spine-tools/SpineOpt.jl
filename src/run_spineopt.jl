@@ -393,9 +393,10 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    if model_algorithm(model=instance) === :mga_algorithm && !add_bridges
+    algorithm = model_algorithm(model=instance)
+    if needs_bridges(Val(algorithm)) && !add_bridges
         add_bridges = true
-        @warn "Bridges are required for MGA algorithm - adding them"
+        @warn "Bridges are required for $algorithm algorithm - adding them"
     end
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model, add_bridges)
@@ -413,6 +414,9 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     JuMP.set_string_names_on_creation(m, use_model_names)
     m
 end
+
+"Standard algorithms do not require optimizer bridges"
+needs_bridges(model_algorithm) = false
 
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.

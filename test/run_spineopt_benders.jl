@@ -24,7 +24,7 @@ end
 
 function _test_run_spineopt_benders_setup()
     url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    file_path_out = tempname(cleanup=true)
     url_out = "sqlite:///$file_path_out"
     test_data = Dict(
         :objects => [
@@ -137,7 +137,6 @@ function _test_benders_unit()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -253,7 +252,6 @@ function _test_benders_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -388,7 +386,6 @@ function _test_benders_unit_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -527,7 +524,6 @@ function _test_benders_rolling_representative_periods()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
             using_spinedb(url_out, Y)
@@ -634,7 +630,6 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         m_mp = master_model(m)
         using_spinedb(url_out, Y)
@@ -720,7 +715,6 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
             cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio_cuts]
@@ -841,7 +835,6 @@ function _test_benders_starting_units_invested()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
