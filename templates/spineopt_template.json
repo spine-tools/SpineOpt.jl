@@ -120,6 +120,8 @@
         ["multiyear_economic_discounting_value_list", "milestone_years"],
         ["model_algorithm_list", "basic_algorithm"],
         ["model_algorithm_list", "mga_algorithm"],
+        ["model_algorithm_list", "hsj_mga_algorithm"],
+        ["model_algorithm_list", "fuzzy_mga_algorithm"],
         ["model_algorithm_list", "monte_carlo_algorithm"],
         ["model_type_list", "spineopt_benders"],
         ["model_type_list", "spineopt_other"],

@@ -179,4 +179,6 @@ end
     include("run_spineopt_representative_periods.jl") # FREEZES with multithreading?
     include("run_examples.jl") # CRASHES with multithreading?
     include("run_benchmark_data.jl") # CRASHES with multithreading?
+    include("run_spineopt_hsj_mga.jl")
 end
+
