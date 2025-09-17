@@ -78,6 +78,56 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
+"""
+    @generator function(foo)
+        for x in 1:10
+            @yield x
+        end
+    end
+
+Create a Python-style generator from the given function that calls the @yield macro.
+"""
+macro generator(f)
+    if f.head != :function
+        error("please use @generator with a function")
+    end
+    signature, body = f.args
+    name, args... = signature.args
+    channel = gensym()
+    _expand_yield_macro!(body, channel)
+    producer = gensym()
+    producer_fn = quote
+        function $(producer)($channel)
+            $(body)
+        end
+    end
+    quote
+        function $(esc(name))($(esc.(args)...))  # TODO: Support keyword arguments
+            $(esc(producer_fn))
+            Channel($(esc(producer)))
+        end
+    end
+end
+
+macro yield(x)
+    x
+end
+
+function _expand_yield_macro!(expr::Expr, channel)
+    for (k, x) in enumerate(expr.args)
+        x isa Expr || continue
+        if x.head == :macrocall && x.args[1] == Symbol("@yield")
+            # TODO: make sure @yield is called correctly by checking x.args[2:end]
+            value = x.args[end]
+            expr.args[k] = quote
+                put!($channel, $value)
+            end
+        else
+            _expand_yield_macro!(x, channel)
+        end
+    end
+end
+
 struct ParameterFunction
     fn
 end
