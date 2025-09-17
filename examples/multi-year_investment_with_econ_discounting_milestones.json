@@ -3503,6 +3503,13 @@
         ],
         [
             "temporal_block",
+            "has_free_start",
+            false,
+            "boolean_value_list",
+            "Whether the block requires a fresh start (own independent history)"
+        ],
+        [
+            "temporal_block",
             "is_active",
             true,
             "boolean_value_list",
