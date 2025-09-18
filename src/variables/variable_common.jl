@@ -80,7 +80,6 @@ function add_variable!(
         if overlaps(t, TimeSlice(blk_start - required_history_period, blk_start))
     ]
     append!(history_time_slices, middle_history_time_slices)
-    for x in sort(history_time_slices; by=(t -> (blocks(t), t))) @show x, blocks(x) end
     history_indices = indices(m; t=history_time_slices, temporal_block=anything)
     # history_indices = indices(m; t=history_time_slice(m), temporal_block=anything)
     window_indices = indices(m; t=time_slice(m))
