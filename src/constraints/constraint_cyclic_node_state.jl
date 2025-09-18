@@ -60,12 +60,22 @@ function constraint_cyclic_node_state_indices(m::Model)
         (node=n, stochastic_path=path, t_start=t_start, t_end=t_end, temporal_block=blk)
         for (n, blk) in indices(cyclic_condition)
         if cyclic_condition(node=n, temporal_block=blk)
-        for t_start in filter(
-            x -> blk in blocks(x), t_before_t(m; t_after=first(collect(time_slice(m; temporal_block=members(blk)))))
-        )
+        for t_start in _t_start(m, blk)
         for t_end in last(collect(time_slice(m; temporal_block=members(blk))))
         for path in active_stochastic_paths(m, node_state_indices(m; node=n, t=[t_start, t_end]))
     )
+end
+
+function _t_start(m, blk)
+    t_start = first(collect(time_slice(m; temporal_block=members(blk))))
+    t_before_start = filter(t_before_t(m; t_after=t_start)) do t
+        blk in blocks(t)
+    end
+    if isempty(t_before_start)
+        t_start
+    else
+        t_before_start
+    end
 end
 
 function constraint_cyclic_node_state_indices_filtered(

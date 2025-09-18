@@ -736,7 +736,13 @@ function dynamic_time_indices(m, blk_after, blk_before=blk_after; t_before=anyth
             m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk_after), t=t_after), _compact=false
         )
         if !isdisjoint(members(blk_before), blocks(tb))
+        && !_is_a_free_start(m, ta)
     )
+end
+
+function _is_a_free_start(m, t)
+    blocks_with_free_start = [blk for blk in blocks(t) if has_free_start(temporal_block=blk)]
+    any(t == first(time_slice(m; temporal_block=blk)) for blk in blocks_with_free_start)
 end
 
 """
