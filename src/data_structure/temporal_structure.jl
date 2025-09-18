@@ -23,7 +23,7 @@ struct TimeSliceSet
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
     gaps::Array{TimeSlice,1}
     bridges::Array{TimeSlice,1}
-    function TimeSliceSet(time_slices, dur_unit)
+    function TimeSliceSet(time_slices, dur_unit; bridge_gaps=true)
         block_time_slices = Dict{Object,Array{TimeSlice,1}}()
         for t in time_slices
             for block in blocks(t)
@@ -31,19 +31,27 @@ struct TimeSliceSet
             end
         end
         # Bridge gaps in between temporal blocks
-        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
-        sort!(solids)
-        gap_bounds = (
-            (prec_last, succ_first)
-            for ((_pf, prec_last), (succ_first, _sl)) in zip(solids[1 : end - 1], solids[2:end])
-            if end_(prec_last) < start(succ_first)
-        )
-        gaps = [
-            TimeSlice(end_(prec_last), start(succ_first); duration_unit=dur_unit)
-            for (prec_last, succ_first) in gap_bounds
-        ]
-        # NOTE: By convention, the first time slice in the succeeding block becomes the 'bridge'
-        bridges = [succ_first for (_pl, succ_first) in gap_bounds]
+        gaps, bridges = if bridge_gaps
+            gaps = []
+            bridges = []
+            range_to_bridge = Dict(
+                (start(first(time_slices)), end_(last(time_slices))) => first(time_slices)
+                for time_slices in values(block_time_slices)
+            )
+            ranges = collect(keys(range_to_bridge))
+            for (range, bridge) in range_to_bridge
+                r_start = first(range)
+                other_ranges = setdiff(ranges, range)
+                other_ranges_end = maximum(last.(other_ranges))
+                other_ranges_end < r_start || continue
+                gap = TimeSlice(other_ranges_end, r_start; duration_unit=dur_unit)
+                push!(gaps, gap)
+                push!(bridges, bridge)
+            end
+            gaps, bridges
+        else
+            [], []
+        end
         new(time_slices, block_time_slices, gaps, bridges)
     end
 end
@@ -327,7 +335,7 @@ function _history_time_slices(m, window_start, window_end, window_time_slices)
         for ((t_start, t_end), time_slices) in time_slices_by_history_interval
     )
     # Collect all history time slices
-    history_time_slices = sort!(collect(keys(history_t_by_interval)))
+    history_time_slices = sort!(collect(values(history_t_by_interval)))
     # Compute mapping from window time slice to corresponding history time slice
     # Note that more than one window time slice can map to the same history time slice
     t_history_t = Dict(
@@ -367,7 +375,9 @@ function _generate_time_slice!(m::Model)
     history_time_slices, t_history_t = _history_time_slices(m, window_start, window_end, window_time_slices)
     dur_unit = _model_duration_unit(m)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
-    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(
+        history_time_slices, dur_unit; bridge_gaps=false
+    )
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
 end
 
