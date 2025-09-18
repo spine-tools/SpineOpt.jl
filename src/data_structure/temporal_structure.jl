@@ -729,20 +729,27 @@ function output_time_slice(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slice], output, nothing)
 end
 
-function dynamic_time_indices(m, blk_after, blk_before=blk_after; t_before=anything, t_after=anything)
+function _is_a_free_start(m, t)
+    blocks_with_free_start = [blk for blk in blocks(t) if has_free_start(temporal_block=blk)]
+    any(t == first(time_slice(m; temporal_block=blk)) for blk in blocks_with_free_start)
+end
+
+function _dynamic_time_indices(m, blk_after, blk_before=blk_after; t_before=anything, t_after=anything)
     (
         (tb, ta)
         for (tb, ta) in t_before_t(
             m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk_after), t=t_after), _compact=false
         )
         if !isdisjoint(members(blk_before), blocks(tb))
-        && !_is_a_free_start(m, ta)
     )
 end
 
-function _is_a_free_start(m, t)
-    blocks_with_free_start = [blk for blk in blocks(t) if has_free_start(temporal_block=blk)]
-    any(t == first(time_slice(m; temporal_block=blk)) for blk in blocks_with_free_start)
+function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
+    (
+        (tb, ta)
+        for (tb, ta) in _dynamic_time_indices(m, blk; t_before, t_after)
+        if !_is_a_free_start(m, ta)
+    )
 end
 
 """
@@ -784,19 +791,12 @@ function node_dynamic_time_indices(
     t_after=anything,
 )
     (
-        (node=n, t_before=tb, t_after=ta)
+        (node=n, t_before=(_is_a_free_start(m, ta) ? Object(:none) : tb), t_after=ta)
         for n in intersect(node, SpineOpt.node())
-        for (tb, ta) in dynamic_time_indices(
+        for (tb, ta) in _dynamic_time_indices(
             m,
             (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)),
-            (
-                blk
-                for (_n, blk) in node__temporal_block(
-                    node=n,
-                    temporal_block=(is_longterm_storage(node=n) ? anything : temporal_block),
-                    _compact=false,
-                )
-            );
+            node__temporal_block(node=n);
             t_before=t_before,
             t_after=t_after,
         )
