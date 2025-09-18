@@ -64,15 +64,25 @@ function add_variable!(
     if required_history_period === nothing
         required_history_period = _model_duration_unit(m.ext[:spineopt].instance)(1)
     end
-    t_starts = Set(
-        start(first(time_slice(m; temporal_block=blk))) for blk in temporal_block(has_free_start=true)
+    m_start = start(first(time_slice(m)))
+    start_by_block = Dict(
+        blk => start(first(time_slice(m; temporal_block=blk))) for blk in temporal_block(has_free_start=true)
     )
-    push!(t_starts, start(first(time_slice(m))))
-    last_history_time_slices = [TimeSlice(t_start - required_history_period, t_start) for t_start in t_starts]
     history_time_slices = [
-        t for t in history_time_slice(m) if any(overlaps(t, t_history) for t_history in last_history_time_slices)
+        t
+        for t in history_time_slice(m; temporal_block=temporal_block(has_free_start=false))
+        if overlaps(t, TimeSlice(m_start - required_history_period, m_start))
     ]
+    middle_history_time_slices = [
+        t
+        for (blk, blk_start) in start_by_block
+        for t in history_time_slice(m; temporal_block=blk)
+        if overlaps(t, TimeSlice(blk_start - required_history_period, blk_start))
+    ]
+    append!(history_time_slices, middle_history_time_slices)
+    for x in sort(history_time_slices; by=(t -> (blocks(t), t))) @show x, blocks(x) end
     history_indices = indices(m; t=history_time_slices, temporal_block=anything)
+    # history_indices = indices(m; t=history_time_slice(m), temporal_block=anything)
     window_indices = indices(m; t=time_slice(m))
     all_indices = Iterators.flatten((history_indices, window_indices))
     first_ind = iterate(indices(m))
