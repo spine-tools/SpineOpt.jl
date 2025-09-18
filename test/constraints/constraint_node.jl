@@ -1110,6 +1110,7 @@ function test_constraint_node_injection_free_start()
             ["node", "node_b", "has_state", true],
             ["node", "node_b", "node_state_cap", 100.0],
             ["node", "node_b", "initial_node_state", 50.0],
+            ["temporal_block", "hourly", "has_free_start", true],
             ["temporal_block", "hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
             ["temporal_block", "two_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
             ["temporal_block", "investments_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
@@ -1122,10 +1123,33 @@ function test_constraint_node_injection_free_start()
             url_in; objects=objects, object_parameter_values=object_parameter_values, relationships=relationships
          )
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        # Check we don't have a node_injection constraint for the first time slice of the discontinuous block
+        # Check we have the middle history node_state variable
+        var_n_state = m.ext[:spineopt].variables[:node_state]
+        middle_history_t = only(history_time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
+        middle_history_ind = (node=node(:node_b), stochastic_scenario=stochastic_scenario(:parent), t=middle_history_t)
+        @test middle_history_ind in keys(var_n_state)
+        # Check we have the right node_injection constraint at the discontinuity
         con_n_inj = m.ext[:spineopt].constraints[:node_injection]
+        t_before = middle_history_t
         t_after = first(time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
-        @test !(t_after in [x.t_after for x in keys(con_n_inj)])
+        discont_ind = (
+            node=node(:node_b),
+            stochastic_path=stochastic_scenario.([:parent, :child]),
+            t_before=t_before,
+            t_after=t_after,
+        )
+        @test discont_ind in keys(con_n_inj)
+        observed_con = constraint_object(con_n_inj[discont_ind])
+        var_n_inj = m.ext[:spineopt].variables[:node_injection]
+        var_u_flow = m.ext[:spineopt].variables[:unit_flow]
+        expected_con = @build_constraint(
+            + var_n_inj[node(:node_b), stochastic_scenario(:child), t_after]
+            + var_n_state[node(:node_b), stochastic_scenario(:child), t_after]
+            - var_n_state[node(:node_b), stochastic_scenario(:parent), t_before]
+            - var_u_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:child), t_after]
+            == 0
+        )
+        @test _is_constraint_equal(observed_con, expected_con)
     end
 end
 
@@ -1144,6 +1168,7 @@ function test_constraint_cyclic_node_state_free_start()
             ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
             ["node", "node_b", "has_state", true],
             ["node", "node_c", "has_state", true],
+            ["temporal_block", "hourly", "has_free_start", true],
             ["temporal_block", "hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
             ["temporal_block", "two_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
             ["model", "instance", "model_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
@@ -1167,8 +1192,10 @@ function test_constraint_cyclic_node_state_free_start()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:spineopt].variables[:node_state]
         constraint = m.ext[:spineopt].constraints[:cyclic_node_state]
+        middle_history_t = only(history_time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
+        middle_history_ind = (node=node(:node_b), stochastic_scenario=stochastic_scenario(:parent), t=middle_history_t)
+
         @test length(constraint) == 2
-        return
         scenario0 = stochastic_scenario(:parent)
         scenario1 = stochastic_scenario(:child)
         # Test for each node with cyclic condition on discontinuous_block

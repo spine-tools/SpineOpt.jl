@@ -280,7 +280,7 @@
         ["stage", "stage_scenario", null, null, "The scenario that this `stage` should run (EXPERIMENTAL)."],
         ["temporal_block", "block_end", null, null, "The end time for the `temporal_block`. Can be given either as a `DateTime` for a static end point, or as a `Duration` for an end point relative to the start of the current optimization."],
         ["temporal_block", "block_start", null, null, "The start time for the `temporal_block`. Can be given either as a `DateTime` for a static start point, or as a `Duration` for an start point relative to the start of the current optimization."],
-        ["temporal_block", "has_free_start", false, "boolean_value_list", "Whether the block requires a free start for variables associated to it"],
+        ["temporal_block", "has_free_start", false, "boolean_value_list", "Whether the block requires a fresh start (own independent history)"],
         ["temporal_block", "representative_period_index", null, null, "Index for the array of coefficients defined in `representative_periods_mapping`"],
         ["temporal_block", "representative_periods_mapping", null, null, "Map from date time to representative temporal block combination (either a single block's name, or an array of coefficients for each block that has a `representative_period_index`)"],
         ["temporal_block", "resolution", {"type": "duration", "data": "1h"}, null, "Temporal resolution of the `temporal_block`. Essentially, divides the period between `block_start` and `block_end` into `TimeSlices` with the input `resolution`."],

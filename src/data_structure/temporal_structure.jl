@@ -290,16 +290,33 @@ function _required_history_duration(m)
 end
 
 function _history_time_slices(m, window_start, window_end, window_time_slices)
-    window_duration = window_end - window_start
     required_history_duration = _required_history_duration(m)
-    history_start = window_start - required_history_duration
-    history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
+    # First, compute mappings from history interval to all the corresponding window time slices
     time_slices_by_history_interval = Dict()
     for t in window_time_slices
-        t_start, t_end = start(t), min(end_(t), window_end)
+        subwindows = [blk for blk in blocks(t) if has_free_start(temporal_block=blk)]
+        subwindow_start, subwindow_end = if length(subwindows) > 1
+            error("timeslice $t is in more than one block with free start: $subwindows")
+        elseif length(subwindows) == 1
+            subwindow = only(subwindows)
+            subwindow_start = _adjusted_start(window_start, block_start(temporal_block=subwindow, _strict=false))
+            subwindow_end = _adjusted_end(window_start, window_end, block_end(temporal_block=subwindow, _strict=false))
+            subwindow_start, subwindow_end
+        else
+            window_start, window_end
+        end
+        t_start, t_end = start(t), min(end_(t), subwindow_end)
         t_start < t_end || continue
-        push!(get!(time_slices_by_history_interval, (t_start, t_end) .- window_duration, Set()), t)
+        history_start = subwindow_start - required_history_duration
+        subwindow_duration = subwindow_end - subwindow_start
+        while true
+            t_start -= subwindow_duration
+            t_end -= subwindow_duration
+            t_end > history_start || break
+            push!(get!(time_slices_by_history_interval, (t_start, t_end), Set()), t)
+        end
     end
+    # Compute mapping from history interval to history time slice
     history_t_by_interval = Dict(
         (t_start, t_end) => TimeSlice(
             t_start,
@@ -309,21 +326,15 @@ function _history_time_slices(m, window_start, window_end, window_time_slices)
         )
         for ((t_start, t_end), time_slices) in time_slices_by_history_interval
     )
+    # Collect all history time slices
+    history_time_slices = sort!(collect(keys(history_t_by_interval)))
+    # Compute mapping from window time slice to corresponding history time slice
+    # Note that more than one window time slice can map to the same history time slice
     t_history_t = Dict(
         t => history_t_by_interval[t_start, t_end]
         for ((t_start, t_end), time_slices) in time_slices_by_history_interval
-        if t_end > history_start
         for t in time_slices
     )
-    history_window_time_slices = collect(values(history_t_by_interval))
-    sort!(history_window_time_slices)
-    history_time_slices = Array{TimeSlice,1}()
-    for k in Iterators.countfrom(1)
-        prepend!(history_time_slices, history_window_time_slices)
-        k == history_window_count && break
-        history_window_time_slices .-= window_duration
-    end
-    filter!(t -> end_(t) > history_start, history_time_slices)
     history_time_slices, t_history_t
 end
 

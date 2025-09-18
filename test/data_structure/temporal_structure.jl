@@ -479,6 +479,51 @@ function _test_master_temporal_structure()
     end
 end
 
+function _test_subwindows()
+    @testset "subwindows" begin
+        url_in = _test_temporal_structure_setup()
+        res = Day(1)
+        m_start = DateTime(2001, 1, 1)
+        m_end = m_start + Week(1)
+        objects = [["temporal_block", "long_block"]]
+        object_parameter_values = [
+            ["model", "instance", "model_start", unparse_db_value(m_start)],
+            ["model", "instance", "model_end", unparse_db_value(m_end)],
+            ["temporal_block", "block_a", "has_free_start", true],
+            ["temporal_block", "block_b", "has_free_start", true],
+            ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
+            ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
+            ["temporal_block", "block_a", "block_start", unparse_db_value(m_start)],
+            ["temporal_block", "block_a", "block_end", unparse_db_value(m_start + Day(1))],
+            ["temporal_block", "block_b", "block_start", unparse_db_value(m_start + Day(3))],
+            ["temporal_block", "block_b", "block_end", unparse_db_value(m_start + Day(4))],
+            ["temporal_block", "long_block", "resolution", unparse_db_value(Week(1))],
+        ]
+        SpineInterface.import_data(url_in; objects=objects, object_parameter_values=object_parameter_values)
+        using_spinedb(url_in, SpineOpt)
+        m = _model()
+        SpineOpt.generate_temporal_structure!(m)
+        obs_time_slices = time_slice(m)
+        exp_time_slices = [
+            TimeSlice(m_start, m_start + Day(1), temporal_block(:block_a)),
+            TimeSlice(m_start, m_start + Week(1), temporal_block(:long_block)),
+            TimeSlice(m_start + Day(3), m_start + Day(4), temporal_block(:block_b))
+        ]
+        @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
+            @test obs == exp
+        end
+        obs_hist_time_slices = history_time_slice(m)
+        exp_hist_time_slices = [
+            TimeSlice(m_start - Week(1), m_start, temporal_block(:long_block)),
+            TimeSlice(m_start - Day(1), m_start, temporal_block(:block_a)),
+            TimeSlice(m_start + Day(2), m_start + Day(3), temporal_block(:block_b))
+        ]
+        @testset for (obs, exp) in zip(obs_hist_time_slices, exp_hist_time_slices)
+            @test obs == exp
+        end
+    end
+end
+
 @testset "temporal structure" begin
     _test_representative_time_slice()
     _test_zero_resolution()
@@ -490,4 +535,5 @@ end
     _test_to_time_slice_with_rolling()
     _test_history()
     _test_master_temporal_structure()
+    _test_subwindows()
 end
