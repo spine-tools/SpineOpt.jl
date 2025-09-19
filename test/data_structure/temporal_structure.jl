@@ -62,8 +62,8 @@ function _test_representative_time_slice()
             "data" => Dict(
                 "2000-01-01T00:00:00" => "rep_blk1",
                 "2000-01-01T06:00:00" => "rep_blk2",
-                "2000-01-01T12:00:00" => "rep_blk1",
-                "2000-01-01T18:00:00" => "rep_blk2",
+                "2000-01-01T12:00:00" => "rep_blk2",
+                "2000-01-01T18:00:00" => "rep_blk1",
             )
         )
         objects = [["temporal_block", "rep_blk1"], ["temporal_block", "rep_blk2"]]
@@ -96,9 +96,9 @@ function _test_representative_time_slice()
             elseif t_end <= m_start + Hour(12)
                 @test _representative_time_slice(m, t) == rep_blk2_t
             elseif t_end <= m_start + Hour(18)
-                @test _representative_time_slice(m, t) == rep_blk1_t
-            elseif t_end <= m_start + Hour(24)
                 @test _representative_time_slice(m, t) == rep_blk2_t
+            elseif t_end <= m_start + Hour(24)
+                @test _representative_time_slice(m, t) == rep_blk1_t
             else
                 @test _representative_time_slice(m, t) == t
             end

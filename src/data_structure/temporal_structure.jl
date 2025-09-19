@@ -188,6 +188,13 @@ function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_b
     for represented_blk in indices(representative_periods_mapping)
         blk_start, blk_end = start_and_end_by_block[represented_blk]
         mapping = representative_periods_mapping(temporal_block=represented_blk)
+        representative_blk_to_coef_by_start = Dict(
+            t_start => _representative_block_to_coefficient(repr_comb, representative_blk_by_index)
+            for (t_start, repr_comb) in mapping
+        )
+        mapping_blocks = unique(
+            blk for blk_to_coef in values(representative_blk_to_coef_by_start) for (blk, _coeff) in blk_to_coef
+        )
         represented_t_starts = sort!(collect(keys(mapping)))
         filter!(represented_t_starts) do t_start
             t_start < blk_end
@@ -195,10 +202,7 @@ function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_b
         represented_t_ends = [represented_t_starts[2:end]; blk_end]
         for (represented_t_start, represented_t_end) in zip(represented_t_starts, represented_t_ends)
             represented_interval = (represented_t_start, represented_t_end)
-            representative_combination = mapping[represented_t_start]
-            representative_blk_to_coef = _representative_block_to_coefficient(
-                representative_combination, representative_blk_by_index
-            )
+            representative_blk_to_coef = representative_blk_to_coef_by_start[represented_t_start]
             invalid_blks = setdiff(keys(representative_blk_to_coef), members(temporal_block()))
             if !isempty(invalid_blks)
                 error("$represented_interval from '$represented_blk' is mapped to unknown block(s) $invalid_blks")
@@ -216,7 +220,7 @@ function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_b
                 t_start, t_end = interval
                 blocks, _mapping = blocks_and_mapping_by_interval[interval]
                 (
-                    !isdisjoint(keys(representative_blk_to_coef), blocks)
+                    !isdisjoint(mapping_blocks, blocks)
                     && t_end > represented_t_start && t_start < represented_t_end
                 )
             end
