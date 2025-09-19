@@ -32,22 +32,32 @@ struct TimeSliceSet
         end
         # Bridge gaps in between temporal blocks
         gaps, bridges = if bridge_gaps
-            gaps = []
-            bridges = []
-            range_to_bridge = Dict(
-                (start(first(time_slices)), end_(last(time_slices))) => first(time_slices)
-                for time_slices in values(block_time_slices)
-            )
-            ranges = collect(keys(range_to_bridge))
-            for (range, bridge) in range_to_bridge
-                r_start = first(range)
-                other_ranges = setdiff(ranges, range)
-                other_ranges_end = maximum(last.(other_ranges))
-                other_ranges_end < r_start || continue
-                gap = TimeSlice(other_ranges_end, r_start; duration_unit=dur_unit)
-                push!(gaps, gap)
-                push!(bridges, bridge)
+            solids = [
+                (start(first(time_slices)), end_(last(time_slices))) for time_slices in values(block_time_slices)
+            ]
+            gaps = [Dict(:start => minimum(first.(solids)), :end => maximum(last.(solids)))]
+            for (s_start, s_end) in solids
+                new_gap = nothing
+                for gap in gaps
+                    if gap[:start] <= s_start && s_end <= gap[:end]
+                        # Split
+                        new_gap = Dict(:start => s_end, :end => gap[:end])
+                        gap[:end] = s_start
+                    elseif s_start <= gap[:start] <= s_end
+                        # Adjust start
+                        gap[:start] = s_end
+                    elseif s_start <= gap[:end] <= s_end
+                        # Adjust end
+                        gap[:end] = s_start
+                    end
+                end
+                new_gap === nothing || push!(gaps, new_gap)
             end
+            filter!(unique!(gaps)) do gap
+                gap[:start] < gap[:end]
+            end
+            gaps = sort!([TimeSlice(gap[:start], gap[:end]; duration_unit=dur_unit) for gap in gaps])
+            bridges = [first(t for t in time_slices if start(t) == end_(gap)) for gap in gaps]
             gaps, bridges
         else
             [], []
