@@ -41,8 +41,6 @@ function _test_temporal_structure_setup()
             ["temporal_block", "block_b"],
         ],
         :relationships => [
-            ["model__temporal_block", ["instance", "block_a"]],
-            ["model__temporal_block", ["instance", "block_b"]],
             ["node__temporal_block", ["only_node", "block_a"]],
             ["node__temporal_block", ["only_node", "block_b"]],
         ],
@@ -51,6 +49,37 @@ function _test_temporal_structure_setup()
     )
     _load_test_data(url_in, test_data)
     url_in
+end
+
+function _test_discontinuity_at_the_first_time_step()
+    # NOTE: This test tests that if a temporal block ends earlier than the optimisation window,
+    # nodes associated only to it don't have a node_injection constraint for the first time step.
+    # The point is to illustrate this behavior which may not be the optimal one.
+    @testset "discontinuity" begin
+        url_in = _test_temporal_structure_setup()
+        objects = [
+            ["node", "another_node"],
+        ]
+        relationships = [
+            ["node__temporal_block", ["another_node", "block_b"]],
+        ]
+        object_parameter_values = [
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
+        ]
+        SpineInterface.import_data(
+            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        using_spinedb(url_in, SpineOpt)
+        m = _model()
+        generate_temporal_structure!(m)
+        t = first(time_slice(m))
+        ts = collect(
+            x.t_after for x in SpineOpt.node_dynamic_time_indices(m) if x.node.name == :another_node
+        )
+        @test !(t in ts)
+    end
 end
 
 function _test_representative_time_slice()
@@ -536,4 +565,5 @@ end
     _test_history()
     _test_master_temporal_structure()
     _test_subwindows()
+    _test_discontinuity_at_the_first_time_step()
 end
