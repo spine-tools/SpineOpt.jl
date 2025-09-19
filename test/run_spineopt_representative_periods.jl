@@ -276,9 +276,13 @@ function _test_representative_periods_constraints(m, ::Val{:node_injection}, con
         (node=node(:h2_node), stochastic_path=path, t_before=rt1, t_after=rt2),
         (node=node(:h2_node), stochastic_path=path, t_before=_represented_t_before(m, rt3), t_after=rt3),
         (node=node(:h2_node), stochastic_path=path, t_before=rt3, t_after=rt4),
+        (node=node(:batt_node), stochastic_path=path, t_before=_represented_t_before(m, rt1), t_after=rt1),
         (node=node(:batt_node), stochastic_path=path, t_before=rt1, t_after=rt2),
+        (node=node(:batt_node), stochastic_path=path, t_before=_represented_t_before(m, rt3), t_after=rt3),
         (node=node(:batt_node), stochastic_path=path, t_before=rt3, t_after=rt4),
+        (node=node(:elec_node), stochastic_path=path, t_before=_represented_t_before(m, rt1), t_after=rt1),
         (node=node(:elec_node), stochastic_path=path, t_before=rt1, t_after=rt2),
+        (node=node(:elec_node), stochastic_path=path, t_before=_represented_t_before(m, rt3), t_after=rt3),
         (node=node(:elec_node), stochastic_path=path, t_before=rt3, t_after=rt4),
     ]
     @test isempty(symdiff(expected_inds, observed_inds))
@@ -354,7 +358,7 @@ function _expected_representative_periods_constraint(
             - node_slack_neg[n, s, t_after]
             + node_slack_pos[n, s, t_after]
             - (1 / 12) * node_state[n, s, t_after]
-            + (1 / 12) * node_state[n, s, t_before]
+            + (1 / 12) * get(node_state, (n, s, t_before), 0)
             - unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after]
             + fr_e2b * unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
         )

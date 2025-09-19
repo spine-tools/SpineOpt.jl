@@ -68,8 +68,10 @@ end
 
 function _t_start(m, n, blk)
     t_start = first(collect(time_slice(m; temporal_block=members(blk))))
-    t_before_start = filter!([x.t_before for x in node_dynamic_time_indices(m; node=n, t_after=t_start)]) do t
-        blk in blocks(t)
+    t_before_start = filter!(
+        [x.t_before for x in node_dynamic_time_indices(m; node=n, temporal_block=anything, t_after=t_start)]
+    ) do t
+        !isdisjoint(members(blk), blocks(t))
     end
     if isempty(t_before_start)
         t_start
