@@ -302,24 +302,11 @@ function _intervals_by_history_interval(blocks_and_mapping_by_interval, m, windo
             h_start -= subwindow_duration
             h_end -= subwindow_duration
             h_end > history_start || break
+            haskey(blocks_and_mapping_by_interval, (h_start, h_end)) && continue
             push!(get!(intervals_by_history_interval, (h_start, h_end), Set()), (t_start, t_end))
         end
     end
     intervals_by_history_interval
-end
-
-function _consolidate_history_and_non_history!(blocks_and_mapping_by_interval, intervals_by_history_interval)
-    to_delete = []
-    for (h_interval, intervals) in intervals_by_history_interval
-        existing = get(blocks_and_mapping_by_interval, h_interval, nothing)
-        existing === nothing && continue
-        push!(to_delete, h_interval)
-        blocks, _mapping = existing
-        union!(blocks, (blk for i in intervals for blk in first(blocks_and_mapping_by_interval[i])))
-    end
-    for k in to_delete
-        delete!(intervals_by_history_interval, k)
-    end
 end
 
 function _history_time_slices(m, intervals_by_history_interval, time_slice_by_interval)
@@ -363,7 +350,6 @@ function _generate_time_slice!(m::Model)
     intervals_by_history_interval = _intervals_by_history_interval(
         blocks_and_mapping_by_interval, m, window_start, window_end
     )
-    _consolidate_history_and_non_history!(blocks_and_mapping_by_interval, intervals_by_history_interval)
     time_slice_by_interval = Dict(
         interval => TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
         for (interval, (blocks, _mapping)) in blocks_and_mapping_by_interval
