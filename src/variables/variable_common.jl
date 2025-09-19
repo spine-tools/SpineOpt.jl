@@ -81,7 +81,6 @@ function add_variable!(
     ]
     append!(history_time_slices, middle_history_time_slices)
     history_indices = indices(m; t=history_time_slices, temporal_block=anything)
-    # history_indices = indices(m; t=history_time_slice(m), temporal_block=anything)
     window_indices = indices(m; t=time_slice(m))
     all_indices = Iterators.flatten((history_indices, window_indices))
     first_ind = iterate(indices(m))

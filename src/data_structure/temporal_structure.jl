@@ -142,45 +142,35 @@ function _start_and_end_by_block(m::Model, window_start, window_end)
     )
 end
 
-"""
-    _blocks_by_representative_interval(m::Model, window_start, window_end)
-
-A `Dict` mapping (start, end) tuples to an Array of temporal blocks where found.
-"""
-function _blocks_by_representative_interval(m::Model, start_and_end_by_block)
-    blocks_by_representative_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
+function _blocks_and_mapping_by_interval(start_and_end_by_block)
+    blocks_and_mapping_by_interval = Dict()
     for blk in members(temporal_block(representative_periods_mapping=nothing))
         blk_start, blk_end = start_and_end_by_block[blk]
-        time_slice_start = blk_start
+        t_start = blk_start
         i = 1
-        while time_slice_start < blk_end
-            res = resolution(temporal_block=blk, i=i, s=time_slice_start, _strict=false)
+        while t_start < blk_end
+            res = resolution(temporal_block=blk, i=i, s=t_start, _strict=false)
             res !== nothing || break
             if iszero(res)
                 # TODO: Try to move this to a check...
                 error("`resolution` of temporal block `$blk` cannot be zero!")
             end
-            time_slice_end = time_slice_start + res
-            if time_slice_end > blk_end
-                time_slice_end = blk_end
+            t_end = t_start + res
+            if t_end > blk_end
+                t_end = blk_end
                 @info "the last time slice of temporal block $blk has been cut to fit within the block"
             end
-            push!(get!(blocks_by_representative_interval, (time_slice_start, time_slice_end), Array{Object,1}()), blk)
-            time_slice_start = time_slice_end
+            blocks, _mapping = get!(blocks_and_mapping_by_interval, (t_start, t_end), (Set(), nothing))
+            push!(blocks, blk)
+            t_start = t_end
             i += 1
         end
     end
-    blocks_by_representative_interval
+    blocks_and_mapping_by_interval
 end
 
-"""
-    _mapping_by_represented_interval(m::Model, start_and_end_by_block)
-
-A `Dict` mapping (start, end) tuples of represented periods to another tuple
-of (original block, mapping from coefficient to represented block).
-"""
-function _mapping_by_represented_interval(m::Model, start_and_end_by_block)
-    mapping_by_represented_interval = Dict{Tuple{DateTime,DateTime},Tuple{Object,Dict}}()
+function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_by_interval, start_and_end_by_block)
+    blocks_and_mapping_by_represented_interval = Dict()
     representative_blk_by_index = Dict(
         round(Int, representative_period_index(temporal_block=blk)) => blk
         for blk in indices(representative_period_index)
@@ -209,46 +199,38 @@ function _mapping_by_represented_interval(m::Model, start_and_end_by_block)
                     "sum of coefficients for $represented_interval from '$represented_blk' must be 1 - not $coefs_sum"
                 )
             end
-            existing_mapping = get(mapping_by_represented_interval, represented_interval, nothing)
-            if existing_mapping !== nothing
-                existing_represented_blk = existing_mapping[1]
+            # Make sure no represented interval is overlapping a representative interval.
+            # If that's the case then add its block to each of the overlapping intervals.
+            # This is so representative intervals have all the blocks they need.
+            overlapping_representative_intervals = filter(keys(blocks_and_mapping_by_interval)) do interval
+                t_start, t_end = interval
+                blocks, _mapping = blocks_and_mapping_by_interval[interval]
+                (
+                    !isdisjoint(keys(representative_blk_to_coef), blocks)
+                    && t_end > represented_t_start && t_start < represented_t_end
+                )
+            end
+            if !isempty(overlapping_representative_intervals)
+                for interval in overlapping_representative_intervals
+                    blocks, _mapping = blocks_and_mapping_by_interval[interval]
+                    push!(blocks, represented_blk)
+                end
+                continue
+            end
+            existing = get(blocks_and_mapping_by_represented_interval, represented_interval, nothing)
+            if existing !== nothing
+                blocks, _mapping = existing
+                existing_represented_blk = only(blocks)
                 error("cannot map $represented_interval from '$represented_blk' \
                     because it already belongs in another represented block $existing_represented_blk",
                 )
             end
-            mapping_by_represented_interval[represented_interval] = (represented_blk, representative_blk_to_coef)
-        end
-    end
-    mapping_by_represented_interval
-end
-
-"""
-    _consolidate_intervals!(mapping_by_represented_interval, blocks_by_representative_interval)
-
-Make sure no represented interval is overlapping a representative interval.
-If that's the case then remove it from `mapping_by_represented_interval`,
-and add its block to each of the overlapping intervals from `blocks_by_representative_interval`.
-This is so representative intervals have all the blocks they need.
-"""
-function _consolidate_intervals!(mapping_by_represented_interval, blocks_by_representative_interval)
-    for represented_interval in keys(mapping_by_represented_interval)
-        represented_t_start, represented_t_end = represented_interval
-        represented_blk, representative_blk_to_coef = mapping_by_represented_interval[represented_interval]
-        overlapping_representative_intervals = filter(keys(blocks_by_representative_interval)) do interval
-            t_start, t_end = interval
-            blocks = blocks_by_representative_interval[interval]
-            (
-                !isdisjoint(keys(representative_blk_to_coef), blocks)
-                && t_end > represented_t_start && t_start < represented_t_end
+            blocks_and_mapping_by_represented_interval[represented_interval] = (
+                Set(represented_blk), representative_blk_to_coef
             )
         end
-        if !isempty(overlapping_representative_intervals)
-            delete!(mapping_by_represented_interval, represented_interval)
-            for interval in overlapping_representative_intervals
-                push!(blocks_by_representative_interval[interval], represented_blk)
-            end
-        end
     end
+    merge!(blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
 end
 
 function _representative_block_to_coefficient(representative_combination::Symbol, _representative_blk_by_index)
@@ -262,16 +244,16 @@ function _representative_block_to_coefficient(representative_combination::Array,
     Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
 end
 
-function _add_padding_time_slice!(window_time_slices, m, window_end)
-    last_t = window_time_slices[argmax(end_.(window_time_slices))]
-    temp_struct_end = end_(last_t)
+function _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
+    intervals = collect(keys(blocks_and_mapping_by_interval))
+    last_i = intervals[argmax(last.(intervals))]
+    temp_struct_end = last(last_i)
     if temp_struct_end < window_end
-        padding_t = TimeSlice(
-            temp_struct_end, window_end, blocks(last_t)...; duration_unit=_model_duration_unit(m)
-        )
-        push!(window_time_slices, padding_t)
+        padding_interval = (temp_struct_end, window_end)
+        blocks, _mapping = get!(blocks_and_mapping_by_interval, padding_interval, (Set(), nothing))
+        union!(blocks, blocks_and_mapping_by_interval[last_i])
         @info string(
-            "an artificial time slice $padding_t has been added to blocks $(blocks(padding_t)), ",
+            "an artificial time slice $padding_interval has been added to blocks $blocks, ",
             "so that the temporal structure fills the optimisation window ",
         )
     end
@@ -297,14 +279,13 @@ function _required_history_duration(m)
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
-function _history_time_slices(m, window_start, window_end, window_time_slices)
+function _intervals_by_history_interval(blocks_and_mapping_by_interval, m, window_start, window_end)
+    intervals_by_history_interval = Dict()
     required_history_duration = _required_history_duration(m)
-    # First, compute mappings from history interval to all the corresponding window time slices
-    time_slices_by_history_interval = Dict()
-    for t in window_time_slices
-        subwindows = [blk for blk in blocks(t) if has_free_start(temporal_block=blk)]
+    for ((t_start, t_end), (blocks, _mapping)) in blocks_and_mapping_by_interval
+        subwindows = [blk for blk in blocks if has_free_start(temporal_block=blk)]
         subwindow_start, subwindow_end = if length(subwindows) > 1
-            error("timeslice $t is in more than one block with free start: $subwindows")
+            error("interval $((t_start, t_end)) is in more than one block with free start: $subwindows")
         elseif length(subwindows) == 1
             subwindow = only(subwindows)
             subwindow_start = _adjusted_start(window_start, block_start(temporal_block=subwindow, _strict=false))
@@ -313,35 +294,53 @@ function _history_time_slices(m, window_start, window_end, window_time_slices)
         else
             window_start, window_end
         end
-        t_start, t_end = start(t), min(end_(t), subwindow_end)
-        t_start < t_end || continue
+        h_start, h_end = t_start, min(t_end, subwindow_end)
+        h_start < h_end || continue
         history_start = subwindow_start - required_history_duration
         subwindow_duration = subwindow_end - subwindow_start
         while true
-            t_start -= subwindow_duration
-            t_end -= subwindow_duration
-            t_end > history_start || break
-            push!(get!(time_slices_by_history_interval, (t_start, t_end), Set()), t)
+            h_start -= subwindow_duration
+            h_end -= subwindow_duration
+            h_end > history_start || break
+            push!(get!(intervals_by_history_interval, (h_start, h_end), Set()), (t_start, t_end))
         end
     end
+    intervals_by_history_interval
+end
+
+function _consolidate_history_and_non_history!(blocks_and_mapping_by_interval, intervals_by_history_interval)
+    to_delete = []
+    for (h_interval, intervals) in intervals_by_history_interval
+        existing = get(blocks_and_mapping_by_interval, h_interval, nothing)
+        existing === nothing && continue
+        push!(to_delete, h_interval)
+        blocks, _mapping = existing
+        union!(blocks, (blk for i in intervals for blk in first(blocks_and_mapping_by_interval[i])))
+    end
+    for k in to_delete
+        delete!(intervals_by_history_interval, k)
+    end
+end
+
+function _history_time_slices(m, intervals_by_history_interval, time_slice_by_interval)
     # Compute mapping from history interval to history time slice
-    history_t_by_interval = Dict(
+    history_time_slice_by_interval = Dict(
         (t_start, t_end) => TimeSlice(
             t_start,
             t_end,
-            unique(blk for t in time_slices for blk in blocks(t))...;
+            unique(blk for i in intervals for blk in blocks(time_slice_by_interval[i]))...;
             duration_unit=_model_duration_unit(m),
         )
-        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
+        for ((t_start, t_end), intervals) in intervals_by_history_interval
     )
     # Collect all history time slices
-    history_time_slices = sort!(collect(values(history_t_by_interval)))
+    history_time_slices = sort!(collect(values(history_time_slice_by_interval)))
     # Compute mapping from window time slice to corresponding history time slice
     # Note that more than one window time slice can map to the same history time slice
     t_history_t = Dict(
-        t => history_t_by_interval[t_start, t_end]
-        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
-        for t in time_slices
+        time_slice_by_interval[interval] => history_time_slice_by_interval[h_interval]
+        for (h_interval, intervals) in intervals_by_history_interval
+        for interval in intervals
     )
     history_time_slices, t_history_t
 end
@@ -358,21 +357,24 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     start_and_end_by_block = _start_and_end_by_block(m, window_start, window_end)
-    blocks_by_representative_interval = _blocks_by_representative_interval(m, start_and_end_by_block)
-    mapping_by_represented_interval = _mapping_by_represented_interval(m, start_and_end_by_block)
-    _consolidate_intervals!(mapping_by_represented_interval, blocks_by_representative_interval)
-    window_time_slices = [
-        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
-        for (interval, blocks) in blocks_by_representative_interval
-    ]
-    m.ext[:spineopt].temporal_structure[:representative_block_coefficients] = representative_block_coefficients = Dict(
-        TimeSlice(interval..., represented_blk; duration_unit=_model_duration_unit(m)) => representative_blk_to_coef
-        for (interval, (represented_blk, representative_blk_to_coef)) in mapping_by_represented_interval
+    blocks_and_mapping_by_interval = _blocks_and_mapping_by_interval(start_and_end_by_block)
+    _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_by_interval, start_and_end_by_block)
+    _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
+    intervals_by_history_interval = _intervals_by_history_interval(
+        blocks_and_mapping_by_interval, m, window_start, window_end
     )
-    append!(window_time_slices, keys(representative_block_coefficients))
-    sort!(window_time_slices)
-    _add_padding_time_slice!(window_time_slices, m, window_end)
-    history_time_slices, t_history_t = _history_time_slices(m, window_start, window_end, window_time_slices)
+    _consolidate_history_and_non_history!(blocks_and_mapping_by_interval, intervals_by_history_interval)
+    time_slice_by_interval = Dict(
+        interval => TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
+        for (interval, (blocks, _mapping)) in blocks_and_mapping_by_interval
+    )
+    window_time_slices = sort!(collect(values(time_slice_by_interval)))
+    m.ext[:spineopt].temporal_structure[:representative_block_coefficients] = Dict(
+        time_slice_by_interval[interval] => mapping
+        for (interval, (_blocks, mapping)) in blocks_and_mapping_by_interval
+        if mapping !== nothing
+    )
+    history_time_slices, t_history_t = _history_time_slices(m, intervals_by_history_interval, time_slice_by_interval)
     dur_unit = _model_duration_unit(m)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(
