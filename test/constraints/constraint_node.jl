@@ -1156,21 +1156,30 @@ end
 function test_constraint_cyclic_node_state_free_start()
     @testset "constraint_cyclic_node_state_free_start" begin
         url_in = _test_constraint_node_setup()
-        objects = [["temporal_block","discontinuous_block"]]
+        objects = [
+            ["temporal_block", "discontinuous_block"],
+            ["temporal_block", "overlapping_block"],
+        ]
         node_capacity = Dict("node_b" => 120, "node_c" => 400)
         storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(180, "m"))
         object_parameter_values = [
-            ["temporal_block", "discontinuous_block", "has_free_start", true],
-            ["temporal_block", "discontinuous_block", "resolution", unparse_db_value(Hour(1))],
-            ["temporal_block", "discontinuous_block", "block_start", unparse_db_value(DateTime("2000-01-02T00:00:00"))],
-            ["temporal_block", "discontinuous_block", "block_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
             ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
             ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
             ["node", "node_b", "has_state", true],
             ["node", "node_c", "has_state", true],
+            ["temporal_block", "discontinuous_block", "has_free_start", true],
+            ["temporal_block", "discontinuous_block", "resolution", unparse_db_value(Hour(1))],
+            ["temporal_block", "discontinuous_block", "block_start", unparse_db_value(DateTime("2000-01-02T00:00:00"))],
+            ["temporal_block", "discontinuous_block", "block_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+            ["temporal_block", "overlapping_block", "resolution", unparse_db_value(Hour(1))],
+            ["temporal_block", "overlapping_block", "block_start", unparse_db_value(DateTime("2000-01-02T00:00:00"))],
+            ["temporal_block", "overlapping_block", "block_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
             ["temporal_block", "hourly", "has_free_start", true],
             ["temporal_block", "hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
             ["temporal_block", "two_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            # NOTE: let investments_hourly end before discontinuous_block starts to check that we do not
+            # bridge gaps into a block with free start
+            ["temporal_block", "investments_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T06:00:00"))],
             ["model", "instance", "model_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
             ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
         ]
@@ -1192,7 +1201,7 @@ function test_constraint_cyclic_node_state_free_start()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:spineopt].variables[:node_state]
         constraint = m.ext[:spineopt].constraints[:cyclic_node_state]
-        middle_history_t = only(history_time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
+        middle_history_t = last(history_time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
         middle_history_ind = (node=node(:node_b), stochastic_scenario=stochastic_scenario(:parent), t=middle_history_t)
 
         @test length(constraint) == 2
