@@ -31,37 +31,40 @@ struct TimeSliceSet
             end
         end
         # Bridge gaps in between temporal blocks
-        gaps, bridges = if bridge_gaps
-            solids = [
-                (start(first(time_slices)), end_(last(time_slices))) for time_slices in values(block_time_slices)
-            ]
-            gaps = [Dict(:start => minimum(first.(solids)), :end => maximum(last.(solids)))]
+        solids = [
+            (start(t_first), end_(t_last))
+            for (t_first, t_last) in (
+                (first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)
+            )
+            if !any(has_free_start(temporal_block=blk) for blk in blocks(t_first))
+        ]
+        gaps = if isempty(solids)
+            []
+        else
+            gap_dicts = [Dict(:start => minimum(first.(solids)), :end => maximum(last.(solids)))]
             for (s_start, s_end) in solids
-                new_gap = nothing
-                for gap in gaps
-                    if gap[:start] <= s_start && s_end <= gap[:end]
+                new_gap_d = nothing
+                for gap_d in gap_dicts
+                    if gap_d[:start] <= s_start && s_end <= gap_d[:end]
                         # Split
-                        new_gap = Dict(:start => s_end, :end => gap[:end])
-                        gap[:end] = s_start
-                    elseif s_start <= gap[:start] <= s_end
+                        new_gap_d = Dict(:start => s_end, :end => gap_d[:end])
+                        gap_d[:end] = s_start
+                    elseif s_start <= gap_d[:start] <= s_end
                         # Adjust start
-                        gap[:start] = s_end
-                    elseif s_start <= gap[:end] <= s_end
+                        gap_d[:start] = s_end
+                    elseif s_start <= gap_d[:end] <= s_end
                         # Adjust end
-                        gap[:end] = s_start
+                        gap_d[:end] = s_start
                     end
                 end
-                new_gap === nothing || push!(gaps, new_gap)
+                new_gap_d === nothing || push!(gap_dicts, new_gap_d)
             end
-            filter!(unique!(gaps)) do gap
-                gap[:start] < gap[:end]
+            filter!(unique!(gap_dicts)) do gap_d
+                gap_d[:start] < gap_d[:end]
             end
-            gaps = sort!([TimeSlice(gap[:start], gap[:end]; duration_unit=dur_unit) for gap in gaps])
-            bridges = [first(t for t in time_slices if start(t) == end_(gap)) for gap in gaps]
-            gaps, bridges
-        else
-            [], []
+            sort!([TimeSlice(gap_d[:start], gap_d[:end]; duration_unit=dur_unit) for gap_d in gap_dicts])
         end
+        bridges = [first(t for t in time_slices if start(t) == end_(gap)) for gap in gaps]
         new(time_slices, block_time_slices, gaps, bridges)
     end
 end
