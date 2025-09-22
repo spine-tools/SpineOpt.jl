@@ -70,7 +70,7 @@ struct TimeSliceSet
 end
 
 struct TOverlapsT
-    overlapping_time_slices::Dict{TimeSlice,Array{TimeSlice,1}}
+    overlapping_time_slices::Dict{TimeSlice,Set{TimeSlice}}
 end
 
 (h::TimeSliceSet)(; temporal_block=anything, t=anything)::Vector{TimeSlice} = h(temporal_block, t)
@@ -391,20 +391,12 @@ end
 E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships!(m::Model)
-    succeeding_time_slices = Dict()
-    overlapping_time_slices = Dict()
-    for blks in Iterators.flatten(((temporal_block(has_free_start=false),), temporal_block(has_free_start=true)))
-        all_time_slices = Iterators.flatten(
-            (history_time_slice(m; temporal_block=blks), time_slice(m; temporal_block=blks))
-        )
-        merge!(
-            succeeding_time_slices,
-            Dict(
-                t => to_time_slice(m; t=TimeSlice(end_(t), end_(t) + Minute(1)), temporal_block=blks)
-                for t in all_time_slices
-            )
-        )
-        merge!(overlapping_time_slices, Dict(t => to_time_slice(m; t=t, temporal_block=blks) for t in all_time_slices))
+    regular_blocks = temporal_block(has_free_start=false)
+    succeeding_time_slices, overlapping_time_slices = _succeeding_and_overlapping_time_slices(m, regular_blocks)
+    for blk in temporal_block(has_free_start=true)
+        succeeding, overlapping = _succeeding_and_overlapping_time_slices(m, [regular_blocks; blk])
+        mergewith!(union!, succeeding_time_slices, succeeding)
+        mergewith!(union!, overlapping_time_slices, overlapping)
     end
     t_before_t_tuples = unique(
         (t_before, t_after)
@@ -425,6 +417,18 @@ function _generate_time_slice_relationships!(m::Model)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
     temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
+end
+
+function _succeeding_and_overlapping_time_slices(m, blks)
+    all_time_slices = Iterators.flatten(
+        (history_time_slice(m; temporal_block=blks), time_slice(m; temporal_block=blks))
+    )
+    succeeding = Dict(
+        t => Set(to_time_slice(m; t=TimeSlice(end_(t), end_(t) + Minute(1)), temporal_block=blks))
+        for t in all_time_slices
+    )
+    overlapping = Dict(t => Set(to_time_slice(m; t=t, temporal_block=blks)) for t in all_time_slices)
+    succeeding, overlapping
 end
 
 function _generate_as_number_or_call!(m)
