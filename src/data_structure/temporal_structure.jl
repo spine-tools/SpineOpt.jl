@@ -319,7 +319,6 @@ function _intervals_by_history_interval(blocks_and_mapping_by_interval, m, windo
             h_start -= subwindow_duration
             h_end -= subwindow_duration
             h_end > history_start || break
-            haskey(blocks_and_mapping_by_interval, (h_start, h_end)) && continue
             push!(get!(intervals_by_history_interval, (h_start, h_end), Set()), (t_start, t_end))
         end
     end
@@ -392,12 +391,21 @@ end
 E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships!(m::Model)
-    all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
-    duration_unit = _model_duration_unit(m)
-    succeeding_time_slices = Dict(
-        t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
-    )
-    overlapping_time_slices = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
+    succeeding_time_slices = Dict()
+    overlapping_time_slices = Dict()
+    for blks in Iterators.flatten(((temporal_block(has_free_start=false),), temporal_block(has_free_start=true)))
+        all_time_slices = Iterators.flatten(
+            (history_time_slice(m; temporal_block=blks), time_slice(m; temporal_block=blks))
+        )
+        merge!(
+            succeeding_time_slices,
+            Dict(
+                t => to_time_slice(m; t=TimeSlice(end_(t), end_(t) + Minute(1)), temporal_block=blks)
+                for t in all_time_slices
+            )
+        )
+        merge!(overlapping_time_slices, Dict(t => to_time_slice(m; t=t, temporal_block=blks) for t in all_time_slices))
+    end
     t_before_t_tuples = unique(
         (t_before, t_after)
         for (t_before, time_slices) in succeeding_time_slices
@@ -634,14 +642,14 @@ end
 
 An `Array` of `TimeSlice`s in model `m` overlapping the given `TimeSlice` (where `t` may not be in `m`).
 """
-function to_time_slice(m::Model; t::TimeSlice)
+function to_time_slice(m::Model; t::TimeSlice, temporal_block=temporal_block())
     temp_struct = m.ext[:spineopt].temporal_structure
     t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
     in_blocks = (
         s
         for t_set in t_sets
-        for time_slices in values(t_set.block_time_slices)
-        for s in _to_time_slice(time_slices, t)
+        for blk in temporal_block
+        for s in _to_time_slice(get(t_set.block_time_slices, blk, TimeSlice[]), t)
     )
     in_gaps = if isempty(indices(representative_periods_mapping))
         (
