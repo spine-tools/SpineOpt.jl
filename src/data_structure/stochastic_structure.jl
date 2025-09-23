@@ -112,9 +112,7 @@ function _time_slice_stochastic_scenarios(m::Model, stochastic_dag::Dict)
     )
     # History `time_slices`
     roots = _find_root_scenarios()
-    history_scenario_mapping = Dict(
-        t => roots for t in history_time_slice(m; temporal_block=temporal_block(has_free_start=false))
-    )
+    history_scenario_mapping = Dict(t => roots for t in history_time_slice(m))
     merge!(scenario_mapping, history_scenario_mapping)
 end
 
