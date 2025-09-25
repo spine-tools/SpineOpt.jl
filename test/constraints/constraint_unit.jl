@@ -299,8 +299,65 @@ function test_units_out_of_service_transition()
     end
 end
 
-function test_constraint_unit_flow_capacity()
-    @testset "constraint_unit_flow_capacity" begin
+function test_constraint_unit_flow_capacity_simple()
+    @testset "constraint_unit_flow_capacity_simple" begin
+        url_in = _test_constraint_unit_reserves_setup()
+        ucap = 100
+        uaf = 0.5
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", ucap],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
+        ]
+        object_parameter_values = [
+            ["unit", "unit_ab", "unit_availability_factor", uaf],
+            ["model", "instance", "use_tight_compact_formulations", false],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+        var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
+        constraint = m.ext[:spineopt].constraints[:unit_flow_capacity]
+        @test length(constraint) == 4
+        s_child = stochastic_scenario(:child)
+        s_parent = stochastic_scenario(:parent)
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
+        case_part = (Object(:min_up_time_gt_time_step, :case), Object(:one, :part))
+        @testset for con_key in keys(constraint)
+            con = constraint[con_key]
+            u, n, d, s, t = con_key
+            @test u.name == :unit_ab
+            @test (n.name, d.name) in ((:node_group_a, :from_node), (:node_group_bc, :to_node))
+            @test (n.name, s, t) in (
+                (:node_group_a, [s_parent], t1h1),
+                (:node_group_a, [s_child], t1h2),
+                (:node_group_bc, [s_parent], t1h1),
+                (:node_group_bc, [s_parent, s_child], t1h2),
+            )
+            var_u_on_t = var_units_on[u, s_by_t[t], t]
+            lhs = if n.name == :node_group_a
+                var_unit_flow[u, node(:node_a), d, s_by_t[t], t]
+            elseif n.name == :node_group_bc
+                var_u_flow_b = var_unit_flow[u, node(:node_b), d, s_parent, t2h]
+                var_u_flow_c = var_unit_flow[u, node(:node_c), d, s_by_t[t], t]
+                var_u_flow_b + var_u_flow_c
+            end
+            expected_con = @build_constraint(lhs <= uaf * ucap * var_u_on_t)
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
+function test_constraint_unit_flow_capacity_tight_and_compact()
+    @testset "constraint_unit_flow_capacity_tight_and_compact" begin
         ucap = 100
         uaf = 0.5
         sul = 0.4
@@ -2103,7 +2160,8 @@ end
     test_constraint_units_available()
     test_constraint_units_available_units_unavailable()
     test_constraint_unit_state_transition()
-    test_constraint_unit_flow_capacity()
+    test_constraint_unit_flow_capacity_simple()
+    test_constraint_unit_flow_capacity_tight_and_compact()
     test_constraint_minimum_operating_point()
     test_constraint_operating_point_bounds()
     test_constraint_operating_point_rank()
