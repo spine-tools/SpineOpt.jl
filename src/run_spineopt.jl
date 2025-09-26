@@ -147,7 +147,7 @@ function _run_spineopt(
     t_start = now()
     @log log_level 1 "Execution started at $t_start"
     prepare_spineopt(url_in; upgrade, filters, templates, log_level)
-    m = create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
+    m = create_model(; mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
     t_end = now()
@@ -380,7 +380,7 @@ A `JuMP.Model` extended to be used with SpineOpt.
 `add_bridges` is a `Bool` indicating whether bridges from JuMP to the solver should be added to the model.
 """
 function create_model(
-    mip_solver=nothing, lp_solver=nothing, use_direct_model=false, use_model_names=true, add_bridges=false
+    ; mip_solver=nothing, lp_solver=nothing, use_direct_model=false, use_model_names=true, add_bridges=false
 )
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
