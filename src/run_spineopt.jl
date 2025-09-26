@@ -146,18 +146,8 @@ function _run_spineopt(
     println("[SpineInterface version $si_ver (git hash: $si_git_hash)]")
     t_start = now()
     @log log_level 1 "Execution started at $t_start"
-    m = prepare_spineopt(
-            url_in;
-            upgrade,
-            filters,
-            templates,
-            mip_solver,
-            lp_solver,
-            use_direct_model,
-            use_model_names,
-            add_bridges,
-            log_level
-        )
+    prepare_spineopt(url_in; upgrade, filters, templates, log_level)
+    m = create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
     t_end = now()
@@ -291,7 +281,7 @@ function prepare_spineopt(
         end
     end
     _set_value_translator()
-    create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
+    nothing
 end
 
 function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scenario="")
@@ -389,7 +379,9 @@ A `JuMP.Model` extended to be used with SpineOpt.
 `use_model_names` is a `Bool` indicating whether the names in the model should be used.
 `add_bridges` is a `Bool` indicating whether bridges from JuMP to the solver should be added to the model.
 """
-function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
+function create_model(
+    mip_solver=nothing, lp_solver=nothing, use_direct_model=false, use_model_names=true, add_bridges=false
+)
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
