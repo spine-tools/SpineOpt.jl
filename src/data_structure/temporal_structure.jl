@@ -70,7 +70,7 @@ struct TimeSliceSet
 end
 
 struct TOverlapsT
-    overlapping_time_slices::Dict{TimeSlice,Set{TimeSlice}}
+    overlapping_time_slices::Dict{TimeSlice,Vector{TimeSlice}}
 end
 
 (h::TimeSliceSet)(; temporal_block=anything, t=anything)::Vector{TimeSlice} = h(temporal_block, t)
@@ -391,13 +391,12 @@ end
 E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships!(m::Model)
-    regular_blocks = temporal_block(has_free_start=false)
-    succeeding_time_slices, overlapping_time_slices = _succeeding_and_overlapping_time_slices(m, regular_blocks)
-    for blk in temporal_block(has_free_start=true)
-        succeeding, overlapping = _succeeding_and_overlapping_time_slices(m, [regular_blocks; blk])
-        mergewith!(union!, succeeding_time_slices, succeeding)
-        mergewith!(union!, overlapping_time_slices, overlapping)
-    end
+    all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
+    succeeding_time_slices = Dict(
+        t => _skip_unrelated!(to_time_slice(m; t=TimeSlice(end_(t), end_(t) + Minute(1))), blocks(t))
+        for t in all_time_slices
+    )
+    overlapping_time_slices = Dict(t => _skip_unrelated!(to_time_slice(m; t=t), blocks(t)) for t in all_time_slices)
     t_before_t_tuples = unique(
         (t_before, t_after)
         for (t_before, time_slices) in succeeding_time_slices
@@ -419,16 +418,23 @@ function _generate_time_slice_relationships!(m::Model)
     temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
 end
 
-function _succeeding_and_overlapping_time_slices(m, blks)
-    all_time_slices = Iterators.flatten(
-        (history_time_slice(m; temporal_block=blks), time_slice(m; temporal_block=blks))
-    )
-    succeeding = Dict(
-        t => Set(to_time_slice(m; t=TimeSlice(end_(t), end_(t) + Minute(1)), temporal_block=blks))
-        for t in all_time_slices
-    )
-    overlapping = Dict(t => Set(to_time_slice(m; t=t, temporal_block=blks)) for t in all_time_slices)
-    succeeding, overlapping
+
+"""
+Remove time slices having blocks that are unrelated to the given blocks.
+Two blocks are unrelated if they both have a free start (we don't want them to be related in any way).
+
+For example say we have three blocks with free start, called 2030, 2040 and 2050.
+Now say the argument is blks = (2040, 2050). Then 2030 is unrelated.
+So any time slice having block 2030 is filtered out.
+"""
+function _skip_unrelated!(time_slices, blks)
+    blocks_with_free_start = [blk for blk in blks if has_free_start(temporal_block=blk)]
+    isempty(blocks_with_free_start) && return time_slices
+    unrelated_blocks = setdiff(temporal_block(has_free_start=true), blocks_with_free_start)
+    isempty(unrelated_blocks) && return time_slices
+    filter!(time_slices) do t
+        isdisjoint(blocks(t), unrelated_blocks)
+    end
 end
 
 function _generate_as_number_or_call!(m)
@@ -646,14 +652,14 @@ end
 
 An `Array` of `TimeSlice`s in model `m` overlapping the given `TimeSlice` (where `t` may not be in `m`).
 """
-function to_time_slice(m::Model; t::TimeSlice, temporal_block=temporal_block())
+function to_time_slice(m::Model; t::TimeSlice)
     temp_struct = m.ext[:spineopt].temporal_structure
     t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
     in_blocks = (
         s
         for t_set in t_sets
-        for blk in temporal_block
-        for s in _to_time_slice(get(t_set.block_time_slices, blk, TimeSlice[]), t)
+        for time_slices in values(t_set.block_time_slices)
+        for s in _to_time_slice(time_slices, t)
     )
     in_gaps = if isempty(indices(representative_periods_mapping))
         (
