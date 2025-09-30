@@ -36,7 +36,7 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
 end
 
 function node_state_lb(m; node, kwargs...)
-    node_state_lower_limit(m; node=node, kwargs..., _default=NaN) * (
+    node_state_lower_limit(m; node=node, kwargs...) * (
         + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
     )
 end

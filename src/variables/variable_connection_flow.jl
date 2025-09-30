@@ -51,7 +51,7 @@ function connection_flow_indices(
 end
 
 function connection_flow_lb(m; connection, node, direction, kwargs...)
-    connection_flow_lower_limit(m; connection=connection, node=node, direction=direction, kwargs..., _default=0) * (
+    connection_flow_lower_limit(m; connection=connection, node=node, direction=direction, kwargs...) * (
         + number_of_connections(m; connection=connection, kwargs..., _default=1)
     )
 end

@@ -848,7 +848,7 @@ end
 
 function generate_connection_flow_lower_limit()
     function _connection_flow_lower_limit(
-        f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
+        f; connection=connection, node=node, direction=direction, _default=0, kwargs...
     )
         _prod_or_nothing(
             f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
@@ -880,11 +880,16 @@ function generate_node_state_capacity()
 end
 
 function generate_node_state_lower_limit()
-    function _node_state_lower_limit(f; node=node, _default=nothing, kwargs...)
-        maximum([_prod_or_nothing(
-            f(node_state_cap; node=node, _default=_default, kwargs...),
-            f(node_state_min_factor; node=node, kwargs...)),
-            f(node_state_min; node=node, kwargs...)]
+    function _node_state_lower_limit(f; node=node, _default=0, kwargs...)
+        max(
+            something(
+                _prod_or_nothing(
+                    f(node_state_cap; node=node, _default=_default, kwargs...),
+                    f(node_state_min_factor; node=node, kwargs...),
+                ),
+                0,
+            ),
+            f(node_state_min; node=node, kwargs...),
         )
     end
 
