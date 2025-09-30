@@ -879,7 +879,7 @@ function _calculate_duals_cplex(m; log_level=3)
     CPLEX = Base.invokelatest(get_module, :CPLEX)
     CPLEX === nothing && return false
     model_backend = backend(m)
-    cplex_model = JuMP.mode(m) == JuMP.DIRECT ? model_backend : model_backend.optimizer.model
+    cplex_model = JuMP.mode(m) == JuMP.DIRECT ? model_backend : model_backend.optimizer
     cplex_model isa CPLEX.Optimizer || return false
     prob_type = CPLEX.CPXgetprobtype(cplex_model.env, cplex_model.lp)
     @assert prob_type == CPLEX.CPXPROB_MILP
