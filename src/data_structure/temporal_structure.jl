@@ -184,10 +184,18 @@ end
 
 function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_by_interval, start_and_end_by_block)
     blocks_and_mapping_by_represented_interval = Dict()
-    representative_blk_by_index = Dict(
-        round(Int, representative_period_index(temporal_block=blk)) => blk
-        for blk in indices(representative_period_index)
-    )
+    representative_blk_by_index = Dict()
+    for blk in indices(representative_period_index)
+        index = round(Int, representative_period_index(temporal_block=blk))
+        existing_blk = get(representative_blk_by_index, index, nothing)
+        if existing_blk !== nothing
+            error(
+                "representative blocks `$blk` and `$existing_blk` cannot have the same index `$index` \
+                - each representative block must have a unique `representative_period_index`"
+            )
+        end
+        representative_blk_by_index[index] = blk
+    end
     for represented_blk in indices(representative_periods_mapping)
         blk_start, blk_end = start_and_end_by_block[represented_blk]
         mapping = representative_periods_mapping(temporal_block=represented_blk)
