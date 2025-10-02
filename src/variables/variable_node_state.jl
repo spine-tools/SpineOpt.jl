@@ -41,7 +41,7 @@ function node_state_indices(
 end
 
 function node_state_lb(m; node, kwargs...)
-    node_state_lower_limit(m; node=node, kwargs..., _default=NaN) * (
+    node_state_lower_limit(m; node=node, kwargs...) * (
         + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
     )
 end
