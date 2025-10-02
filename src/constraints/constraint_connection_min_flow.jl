@@ -112,8 +112,7 @@ function constraint_connection_min_flow_indices(m::Model)
     (
         (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
         for (conn, ng, d) in _connection_node_direction_for_min_flow(m)
-        if members(ng) != [ng] || 
-           is_candidate(connection=conn)
+        if members(ng) != [ng] || is_candidate(connection=conn)
         for (t, path) in t_lowest_resolution_path(
             m,
             connection_flow_indices(m; connection=conn, node=ng, direction=d),
@@ -128,7 +127,7 @@ end
 
 An iterator over tuples (connection, node, direction) for which a connection_flow_lower_limit is specified.
 If a capacity is specified for the same connection and node in the two directions and the 
-connection_flow_lower_limit is never zero, then the connection and node will be included in
+connection_flow_lower_limit is not always zero, then the connection and node will be included in
 only one tuple and the direction will be a `Vector` of the two directions.
 In this case we can write a tight compact formulation.
 """
@@ -138,7 +137,7 @@ function _connection_node_direction_for_min_flow(m)
     iter = Iterators.flatten((froms, tos))
     if use_tight_compact_formulations(model=m.ext[:spineopt].instance)
         bidirectional = intersect(((x.connection, x.node) for x in froms), ((x.connection, x.node) for x in tos))
-        filter!(x -> _is_never_zero(_from_lower_limit(x)) && _is_never_zero(_to_lower_limit(x)), bidirectional)
+        filter!(x -> !_is_zero(_from_lower_limit(x)) && !_is_zero(_to_lower_limit(x)), bidirectional)
         Iterators.flatten(
             (
                 (x for x in iter if !((x.connection, x.node) in bidirectional)),
@@ -146,9 +145,10 @@ function _connection_node_direction_for_min_flow(m)
             )
         )
     else
-        iter
+        (x for x in iter if !_is_zero(connection_flow_lower_limit(; x...)))
     end
 end
 
 _from_lower_limit(x) = connection_flow_lower_limit(; zip((:connection, :node), x)..., direction=direction(:from_node))
+
 _to_lower_limit(x) = connection_flow_lower_limit(; zip((:connection, :node), x)..., direction=direction(:to_node))
