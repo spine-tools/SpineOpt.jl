@@ -22,6 +22,7 @@ Initialize the given model for SpineOpt Master Problem: add variables, add const
 """
 function _build_mp_model!(m; log_level=3)
     num_variables(m) == 0 || return
+    _generate_reports_by_output!(m)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
