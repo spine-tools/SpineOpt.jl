@@ -490,7 +490,9 @@ _parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
 
-_do_create_model(mip_solver, use_direct_model, add_bridges) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver; add_bridges = add_bridges)
+function _do_create_model(mip_solver, use_direct_model, add_bridges)
+    use_direct_model ? direct_model(mip_solver) : Model(mip_solver; add_bridges=add_bridges)
+end
 
 struct SpineOptExt
     instance::Object
@@ -520,27 +522,12 @@ struct SpineOptExt
     event_handlers::Dict
     extras::Dict
     function SpineOptExt(instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing)
-        if stage === nothing
+        intermediate_results_folder = if stage === nothing
             intermediate_results_folder = tempname(; cleanup=false)
             mkpath(intermediate_results_folder)
-            reports_by_output = Dict()
-            for rpt in model__report(model=instance)
-                output_url = output_db_url(report=rpt, _strict=false)
-                for out in report__output(report=rpt)
-                    output_key = (out.name, overwrite_results_on_rolling(report=rpt, output=out))
-                    push!(get!(reports_by_output, output_key, []), (rpt.name, output_url))
-                end
-            end
+            intermediate_results_folder
         else
-            intermediate_results_folder = ""
-            outputs = (
-                out
-                for stage__output__entity in (stage__output__unit, stage__output__node, stage__output__connection)
-                for (out, _ent) in stage__output__entity(stage=stage)
-            )
-            reports_by_output = Dict(
-                (out.name, true) => [] for out in Iterators.flatten((outputs, stage__output(stage=stage)))
-            )
+            ""
         end
         event_handlers = Dict(
             :model_built => Set(),
@@ -557,7 +544,7 @@ struct SpineOptExt
             model_by_stage,
             stage,
             intermediate_results_folder,
-            reports_by_output,
+            Dict(),  # reports_by_output
             Dict{Symbol,Dict}(),  # variables
             Dict{Symbol,Dict}(),  # variables_definition
             Dict{Symbol,Dict}(),  # values
