@@ -101,7 +101,8 @@ function _generate_reports_by_output!(m)
     reports_by_output = m.ext[:spineopt].reports_by_output
     empty!(reports_by_output)
     instance = m.ext[:spineopt].instance
-    if m.ext[:spineopt].stage === nothing
+    stage = m.ext[:spineopt].stage
+    if stage === nothing
         for rpt in model__report(model=instance)
             for out in report__output(report=rpt)
                 output_key = (out.name, overwrite_results_on_rolling(report=rpt, output=out))
