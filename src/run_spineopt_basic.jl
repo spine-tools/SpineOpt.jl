@@ -1189,8 +1189,20 @@ A new Spine database is created at `url_out` if one doesn't exist.
 """
 function write_report(m, url_out; alternative="", log_level=3)
     url_out === nothing && return
+    values = _collect_all_output_values(m)
+    write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
+end
+function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
+    vals_by_report = _vals_by_report(reports_by_output, values)
+    @timelog log_level 2 "Writing report to $actual_output_url..." for (report_name, vals) in vals_by_report
+        output_url = something(output_db_url(report=report(report_name), _strict=false), url_out)
+        write_parameters(vals, output_url; report=string(report_name), alternative=alternative, on_conflict="merge")
+    end
+end
+
+function _collect_all_output_values(m)
     m_mp = master_model(m)
-    values = if m_mp === nothing
+    if m_mp === nothing
         _collect_output_values(m)
     else
         values_mp = _collect_output_values(m_mp)
@@ -1209,30 +1221,22 @@ function write_report(m, url_out; alternative="", log_level=3)
         end
         mergewith!(merge!, values_mp, values)
     end
-    write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end
-function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
-    vals_by_url_by_report = Dict()
+
+function _vals_by_report(reports_by_output, values)
+    vals_by_report = Dict()
     for ((output_name, overwrite), reports) in reports_by_output
         value = get(values, (output_name, overwrite), nothing)
         value === nothing && continue
         if output_name in all_objective_terms
             output_name = Symbol(:objective_, output_name)
         end
-        for (report_name, output_url) in reports
-            if output_url === nothing
-                output_url = url_out
-            end
-            vals = get!(get!(vals_by_url_by_report, output_url, Dict()), report_name, Dict())
+        for report_name in reports
+            vals = get!(vals_by_report, report_name, Dict())
             vals[output_name] = value
         end
     end
-    for (output_url, vals_by_report) in vals_by_url_by_report
-        actual_output_url = run_request(output_url, "get_db_url")
-        @timelog log_level 2 "Writing report to $actual_output_url..." for (report_name, vals) in vals_by_report
-            write_parameters(vals, output_url; report=string(report_name), alternative=alternative, on_conflict="merge")
-        end
-    end
+    vals_by_report
 end
 
 function _collect_output_values(m)
