@@ -72,6 +72,7 @@ Build given SpineOpt model:
 """
 function build_model!(m; log_level)
     num_variables(m) == 0 || return
+    _generate_reports_by_output!(m)
     t_start = now()
     @log log_level 1 "\nBuild started at $t_start"
     model_name = _model_name(m)
@@ -94,6 +95,29 @@ function build_model!(m; log_level)
     @log log_level 1 "Build complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     get!(m.ext[:spineopt].extras, :build_time, Dict())[(model=model_name,)] = elapsed_time_string
     _build_stage_models!(m; log_level)
+end
+
+function _generate_reports_by_output!(m)
+    reports_by_output = m.ext[:spineopt].reports_by_output
+    empty!(reports_by_output)
+    instance = m.ext[:spineopt].instance
+    if m.ext[:spineopt].stage === nothing
+        for rpt in model__report(model=instance)
+            for out in report__output(report=rpt)
+                output_key = (out.name, overwrite_results_on_rolling(report=rpt, output=out))
+                push!(get!(reports_by_output, output_key, []), rpt.name)
+            end
+        end
+    else
+        outputs = (
+            out
+            for stage__output__entity in (stage__output__unit, stage__output__node, stage__output__connection)
+            for (out, _ent) in stage__output__entity(stage=stage)
+        )
+        for out in Iterators.flatten((outputs, stage__output(stage=stage)))
+            reports_by_output[out.name, true] = []
+        end
+    end
 end
 
 """
