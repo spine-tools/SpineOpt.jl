@@ -1193,10 +1193,11 @@ function write_report(m, url_out; alternative="", log_level=3)
     write_report(m.ext[:spineopt].reports_by_output, url_out, values, alternative=alternative, log_level=log_level)
 end
 function write_report(reports_by_output::Dict, url_out, values::Dict; alternative="", log_level=3)
-    vals_by_report = _vals_by_report(reports_by_output, values)
-    @timelog log_level 2 "Writing report to $actual_output_url..." for (report_name, vals) in vals_by_report
+    for (report_name, vals) in _vals_by_report(reports_by_output, values)
         output_url = something(output_db_url(report=report(report_name), _strict=false), url_out)
-        write_parameters(vals, output_url; report=string(report_name), alternative=alternative, on_conflict="merge")
+        @timelog log_level 2 "Writing report to $output_url ..." write_parameters(
+            vals, output_url; report=string(report_name), alternative=alternative, on_conflict="merge"
+        )
     end
 end
 
