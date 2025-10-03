@@ -198,12 +198,7 @@ end
 
 function _update_benders_invested_available!(m_mp)
     for (var_name, current_benders_invested_available) in m_mp.ext[:spineopt].downstream_outputs
-        new_benders_invested_available = Dict(
-            ent => parameter_value(val)
-            for (ent, val) in _output_value_by_entity(
-                m_mp.ext[:spineopt].outputs[var_name], model_end(model=m_mp.ext[:spineopt].instance)
-            )
-        )
+        new_benders_invested_available = Dict(ent => parameter_value(val) for (ent, val) in _val_by_ent(m_mp, var_name))
         mergewith!(merge!, current_benders_invested_available, new_benders_invested_available)
     end
 end
