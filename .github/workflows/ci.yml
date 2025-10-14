@@ -28,8 +28,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.8"  # Minimum compatible Release
-          - "1"    # Latest Release of Julia v1.x
+          - "lts"  # Minimum compatible Release
+          - "1.11" # Latest Release of Julia v1.x
         os:
           - ubuntu-latest
           # - macOS-latest
