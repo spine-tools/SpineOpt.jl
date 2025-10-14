@@ -7,7 +7,7 @@ A Julia package containing a state-of-the-art energy system optimization model.
 
 ## Compatibility
 
-This package supports Julia Long-term support (LTS) up to version 1.11.
+This package supports Julia 1.10.10 (LTS by June 27, 2025) up to version 1.11.
 
 ## :loudspeaker: Community and how to ask help :rocket:
 
