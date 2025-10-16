@@ -61,7 +61,7 @@ end
 	file_path, io = mktemp()
 	url = "sqlite:///$file_path"
 	SpineOpt.run_migrations(url, 1, 0)
-	Y = Module()
+	Y = Bind()
 	using_spinedb(url, Y)
 	template = SpineOpt.template()
 	object_class_names = [Symbol(x[1]) for x in template["object_classes"]]
@@ -111,7 +111,7 @@ function _test_move_connection_flow_cost()
 			_load_test_data_without_template(url, data)
 			@test SpineOpt.move_connection_flow_cost(url, 0) === true
 			run_request(url, "call_method", ("commit_session", "move_connection_flow_cost"))
-			Y = Module()
+			Y = Bind()
 			using_spinedb(url, Y)
 			@test Y.connection_flow_cost(connection=Y.connection(:conn_ab), node=Y.node(:node_a)) == 99
 			@test Y.connection_flow_cost(connection=Y.connection(:conn_bc), node=Y.node(:node_b)) == -1
@@ -146,7 +146,7 @@ function _test_rename_model_types()
 		_load_test_data_without_template(url, data)
 		@test SpineOpt.rename_model_types(url, 0) === true
 		run_request(url, "call_method", ("commit_session", "rename_model_types"))
-		Y = Module()
+		Y = Bind()
 		using_spinedb(url, Y)
 		@test Y.model_type(model=Y.model(:op)) == :spineopt_standard
 		@test Y.model_type(model=Y.model(:benders)) == :spineopt_benders_master
@@ -181,7 +181,7 @@ function _test_translate_ramp_parameters()
 		_load_test_data_without_template(url, data)
 		@test SpineOpt.translate_ramp_parameters(url, 0) === true
 		run_request(url, "call_method", ("commit_session", "translate_ramp_parameters"))
-		Y = Module()
+		Y = Bind()
 		using_spinedb(url, Y)
 		@test isempty(intersect([x.name for x in parameters(Y)], to_rm_pnames))
 		@test Y.start_up_limit(unit=Y.unit(:unit_a), node=Y.node(:node_b)) == 0.5
@@ -203,7 +203,7 @@ function _test_remove_model_tb_ss()
 		_load_test_data_without_template(url, data)
 		@test SpineOpt.remove_model_tb_ss(url, 0) === true
 		run_request(url, "call_method", ("commit_session", "remove_model_tb_ss"))
-		Y = Module()
+		Y = Bind()
 		using_spinedb(url, Y)
 		@test isempty(intersect([x.name for x in relationship_classes(Y)], to_rm_ec_names))
 		@test all(cn in [x.name for x in object_classes(Y)] for cn in (:model, :temporal_block, :stochastic_structure))
@@ -232,7 +232,7 @@ function _test_update_investment_variable_type()
 			],
 		)
 		_load_test_data_without_template(url, data)
-		Y = Module()
+		Y = Bind()
 		using_spinedb(url, Y)
 		@test Y.connection_investment_variable_type(connection=Y.connection(:conn)) == :variable_type_continuous
 		@test Y.storage_investment_variable_type(node=Y.node(:n)) == :variable_type_continuous
@@ -265,7 +265,7 @@ function _test_add_model_algorithm()
 			],
 		)
 		_load_test_data_without_template(url, data)
-		Y = Module()
+		Y = Bind()
 		using_spinedb(url, Y)
 		@test Y.model_type(model=Y.model(:test_model)) == :spineopt_mga
 		@test SpineOpt.add_model_algorithm(url, 0) === true
@@ -294,7 +294,7 @@ function _test_rename_lifetime_to_tech_lifetime()
 			]
 		)
 		_load_test_data_without_template(url, data)
-		Y = Module()
+		Y = Bind()
 		using_spinedb(url, Y)
 		@test SpineOpt.rename_lifetime_to_tech_lifetime(url, 0) === true
 		run_request(url, "call_method", ("commit_session", "rename_lifetime_to_tech_lifetime"))
@@ -325,7 +325,7 @@ function _test_translate_heatrate_parameters()
 			]
 		)
 		_load_test_data_without_template(url, data)
-		Y = Module()
+		Y = Bind()
 		using_spinedb(url, Y)
 		@test SpineOpt.translate_heatrate_parameters(url, 0) === true
 		run_request(url, "call_method", ("commit_session", "translate_heatrate_parameters"))
@@ -370,7 +370,7 @@ function _test_translate_use_economic_representation__use_milestone_years()
 				object_parameter_values=object_parameter_values,
 			)
 
-			Y = Module()
+			Y = Bind()
 			using_spinedb(url, Y)
 			@test SpineOpt.translate_use_economic_representation__use_milestone_years(url, 0) === true
 			run_request(
@@ -408,7 +408,7 @@ function _test_translate_use_economic_representation__use_milestone_years()
 	# Test the case where the new parameter and is value list is already present, e.g. by loading the latest template
 	url_w_template = _test_translate_use_economic_representation__use_milestone_years_setup()
 	_load_test_data(url_w_template, Dict())	# incl. loading the latest template
-	Y = Module()
+	Y = Bind()
 	using_spinedb(url_w_template, Y)
 	@test SpineOpt.translate_use_economic_representation__use_milestone_years(url_w_template, 0) === true
 end
@@ -425,15 +425,15 @@ function _test_dummy_migrations_functions()
 end
 
 @testset "migration scripts" begin
-	# _test_rename_unit_constraint_to_user_constraint()
-	# _test_move_connection_flow_cost()
-	# _test_rename_model_types()
-	# _test_translate_ramp_parameters()
-	# _test_remove_model_tb_ss()
-	# _test_update_investment_variable_type()
-	# _test_add_model_algorithm()
-	# _test_rename_lifetime_to_tech_lifetime()
-	# _test_translate_heatrate_parameters()
+	_test_rename_unit_constraint_to_user_constraint()
+	_test_move_connection_flow_cost()
+	_test_rename_model_types()
+	_test_translate_ramp_parameters()
+	_test_remove_model_tb_ss()
+	_test_update_investment_variable_type()
+	_test_add_model_algorithm()
+	_test_rename_lifetime_to_tech_lifetime()
+	_test_translate_heatrate_parameters()
 	_test_translate_use_economic_representation__use_milestone_years()
 	_test_dummy_migrations_functions()
 end

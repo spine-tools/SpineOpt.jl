@@ -8,8 +8,8 @@ using SpineOpt
 for path in readdir(@__DIR__; join=true)
     if splitext(path)[end] == ".json"
         @info "upgrading $path"
-        data = JSON.parsefile(path, use_mmap=false) 
-        # memory mapped files causing issues on windows https://discourse.julialang.org/t/error-when-trying-to-open-a-file/78782
+        data = JSON.parsefile(path, use_mmap=false)
+        # memory mapped files cause issues on windows https://discourse.julialang.org/t/error-when-trying-to-open-a-file/78782
         db_url = "sqlite://"
         SpineInterface.close_connection(db_url)
         SpineInterface.open_connection(db_url)
@@ -17,10 +17,33 @@ for path in readdir(@__DIR__; join=true)
         # 1. upgrade the data items to the latest DB version
         SpineOpt.upgrade_db(db_url; log_level=3)
         # 2. amend missing items with respect to the latest SpineOpt template
+        template = SpineOpt.template()
         import_data(db_url, SpineOpt.template(), "Add SpineOpt template")
+        # 3. remove classes and parameters not on the template anymore
+        template_class_names = [x[1] for x in [template["object_classes"]; template["relationship_classes"]]]
+        template_class_param_names = [
+            x[1:2] for x in [template["object_parameters"]; template["relationship_parameters"]]
+        ]
+        new_data = export_data(db_url)
+        new_class_names = [x[1] for x in new_data["entity_classes"]]
+        new_class_param_names = [x[1:2] for x in new_data["parameter_definitions"]]
+        deprecated_class_names = setdiff!(new_class_names, template_class_names)
+        deprecated_class_param_names = setdiff!(new_class_param_names, template_class_param_names)
+        run_request(
+            db_url, "call_method", ("remove_entity_classes", [Dict("name" => n) for n in deprecated_class_names])
+        )
+        run_request(
+            db_url,
+            "call_method",
+            (
+                "remove_parameter_definitions",
+                [Dict("entity_class_name" => cn, "name" => n) for (cn, n) in deprecated_class_param_names],
+            ),
+        )
+        # 4. Reexport data
         new_data = export_data(db_url)
         # parse the value items of the exported DB into Spine Db value types
-        #TODO: remove the old terms when we completely switch to the new framework
+        # TODO: remove the old terms when we completely switch to the new framework
         for (index, keys) in (
             2 => ("parameter_value_lists",),
             3 => (

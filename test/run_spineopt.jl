@@ -20,9 +20,7 @@
 
 import Logging: Warn
 
-module Y
-using SpineInterface
-end
+const Y = Bind()
 
 function _test_run_spineopt_setup()
     url_in = "sqlite://"
@@ -489,7 +487,7 @@ function _test_unknown_output()
             relationship_parameter_values=relationship_parameter_values,
         )
         msg = "can't find any values for 'unknown_output'"
-        @test_logs min_level=Warn (:warn, msg) run_spineopt(url_in, url_out; log_level=0)
+        @test_logs min_level=Warn (:warn, msg) run_spineopt(url_in, url_out; log_level=0, upgrade=true)
     end
 end
 
@@ -853,7 +851,9 @@ function _test_time_limit()
         )
         windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
         msgs = ["no solution available for instance - window $w - moving on..." for w in windows]
-        @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
+        @test_logs(
+            min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0, upgrade=true)
+        )
     end
 end
 

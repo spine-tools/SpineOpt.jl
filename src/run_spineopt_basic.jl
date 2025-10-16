@@ -530,7 +530,7 @@ function solve_model!(
             end
             @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp, m; log_level=log_level)
             unfix_history!(m)
-            global current_bi = add_benders_iteration(j + 1)
+            current_bi = add_benders_iteration(j + 1)
         end
         true
     end

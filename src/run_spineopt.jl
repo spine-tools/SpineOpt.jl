@@ -262,8 +262,8 @@ function prepare_spineopt(
 )
     @log log_level 0 "Reading input data from $(_real_url(url_in))..."
     _check_version(url_in; log_level, upgrade)
-    template, data = _init_data_from_db(url_in, log_level, upgrade, templates, filters)
-    missing_items = difference(template, data)
+    data = _init_data_from_db(url_in, log_level, upgrade, templates, filters)
+    missing_items = difference(template(), data)
     if !isempty(missing_items)
         println()
         @warn """
@@ -296,8 +296,8 @@ end
 
 function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scenario="")
     @timelog log_level 2 "Initializing $scenario data structure from db..." begin
-        template = SpineOpt.template()
-        using_spinedb(template, @__MODULE__; extend=false)
+        full_template = merge(append!, template(), preproc_template())
+        using_spinedb(full_template, @__MODULE__; extend=false)
         for template in templates
             using_spinedb(template, @__MODULE__; extend=true)
         end
@@ -306,7 +306,7 @@ function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scen
     end
     @timelog log_level 2 "Preprocessing $scenario data structure..." preprocess_data_structure()
     @timelog log_level 2 "Checking $scenario data structure..." check_data_structure()
-    template, data
+    data
 end
 
 _real_url(url_in::String) = run_request(url_in, "get_db_url")
@@ -466,10 +466,10 @@ function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
     db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
     db_solver_mod = try
         @eval Base.Main using $db_solver_mod_name
-        getproperty(Base.Main, db_solver_mod_name)
+        invokelatest(getproperty, Base.Main, db_solver_mod_name)
     catch
         @eval using $db_solver_mod_name
-        getproperty(@__MODULE__, db_solver_mod_name)
+        invokelatest(getproperty, @__MODULE__, db_solver_mod_name)
     end
     factory = () -> Base.invokelatest(db_solver_mod.Optimizer)
     optimizer_with_attributes(factory, db_solver_options_parsed...)

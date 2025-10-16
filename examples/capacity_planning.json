@@ -1665,26 +1665,6 @@
             true
         ],
         [
-            "model__stochastic_structure",
-            [
-                "model",
-                "stochastic_structure"
-            ],
-            "Defines which `stochastic_structure`s are included in which `model`s.",
-            null,
-            true
-        ],
-        [
-            "model__temporal_block",
-            [
-                "model",
-                "temporal_block"
-            ],
-            "Defines which `temporal_block`s are included in which `model`s.",
-            null,
-            true
-        ],
-        [
             "node__commodity",
             [
                 "node",
@@ -2085,13 +2065,6 @@
         ],
         [
             "commodity",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "commodity",
             "mp_min_res_gen_to_demand_ratio",
             null,
             null,
@@ -2280,20 +2253,6 @@
         ],
         [
             "connection",
-            "forced_availability_factor",
-            null,
-            null,
-            "Availability factor due to outages/deratings."
-        ],
-        [
-            "connection",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "connection",
             "has_binary_gas_flow",
             false,
             "boolean_value_list",
@@ -2312,13 +2271,6 @@
             null,
             null,
             "Setting a value fixes the connections_invested_available variable at the beginning"
-        ],
-        [
-            "connection",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "connection",
@@ -2403,13 +2355,6 @@
             null,
             null,
             "Fix the value of the `connection_intact_flow` variable."
-        ],
-        [
-            "connection__from_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
         ],
         [
             "connection__from_node",
@@ -2574,13 +2519,6 @@
             null,
             null,
             "Fix the value of the `connection_intact_flow` variable."
-        ],
-        [
-            "connection__to_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
         ],
         [
             "connection__to_node",
@@ -2812,13 +2750,6 @@
         ],
         [
             "model",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "model",
             "max_gap",
             0.05,
             null,
@@ -2920,6 +2851,13 @@
             null,
             null,
             "A map from symbol to shared value."
+        ],
+        [
+            "model",
+            "solution_stats",
+            null,
+            null,
+            "Solution statistics."
         ],
         [
             "model",
@@ -3063,13 +3001,6 @@
         ],
         [
             "node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "node",
             "has_pressure",
             false,
             "boolean_value_list",
@@ -3123,13 +3054,6 @@
             null,
             null,
             "Used to initialze the value of the storages_invested_available variable"
-        ],
-        [
-            "node",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "node",
@@ -3397,13 +3321,6 @@
             "Commodity diffusion coefficient between two `nodes`. Effectively, denotes the *diffusion power per unit of state* from the first `node` to the second."
         ],
         [
-            "node__stochastic_structure",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
             "node__temporal_block",
             "cyclic_condition",
             false,
@@ -3416,13 +3333,6 @@
             ">=",
             "constraint_sense_list",
             "Sense for the cyclic condition constraint of a node."
-        ],
-        [
-            "node__temporal_block",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "node__user_constraint",
@@ -3454,13 +3364,6 @@
         ],
         [
             "output",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "output",
             "output_resolution",
             null,
             null,
@@ -3472,13 +3375,6 @@
             null,
             "output_type_list",
             "Type of this `output`."
-        ],
-        [
-            "report",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "report",
@@ -3497,16 +3393,9 @@
         [
             "settings",
             "version",
-            20,
+            1,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
-        ],
-        [
-            "stage",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "stage",
@@ -3565,20 +3454,6 @@
             "A penalty for violating the constraint that fixes this output for this stage (EXPERIMENTAL)."
         ],
         [
-            "stochastic_scenario",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "stochastic_structure",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
             "stochastic_structure__stochastic_scenario",
             "stochastic_scenario_end",
             null,
@@ -3605,13 +3480,6 @@
             null,
             null,
             "The start time for the `temporal_block`. Can be given either as a `DateTime` for a static start point, or as a `Duration` for an start point relative to the start of the current optimization."
-        ],
-        [
-            "temporal_block",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "temporal_block",
@@ -3702,20 +3570,6 @@
         ],
         [
             "unit",
-            "forced_availability_factor",
-            null,
-            null,
-            "Availability factor due to outages/deratings."
-        ],
-        [
-            "unit",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "unit",
             "initial_units_invested",
             null,
             null,
@@ -3741,13 +3595,6 @@
             null,
             null,
             "Initialize the value of the `units_out_of_service` variable."
-        ],
-        [
-            "unit",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "unit",
@@ -3974,13 +3821,6 @@
         ],
         [
             "unit__from_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "unit__from_node",
             "initial_nonspin_units_started_up",
             null,
             null,
@@ -4002,73 +3842,10 @@
         ],
         [
             "unit__from_node",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "unit__from_node",
-            "max_res_shutdown_ramp",
-            null,
-            null,
-            "Max. downward reserve ramp for online units scheduled to shut down for reserve provision"
-        ],
-        [
-            "unit__from_node",
-            "max_res_startup_ramp",
-            null,
-            null,
-            "Maximum non-spinning reserve ramp-up for startups."
-        ],
-        [
-            "unit__from_node",
-            "max_shutdown_ramp",
-            null,
-            null,
-            "Max. downward ramp for units shutting down"
-        ],
-        [
-            "unit__from_node",
-            "max_startup_ramp",
-            null,
-            null,
-            "Maximum ramp-up during startups."
-        ],
-        [
-            "unit__from_node",
             "max_total_cumulated_unit_flow_from_node",
             null,
             null,
             "Bound on the maximum cumulated flows of a unit group from a node group e.g max consumption of certain commodity."
-        ],
-        [
-            "unit__from_node",
-            "min_res_shutdown_ramp",
-            null,
-            null,
-            "Minimum non-spinning reserve ramp-down for online units providing reserves during shut-downs"
-        ],
-        [
-            "unit__from_node",
-            "min_res_startup_ramp",
-            null,
-            null,
-            "Minimum non-spinning reserve ramp-up for startups."
-        ],
-        [
-            "unit__from_node",
-            "min_shutdown_ramp",
-            null,
-            null,
-            "Minimum ramp-up during startups"
-        ],
-        [
-            "unit__from_node",
-            "min_startup_ramp",
-            null,
-            null,
-            "Minimum ramp-up during startups."
         ],
         [
             "unit__from_node",
@@ -4107,24 +3884,10 @@
         ],
         [
             "unit__from_node",
-            "ramp_down_cost",
-            null,
-            null,
-            "Costs for ramping down"
-        ],
-        [
-            "unit__from_node",
             "ramp_down_limit",
             null,
             null,
             "Limit the maximum ramp-down rate of an online unit, given as a fraction of the unit_capacity. [ramp_down_limit] = %/t, e.g. 0.2/h"
-        ],
-        [
-            "unit__from_node",
-            "ramp_up_cost",
-            null,
-            null,
-            "Costs for ramping up"
         ],
         [
             "unit__from_node",
@@ -4184,24 +3947,10 @@
         ],
         [
             "unit__from_node",
-            "use_unit_capacity_for_investment_cost_scaling",
-            false,
-            "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬/MW)"
-        ],
-        [
-            "unit__from_node",
             "vom_cost",
             null,
             null,
             "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
-        ],
-        [
-            "unit__from_node__user_constraint",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
         ],
         [
             "unit__from_node__user_constraint",
@@ -4422,13 +4171,6 @@
         ],
         [
             "unit__to_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "unit__to_node",
             "initial_nonspin_units_shut_down",
             null,
             null,
@@ -4454,13 +4196,6 @@
             null,
             null,
             "Initialize the `unit_flow_op` variable."
-        ],
-        [
-            "unit__to_node",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "unit__to_node",
@@ -4506,24 +4241,10 @@
         ],
         [
             "unit__to_node",
-            "ramp_down_cost",
-            null,
-            null,
-            "Costs of ramping down"
-        ],
-        [
-            "unit__to_node",
             "ramp_down_limit",
             null,
             null,
             "Limit the maximum ramp-down rate of an online unit, given as a fraction of the unit_capacity. [ramp_down_limit] = %/t, e.g. 0.2/h"
-        ],
-        [
-            "unit__to_node",
-            "ramp_up_cost",
-            null,
-            null,
-            "Costs of ramping up"
         ],
         [
             "unit__to_node",
@@ -4583,24 +4304,10 @@
         ],
         [
             "unit__to_node",
-            "use_unit_capacity_for_investment_cost_scaling",
-            false,
-            "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬/MW)"
-        ],
-        [
-            "unit__to_node",
             "vom_cost",
             null,
             null,
             "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
-        ],
-        [
-            "unit__to_node__user_constraint",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
         ],
         [
             "unit__to_node__user_constraint",
@@ -4638,20 +4345,6 @@
             "Coefficient of a `units_started_up` variable for a custom `user_constraint`."
         ],
         [
-            "units_on__stochastic_structure",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "units_on__temporal_block",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
             "user_constraint",
             "constraint_sense",
             "==",
@@ -4664,13 +4357,6 @@
             false,
             "boolean_value_list",
             "If using representative periods, this boolean parameter determines whether or not the constraint is enforced in non-representative periods."
-        ],
-        [
-            "user_constraint",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "user_constraint",
@@ -5612,38 +5298,6 @@
             null
         ],
         [
-            "model__stochastic_structure",
-            [
-                "simple",
-                "deterministic"
-            ],
-            null
-        ],
-        [
-            "model__temporal_block",
-            [
-                "simple",
-                "investment"
-            ],
-            null
-        ],
-        [
-            "model__temporal_block",
-            [
-                "simple",
-                "operation2030"
-            ],
-            null
-        ],
-        [
-            "model__temporal_block",
-            [
-                "simple",
-                "operation2035"
-            ],
-            null
-        ],
-        [
             "report__output",
             [
                 "report1",
@@ -5982,6 +5636,14 @@
         [
             "model_algorithm_list",
             "mga_algorithm"
+        ],
+        [
+            "model_algorithm_list",
+            "hsj_mga_algorithm"
+        ],
+        [
+            "model_algorithm_list",
+            "fuzzy_mga_algorithm"
         ],
         [
             "model_algorithm_list",

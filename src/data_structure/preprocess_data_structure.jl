@@ -44,11 +44,6 @@ function preprocess_data_structure()
     generate_variable_indexing_support()
     generate_benders_iteration()
     generate_is_boundary()
-    generate_unit_flow_capacity()
-    generate_connection_flow_capacity()
-    generate_connection_flow_lower_limit()
-    generate_node_state_capacity()
-    generate_node_state_lower_limit()
     generate_unit_commitment_parameters()
 end
 
@@ -58,7 +53,6 @@ end
 Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 """
 function generate_is_candidate()
-    is_candidate = Parameter(:is_candidate, [node, unit, connection])
     add_object_parameter_values!(
         connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_connections))
     )
@@ -71,9 +65,6 @@ function generate_is_candidate()
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(node, Dict(:is_candidate => parameter_value(false)))
-    @eval begin
-        is_candidate = $is_candidate
-    end
 end
 
 _nz_indices(p::Parameter) = (first(x) for x in indices_as_tuples(p) if !iszero(p(; x...)))
@@ -187,23 +178,19 @@ Generate the `direction` `ObjectClass` and its relationships.
 function generate_direction()
     from_node = Object(:from_node, :direction)
     to_node = Object(:to_node, :direction)
-    direction = ObjectClass(:direction, [from_node, to_node])
+    add_objects!(direction, [from_node, to_node])
     directions_by_class = Dict(
         unit__from_node => from_node,
         unit__to_node => to_node,
         connection__from_node => from_node,
         connection__to_node => to_node,
         unit__from_node__user_constraint => from_node,
-        unit__to_node__user_constraint => to_node,        
+        unit__to_node__user_constraint => to_node,
         connection__from_node__user_constraint => from_node,
-        connection__to_node__user_constraint => to_node,        
+        connection__to_node__user_constraint => to_node,
     )
     for (cls, d) in directions_by_class
         add_dimension!(cls, :direction, d)
-    end
-    @eval begin
-        direction = $direction
-        export direction
     end
 end
 
@@ -221,20 +208,11 @@ function generate_node_has_ptdf()
         )
         ptdf_durations = [commodity_physics_duration(commodity=c, _strict=false) for c in ptdf_comms]
         filter!(!isnothing, ptdf_durations)
-        ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
-        Dict(
-            :has_ptdf => parameter_value(!isempty(ptdf_comms)),
-            :ptdf_duration => parameter_value(ptdf_duration),
-        )
+        ptdf_duration_ = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
+        Dict(:has_ptdf => parameter_value(!isempty(ptdf_comms)), :ptdf_duration => parameter_value(ptdf_duration_))
     end
 
     add_object_parameter_values!(node, Dict(n => _new_node_pvals(n) for n in node()))
-    has_ptdf = Parameter(:has_ptdf, [node])
-    ptdf_duration = Parameter(:ptdf_duration, [node])
-    @eval begin
-        has_ptdf = $has_ptdf
-        ptdf_duration = $ptdf_duration
-    end
 end
 
 """
@@ -285,12 +263,6 @@ function generate_connection_has_lodf()
     add_object_parameter_values!(
         connection, Dict(conn => _new_connection_pvals(conn) for conn in connection(has_ptdf=true))
     )
-    has_lodf = Parameter(:has_lodf, [connection])
-    connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection])  # TODO connnection with 3 `n`'s?
-    @eval begin
-        has_lodf = $has_lodf
-        connnection_lodf_tolerance = $connnection_lodf_tolerance
-    end
 end
 
 function _build_ptdf(connections, nodes, unavailable_connections=Set())
@@ -455,22 +427,8 @@ Generate the `ptdf` parameter.
 function generate_ptdf()
     ptdf_unfiltered_values = _ptdf_unfiltered_values()    
     ptdf_values = _filter_ptdf_values(ptdf_unfiltered_values)
-    ptdf_connection__node = RelationshipClass(
-        :ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values
-    )
-    ptdf_unfiltered_connection__node = RelationshipClass(
-        :ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_unfiltered_values), ptdf_unfiltered_values
-    )
-    ptdf = Parameter(:ptdf, [ptdf_connection__node])
-    ptdf_unfiltered = Parameter(:ptdf_unfiltered, [ptdf_unfiltered_connection__node])
-    @eval begin
-        ptdf_connection__node = $ptdf_connection__node
-        ptdf_unfiltered_connection__node = $ptdf_unfiltered_connection__node
-        ptdf = $ptdf
-        ptdf_unfiltered = $ptdf_unfiltered
-        export ptdf
-        export ptdf_unfiltered
-    end    
+    add_relationship_parameter_values!(ptdf_connection__node, ptdf_values)
+    add_relationship_parameter_values!(ptdf_unfiltered_connection__node, ptdf_unfiltered_values)
 end
 
 """
@@ -508,14 +466,7 @@ function generate_lodf()
         for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true))
         if conn_cont !== conn_mon && lodf_trial !== nothing && !isapprox(lodf_trial, 0; atol=tolerance)
     )
-    lodf_connection__connection = RelationshipClass(
-        :lodf_connection__connection, [:connection, :connection], keys(lodf_values), lodf_values
-    )
-    lodf = Parameter(:lodf, [lodf_connection__connection])
-    @eval begin
-        lodf = $lodf
-        lodf_connection__connection = $lodf_connection__connection
-    end
+    add_relationship_parameter_values!(lodf_connection__connection, lodf_values)
 end
 
 """
@@ -539,22 +490,10 @@ end
 TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
 """
 function generate_variable_indexing_support()
-    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
-    node_with_min_capacity_margin_penalty = ObjectClass(
-        :node_with_min_capacity_margin_slack_penalty, collect(indices(min_capacity_margin_penalty))
-    )
-    unit__node__direction = RelationshipClass(
-        :unit__node__direction, [:unit, :node, :direction], [unit__from_node(); unit__to_node()]
-    )
-    connection__node__direction = RelationshipClass(
-        :connection__node__direction, [:connection, :node, :direction], [connection__from_node(); connection__to_node()]
-    )
-    @eval begin
-        node_with_slack_penalty = $node_with_slack_penalty
-        node_with_min_capacity_margin_penalty = $node_with_min_capacity_margin_penalty
-        unit__node__direction = $unit__node__direction
-        connection__node__direction = $connection__node__direction
-    end
+    add_objects!(node_with_slack_penalty, collect(indices(node_slack_penalty)))
+    add_objects!(node_with_min_capacity_margin_penalty, collect(indices(min_capacity_margin_penalty)))
+    add_relationships!(unit__node__direction, [unit__from_node(); unit__to_node()])
+    add_relationships!(connection__node__direction, [connection__from_node(); connection__to_node()])
 end
 
 """
@@ -760,16 +699,9 @@ Create the `benders_iteration` object class. Benders cuts have the Benders itera
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_iteration()
-    current_bi = _make_bi(1)
-    benders_iteration = ObjectClass(
-        :benders_iteration, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
+    add_object_parameter_values!(
+        benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
     )
-    @eval begin
-        benders_iteration = $benders_iteration
-        current_bi = $current_bi
-        export benders_iteration
-        export current_bi
-    end
 end
 
 """
@@ -779,8 +711,6 @@ Generate `is_boundary_node` and `is_boundary_connection` parameters
 associated with the `node` and `connection` `ObjectClass`es respectively.
 """
 function generate_is_boundary()
-    is_boundary_node = Parameter(:is_boundary_node, [node])
-    is_boundary_connection = Parameter(:is_boundary_connection, [connection])
     add_object_parameter_defaults!(node, Dict(:is_boundary_node => parameter_value(false)))
     add_object_parameter_defaults!(connection, Dict(:is_boundary_connection => parameter_value(false)))
     for (n, c) in node__commodity()
@@ -804,105 +734,7 @@ function generate_is_boundary()
             add_object_parameter_values!(node, Dict(n => Dict(:is_boundary_node => parameter_value(true))))
         end
     end
-    @eval begin
-        is_boundary_node = $is_boundary_node
-        is_boundary_connection = $is_boundary_connection
-        export is_boundary_node
-        export is_boundary_connection
-    end
 end
-
-function generate_unit_flow_capacity()
-    function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
-        _prod_or_nothing(
-            f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
-            f(unit_availability_factor; unit=unit, kwargs...),
-            f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
-        )
-    end
-
-    unit_flow_capacity = ParameterFunction(_unit_flow_capacity)
-    @eval begin
-        unit_flow_capacity = $unit_flow_capacity
-        export unit_flow_capacity
-    end
-end
-
-function generate_connection_flow_capacity()
-    function _connection_flow_capacity(
-        f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
-    )
-        _prod_or_nothing(
-            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
-            f(connection_availability_factor; connection=connection, kwargs...),
-            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
-        )
-    end
-
-    connection_flow_capacity = ParameterFunction(_connection_flow_capacity)
-    @eval begin
-        connection_flow_capacity = $connection_flow_capacity
-        export connection_flow_capacity
-    end
-end
-
-function generate_connection_flow_lower_limit()
-    function _connection_flow_lower_limit(
-        f; connection=connection, node=node, direction=direction, _default=0, kwargs...
-    )
-        _prod_or_nothing(
-            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
-            f(connection_min_factor; connection=connection, kwargs...),
-            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
-        )
-    end
-
-    connection_flow_lower_limit = ParameterFunction(_connection_flow_lower_limit)
-    @eval begin
-        connection_flow_lower_limit = $connection_flow_lower_limit
-        export connection_flow_lower_limit
-    end
-end
-
-function generate_node_state_capacity()
-    function _node_state_capacity(f; node=node, _default=nothing, kwargs...)
-        _prod_or_nothing(
-            f(node_state_cap; node=node, _default=_default, kwargs...),
-            f(node_availability_factor; node=node, kwargs...),
-        )
-    end
-
-    node_state_capacity = ParameterFunction(_node_state_capacity)
-    @eval begin
-        node_state_capacity = $node_state_capacity
-        export node_state_capacity
-    end
-end
-
-function generate_node_state_lower_limit()
-    function _node_state_lower_limit(f; node=node, _default=0, kwargs...)
-        max(
-            something(
-                _prod_or_nothing(
-                    f(node_state_cap; node=node, _default=_default, kwargs...),
-                    f(node_state_min_factor; node=node, kwargs...),
-                ),
-                0,
-            ),
-            f(node_state_min; node=node, kwargs...),
-        )
-    end
-
-    node_state_lower_limit = ParameterFunction(_node_state_lower_limit)
-    @eval begin
-        node_state_lower_limit = $node_state_lower_limit
-        export node_state_lower_limit
-    end
-end
-
-_prod_or_nothing(args...) = _prod_or_nothing(collect(args))
-_prod_or_nothing(args::Vector) = any(isnothing.(args)) ? nothing : *(args...)
-_prod_or_nothing(args::Vector{T}) where T<:Call = Call(_prod_or_nothing, args)
 
 function generate_unit_commitment_parameters()
     models = model()
@@ -998,13 +830,5 @@ function generate_unit_commitment_parameters()
     )
         add_object_parameter_values!(unit, Dict(u => Dict(pname => parameter_value(true)) for u in unit_set))
         add_object_parameter_defaults!(unit, Dict(pname => parameter_value(false)))
-    end
-    @eval begin
-        has_switched_variable = Parameter(:has_switched_variable, [unit])
-        has_online_variable = Parameter(:has_online_variable, [unit])
-        has_out_of_service_variable = Parameter(:has_out_of_service_variable, [unit])
-        export has_switched_variable
-        export has_online_variable
-        export has_out_of_service_variable
     end
 end
