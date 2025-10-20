@@ -601,7 +601,7 @@ An `Array` of `TimeSlice`s in model `m`.
   - `temporal_block::Union{Object,Vector{Object}}`: only return `TimeSlice`s in these blocks.
   - `t::Union{TimeSlice,Vector{TimeSlice}}`: only return `TimeSlice`s that are also in this collection.
 """
-time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
+time_slice(m::Model; kwargs...) = (m.ext[:spineopt].temporal_structure[:time_slice]::TimeSliceSet)(; kwargs...)
 
 history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
 
@@ -635,7 +635,7 @@ the second containing the first.
 """
 function t_in_t(m::Model; kwargs...)
     _with_model_env(m) do
-        m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
+        (m.ext[:spineopt].temporal_structure[:t_in_t]::RelationshipClass)(; kwargs...)
     end
 end
 
