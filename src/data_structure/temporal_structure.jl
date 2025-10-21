@@ -393,56 +393,86 @@ function _generate_time_slice!(m::Model)
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
 end
 
+struct _AnnotatedTimeSlice
+    t::TimeSlice
+    is_history::Bool
+end
+
 """
     _generate_time_slice_relationships()
 
 E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships!(m::Model)
-    all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
-    succeeding_time_slices = Dict(
-        t => _skip_unrelated!(to_time_slice(m; t=TimeSlice(end_(t), end_(t) + Minute(1))), blocks(t))
-        for t in all_time_slices
+    annotated_time_slices = _annotated_time_slice(m)
+    succeeding_annotated_time_slices = Dict(
+        x => _to_annotated_time_slice(m; t=TimeSlice(end_(x.t), end_(x.t) + Minute(1)))
+        for x in annotated_time_slices
     )
-    overlapping_time_slices = Dict(t => _skip_unrelated!(to_time_slice(m; t=t), blocks(t)) for t in all_time_slices)
+    overlapping_annotated_time_slices = Dict(x => _to_annotated_time_slice(m; t=x.t) for x in annotated_time_slices)
     t_before_t_tuples = unique(
-        (t_before, t_after)
-        for (t_before, time_slices) in succeeding_time_slices
-        for t_after in time_slices
-        if end_(t_before) <= start(t_after)
+        (x_before.t, x_after.t)
+        for (x_before, succeeding) in succeeding_annotated_time_slices
+        for x_after in succeeding
+        if end_(x_before.t) <= start(x_after.t)
+        && _check_affinity(x_before, x_after)
     )
     t_in_t_tuples = unique(
-        (t_short, t_long)
-        for (t_short, time_slices) in overlapping_time_slices
-        for t_long in time_slices
-        if iscontained(t_short, t_long)
+        (x_short.t, x_long.t)
+        for (x_short, overlapping) in overlapping_annotated_time_slices
+        for x_long in overlapping
+        if iscontained(x_short.t, x_long.t)
+        && _check_affinity(x_short, x_long)
     )
     t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
+    t_to_overlapping_t = Dict(
+        x1.t => [x2.t for x2 in overlapping if _check_affinity(x1, x2)]
+        for (x1, overlapping) in overlapping_annotated_time_slices
+    )
     # Create the function-like objects
     temp_struct = m.ext[:spineopt].temporal_structure
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
-    temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
+    temp_struct[:t_overlaps_t] = TOverlapsT(t_to_overlapping_t)
 end
 
+"""
+An iterator over annotated time slices in the model
+"""
+function _annotated_time_slice(m)
+    _flatten_annotated(history_time_slice(m), time_slice(m))
+end
 
 """
-Remove time slices having blocks that are unrelated to the given blocks.
-Two blocks are unrelated if they both have a free start (we don't want them to be related in any way).
-
-For example say we have three blocks with free start, called 2030, 2040 and 2050.
-Now say the argument is blks = (2040, 2050). Then 2030 is unrelated.
-So any time slice having block 2030 is filtered out.
+An iterator over annotated time slices in the model that overlap the given t (which may not be in the model)
 """
-function _skip_unrelated!(time_slices, blks)
-    blocks_with_free_start = [blk for blk in blks if has_free_start(temporal_block=blk)]
-    isempty(blocks_with_free_start) && return time_slices
-    unrelated_blocks = setdiff(temporal_block(has_free_start=true), blocks_with_free_start)
-    isempty(unrelated_blocks) && return time_slices
-    filter!(time_slices) do t
-        isdisjoint(blocks(t), unrelated_blocks)
-    end
+function _to_annotated_time_slice(m; t::TimeSlice)
+    _flatten_annotated(_to_history_time_slice(m; t), _to_window_time_slice(m; t))
+end
+
+function _flatten_annotated(history, window)
+    history = (_AnnotatedTimeSlice(t, true) for t in history)
+    window = (_AnnotatedTimeSlice(t, false) for t in window)
+    Iterators.flatten((history, window))
+end
+
+"""
+Check if two (annotated) time-slices can be part of a relationship in the context of blocks with free-start.
+The rule is, the history of a block with free start should only be related to that same block, not to any other.
+So, if one of the time slices belongs to the history of a block with free start,
+and the other does not belong to that same block, then return false.
+Otherwise return true.
+"""
+function _check_affinity(x1::_AnnotatedTimeSlice, x2::_AnnotatedTimeSlice)
+    _do_check_affinity(x1, x2) && _do_check_affinity(x2, x1)
+end
+
+function _do_check_affinity(x1, x2)
+    x1.is_history || return true
+    t1_blocks = [blk for blk in blocks(x1.t) if has_free_start(temporal_block=blk)]
+    isempty(t1_blocks) && return true
+    !isdisjoint(t1_blocks, blocks(x2.t))
 end
 
 function _generate_as_number_or_call!(m)
@@ -661,20 +691,23 @@ end
 An `Array` of `TimeSlice`s in model `m` overlapping the given `TimeSlice` (where `t` may not be in `m`).
 """
 function to_time_slice(m::Model; t::TimeSlice)
-    temp_struct = m.ext[:spineopt].temporal_structure
-    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
-    in_blocks = (
-        s
-        for t_set in t_sets
-        for time_slices in values(t_set.block_time_slices)
-        for s in _to_time_slice(time_slices, t)
-    )
+    vcat(_to_history_time_slice(m; t), _to_window_time_slice(m; t))
+end
+
+function _to_history_time_slice(m::Model; t::TimeSlice)
+    t_set = m.ext[:spineopt].temporal_structure[:history_time_slice]
+    _to_time_slice_from_set(t_set; t)
+end
+
+function _to_window_time_slice(m::Model; t::TimeSlice)
+    t_set = m.ext[:spineopt].temporal_structure[:time_slice]
+    _to_time_slice_from_set(t_set; t)
+end
+
+function _to_time_slice_from_set(t_set; t::TimeSlice)
+    in_blocks = (s for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
     in_gaps = if isempty(indices(representative_periods_mapping))
-        (
-            s
-            for t_set in t_sets
-            for s in _to_time_slice(t_set.bridges, t_set.gaps, t)
-        )
+        _to_time_slice(t_set.bridges, t_set.gaps, t)
     else
         ()
     end
