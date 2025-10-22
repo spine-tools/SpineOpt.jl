@@ -903,8 +903,7 @@ end
 function _calculate_duals_cplex(m; log_level=3)
     CPLEX = Base.invokelatest(get_module, :CPLEX)
     CPLEX === nothing && return false
-    model_backend = backend(m)
-    cplex_model = JuMP.mode(m) == JuMP.DIRECT ? model_backend : model_backend.optimizer
+    cplex_model = _get_cplex_model(m)
     cplex_model isa CPLEX.Optimizer || return false
     prob_type = CPLEX.CPXgetprobtype(cplex_model.env, cplex_model.lp)
     @assert prob_type == CPLEX.CPXPROB_MILP
@@ -922,6 +921,16 @@ function _calculate_duals_cplex(m; log_level=3)
     end
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
     ret == 0
+end
+
+function _get_cplex_model(m)
+    model_backend = backend(m)
+    cplex_optimizer = JuMP.mode(m) == JuMP.DIRECT ? model_backend : model_backend.optimizer
+    if hasproperty(cplex_optimizer, :model)
+        cplex_optimizer.model
+    else
+        cplex_optimizer
+    end
 end
 
 function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)

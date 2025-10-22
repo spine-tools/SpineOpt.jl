@@ -38,7 +38,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 - `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
 - `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
 - `use_model_names::Bool=true`: whether or not to use the names in the model.
-- `add_bridges::Bool=false` whether or not bridges from JuMP to the solver should be added to the model.
+- `add_bridges::Bool=true` whether or not bridges from JuMP to the solver should be added to the model.
 - `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
 - `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
    (expensive).
@@ -92,7 +92,7 @@ function run_spineopt(
     lp_solver=nothing,
     use_direct_model=false,
     use_model_names=true,
-    add_bridges=false,
+    add_bridges=true,
     optimize=true,
     update_names=false,
     alternative="",
@@ -156,7 +156,7 @@ function _run_spineopt(
             use_direct_model,
             use_model_names,
             add_bridges,
-            log_level
+            log_level,
         )
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
@@ -258,7 +258,7 @@ function prepare_spineopt(
     lp_solver=nothing,
     use_direct_model=false,
     use_model_names=true,
-    add_bridges=false,
+    add_bridges=true,
 )
     @log log_level 0 "Reading input data from $(_real_url(url_in))..."
     _check_version(url_in; log_level, upgrade)
