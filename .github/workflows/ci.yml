@@ -61,6 +61,7 @@ jobs:
           julia ./.install_spinedb_api.jl
         env:
           PYTHON: python
+      - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest'
