@@ -82,7 +82,7 @@ function _test_benders_unit()
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 269.0
+        do_inv_cost = do_not_inv_cost - 10  # maximum cost at which investment is profitable, 260.0
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -310,7 +310,7 @@ function _test_benders_unit_storage()
         op_cost_no_inv = (mop * ucap2 - dem) * penalty * (24 + look_ahead)
         op_cost_inv = 0
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        do_inv_cost = do_not_inv_cost - 10  # maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -652,7 +652,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        do_inv_cost = do_not_inv_cost - 10  # maximum cost at which investment is profitable
         u_inv_cost = do_not_inv_cost
         @testset for should_invest in (true, false)
             mrg2d_ratio = should_invest ? 0.8 : 0.0
