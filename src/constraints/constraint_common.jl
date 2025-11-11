@@ -163,6 +163,19 @@ function _check_ptdf_duration(m, t, conns...)
     Dates.toms(duration - elapsed) >= 0
 end
 
+function _node_state_time_slices(m, n)
+    Iterators.flatten((_node_state_representative_time_slices(m, n), _node_state_represented_time_slices(m, n)))
+end
+
+function _node_state_representative_time_slices(m, node)
+    (t for (_n, t) in node_time_indices(m; node=node))
+end
+
+function _node_state_represented_time_slices(m, node)
+    node = intersect(node, SpineOpt.node(is_longterm_storage=true))
+    (t for (_n, t) in node_time_indices(m; node=node, t=represented_time_slices(m), temporal_block=anything))
+end
+
 function _term_connection_flow(m, conn, ng, d, s_path, t)
     @fetch connection_flow = m.ext[:spineopt].variables
     sum(

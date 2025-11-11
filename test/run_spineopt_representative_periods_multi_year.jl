@@ -30,22 +30,32 @@ function _vals_from_data(data)
     )
 end
 
-function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
-    repr_periods_mapping = Map(
-        collect(DateTime(2000, 1, 1):Day(1):DateTime(2000, 1, 10)), [[0.1k, 1.0 - 0.1k] for k in 1:10]
+function _get_representative_periods_multi_year_setup_data()::Dict{Symbol,Vector{Any}}
+    repr_periods_mapping_block_1 = Map(
+        collect(DateTime(2000, 1, 1):Day(1):DateTime(2000, 1, 10)), [[0.1k, 1.0 - 0.1k, 0, 0] for k in 1:10]
     )
-    rp1_start = DateTime(2000, 1, 3)
-    rp2_start = DateTime(2000, 1, 7)
-    repr_periods_mapping[rp1_start] = [1, 0]
-    repr_periods_mapping[rp2_start] = [0, 1]
+    repr_periods_mapping_block_2 = Map(
+        collect(DateTime(2001, 1, 1):Day(1):DateTime(2001, 1, 10)), [[0, 0, 0.1k, 1.0 - 0.1k] for k in 1:10]
+    )    
+    rp1_start = DateTime(2000,1,3) #Day(3)
+    rp2_start = DateTime(2000,1,7) #Day(7)
+    rp3_start = DateTime(2001,1,4) #Day(4)
+    rp4_start = DateTime(2001,1,8) #Day(8)
+    repr_periods_mapping_block_1[rp1_start] = [1, 0, 0, 0] #DateTime(1999,12,31) +
+    repr_periods_mapping_block_1[rp2_start] = [0, 1, 0, 0] #DateTime(1999,12,31) +
+    repr_periods_mapping_block_2[rp3_start] = [0, 0, 1, 0] #DateTime(2000,12,31) +
+    repr_periods_mapping_block_2[rp4_start] = [0, 0, 0, 1] #DateTime(2000,12,31) +
     base_res = Hour(12)
     test_data = Dict(
         :objects => [
             ["model", "instance"],
-            ["temporal_block", "operations"],
+            ["temporal_block", "operations_block1"],
+            ["temporal_block", "operations_block2"],
             ["temporal_block", "investments"],
             ["temporal_block", "rp1"],
             ["temporal_block", "rp2"],
+            ["temporal_block", "rp3"],
+            ["temporal_block", "rp4"],
             ["temporal_block", "all_rps"],
             ["stochastic_structure", "deterministic"],
             ["stochastic_scenario", "realisation"],
@@ -55,9 +65,12 @@ function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
         :object_groups => [
             ["temporal_block", "all_rps", "rp1"],
             ["temporal_block", "all_rps", "rp2"],
+            ["temporal_block", "all_rps", "rp3"],
+            ["temporal_block", "all_rps", "rp4"],
         ],
         :relationships => [
-            ["model__default_temporal_block", ["instance", "operations"]],
+            ["model__default_temporal_block", ["instance", "operations_block1"]],
+            ["model__default_temporal_block", ["instance", "operations_block2"]],
             ["model__default_temporal_block", ["instance", "all_rps"]],
             ["model__default_stochastic_structure", ["instance", "deterministic"]],
             ["model__default_investment_temporal_block", ["instance", "investments"]],
@@ -67,8 +80,15 @@ function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
         ],
         :object_parameter_values => [
             ["model", "instance", "model_start", unparse_db_value(DateTime(2000, 1, 1))],
-            ["model", "instance", "model_end", unparse_db_value(DateTime(2000, 1, 11))],
-            ["temporal_block", "operations", "resolution", unparse_db_value(base_res)],
+            ["model", "instance", "model_end", unparse_db_value(DateTime(2001, 1, 11))],
+            ["temporal_block", "operations_block1", "resolution", unparse_db_value(base_res)],
+            ["temporal_block", "operations_block1", "block_start", unparse_db_value(DateTime("2000-01-01T00:00:00"))],
+            ["temporal_block", "operations_block1", "block_end", unparse_db_value(DateTime("2000-01-10T00:00:00"))],
+            ["temporal_block", "operations_block1", "has_free_start", true],
+            ["temporal_block", "operations_block2", "resolution", unparse_db_value(base_res)],
+            ["temporal_block", "operations_block2", "block_start", unparse_db_value(DateTime("2001-01-01T00:00:00"))],
+            ["temporal_block", "operations_block2", "block_end", unparse_db_value(DateTime("2001-01-10T00:00:00"))],
+            ["temporal_block", "operations_block2", "has_free_start", true],
             ["temporal_block", "investments", "resolution", unparse_db_value(Year(1))],
             ["temporal_block", "rp1", "resolution", unparse_db_value(base_res)],
             ["temporal_block", "rp1", "block_start", unparse_db_value(rp1_start)],
@@ -80,22 +100,33 @@ function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
             ["temporal_block", "rp2", "block_end", unparse_db_value(rp2_start + Day(1))],
             ["temporal_block", "rp2", "weight", 5],
             ["temporal_block", "rp2", "representative_period_index", 2],
-            ["temporal_block", "operations", "representative_periods_mapping", unparse_db_value(repr_periods_mapping)],
+            ["temporal_block", "rp3", "resolution", unparse_db_value(base_res)],
+            ["temporal_block", "rp3", "block_start", unparse_db_value(rp3_start)],
+            ["temporal_block", "rp3", "block_end", unparse_db_value(rp3_start + Day(1))],
+            ["temporal_block", "rp3", "weight", 5],
+            ["temporal_block", "rp3", "representative_period_index", 3],
+            ["temporal_block", "rp4", "resolution", unparse_db_value(base_res)],
+            ["temporal_block", "rp4", "block_start", unparse_db_value(rp4_start)],
+            ["temporal_block", "rp4", "block_end", unparse_db_value(rp4_start + Day(1))],
+            ["temporal_block", "rp4", "weight", 5],
+            ["temporal_block", "rp4", "representative_period_index", 4],
+            ["temporal_block", "operations_block1", "representative_periods_mapping", unparse_db_value(repr_periods_mapping_block_1)],
+            ["temporal_block", "operations_block2", "representative_periods_mapping", unparse_db_value(repr_periods_mapping_block_2)],
         ],
     )
 end
 
-function _test_representative_periods_setup()
+function _test_representative_periods_multi_year_setup()
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
-    test_data = _get_representative_periods_setup_data()
+    test_data = _get_representative_periods_multi_year_setup_data()
     _load_test_data(url_in, test_data)
     vals = _vals_from_data(test_data)
     url_in, url_out, file_path_out, vals
 end
 
-function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
+function _get_representative_periods_multi_year_test_data()::Dict{Symbol,Vector{Any}}
     elec_demand_inds = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 11))
     elec_demand_length = length(elec_demand_inds)
     elec_demand_ts = TimeSeries(
@@ -135,8 +166,13 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
             ["unit__to_node", ["pv", "elec_node"]],
             ["unit__to_node", ["wind", "elec_node"]],
             ["unit__to_node", ["conventional", "elec_node"]],
-            ["node__temporal_block", ["h2_node", "operations"]],
+            ["node__temporal_block", ["h2_node", "operations_block1"]],
+            ["node__temporal_block", ["h2_node", "operations_block2"]], 
             ["node__temporal_block", ["h2_node", "all_rps"]],
+            ["node__temporal_block", ["batt_node", "rp1"]],
+            ["node__temporal_block", ["batt_node", "rp2"]],
+            ["node__temporal_block", ["batt_node", "rp3"]],
+            ["node__temporal_block", ["batt_node", "rp4"]],
         ],
         :object_parameter_values => [
             ["node", "elec_node", "demand", unparse_db_value(elec_demand_ts)],
@@ -163,6 +199,7 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
             ["unit", "electrolizer", "number_of_units", 0],
             ["unit", "electrolizer", "unit_investment_cost", 40000000],
             ["unit", "electrolizer", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+            ["unit", "electrolizer", "unit_investment_tech_lifetime", Dict("type" => "duration", "data" => string(5, "Y"))],
             ["unit", "h2_gen", "candidate_units", 100],
             ["unit", "h2_gen", "number_of_units", 0],
             ["unit", "h2_gen", "online_variable_type", "unit_online_variable_type_integer"],
@@ -195,40 +232,54 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
             ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
             ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
             ["unit__to_node", ["conventional", "elec_node"], "vom_cost", 500],
-            ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition", true],
-            ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition_sense", "=="],
+            ["node__temporal_block", ["h2_node", "operations_block1"], "cyclic_condition", true],
+            ["node__temporal_block", ["h2_node", "operations_block1"], "cyclic_condition_sense", "=="],
+            ["node__temporal_block", ["h2_node", "operations_block2"], "cyclic_condition", true],
+            ["node__temporal_block", ["h2_node", "operations_block2"], "cyclic_condition_sense", "=="],
+            ["node__temporal_block", ["batt_node", "rp1"], "cyclic_condition", true],
+            ["node__temporal_block", ["batt_node", "rp2"], "cyclic_condition", true],
+            ["node__temporal_block", ["batt_node", "rp3"], "cyclic_condition", true],
+            ["node__temporal_block", ["batt_node", "rp4"], "cyclic_condition", true],            
         ],
     )
 end
 
-function _test_representative_periods()
-    @testset "representative_periods" begin
-        url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
-        test_data = _get_representative_periods_test_data()
+function _test_representative_periods_multi_year()
+    @testset "representative_periods and multi year" begin
+        url_in, url_out, file_path_out, vals = _test_representative_periods_multi_year_setup()
+        test_data = _get_representative_periods_multi_year_test_data()
         count, errors = import_data(url_in, "Add test data"; test_data...)
         @test isempty(errors)
         merge!(vals, _vals_from_data(test_data))
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
-        rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 3, 12), temporal_block.((:operations, :rp1))...)
-        rt2 = TimeSlice(DateTime(2000, 1, 3, 12), DateTime(2000, 1, 4), temporal_block.((:operations, :rp1))...)
-        rt3 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 7, 12), temporal_block.((:operations, :rp2))...)
-        rt4 = TimeSlice(DateTime(2000, 1, 7, 12), DateTime(2000, 1, 8), temporal_block.((:operations, :rp2))...)
-        all_rt = [rt1, rt2, rt3, rt4]
-        t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
-        @testset for con_name in keys(m.ext[:spineopt].constraints)
-            cons = m.ext[:spineopt].constraints[con_name]
-            _test_representative_periods_constraints(m, Val(con_name), cons, vals, all_rt, t_invest)
-            @testset for ind in keys(cons)
-                con = cons[ind]
-                _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
-            end
-        end
-        @testset for var_name in keys(m.ext[:spineopt].variables)
-            vars = m.ext[:spineopt].variables[var_name]
-            @testset for ind in keys(vars)
-                var = vars[ind]
-                _test_representative_periods_variable(m, var_name, ind, var, vals, all_rt, t_invest)
+
+        rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 3, 12), temporal_block.((:operations_block1, :rp1))...)
+        rt2 = TimeSlice(DateTime(2000, 1, 3, 12), DateTime(2000, 1, 4), temporal_block.((:operations_block1, :rp1))...)
+        rt3 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 7, 12), temporal_block.((:operations_block1, :rp2))...)
+        rt4 = TimeSlice(DateTime(2000, 1, 7, 12), DateTime(2000, 1, 8), temporal_block.((:operations_block1, :rp2))...)
+        rt5 = TimeSlice(DateTime(2001, 1, 4), DateTime(2001, 1, 4, 12), temporal_block.((:operations_block2, :rp3))...)
+        rt6 = TimeSlice(DateTime(2001, 1, 4, 12), DateTime(2001, 1, 5), temporal_block.((:operations_block2, :rp3))...)
+        rt7 = TimeSlice(DateTime(2001, 1, 8), DateTime(2001, 1, 8, 12), temporal_block.((:operations_block2, :rp4))...)
+        rt8 = TimeSlice(DateTime(2001, 1, 8, 12), DateTime(2001, 1, 9), temporal_block.((:operations_block2, :rp4))...)
+        all_rt = [rt1, rt2, rt3, rt4, rt5, rt6, rt7, rt8]
+        t_invest_blocks = time_slice(m; temporal_block=temporal_block(:investments))
+        @test length(t_invest_blocks) == 2
+        @testset for t_invest in t_invest_blocks
+            for con_name in keys(m.ext[:spineopt].constraints)
+                cons = m.ext[:spineopt].constraints[con_name]
+                _test_representative_periods_multi_year_constraints(m, Val(con_name), cons, vals, all_rt, t_invest)
+                @testset for ind in keys(cons)
+                    con = cons[ind]
+                _test_representative_periods_multi_year_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
+                end
+            end     
+            @testset for var_name in keys(m.ext[:spineopt].variables)
+                vars = m.ext[:spineopt].variables[var_name]
+                @testset for ind in keys(vars)
+                    var = vars[ind]
+                    _test_representative_periods_multi_year_variable(m, var_name, ind, var, vals, all_rt, t_invest)
+                end
             end
         end
     end
@@ -248,7 +299,7 @@ function _delta_expr_from_index(m, ind, coefs, all_rt)
     )
 end
 
-function _test_representative_periods_variable(m, var_name, ind, var, vals, all_rt, t_invest)
+function _test_representative_periods_multi_year_variable(m, var_name, ind, var, vals, all_rt, t_invest)
     rpm = vals["temporal_block", "operations", "representative_periods_mapping"]
     (ind.t in all_rt || ind.t == t_invest) && return
     coefs = get(rpm, start(ind.t), nothing)
@@ -266,7 +317,7 @@ function _test_representative_periods_variable(m, var_name, ind, var, vals, all_
     end
 end
 
-function _test_representative_periods_constraints(m, ::Val{:node_injection}, cons, vals, all_rt, t_invest)
+function _test_representative_periods_multi_year_constraints(m, ::Val{:node_injection}, cons, vals, all_rt, t_invest)
     inds = keys(cons)
     observed_inds = collect(keys(cons))
     path = [stochastic_scenario(:realisation)]
@@ -287,16 +338,16 @@ function _test_representative_periods_constraints(m, ::Val{:node_injection}, con
     ]
     @test isempty(symdiff(expected_inds, observed_inds))
 end
-function _test_representative_periods_constraints(m, ::Val{X}, cons, vals, all_rt, t_invest) where X
+function _test_representative_periods_multi_year_constraints(m, ::Val{X}, cons, vals, all_rt, t_invest) where X
     nothing
 end
 
-function _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
+function _test_representative_periods_multi_year_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
     con === nothing && return
     observed_con = constraint_object(con)
     d_from = direction(:from_node)
     d_to = direction(:to_node)
-    expected_con = _expected_representative_periods_constraint(
+    expected_con = _expected_representative_periods_multi_year_constraint(
         m, Val(con_name), ind, observed_con, vals, all_rt, t_invest, d_from, d_to
     )
     if expected_con !== nothing
@@ -305,7 +356,7 @@ function _test_representative_periods_constraint(m, con_name, ind, con, vals, al
     end
 end
 
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:cyclic_node_state}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t_start, t_end, tb = ind
@@ -317,7 +368,7 @@ function _expected_representative_periods_constraint(
     @fetch node_state = m.ext[:spineopt].variables
     @build_constraint(node_state[n, only(s_path), t_end] == node_state[n, only(s_path), t_start])
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:min_node_state}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t = ind
@@ -331,7 +382,7 @@ function _expected_representative_periods_constraint(
     nsmf = vals["node", string(n), "node_state_min_factor"]
     @build_constraint(node_state[n, s, t] >= maximum([nsc * nsmf, nsm]) * storages_invested_available[n, s, t_invest])
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:nodal_balance}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t = ind
@@ -341,7 +392,7 @@ function _expected_representative_periods_constraint(
     @fetch node_injection = m.ext[:spineopt].variables
     @build_constraint(node_injection[n, s, t] == 0)
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:node_injection}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t_before, t_after = ind
@@ -397,7 +448,7 @@ function _expected_representative_periods_constraint(
         )
     end
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:node_state_capacity}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t = ind
@@ -409,7 +460,7 @@ function _expected_representative_periods_constraint(
     nsc = vals["node", string(n), "node_state_cap"]
     @build_constraint(node_state[n, s, t] <= nsc * storages_invested_available[n, s, t_invest])
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:node_state_lb}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t = ind
@@ -421,7 +472,7 @@ function _expected_representative_periods_constraint(
     var = _delta_expr_from_index(m, ind, coefs, all_rt)
     @build_constraint(var >= 0)
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:node_state_ub}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t = ind
@@ -435,7 +486,7 @@ function _expected_representative_periods_constraint(
     nsc = vals["node", string(n), "node_state_cap"]
     @build_constraint(var <= nos * nsc)
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:storages_invested_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t_before, t_after = ind
@@ -452,7 +503,7 @@ function _expected_representative_periods_constraint(
         - storages_decommissioned[n, s, t_after]
     )
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:storages_invested_available}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t = ind
@@ -463,7 +514,7 @@ function _expected_representative_periods_constraint(
     cs = vals["node", string(n), "candidate_storages"]
     @build_constraint(storages_invested_available[n, s, t] <= cs)
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:unit_flow_lb}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, n, d, s, t = ind
@@ -490,7 +541,7 @@ function _expected_representative_periods_constraint(
         @build_constraint(fr * unit_flow[u, node(:elec_node), d_to, s, t] >= 0)
     end
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:unit_flow_capacity}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, n, d, s_path, t = ind
@@ -519,7 +570,7 @@ function _expected_representative_periods_constraint(
     end
     @build_constraint(12 * unit_flow[u, n, d, s, t] <= 12 * rhs)
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:unit_state_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s_path, t_before, t_after = ind
@@ -536,7 +587,7 @@ function _expected_representative_periods_constraint(
         - units_shut_down[u, s, t_after]
     )
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:units_available}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s, t = ind
@@ -546,7 +597,7 @@ function _expected_representative_periods_constraint(
     @fetch units_on, units_invested_available = m.ext[:spineopt].variables
     @build_constraint(units_on[u, s, t] <= units_invested_available[u, s, t_invest])
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:units_invested_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s_path, t_before, t_after = ind
@@ -563,7 +614,7 @@ function _expected_representative_periods_constraint(
         - units_mothballed[u, s, t_after]
     )
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:units_invested_available}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s, t = ind
@@ -574,7 +625,7 @@ function _expected_representative_periods_constraint(
     cu = vals["unit", string(u), "candidate_units"]
     @build_constraint(units_invested_available[u, s, t] <= cu)
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:min_up_time}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
@@ -620,7 +671,7 @@ function _expected_representative_periods_constraint(
         )
     )
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{:min_down_time}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
@@ -667,7 +718,7 @@ function _expected_representative_periods_constraint(
         )
     )
 end
-function _expected_representative_periods_constraint(
+function _expected_representative_periods_multi_year_constraint(
     m, ::Val{X}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 ) where X
     @info "unexpected constraint $X"
@@ -675,7 +726,7 @@ function _expected_representative_periods_constraint(
     nothing
 end
 
-function _test_representative_periods_no_index_found()
+function _test_representative_periods_multi_year_no_index_found()
     @testset "representative_periods" begin
         @testset "no_index_found" begin
             url_in = "sqlite://"
@@ -712,7 +763,6 @@ function _test_representative_periods_no_index_found()
     end
 end
 
-@testset "run_spineopt_representative_periods" begin
-   _test_representative_periods()
-   # _test_representative_periods_no_index_found()
+@testset "run_spineopt_representative_periods_multi_year" begin
+   _test_representative_periods_multi_year()
 end
