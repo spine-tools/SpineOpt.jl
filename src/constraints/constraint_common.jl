@@ -181,7 +181,7 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
                 for s in s_path, t1 in t_in_t(m; t_short=t);
                 init=0,
             )
-            + number_of_connections(
+            + existing_connections(
                 m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
             )
         )
