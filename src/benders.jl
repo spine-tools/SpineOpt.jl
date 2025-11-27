@@ -22,6 +22,7 @@ Initialize the given model for SpineOpt Master Problem: add variables, add const
 """
 function _build_mp_model!(m; log_level=3)
     num_variables(m) == 0 || return
+    _generate_reports_by_output!(m)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_master_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
@@ -198,12 +199,7 @@ end
 
 function _update_benders_invested_available!(m_mp)
     for (var_name, current_benders_invested_available) in m_mp.ext[:spineopt].downstream_outputs
-        new_benders_invested_available = Dict(
-            ent => parameter_value(val)
-            for (ent, val) in _output_value_by_entity(
-                m_mp.ext[:spineopt].outputs[var_name], model_end(model=m_mp.ext[:spineopt].instance)
-            )
-        )
+        new_benders_invested_available = Dict(ent => parameter_value(val) for (ent, val) in _val_by_ent(m_mp, var_name))
         mergewith!(merge!, current_benders_invested_available, new_benders_invested_available)
     end
 end

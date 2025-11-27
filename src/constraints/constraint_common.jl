@@ -141,19 +141,10 @@ _d_reverse(d::Object) = d.name == :to_node ? direction(:from_node) : direction(:
 """
     _default_parameter_value(p::Parameter, entity_class::Union{ObjectClass,RelationshipClass})
 
-Obtain the default value of parameter `p` defined in `entity_class` as specified in the input DB.
+The default value of parameter `p` defined in `entity_class` as specified in the input DB.
 """
-function _default_parameter_value(p::Parameter, entity_class::Union{ObjectClass,RelationshipClass})
-    _default = try
-        entity_class.parameter_defaults[p.name]
-    catch
-        @error(
-            "Parameter `$p` is only defined in `$(join(p.classes, "`, `"))`.\n
-            `$entity_class` does not contain the parameter."
-        )
-        ParameterValue(nothing)
-    end
-    return _default.value
+function _default_parameter_value(p::Parameter, entity_class::ObjectClass)
+    entity_class.parameter_defaults[p.name].value
 end
 
 _default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(existing_storages, node)
@@ -170,4 +161,36 @@ function _check_ptdf_duration(m, t, conns...)
     duration = minimum(durations)
     elapsed = end_(t) - start(current_window(m))
     Dates.toms(duration - elapsed) >= 0
+end
+
+function _term_connection_flow(m, conn, ng, d, s_path, t)
+    @fetch connection_flow = m.ext[:spineopt].variables
+    sum(
+        get(connection_flow, (conn, n, d, s, t), 0) * duration(t)
+        for n in members(ng), s in s_path, t in t_in_t(m; t_long=t);
+        init=0,
+    )
+end
+
+function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
+    @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables
+    sum(
+        (
+            + sum(
+                get(connections_invested_available, (conn, s, t1), 0)
+                for s in s_path, t1 in t_in_t(m; t_short=t);
+                init=0,
+            )
+            + number_of_connections(
+                m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
+            )
+        )
+        for s in s_path, t in t_in_t(m; t_long=t)
+        if any(haskey(connection_flow, (conn, n, d, s, t)) for n in members(ng));
+        init=0,
+    )
+end
+
+function _is_zero(cap)
+    iszero(collect(values(indexed_values(cap))))
 end

@@ -358,6 +358,40 @@ function test_unit_flow_simple_bounds()
     end
 end
 
+function test_unit_flow_ub_with_number_of_units_time_series()
+    @testset "unit_flow_ub_with_number_of_units_time_series" begin
+        m_start = DateTime(2000, 1, 1, 0)
+        m_end = m_start + Hour(2)
+        fruf = 0.8
+        cap_to_node = 200
+        number_of_units_ts = TimeSeries([DateTime(2000, 1, 1, 0), DateTime(2000, 1, 1, 1)], [1, 0])
+        url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
+        obj_pvals = [
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_linear"],
+            ["unit", "unit_ab", "number_of_units", unparse_db_value(number_of_units_ts)],
+        ]
+        rel_pvals = [
+            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", cap_to_node],
+        ]
+        import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
+        m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        ind_unit_flow_head = (unit(:unit_ab), node(:node_a), direction(:from_node), stochastic_scenario(:parent))
+        @testset for key in keys(m.ext[:spineopt].constraints[:unit_flow_ub])
+            @test key.direction.name == :to_node
+            @test key.node.name == :node_b
+            @test key.unit.name == :unit_ab
+            observed_con = constraint_object(m.ext[:spineopt].constraints[:unit_flow_ub][key])
+            number_of_units = parameter_value(number_of_units_ts)(t=key.t)
+            expected_con = @build_constraint(
+                fruf * var_unit_flow[ind_unit_flow_head..., key.t] <= number_of_units * 200
+            )
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 function test_fix_ratio_out_in_unit_flow_simple()
     @testset "fix_ratio_out_in_unit_flow_simple" begin
         m_start = DateTime(2000, 1, 1, 0)
@@ -735,6 +769,7 @@ end
     test_unit_history_parameters()
     test_connection_history_parameters()
     test_unit_flow_simple_bounds()
+    test_unit_flow_ub_with_number_of_units_time_series()
     test_fix_ratio_out_in_unit_flow_simple()
     test_fix_ratio_in_out_unit_flow_simple()
     test_two_fix_ratio_out_in_unit_flow_simple()

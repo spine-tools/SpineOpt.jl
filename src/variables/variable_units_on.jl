@@ -33,7 +33,11 @@ function units_on_indices(
 )
     unit = intersect(unit, _unit_with_online_variable())
     unit_stochastic_time_indices(
-        m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+        m;
+        unit=unit,
+        stochastic_scenario=stochastic_scenario,
+        temporal_block=temporal_block,
+        t=t,
     )
 end
 
@@ -51,9 +55,12 @@ function units_switched_indices(
 )
     unit = intersect(unit, _unit_with_switched_variable())
     (
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, s, t) in unit_stochastic_time_indices(
-            m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+        (unit=u, stochastic_scenario=s, t=t) for (u, s, t) in unit_stochastic_time_indices(
+            m;
+            unit=unit,
+            stochastic_scenario=stochastic_scenario,
+            temporal_block=temporal_block,
+            t=t,
         )
     )
 end
@@ -109,7 +116,7 @@ end
 
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        existing_units(unit=u, _default=_default_nb_of_units(u))
+        existing_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
     end
 end
 

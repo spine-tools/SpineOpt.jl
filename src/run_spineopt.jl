@@ -38,7 +38,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 - `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
 - `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
 - `use_model_names::Bool=true`: whether or not to use the names in the model.
-- `add_bridges::Bool=false` whether or not bridges from JuMP to the solver should be added to the model.
+- `add_bridges::Bool=true` whether or not bridges from JuMP to the solver should be added to the model.
 - `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
 - `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
    (expensive).
@@ -92,7 +92,7 @@ function run_spineopt(
     lp_solver=nothing,
     use_direct_model=false,
     use_model_names=true,
-    add_bridges=false,
+    add_bridges=true,
     optimize=true,
     update_names=false,
     alternative="",
@@ -156,7 +156,7 @@ function _run_spineopt(
             use_direct_model,
             use_model_names,
             add_bridges,
-            log_level
+            log_level,
         )
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
@@ -258,7 +258,7 @@ function prepare_spineopt(
     lp_solver=nothing,
     use_direct_model=false,
     use_model_names=true,
-    add_bridges=false,
+    add_bridges=true,
 )
     @log log_level 0 "Reading input data from $(_real_url(url_in))..."
     _check_version(url_in; log_level, upgrade)
@@ -393,9 +393,10 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    if model_algorithm(model=instance) === :mga_algorithm && !add_bridges
+    algorithm = model_algorithm(model=instance)
+    if needs_bridges(Val(algorithm)) && !add_bridges
         add_bridges = true
-        @warn "Bridges are required for MGA algorithm - adding them"
+        @warn "Bridges are required for $algorithm algorithm - adding them"
     end
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model, add_bridges)
@@ -413,6 +414,9 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
     JuMP.set_string_names_on_creation(m, use_model_names)
     m
 end
+
+"Standard algorithms do not require optimizer bridges"
+needs_bridges(model_algorithm) = false
 
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.
@@ -486,7 +490,9 @@ _parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
 
-_do_create_model(mip_solver, use_direct_model, add_bridges) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver; add_bridges = add_bridges)
+function _do_create_model(mip_solver, use_direct_model, add_bridges)
+    use_direct_model ? direct_model(mip_solver) : Model(mip_solver; add_bridges=add_bridges)
+end
 
 struct SpineOptExt
     instance::Object
@@ -516,27 +522,12 @@ struct SpineOptExt
     event_handlers::Dict
     extras::Dict
     function SpineOptExt(instance, lp_solver, master_model=nothing; model_by_stage=Dict(), stage=nothing)
-        if stage === nothing
+        intermediate_results_folder = if stage === nothing
             intermediate_results_folder = tempname(; cleanup=false)
             mkpath(intermediate_results_folder)
-            reports_by_output = Dict()
-            for rpt in model__report(model=instance)
-                output_url = output_db_url(report=rpt, _strict=false)
-                for out in report__output(report=rpt)
-                    output_key = (out.name, overwrite_results_on_rolling(report=rpt, output=out))
-                    push!(get!(reports_by_output, output_key, []), (rpt.name, output_url))
-                end
-            end
+            intermediate_results_folder
         else
-            intermediate_results_folder = ""
-            outputs = (
-                out
-                for stage__output__entity in (stage__output__unit, stage__output__node, stage__output__connection)
-                for (out, _ent) in stage__output__entity(stage=stage)
-            )
-            reports_by_output = Dict(
-                (out.name, true) => [] for out in Iterators.flatten((outputs, stage__output(stage=stage)))
-            )
+            ""
         end
         event_handlers = Dict(
             :model_built => Set(),
@@ -553,7 +544,7 @@ struct SpineOptExt
             model_by_stage,
             stage,
             intermediate_results_folder,
-            reports_by_output,
+            Dict(),  # reports_by_output
             Dict{Symbol,Dict}(),  # variables
             Dict{Symbol,Dict}(),  # variables_definition
             Dict{Symbol,Dict}(),  # values

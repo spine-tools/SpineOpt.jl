@@ -18,7 +18,7 @@ jobs:
       - id: skip_check
         uses: fkirc/skip-duplicate-actions@v5
         with:
-          concurrent_skipping: 'same_content'
+          concurrent_skipping: 'same_content_newer'
   test:
     needs: check_duplicate_actions
     if: needs.check_duplicate_actions.outputs.should_skip != 'true'
@@ -28,8 +28,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.8"  # Minimum compatible Release
-          - "1"    # Latest Release of Julia v1.x
+          - "1.10.10"  #  Long-term support (LTS) release
+          - "1.11" # Latest Release of Julia v1.x
         os:
           - ubuntu-latest
           # - macOS-latest
@@ -79,6 +79,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11' 
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.11' 
       - name: Install dependencies
         run: |
           julia ./.install_spinedb_api.jl          

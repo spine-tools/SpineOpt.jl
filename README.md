@@ -1,11 +1,15 @@
-## SpineOpt.jl
+# SpineOpt.jl
 
 [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-tools.github.io/SpineOpt.jl/latest/index.html)
 [![codecov](https://codecov.io/gh/spine-tools/SpineOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/spine-tools/SpineOpt.jl) [![Join the chat at https://gitter.im/spine-tools/SpineOpt.jl](https://badges.gitter.im/spine-tools/SpineOpt.jl.svg)](https://gitter.im/spine-tools/SpineOpt.jl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A Julia package containing a state-of-the-art energy system optimization model.
 
-### :loudspeaker: Community and how to ask help :rocket:
+## Compatibility
+
+This package supports Julia 1.10.10 (LTS by June 27, 2025) up to version 1.11.
+
+## :loudspeaker: Community and how to ask help :rocket:
 
 There are several ways to get help with SpineOpt.
 
@@ -14,9 +18,9 @@ There are several ways to get help with SpineOpt.
 3. [Discussion forum](https://github.com/spine-tools/SpineOpt.jl/discussions/categories/support) (support section) can be used when you don't know how to get something done or you don't quite know why something isn't working. It's highly appreciated if other users can contribute by helping each other (developers are short on time).
 4. [Issue tracker](https://github.com/spine-tools/SpineOpt.jl/issues) should be used only when there is a missing feature or something should work but it's not working. Update your tools and test with latest software before submitting an issue. In case of new feature, make sure there is no existing issue. Issues reporting bugs should provide sufficient information to enable locating and fixing the bug.
 
-### Getting started
+## Getting started
 
-We highly recommend you to go through the getting started chapter of the documentation.
+We highly recommend you to go through the `getting started` part of the documentation.
 
 The chapter explains in great detail the different ways to [install](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/installation/) SpineOpt. The prerequisites are also mentioned here.
 
@@ -26,21 +30,21 @@ If any issues arise during the first two steps, you can consult the [trouble sho
 
 Once you have succesfully installed and verified the correct functioning of SpineOpt, you can start learning how to use SpineOpt. To that end you can visit the tutorials chapter of the documentation. The tutorials cover the different features of SpineOpt (the underlying files of the tutorials are part of our tests so these should always be up to date, though the text/images may lag behind some times).
 
-### Reporting Issues and Contributing
+## Reporting Issues and Contributing
 
 For contributing and instructions on reporting issues, see [CONTRIBUTING.md](CONTRIBUTING.md)
 
-### License
+## License
 
 SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.
 
-### Citing SpineOpt
+## Citing SpineOpt
 
 Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when referring to SpineOpt in scientific writing.
 
 `Ihlemann, M., Kouveliotis-Lysikatos, I., Huang, J., Dillon, J., O'Dwyer, C., Rasku, T., Marin, M., Poncelet, K., & Kiviluoma, J. (2022). SpineOpt: A flexible open-source energy system modelling framework. Energy Strategy Reviews, 43, [100902]. https://doi.org/10.1016/j.esr.2022.100902`
 
-### Acknowledgements
+## Acknowledgements
 
 <center>
 <table width=500px frame="none">

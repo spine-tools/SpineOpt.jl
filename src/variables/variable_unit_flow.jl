@@ -142,7 +142,9 @@ function add_variable_unit_flow!(m::Model)
                 (unit=u, stochastic_scenario=s, t=t) => _fix_units_on_coeff(m, u, n, n_ref, s, t, fix_ratio, direct)
             ),
             :units_started_up => Dict(
-                (unit=u, stochastic_scenario=s, t=t) => _signed_unit_start_flow(m, u, n, n_ref, s, t, fix_ratio, direct)
+                (unit=u, stochastic_scenario=s, t=t) => /(
+                    _signed_unit_start_flow(m, u, n, n_ref, s, t, fix_ratio, direct), duration(t)
+                )
             ),
         )
         for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)

@@ -47,44 +47,19 @@ macro timelog(level, threshold, msg, stats, expr)
     end
 end
 
-const _SENTINEL = "SpineOptSentinel"
-
 macro timemsg(msg, stats, expr)
-    quote
-        msg = $(esc(msg))
-        stats = $(esc(stats))
-        printstyled(stderr, msg; bold=true)
-        pipe = Pipe()
-        task = @Threads.spawn _drain(pipe)
-        val = redirect_stdout(pipe) do
-            val = @time $(esc(expr))
-            println(_SENTINEL)
-            val
-        end
-        last_str = fetch(task)
-        if stats isa Dict
-            seconds = parse(Float64, strip(split(last_str, "seconds")[1]))
-            push!(get!(stats, strip(msg), []), seconds)
-        end
-        val
-    end
+    :(timemsg($(esc(msg)), $(esc(stats)), () -> $(esc(expr))))
 end
 
-function _drain(pipe)
-    last_str = ""
-    while true
-        str = try
-            readline(pipe)
-        catch err
-            err isa ArgumentError || rethrow()
-            sleep(0.02)
-            continue
-        end
-        str == _SENTINEL && break
-        println(stderr, str)
-        last_str = str
+function timemsg(msg, stats, f)
+    printstyled(stdout, msg; bold=true)
+    if stats isa Dict
+        result = @timed @time f()
+        push!(get!(stats, strip(msg), []), result.time)
+        result.value
+    else
+        @time f()
     end
-    last_str
 end
 
 """
@@ -101,6 +76,56 @@ macro fetch(expr)
         :($dict[$(Expr(:quote, keys))])
     end
     esc(Expr(:(=), keys, values))
+end
+
+"""
+    @generator function(foo)
+        for x in 1:10
+            @yield x
+        end
+    end
+
+Create a Python-style generator from the given function that calls the @yield macro.
+"""
+macro generator(f)
+    if f.head != :function
+        error("please use @generator with a function")
+    end
+    signature, body = f.args
+    name, args... = signature.args
+    channel = gensym()
+    _expand_yield_macro!(body, channel)
+    producer = gensym()
+    producer_fn = quote
+        function $(producer)($channel)
+            $(body)
+        end
+    end
+    quote
+        function $(esc(name))($(esc.(args)...))  # TODO: Support keyword arguments
+            $(esc(producer_fn))
+            Channel($(esc(producer)))
+        end
+    end
+end
+
+macro yield(x)
+    x
+end
+
+function _expand_yield_macro!(expr::Expr, channel)
+    for (k, x) in enumerate(expr.args)
+        x isa Expr || continue
+        if x.head == :macrocall && x.args[1] == Symbol("@yield")
+            # TODO: make sure @yield is called correctly by checking x.args[2:end]
+            value = x.args[end]
+            expr.args[k] = quote
+                put!($channel, $value)
+            end
+        else
+            _expand_yield_macro!(x, channel)
+        end
+    end
 end
 
 struct ParameterFunction

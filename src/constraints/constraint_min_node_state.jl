@@ -37,33 +37,25 @@ See also
 [has\_storage](@ref).
 """
 function add_constraint_min_node_state!(m::Model)
-    _add_constraint!(
-        m, :min_node_state, constraint_min_node_state_indices, _build_constraint_min_node_state
-    )
+    _add_constraint!(m, :min_node_state, constraint_min_node_state_indices, _build_constraint_min_node_state)
 end
 
 function _build_constraint_min_node_state(m::Model, ng, s_path, t)
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
     @build_constraint(
-        + sum(
-            + node_state[n, s, t]
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+        +sum(
+            +node_state[n, s, t] for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
             init=0,
-        )
-        >=
-        + sum(
-            + node_state_lower_limit(m; node=ng, stochastic_scenario=s, t=t)
-            * (
-                + existing_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
-                + sum(
-                    storages_invested_available[n, s, t1]
-                    for (n, s, t1) in storages_invested_available_indices(
-                        m; node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_short=t)
-                    );
+        ) >=
+        +sum(
+            +node_state_lower_limit(m; node=ng, stochastic_scenario=s, t=t) * (
+                existing_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n)) +
+                sum(
+                    storages_invested_available[n, s, t1] for (n, s, t1) in
+                    storages_invested_available_indices(m; node=ng, stochastic_scenario=s_path, t=t_in_t(m; t_short=t));
                     init=0,
                 )
-            )
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            ) for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
             init=0,
         )
     )
@@ -71,19 +63,17 @@ end
 
 function constraint_min_node_state_indices(m::Model)
     (
-        (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(
-            m; node=intersect(indices(storage_state_min), indices(storage_investment_count_max_cumulative)), temporal_block=anything
-        )
-        if (has_storage(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
-        for path in active_stochastic_paths(
+        (node=ng, stochastic_path=path, t=t) for (ng, t) in node_time_indices(
+            m;
+            node=intersect(indices(storage_state_min), indices(storage_investment_count_max_cumulative)),
+            temporal_block=anything,
+        ) if ((has_storage(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)) &&
+        !_is_zero(node_state_lower_limit(m; node=ng, t=t, _strict=false)) for path in active_stochastic_paths(
             m,
-            Iterators.flatten(
-                (
-                    node_state_indices(m; node=ng, t=t),
-                    storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
-                )
-            )
-        ) if realize(node_state_lower_limit(m; node=ng, stochastic_scenario=path, t=t, _strict=false)) > 0
+            Iterators.flatten((
+                node_state_indices(m; node=ng, t=t),
+                storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
+            )),
+        )
     )
 end

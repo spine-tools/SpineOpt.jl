@@ -34,7 +34,7 @@ To be able to see the values of the economic parameters after a run, you have to
 ## Not using economic discounting
 We start with the case where [multiyear\_economic\_discounting](@ref) is not used with the default value `null`, which means SpineOpt will not create and use its internally-calculated parameters for discounting investment and operation costs. A [unit\_investment\_cost](@ref) of 100 and a [vom\_cost](@ref) of 25 are not discouted at all. See the set-up below.
 
-![image](figs_multi-year/economic_disounting_no_use.png)
+![image](figs_multi-year/economic_discounting_no_use.png)
 
 ## Using economic parameters with consecutive operation years
 Now we set [multiyear\_economic\_discounting](@ref) to `consecutive_years`. This set-up indicates that the model will use the internally-calculated parameters and continous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05. See the set-up below.

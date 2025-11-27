@@ -95,15 +95,6 @@ function _build_constraint_connection_flow_capacity_bidirectional(m, conn, ng, s
     )
 end
 
-function _term_connection_flow(m, conn, ng, d, s_path, t)
-    @fetch connection_flow = m.ext[:spineopt].variables
-    sum(
-        get(connection_flow, (conn, n, d, s, t), 0) * duration(t)
-        for n in members(ng), s in s_path, t in t_in_t(m; t_long=t);
-        init=0,
-    )
-end
-
 function _term_connection_flow_capacity(m, conn, ng, d, s_path, t)
     @fetch connection_flow = m.ext[:spineopt].variables
     (
@@ -139,7 +130,7 @@ end
 function constraint_connection_flow_capacity_indices(m::Model)    
     (
         (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
-        for (conn, ng, d) in _connection_node_direction(m)
+        for (conn, ng, d) in _connection_node_direction_for_flow_capacity(m)
         if members(ng) != [ng] || is_candidate(connection=conn)
         for (t, path) in t_lowest_resolution_path(
             m,
@@ -150,21 +141,21 @@ function constraint_connection_flow_capacity_indices(m::Model)
 end
 
 """
-    _connection_node_direction(m)
+    _connection_node_direction_for_flow_capacity(m)
 
 An iterator over tuples (connection, node, direction) for which a connection_flow_capacity is specified.
-If a capacity is specified for the same connection and node in the two directions and is never zero,
+If a capacity is specified for the same connection and node in the two directions and is not always zero,
 then the connection and node will be included in only one tuple and the direction will be a `Vector`
 of the two directions.
 In this case we can write a tight compact formulation.
 """
-function _connection_node_direction(m)
+function _connection_node_direction_for_flow_capacity(m)
     froms = indices(connection_capacity, connection__from_node)
     tos = indices(connection_capacity, connection__to_node)
     iter = Iterators.flatten((froms, tos))
     if tight_compact_formulations_activate(model=m.ext[:spineopt].instance)
         bidirectional = intersect(((x.connection, x.node) for x in froms), ((x.connection, x.node) for x in tos))
-        filter!(x -> _is_never_zero(_from_cap(x)) && _is_never_zero(_to_cap(x)), bidirectional)
+        filter!(x -> !_is_zero(_from_cap(x)) && !_is_zero(_to_cap(x)), bidirectional)
         Iterators.flatten(
             (
                 (x for x in iter if !((x.connection, x.node) in bidirectional)),
@@ -179,7 +170,3 @@ end
 _from_cap(x) = connection_flow_capacity(; zip((:connection, :node), x)..., direction=direction(:from_node))
 
 _to_cap(x) = connection_flow_capacity(; zip((:connection, :node), x)..., direction=direction(:to_node))
-
-function _is_never_zero(cap)
-    !iszero(collect(values(indexed_values(cap))))
-end

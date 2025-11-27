@@ -24,19 +24,15 @@ end
 
 function _vals_from_data(data)
     Dict{Any,Any}(
-        (cls, ent, param) => val isa Tuple ? parse_db_value(val...) : val
-        for key in (:object_parameter_values, :relationship_parameter_values)
-        for (cls, ent, param, val) in get(data, key, ())
+        (cls, ent, param) => val isa Tuple ? parse_db_value(val...) : val for
+        key in (:object_parameter_values, :relationship_parameter_values) for
+        (cls, ent, param, val) in get(data, key, ())
     )
 end
 
-function _test_representative_periods_setup()
-    url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
-    url_out = "sqlite:///$file_path_out"
-    repr_periods_mapping = Map(
-        collect(DateTime(2000, 1, 1):Day(1):DateTime(2000, 1, 10)), [[0.1k, 1.0 - 0.1k] for k in 1:10]
-    )
+function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
+    repr_periods_mapping =
+        Map(collect(DateTime(2000, 1, 1):Day(1):DateTime(2000, 1, 10)), [[0.1k, 1.0 - 0.1k] for k in 1:10])
     rp1_start = DateTime(2000, 1, 3)
     rp2_start = DateTime(2000, 1, 7)
     repr_periods_mapping[rp1_start] = [1, 0]
@@ -55,10 +51,7 @@ function _test_representative_periods_setup()
             ["report", "report_x"],
             ["node", "elec_node"],
         ],
-        :object_groups => [
-            ["temporal_block", "all_rps", "rp1"],
-            ["temporal_block", "all_rps", "rp2"],
-        ],
+        :object_groups => [["temporal_block", "all_rps", "rp1"], ["temporal_block", "all_rps", "rp2"]],
         :relationships => [
             ["model__default_temporal_block", ["instance", "operations"]],
             ["model__default_temporal_block", ["instance", "all_rps"]],
@@ -86,117 +79,133 @@ function _test_representative_periods_setup()
             ["temporal_block", "operations", "representative_blocks_by_period", unparse_db_value(repr_periods_mapping)],
         ],
     )
+end
+
+function _test_representative_periods_setup()
+    url_in = "sqlite://"
+    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    url_out = "sqlite:///$file_path_out"
+    test_data = _get_representative_periods_setup_data()
     _load_test_data(url_in, test_data)
     vals = _vals_from_data(test_data)
     url_in, url_out, file_path_out, vals
 end
 
+function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
+    elec_demand_inds = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 11))
+    elec_demand_length = length(elec_demand_inds)
+    elec_demand_ts =
+        TimeSeries(elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length])
+    pv_af_ts = TimeSeries(elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length])
+    wind_af_ts =
+        TimeSeries(elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length])
+    test_data = Dict(
+        :objects => [
+            ["node", "elec_node"],
+            ["node", "batt_node"],
+            ["node", "h2_node"],
+            ["unit", "batt_unit"],
+            ["unit", "electrolizer"],
+            ["unit", "h2_gen"],
+            ["unit", "pv"],
+            ["unit", "wind"],
+            ["unit", "conventional"],
+        ],
+        :relationships => [
+            ["node__to_unit", ["batt_node", "batt_unit"]],
+            ["node__to_unit", ["elec_node", "batt_unit"]],
+            ["unit__to_node", ["batt_unit", "batt_node"]],
+            ["unit__to_node", ["batt_unit", "elec_node"]],
+            ["unit__node__node", ["batt_unit", "batt_node", "elec_node"]],
+            ["unit__node__node", ["batt_unit", "elec_node", "batt_node"]],
+            ["node__to_unit", ["elec_node", "electrolizer"]],
+            ["unit__to_node", ["electrolizer", "h2_node"]],
+            ["unit__node__node", ["electrolizer", "elec_node", "h2_node"]],
+            ["node__to_unit", ["h2_node", "h2_gen"]],
+            ["unit__to_node", ["h2_gen", "elec_node"]],
+            ["unit__node__node", ["h2_gen", "h2_node", "elec_node"]],
+            ["unit__to_node", ["pv", "elec_node"]],
+            ["unit__to_node", ["wind", "elec_node"]],
+            ["unit__to_node", ["conventional", "elec_node"]],
+            ["node__temporal_block", ["h2_node", "operations"]],
+            ["node__temporal_block", ["h2_node", "all_rps"]],
+        ],
+        :object_parameter_values => [
+            ["node", "elec_node", "demand", unparse_db_value(elec_demand_ts)],
+            ["node", "batt_node", "storage_investment_count_max_cumulative", 100],
+            ["node", "batt_node", "has_storage", true],
+            ["node", "batt_node", "storage_state_initial", 0],
+            ["node", "batt_node", "node_balance_penalty", 10000],
+            ["node", "batt_node", "storage_state_max", 200],
+            ["node", "batt_node", "storage_state_min", 10],
+            ["node", "batt_node", "storage_state_min_fraction", 0.2],
+            ["node", "batt_node", "existing_storages", 0],
+            ["node", "batt_node", "storage_investment_cost", 2000000],
+            ["node", "batt_node", "storage_investment_variable_type", "integer"],
+            ["node", "h2_node", "has_storage", true],
+            ["node", "h2_node", "is_longterm_storage", true],
+            ["node", "h2_node", "node_balance_penalty", 10000],
+            ["node", "h2_node", "storage_state_max", 20000],
+            ["node", "h2_node", "existing_storages", 100],
+            ["unit", "batt_unit", "investment_count_max_cumulative", 100],
+            ["unit", "batt_unit", "existing_units", 0],
+            ["unit", "batt_unit", "unit_investment_cost", 750000],
+            ["unit", "batt_unit", "investment_variable_type", "integer"],
+            ["unit", "electrolizer", "investment_count_max_cumulative", 100],
+            ["unit", "electrolizer", "existing_units", 0],
+            ["unit", "electrolizer", "unit_investment_cost", 40000000],
+            ["unit", "electrolizer", "investment_variable_type", "integer"],
+            ["unit", "h2_gen", "investment_count_max_cumulative", 100],
+            ["unit", "h2_gen", "existing_units", 0],
+            ["unit", "h2_gen", "online_variable_type", "integer"],
+            ["unit", "h2_gen", "start_up_cost", 1000],
+            ["unit", "h2_gen", "min_up_time", Dict("type" => "duration", "data" => string(60, "m"))],
+            ["unit", "h2_gen", "min_down_time", Dict("type" => "duration", "data" => string(60, "m"))],
+            ["unit", "h2_gen", "unit_investment_cost", 3000000],
+            ["unit", "h2_gen", "investment_variable_type", "integer"],
+            ["unit", "pv", "investment_count_max_cumulative", 100],
+            ["unit", "pv", "existing_units", 0],
+            ["unit", "pv", "availability_factor", unparse_db_value(pv_af_ts)],
+            ["unit", "pv", "unit_investment_cost", 9000000],
+            ["unit", "pv", "investment_variable_type", "linear"],
+            ["unit", "wind", "investment_count_max_cumulative", 100],
+            ["unit", "wind", "existing_units", 0],
+            ["unit", "wind", "availability_factor", unparse_db_value(wind_af_ts)],
+            ["unit", "wind", "unit_investment_cost", 18000000],
+            ["unit", "wind", "investment_variable_type", "linear"],
+        ],
+        :relationship_parameter_values => [
+            ["node__to_unit", ["elec_node", "batt_unit"], "unit_capacity", 50],
+            ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
+            ["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow", 0.9],
+            ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.8],
+            ["node__to_unit", ["elec_node", "electrolizer"], "unit_capacity", 1000],
+            ["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow", 1.5],
+            ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
+            ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.6],
+            ["unit__to_node", ["pv", "elec_node"], "unit_capacity", 300],
+            ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
+            ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
+            ["unit__to_node", ["conventional", "elec_node"], "vom_cost", 500],
+            ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition", true],
+            ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition_sense", "=="],
+        ],
+    )
+end
+
+function testDebugger()
+    url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
+    test_data = _get_representative_periods_test_data()
+    count, errors = import_data(url_in, "Add test data"; test_data...)
+    merge!(vals, _vals_from_data(test_data))
+    rm(file_path_out; force=true)
+    m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
+end
+
 function _test_representative_periods()
     @testset "representative_periods" begin
         url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
-        elec_demand_inds = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 11))
-        elec_demand_length = length(elec_demand_inds)
-        elec_demand_ts = TimeSeries(
-            elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
-        )
-        pv_af_ts = TimeSeries(
-            elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
-        )
-        wind_af_ts = TimeSeries(
-            elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
-        )
-        test_data = Dict(
-            :objects => [
-                ["node", "elec_node"],
-                ["node", "batt_node"],
-                ["node", "h2_node"],
-                ["unit", "batt_unit"],
-                ["unit", "electrolizer"],
-                ["unit", "h2_gen"],
-                ["unit", "pv"],
-                ["unit", "wind"],
-                ["unit", "conventional"],
-            ],
-            :relationships => [
-                ["node__to_unit", ["batt_node", "batt_unit"]],
-                ["node__to_unit", ["elec_node", "batt_unit"]],
-                ["unit__to_node", ["batt_unit", "batt_node"]],
-                ["unit__to_node", ["batt_unit", "elec_node"]],
-                ["unit__node__node", ["batt_unit", "batt_node", "elec_node"]],
-                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"]],
-                ["node__to_unit", ["elec_node", "electrolizer"]],
-                ["unit__to_node", ["electrolizer", "h2_node"]],
-                ["unit__node__node", ["electrolizer", "elec_node", "h2_node"]],
-                ["node__to_unit", ["h2_node", "h2_gen"]],
-                ["unit__to_node", ["h2_gen", "elec_node"]],
-                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"]],
-                ["unit__to_node", ["pv", "elec_node"]],
-                ["unit__to_node", ["wind", "elec_node"]],
-                ["unit__to_node", ["conventional", "elec_node"]],
-                ["node__temporal_block", ["h2_node", "operations"]],
-                ["node__temporal_block", ["h2_node", "all_rps"]],
-            ],
-            :object_parameter_values => [
-                ["node", "elec_node", "demand", unparse_db_value(elec_demand_ts)],
-                ["node", "batt_node", "storage_investment_count_max_cumulative", 100],
-                ["node", "batt_node", "has_storage", true],
-                ["node", "batt_node", "storage_state_initial", 0],
-                ["node", "batt_node", "node_balance_penalty", 10000],
-                ["node", "batt_node", "storage_state_max", 200],
-                ["node", "batt_node", "storage_state_min", 10],
-                ["node", "batt_node", "storage_state_min_fraction", 0.2],
-                ["node", "batt_node", "existing_storages", 0],
-                ["node", "batt_node", "storage_investment_cost", 2000000],
-                ["node", "batt_node", "storage_investment_variable_type", "integer"],
-                ["node", "h2_node", "has_storage", true],
-                ["node", "h2_node", "is_longterm_storage", true],
-                ["node", "h2_node", "node_balance_penalty", 10000],
-                ["node", "h2_node", "storage_state_max", 20000],
-                ["node", "h2_node", "existing_storages", 100],
-                ["unit", "batt_unit", "investment_count_max_cumulative", 100],
-                ["unit", "batt_unit", "existing_units", 0],
-                ["unit", "batt_unit", "unit_investment_cost", 750000],
-                ["unit", "batt_unit", "investment_variable_type", "integer"],
-                ["unit", "electrolizer", "investment_count_max_cumulative", 100],
-                ["unit", "electrolizer", "existing_units", 0],
-                ["unit", "electrolizer", "unit_investment_cost", 40000000],
-                ["unit", "electrolizer", "investment_variable_type", "integer"],
-                ["unit", "h2_gen", "investment_count_max_cumulative", 100],
-                ["unit", "h2_gen", "existing_units", 0],
-                ["unit", "h2_gen", "online_variable_type", "integer"],
-                ["unit", "h2_gen", "start_up_cost", 1000],
-                ["unit", "h2_gen", "min_up_time", Dict("type" => "duration", "data" => string(60, "m"))],
-                ["unit", "h2_gen", "min_down_time", Dict("type" => "duration", "data" => string(60, "m"))],
-                ["unit", "h2_gen", "unit_investment_cost", 3000000],
-                ["unit", "h2_gen", "investment_variable_type", "integer"],
-                ["unit", "pv", "investment_count_max_cumulative", 100],
-                ["unit", "pv", "existing_units", 0],
-                ["unit", "pv", "availability_factor", unparse_db_value(pv_af_ts)],
-                ["unit", "pv", "unit_investment_cost", 9000000],
-                ["unit", "pv", "investment_variable_type", "linear"],
-                ["unit", "wind", "investment_count_max_cumulative", 100],
-                ["unit", "wind", "existing_units", 0],
-                ["unit", "wind", "availability_factor", unparse_db_value(wind_af_ts)],
-                ["unit", "wind", "unit_investment_cost", 18000000],
-                ["unit", "wind", "investment_variable_type", "linear"],
-            ],
-            :relationship_parameter_values => [
-                ["node__to_unit", ["elec_node", "batt_unit"], "unit_capacity", 50],
-                ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
-                ["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow", 0.9],
-                ["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow", 0.8],
-                ["node__to_unit", ["elec_node", "electrolizer"], "unit_capacity", 1000],
-                ["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow", 1.5],
-                ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
-                ["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow", 1.6],
-                ["unit__to_node", ["pv", "elec_node"], "unit_capacity", 300],
-                ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
-                ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
-                ["unit__to_node", ["conventional", "elec_node"], "vom_cost", 500],
-                ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition", true],
-                ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition_sense", "=="],
-            ],
-        )
+        test_data = _get_representative_periods_test_data()
         count, errors = import_data(url_in, "Add test data"; test_data...)
         @test isempty(errors)
         merge!(vals, _vals_from_data(test_data))
@@ -223,6 +232,45 @@ function _test_representative_periods()
     end
 end
 
+function _test_representative_periods_no_index_found()
+    @testset "representative_periods" begin
+        @testset "no_index_found" begin
+            url_in = "sqlite://"
+            file_path_out = "$(@__DIR__)/test_out.sqlite"
+            url_out = "sqlite:///$file_path_out"
+            test_setup_data = _get_representative_periods_setup_data()
+            # Remove the association with the representative temporal_block
+            test_object_groups = test_setup_data[Symbol("object_groups")]
+            test_object_groups = [x for x in test_object_groups if x != ["temporal_block", "all_rps", "rp1"]]
+            test_setup_data[Symbol("object_groups")] = test_object_groups
+            # finish setup
+            _load_test_data(url_in, test_setup_data)
+            vals = _vals_from_data(test_setup_data)
+            test_data = _get_representative_periods_test_data()
+            count, errors = import_data(url_in, "Add test data"; test_data...)
+            @test isempty(errors)
+            merge!(vals, _vals_from_data(test_data))
+            rm(file_path_out; force=true)
+            try
+                run_spineopt(url_in, url_out; optimize=true, log_level=3)
+                # fail test if we reach this point without an error
+                @test false
+            catch e
+                buf = IOBuffer()
+                showerror(buf, e)
+                message = String(take!(buf))
+                println(message)
+                @test startswith(
+                    message,
+                    "can't find a linear representative index combination for \
+(node = h2_node, stochastic_scenario = realisation, \
+t = 2000-01-01T00:00~(1 day)~>2000-01-02T00:00)",
+                )
+            end
+        end
+    end
+end
+
 function _test_representative_periods_variable(m, var_name, ind, var, vars, vals, rt1, rt2, all_rt, t_invest)
     rpm = vals["temporal_block", "operations", "representative_blocks_by_period"]
     (ind.t in all_rt || ind.t == t_invest || var_name == :node_state) && return
@@ -232,14 +280,23 @@ function _test_representative_periods_variable(m, var_name, ind, var, vars, vals
     end
 end
 
-
 function _test_representative_periods_constraint(m, con_name, ind, con, vals, rt1, rt2, all_rt, t_invest)
     con === nothing && return
     observed_con = constraint_object(con)
     d_from = direction(:from_node)
     d_to = direction(:to_node)
     expected_con = _expected_representative_periods_constraint(
-        m, Val(con_name), ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+        m,
+        Val(con_name),
+        ind,
+        observed_con,
+        vals,
+        rt1,
+        rt2,
+        all_rt,
+        t_invest,
+        d_from,
+        d_to,
     )
     if expected_con !== nothing
         @test _is_constraint_equal(observed_con, expected_con)
@@ -247,7 +304,17 @@ function _test_representative_periods_constraint(m, con_name, ind, con, vals, rt
 end
 
 function _expected_representative_periods_constraint(
-    m, ::Val{:cyclic_node_state}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:cyclic_node_state},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     n, s_path, t_start, t_end, tb = ind
     @test n == node(:h2_node)
@@ -259,7 +326,17 @@ function _expected_representative_periods_constraint(
     @build_constraint(node_state[n, only(s_path), t_end] == node_state[n, only(s_path), t_start])
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:nodal_balance}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:nodal_balance},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     n, s, t = ind
     @test n in node()
@@ -269,7 +346,17 @@ function _expected_representative_periods_constraint(
     @build_constraint(node_injection[n, s, t] == 0)
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:node_injection}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:node_injection},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     n, s_path, t_before, t_after = ind
     @test n in node()
@@ -284,46 +371,52 @@ function _expected_representative_periods_constraint(
     if n == node(:batt_node)
         fr_e2b = vals["unit__node__node", ["batt_unit", "batt_node", "elec_node"], "fix_ratio_out_in_unit_flow"]
         @build_constraint(
-            + node_injection[n, s, t_after]
-            ==
-            - node_slack_neg[n, s, t_after]
-            + node_slack_pos[n, s, t_after]
-            - (1 / 24) * node_state[n, s, t_after]
-            - unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after]
-            + fr_e2b * unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
+            +node_injection[n, s, t_after] ==
+            -node_slack_neg[n, s, t_after] + node_slack_pos[n, s, t_after] - (1 / 24) * node_state[n, s, t_after] -
+            unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after] +
+            fr_e2b * unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
         )
     elseif n == node(:elec_node)
         elec_demand = parameter_value(vals["node", "elec_node", "demand"])
         fr_b2e = vals["unit__node__node", ["batt_unit", "elec_node", "batt_node"], "fix_ratio_out_in_unit_flow"]
         fr_e2h = vals["unit__node__node", ["electrolizer", "elec_node", "h2_node"], "fix_ratio_in_out_unit_flow"]
         @build_constraint(
-            + node_injection[n, s, t_after]
-            ==
-            + fr_b2e * unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after]
-            - unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after]
-            - fr_e2h * unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after]
-            + unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
-            + unit_flow[unit(:pv), node(:elec_node), d_to, s, t_after]
-            + unit_flow[unit(:wind), node(:elec_node), d_to, s, t_after]
-            + unit_flow[unit(:conventional), node(:elec_node), d_to, s, t_after]
-            - elec_demand(t=t_after)
+            +node_injection[n, s, t_after] ==
+            +fr_b2e * unit_flow[unit(:batt_unit), node(:batt_node), d_from, s, t_after] -
+            unit_flow[unit(:batt_unit), node(:elec_node), d_from, s, t_after] -
+            fr_e2h * unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after] +
+            unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after] +
+            unit_flow[unit(:pv), node(:elec_node), d_to, s, t_after] +
+            unit_flow[unit(:wind), node(:elec_node), d_to, s, t_after] +
+            unit_flow[unit(:conventional), node(:elec_node), d_to, s, t_after] - elec_demand(t=t_after)
         )
     else#if n == node(:h2_node)
-        fr_h2e = vals["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow"]
+        unit_flow_from_node = if t_after in all_rt
+            fr_h2e = vals["unit__node__node", ["h2_gen", "h2_node", "elec_node"], "fix_ratio_in_out_unit_flow"]
+            fr_h2e * unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
+        else
+            unit_flow[unit(:h2_gen), node(:h2_node), d_from, s, t_after]
+        end
         @build_constraint(
-            + node_injection[n, s, t_after]
-            ==
-            - node_slack_neg[n, s, t_after]
-            + node_slack_pos[n, s, t_after]
-            - (1 / 24) * node_state[n, s, t_after]
-            + (1 / 24) * node_state[n, s, t_before]
-            + unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after]
-            - fr_h2e * unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
+            +node_injection[n, s, t_after] ==
+            -node_slack_neg[n, s, t_after] + node_slack_pos[n, s, t_after] - (1 / 24) * node_state[n, s, t_after] +
+            (1 / 24) * node_state[n, s, t_before] +
+            unit_flow[unit(:electrolizer), node(:h2_node), d_to, s, t_after] - unit_flow_from_node
         )
     end
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:node_state_capacity}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:node_state_capacity},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     n, s_path, t = ind
     @test n == node(:batt_node)
@@ -335,7 +428,17 @@ function _expected_representative_periods_constraint(
     @build_constraint(node_state[n, s, t] <= nsc * storages_invested_available[n, s, t_invest])
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:min_node_state}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:min_node_state},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     n, s_path, t = ind
     @test n == node(:batt_node)
@@ -349,7 +452,17 @@ function _expected_representative_periods_constraint(
     @build_constraint(node_state[n, s, t] >= maximum([nsc * nsmf, nsm]) * storages_invested_available[n, s, t_invest])
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:storages_invested_transition}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:storages_invested_transition},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     n, s_path, t_before, t_after = ind
     @test n == node(:batt_node)
@@ -358,15 +471,22 @@ function _expected_representative_periods_constraint(
     @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt].variables
     s = only(s_path)
     @build_constraint(
-        + storages_invested_available[n, s, t_after]
-        - storages_invested_available[n, s, t_before]
-        ==
-        + storages_invested[n, s, t_after]
-        - storages_decommissioned[n, s, t_after]
+        +storages_invested_available[n, s, t_after] - storages_invested_available[n, s, t_before] ==
+        +storages_invested[n, s, t_after] - storages_decommissioned[n, s, t_after]
     )
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:storages_invested_available}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:storages_invested_available},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     n, s, t = ind
     @test n == node(:batt_node)
@@ -377,7 +497,17 @@ function _expected_representative_periods_constraint(
     @build_constraint(storages_invested_available[n, s, t] <= cs)
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:unit_flow_lb}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:unit_flow_lb},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     u, n, d, s, t = ind
     @test u in (unit(:batt_unit), unit(:electrolizer), unit(:h2_gen))
@@ -404,7 +534,17 @@ function _expected_representative_periods_constraint(
     end
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:unit_flow_capacity}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:unit_flow_capacity},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     u, n, d, s_path, t = ind
     @test u in unit()
@@ -415,7 +555,7 @@ function _expected_representative_periods_constraint(
     rhs = if u == unit(:batt_unit)
         @test d in direction()
         cls = Dict(d_from => "node__to_unit", d_to => "unit__to_node")[d]
-        entity_inds_by_class = Dict("node__to_unit" => [2,1], "unit__to_node" => [1,2])
+        entity_inds_by_class = Dict("node__to_unit" => [2, 1], "unit__to_node" => [1, 2])
         vals[cls, ["batt_unit", "elec_node"][entity_inds_by_class[cls]], "unit_capacity"]
     elseif u == unit(:electrolizer)
         @test d in d_from
@@ -434,7 +574,17 @@ function _expected_representative_periods_constraint(
     @build_constraint(24 * unit_flow[u, n, d, s, t] <= 24 * rhs)
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:unit_state_transition}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:unit_state_transition},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     u, s_path, t_before, t_after = ind
     @test u == unit(:h2_gen)
@@ -443,15 +593,22 @@ function _expected_representative_periods_constraint(
     @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
     s = only(s_path)
     @build_constraint(
-        + units_on[u, s, t_after]
-        - units_on[u, s, t_before]
-        ==
-        + units_started_up[u, s, t_after]
-        - units_shut_down[u, s, t_after]
+        +units_on[u, s, t_after] - units_on[u, s, t_before] ==
+        +units_started_up[u, s, t_after] - units_shut_down[u, s, t_after]
     )
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:units_available}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:units_available},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     u, s, t = ind
     @test u in unit()
@@ -461,7 +618,17 @@ function _expected_representative_periods_constraint(
     @build_constraint(units_on[u, s, t] <= units_invested_available[u, s, t_invest])
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:units_invested_transition}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:units_invested_transition},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     u, s_path, t_before, t_after = ind
     @test u in unit()
@@ -470,15 +637,22 @@ function _expected_representative_periods_constraint(
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:spineopt].variables
     s = only(s_path)
     @build_constraint(
-        + units_invested_available[u, s, t_after]
-        - units_invested_available[u, s, t_before]
-        == 
-        + units_invested[u, s, t_after]
-        - units_mothballed[u, s, t_after]
+        +units_invested_available[u, s, t_after] - units_invested_available[u, s, t_before] ==
+        +units_invested[u, s, t_after] - units_mothballed[u, s, t_after]
     )
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:units_invested_available}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:units_invested_available},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     u, s, t = ind
     @test u in unit()
@@ -489,25 +663,33 @@ function _expected_representative_periods_constraint(
     @build_constraint(units_invested_available[u, s, t] <= cu)
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:min_up_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:min_up_time},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
     # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
-    
+
     @test u == unit(:h2_gen)
     @test s_path == [stochastic_scenario(:realisation)]
     @test t_con in all_rt
 
-    look_behind = maximum(
-        maximum_parameter_value(min_up_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path)
-    )
+    look_behind = maximum(maximum_parameter_value(min_up_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path))
     @test look_behind == min_up_time(unit=u)
-    
+
     # The min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit.
     @test min_up_time(unit=u) == Hour(1)
     @test duration_unit(model=model(:instance)) == :hour
-    
+
     past_units_on_indices = units_on_indices(
         m;
         unit=u,
@@ -526,34 +708,39 @@ function _expected_representative_periods_constraint(
 
     @fetch units_on, units_started_up = m.ext[:spineopt].variables
     @build_constraint(
-        units_on[u, s, t_con]
-        >=
-        sum(
-            units_started_up[u, s_past, t_past] * weight
-            for (u, s_past, t_past) in past_units_on_indices
-        )
+        units_on[u, s, t_con] >=
+        sum(units_started_up[u, s_past, t_past] * weight for (u, s_past, t_past) in past_units_on_indices)
     )
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:min_down_time}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
+    m,
+    ::Val{:min_down_time},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
 )
     # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
     # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
-    
+
     @test u == unit(:h2_gen)
     @test s_path == [stochastic_scenario(:realisation)]
     @test t_con in all_rt
 
-    look_behind = maximum(
-        maximum_parameter_value(min_down_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path)
-    )
+    look_behind =
+        maximum(maximum_parameter_value(min_down_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path))
     @test look_behind == min_down_time(unit=u)
-    
+
     # The min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit.
     @test min_down_time(unit=u) == Hour(1)
     @test duration_unit(model=model(:instance)) == :hour
-    
+
     past_units_on_indices = units_on_indices(
         m;
         unit=u,
@@ -573,22 +760,29 @@ function _expected_representative_periods_constraint(
 
     @fetch units_invested_available, units_on, units_shut_down = m.ext[:spineopt].variables
     @build_constraint(
-        nou + units_invested_available[u, s, t_invest] - units_on[u, s, t_con] 
-        >= 
-        sum(
-            units_shut_down[u, s_past, t_past] * weight
-            for (u, s_past, t_past) in past_units_on_indices
-        )
+        nou + units_invested_available[u, s, t_invest] - units_on[u, s, t_con] >=
+        sum(units_shut_down[u, s_past, t_past] * weight for (u, s_past, t_past) in past_units_on_indices)
     )
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{X}, ind, observed_con, vals, rt1, rt2, all_rt, t_invest, d_from, d_to
-) where X
+    m,
+    ::Val{X},
+    ind,
+    observed_con,
+    vals,
+    rt1,
+    rt2,
+    all_rt,
+    t_invest,
+    d_from,
+    d_to,
+) where {X}
     @info "unexpected constraint $X"
     @test false
     nothing
 end
 
 @testset "run_spineopt_representative_periods" begin
-   _test_representative_periods()
+    _test_representative_periods()
+    _test_representative_periods_no_index_found()
 end
