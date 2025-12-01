@@ -196,9 +196,10 @@ function _test_run_spineopt_hsj_mga()
             )
         )
         for (iter, dict) in expected_values
-            for ((unit, v1), (inds, v2)) in zip(sort(dict), sort(variable_values[iter][:units_invested])) # Sorts required for consistency!
-                @test unit == inds.unit
-                @test isapprox(v1, v2)
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
@@ -228,9 +229,10 @@ function _test_run_spineopt_hsj_mga()
             ),
         )
         for (iter, dict) in expected_values
-            for ((unit, v1), (inds, v2)) in zip(sort(dict), sort(variable_values[iter][:units_invested])) # Sorts required for consistency!
-                @test unit == inds.unit
-                @test isapprox(v1, v2)
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
@@ -255,9 +257,10 @@ function _test_run_spineopt_fuzzy_mga()
             ),
         )
         for (iter, dict) in expected_values
-            for ((unit, v1), (inds, v2)) in zip(sort(dict), sort(variable_values[iter][:units_invested])) # Sorts required for consistency!
-                @test unit == inds.unit
-                @test isapprox(v1, v2)
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
@@ -287,9 +290,10 @@ function _test_run_spineopt_fuzzy_mga()
             ),
         )
         for (iter, dict) in expected_values
-            for ((unit, v1), (inds, v2)) in zip(sort(dict), sort(variable_values[iter][:units_invested])) # Sorts required for consistency!
-                @test unit == inds.unit
-                @test isapprox(v1, v2)
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
