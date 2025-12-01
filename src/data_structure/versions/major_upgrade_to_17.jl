@@ -98,7 +98,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "storage_investment_econ_lifetime"), "storage_lifetime_economic", ""),
         (("node", "storage_investment_tech_lifetime"), "storage_lifetime_technical", ""),
         (("node", "storage_investment_lifetime_sense"), "storage_lifetime_constraint_sense", ""),
-        # node storage investment limits
+        # node storage investment limits # Tasku: TODO: Why are storage investments named differently?
         (("node", "candidate_storages"), "storage_investment_count_max_cumulative", ""),
         (("node", "fix_storages_invested"), "storage_investment_count_fix_new", ""),
         (("node", "fix_storages_invested_available"), "storage_investment_count_fix_cumulative", ""),
