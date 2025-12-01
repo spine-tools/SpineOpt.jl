@@ -367,8 +367,8 @@ function test_unit_flow_ub_with_number_of_units_time_series()
         number_of_units_ts = TimeSeries([DateTime(2000, 1, 1, 0), DateTime(2000, 1, 1, 1)], [1, 0])
         url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_linear"],
-            ["unit", "unit_ab", "number_of_units", unparse_db_value(number_of_units_ts)],
+            ["unit", "unit_ab", "online_variable_type", "linear"],
+            ["unit", "unit_ab", "existing_units", unparse_db_value(number_of_units_ts)],
         ]
         rel_pvals = [
             ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],

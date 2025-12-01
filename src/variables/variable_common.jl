@@ -285,7 +285,7 @@ function _is_longterm_index(ind)
     if haskey(ind, :node)
         _is_longterm_node(ind.node)
     elseif haskey(ind, :unit)
-        nodes = (n for unit__node in (unit__from_node, unit__to_node) for (n, _d) in unit__node(unit=ind.unit))
+        nodes = (n for unit__node in (node__to_unit, unit__to_node) for (n, _d) in unit__node(unit=ind.unit))
         any(_is_longterm_node(n) for n in nodes)
     else
         true
@@ -293,7 +293,7 @@ function _is_longterm_index(ind)
 end
 
 function _is_longterm_node(n)
-    has_state(node=n) && is_longterm_storage(node=n)
+    has_storage(node=n) && is_longterm_storage(node=n)
 end
 
 """

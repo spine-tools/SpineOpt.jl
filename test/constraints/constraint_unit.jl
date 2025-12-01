@@ -308,11 +308,11 @@ function test_constraint_unit_flow_capacity_simple()
         ucap = 100
         uaf = 0.5
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", ucap],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", ucap],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
         ]
         object_parameter_values = [
-            ["unit", "unit_ab", "unit_availability_factor", uaf],
+            ["unit", "unit_ab", "availability_factor", uaf],
             ["model", "instance", "use_tight_compact_formulations", false],
         ]
         SpineInterface.import_data(
