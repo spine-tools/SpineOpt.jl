@@ -371,7 +371,7 @@ function test_unit_flow_ub_with_number_of_units_time_series()
             ["unit", "unit_ab", "existing_units", unparse_db_value(number_of_units_ts)],
         ]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
