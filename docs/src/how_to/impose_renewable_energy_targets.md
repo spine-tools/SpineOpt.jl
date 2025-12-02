@@ -51,12 +51,12 @@ To illustrate this functionality, we will assume that there is a ficticious cap 
 
 Three nodes are required to represent this system: an `electricity` node, a `carbon_cap_1` node (with `has_storage=true` and `storage_state_max=100`), and a `carbon_cap_2` node (with `has_storage=true` and `storage_state_max=50`).
 
-Further we introduce the `unit__node__node` relationships between `carbon_unit__carbon_cap1__electricity` and `carbon_unit__carbon_cap2__electricity`. On these relationships, we will define the ratio between emissions and electricity production. In this fictious example, we will assume 0.5 units of emissions per unit of electricity.
+Further we introduce the `unit_flow__unit_flow` relationships between `carbon_unit__carbon_cap1__carbon_unit__electricity` and `carbon_unit__carbon_cap2__carbon_unit__electricity`. On these relationships, we will define the ratio between emissions and electricity production. In this fictious example, we will assume 0.5 units of emissions per unit of electricity.
 
-The `fix_ratio_out_out` parameter will now be defined as a time varying parameter in the following way (*simplified representation of TimeSeries parameter*):
+The `constraint_equality_flow_ratio` parameter will now be defined as a time varying parameter in the following way (*simplified representation of TimeSeries parameter*):
 
-`fix_ratio_out_out(carbon_unit__carbon_cap1__electricity)` = [2025: 0.5; 2030: 0]
-`fix_ratio_out_out(carbon_unit__carbon_cap2__electricity)` = [2025: 0; 2030: 0.5]
+`constraint_equality_flow_ratio(carbon_unit__carbon_cap1__carbon_unit__electricity)` = [2025: 0.5; 2030: 0]
+`constraint_equality_flow_ratio(carbon_unit__carbon_cap2__carbon_unit__electricity)` = [2025: 0; 2030: 0.5]
 
 This way the first emission-cap node `carbon_cap1` can only be "filled" during the 2025-2030, while `carbon_cap2` can only be "filled" during the second period 2030-2035. 
 

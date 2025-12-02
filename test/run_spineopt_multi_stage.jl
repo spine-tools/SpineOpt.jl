@@ -76,8 +76,8 @@ function _ref_setup(storage_count)
                 ("node__to_unit", (n, u)),
                 ("unit__to_node", (u, "demand_node")),
                 ("unit__to_node", (u, n)),
-                ("unit__node__node", (u, n, "demand_node")),
-                ("unit__node__node", (u, "demand_node", n)),
+                ("unit_flow__unit_flow", (u, n, "demand_node", u)),
+                ("unit_flow__unit_flow", (u, "demand_node", n, u)),
             )
         )
         append!(
@@ -96,8 +96,8 @@ function _ref_setup(storage_count)
                 ("unit__to_node", (u, "demand_node"), "unit_capacity", discharge_cap),
                 ("unit__to_node", (u, n), "unit_capacity", charge_cap),
                 ("unit__to_node", (u, "demand_node"), "vom_cost", base_cost),
-                ("unit__node__node", (u, n, "demand_node"), "fix_ratio_out_in_unit_flow", 0.8),
-                ("unit__node__node", (u, "demand_node", n), "fix_ratio_out_in_unit_flow", 1),
+                ("unit_flow__unit_flow", (u, n, "demand_node", u), "constraint_equality_flow_ratio", 0.8),
+                ("unit_flow__unit_flow", (u, "demand_node", n, u), "constraint_equality_flow_ratio", 1),
             )
         )
     end

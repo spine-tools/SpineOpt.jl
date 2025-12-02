@@ -909,10 +909,25 @@ function test_constraint_ratio_unit_flow()
         flow_ratio = 0.8
         units_on_coeff = 0.2
         start_flow = 1.3
-        class = "unit__node__node"
-        relationship = ["unit_ab", "node_a", "node_b"]
+        class = "unit_flow__unit_flow"
+        relationships_by_prefix = Dict(
+            ("in", "in") => ["node_a", "unit_ab", "node_b", "unit_ab"],
+            ("in", "out") => ["node_a", "unit_ab", "unit_ab", "node_b"],
+            ("out", "in") => ["unit_ab", "node_a", "node_b", "unit_ab"],
+            ("out", "out") => ["unit_ab", "node_a", "unit_ab", "node_b"]
+        )
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
         classes_by_prefix = Dict("in" => "node__to_unit", "out" => "unit__to_node")
+        ratios_by_prefix = Dict(
+            "min" => "constraint_greater_than_flow_ratio",
+            "fix" => "constraint_equality_flow_ratio",
+            "max" => "constraint_less_than_flow_ratio"
+        )
+        coeffs_by_prefix = Dict(
+            "min" => "constraint_greater_than_online_coefficient",
+            "fix" => "constraint_equality_online_coefficient",
+            "max" => "constraint_less_than_online_coefficient"
+        )
         entity_inds_by_class = Dict("node__to_unit" => [2,1], "unit__to_node" => [1,2])
         @testset for (p, a, b) in (
             ("min", "in", "in"),
@@ -929,8 +944,9 @@ function test_constraint_ratio_unit_flow()
             ("max", "out", "out"),
         )
             url_in = _test_constraint_unit_setup()
-            ratio = join([p, "ratio", a, b, "unit_flow"], "_")
-            coeff = join([p, "units_on_coefficient", a, b], "_")
+            ratio = ratios_by_prefix[p]
+            coeff = coeffs_by_prefix[p]
+            relationship = relationships_by_prefix[(a,b)]
             relationships = [
                 [classes_by_prefix[a], ["unit_ab", "node_a"][entity_inds_by_class[classes_by_prefix[a]]]],
                 [classes_by_prefix[b], ["unit_ab", "node_b"][entity_inds_by_class[classes_by_prefix[b]]]],
@@ -954,12 +970,12 @@ function test_constraint_ratio_unit_flow()
             path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
             t_long = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
             t_short1, t_short2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            directions_by_prefix = Dict("in" => direction(:from_node), "out" => direction(:to_node))
+            directions_by_prefix = Dict("in" => :from_node, "out" => :to_node)
             d_a = directions_by_prefix[a]
             d_b = directions_by_prefix[b]
-            var_u_flow_b_key = (unit(:unit_ab), node(:node_b), d_b, stochastic_scenario(:parent), t_long)
-            var_u_flow_a1_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:parent), t_short1)
-            var_u_flow_a2_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:child), t_short2)
+            var_u_flow_b_key = (unit(:unit_ab), node(:node_b), direction(d_b), stochastic_scenario(:parent), t_long)
+            var_u_flow_a1_key = (unit(:unit_ab), node(:node_a), direction(d_a), stochastic_scenario(:parent), t_short1)
+            var_u_flow_a2_key = (unit(:unit_ab), node(:node_a), direction(d_a), stochastic_scenario(:child), t_short2)
             var_u_on_a1_key = (unit(:unit_ab), stochastic_scenario(:parent), t_short1)
             var_u_on_a2_key = (unit(:unit_ab), stochastic_scenario(:child), t_short2)
             var_u_flow_b = var_unit_flow[var_u_flow_b_key...]
@@ -969,7 +985,11 @@ function test_constraint_ratio_unit_flow()
             var_u_on_a2 = var_units_on[var_u_on_a2_key...]
             var_u_su_a1 = var_units_started_up[var_u_on_a1_key...]
             var_u_su_a2 = var_units_started_up[var_u_on_a2_key...]
-            con_key = (unit(:unit_ab), node(:node_a), node(:node_b), path, t_long)
+            con_key = (
+                unit(:unit_ab), node(:node_a), direction(d_a), 
+                unit(:unit_ab), node(:node_b), direction(d_b), 
+                path, t_long
+            )
             sf_sign = if p == "fix"
                 if a == "in" && b == "out"
                     1
@@ -2030,17 +2050,17 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw" begin
         url_in = _test_constraint_unit_setup()
-        fix_units_on_coefficient_in_out = 200
+        constraint_equality_online_coefficient = 200
         unit_start_flow = 100
         points = [0.1, 0.5, 1.0]
         inc_hrs = [10, 20, 30]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
-        fix_ratio_in_out_unit_flow = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
-        relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
+        constraint_equality_flow_ratio = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
+        relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "fix_ratio_in_out_unit_flow", fix_ratio_in_out_unit_flow],
-            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
+            [relationships[1]..., "constraint_equality_flow_ratio", constraint_equality_flow_ratio],
+            [relationships[1]..., "constraint_equality_online_coefficient", constraint_equality_online_coefficient],
             [relationships[1]..., "unit_start_flow", unit_start_flow],
         ]
         SpineInterface.import_data(
@@ -2053,11 +2073,10 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
+        constraint = m.ext[:spineopt].constraints[:constraint_equality_flow_ratio]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
-        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
@@ -2065,14 +2084,14 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + fix_units_on_coefficient_in_out
+            + constraint_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
             + unit_start_flow * (
                 + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                 + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )
-        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        con_key = (key_a..., key_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end
@@ -2081,16 +2100,16 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple" begin
         url_in = _test_constraint_unit_setup()
-        fix_units_on_coefficient_in_out = 200
+        constraint_equality_online_coefficient = 200
         unit_start_flow = 0
         points = [0.1, 0.5, 1.0]
         inc_hrs = 10
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
-        relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
+        relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "fix_ratio_in_out_unit_flow", inc_hrs],
-            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
+            [relationships[1]..., "constraint_equality_flow_ratio", inc_hrs],
+            [relationships[1]..., "constraint_equality_online_coefficient", constraint_equality_online_coefficient],
             [relationships[1]..., "unit_start_flow", unit_start_flow],
         ]
         SpineInterface.import_data(
@@ -2103,11 +2122,10 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
+        constraint = m.ext[:spineopt].constraints[:constraint_equality_flow_ratio]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
-        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
@@ -2115,10 +2133,10 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + fix_units_on_coefficient_in_out
+            + constraint_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
         )
-        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        con_key = (key_a..., key_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end
@@ -2127,13 +2145,13 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple2" begin
         url_in = _test_constraint_unit_setup()
-        fix_units_on_coefficient_in_out = 200
+        constraint_equality_online_coefficient = 200
         unit_start_flow = 0
         inc_hrs = 10
-        relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
+        relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
-            [relationships[1]..., "fix_ratio_in_out_unit_flow", inc_hrs],
-            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
+            [relationships[1]..., "constraint_equality_flow_ratio", inc_hrs],
+            [relationships[1]..., "constraint_equality_online_coefficient", constraint_equality_online_coefficient],
             [relationships[1]..., "unit_start_flow", unit_start_flow],
         ]
         SpineInterface.import_data(
@@ -2146,21 +2164,20 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
+        constraint = m.ext[:spineopt].constraints[:constraint_equality_flow_ratio]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
-        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             == 2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h]
-            + fix_units_on_coefficient_in_out
+            + constraint_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
         )
-        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        con_key = (key_a..., key_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end

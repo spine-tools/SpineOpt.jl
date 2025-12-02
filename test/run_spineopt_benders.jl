@@ -206,7 +206,7 @@ function _test_benders_storage()
             relationships = [
                 ["unit__to_node", ["unit_a", "node_a"]],
                 ["node__to_unit", ["node_a", "unit_ab"]],
-                ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
+                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"]],
                 ["units_on__stochastic_structure", ["unit_a", "deterministic"]],
                 ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
                 ["node__temporal_block", ["node_a", "hourly"]],
@@ -242,7 +242,7 @@ function _test_benders_storage()
             ]
             relationship_parameter_values = [
                 ["unit__to_node", ["unit_a", "node_a"], "fix_unit_flow", fixuflow],
-                ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
+                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
                 ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
             ]
             SpineInterface.import_data(
@@ -331,7 +331,7 @@ function _test_benders_unit_storage()
             relationships = [
                 ["unit__to_node", ["unit_a", "node_a"]],
                 ["node__to_unit", ["node_a", "unit_ab"]],
-                ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
+                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"]],
                 ["units_on__temporal_block", ["unit_a", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_a", "deterministic"]],
                 ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
@@ -374,7 +374,7 @@ function _test_benders_unit_storage()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
             relationship_parameter_values = [
-                ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
+                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
                 ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
                 ["unit__to_node", ["unit_a", "node_a"], "unit_capacity", ucap2],
                 ["unit__to_node", ["unit_a", "node_a"], "minimum_operating_point", mop],

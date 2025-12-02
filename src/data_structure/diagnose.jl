@@ -69,13 +69,25 @@ function _unit_issue(u)
 end
 
 function _are_unit_flows_related(u, n_from, n_to)
-	any(
-		ratio(unit=u, node1=n_to, node2=n_from, _strict=false) !== nothing
-		for ratio in (fix_ratio_out_in_unit_flow, max_ratio_out_in_unit_flow, min_ratio_out_in_unit_flow)
-	) || any(
-		ratio(unit=u, node1=n_from, node2=n_to, _strict=false) !== nothing
-		for ratio in (fix_ratio_in_out_unit_flow, max_ratio_in_out_unit_flow, min_ratio_in_out_unit_flow)
-	)
+    any(
+        ratio(
+            unit1=u, node1=n_to, direction1=:to_node, 
+            unit2=u, node2=n_from, direction2=:from_node, 
+            _strict=false
+        ) !== nothing
+        for ratio in (
+            constraint_equality_flow_ratio, constraint_less_than_flow_ratio, constraint_greater_than_flow_ratio
+        )
+    ) || any(
+        ratio(
+            unit1=u, node1=n_from, direction1=:from_node, 
+            unit2=u, node2=n_to, direction2=:to_node, 
+            _strict=false
+        ) !== nothing
+        for ratio in (
+            constraint_equality_flow_ratio, constraint_less_than_flow_ratio, constraint_greater_than_flow_ratio
+        )
+    )
 end
 
 function _connection_issue(c)

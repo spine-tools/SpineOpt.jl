@@ -100,13 +100,13 @@ function test_data_example_multiyear_economic_discounting()
             ["report__output", ["report_a", "storage_conversion_to_discounted_annuities"]],
             ["report__output", ["report_a", "storage_discounted_duration"]],            
             ["model__report", ["instance", "report_a"]],
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_a", "node_b", "unit_ab"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
-            ["unit__node__node", ["unit_bc", "node_b", "node_c"]],
+            ["unit_flow__unit_flow", ["unit_bc", "node_b", "node_c", "unit_bc"]],
             ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
-            ["unit__node__node", ["unit_bc", "node_c", "node_b"]],
+            ["unit_flow__unit_flow", ["unit_bc", "node_c", "node_b", "unit_bc"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
         ],
         :object_parameter_values => [
@@ -129,10 +129,10 @@ function test_data_example_multiyear_economic_discounting()
             ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_out_in_unit_flow", 1.0],
-            ["unit__node__node", ["unit_bc", "node_c", "node_b"], "fix_ratio_out_in_unit_flow", 1.0],
-            ["unit__node__node", ["unit_bc", "node_b", "node_c"], "fix_ratio_out_in_unit_flow", 1.0],
+            ["unit_flow__unit_flow", ["unit_ab", "node_a", "node_b", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
+            ["unit_flow__unit_flow", ["unit_bc", "node_b", "node_c", "unit_bc"], "constraint_equality_flow_ratio", 1.0],
+            ["unit_flow__unit_flow", ["unit_bc", "node_c", "node_b", "unit_bc"], "constraint_equality_flow_ratio", 1.0],
         ],
     )
     _load_test_data(url_in, test_data)
@@ -164,7 +164,7 @@ function test_data_minimal_feasible_example_multiyear_economic_discounting()
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
             ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"]],
         ],
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2030-01-01T00:00:00")],
@@ -176,7 +176,7 @@ function test_data_minimal_feasible_example_multiyear_economic_discounting()
         ],
         :relationship_parameter_values => [
             ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
             
         ],
     )
@@ -514,7 +514,7 @@ function _test_saving_outputs()
             ["node__to_unit", ["node_a", "unit_ab_only_operation"], "vom_cost", 25],
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 200],
             ["unit__to_node", ["unit_ab_only_operation", "node_b"], "unit_capacity", 100],
-            ["unit__node__node", ["unit_ab_only_operation", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
+            ["unit_flow__unit_flow", ["unit_ab_only_operation", "node_b", "node_a", "unit_ab_only_operation"], "constraint_equality_flow_ratio", 1.0],
         ]
         object_parameter_values = [
             ["model", "instance", "discount_rate", discnt_rate],

@@ -997,7 +997,7 @@ function generate_unit_commitment_parameters()
             (x.unit for x in indices(shut_down_limit)),
             (x.unit for x in indices(ramp_up_limit)),
             (x.unit for x in indices(ramp_down_limit)),
-            (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
+            (x.unit2 for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
             (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
             (u for (st, u) in stage__output__unit(output=output.((:units_started_up, :units_shut_down)))),
             !isempty(stage__output(output=output.((:units_started_up, :units_shut_down)))) ? unit() : (),
