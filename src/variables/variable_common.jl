@@ -116,19 +116,24 @@ function add_variable!(
     _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
-        last_history_t = last(
+        # Collect history time slices for blocks without free start (may be empty if those blocks
+        # end early in a long window, since history generation uses full window duration)
+        history_ts = collect(
             t
             for t in history_time_slice(m; temporal_block=temporal_block(has_free_start=false))
             if !any(has_free_start(temporal_block=blk) for blk in blocks(t))
         )
-        t0 = model_start(model=m.ext[:spineopt].instance)
-        dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-        for (ind, var) in vars
-            overlaps(ind.t, last_history_t) || continue
-            val = initial_value(; ind..., _strict=false)
-            val === nothing && continue
-            initial_value_ts = parameter_value(TimeSeries([t0 - dur_unit(1), t0], [val, NaN]))
-            fix(var, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
+        last_history_t = isempty(history_ts) ? nothing : last(history_ts)
+        if last_history_t !== nothing
+            t0 = model_start(model=m.ext[:spineopt].instance)
+            dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+            for (ind, var) in vars
+                overlaps(ind.t, last_history_t) || continue
+                val = initial_value(; ind..., _strict=false)
+                val === nothing && continue
+                initial_value_ts = parameter_value(TimeSeries([t0 - dur_unit(1), t0], [val, NaN]))
+                fix(var, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
+            end
         end
     end
     vars
