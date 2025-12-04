@@ -2581,7 +2581,7 @@
         ],
         [
             "node__to_unit",
-            "min_unit_flow",
+            "flow_limits_min",
             0.0,
             null,
             "Set lower bound of the `unit_flow` variable."
@@ -2805,7 +2805,7 @@
         ],
         [
             "unit__to_node",
-            "min_unit_flow",
+            "flow_limits_min",
             0.0,
             null,
             "Set lower bound of the `unit_flow` variable."

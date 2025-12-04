@@ -231,7 +231,7 @@ function add_variable_unit_flow!(m::Model)
         m,
         :unit_flow,
         unit_flow_indices;
-        lb=min_unit_flow,
+        lb=flow_limits_min,
         ub=unit_flow_ub,
         fix_value=flow_limits_fix,
         initial_value=flow_limits_initial,
