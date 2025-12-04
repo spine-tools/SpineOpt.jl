@@ -19,7 +19,7 @@ The reserve group definition allows the creation of a [unit flow capacity constr
 
 The definition of the reserve group also allows the creation of [minimum operating point](../mathematical_formulation/constraints.md#constraint_minimum_operating_point), [ramp up](../mathematical_formulation/constraints.md#constraint_ramp_up), and [ramp down](../mathematical_formulation/constraints.md#constraint_ramp_down) constraints, considering flows and reserve provisions.
 
-The relationship between the unit and the node group (i.e., [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref)) is essential to define the parameters needed for the constraints (e.g., [unit\_capacity](@ref), [minimum\_operating\_point](@ref), [ramp\_up\_limit](@ref), or [ramp\_down\_limit](@ref)).
+The relationship between the unit and the node group (i.e., [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref)) is essential to define the parameters needed for the constraints (e.g., [unit\_capacity](@ref), [minimum\_operating\_point](@ref), [ramp\_up\_limit](@ref), or [ramp\_limits\_down](@ref)).
 
 ## Illustrative examples
 

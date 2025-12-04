@@ -20,7 +20,7 @@
 
 @doc raw"""
 Limit the decrease of [unit\_flow](@ref) over a time period of one [duration\_unit](@ref) according
-to the [shut\_down\_limit](@ref) and [ramp\_down\_limit](@ref) parameter values.
+to the [shut\_down\_limit](@ref) and [ramp\_limits\_down](@ref) parameter values.
 
 ```math
 \begin{aligned}
@@ -50,11 +50,11 @@ v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{is\_reserve
  \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t) \right) }{\Delta(overlapping(t))}   \\
 
 & \qquad + \frac{1}{2} \cdot
-\sum_{t' \in overlapping(t)} \left( p^{ramp\_down\_limit}_{(u,ng,d,s,t)}
+\sum_{t' \in overlapping(t)} \left( p^{ramp\_limits\_down}_{(u,ng,d,s,t)}
  \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t) \right)    \\
 
 & \qquad + \frac{1}{2} \cdot
-\sum_{t' \in overlapping(t-1)} \left( p^{ramp\_down\_limit}_{(u,ng,d,s,t)}
+\sum_{t' \in overlapping(t-1)} \left( p^{ramp\_limits\_down}_{(u,ng,d,s,t)}
  \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t-1) \right)    \\
 
 & ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
@@ -81,7 +81,7 @@ See also
 [downward\_reserve](@ref),
 [unit\_capacity](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
-[ramp\_down\_limit](@ref),
+[ramp\_limits\_down](@ref),
 [shut\_down\_limit](@ref),
 [minimum\_operating\_point](@ref).
 """
@@ -170,7 +170,7 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
                 init=0,
             ) / overlap_duration_units_on(t_before)
             + sum(
-                + _ramp_down_limit(m, u, ng, d, s, t_after)
+                + _ramp_limits_down(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
                 * units_on[u, s, t]
                 * overlap_duration(t_before, t)
@@ -179,7 +179,7 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
                 init=0,
             )
             + sum(
-                + _ramp_down_limit(m, u, ng, d, s, t_after)
+                + _ramp_limits_down(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
                 * units_on[u, s, t]
                 * overlap_duration(t_after, t)
@@ -191,14 +191,14 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
     )
 end
 
-function _ramp_down_limit(m, u, ng, d, s, t)
-    ramp_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
+function _ramp_limits_down(m, u, ng, d, s, t)
+    ramp_limits_down(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
 function constraint_ramp_down_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, ng, d) in Iterators.flatten((indices(ramp_down_limit), indices(shut_down_limit)))
+        for (u, ng, d) in Iterators.flatten((indices(ramp_limits_down), indices(shut_down_limit)))
         for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m,

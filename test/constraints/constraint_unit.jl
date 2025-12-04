@@ -1814,11 +1814,11 @@ function test_constraint_ramp_down()
         uc = 200
         mop = 0.2
         relationship_parameter_values = [
-            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_down_limit", rdl],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_down", rdl],
             ["node__to_unit", ["node_group_a", "unit_ab"], "shut_down_limit", sdl],
             ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
             ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_down_limit", rdl],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_down", rdl],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "shut_down_limit", sdl],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],

@@ -132,7 +132,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     rel_pvs = []
     append!(rel_pvs, (["unit__to_node", (u, n), "unit_capacity", 1] for (u, n) in zip(units, nodes_to)))
     append!(rel_pvs, (["unit__to_node", (u, n), "ramp_up_limit", 0.9] for (u, n) in zip(units, nodes_to)))
-    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_down_limit", 0.9] for (u, n) in zip(units, nodes_to)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_limits_down", 0.9] for (u, n) in zip(units, nodes_to)))
     append!(rel_pvs, (["unit__to_node", (u, n), "minimum_operating_point", 0.2] for (u, n) in zip(units, nodes_to)))
     append!(rel_pvs, (["unit__to_node", [u, "node_group_reserve"], "unit_capacity", 0.1] for u in units))
     append!(

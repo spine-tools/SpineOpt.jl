@@ -12,7 +12,7 @@ The discussion here will be conceptual. For the mathematical formulation the rea
 
 ### Constraining spinning up and down ramps
  * [ramp\_up\_limit](@ref) : limit the maximum increase in the `unit_flow` variable when the unit is online, over a period of time equal to the [duration\_unit](@ref). The parameter is given as a fraction of the [unit\_capacity](@ref). Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp](@ref constraint_ramp_up)
- * [ramp\_down\_limit](@ref) : limit the maximum decrease in the `unit_flow` variable when the unit is online, over a period of time equal to the [duration\_unit](@ref). The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
+ * [ramp\_limits\_down](@ref) : limit the maximum decrease in the `unit_flow` variable when the unit is online, over a period of time equal to the [duration\_unit](@ref). The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
 
 ### Constraining start up and shut down ramps
  * [start\_up\_limit](@ref) : limit the maximum increase in the `unit_flow` variable when the unit is starting up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp](@ref constraint_ramp_up)
@@ -21,7 +21,7 @@ The discussion here will be conceptual. For the mathematical formulation the rea
 ## General principle and example use cases
 The general principle of the Spine modelling ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.
 
-It should be noted that it is perfectly possible to omit all of the ramp constraining parameters mentioned above, or to specify only some of them. Anything that is omitted is interpreted as if it shouldn't be constrained. For example, if you only specify [start\_up\_limit](@ref) and [ramp\_down\_limit](@ref), then only the flow *increase* during *start up* and the flow *decrease* during *online* operation will be constrained (but not any other flow increase or decrease).
+It should be noted that it is perfectly possible to omit all of the ramp constraining parameters mentioned above, or to specify only some of them. Anything that is omitted is interpreted as if it shouldn't be constrained. For example, if you only specify [start\_up\_limit](@ref) and [ramp\_limits\_down](@ref), then only the flow *increase* during *start up* and the flow *decrease* during *online* operation will be constrained (but not any other flow increase or decrease).
 
 ### Illustrative examples
 #### Step 1: Simple case of unrestricted unit
@@ -29,13 +29,13 @@ When none of the ramping parameters mentioned above are specified, the unit is c
 * `shut_down_limit` : 1
 * `start_up_limit` : 1
 * `ramp_up_limit` : 1
-* `ramp_down_limit` : 1
+* `ramp_limits_down` : 1
 
 #### Step 2: Spinning ramp restriction
 A unit which is only restricted in spinning ramping can be created by changing the `ramp_up/down_limit` parameters:
 
  * `ramp_up_limit` : **0.2**
- * `ramp_down_limit` : **0.4**
+ * `ramp_limits_down` : **0.4**
 
  This parameter choice implies that the unit flow cannot increase more than ``0.2  * 200`` and cannot decrease more than ``0.4 * 200`` over a period of time equal to 'one' [duration\_unit](@ref). For example, when the unit is running at an output of ``100`` in some timestep ``t``, its output for the next 'one' [duration\_unit](@ref) must be somewhere in the interval ``[20, 140]`` - unless it shuts down completely.
 
@@ -90,7 +90,7 @@ Let's assume that we have one unit and two nodes in a model, one for reserves an
 The unit can be restricted in spinning ramping by defining the `ramp_up/down_limit` parameters in the `unit__to_node` relationship for the regular demand node:
 
  * `ramp_up_limit`      : **0.2**
- * `ramp_down_limit`    : **0.4**
+ * `ramp_limits_down`    : **0.4**
 
  This parameter choice implies that the unit's flow to the regular demand node cannot increase more than ``0.2  * 200 - upward\_reserve\_demand`` or decrease more than ``0.4 * 200 - downward\_reserve\_demand`` over one [duration\_unit](@ref). For example, when the unit is running at an output of ``100`` and there is an upward reserve demand of ``10``, then its output over the next [duration\_unit](@ref) must be somewhere in the interval ``[20, 130]``.
 
