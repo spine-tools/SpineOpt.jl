@@ -1026,7 +1026,7 @@ function test_constraint_total_cumulated_unit_flow()
             ("max", "to_node"),
         )
             url_in = _test_constraint_unit_setup()
-            cumulated = join([p,"total" , "cumulated", "unit_flow", a], "_")
+            cumulated = join(["flow", "limits", p, "cumulative"], '_')
             if a == "from_node"
                 relationships = 
                     [[classes_by_prefix[a], ["node_a", "unit_ab"]]]

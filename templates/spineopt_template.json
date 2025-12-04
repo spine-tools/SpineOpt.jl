@@ -2791,14 +2791,14 @@
         ],
         [
             "unit__to_node",
-            "max_total_cumulated_unit_flow_to_node",
+            "flow_limits_max_cumulative",
             null,
             null,
             "Bound on the maximum cumulated flows of a unit group to a node group, e.g. total GHG emissions."
         ],
         [
             "unit__to_node",
-            "min_total_cumulated_unit_flow_to_node",
+            "flow_limits_min_cumulative",
             null,
             null,
             "Bound on the minimum cumulated flows of a unit group to a node group, e.g. total renewable production."
@@ -3450,7 +3450,7 @@
         ],
         [
             "output",
-            "constraint_min_total_cumulated_unit_flow_to_node",
+            "constraint_flow_limits_min_cumulative",
             null
         ],
         [
@@ -3490,7 +3490,7 @@
         ],
         [
             "output",
-            "constraint_max_total_cumulated_unit_flow_to_node",
+            "constraint_flow_limits_max_cumulative",
             null
         ],
         [
@@ -3955,13 +3955,6 @@
         ],
         [
             "output",
-            "constraint_max_total_cumulated_unit_flow_to_node",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
             "constraint_min_capacity_margin",
             "output_type",
             "constraint_dual",
@@ -4033,13 +4026,6 @@
         [
             "output",
             "constraint_flow_limits_min_cumulative",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_total_cumulated_unit_flow_to_node",
             "output_type",
             "constraint_dual",
             "Base"
