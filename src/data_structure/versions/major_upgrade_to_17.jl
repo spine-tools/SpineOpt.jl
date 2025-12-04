@@ -170,17 +170,17 @@ function major_upgrade_to_17(db_url, log_level)
         (("node__node", "diff_coeff"), "diffusion_coefficient", ""),
 
         # unit__to_node_ and node__to_unit, new temporary and renamed classes!
-        (("unit__to_node_", "fix_unit_flow"), "flow_limits_fix", ""),
-        (("node_to_unit", "fix_unit_flow"), "flow_limits_fix", ""),
-        (("unit__to_node_", "fix_unit_flow_op"), "flow_limits_fix_op", ""),
-        (("node_to_unit", "fix_unit_flow_op"), "flow_limits_fix_op", ""),
-        (("unit__to_node_", "initial_unit_flow"), "flow_limits_initial", ""),
+        (("unit__to_node", "fix_unit_flow"), "flow_limits_fix", ""),
+        (("node__to_unit", "fix_unit_flow"), "flow_limits_fix", ""),
+        (("unit__to_node", "fix_unit_flow_op"), "flow_limits_fix_op", ""),
+        (("node__to_unit", "fix_unit_flow_op"), "flow_limits_fix_op", ""),
+        (("unit__to_node", "initial_unit_flow"), "flow_limits_initial", ""),
         (("node__to_unit", "initial_unit_flow"), "flow_limits_initial", ""),
-        (("unit__to_node_", "initial_unit_flow_op"), "flow_limits_initial_op", ""),
+        (("unit__to_node", "initial_unit_flow_op"), "flow_limits_initial_op", ""),
         (("node__to_unit", "initial_unit_flow_op"), "flow_limits_initial_op", ""),
         (("node__to_unit", "max_total_cumulated_unit_flow_from_node"), "flow_limits_max_cumulative", ""),
         (("node__to_unit", "min_total_cumulated_unit_flow_from_node"), "flow_limits_min_cumulative", ""),
-        (("unit__to_node_", "min_unit_flow"), "flow_limits_min", ""),
+        (("unit__to_node", "min_unit_flow"), "flow_limits_min", ""),
         (("node__to_unit", "min_unit_flow"), "flow_limits_min", ""),
 
         # temporal_block
