@@ -155,7 +155,7 @@ It is important to note that the optimal solution we have calculated assumes tha
 
 - In *Relationship tree*, expand the *unit\_\_to_node* class and select *power\_plant\_a | electricity\_node*.
 
-- In the *Relationship parameter* table, select the *initial\_unit\_flow* parameter and the *Base* alternative, and enter the value *0.0* as seen in the image below. This will set the initial flow for *power\_plant\_a*.
+- In the *Relationship parameter* table, select the *flow\_limits\_initial* parameter and the *Base* alternative, and enter the value *0.0* as seen in the image below. This will set the initial flow for *power\_plant\_a*.
 
 ![image](figs_ramping/ramping_plant_a_initial_flow.png)
 

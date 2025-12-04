@@ -2553,17 +2553,17 @@
         ],
         [
             "node__to_unit",
-            "initial_unit_flow",
+            "flow_limits_initial",
             null,
             null,
-            "Initialize the `unit_flow` variable."
+            "Set the initial value for the `unit_flow` variable."
         ],
         [
             "node__to_unit",
-            "initial_unit_flow_op",
+            "flow_limits_initial_op",
             null,
             null,
-            "Initialize the `unit_flow_op` variable."
+            "Set the initial value for the `unit_flow_op` variable, essentially fixing the initial flow per operating point."
         ],
         [
             "node__to_unit",
@@ -2777,17 +2777,17 @@
         ],
         [
             "unit__to_node",
-            "initial_unit_flow",
+            "flow_limits_initial",
             null,
             null,
-            "Initialize the `unit_flow` variable."
+            "Set the initial value for the `unit_flow` variable."
         ],
         [
             "unit__to_node",
-            "initial_unit_flow_op",
+            "flow_limits_initial_op",
             null,
             null,
-            "Initialize the `unit_flow_op` variable."
+            "Set the initial value for the `unit_flow_op` variable, essentially fixing the initial flow per operating point."
         ],
         [
             "unit__to_node",
