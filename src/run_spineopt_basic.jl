@@ -218,7 +218,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_min_ratio_out_in_connection_flow!,
             add_constraint_min_ratio_unit_flow!,
             add_constraint_min_scheduled_outage_duration!,
-            add_constraint_min_total_cumulated_unit_flow_from_node!,
+            add_constraint_flow_limits_min_cumulative!,
             add_constraint_min_total_cumulated_unit_flow_to_node!,
             add_constraint_min_up_time!,
             add_constraint_minimum_operating_point!,

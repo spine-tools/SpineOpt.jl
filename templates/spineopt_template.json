@@ -2574,7 +2574,7 @@
         ],
         [
             "node__to_unit",
-            "min_total_cumulated_unit_flow_from_node",
+            "flow_limits_min_cumulative",
             null,
             null,
             "Bound on the minimum cumulated flows of a unit group from a node group."
@@ -3535,7 +3535,7 @@
         ],
         [
             "output",
-            "constraint_min_total_cumulated_unit_flow_from_node",
+            "constraint_flow_limits_min_cumulative",
             null
         ],
         [
@@ -4032,7 +4032,7 @@
         ],
         [
             "output",
-            "constraint_min_total_cumulated_unit_flow_from_node",
+            "constraint_flow_limits_min_cumulative",
             "output_type",
             "constraint_dual",
             "Base"

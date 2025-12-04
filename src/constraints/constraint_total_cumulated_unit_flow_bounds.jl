@@ -22,7 +22,7 @@
 To impose a limit on the cumulative amount of certain commodity flows,
 a cumulative bound can be set by defining one of the following parameters:
 * [flow\_limits\_max\_cumulative](@ref)
-* [min\_total\_cumulated\_unit\_flow\_from\_node](@ref)
+* [flow\_limits\_min\_cumulative](@ref)
 * [max\_total\_cumulated\_unit\_flow\_to\_node](@ref)
 * [min\_total\_cumulated\_unit\_flow\_to\_node](@ref)
 
@@ -33,8 +33,8 @@ A maximum cumulated flow restriction can for example be used to limit emissions 
 \begin{aligned}
 & \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{flow\_limits\_max\_cumulative}_{(ug,ng,d)} \\
 & \forall (ug,ng,d) \in indices(p^{flow\_limits\_max\_cumulative}), \, \forall s \\
-& \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \geq p^{min\_total\_cumulated\_unit\_flow\_from\_node}_{(ug,ng,d)} \\
-& \forall (ug,ng,d) \in indices(p^{min\_total\_cumulated\_unit\_flow\_from\_node}), \, \forall s \\
+& \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \geq p^{flow\_limits\_min\_cumulative}_{(ug,ng,d)} \\
+& \forall (ug,ng,d) \in indices(p^{flow\_limits\_min\_cumulative}), \, \forall s \\
 & \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{max\_total\_cumulated\_unit\_flow\_to\_node}_{(ug,ng,d)} \\
 & \forall (ug,ng,d) \in indices(p^{max\_total\_cumulated\_unit\_flow\_to\_node}), \, \forall s \\
 & \sum_{u \in ug, n \in ng} v^{unit\_flow}_{(u,n,d,s,t)} \geq p^{min\_total\_cumulated\_unit\_flow\_to\_node}_{(ug,ng,d)} \\
@@ -44,7 +44,7 @@ A maximum cumulated flow restriction can for example be used to limit emissions 
 
 See also
 [flow\_limits\_max\_cumulative](@ref),
-[min\_total\_cumulated\_unit\_flow\_from\_node](@ref),
+[flow\_limits\_min\_cumulative](@ref),
 [max\_total\_cumulated\_unit\_flow\_to\_node](@ref),
 [min\_total\_cumulated\_unit\_flow\_to\_node](@ref).
 """
@@ -86,8 +86,8 @@ function add_constraint_flow_limits_max_cumulative!(m::Model)
     add_constraint_total_cumulated_unit_flow!(m, flow_limits_max_cumulative, <=)
 end
 
-function add_constraint_min_total_cumulated_unit_flow_from_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m, min_total_cumulated_unit_flow_from_node, >=)
+function add_constraint_flow_limits_min_cumulative!(m::Model)
+    add_constraint_total_cumulated_unit_flow!(m, flow_limits_min_cumulative, >=)
 end
 
 function add_constraint_max_total_cumulated_unit_flow_to_node!(m::Model)
