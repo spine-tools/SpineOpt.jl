@@ -233,7 +233,7 @@ function add_variable_unit_flow!(m::Model)
         unit_flow_indices;
         lb=min_unit_flow,
         ub=unit_flow_ub,
-        fix_value=fix_unit_flow,
+        fix_value=flow_limits_fix,
         initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,
         non_anticipativity_margin=unit_flow_non_anticipativity_margin,

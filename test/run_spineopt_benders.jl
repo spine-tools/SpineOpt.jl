@@ -241,7 +241,7 @@ function _test_benders_storage()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_a", "node_a"], "fix_unit_flow", fixuflow],
+                ["unit__to_node", ["unit_a", "node_a"], "flow_limits_fix", fixuflow],
                 ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
                 ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
             ]

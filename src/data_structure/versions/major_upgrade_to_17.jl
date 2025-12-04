@@ -28,7 +28,7 @@ function major_upgrade_to_17(db_url, log_level)
     # (original class, new class, dimensions, mapping of dimensions)
     classes_to_be_updated = [
         ("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1]),
-        ("unit__to_node_", "unit__to_node", ["unit", "node"], [1, 2]),
+        ("unit__to_node_", "unit__to_node", ["unit", "node"], [1, 2]), # Tasku: This is apparently a trick useful for superclass creation later.
         ("unit__from_node__investment_group", "unit_flow__investment_group", ["node", "unit", "investment_group"], [2, 1, 3]),
         ("unit__from_node__user_constraint", "unit_flow__user_constraint", ["node", "unit", "user_constraint"], [2, 1, 3]),
         ("unit__to_node__investment_group", "unit_flow__investment_group", ["unit", "node", "investment_group"], [1, 2, 3]),
@@ -95,11 +95,11 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "initial_node_voltage_angle"), "voltage_angle_initial", ""),
         (("node", "max_voltage_angle"), "voltage_angle_max", ""),
         (("node", "min_voltage_angle"), "voltage_angle_min", ""),
-        # node storage installing and decommissioning
+        # node storage installing and decommissioning # Tasku: Storage investments named different to separate potential investments into demand scaling from storage.
         (("node", "storage_investment_econ_lifetime"), "storage_lifetime_economic", ""),
         (("node", "storage_investment_tech_lifetime"), "storage_lifetime_technical", ""),
         (("node", "storage_investment_lifetime_sense"), "storage_lifetime_constraint_sense", ""),
-        # node storage investment limits # Tasku: TODO: Why are storage investments named differently?
+        # node storage investment limits
         (("node", "candidate_storages"), "storage_investment_count_max_cumulative", ""),
         (("node", "fix_storages_invested"), "storage_investment_count_fix_new", ""),
         (("node", "fix_storages_invested_available"), "storage_investment_count_fix_cumulative", ""),
@@ -168,6 +168,12 @@ function major_upgrade_to_17(db_url, log_level)
 
         # node__node
         (("node__node", "diff_coeff"), "diffusion_coefficient", ""),
+
+        # unit__to_node_ and node__to_unit, new temporary and renamed classes!
+        (("unit__to_node_", "fix_unit_flow"), "flow_limits_fix", ""),
+        (("node_to_unit", "fix_unit_flow"), "flow_limits_fix", ""),
+        (("unit__to_node_", "fix_unit_flow_op"), "flow_limits_fix_op", ""),
+        (("node_to_unit", "fix_unit_flow_op"), "flow_limits_fix_op", ""),
 
         # temporal_block
         (("temporal_block", "representative_period_index"), "representative_block_index", ""),

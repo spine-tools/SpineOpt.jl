@@ -746,8 +746,8 @@ function _test_dual_values_with_two_time_indices()
     end
 end
 
-function _test_fix_unit_flow_with_rolling()
-    @testset "fix_unit_flow with rolling" begin
+function _test_flow_limits_fix_with_rolling()
+    @testset "flow_limits_fix with rolling" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         indexes = [
             DateTime("2000-01-01T00:00:00"),
@@ -758,12 +758,12 @@ function _test_fix_unit_flow_with_rolling()
             DateTime("2000-01-01T18:00:00")
         ]
         values = [1, NaN, 2, NaN, 3, NaN]
-        fix_unit_flow_ = unparse_db_value(TimeSeries(indexes, values, false, false))
+        flow_limits_fix_ = unparse_db_value(TimeSeries(indexes, values, false, false))
         object_parameter_values = [
             ["node", "node_b", "balance_type", "none"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(6))],
         ]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fix_unit_flow", fix_unit_flow_]]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "flow_limits_fix", flow_limits_fix_]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -915,7 +915,7 @@ end
     _test_fixing_variables_when_rolling()
     _test_dual_values()
     _test_dual_values_with_two_time_indices()
-    _test_fix_unit_flow_with_rolling()
+    _test_flow_limits_fix_with_rolling()
     _test_storage_state_fix_using_map_with_rolling()
     _test_time_limit()
     _test_only_linear_model_has_duals()
