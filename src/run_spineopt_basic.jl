@@ -209,7 +209,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_max_node_voltage_angle!,
             add_constraint_max_ratio_out_in_connection_flow!,
             add_constraint_max_ratio_unit_flow!,
-            add_constraint_max_total_cumulated_unit_flow_from_node!,
+            add_constraint_flow_limits_max_cumulative!,
             add_constraint_max_total_cumulated_unit_flow_to_node!,
             add_constraint_min_capacity_margin!,
             add_constraint_min_down_time!,

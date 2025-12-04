@@ -2567,7 +2567,7 @@
         ],
         [
             "node__to_unit",
-            "max_total_cumulated_unit_flow_from_node",
+            "flow_limits_max_cumulative",
             null,
             null,
             "Bound on the maximum cumulated flows of a unit group from a node group e.g max consumption of certain commodity."
@@ -3560,7 +3560,7 @@
         ],
         [
             "output",
-            "constraint_max_total_cumulated_unit_flow_from_node",
+            "constraint_flow_limits_max_cumulative",
             null
         ],
         [
@@ -3948,7 +3948,7 @@
         ],
         [
             "output",
-            "constraint_max_total_cumulated_unit_flow_from_node",
+            "constraint_flow_limits_max_cumulative",
             "output_type",
             "constraint_dual",
             "Base"
