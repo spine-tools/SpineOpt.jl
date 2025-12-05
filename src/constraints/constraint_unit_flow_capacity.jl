@@ -42,7 +42,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 & p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
 & \qquad v^{units\_on}_{(u,s,t)} \\
-& \qquad - \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right)
+& \qquad - \left(1 - p^{ramp\_limits\_shutdown}_{(u,ng,d,s,t)}\right)
 \cdot \left( v^{units\_shut\_down}_{(u,s,t+1)}
 + \sum_{
     n \in ng
@@ -86,7 +86,7 @@ See also
 [availability\_factor](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
 [start\_up\_limit](@ref),
-[shut\_down\_limit](@ref).
+[ramp\_limits\_shutdown](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     if tight_compact_formulations_activate(model=m.ext[:spineopt].instance, _default=false)
@@ -180,17 +180,17 @@ end
 function _shutdown_margin(m, u, ng, d, s, t, case, part)
     if part.name == :one
         # (F - SD)
-        1 - _shut_down_limit(m, u, ng, d, s, t)
+        1 - _ramp_limits_shutdown(m, u, ng, d, s, t)
     else
         # max(SU - SD, 0)
-        max(_start_up_limit(m, u, ng, d, s, t) - _shut_down_limit(m, u, ng, d, s, t), 0)
+        max(_start_up_limit(m, u, ng, d, s, t) - _ramp_limits_shutdown(m, u, ng, d, s, t), 0)
     end
 end
 
 function _startup_margin(m, u, ng, d, s, t, case, part)
     if case.name == :min_up_time_le_time_step && part.name == :one
         # max(SD - SU, 0)
-        max(_shut_down_limit(m, u, ng, d, s, t) - _start_up_limit(m, u, ng, d, s, t), 0)
+        max(_ramp_limits_shutdown(m, u, ng, d, s, t) - _start_up_limit(m, u, ng, d, s, t), 0)
     else
         # (F - SU)
         1 - _start_up_limit(m, u, ng, d, s, t)

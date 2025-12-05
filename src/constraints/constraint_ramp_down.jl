@@ -20,7 +20,7 @@
 
 @doc raw"""
 Limit the decrease of [unit\_flow](@ref) over a time period of one [duration\_unit](@ref) according
-to the [shut\_down\_limit](@ref) and [ramp\_limits\_down](@ref) parameter values.
+to the [ramp\_limits\_shutdown](@ref) and [ramp\_limits\_down](@ref) parameter values.
 
 ```math
 \begin{aligned}
@@ -38,7 +38,7 @@ v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{is\_reserve
 
 & \le ( \\
 
-& \qquad \frac{\sum_{t' \in overlapping(t)}\left(p^{shut\_down\_limit}_{(u,ng,d,s,t')} - p^{minimum\_operating\_point}_{(u,ng,d,s,t')}
+& \qquad \frac{\sum_{t' \in overlapping(t)}\left(p^{ramp\_limits\_shutdown}_{(u,ng,d,s,t')} - p^{minimum\_operating\_point}_{(u,ng,d,s,t')}
 \right) \cdot v^{units\_shut\_down}_{(u,s,t)} \cdot \Delta(t'\cap t)}{\Delta(overlapping(t))}\\
 
 & \qquad + 
@@ -82,7 +82,7 @@ See also
 [unit\_capacity](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
 [ramp\_limits\_down](@ref),
-[shut\_down\_limit](@ref),
+[ramp\_limits\_shutdown](@ref),
 [minimum\_operating\_point](@ref).
 """
 function add_constraint_ramp_down!(m::Model)
@@ -144,7 +144,7 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
         <=
          (
             + sum(  (
-                    + _shut_down_limit(m, u, ng, d, s, t_after)
+                    + _ramp_limits_shutdown(m, u, ng, d, s, t_after)
                     - _minimum_operating_point(m, u, ng, d, s, t_after)
                     )
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
@@ -198,7 +198,7 @@ end
 function constraint_ramp_down_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, ng, d) in Iterators.flatten((indices(ramp_limits_down), indices(shut_down_limit)))
+        for (u, ng, d) in Iterators.flatten((indices(ramp_limits_down), indices(ramp_limits_shutdown)))
         for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m,

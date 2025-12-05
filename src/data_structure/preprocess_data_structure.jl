@@ -994,7 +994,7 @@ function generate_unit_commitment_parameters()
             indices(start_up_cost),
             indices(shut_down_cost),
             (x.unit for x in indices(start_up_limit)),
-            (x.unit for x in indices(shut_down_limit)),
+            (x.unit for x in indices(ramp_limits_shutdown)),
             (x.unit for x in indices(ramp_limits_up)),
             (x.unit for x in indices(ramp_limits_down)),
             (x.unit2 for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),

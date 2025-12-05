@@ -203,7 +203,7 @@ function _test_translate_ramp_parameters()
 		using_spinedb(url, Y)
 		@test isempty(intersect([x.name for x in parameters(Y)], to_rm_pnames))
 		@test Y.start_up_limit(unit=Y.unit(:unit_a), node=Y.node(:node_b)) == 0.5
-		@test Y.shut_down_limit(unit=Y.unit(:unit_a), node=Y.node(:node_b)) == 0.8
+		@test Y.ramp_limits_shutdown(unit=Y.unit(:unit_a), node=Y.node(:node_b)) == 0.8
 	end
 end
 

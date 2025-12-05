@@ -2630,7 +2630,7 @@
         ],
         [
             "node__to_unit",
-            "shut_down_limit",
+            "ramp_limits_shutdown",
             null,
             null,
             "Maximum ramp-down during shutdowns"
@@ -2854,7 +2854,7 @@
         ],
         [
             "unit__to_node",
-            "shut_down_limit",
+            "ramp_limits_shutdown",
             null,
             null,
             "Maximum ramp-down during shutdowns"

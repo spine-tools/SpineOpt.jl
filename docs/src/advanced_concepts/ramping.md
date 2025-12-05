@@ -16,7 +16,7 @@ The discussion here will be conceptual. For the mathematical formulation the rea
 
 ### Constraining start up and shut down ramps
  * [start\_up\_limit](@ref) : limit the maximum increase in the `unit_flow` variable when the unit is starting up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp](@ref constraint_ramp_up)
- * [shut\_down\_limit](@ref) : limit the maximum decrease in the `unit_flow` variable when the unit is shutting down. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
+ * [ramp\_limits\_shutdown](@ref) : limit the maximum decrease in the `unit_flow` variable when the unit is shutting down. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
 
 ## General principle and example use cases
 The general principle of the Spine modelling ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.
@@ -26,7 +26,7 @@ It should be noted that it is perfectly possible to omit all of the ramp constra
 ### Illustrative examples
 #### Step 1: Simple case of unrestricted unit
 When none of the ramping parameters mentioned above are specified, the unit is considered to have full ramping flexibility. This means that over any period of time, its flow can be any value between 0 and its capacity, regardless of what the flow of the unit was in previous timesteps, and regardless of the on- or offline status of the unit in previous timesteps (while still respecting, of course, the [Unit commitment](@ref) restrictions that are defined for this unit). This is equivalent to specifying the following:
-* `shut_down_limit` : 1
+* `ramp_limits_shutdown` : 1
 * `start_up_limit` : 1
 * `ramp_limits_up` : 1
 * `ramp_limits_down` : 1
@@ -41,9 +41,9 @@ A unit which is only restricted in spinning ramping can be created by changing t
 
 #### Step 3: Shutdown restrictions
 
- By specifying the parameter `shut_down_limit`, an additional restriction is imposed on the maximum flow of the unit at the moment it goes offline:
+ By specifying the parameter `ramp_limits_shutdown`, an additional restriction is imposed on the maximum flow of the unit at the moment it goes offline:
 
- * `shut_down_limit` : **0.5**
+ * `ramp_limits_shutdown` : **0.5**
  * `minimum_operating_point` : **0.3**
 
  When the unit goes offline in a given timestep ``t``, the output of the unit must be below ``0.5 * 200 = 100``  in the timestep *right before* that ``t`` (and of course, above ``0.3 * 200 = 60`` - the minimum operating point).

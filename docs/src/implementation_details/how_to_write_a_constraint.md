@@ -26,7 +26,7 @@ Let's begin! We will be trying to write a simplified version of the unit capacit
 
 ```math
 \begin{aligned}
-& v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{unit\_capacity}_{(u,n,d,s,t)} \cdot \left( v^{units\_on}_{(u,s,t)} - \left(1 - p^{shut\_down\_limit}_{u,n,d,s,t} \right) \cdot v^{units\_shut\_down}_{(u,s,t+1)} \right) \\
+& v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{unit\_capacity}_{(u,n,d,s,t)} \cdot \left( v^{units\_on}_{(u,s,t)} - \left(1 - p^{ramp\_limits\_shutdown}_{u,n,d,s,t} \right) \cdot v^{units\_shut\_down}_{(u,s,t+1)} \right) \\
 & \forall (u, n, d) \in node\_\_to\_unit \cup unit\_\_to\_node: p^{unit\_capacity}_{(u,n,d)} \neq null \\
 & \forall (s, t)
 \end{aligned}
@@ -34,7 +34,7 @@ Let's begin! We will be trying to write a simplified version of the unit capacit
 
 In other words, the [unit\_flow](@ref) between a [unit](@ref) and a [node](@ref) has to be lower than or equal to:
 - the specified [unit\_capacity](@ref), if the [unit](@ref) is online and not shutting down in the next period;
-- the [unit\_capacity](@ref) multiplied by the [shut\_down\_limit](@ref), if the [unit](@ref) is shutting down in the next period;
+- the [unit\_capacity](@ref) multiplied by the [ramp\_limits\_shutdown](@ref), if the [unit](@ref) is shutting down in the next period;
 - zero, if the [unit](@ref) is offline.
 
 Note that we ignore the [start\_up\_limit](@ref) in this formulation, just for simplicity.
@@ -95,7 +95,7 @@ is *never* higher than the [unit\_capacity](@ref). So it looks like we should be
 of the [unit\_flow](@ref) variable.
 
 But we also need to guarantee that the flow is lower than the [unit\_capacity](@ref) times the
-[shut\_down\_limit](@ref) if the [unit](@ref) is shutting down in the next period. How does that affect the
+[ramp\_limits\_shutdown](@ref) if the [unit](@ref) is shutting down in the next period. How does that affect the
 resolution of the constraint? Is it still Ok to use the resolution of [unit\_flow](@ref)?
 What happens if [units\_on](@ref) has higher resolution than [unit\_flow](@ref)?
 Would we violate this last part of the constraint eventually?
@@ -252,7 +252,7 @@ import_data(
         ),
         ("node__to_unit", ("pwrplant", "fuel"), "unit_capacity", 200),
         ("unit__to_node", ("pwrplant", "elec"), "unit_capacity", 100),
-        ("unit__to_node", ("pwrplant", "elec"), "shut_down_limit", 0.2),
+        ("unit__to_node", ("pwrplant", "elec"), "ramp_limits_shutdown", 0.2),
     ],
 )
 ```
@@ -275,7 +275,7 @@ the `elec` [node](@ref) is modelled at one-hour resolution and two-stage stochas
 and the `pwrplant` [unit](@ref) is modelled at two-hour resolution and one-stage stochastics.
 Finally, the [unit\_capacity](@ref) is 200 for flows coming to the `pwrplant` from the `fuel` [node](@ref),
 and 300 for flows going from the `pwrplant` to the `elec` [node](@ref);
-the [shut\_down\_limit](@ref) is 0.2 for the `elec` [node](@ref) flows
+the [ramp\_limits\_shutdown](@ref) is 0.2 for the `elec` [node](@ref) flows
 (and none, thus irrestricted, for the `fuel` [node](@ref) flows).
 
 !!! note
@@ -509,7 +509,7 @@ So now we're getting time-slices at one-hour resolution on the `elec` side, and 
 This seems enough to enforce that the [unit\_flow](@ref) is never higher than the
 [unit\_capacity](@ref).
 However, we also need to enforce that the [unit\_flow](@ref) is never higher than the [unit\_capacity](@ref) times
-the [shut\_down\_limit](@ref) if the unit is shutting down the next period.
+the [ramp\_limits\_shutdown](@ref) if the unit is shutting down the next period.
 Since the unit is able to shut-down 'at two-hour resolution' so to say, clearly taking the
 three-hour resolution on the `fuel` side is not enough to check if the [unit](@ref) is shutting down in the next period.
 Worst-case scenario, the [unit](@ref) could be shutting down in the *current* period, because the current period
