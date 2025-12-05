@@ -20,7 +20,7 @@
 
 @doc raw"""
 Limit the increase of [unit\_flow](@ref) over a time period of one [duration\_unit](@ref) according
-to the [start\_up\_limit](@ref) and [ramp\_up\_limit](@ref) parameter values.
+to the [start\_up\_limit](@ref) and [ramp\_limits\_up](@ref) parameter values.
 
 ```math
 \begin{aligned}
@@ -48,17 +48,17 @@ v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{is\_reserve
  \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t-1) \right) }{\Delta(overlapping(t))}   \\
 
 & \qquad + \frac{1}{2} \cdot
-\sum_{t' \in overlapping(t)} \left( p^{ramp\_up\_limit}_{(u,ng,d,s,t)}
+\sum_{t' \in overlapping(t)} \left( p^{ramp\_limits\_up}_{(u,ng,d,s,t)}
  \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t) \right)    \\
 
 & \qquad + \frac{1}{2} \cdot
-\sum_{t' \in overlapping(t-1)} \left( p^{ramp\_up\_limit}_{(u,ng,d,s,t)}
+\sum_{t' \in overlapping(t-1)} \left( p^{ramp\_limits\_up}_{(u,ng,d,s,t)}
  \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t-1) \right)    \\
 
 & ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 
 
-& \forall (u,ng,d) \in indices(p^{ramp\_up\_limit}) \cup indices(p^{start\_up\_limit}) \\
+& \forall (u,ng,d) \in indices(p^{ramp\_limits\_up}) \cup indices(p^{start\_up\_limit}) \\
 & \forall (s,t)
 
 \end{aligned}
@@ -79,7 +79,7 @@ See also
 [upward\_reserve](@ref),
 [unit\_capacity](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
-[ramp\_up\_limit](@ref),
+[ramp\_limits\_up](@ref),
 [start\_up\_limit](@ref),
 [minimum\_operating\_point](@ref).
 """
@@ -167,7 +167,7 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
                 init=0,
             ) / overlap_duration_units_on(t_before)
             + sum(
-                + _ramp_up_limit(m, u, ng, d, s, t_after)
+                + _ramp_limits_up(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
                 * units_on[u, s, t]
                 * overlap_duration(t_before, t)
@@ -176,7 +176,7 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
                 init=0,
             )
             + sum(
-                + _ramp_up_limit(m, u, ng, d, s, t_after)
+                + _ramp_limits_up(m, u, ng, d, s, t_after)
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
                 * units_on[u, s, t]
                 * overlap_duration(t_after, t)
@@ -188,14 +188,14 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
     )
 end
 
-function _ramp_up_limit(m, u, ng, d, s, t)
-    ramp_up_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
+function _ramp_limits_up(m, u, ng, d, s, t)
+    ramp_limits_up(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
 function constraint_ramp_up_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, ng, d) in Iterators.flatten((indices(ramp_up_limit), indices(start_up_limit)))
+        for (u, ng, d) in Iterators.flatten((indices(ramp_limits_up), indices(start_up_limit)))
         for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m,

@@ -1706,11 +1706,11 @@ function test_constraint_ramp_up()
         uc = 200
         mop = 0.2
         relationship_parameter_values = [
-            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_up_limit", rul],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_up", rul],
             ["node__to_unit", ["node_group_a", "unit_ab"], "start_up_limit", sul],
             ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
             ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_up_limit", rul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_up", rul],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "start_up_limit", sul],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],

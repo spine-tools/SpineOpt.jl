@@ -184,6 +184,8 @@ function major_upgrade_to_17(db_url, log_level)
         (("node__to_unit", "min_unit_flow"), "flow_limits_min", ""),
         (("unit__to_node", "ramp_down_limit"), "ramp_limits_down", ""),
         (("node__to_unit", "ramp_down_limit"), "ramp_limits_down", ""),
+        (("unit__to_node", "ramp_up_limit"), "ramp_limits_up", ""),
+        (("node__to_unit", "ramp_up_limit"), "ramp_limits_up", ""),
 
         # temporal_block
         (("temporal_block", "representative_period_index"), "representative_block_index", ""),

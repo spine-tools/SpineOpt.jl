@@ -215,7 +215,7 @@ function check_operating_points()
 end
 
 function check_ramp_parameters()
-    for param in (ramp_up_limit, ramp_limits_down, start_up_limit, shut_down_limit)
+    for param in (ramp_limits_up, ramp_limits_down, start_up_limit, shut_down_limit)
         # value between 0 and 1
         error_indices = [(u, n, d) for (u, n, d) in indices(param) if !(0 < param(unit=u, node=n, direction=d) <= 1)]
         _check(
