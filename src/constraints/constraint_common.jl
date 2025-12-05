@@ -99,8 +99,8 @@ function _unit_flow_capacity(m, u, ng, d, s, t)
     unit_flow_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
 end
 
-function _start_up_limit(m, u, ng, d, s, t)
-    start_up_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
+function _ramp_limits_startup(m, u, ng, d, s, t)
+    ramp_limits_startup(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
 function _ramp_limits_shutdown(m, u, ng, d, s, t)

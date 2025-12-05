@@ -33,7 +33,7 @@ Assuming the following parameters, we are considering a fully flexible unit taki
 
 * `unit_capacity`  : **100**
 * `ramp_limits_shutdown`: **1**
-* `start_up_limit` : **1**
+* `ramp_limits_startup` : **1**
 
 The parameters indicate that the unit capacity is 100 (e.g., 100 MW) and the shutdown and startup limits are 1 p.u. This means that the unit can start up or shut down to its maximum capacity, making it a fully flexible unit.
 

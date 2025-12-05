@@ -993,7 +993,7 @@ function generate_unit_commitment_parameters()
             indices(min_down_time),
             indices(start_up_cost),
             indices(shut_down_cost),
-            (x.unit for x in indices(start_up_limit)),
+            (x.unit for x in indices(ramp_limits_startup)),
             (x.unit for x in indices(ramp_limits_shutdown)),
             (x.unit for x in indices(ramp_limits_up)),
             (x.unit for x in indices(ramp_limits_down)),

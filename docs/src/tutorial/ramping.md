@@ -115,7 +115,7 @@ Let's consider the input data where the *power\_plant\_a* has a ramping limit of
 
   - Select the *minimum\_operating\_point* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the minimum operating point for *power\_plant\_a*.
 
-  - Select the *start\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the startup capacity limit for *power\_plant\_a*.
+  - Select the *ramp\_limits\_startup* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the startup capacity limit for *power\_plant\_a*.
 
   - Select the *ramp\_limits\_shutdown* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the shutdown capacity limit for *power\_plant\_a*.
 

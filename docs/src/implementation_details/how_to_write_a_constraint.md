@@ -37,7 +37,7 @@ In other words, the [unit\_flow](@ref) between a [unit](@ref) and a [node](@ref)
 - the [unit\_capacity](@ref) multiplied by the [ramp\_limits\_shutdown](@ref), if the [unit](@ref) is shutting down in the next period;
 - zero, if the [unit](@ref) is offline.
 
-Note that we ignore the [start\_up\_limit](@ref) in this formulation, just for simplicity.
+Note that we ignore the [ramp\_limits\_startup](@ref) in this formulation, just for simplicity.
 (And actually, it looks like we also assume that a unit cannot start up and shut down in the same period.)
 
 ## First steps

@@ -20,7 +20,7 @@
 
 @doc raw"""
 Limit the increase of [unit\_flow](@ref) over a time period of one [duration\_unit](@ref) according
-to the [start\_up\_limit](@ref) and [ramp\_limits\_up](@ref) parameter values.
+to the [ramp\_limits\_startup](@ref) and [ramp\_limits\_up](@ref) parameter values.
 
 ```math
 \begin{aligned}
@@ -36,7 +36,7 @@ v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{is\_reserve
 
 & \le ( \\
 
-& \qquad \frac{\sum_{t' \in overlapping(t)}\left(p^{start\_up\_limit}_{(u,ng,d,s,t')} - p^{minimum\_operating\_point}_{(u,ng,d,s,t')}
+& \qquad \frac{\sum_{t' \in overlapping(t)}\left(p^{ramp\_limits\_startup}_{(u,ng,d,s,t')} - p^{minimum\_operating\_point}_{(u,ng,d,s,t')}
 \right) \cdot v^{units\_started\_up}_{(u,s,t)} \cdot \Delta(t'\cap t)}{\Delta(overlapping(t))}\\
 
 & \qquad + 
@@ -58,7 +58,7 @@ v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{is\_reserve
 & ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 
 
-& \forall (u,ng,d) \in indices(p^{ramp\_limits\_up}) \cup indices(p^{start\_up\_limit}) \\
+& \forall (u,ng,d) \in indices(p^{ramp\_limits\_up}) \cup indices(p^{ramp\_limits\_startup}) \\
 & \forall (s,t)
 
 \end{aligned}
@@ -80,7 +80,7 @@ See also
 [unit\_capacity](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
 [ramp\_limits\_up](@ref),
-[start\_up\_limit](@ref),
+[ramp\_limits\_startup](@ref),
 [minimum\_operating\_point](@ref).
 """
 function add_constraint_ramp_up!(m::Model)
@@ -141,7 +141,7 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
         <=
         (
             + sum(  (
-                    + _start_up_limit(m, u, ng, d, s, t_after)
+                    + _ramp_limits_startup(m, u, ng, d, s, t_after)
                     - _minimum_operating_point(m, u, ng, d, s, t_after)
                     )
                 * _unit_flow_capacity(m, u, ng, d, s, t_after)
@@ -195,7 +195,7 @@ end
 function constraint_ramp_up_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, ng, d) in Iterators.flatten((indices(ramp_limits_up), indices(start_up_limit)))
+        for (u, ng, d) in Iterators.flatten((indices(ramp_limits_up), indices(ramp_limits_startup)))
         for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m,

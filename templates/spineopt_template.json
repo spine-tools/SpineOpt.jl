@@ -2637,7 +2637,7 @@
         ],
         [
             "node__to_unit",
-            "start_up_limit",
+            "ramp_limits_startup",
             null,
             null,
             "Maximum ramp-up during startups"
@@ -2861,7 +2861,7 @@
         ],
         [
             "unit__to_node",
-            "start_up_limit",
+            "ramp_limits_startup",
             null,
             null,
             "Maximum ramp-up during startups"

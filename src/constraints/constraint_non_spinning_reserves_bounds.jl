@@ -57,7 +57,7 @@ function _build_constraint_non_spinning_reserves_lower_bound(m::Model, u, ng, d,
 end
 
 function add_constraint_non_spinning_reserves_start_up_upper_bound!(m::Model)
-    _add_constraint_non_spinning_reserves_upper_bound!(m, start_up_limit)
+    _add_constraint_non_spinning_reserves_upper_bound!(m, ramp_limits_startup)
 end
 
 function add_constraint_non_spinning_reserves_shut_down_upper_bound!(m::Model)
@@ -66,7 +66,7 @@ end
 
 function _add_constraint_non_spinning_reserves_upper_bound!(m::Model, limit::Parameter)
     name = Dict(
-        start_up_limit => :non_spinning_reserves_start_up_upper_bound,
+        ramp_limits_startup => :non_spinning_reserves_start_up_upper_bound,
         ramp_limits_shutdown => :non_spinning_reserves_shut_down_upper_bound,
     )[limit]
     _add_constraint!(

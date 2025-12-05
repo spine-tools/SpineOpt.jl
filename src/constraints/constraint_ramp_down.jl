@@ -60,7 +60,7 @@ v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{is\_reserve
 & ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 
 
-& \forall (u,ng,d) \in indices(p^{ramp\_limits\_up}) \cup indices(p^{start\_up\_limit}) \\
+& \forall (u,ng,d) \in indices(p^{ramp\_limits\_up}) \cup indices(p^{ramp\_limits\_startup}) \\
 & \forall (s,t)
 
 \end{aligned}

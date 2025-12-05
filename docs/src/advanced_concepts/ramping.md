@@ -15,19 +15,19 @@ The discussion here will be conceptual. For the mathematical formulation the rea
  * [ramp\_limits\_down](@ref) : limit the maximum decrease in the `unit_flow` variable when the unit is online, over a period of time equal to the [duration\_unit](@ref). The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
 
 ### Constraining start up and shut down ramps
- * [start\_up\_limit](@ref) : limit the maximum increase in the `unit_flow` variable when the unit is starting up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp](@ref constraint_ramp_up)
+ * [ramp\_limits\_startup](@ref) : limit the maximum increase in the `unit_flow` variable when the unit is starting up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp](@ref constraint_ramp_up)
  * [ramp\_limits\_shutdown](@ref) : limit the maximum decrease in the `unit_flow` variable when the unit is shutting down. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
 
 ## General principle and example use cases
 The general principle of the Spine modelling ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.
 
-It should be noted that it is perfectly possible to omit all of the ramp constraining parameters mentioned above, or to specify only some of them. Anything that is omitted is interpreted as if it shouldn't be constrained. For example, if you only specify [start\_up\_limit](@ref) and [ramp\_limits\_down](@ref), then only the flow *increase* during *start up* and the flow *decrease* during *online* operation will be constrained (but not any other flow increase or decrease).
+It should be noted that it is perfectly possible to omit all of the ramp constraining parameters mentioned above, or to specify only some of them. Anything that is omitted is interpreted as if it shouldn't be constrained. For example, if you only specify [ramp\_limits\_startup](@ref) and [ramp\_limits\_down](@ref), then only the flow *increase* during *start up* and the flow *decrease* during *online* operation will be constrained (but not any other flow increase or decrease).
 
 ### Illustrative examples
 #### Step 1: Simple case of unrestricted unit
 When none of the ramping parameters mentioned above are specified, the unit is considered to have full ramping flexibility. This means that over any period of time, its flow can be any value between 0 and its capacity, regardless of what the flow of the unit was in previous timesteps, and regardless of the on- or offline status of the unit in previous timesteps (while still respecting, of course, the [Unit commitment](@ref) restrictions that are defined for this unit). This is equivalent to specifying the following:
 * `ramp_limits_shutdown` : 1
-* `start_up_limit` : 1
+* `ramp_limits_startup` : 1
 * `ramp_limits_up` : 1
 * `ramp_limits_down` : 1
 
@@ -50,9 +50,9 @@ A unit which is only restricted in spinning ramping can be created by changing t
 
 #### Step 4: Startup restrictions
 
- The start up restrictions are very similar to the shut down restrictions, but of course apply to units that are starting up. THey are activated by specifying `start_up_limit`:
+ The start up restrictions are very similar to the shut down restrictions, but of course apply to units that are starting up. THey are activated by specifying `ramp_limits_startup`:
 
- * `start_up_limit` : **0.4**
+ * `ramp_limits_startup` : **0.4**
  * `minimum_operating_point` : **0.2**
 
 When the unit goes online in a given timestep ``t``, its output will be restricted to the interval ``[40, 80]``.

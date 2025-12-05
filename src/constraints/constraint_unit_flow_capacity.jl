@@ -47,7 +47,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 + \sum_{
     n \in ng
 } v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
-& \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
+& \qquad - \left(1 - p^{ramp\_limits\_startup}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
 & ) \\
 & \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
 & \forall (s,t)
@@ -85,7 +85,7 @@ See also
 [unit\_capacity](@ref),
 [availability\_factor](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
-[start\_up\_limit](@ref),
+[ramp\_limits\_startup](@ref),
 [ramp\_limits\_shutdown](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
@@ -183,17 +183,17 @@ function _shutdown_margin(m, u, ng, d, s, t, case, part)
         1 - _ramp_limits_shutdown(m, u, ng, d, s, t)
     else
         # max(SU - SD, 0)
-        max(_start_up_limit(m, u, ng, d, s, t) - _ramp_limits_shutdown(m, u, ng, d, s, t), 0)
+        max(_ramp_limits_startup(m, u, ng, d, s, t) - _ramp_limits_shutdown(m, u, ng, d, s, t), 0)
     end
 end
 
 function _startup_margin(m, u, ng, d, s, t, case, part)
     if case.name == :min_up_time_le_time_step && part.name == :one
         # max(SD - SU, 0)
-        max(_ramp_limits_shutdown(m, u, ng, d, s, t) - _start_up_limit(m, u, ng, d, s, t), 0)
+        max(_ramp_limits_shutdown(m, u, ng, d, s, t) - _ramp_limits_startup(m, u, ng, d, s, t), 0)
     else
         # (F - SU)
-        1 - _start_up_limit(m, u, ng, d, s, t)
+        1 - _ramp_limits_startup(m, u, ng, d, s, t)
     end
 end
 

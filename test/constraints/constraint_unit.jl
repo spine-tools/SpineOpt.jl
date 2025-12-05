@@ -367,10 +367,10 @@ function test_constraint_unit_flow_capacity_tight_and_compact()
         sdl = 0.3
         relationship_parameter_values = [
             ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", ucap],
-            ["node__to_unit", ["node_group_a", "unit_ab"], "start_up_limit", sul],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_startup", sul],
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_shutdown", sdl],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "start_up_limit", sul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_startup", sul],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_shutdown", sdl],
         ]
         @testset for (case_name, part_names) in (
@@ -592,9 +592,9 @@ end
 
 function test_constraint_non_spinning_reserves_upper_bounds()
     @testset "constraint_non_spinning_reserves_upper_bounds" begin
-        @testset for limit_name in ("start_up_limit", "ramp_limits_shutdown")
+        @testset for limit_name in ("ramp_limits_startup", "ramp_limits_shutdown")
             constraint_name = Dict(
-                "start_up_limit" => :non_spinning_reserves_start_up_upper_bound,
+                "ramp_limits_startup" => :non_spinning_reserves_start_up_upper_bound,
                 "ramp_limits_shutdown" => :non_spinning_reserves_shut_down_upper_bound,
             )[limit_name]
             url_in = _test_constraint_unit_reserves_setup()
@@ -1707,11 +1707,11 @@ function test_constraint_ramp_up()
         mop = 0.2
         relationship_parameter_values = [
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_up", rul],
-            ["node__to_unit", ["node_group_a", "unit_ab"], "start_up_limit", sul],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_startup", sul],
             ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
             ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_up", rul],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "start_up_limit", sul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_startup", sul],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
