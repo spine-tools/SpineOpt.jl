@@ -2616,10 +2616,10 @@
         ],
         [
             "node__to_unit",
-            "ramp_up_limit",
+            "ramp_limits_up",
             null,
             null,
-            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_up_limit] = %/t, e.g. 0.2/h"
+            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_limits_up] = %/t, e.g. 0.2/h"
         ],
         [
             "node__to_unit",
@@ -2840,10 +2840,10 @@
         ],
         [
             "unit__to_node",
-            "ramp_up_limit",
+            "ramp_limits_up",
             null,
             null,
-            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_up_limit] = %/t, e.g. 0.2/h"
+            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_limits_up] = %/t, e.g. 0.2/h"
         ],
         [
             "unit__to_node",
