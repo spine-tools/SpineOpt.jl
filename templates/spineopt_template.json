@@ -1359,7 +1359,7 @@
             "node",
             "has_storage",
             false,
-            null,
+            "boolean_value_list",
             "A boolean flag for whether the flows are instantaneously balanced (false) or the node can store its commodity (true)."
         ],
         [
@@ -1729,14 +1729,14 @@
             "node",
             "upward_reserve",
             false,
-            null,
+            "boolean_value_list",
             "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `is_reserve_node` is also set to `true`."
         ],
         [
             "node",
             "is_longterm_storage",
             false,
-            null,
+            "boolean_value_list",
             "If true, `node` has a state variable for representative and non-representative timeslices"
         ],
         [
@@ -2450,7 +2450,7 @@
             "report__output",
             "overwrite_results_on_rolling",
             true,
-            null,
+            "boolean_value_list",
             "Whether or not results from further windows should overwrite results from previous ones."
         ],
         [
