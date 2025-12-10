@@ -92,6 +92,6 @@ The unit can be restricted in spinning ramping by defining the `ramp_up/down_lim
  * `ramp_limits_up`      : **0.2**
  * `ramp_limits_down`    : **0.4**
 
- This parameter choice implies that the unit's flow to the regular demand node cannot increase more than ``0.2  * 200 - upward\_reserve\_demand`` or decrease more than ``0.4 * 200 - reserve\_downward\_demand`` over one [duration\_unit](@ref). For example, when the unit is running at an output of ``100`` and there is an upward reserve demand of ``10``, then its output over the next [duration\_unit](@ref) must be somewhere in the interval ``[20, 130]``.
+ This parameter choice implies that the unit's flow to the regular demand node cannot increase more than ``0.2  * 200 - reserve\_upward\_demand`` or decrease more than ``0.4 * 200 - reserve\_downward\_demand`` over one [duration\_unit](@ref). For example, when the unit is running at an output of ``100`` and there is an upward reserve demand of ``10``, then its output over the next [duration\_unit](@ref) must be somewhere in the interval ``[20, 130]``.
 
  It can be seen in this example that the demand for reserves is subtracted from the ramping capacity of the unit that is available for regular operation. This stems from the fact that in providing reserve capacity, the unit is expected to be able to provide the demanded reserve within one [duration\_unit](@ref) as stated above.

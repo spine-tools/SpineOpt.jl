@@ -383,7 +383,7 @@ function test_constraint_unit_flow_capacity_tight_and_compact()
                     ["unit", "unit_ab", "availability_factor", uaf],
                     ["unit", "unit_ab", "min_up_time", mup],
                     ["node", "reserves_a", "reserve_downward", dr],
-                    ["node", "reserves_bc", "upward_reserve", ur],
+                    ["node", "reserves_bc", "reserve_upward", ur],
                     ["model", "instance", "tight_compact_formulations_activate", true],
                 ]
                 SpineInterface.import_data(
@@ -468,7 +468,7 @@ function test_constraint_minimum_operating_point()
         @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
             url_in = _test_constraint_unit_reserves_setup()
             object_parameter_values = [
-                ["node", "reserves_a", "upward_reserve", ur],
+                ["node", "reserves_a", "reserve_upward", ur],
                 ["node", "reserves_bc", "reserve_downward", dr],
                 ["node", "reserves_a", "is_non_spinning", ur],
                 ["node", "reserves_bc", "is_non_spinning", dr],
@@ -1721,7 +1721,7 @@ function test_constraint_ramp_up()
                 ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "3h")],
                 ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
                 ["node", "reserves_a", "reserve_downward", dr],
-                ["node", "reserves_bc", "upward_reserve", ur],
+                ["node", "reserves_bc", "reserve_upward", ur],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1828,7 +1828,7 @@ function test_constraint_ramp_down()
             object_parameter_values = [
                 ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "3h")],
                 ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
-                ["node", "reserves_a", "upward_reserve", ur],
+                ["node", "reserves_a", "reserve_upward", ur],
                 ["node", "reserves_bc", "reserve_downward", dr],
             ]
             SpineInterface.import_data(

@@ -101,7 +101,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["grid", "electricity", "physics_type", "lodf_physics"],
         ["node", nodes_to[1], "node_opf_type", "node_opf_type_reference"],
         ["node", "reserve", "is_reserve_node", true],
-        ["node", "reserve", "upward_reserve", true],
+        ["node", "reserve", "reserve_upward", true],
     ]
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes_to))
     append!(obj_pvs, (["node", n, "storage_state_max", 10] for n in nodes_to))

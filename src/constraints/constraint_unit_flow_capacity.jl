@@ -36,7 +36,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
         n \in ng
 }
     v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[
-        p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
+        p^{is\_reserve\_node}_{(n)} \land p^{reserve\_upward}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
     \right]\\
 & \le \\
 & p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
@@ -80,7 +80,7 @@ where
 
 See also
 [is\_reserve\_node](@ref),
-[upward\_reserve](@ref),
+[reserve\_upward](@ref),
 [is\_non\_spinning](@ref),
 [unit\_capacity](@ref),
 [availability\_factor](@ref),
@@ -301,7 +301,7 @@ end
 function _is_regular_node(n, d)
     !is_reserve_node(node=n) || (
         is_reserve_node(node=n)
-        && _switch(d; to_node=upward_reserve, from_node=reserve_downward)(node=n)
+        && _switch(d; to_node=reserve_upward, from_node=reserve_downward)(node=n)
         && !is_non_spinning(node=n)
     )
 end

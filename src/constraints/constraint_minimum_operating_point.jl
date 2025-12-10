@@ -89,7 +89,7 @@ function _build_constraint_minimum_operating_point(m::Model, u, ng, d, s_path, t
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_in_t(m, t_long=t)
             )
-            if is_reserve_node(node=n) && _switch(d; to_node=reserve_downward, from_node=upward_reserve)(node=n);
+            if is_reserve_node(node=n) && _switch(d; to_node=reserve_downward, from_node=reserve_upward)(node=n);
             init=0,
         )
         >=

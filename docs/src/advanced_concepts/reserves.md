@@ -9,7 +9,7 @@ This section covers the reserve concepts, but we highly recommend checking out t
 To define a reserve node, the following parameters have to be defined for the relevant node:
 
 * [is\_reserve_node](@ref)  : this boolean parameter indicates that this node is a reserve node.
-* [upward\_reserve](@ref)   : this boolean parameter indicates that the demand for reserve provision of this node concerns upward reserves.
+* [reserve\_upward](@ref)   : this boolean parameter indicates that the demand for reserve provision of this node concerns upward reserves.
 * [reserve\_downward](@ref)  : this boolean parameter indicates that the demand for reserve provision of this node concerns downward reserves.
 * [reserve\_procurement\_cost](@ref): (optional) this parameter indicates the procurement cost of a unit for a certain reserve product and can be define on a [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship.
 

@@ -137,7 +137,7 @@ function _build_constraint_ramp_down(m::Model, u, ng, d, s_path, t_before, t_aft
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
             )
             if is_reserve_node(node=n)
-            && _switch(d; to_node=reserve_downward, from_node=upward_reserve)(node=n)
+            && _switch(d; to_node=reserve_downward, from_node=reserve_upward)(node=n)
             && !is_non_spinning(node=n);
             init=0,
         ) / overlap_duration_flow(t_after)
