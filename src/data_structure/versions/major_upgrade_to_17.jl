@@ -78,6 +78,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "number_of_storages"), "existing_storages", ""),
         (("node", "state_coeff"), "storage_state_coefficient", ""),
         (("node", "storage_fom_cost"), "storage_fixed_annual_cost", ""),
+        (("node", "is_longterm_storage"), "storage_longterm_activate", ""),
         # node storage limits
         (("node", "fix_node_state"), "storage_state_fix", ""),
         (("node", "initial_node_state"), "storage_state_initial", ""),

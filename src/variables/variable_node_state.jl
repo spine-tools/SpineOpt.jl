@@ -31,7 +31,7 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
         for (n, s, t) in node_stochastic_time_indices(
             m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
-        if is_longterm_storage(node=n) || _is_representative(t)
+        if storage_longterm_activate(node=n) || _is_representative(t)
     )
 end
 

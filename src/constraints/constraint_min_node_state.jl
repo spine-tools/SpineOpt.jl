@@ -67,7 +67,7 @@ function constraint_min_node_state_indices(m::Model)
             m;
             node=intersect(indices(storage_state_min), indices(storage_investment_count_max_cumulative)),
             temporal_block=anything,
-        ) if ((storage_activate(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)) &&
+        ) if ((storage_activate(node=ng) && storage_longterm_activate(node=ng)) || _is_representative(t)) &&
         !_is_zero(node_state_lower_limit(m; node=ng, t=t, _strict=false)) for path in active_stochastic_paths(
             m,
             Iterators.flatten((

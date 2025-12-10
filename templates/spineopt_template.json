@@ -1734,7 +1734,7 @@
         ],
         [
             "node",
-            "is_longterm_storage",
+            "storage_longterm_activate",
             false,
             "boolean_value_list",
             "If true, `node` has a state variable for representative and non-representative timeslices"
