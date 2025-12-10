@@ -67,7 +67,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("unit", "units_invested_mga_weight"), "mga_investment_weight", ""),
 
         # node
-        (("node", "has_state"), "has_storage", ""),
+        (("node", "has_state"), "storage_activate", ""),
         (("node", "fractional_demand"), "demand_fraction", ""),
         (("node", "min_capacity_margin"), "capacity_margin_min", ""),
         (("node", "min_capacity_margin_penalty"), "capacity_margin_penalty", ""),
@@ -173,7 +173,7 @@ function major_upgrade_to_17(db_url, log_level)
         # node__node
         (("node__node", "diff_coeff"), "diffusion_coefficient", ""),
 
-        # unit__to_node_ and node__to_unit, new temporary and renamed classes!
+        # unit__to_node and node__to_unit, new temporary and renamed classes!
         (("unit__to_node", "fix_unit_flow"), "flow_limits_fix", ""),
         (("node__to_unit", "fix_unit_flow"), "flow_limits_fix", ""),
         (("unit__to_node", "fix_unit_flow_op"), "flow_limits_fix_op", ""),

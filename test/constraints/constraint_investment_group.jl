@@ -71,7 +71,7 @@ function _test_constraint_investment_group_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["node", "node_c", "has_storage", true],
+            ["node", "node_c", "storage_activate", true],
             ["node", "node_c", "storage_state_max", 100],
             ["node", "node_c", "storage_investment_count_max_cumulative", 2],
             ["node", "node_c", "storage_investment_cost", 1000],

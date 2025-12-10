@@ -198,8 +198,8 @@ function test_constraint_node_injection()
             ["node", "node_b", "demand", demand_b],
             ["node", "node_c", "demand", demand_c],
             ["node", "node_group_bc", "demand", demand_group],
-            ["node", "node_b", "has_storage", true],
-            ["node", "node_c", "has_storage", true],
+            ["node", "node_b", "storage_activate", true],
+            ["node", "node_c", "storage_activate", true],
             ["node", "node_b", "storage_self_discharge", storage_self_discharge_b],
             ["node", "node_c", "storage_self_discharge", storage_self_discharge_c],
             ["node", "node_b", "storage_state_coefficient", storage_state_coefficient_b],
@@ -319,8 +319,8 @@ function test_constraint_cyclic_node_state()
         object_parameter_values = [
             ["node", "node_b", "storage_state_max", node_capacity["node_b"]],
             ["node", "node_c", "storage_state_max", node_capacity["node_c"]],
-            ["node", "node_b", "has_storage", true],
-            ["node", "node_c", "has_storage", true],
+            ["node", "node_b", "storage_activate", true],
+            ["node", "node_c", "storage_activate", true],
         ]
         relationship_parameter_values = [
             ["node__temporal_block", ["node_b", "hourly"], "cyclic_condition", cyc_cond[("node_b", "hourly")]],
@@ -363,7 +363,7 @@ function test_constraint_storage_line_pack()
         objects = [["grid", "gas"]]
         object_parameter_values = [
             ["grid", "gas", "physics_type", "pressure_physics"],
-            ["node", "node_a", "has_storage", storage["node_a"]],
+            ["node", "node_a", "storage_activate", storage["node_a"]],
         ]
         conn_linepack = Dict(("connection_bc", "node_a", "node_group_bc") => 28)
 
@@ -642,7 +642,7 @@ function test_constraint_min_node_state_investments()
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_c", "storage_state_min", node_state_min],
             ["node", "node_c", "storage_state_min_fraction", storage_state_min_fraction],
-            ["node", "node_c", "has_storage", true],
+            ["node", "node_c", "storage_activate", true],
             ["node", "node_c", "storage_investment_count_max_cumulative", candidate_storages],
         ]
         relationships = [
@@ -685,7 +685,7 @@ function test_constraint_node_state_capacity_investments()
         object_parameter_values = [
             ["node", "node_c", "storage_state_max", node_capacity],
             ["node", "node_c", "storage_state_max_fraction", storage_state_max_fraction],
-            ["node", "node_c", "has_storage", true],
+            ["node", "node_c", "storage_activate", true],
             ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
         ]
         relationships = [
@@ -724,7 +724,7 @@ function test_constraint_storages_invested_available()
         object_parameter_values = [
             ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
-            ["node", "node_b", "has_storage", true],
+            ["node", "node_b", "storage_activate", true],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -756,7 +756,7 @@ function test_constraint_storages_invested_available_mp()
         object_parameter_values = [
             ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
-            ["node", "node_b", "has_storage", true],
+            ["node", "node_b", "storage_activate", true],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -789,7 +789,7 @@ function test_constraint_storages_invested_transition()
         object_parameter_values = [
             ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
-            ["node", "node_b", "has_storage", true],
+            ["node", "node_b", "storage_activate", true],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -831,7 +831,7 @@ function test_constraint_storages_invested_transition_mp()
         object_parameter_values = [
             ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ["node", "node_c", "storage_state_max", node_capacity],
-            ["node", "node_b", "has_storage", true],
+            ["node", "node_b", "storage_activate", true],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -878,7 +878,7 @@ function test_constraint_storage_lifetime()
             object_parameter_values = [
                 ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
                 ["node", "node_c", "storage_state_max", node_capacity],
-                ["node", "node_c", "has_storage", true],
+                ["node", "node_c", "storage_activate", true],
                 ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
                 ["model", "instance", "model_end", model_end],
             ]
@@ -947,7 +947,7 @@ function test_constraint_storage_lifetime_sense()
             object_parameter_values = [
                 ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
                 ["node", "node_c", "storage_state_max", node_capacity],
-                ["node", "node_c", "has_storage", true],
+                ["node", "node_c", "storage_activate", true],
                 ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
                 ["node", "node_c", "storage_lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
@@ -1001,7 +1001,7 @@ function test_constraint_storage_lifetime_mp()
             object_parameter_values = [
                 ["node", "node_c", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
                 ["node", "node_c", "storage_state_max", node_capacity],
-                ["node", "node_c", "has_storage", true],
+                ["node", "node_c", "storage_activate", true],
                 ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],

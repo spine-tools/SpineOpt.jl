@@ -1,4 +1,4 @@
-The [has\_storage](@ref) parameter determines whether the [node](@ref) has a [node\_state](@ref) variable generated for 
+The [storage\_activate](@ref) parameter determines whether the [node](@ref) has a [node\_state](@ref) variable generated for 
 it that can increase and decrease based on the flows entering and leaving the [node](@ref), allowing for commodity 
 storage at the [node](@ref).
 

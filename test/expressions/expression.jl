@@ -82,7 +82,7 @@ function _test_expressions_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["node", "node_c", "has_storage", true],
+            ["node", "node_c", "storage_activate", true],
             ["node", "node_c", "storage_state_max", 50],
             ["node", "node_b", "demand", 105],
             ["unit", "unit_b", "online_variable_type", "linear"],

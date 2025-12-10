@@ -21,7 +21,7 @@
 @doc raw"""
 The node injection itself represents all local production and consumption,
 computed as the sum of all connected unit flows and the nodal demand.
-If a node corresponds to a storage node, the parameter [has\_storage](@ref)
+If a node corresponds to a storage node, the parameter [storage\_activate](@ref)
 should be set to [true](@ref boolean_value_list) for this node.
 The node injection is created for each node in the network
 (unless the node is only used for parameter aggregation purposes, see [Introduction to groups of objects](@ref)).
@@ -45,7 +45,7 @@ v^{unit\_flow}_{(u,n,to\_node,s,t)}
 v^{unit\_flow}_{(u,n,from\_node,s,t)}\\
 & - \left(p^{demand}_{(n,s,t)} + \sum_{ng \ni n} p^{demand\_fraction}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)}\right) \\
 & + v^{node\_slack\_pos}_{(n,s,t)} - v^{node\_slack\_neg}_{(n,s,t)} \\
-& \forall n \in node: p^{has\_storage}_{(n)}\\
+& \forall n \in node: p^{storage\_activate}_{(n)}\\
 & \forall (s, t)
 \end{aligned}
 ```
@@ -59,7 +59,7 @@ See also
 [unit\_\_to\_node](@ref),
 [demand](@ref),
 [demand\_fraction](@ref),
-[has\_storage](@ref).
+[storage\_activate](@ref).
 
 """
 function add_constraint_node_injection!(m::Model)
@@ -152,7 +152,7 @@ function constraint_node_injection_indices(m::Model)
     (
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, t_before, t_after) in node_dynamic_time_indices(m; temporal_block=anything)
-        if (has_storage(node=n) && is_longterm_storage(node=n)) || _is_representative(t_after)
+        if (storage_activate(node=n) && is_longterm_storage(node=n)) || _is_representative(t_after)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

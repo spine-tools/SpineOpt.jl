@@ -7,6 +7,6 @@ e.g. having a MWh storage connected to MW flows in a model with hour as the basi
 
 Note that in order for the [storage\_state\_coefficient](@ref) parameter to have an impact,
 the [node](@ref) must first have a `node_state` variable to begin with,
-defined using the [has\_storage](@ref) parameter.
+defined using the [storage\_activate](@ref) parameter.
 By default, the [storage\_state\_coefficient](@ref) is set to zero as a precaution,
 so that the user always has to set its value explicitly for it to have an impact on the model.

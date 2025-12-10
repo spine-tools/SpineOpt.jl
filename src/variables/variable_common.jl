@@ -293,7 +293,7 @@ function _is_longterm_index(ind)
 end
 
 function _is_longterm_node(n)
-    has_storage(node=n) && is_longterm_storage(node=n)
+    storage_activate(node=n) && is_longterm_storage(node=n)
 end
 
 """

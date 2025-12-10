@@ -133,7 +133,7 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
         :object_parameter_values => [
             ["node", "elec_node", "demand", unparse_db_value(elec_demand_ts)],
             ["node", "batt_node", "storage_investment_count_max_cumulative", 100],
-            ["node", "batt_node", "has_storage", true],
+            ["node", "batt_node", "storage_activate", true],
             ["node", "batt_node", "storage_state_initial", 0],
             ["node", "batt_node", "node_balance_penalty", 10000],
             ["node", "batt_node", "storage_state_max", 200],
@@ -142,7 +142,7 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
             ["node", "batt_node", "existing_storages", 0],
             ["node", "batt_node", "storage_investment_cost", 2000000],
             ["node", "batt_node", "storage_investment_variable_type", "integer"],
-            ["node", "h2_node", "has_storage", true],
+            ["node", "h2_node", "storage_activate", true],
             ["node", "h2_node", "is_longterm_storage", true],
             ["node", "h2_node", "node_balance_penalty", 10000],
             ["node", "h2_node", "storage_state_max", 20000],

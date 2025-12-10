@@ -804,7 +804,7 @@ function _test_storage_state_fix_using_map_with_rolling()
         objects = [["output", "node_state"]]
         relationships = [["report__output", ["report_x", "node_state"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_storage", true],
+            ["node", "node_b", "storage_activate", true],
             ["node", "node_b", "storage_state_fix", storage_state_fix_],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
             ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(look_ahead + 1))],

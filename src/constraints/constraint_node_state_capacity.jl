@@ -22,7 +22,7 @@
 To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-v^{node\_state}_{(n, s, t)} \leq p^{storage\_state\_max}_{(n, s, t)} \cdot p^{storage\_state\_max\_fraction}_{(n, s, t)} \quad \forall n \in node : p^{has\_storage}_{(n)}, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \leq p^{storage\_state\_max}_{(n, s, t)} \cdot p^{storage\_state\_max\_fraction}_{(n, s, t)} \quad \forall n \in node : p^{storage\_activate}_{(n)}, \, \forall (s,t)
 ```
 
 The discharging and charging behavior of storage nodes can be described through unit(s),
@@ -34,7 +34,7 @@ the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
 See also
 [storage\_state\_max](@ref),
 [storage\_state\_max\_fraction](@ref),
-[has\_storage](@ref).
+[storage\_activate](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
     _add_constraint!(
@@ -75,7 +75,7 @@ function constraint_node_state_capacity_indices(m::Model)
         for (ng, t) in node_time_indices(
             m; node=intersect(indices(storage_state_max), indices(storage_investment_count_max_cumulative)), temporal_block=anything
         )
-        if (has_storage(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
+        if (storage_activate(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

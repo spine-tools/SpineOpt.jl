@@ -1357,7 +1357,7 @@
         ],
         [
             "node",
-            "has_storage",
+            "storage_activate",
             false,
             "boolean_value_list",
             "A boolean flag for whether the flows are instantaneously balanced (false) or the node can store its commodity (true)."
