@@ -301,7 +301,7 @@ end
 function _is_regular_node(n, d)
     !is_reserve_node(node=n) || (
         is_reserve_node(node=n)
-        && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
+        && _switch(d; to_node=upward_reserve, from_node=reserve_downward)(node=n)
         && !is_non_spinning(node=n)
     )
 end

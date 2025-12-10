@@ -109,6 +109,8 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "storages_invested_big_m_mga"), "mga_storage_investment_big_m", ""),
         (("node", "storages_invested_mga"), "mga_storage_investment_activate", ""),
         (("node", "storages_invested_mga_weight"), "mga_storage_investment_weight", ""),
+        # node reserves
+        (("node", "downward_reserve"), "reserve_downward", ""),
 
         # connection
         (("connection", "connection_availability_factor"), "availability_factor", ""),

@@ -10,7 +10,7 @@ To define a reserve node, the following parameters have to be defined for the re
 
 * [is\_reserve_node](@ref)  : this boolean parameter indicates that this node is a reserve node.
 * [upward\_reserve](@ref)   : this boolean parameter indicates that the demand for reserve provision of this node concerns upward reserves.
-* [downward\_reserve](@ref)  : this boolean parameter indicates that the demand for reserve provision of this node concerns downward reserves.
+* [reserve\_downward](@ref)  : this boolean parameter indicates that the demand for reserve provision of this node concerns downward reserves.
 * [reserve\_procurement\_cost](@ref): (optional) this parameter indicates the procurement cost of a unit for a certain reserve product and can be define on a [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship.
 
 ## Defining a reserve group
@@ -51,6 +51,6 @@ We need to consider the following parameters for the [minimum operating point](.
 
 This value means that the unit has a *25%* of its capacity as a minimum operating point (i.e., 25 MW). Therefore, the simplified version of the resulting constraint is:
 
- ``unit\_flow\_to\_electricity - downward\_reserve \geq 25 \cdot units\_on``
+ ``unit\_flow\_to\_electricity - reserve\_downward \geq 25 \cdot units\_on``
 
 Here, the downward reserve limits the flow to the electricity node to ensure that the minimum operating point of the unit is fulfilled.

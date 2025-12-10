@@ -1385,9 +1385,9 @@
         ],
         [
             "node",
-            "downward_reserve",
+            "reserve_downward",
             false,
-            null,
+            "boolean_value_list",
             "Identifier for `node`s providing downward reserves."
         ],
         [

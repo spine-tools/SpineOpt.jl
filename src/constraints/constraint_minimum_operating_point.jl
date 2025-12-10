@@ -31,7 +31,7 @@ v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[\neg p^{is\_reserve\_node}_{(n)}\right]
 - \sum_{
         n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{is\_reserve\_node}_{(n)} \land p^{downward\_reserve}_{(n)}\right] \\
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{is\_reserve\_node}_{(n)} \land p^{reserve\_downward}_{(n)}\right] \\
 & \ge p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot \left( v^{units\_on}_{(u,s,t)}
 - \sum_{
@@ -58,7 +58,7 @@ where
 
 See also
 [is\_reserve\_node](@ref),
-[downward\_reserve](@ref),
+[reserve\_downward](@ref),
 [is\_non\_spinning](@ref),
 [minimum\_operating\_point](@ref),
 [unit\_capacity](@ref),
@@ -89,7 +89,7 @@ function _build_constraint_minimum_operating_point(m::Model, u, ng, d, s_path, t
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_in_t(m, t_long=t)
             )
-            if is_reserve_node(node=n) && _switch(d; to_node=downward_reserve, from_node=upward_reserve)(node=n);
+            if is_reserve_node(node=n) && _switch(d; to_node=reserve_downward, from_node=upward_reserve)(node=n);
             init=0,
         )
         >=
