@@ -107,8 +107,8 @@ function _test_constraint_unit_reserves_setup()
         ["node__stochastic_structure", ["reserves_bc", "deterministic"]],
     ]
     object_parameter_values = [
-        ["node", "reserves_a", "is_reserve_node", true],
-        ["node", "reserves_bc", "is_reserve_node", true],
+        ["node", "reserves_a", "reserve_activate", true],
+        ["node", "reserves_bc", "reserve_activate", true],
     ]
     url_in = _test_constraint_unit_setup()
     SpineInterface.import_data(
@@ -1212,7 +1212,7 @@ function test_constraint_min_up_time_with_non_spinning_reserves()
             object_parameter_values = [
                 ["unit", "unit_ab", "min_up_time", min_up_time],
                 ["model", "instance", "model_end", model_end],
-                ["node", "node_a", "is_reserve_node", true],
+                ["node", "node_a", "reserve_activate", true],
                 ["node", "node_a", "is_non_spinning", true],
             ]
             relationship_parameter_values = [
@@ -1336,7 +1336,7 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
                 ["unit", "unit_ab", "existing_units", existing_units],
                 ["unit", "unit_ab", "min_down_time", min_down_time],
                 ["model", "instance", "model_end", model_end],
-                ["node", "node_a", "is_reserve_node", true],
+                ["node", "node_a", "reserve_activate", true],
                 ["node", "node_a", "is_non_spinning", true],
             ]
             relationships = [

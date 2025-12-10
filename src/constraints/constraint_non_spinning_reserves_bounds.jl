@@ -50,7 +50,7 @@ function _build_constraint_non_spinning_reserves_lower_bound(m::Model, u, ng, d,
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
             )
-            if is_reserve_node(node=n) && is_non_spinning(node=n);
+            if reserve_activate(node=n) && is_non_spinning(node=n);
             init=0,
         )
     )
@@ -85,7 +85,7 @@ function _build_constraint_non_spinning_reserves_upper_bound(m::Model, u, ng, d,
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)
             )
-            if is_reserve_node(node=n) && is_non_spinning(node=n);
+            if reserve_activate(node=n) && is_non_spinning(node=n);
             init=0,
         )
         <=
@@ -106,7 +106,7 @@ function constraint_non_spinning_reserves_bounds_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
-        if any(is_reserve_node(node=n) && is_non_spinning(node=n) for n in members(ng))
+        if any(reserve_activate(node=n) && is_non_spinning(node=n) for n in members(ng))
         for (t, path) in t_lowest_resolution_path(
             m,
             unit_flow_indices(m; unit=u, node=ng, direction=d),

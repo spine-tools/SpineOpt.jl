@@ -61,7 +61,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 - Locate the *Object parameter* table (typically at the top-center).
 - In the *Object parameter* table (typically at the top-center), select the following parameter as seen in the image below:
   - *demand* parameter and the *Base* alternative, and enter the value *20*. This will establish that there's a demand of '20' at the reverse node.
-  - *is\_reserve\_node* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
+  - *reserve\_activate* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
   - *reserve\_upward* parameter and the *Base* alternative, then right-click on the value cell and then, in the context menu, select 'Edit...' and select the option *True*. This will establish the direction of the reserve is upwards.
   - *node\_balance\_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
 

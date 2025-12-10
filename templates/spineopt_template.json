@@ -1483,7 +1483,7 @@
         ],
         [
             "node",
-            "is_reserve_node",
+            "reserve_activate",
             false,
             "boolean_value_list",
             "A boolean flag for whether a `node` is acting as a `reserve_node`."
@@ -1730,7 +1730,7 @@
             "reserve_upward",
             false,
             "boolean_value_list",
-            "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `is_reserve_node` is also set to `true`."
+            "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `reserve_activate` is also set to `true`."
         ],
         [
             "node",

@@ -131,7 +131,7 @@ The procurement costs for reserves provided by a specific unit can be accounted 
 & {res\_proc\_costs}
  = \sum_{(u,n,d,s,t)}
 v^{unit\_flow}_{(u, n, d, s, t)} \cdot p^{reserve\_procurement\_cost}_{(u,n,d,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t
-\cdot \left[p^{is\_reserve\_node}_{n}\right] \\
+\cdot \left[p^{reserve\_activate}_{n}\right] \\
 \end{aligned}
 ```
 where

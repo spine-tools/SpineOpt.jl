@@ -112,6 +112,7 @@ function major_upgrade_to_17(db_url, log_level)
         # node reserves
         (("node", "downward_reserve"), "reserve_downward", ""),
         (("node", "upward_reserve"), "reserve_upward", ""),
+        (("node", "is_reserve_node"), "reserve_activate", ""),
 
         # connection
         (("connection", "connection_availability_factor"), "availability_factor", ""),
