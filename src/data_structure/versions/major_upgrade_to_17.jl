@@ -208,6 +208,8 @@ function major_upgrade_to_17(db_url, log_level)
         (("connection__to_node", "fix_connection_intact_flow"), "flow_limits_fix_intact", ""),
         (("connection__from_node", "initial_connection_flow"), "flow_limits_initial", ""),
         (("connection__to_node", "initial_connection_flow"), "flow_limits_initial", ""),
+        (("connection__from_node", "initial_connection_intact_flow"), "flow_limits_initial_intact", ""),
+        (("connection__to_node", "initial_connection_intact_flow"), "flow_limits_initial_intact", ""),
 
         # temporal_block
         (("temporal_block", "representative_period_index"), "representative_block_index", ""),

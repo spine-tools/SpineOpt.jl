@@ -62,7 +62,7 @@ function add_variable_connection_intact_flow!(m::Model)
         connection_intact_flow_indices;
         lb=constant(0),
         fix_value=flow_limits_fix_intact,
-        initial_value=initial_connection_intact_flow,
+        initial_value=flow_limits_initial_intact,
         non_anticipativity_time=connection_intact_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_intact_flow_non_anticipativity_margin,
     )

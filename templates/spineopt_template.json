@@ -2207,10 +2207,10 @@
         ],
         [
             "connection__from_node",
-            "initial_connection_intact_flow",
+            "flow_limits_initial_intact",
             null,
             null,
-            "Initialize the value of the `connection_intact_flow` variable."
+            "Set the initial value for the `connection_intact_flow` variable."
         ],
         [
             "connection__from_node__user_constraint",
@@ -2371,10 +2371,10 @@
         ],
         [
             "connection__to_node",
-            "initial_connection_intact_flow",
+            "flow_limits_initial_intact",
             null,
             null,
-            "Initialize the value of the `connection_intact_flow` variable."
+            "Set the initial value for the `connection_intact_flow` variable."
         ],
         [
             "connection__to_node__user_constraint",
