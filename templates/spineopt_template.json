@@ -2193,10 +2193,10 @@
         ],
         [
             "connection__from_node",
-            "initial_binary_gas_connection_flow",
+            "binary_gas_flow_limits_initial",
             null,
             null,
-            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+            "Set the initial value for the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
         ],
         [
             "connection__from_node",
@@ -2357,10 +2357,10 @@
         ],
         [
             "connection__to_node",
-            "initial_binary_gas_connection_flow",
+            "binary_gas_flow_limits_initial",
             null,
             null,
-            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+            "Set the initial value for the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
         ],
         [
             "connection__to_node",
