@@ -2186,7 +2186,7 @@
         ],
         [
             "connection__from_node",
-            "fix_connection_intact_flow",
+            "flow_limits_fix_intact",
             null,
             null,
             "Fix the value of the `connection_intact_flow` variable."
@@ -2350,7 +2350,7 @@
         ],
         [
             "connection__to_node",
-            "fix_connection_intact_flow",
+            "flow_limits_fix_intact",
             null,
             null,
             "Fix the value of the `connection_intact_flow` variable."
