@@ -256,7 +256,7 @@ function _investment_term(m, uc, path, t)
         + sum(
             (
                 + storages_invested_available[n, s, t1]
-                * storages_invested_available_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
+                * coefficient_for_storages_invested_available(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
                 + storages_invested[n, s, t1]
                 * storages_invested_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
             )

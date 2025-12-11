@@ -109,7 +109,7 @@
             coefficient_for_connections_invested_available = 9
             coefficient_for_node_state = 10
             storages_invested_coefficient = 11
-            storages_invested_available_coefficient = 12
+            coefficient_for_storages_invested_available = 12
             coefficient_for_connection_flow_b = 13
             coefficient_for_connection_flow_c = 14
             objects = [["user_constraint", "constraint_x"]]
@@ -138,7 +138,7 @@
                 [relationships[4]..., "coefficient_for_connections_invested_available", coefficient_for_connections_invested_available],
                 [relationships[5]..., "coefficient_for_node_state", coefficient_for_node_state],
                 [relationships[5]..., "storages_invested_coefficient", storages_invested_coefficient],
-                [relationships[5]..., "storages_invested_available_coefficient", storages_invested_available_coefficient],
+                [relationships[5]..., "coefficient_for_storages_invested_available", coefficient_for_storages_invested_available],
                 [relationships[6]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_b],
                 [relationships[7]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_c],
             ]
@@ -183,7 +183,7 @@
                     + var_storages_invested[node(:node_c), s_parent, t2h1]
                     + var_storages_invested[node(:node_c), s_parent, t2h2]
                 )
-                + 2 * storages_invested_available_coefficient * (
+                + 2 * coefficient_for_storages_invested_available * (
                     + var_storages_invested_available[node(:node_c), s_parent, t2h1]
                     + var_storages_invested_available[node(:node_c), s_parent, t2h2]
                 )

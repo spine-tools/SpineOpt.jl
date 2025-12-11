@@ -2427,7 +2427,7 @@
         ],
         [
             "node__user_constraint",
-            "storages_invested_available_coefficient",
+            "coefficient_for_storages_invested_available",
             0.0,
             null,
             "Coefficient of the specified node's storages invested available variable in the specified user constraint."
