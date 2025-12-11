@@ -1546,13 +1546,6 @@
         ],
         [
             "node",
-            "node_availability_factor",
-            1.0,
-            null,
-            "Availability of the `node`, acting as a multiplier on its `node_state_cap`. Typically between 0-1."
-        ],
-        [
-            "node",
             "node_opf_type",
             "node_opf_type_normal",
             "node_opf_type_list",
