@@ -105,7 +105,7 @@
             units_started_up_coefficient = 5
             units_invested_coefficient = 6
             units_invested_available_coefficient = 7
-            connections_invested_coefficient = 8
+            coefficient_for_connections_invested = 8
             coefficient_for_connections_invested_available = 9
             node_state_coefficient = 10
             storages_invested_coefficient = 11
@@ -134,7 +134,7 @@
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
                 [relationships[3]..., "units_invested_coefficient", units_invested_coefficient],
                 [relationships[3]..., "units_invested_available_coefficient", units_invested_available_coefficient],
-                [relationships[4]..., "connections_invested_coefficient", connections_invested_coefficient],
+                [relationships[4]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
                 [relationships[4]..., "coefficient_for_connections_invested_available", coefficient_for_connections_invested_available],
                 [relationships[5]..., "node_state_coefficient", node_state_coefficient],
                 [relationships[5]..., "storages_invested_coefficient", storages_invested_coefficient],
@@ -175,7 +175,7 @@
                 + 4 * units_invested_coefficient * var_units_invested[unit(:unit_ab), s_parent, t4h1]
                 + 4 * units_invested_available_coefficient
                     * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
-                + 4 * connections_invested_coefficient
+                + 4 * coefficient_for_connections_invested
                     * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
                 + 4 * coefficient_for_connections_invested_available
                     * var_connections_invested_available[connection(:connection_bc), s_parent, t4h1]

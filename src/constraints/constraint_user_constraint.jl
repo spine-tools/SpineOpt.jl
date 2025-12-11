@@ -244,7 +244,7 @@ function _investment_term(m, uc, path, t)
                     m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1
                 )
                 + connections_invested[c, s, t1]
-                * connections_invested_coefficient(m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1)
+                * coefficient_for_connections_invested(m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1)
             )
             * min(duration(t1), duration(t))
             for c in connection__user_constraint(user_constraint=uc)

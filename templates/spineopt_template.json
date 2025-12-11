@@ -2381,14 +2381,14 @@
             "coefficient_for_connections_invested_available",
             0.0,
             null,
-            "coefficient of `connections_invested_available` in the specific `user_constraint`"
+            "Coefficient of `connections_invested_available` in the specific `user_constraint`"
         ],
         [
             "connection__user_constraint",
-            "connections_invested_coefficient",
+            "coefficient_for_connections_invested",
             0.0,
             null,
-            "coefficient of `connections_invested` in the specific `user_constraint`"
+            "Coefficient of `connections_invested` in the specific `user_constraint`"
         ],
         [
             "node__node",
