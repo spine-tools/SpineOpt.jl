@@ -197,6 +197,10 @@ function major_upgrade_to_17(db_url, log_level)
         (("unit__to_node", "start_up_limit"), "ramp_limits_startup", ""),
         (("node__to_unit", "start_up_limit"), "ramp_limits_startup", ""),
 
+        # connection__from_node and # connection__to_node #TODO: These might be reworked into node__connection__node later.
+        (("connection__from_node", "fix_binary_gas_connection_flow"), "binary_gas_flow_limits_fix", ""),
+        (("connection__to_node", "fix_binary_gas_connection_flow"), "binary_gas_flow_limits_fix", ""),
+
         # temporal_block
         (("temporal_block", "representative_period_index"), "representative_block_index", ""),
         (("temporal_block", "representative_periods_mapping"), "representative_blocks_by_period", ""),

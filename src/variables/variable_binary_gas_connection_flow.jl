@@ -59,7 +59,7 @@ function add_variable_binary_gas_connection_flow!(m::Model)
         :binary_gas_connection_flow,
         binary_gas_connection_flow_indices;
         bin=(x -> true),
-        fix_value=fix_binary_gas_connection_flow,
+        fix_value=binary_gas_flow_limits_fix,
         initial_value=initial_binary_gas_connection_flow,
     )
 end

@@ -2172,7 +2172,7 @@
         ],
         [
             "connection__from_node",
-            "fix_binary_gas_connection_flow",
+            "binary_gas_flow_limits_fix",
             null,
             null,
             "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
@@ -2336,7 +2336,7 @@
         ],
         [
             "connection__to_node",
-            "fix_binary_gas_connection_flow",
+            "binary_gas_flow_limits_fix",
             null,
             null,
             "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
