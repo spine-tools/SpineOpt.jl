@@ -2420,7 +2420,7 @@
         ],
         [
             "node__user_constraint",
-            "node_state_coefficient",
+            "coefficient_for_node_state",
             0.0,
             null,
             "Coefficient of the specified node's state variable in the specified user constraint."

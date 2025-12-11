@@ -177,6 +177,7 @@ function major_upgrade_to_17(db_url, log_level)
 
         # node__user_constraint
         (("node__user_constraint", "demand_coefficient"), "coefficient_for_demand", ""),
+        (("node__user_constraint", "node_state_coefficient"), "coefficient_for_node_state", ""),
 
         # unit__to_node and node__to_unit, new temporary and renamed classes!
         (("unit__to_node", "fix_unit_flow"), "flow_limits_fix", ""),

@@ -1316,7 +1316,7 @@ function test_constraint_user_constraint_node_connection()
             unit_flow_coefficient = 25
             coefficient_for_connection_flow = 25
             coefficient_for_demand = 45
-            node_state_coefficient = 55
+            coefficient_for_node_state = 55
             units_on_coefficient = 20
             units_started_up_coefficient = 35
             demand = 150
@@ -1342,7 +1342,7 @@ function test_constraint_user_constraint_node_connection()
                 [relationships[2]..., "units_started_up_coefficient", units_started_up_coefficient],
                 [relationships[3]..., "coefficient_for_connection_flow", coefficient_for_connection_flow],
                 [relationships[4]..., "coefficient_for_demand", coefficient_for_demand],
-                [relationships[4]..., "node_state_coefficient", node_state_coefficient],
+                [relationships[4]..., "coefficient_for_node_state", coefficient_for_node_state],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1374,7 +1374,7 @@ function test_constraint_user_constraint_node_connection()
                     + var_units_started_up[unit(:unit_c), s_parent, t1h1]
                     + var_units_started_up[unit(:unit_c), s_child, t1h2]
                 )
-                + 2 * node_state_coefficient * var_node_state[node(:node_b), s_parent, t2h]
+                + 2 * coefficient_for_node_state * var_node_state[node(:node_b), s_parent, t2h]
                 + 2 * coefficient_for_demand * demand,
                 Symbol(sense),
                 2 * rhs,

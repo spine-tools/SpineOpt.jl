@@ -45,7 +45,7 @@ For more information, see the dedicated article on [User Constraints](@ref)
 &+\sum_{u} p^{units\_started\_up\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_started\_up}_{(u,s,t)} \\
 &+\sum_{u} p^{units\_on\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
 &+\sum_{c} p^{coefficient\_for\_connection\_flow}_{(c,n,uc,s,t)} \cdot v^{connection\_flow}_{(c,n,d,s,t)} \\
-&+\sum_{n} p^{node\_state\_coefficient}_{(n,uc,s,t)} \cdot v^{node\_state}_{(n,s,t)} \\
+&+\sum_{n} p^{coefficient\_for\_node\_state}_{(n,uc,s,t)} \cdot v^{node\_state}_{(n,s,t)} \\
 &+\sum_{n} p^{coefficient\_for\_demand}_{(n,uc,s,t)} \cdot p^{demand}_{(n,s,t)} \\
 & \begin{cases}  
        = &\text{if } p^{constraint\_sense}_{(uc)} \text{= "=="}\\
@@ -189,9 +189,9 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + node_state[n, s, t_short]
-            * node_state_coefficient(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t_short)
+            * coefficient_for_node_state(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t_short)
             * duration(t_short)
-            for n in indices(node_state_coefficient; user_constraint=uc)
+            for n in indices(coefficient_for_node_state; user_constraint=uc)
             for (n, s, t_short) in node_state_indices(m; node=n, stochastic_scenario=path, t=t_in_t(m; t_long=t));
             init=0,
         )

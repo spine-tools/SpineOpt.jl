@@ -107,7 +107,7 @@
             units_invested_available_coefficient = 7
             coefficient_for_connections_invested = 8
             coefficient_for_connections_invested_available = 9
-            node_state_coefficient = 10
+            coefficient_for_node_state = 10
             storages_invested_coefficient = 11
             storages_invested_available_coefficient = 12
             coefficient_for_connection_flow_b = 13
@@ -136,7 +136,7 @@
                 [relationships[3]..., "units_invested_available_coefficient", units_invested_available_coefficient],
                 [relationships[4]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
                 [relationships[4]..., "coefficient_for_connections_invested_available", coefficient_for_connections_invested_available],
-                [relationships[5]..., "node_state_coefficient", node_state_coefficient],
+                [relationships[5]..., "coefficient_for_node_state", coefficient_for_node_state],
                 [relationships[5]..., "storages_invested_coefficient", storages_invested_coefficient],
                 [relationships[5]..., "storages_invested_available_coefficient", storages_invested_available_coefficient],
                 [relationships[6]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_b],
@@ -215,7 +215,7 @@
                     + var_connection_flow[key_cf_c..., s_parent, t1h3]
                     + var_connection_flow[key_cf_c..., s_parent, t1h4]
                 )
-                + node_state_coefficient * (
+                + coefficient_for_node_state * (
                     + var_node_state[node(:node_c), s_parent, t1h1]
                     + var_node_state[node(:node_c), s_parent, t1h2]
                     + var_node_state[node(:node_c), s_parent, t1h3]
@@ -231,7 +231,7 @@
     end
     @testset "constraint_user_constraint_slack_penalty" begin
         rhs = 10
-        node_state_coefficient = 10
+        coefficient_for_node_state = 10
         penalty = 1000
         @testset for sense in ("==", ">=", "<=")
             _load_test_data(url_in, test_data)
@@ -243,7 +243,7 @@
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
-                [relationships[1]..., "node_state_coefficient", node_state_coefficient],
+                [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -267,7 +267,7 @@
             for (t2h, t1h_arr) in t1h_arr_by_t2h
                 obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t2h)])
                 exp_con = SpineOpt.build_sense_constraint(
-                    node_state_coefficient * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
+                    coefficient_for_node_state * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
                     + var_uc_slack_pos[ucx, parent, t2h] - var_uc_slack_neg[ucx, parent, t2h]
                     ,
                     Symbol(sense),
