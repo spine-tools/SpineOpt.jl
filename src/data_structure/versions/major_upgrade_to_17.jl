@@ -273,7 +273,21 @@ function major_upgrade_to_17(db_url, log_level)
         (("unit__node__node", "max_units_on_coefficient_in_in"), 
             ("unit_flow__unit_flow", "constraint_less_than_online_coefficient", [2, 1, 3, 1])),
         (("unit__node__node", "max_units_on_coefficient_out_out"), 
-            ("unit_flow__unit_flow", "constraint_less_than_online_coefficient", [1, 2, 1, 3]))
+            ("unit_flow__unit_flow", "constraint_less_than_online_coefficient", [1, 2, 1, 3])),
+
+        # Unit__node__node startup flows
+        # This parameter was only ever apparantly meant for input-output dimensions:
+        (("unit__node__node", "unit_start_flow"),
+            ("unit_flow__unit_flow", "unit_start_flow", [2, 1, 1, 3])),
+        #=
+        # Uncomment in case anyone ever needs to enable the "full migration" despite resulting in duplicate values.
+        (("unit__node__node", "unit_start_flow"),
+            ("unit_flow__unit_flow", "unit_start_flow", [2, 1, 3, 1])),
+        (("unit__node__node", "unit_start_flow"),
+            ("unit_flow__unit_flow", "unit_start_flow", [1, 2, 3, 1])),
+        (("unit__node__node", "unit_start_flow"),
+            ("unit_flow__unit_flow", "unit_start_flow", [1, 2, 1, 3])),
+        =#
     ]
 
     # original class,
