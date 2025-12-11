@@ -2413,10 +2413,10 @@
         ],
         [
             "node__user_constraint",
-            "demand_coefficient",
+            "coefficient_for_demand",
             0.0,
             null,
-            "coefficient of the specified node's demand in the specified user constraint"
+            "Coefficient of the specified node's demand in the specified user constraint."
         ],
         [
             "node__user_constraint",

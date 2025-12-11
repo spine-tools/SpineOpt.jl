@@ -6,4 +6,4 @@ When the node is part of a group, the [demand\_fraction](@ref) parameter can be 
 when desired. See also: [Introduction to groups of objects](@ref)
 
 The [demand](@ref) parameter can also be included in custom [user\_constraint](@ref)s
-using the [demand\_coefficient](@ref) parameter for the [node\_\_user\_constraint](@ref) relationship.
+using the [coefficient\_for\_demand](@ref) parameter for the [node\_\_user\_constraint](@ref) relationship.

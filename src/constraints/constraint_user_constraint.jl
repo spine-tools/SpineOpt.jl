@@ -46,7 +46,7 @@ For more information, see the dedicated article on [User Constraints](@ref)
 &+\sum_{u} p^{units\_on\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
 &+\sum_{c} p^{coefficient\_for\_connection\_flow}_{(c,n,uc,s,t)} \cdot v^{connection\_flow}_{(c,n,d,s,t)} \\
 &+\sum_{n} p^{node\_state\_coefficient}_{(n,uc,s,t)} \cdot v^{node\_state}_{(n,s,t)} \\
-&+\sum_{n} p^{demand\_coefficient}_{(n,uc,s,t)} \cdot p^{demand}_{(n,s,t)} \\
+&+\sum_{n} p^{coefficient\_for\_demand}_{(n,uc,s,t)} \cdot p^{demand}_{(n,s,t)} \\
 & \begin{cases}  
        = &\text{if } p^{constraint\_sense}_{(uc)} \text{= "=="}\\
        \geq &\text{if } p^{constraint\_sense}_{(uc)} \text{= ">="}\\
@@ -197,7 +197,7 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + demand(m; node=n, stochastic_scenario=s, t=t)
-            * demand_coefficient(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t)
+            * coefficient_for_demand(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t)
             * duration(t_short)
             for n in node__user_constraint(user_constraint=uc)
             for (ns, s, t_short) in node_stochastic_time_indices(
