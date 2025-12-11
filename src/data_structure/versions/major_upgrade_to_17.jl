@@ -215,6 +215,9 @@ function major_upgrade_to_17(db_url, log_level)
         (("connection__from_node__user_constraint", "connection_flow_coefficient"), "coefficient_for_connection_flow", ""),
         (("connection__to_node__user_constraint", "connection_flow_coefficient"), "coefficient_for_connection_flow", ""),
 
+        # connection__user_constraint
+        (("connection__user_constraint", "connections_invested_available_coefficient"), "coefficient_for_connections_invested_available", ""),
+
         # temporal_block
         (("temporal_block", "representative_period_index"), "representative_block_index", ""),
         (("temporal_block", "representative_periods_mapping"), "representative_blocks_by_period", ""),

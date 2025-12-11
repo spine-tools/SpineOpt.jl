@@ -240,7 +240,7 @@ function _investment_term(m, uc, path, t)
         + sum(
             (
                 + connections_invested_available[c, s, t1]
-                * connections_invested_available_coefficient(
+                * coefficient_for_connections_invested_available(
                     m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1
                 )
                 + connections_invested[c, s, t1]

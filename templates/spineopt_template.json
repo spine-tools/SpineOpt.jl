@@ -2378,7 +2378,7 @@
         ],
         [
             "connection__user_constraint",
-            "connections_invested_available_coefficient",
+            "coefficient_for_connections_invested_available",
             0.0,
             null,
             "coefficient of `connections_invested_available` in the specific `user_constraint`"

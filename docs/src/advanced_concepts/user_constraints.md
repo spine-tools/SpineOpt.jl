@@ -27,4 +27,4 @@ User constraints allow the user to define arbitrary linear constraints involving
 |`units_invested`                         |[unit\_\_user\_constraint](@ref)                       |[units\_invested\_coefficient](@ref)             |
 |`units_invested_available`               |[unit\_\_user\_constraint](@ref)                       |[units\_invested\_available\_coefficient](@ref)  |
 |`connections_invested`                   |[connection\_\_user\_constraint](@ref)                 |[connections\_invested\_coefficient](@ref)       |
-|`connections_invested_available`         |[connection\_\_user\_constraint](@ref)                 |[connections\_invested\_available\_coefficient](@ref)|
+|`connections_invested_available`         |[connection\_\_user\_constraint](@ref)                 |[coefficient\_for\_connections\_invested\_available](@ref)|
