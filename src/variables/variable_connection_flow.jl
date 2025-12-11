@@ -116,7 +116,7 @@ function add_variable_connection_flow!(m::Model)
         lb=connection_flow_lb,
         ub=connection_flow_ub,
         fix_value=flow_limits_fix,
-        initial_value=initial_connection_flow,
+        initial_value=flow_limits_initial,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
         required_history_period=maximum_parameter_value(connection_flow_delay),

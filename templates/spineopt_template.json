@@ -2200,10 +2200,10 @@
         ],
         [
             "connection__from_node",
-            "initial_connection_flow",
+            "flow_limits_initial",
             null,
             null,
-            "Initialize the value of the `connection_flow` variable."
+            "Set the initial value for the `connection_flow` variable."
         ],
         [
             "connection__from_node",
@@ -2364,10 +2364,10 @@
         ],
         [
             "connection__to_node",
-            "initial_connection_flow",
+            "flow_limits_initial",
             null,
             null,
-            "Initialize the value of the `connection_flow` variable."
+            "Set the initial value for the `connection_flow` variable."
         ],
         [
             "connection__to_node",
