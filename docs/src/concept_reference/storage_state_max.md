@@ -1,6 +1,6 @@
 The [storage\_state\_max](@ref) parameter represents the maximum allowed value for the `node_state` variable.
 Note that in order for a [node](@ref) to have a `node_state` variable in the first place,
-the [storage\_activate](@ref) parameter must be set to `true`.
+the [storage\_active](@ref) parameter must be set to `true`.
 However, if the [node](@ref) has storage investments enabled using the [storage\_investment\_count\_max\_cumulative](@ref) parameter,
 the [storage\_state\_max](@ref) parameter acts as a coefficient for the `storages_invested_available` variable.
 Essentially, with investments,

@@ -4,8 +4,8 @@ the fraction of the pre-contingency flow on the first one, that will flow on the
 Any value below this tolerance (in absolute value) will be treated as zero.
 
 The LODFs are used to model contingencies on some [connection](@ref)s and their impact on some other [connection](@ref)s.
-To model contingencies on a [connection](@ref), set [contingency\_activate](@ref) to `true`;
-to study the impact of such contingencies on another [connection](@ref), set [monitoring\_activate](@ref) to `true`.
+To model contingencies on a [connection](@ref), set [contingency\_active](@ref) to `true`;
+to study the impact of such contingencies on another [connection](@ref), set [monitoring\_active](@ref) to `true`.
 
 In addition, define a [grid](@ref) with [physics\_type](@ref) set to [lodf\_physics](@ref grid_physics_list),
 and associate that [grid](@ref) (via [node\_\_grid](@ref)) to both [connection](@ref)s' [node](@ref)s

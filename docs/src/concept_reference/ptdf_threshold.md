@@ -4,7 +4,7 @@ is the fraction of the flow injected into the [node](@ref) that will flow on the
 Any value below this threshold (in absolute value) will be treated as zero.
 
 The PTDFs are used to model DC power flow on certain [connection](@ref)s.
-To model DC power flow on a [connection](@ref), set [monitoring\_activate](@ref) to `true`.
+To model DC power flow on a [connection](@ref), set [monitoring\_active](@ref) to `true`.
 
 In addition, define a [grid](@ref) with [physics\_type](@ref) set to either [ptdf\_physics](@ref grid_physics_list),
 or [lodf\_physics](@ref grid_physics_list).

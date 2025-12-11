@@ -127,16 +127,16 @@ Write `lodf` parameter values to a `lodsfs.csv` file.
 function write_lodfs()
     io = open("lodfs.csv", "w")
     print(io, raw"contingency line,from_node,to node,")
-    for conn_mon in connection(monitoring_activate=true)
+    for conn_mon in connection(monitoring_active=true)
         print(io, string(conn_mon), ",")
     end
     print(io, "\n")
-    for conn_cont in connection(contingency_activate=true)
+    for conn_cont in connection(contingency_active=true)
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the lodf calculation
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
-        for conn_mon in connection(monitoring_activate=true)
+        for conn_mon in connection(monitoring_active=true)
             print(io, ",")
             for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon)
                 print(io, lodf(connection1=conn_cont, connection2=conn_mon))

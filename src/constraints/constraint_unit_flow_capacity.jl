@@ -31,12 +31,12 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 & \sum_{
         n \in ng
 }
-    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{reserve\_activate}_{(n)} \right]\\
+    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{reserve\_active}_{(n)} \right]\\
 & + \sum_{
         n \in ng
 }
     v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[
-        p^{reserve\_activate}_{(n)} \land p^{reserve\_upward}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
+        p^{reserve\_active}_{(n)} \land p^{reserve\_upward}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
     \right]\\
 & \le \\
 & p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
@@ -79,7 +79,7 @@ where
     The details are omitted for brevity.
 
 See also
-[reserve\_activate](@ref),
+[reserve\_active](@ref),
 [reserve\_upward](@ref),
 [is\_non\_spinning](@ref),
 [unit\_capacity](@ref),
@@ -89,7 +89,7 @@ See also
 [ramp\_limits\_shutdown](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    if tight_compact_formulations_activate(model=m.ext[:spineopt].instance, _default=false)
+    if tight_compact_formulations_active(model=m.ext[:spineopt].instance, _default=false)
         _add_constraint_unit_flow_capacity_tight_compact!(m)
     else
         _add_constraint_unit_flow_capacity_simple!(m)
@@ -299,8 +299,8 @@ function constraint_unit_flow_capacity_indices(m::Model)
 end
 
 function _is_regular_node(n, d)
-    !reserve_activate(node=n) || (
-        reserve_activate(node=n)
+    !reserve_active(node=n) || (
+        reserve_active(node=n)
         && _switch(d; to_node=reserve_upward, from_node=reserve_downward)(node=n)
         && !is_non_spinning(node=n)
     )

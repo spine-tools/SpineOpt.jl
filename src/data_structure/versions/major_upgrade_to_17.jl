@@ -63,11 +63,11 @@ function major_upgrade_to_17(db_url, log_level)
         (("unit", "initial_units_invested_available"), "investment_count_initial_cumulative", ""),
         # unit mga
         (("unit", "units_invested_big_m_mga"), "mga_investment_big_m", ""),
-        (("unit", "units_invested_mga"), "mga_investment_activate", ""),
+        (("unit", "units_invested_mga"), "mga_investment_active", ""),
         (("unit", "units_invested_mga_weight"), "mga_investment_weight", ""),
 
         # node
-        (("node", "has_state"), "storage_activate", ""),
+        (("node", "has_state"), "storage_active", ""),
         (("node", "fractional_demand"), "demand_fraction", ""),
         (("node", "min_capacity_margin"), "capacity_margin_min", ""),
         (("node", "min_capacity_margin_penalty"), "capacity_margin_penalty", ""),
@@ -78,7 +78,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "number_of_storages"), "existing_storages", ""),
         (("node", "state_coeff"), "storage_state_coefficient", ""),
         (("node", "storage_fom_cost"), "storage_fixed_annual_cost", ""),
-        (("node", "is_longterm_storage"), "storage_longterm_activate", ""),
+        (("node", "is_longterm_storage"), "storage_longterm_active", ""),
         # node storage limits
         (("node", "fix_node_state"), "storage_state_fix", ""),
         (("node", "initial_node_state"), "storage_state_initial", ""),
@@ -108,22 +108,22 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "initial_storages_invested_available"), "storage_investment_count_initial_cumulative", ""),
         # node storage mga
         (("node", "storages_invested_big_m_mga"), "mga_storage_investment_big_m", ""),
-        (("node", "storages_invested_mga"), "mga_storage_investment_activate", ""),
+        (("node", "storages_invested_mga"), "mga_storage_investment_active", ""),
         (("node", "storages_invested_mga_weight"), "mga_storage_investment_weight", ""),
         # node reserves
         (("node", "downward_reserve"), "reserve_downward", ""),
         (("node", "upward_reserve"), "reserve_upward", ""),
-        (("node", "is_reserve_node"), "reserve_activate", ""),
+        (("node", "is_reserve_node"), "reserve_active", ""),
 
         # connection
         (("connection", "connection_availability_factor"), "availability_factor", ""),
-        (("connection", "connection_contingency"), "contingency_activate", ""),
-        (("connection", "connection_monitored"), "monitoring_activate", ""),
+        (("connection", "connection_contingency"), "contingency_active", ""),
+        (("connection", "connection_monitored"), "monitoring_active", ""),
         (("connection", "connection_reactance"), "reactance", ""),
         (("connection", "connection_reactance_base"), "reactance_base", ""),
         (("connection", "connection_resistance"), "resistance", ""),
         (("connection", "number_of_connections"), "existing_connections", ""),
-        (("connection", "has_binary_gas_flow"), "binary_gas_flow_activate", ""),
+        (("connection", "has_binary_gas_flow"), "binary_gas_flow_active", ""),
         # connection installing and decommissioning
         (("connection", "connection_decommissioning_cost"), "decommissioning_cost", ""),
         (("connection", "connection_decommissioning_time"), "decommissioning_time", ""),
@@ -141,7 +141,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("connection", "initial_connections_invested_available"), "investment_count_initial_cumulative", ""),
         # connection mga
         (("connection", "connections_invested_big_m_mga"), "mga_investment_big_m", ""),
-        (("connection", "connections_invested_mga"), "mga_investment_activate", ""),
+        (("connection", "connections_invested_mga"), "mga_investment_active", ""),
         (("connection", "connections_invested_mga_weight"), "mga_investment_weight", ""),
 
         # commodity
@@ -151,7 +151,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("commodity", "commodity_ptdf_threshold"), "ptdf_threshold", ""),
 
         # investment_group
-        (("investment_group", "equal_investments"), "equal_investments_activate", ""),
+        (("investment_group", "equal_investments"), "equal_investments_active", ""),
         (("investment_group", "maximum_capacity_invested_available"), "investment_capacity_total_max_cumulative", ""),
         (("investment_group", "maximum_entities_invested_available"), "investment_count_total_max_cumulative", ""),
         (("investment_group", "minimum_capacity_invested_available"), "investment_capacity_total_min_cumulative", ""),
@@ -167,10 +167,10 @@ function major_upgrade_to_17(db_url, log_level)
         (("model", "max_mga_iterations"), "mga_max_iterations", ""),
         (("model", "max_mga_slack"), "mga_max_slack", ""),
         (("model", "min_iterations"), "decomposition_min_iterations", ""),
-        (("model", "report_benders_iterations"), "benders_iterations_reporting_activate", ""),
-        (("model", "use_connection_intact_flow"), "connection_investment_power_flow_impact_activate", ""),
-        (("model", "use_highest_resolution_constraint_ratio_out_in_connection_flow"), "connection_flow_highest_resolution_activate", ""),
-        (("model", "use_tight_compact_formulations"), "tight_compact_formulations_activate", ""),
+        (("model", "report_benders_iterations"), "benders_iterations_reporting_active", ""),
+        (("model", "use_connection_intact_flow"), "connection_investment_power_flow_impact_active", ""),
+        (("model", "use_highest_resolution_constraint_ratio_out_in_connection_flow"), "connection_flow_highest_resolution_active", ""),
+        (("model", "use_tight_compact_formulations"), "tight_compact_formulations_active", ""),
 
         # node__node
         (("node__node", "diff_coeff"), "diffusion_coefficient", ""),

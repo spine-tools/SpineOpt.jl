@@ -108,33 +108,33 @@ function _add_mga_iteration(k)
 end
 
 function units_invested_mga_indices()
-    unique((unit=ug,) for ug in unit(mga_investment_activate=true))
+    unique((unit=ug,) for ug in unit(mga_investment_active=true))
 end
 
 function units_invested_mga_indices(mga_iteration)
-    unique((unit=ug, mga_iteration=mga_it) for ug in unit(mga_investment_activate=true) for mga_it in mga_iteration)
+    unique((unit=ug, mga_iteration=mga_it) for ug in unit(mga_investment_active=true) for mga_it in mga_iteration)
 end
 
 function connections_invested_mga_indices()
-    unique((connection=cg,) for cg in connection(mga_investment_activate=true))
+    unique((connection=cg,) for cg in connection(mga_investment_active=true))
 end
 
 function connections_invested_mga_indices(mga_iteration)
     unique(
         (connection=cg, mga_iteration=mga_it)
-        for cg in connection(mga_investment_activate=true)
+        for cg in connection(mga_investment_active=true)
         for mga_it in mga_iteration
     )
 end
 
 function storages_invested_mga_indices()
-    unique((node=ng,) for ng in node(mga_storage_investment_activate=true))
+    unique((node=ng,) for ng in node(mga_storage_investment_active=true))
 end
 
 function storages_invested_mga_indices(mga_iteration)
     unique(
         (node=ng, mga_iteration=mga_it)
-        for ng in node(mga_storage_investment_activate=true)
+        for ng in node(mga_storage_investment_active=true)
         for mga_it in mga_iteration
     )
 end

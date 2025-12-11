@@ -100,12 +100,12 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
         ["grid", "electricity", "physics_type", "lodf_physics"],
         ["node", nodes_to[1], "node_opf_type", "node_opf_type_reference"],
-        ["node", "reserve", "reserve_activate", true],
+        ["node", "reserve", "reserve_active", true],
         ["node", "reserve", "reserve_upward", true],
     ]
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes_to))
     append!(obj_pvs, (["node", n, "storage_state_max", 10] for n in nodes_to))
-    append!(obj_pvs, (["node", n, "storage_activate", true] for n in nodes_to))
+    append!(obj_pvs, (["node", n, "storage_active", true] for n in nodes_to))
     append!(obj_pvs, (["connection", c, "connection_type", "connection_type_lossless_bidirectional"] for c in conns))
     append!(obj_pvs, (["connection", c, "reactance", 0.1] for c in conns))
     append!(obj_pvs, (["unit", u, "min_up_time", Dict("type" => "duration", "data" => "8h")] for u in units))

@@ -46,7 +46,7 @@ See also
 [unit\_\_to\_node](@ref),
 [demand](@ref),
 [demand\_fraction](@ref),
-[storage\_activate](@ref)
+[storage\_active](@ref)
 
 """
 
@@ -143,5 +143,5 @@ end
 Whether the unit u is attached to a node with storage or not.
 """
 function is_storage_unit(u)
-    any(storage_activate(node=n) for n in unit__node__direction(unit=u, direction=direction(:from_node)))
+    any(storage_active(node=n) for n in unit__node__direction(unit=u, direction=direction(:from_node)))
 end

@@ -1,5 +1,5 @@
 The [storage\_self\_discharge](@ref) parameter allows setting self-discharge losses for [node](@ref)s
-with the `node_state` variables enabled using the [storage\_activate](@ref) parameter.
+with the `node_state` variables enabled using the [storage\_active](@ref) parameter.
 Effectively, the [storage\_self\_discharge](@ref) parameter acts as a coefficient on the `node_state` variable in the
 [node injection constraint](@ref constraint_node_injection), imposing losses for the [node](@ref).
 In simple cases, storage losses are typically fractional,

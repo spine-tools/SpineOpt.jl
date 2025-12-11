@@ -25,13 +25,13 @@ A set of tuples for indexing the `node_state` variable where filtering options c
 for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
-    node = intersect(node, SpineOpt.node(storage_activate=true))
+    node = intersect(node, SpineOpt.node(storage_active=true))
     (
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(
             m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
-        if storage_longterm_activate(node=n) || _is_representative(t)
+        if storage_longterm_active(node=n) || _is_representative(t)
     )
 end
 

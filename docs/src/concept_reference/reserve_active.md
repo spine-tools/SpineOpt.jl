@@ -1,4 +1,4 @@
-By setting the parameter [reserve\_activate](@ref) to `true`, a node is treated as a
+By setting the parameter [reserve\_active](@ref) to `true`, a node is treated as a
 reserve [node](@ref) in the model. Units that are linked through a [unit\_\_to\_node](@ref)
 relationship will be able to provide balancing services to the reserve node, but
 within their technical feasibility. The mathematical formulation holds a chapter on [Reserve constraints](@ref)

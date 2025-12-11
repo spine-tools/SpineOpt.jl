@@ -50,7 +50,7 @@ from investment connections that are not invested in.
 ```
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
-    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_active(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :connection_flow_intact_flow,
@@ -104,7 +104,7 @@ end
 function constraint_connection_flow_intact_flow_indices(m::Model)
     (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
-        for conn in connection(monitoring_activate=true, has_ptdf=true, is_candidate=false)
+        for conn in connection(monitoring_active=true, has_ptdf=true, is_candidate=false)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (t, path) in t_lowest_resolution_path(
             m, 

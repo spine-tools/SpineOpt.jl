@@ -38,7 +38,7 @@ n \in ng
 ```
 """
 function add_constraint_connection_intact_flow_capacity!(m::Model)
-    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_active(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :connection_intact_flow_capacity,

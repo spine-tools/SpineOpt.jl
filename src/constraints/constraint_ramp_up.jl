@@ -25,14 +25,14 @@ to the [ramp\_limits\_startup](@ref) and [ramp\_limits\_up](@ref) parameter valu
 ```math
 \begin{aligned}
 & \frac{\sum_{n \in ng, \: t' \in overlapping(t)}
-v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ \neg p^{reserve\_activate}_{(n)} \right] }{\Delta(overlapping(t))} \\
+v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ \neg p^{reserve\_active}_{(n)} \right] }{\Delta(overlapping(t))} \\
 
 & - \frac{\sum_{n \in ng, \: t' \in overlapping(t-1)}
-v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t-1)  \cdot \left[ \neg p^{reserve\_activate}_{(n)} \right] }{\Delta(overlapping(t-1))} \\
+v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t-1)  \cdot \left[ \neg p^{reserve\_active}_{(n)} \right] }{\Delta(overlapping(t-1))} \\
 
 & + \frac{\sum_{
         n \in ng, \: t' \in overlapping(t)}
-v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{reserve\_activate}_{(n)} \land p^{reserve\_upward}_{(n)} \right]}{\Delta(overlapping(t))} \\
+v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{reserve\_active}_{(n)} \land p^{reserve\_upward}_{(n)} \right]}{\Delta(overlapping(t))} \\
 
 & \le ( \\
 
@@ -75,7 +75,7 @@ Here``overlapping(t)`` is the set of time slices which overlap ``t``, and
 ``t'\cap t`` is the intersection of time slices ``t'`` and ``t``. 
 
 See also
-[reserve\_activate](@ref),
+[reserve\_active](@ref),
 [reserve\_upward](@ref),
 [unit\_capacity](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
@@ -117,7 +117,7 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
             for (u, n, d, s, t) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
             )
-            if !reserve_activate(node=n);
+            if !reserve_active(node=n);
             init=0,
         ) / overlap_duration_flow(t_after)
         - sum(
@@ -125,7 +125,7 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
             for (u, n, d, s, t) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_before)
             )
-            if !reserve_activate(node=n);
+            if !reserve_active(node=n);
             init=0,
         ) / overlap_duration_flow(t_before)
         + sum(
@@ -133,7 +133,7 @@ function _build_constraint_ramp_up(m::Model, u, ng, d, s_path, t_before, t_after
             for (u, n, d, s, t) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t_after)
             )
-            if reserve_activate(node=n)
+            if reserve_active(node=n)
             && _switch(d; to_node=reserve_upward, from_node=reserve_downward)(node=n)
             && !is_non_spinning(node=n);
             init=0,

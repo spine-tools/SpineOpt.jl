@@ -27,11 +27,11 @@ input or output nodes/node groups.
 & \sum_{
         n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[\neg p^{reserve\_activate}_{(n)}\right]
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[\neg p^{reserve\_active}_{(n)}\right]
 - \sum_{
         n \in ng
 }
-v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{reserve\_activate}_{(n)} \land p^{reserve\_downward}_{(n)}\right] \\
+v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{reserve\_active}_{(n)} \land p^{reserve\_downward}_{(n)}\right] \\
 & \ge p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot \left( v^{units\_on}_{(u,s,t)}
 - \sum_{
@@ -57,7 +57,7 @@ where
     The details are omitted for brevity.
 
 See also
-[reserve\_activate](@ref),
+[reserve\_active](@ref),
 [reserve\_downward](@ref),
 [is\_non\_spinning](@ref),
 [minimum\_operating\_point](@ref),
@@ -81,7 +81,7 @@ function _build_constraint_minimum_operating_point(m::Model, u, ng, d, s_path, t
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_in_t(m, t_long=t)
             )
-            if !reserve_activate(node=n);
+            if !reserve_active(node=n);
             init=0,
         )
         - sum(
@@ -89,7 +89,7 @@ function _build_constraint_minimum_operating_point(m::Model, u, ng, d, s_path, t
             for (u, n, d, s, t_short) in unit_flow_indices(
                 m; unit=u, node=ng, direction=d, stochastic_scenario=s_path, t=t_in_t(m, t_long=t)
             )
-            if reserve_activate(node=n) && _switch(d; to_node=reserve_downward, from_node=reserve_upward)(node=n);
+            if reserve_active(node=n) && _switch(d; to_node=reserve_downward, from_node=reserve_upward)(node=n);
             init=0,
         )
         >=

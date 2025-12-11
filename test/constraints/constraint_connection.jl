@@ -193,7 +193,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
             ["connection__to_node", ["connection_ab", "node_a"]],
             ["connection__to_node", ["connection_ab", "node_a_bis"]],
         ]
-        object_parameter_values = [["model", "instance", "tight_compact_formulations_activate", true]]
+        object_parameter_values = [["model", "instance", "tight_compact_formulations_active", true]]
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_group_a"], "connection_capacity", conn_cap_from_a],
             ["connection__to_node", ["connection_ab", "node_group_a"], "connection_capacity", conn_cap_to_a],
@@ -242,7 +242,7 @@ function test_constraint_connection_flow_capacity_bidirectional()
         object_parameter_values = [
             ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
             ["connection", "connection_ab", "investment_count_max_cumulative", 1],
-            ["model", "instance", "tight_compact_formulations_activate", true],
+            ["model", "instance", "tight_compact_formulations_active", true],
         ]
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_from_a],
@@ -290,7 +290,7 @@ function test_constraint_connection_flow_gas_capacity()
         relationships = [["connection__node__node", [ "connection_ca", "node_c", "node_a"]]]
         fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         object_parameter_values = [
-            ["connection", "connection_ca", "binary_gas_flow_activate", binary["connection_ca"]],
+            ["connection", "connection_ca", "binary_gas_flow_active", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values = [
@@ -363,7 +363,7 @@ function test_constraint_fix_node_pressure_point()
         )
         object_parameter_values = [
             ["grid", "gas", "physics_type", "pressure_physics"],
-            ["connection", "connection_ca", "binary_gas_flow_activate", binary["connection_ca"]],
+            ["connection", "connection_ca", "binary_gas_flow_active", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values = [
@@ -443,7 +443,7 @@ function test_constraint_connection_unitary_gas_flow()
             ]
         fixed_pr_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         object_parameter_values = [
-            ["connection", "connection_ca", "binary_gas_flow_activate", binary["connection_ca"]],
+            ["connection", "connection_ca", "binary_gas_flow_active", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values = [
@@ -574,13 +574,13 @@ function test_constraint_connection_intact_flow_ptdf()
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
@@ -658,18 +658,18 @@ function test_constraint_connection_flow_lodf()
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "lodf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "contingency_activate", true],
+            ["connection", "connection_ca", "contingency_active", true],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -805,18 +805,18 @@ function test_contraints_ptdf_lodf_duration()
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "lodf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "contingency_activate", true],
+            ["connection", "connection_ca", "contingency_active", true],
             ["temporal_block", "hourly", "block_end", unparse_db_value(block_end)],
             ["temporal_block", "two_hourly", "block_end", unparse_db_value(block_end)],
         ]
@@ -877,7 +877,7 @@ function test_constraint_ratio_out_in_connection_flow()
         relationship = ["connection_ab", "node_b", "node_a"]
         object_parameter_values = [
             ["model", "instance", "model_end", model_end],
-            ["model", "instance", "connection_flow_highest_resolution_activate", true] # this is the default value
+            ["model", "instance", "connection_flow_highest_resolution_active", true] # this is the default value
         ]
         relationships = [[class, relationship]]
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
@@ -938,7 +938,7 @@ function test_constraint_ratio_out_in_connection_flow()
         relationship = ["connection_ab", "node_b", "node_a"]
         object_parameter_values = [
             ["model", "instance", "model_end", model_end],
-            ["model", "instance", "connection_flow_highest_resolution_activate", false] 
+            ["model", "instance", "connection_flow_highest_resolution_active", false] 
         ]
         relationships = [[class, relationship]]
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
@@ -1334,7 +1334,7 @@ function test_constraint_user_constraint_node_connection()
                 ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
                 ["node", "node_b", "demand", demand],
-                ["node", "node_b", "storage_activate", true],
+                ["node", "node_b", "storage_active", true],
             ]
             relationship_parameter_values = [
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient],
@@ -1413,14 +1413,14 @@ function test_constraint_connection_flow_intact_flow()
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
             ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
@@ -1508,7 +1508,7 @@ function test_constraint_candidate_connection_lb()
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
             ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
@@ -1518,10 +1518,10 @@ function test_constraint_candidate_connection_lb()
                 "lifetime_technical",
                 Dict("type" => "duration", "data" => "60m"),
             ],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
@@ -1614,7 +1614,7 @@ function test_constraint_ratio_out_in_connection_intact_flow()
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
             ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
@@ -1624,10 +1624,10 @@ function test_constraint_ratio_out_in_connection_intact_flow()
                 "lifetime_technical",
                 Dict("type" => "duration", "data" => "60m"),
             ],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
@@ -1738,7 +1738,7 @@ function test_constraint_candidate_connection_ub()
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
             ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
@@ -1748,10 +1748,10 @@ function test_constraint_candidate_connection_ub()
                 "lifetime_technical",
                 Dict("type" => "duration", "data" => "60m"),
             ],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
@@ -1927,7 +1927,7 @@ function test_constraint_connection_min_flow_bidirectional()
             ["connection__to_node", ["connection_ab", "node_a_bis"]],
         ]
         object_parameter_values = [
-            ["model", "instance", "tight_compact_formulations_activate", true],
+            ["model", "instance", "tight_compact_formulations_active", true],
             ["connection", "connection_ab", "connection_min_factor", connection_min_factor],
         ]
         relationship_parameter_values = [
@@ -1979,7 +1979,7 @@ function test_constraint_connection_min_flow_bidirectional()
         object_parameter_values = [
             ["temporal_block", "investments_daily", "resolution", Dict("type" => "duration", "data" => "1D")],
             ["connection", "connection_ab", "investment_count_max_cumulative", 1],
-            ["model", "instance", "tight_compact_formulations_activate", true],
+            ["model", "instance", "tight_compact_formulations_active", true],
             ["connection", "connection_ab", "connection_min_factor", connection_min_factor],
         ]
         relationship_parameter_values = [

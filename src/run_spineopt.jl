@@ -194,7 +194,7 @@ function _run_spineopt(
                         :benders_iteration_count,
                     ],
                 )
-                benders_stat_values = if benders_iterations_reporting_activate(model=m.ext[:spineopt].instance, _default=false)
+                benders_stat_values = if benders_iterations_reporting_active(model=m.ext[:spineopt].instance, _default=false)
                     lbs = m_mp.ext[:spineopt].objective_lower_bounds
                     ubs = m_mp.ext[:spineopt].objective_upper_bounds
                     [lbs, ubs, gaps, length(gaps)]

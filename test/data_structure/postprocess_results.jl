@@ -130,7 +130,7 @@ function test_save_connection_avg_throughflow()
             ["node__grid", ["node_b", "electricity"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", 0.1],
             ["connection", "connection_ab", "resistance", 0.9],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
@@ -262,18 +262,18 @@ function test_save_contingency_is_binding()
             # ["report__output", ["report_y", "contingency_is_binding"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_activate", true],
+            ["connection", "connection_ab", "monitoring_active", true],
             ["connection", "connection_ab", "reactance", conn_x],
             ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_bc", "monitoring_activate", true],
+            ["connection", "connection_bc", "monitoring_active", true],
             ["connection", "connection_bc", "reactance", conn_x],
             ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_activate", true],
+            ["connection", "connection_ca", "monitoring_active", true],
             ["connection", "connection_ca", "reactance", conn_x],
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "lodf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "contingency_activate", true],
+            ["connection", "connection_ca", "contingency_active", true],
             ["node", "node_c", "demand", unparse_db_value(demand_)],
             ["node", "node_b", "demand", unparse_db_value(-demand_)],
         ]

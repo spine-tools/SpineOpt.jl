@@ -71,7 +71,7 @@ function _test_constraint_investment_group_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["node", "node_c", "storage_activate", true],
+            ["node", "node_c", "storage_active", true],
             ["node", "node_c", "storage_state_max", 100],
             ["node", "node_c", "storage_investment_count_max_cumulative", 2],
             ["node", "node_c", "storage_investment_cost", 1000],
@@ -100,7 +100,7 @@ end
 function _test_equal_investments()
     @testset "equal_investments" begin
         url_in = _test_constraint_investment_group_setup()
-        object_parameter_values = [["investment_group", "ig", "equal_investments_activate", true]]
+        object_parameter_values = [["investment_group", "ig", "equal_investments_active", true]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:investment_group_equal_investments]

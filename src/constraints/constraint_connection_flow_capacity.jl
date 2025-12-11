@@ -134,7 +134,7 @@ function _connection_node_direction_for_flow_capacity(m)
     froms = indices(connection_capacity, connection__from_node)
     tos = indices(connection_capacity, connection__to_node)
     iter = Iterators.flatten((froms, tos))
-    if tight_compact_formulations_activate(model=m.ext[:spineopt].instance)
+    if tight_compact_formulations_active(model=m.ext[:spineopt].instance)
         bidirectional = intersect(((x.connection, x.node) for x in froms), ((x.connection, x.node) for x in tos))
         filter!(x -> !_is_zero(_from_cap(x)) && !_is_zero(_to_cap(x)), bidirectional)
         Iterators.flatten(

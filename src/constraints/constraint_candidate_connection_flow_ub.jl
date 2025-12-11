@@ -34,7 +34,7 @@ v^{connection\_intact\_flow}_{(c, n, d, s, t)} \\
 ```
 """
 function add_constraint_candidate_connection_flow_ub!(m::Model)
-    connection_investment_power_flow_impact_activate(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_active(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :candidate_connection_flow_ub,

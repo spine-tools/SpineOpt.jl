@@ -830,7 +830,7 @@
         ],
         [
             "connection",
-            "contingency_activate",
+            "contingency_active",
             null,
             "boolean_value_list",
             "A boolean flag for defining a contingency `connection`."
@@ -889,7 +889,7 @@
         ],
         [
             "connection",
-            "monitoring_activate",
+            "monitoring_active",
             false,
             "boolean_value_list",
             "A boolean flag for activating monitoring of a `connection` in PTDF-based load flow."
@@ -927,11 +927,11 @@
             "mga_investment_big_m",
             null,
             null,
-            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_investment_activate an appropriate `mga_investment_big_m` would be twice the `investment_count_max_cumulative`."
+            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_investment_active an appropriate `mga_investment_big_m` would be twice the `investment_count_max_cumulative`."
         ],
         [
             "connection",
-            "mga_investment_activate",
+            "mga_investment_active",
             false,
             "boolean_value_list",
             "A boolean flag for whether a certain variable (here: `connections_invested`) will be considered in the maximal-differences of the MGA objective."
@@ -976,7 +976,7 @@
         ],
         [
             "connection",
-            "binary_gas_flow_activate",
+            "binary_gas_flow_active",
             false,
             "boolean_value_list",
             "A boolean flag for activating a representation based on bidirectional pressure driven gas transfer."
@@ -1004,7 +1004,7 @@
         ],
         [
             "investment_group",
-            "equal_investments_activate",
+            "equal_investments_active",
             false,
             "boolean_value_list",
             "Whether all entities in the group must have the same investment decision."
@@ -1273,7 +1273,7 @@
         ],
         [
             "model",
-            "benders_iterations_reporting_activate",
+            "benders_iterations_reporting_active",
             false,
             "boolean_value_list",
             "Whether to save results from Benders iterations before convergence."
@@ -1287,21 +1287,21 @@
         ],
         [
             "model",
-            "connection_investment_power_flow_impact_activate",
+            "connection_investment_power_flow_impact_active",
             true,
             "boolean_value_list",
             "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
         ],
         [
             "model",
-            "tight_compact_formulations_activate",
+            "tight_compact_formulations_active",
             false,
             "boolean_value_list",
             "Whether to use tight and compact constraint formulations."
         ],
         [
             "model",
-            "connection_flow_highest_resolution_activate",
+            "connection_flow_highest_resolution_active",
             true,
             "boolean_value_list",
             "Whether to use highest resolution for constraint ratio out in connection flow."
@@ -1357,7 +1357,7 @@
         ],
         [
             "node",
-            "storage_activate",
+            "storage_active",
             false,
             "boolean_value_list",
             "A boolean flag for whether the flows are instantaneously balanced (false) or the node can store its commodity (true)."
@@ -1483,7 +1483,7 @@
         ],
         [
             "node",
-            "reserve_activate",
+            "reserve_active",
             false,
             "boolean_value_list",
             "A boolean flag for whether a `node` is acting as a `reserve_node`."
@@ -1681,11 +1681,11 @@
             "mga_storage_investment_big_m",
             null,
             null,
-            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_storage_investment_activate an appropriate `mga_storage_investment_big_m` would be twice the `storage_investment_count_max_cumulative`."
+            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_storage_investment_active an appropriate `mga_storage_investment_big_m` would be twice the `storage_investment_count_max_cumulative`."
         ],
         [
             "node",
-            "mga_storage_investment_activate",
+            "mga_storage_investment_active",
             false,
             "boolean_value_list",
             "A boolean flag for whether a certain variable (here: `storages_invested`) will be considered in the maximal-differences of the MGA objective."
@@ -1723,11 +1723,11 @@
             "reserve_upward",
             false,
             "boolean_value_list",
-            "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `reserve_activate` is also set to `true`."
+            "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `reserve_active` is also set to `true`."
         ],
         [
             "node",
-            "storage_longterm_activate",
+            "storage_longterm_active",
             false,
             "boolean_value_list",
             "If true, `node` has a state variable for representative and non-representative timeslices"
@@ -2040,11 +2040,11 @@
             "mga_investment_big_m",
             null,
             null,
-            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_investment_activate an appropriate `mga_investment_big_m` would be twice the `investment_count_max_cumulative`."
+            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_investment_active an appropriate `mga_investment_big_m` would be twice the `investment_count_max_cumulative`."
         ],
         [
             "unit",
-            "mga_investment_activate",
+            "mga_investment_active",
             false,
             "boolean_value_list",
             "A boolean flag for whether a certain variable (here: `units_invested`) will be considered in the maximal-differences of the MGA objective."

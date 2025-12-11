@@ -28,7 +28,7 @@ Runs a number of other functions processing different aspecs of the input data i
 function preprocess_data_structure()
     check_model_object()
     generate_is_candidate()
-    update_connection_investment_power_flow_impact_activate()
+    update_connection_investment_power_flow_impact_active()
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
@@ -95,12 +95,12 @@ _nz_indices(p::Parameter) = (first(x) for x in indices_as_tuples(p) if !iszero(p
 _nz_indices(p::Parameter, class::Union{ObjectClass,RelationshipClass}) =
     (first(x) for x in indices_as_tuples(p, class) if !iszero(p(; x...)))
 
-function update_connection_investment_power_flow_impact_activate()
+function update_connection_investment_power_flow_impact_active()
     if isempty(connection(is_candidate=true))
         instance = first(model())
         add_object_parameter_values!(
             model,
-            Dict(instance => Dict(:connection_investment_power_flow_impact_activate => parameter_value(false))),
+            Dict(instance => Dict(:connection_investment_power_flow_impact_active => parameter_value(false))),
         )
     end
 end
