@@ -2179,7 +2179,7 @@
         ],
         [
             "connection__from_node",
-            "fix_connection_flow",
+            "flow_limits_fix",
             null,
             null,
             "Fix the value of the `connection_flow` variable."
@@ -2343,7 +2343,7 @@
         ],
         [
             "connection__to_node",
-            "fix_connection_flow",
+            "flow_limits_fix",
             null,
             null,
             "Fix the value of the `connection_flow` variable."

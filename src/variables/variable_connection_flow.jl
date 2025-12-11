@@ -115,7 +115,7 @@ function add_variable_connection_flow!(m::Model)
         connection_flow_indices;
         lb=connection_flow_lb,
         ub=connection_flow_ub,
-        fix_value=fix_connection_flow,
+        fix_value=flow_limits_fix,
         initial_value=initial_connection_flow,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
