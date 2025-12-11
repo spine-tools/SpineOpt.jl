@@ -2207,10 +2207,10 @@
         ],
         [
             "connection__from_node__user_constraint",
-            "connection_flow_coefficient",
+            "coefficient_for_connection_flow",
             0.0,
             null,
-            "defines the user constraint coefficient on the connection flow variable in the from direction"
+            "Defines the user constraint coefficient on the connection flow variable in the from direction."
         ],
         [
             "connection__node__node",
@@ -2371,10 +2371,10 @@
         ],
         [
             "connection__to_node__user_constraint",
-            "connection_flow_coefficient",
+            "coefficient_for_connection_flow",
             0.0,
             null,
-            "defines the user constraint coefficient on the connection flow variable in the to direction"
+            "Defines the user constraint coefficient on the connection flow variable in the to direction."
         ],
         [
             "connection__user_constraint",

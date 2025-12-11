@@ -110,8 +110,8 @@
             node_state_coefficient = 10
             storages_invested_coefficient = 11
             storages_invested_available_coefficient = 12
-            connection_flow_coefficient_b = 13
-            connection_flow_coefficient_c = 14
+            coefficient_for_connection_flow_b = 13
+            coefficient_for_connection_flow_c = 14
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
                 ["unit_flow__user_constraint", ["node_a", "unit_ab", "constraint_x"]],
@@ -139,8 +139,8 @@
                 [relationships[5]..., "node_state_coefficient", node_state_coefficient],
                 [relationships[5]..., "storages_invested_coefficient", storages_invested_coefficient],
                 [relationships[5]..., "storages_invested_available_coefficient", storages_invested_available_coefficient],
-                [relationships[6]..., "connection_flow_coefficient", connection_flow_coefficient_b],
-                [relationships[7]..., "connection_flow_coefficient", connection_flow_coefficient_c],
+                [relationships[6]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_b],
+                [relationships[7]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_c],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -205,11 +205,11 @@
                     + var_unit_flow[key_uf_b..., s_parent, t2h1]
                     + var_unit_flow[key_uf_b..., s_parent, t2h2]
                 )
-                + 2 * connection_flow_coefficient_b * (
+                + 2 * coefficient_for_connection_flow_b * (
                     + var_connection_flow[key_cf_b..., s_parent, t2h1]
                     + var_connection_flow[key_cf_b..., s_parent, t2h2]
                 )
-                + connection_flow_coefficient_c * (
+                + coefficient_for_connection_flow_c * (
                     + var_connection_flow[key_cf_c..., s_parent, t1h1]
                     + var_connection_flow[key_cf_c..., s_parent, t1h2]
                     + var_connection_flow[key_cf_c..., s_parent, t1h3]

@@ -16,8 +16,8 @@ User constraints allow the user to define arbitrary linear constraints involving
 |:----------------------------------------|:------------------------------------------------------|:------------------------------------------------|
 |`unit_flow`                              |[unit\_flow\_\_user\_constraint](@ref)                 |[unit\_flow\_coefficient](@ref) (non-array type) |
 |`unit_flow_op`                           |[unit\_flow\_\_user\_constraint](@ref)                 |[unit\_flow\_coefficient](@ref) (array type)     |
-|`connection_flow` (direction=from_node)  |[connection\_\_from\_node\_\_user\_constraint](@ref)   |[connection\_flow\_coefficient](@ref)            |
-|`connection_flow` (direction=to_node)    |[connection\_\_to\_node\_\_user\_constraint](@ref)     |[connection\_flow\_coefficient](@ref)            |
+|`connection_flow` (direction=from_node)  |[connection\_\_from\_node\_\_user\_constraint](@ref)   |[coefficient\_for\_connection\_flow](@ref)            |
+|`connection_flow` (direction=to_node)    |[connection\_\_to\_node\_\_user\_constraint](@ref)     |[coefficient\_for\_connection\_flow](@ref)            |
 |`node_state`                             |[node\_\_user\_constraint](@ref)                       |[node\_state\_coefficient](@ref)                 |
 |`storages_invested`                      |[node\_\_user\_constraint](@ref)                       |[storages\_invested\_coefficient](@ref)          |
 |`storages_invested_available`            |[node\_\_user\_constraint](@ref)                       |[storages\_invested\_available\_coefficient](@ref)|

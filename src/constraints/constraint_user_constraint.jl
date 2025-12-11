@@ -44,7 +44,7 @@ For more information, see the dedicated article on [User Constraints](@ref)
 \\
 &+\sum_{u} p^{units\_started\_up\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_started\_up}_{(u,s,t)} \\
 &+\sum_{u} p^{units\_on\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
-&+\sum_{c} p^{connection\_flow\_coefficient}_{(c,n,uc,s,t)} \cdot v^{connection\_flow}_{(c,n,d,s,t)} \\
+&+\sum_{c} p^{coefficient\_for\_connection\_flow}_{(c,n,uc,s,t)} \cdot v^{connection\_flow}_{(c,n,d,s,t)} \\
 &+\sum_{n} p^{node\_state\_coefficient}_{(n,uc,s,t)} \cdot v^{node\_state}_{(n,s,t)} \\
 &+\sum_{n} p^{demand\_coefficient}_{(n,uc,s,t)} \cdot p^{demand}_{(n,s,t)} \\
 & \begin{cases}  
@@ -153,7 +153,7 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + connection_flow[c, n, d, s, t_short]
-            * connection_flow_coefficient(
+            * coefficient_for_connection_flow(
                 m; connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
@@ -172,7 +172,7 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + connection_flow[c, n, d, s, t_short]
-            * connection_flow_coefficient(
+            * coefficient_for_connection_flow(
                 m; connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
