@@ -258,14 +258,14 @@ function test_unit_investment_cost()
     end
 end
 
-function test_node_balance_penalty()
-    @testset "node_balance_penalty" begin
+function test_balance_penalty()
+    @testset "balance_penalty" begin
         url_in = _test_objective_setup()
         node_a_slack_penalty = 0.6
         node_b_slack_penalty = 0.4
         object_parameter_values = [
-            ["node", "node_a", "node_balance_penalty", node_a_slack_penalty],
-            ["node", "node_b", "node_balance_penalty", node_b_slack_penalty],
+            ["node", "node_a", "balance_penalty", node_a_slack_penalty],
+            ["node", "node_b", "balance_penalty", node_b_slack_penalty],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         
@@ -428,7 +428,7 @@ end
     test_fom_cost_case_2b()
     test_fuel_cost()
     test_unit_investment_cost()
-    test_node_balance_penalty()
+    test_balance_penalty()
     test_user_constraint_slack_penalty()
     test_shut_down_cost()
     test_start_up_cost()

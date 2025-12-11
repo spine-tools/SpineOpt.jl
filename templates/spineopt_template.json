@@ -1553,7 +1553,7 @@
         ],
         [
             "node",
-            "node_balance_penalty",
+            "balance_penalty",
             null,
             null,
             "Penalty cost applied to violations of the `nodal_balance` constraint, i.e., to the `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a penalty defined for them."

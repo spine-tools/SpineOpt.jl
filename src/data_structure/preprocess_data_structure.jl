@@ -584,7 +584,7 @@ as the filtering can be easily done when needed without these superfluous classe
 """
 function generate_variable_indexing_support()
     # Tasku: Are these support ObjectClasses worth it? They are both used only once.
-    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_balance_penalty)))
+    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(balance_penalty)))
     node_with_capacity_margin_penalty =
         ObjectClass(:node_with_min_capacity_margin_slack_penalty, collect(indices(capacity_margin_penalty)))
     # Convenience superclasses (avoid duplicating underlying relationship lists)

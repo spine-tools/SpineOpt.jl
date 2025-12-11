@@ -60,7 +60,7 @@ function _ref_setup(storage_count)
             ("model", "test_model", "decomposition_max_iterations", 20),
             ("temporal_block", "flat", "resolution", unparse_db_value(res)),
             ("node", "demand_node", "demand", unparse_db_value(demand_ts)),
-            ("node", "demand_node", "node_balance_penalty", 10000),
+            ("node", "demand_node", "balance_penalty", 10000),
         ],
         :relationship_parameter_values => Any[
             ("unit__to_node", ("other_unit", "demand_node"), "vom_cost", unparse_db_value(cost_ts)),
@@ -87,7 +87,7 @@ function _ref_setup(storage_count)
                 ("node", n, "storage_state_coefficient", 1.0),
                 ("node", n, "storage_state_initial", storage_cap / 2),
                 ("node", n, "storage_state_max", storage_cap),
-                ("node", n, "node_balance_penalty", 10000),
+                ("node", n, "balance_penalty", 10000),
             )
         )
         append!(

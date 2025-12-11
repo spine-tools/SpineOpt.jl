@@ -174,13 +174,13 @@ v^{unit\_flow}_{(u, n, to\_node, s, t)} \cdot p^{tax\_in\_unit\_flow}_{(n,s,t)} 
 
 
 # Objective penalties
-Penalty cost terms associated with the slack variables of a specific constraint can be accounted for by defining a [node\_balance\_penalty](@ref) parameter. For all tuples of ({node,node\_group}, scenario, timestep) in the set `node_slack_indices` for which this parameter is defined, a penalty term is added to the objective function. The total objective penalties can be expressed as:
+Penalty cost terms associated with the slack variables of a specific constraint can be accounted for by defining a [balance\_penalty](@ref) parameter. For all tuples of ({node,node\_group}, scenario, timestep) in the set `node_slack_indices` for which this parameter is defined, a penalty term is added to the objective function. The total objective penalties can be expressed as:
 
 ```math
 \begin{aligned}
 & {objective\_penalties}
  = \sum_{(n,s,t)}
-\left(v^{node\_slack\_neg}_{(n, s, t)} - v^{node\_slack\_pos}_{(n, s, t)} \right) \cdot p^{node\_balance\_penalty}_{(n,s,t)}
+\left(v^{node\_slack\_neg}_{(n, s, t)} - v^{node\_slack\_pos}_{(n, s, t)} \right) \cdot p^{balance\_penalty}_{(n,s,t)}
 \cdot p^{weight}_{(n,s,t)} \cdot \Delta t \\
 \end{aligned}
 ```

@@ -72,7 +72,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("node", "min_capacity_margin"), "capacity_margin_min", ""),
         (("node", "min_capacity_margin_penalty"), "capacity_margin_penalty", ""),
         (("node", "nodal_balance_sense"), "balance_sense", ""),
-        (("node", "node_slack_penalty"), "node_balance_penalty", ""),
+        (("node", "node_slack_penalty"), "balance_penalty", ""),
         # node storage other parameters
         (("node", "frac_state_loss"), "storage_self_discharge", ""),
         (("node", "number_of_storages"), "existing_storages", ""),

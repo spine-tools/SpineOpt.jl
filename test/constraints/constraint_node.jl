@@ -99,7 +99,7 @@ end
 function test_constraint_nodal_balance()
     @testset "constraint_nodal_balance" begin
         url_in = _test_constraint_node_setup()
-        object_parameter_values = [["node", "node_a", "node_balance_penalty", 0.5]]
+        object_parameter_values = [["node", "node_a", "balance_penalty", 0.5]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
@@ -193,7 +193,7 @@ function test_constraint_node_injection()
         url_in = _test_constraint_node_setup()
         relationships = [["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]]
         object_parameter_values = [
-            ["node", "node_a", "node_balance_penalty", 0.5],
+            ["node", "node_a", "balance_penalty", 0.5],
             ["node", "node_a", "demand", demand_a],
             ["node", "node_b", "demand", demand_b],
             ["node", "node_c", "demand", demand_c],
