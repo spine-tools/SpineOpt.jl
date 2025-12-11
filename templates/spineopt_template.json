@@ -2717,7 +2717,7 @@
             "unit_start_flow",
             0.0,
             null,
-            "Flow from node1 that is incurred when a unit is started up."
+            "Enforces additional flow for the first `unit_flow` based on the `units_started_up`."
         ],
         [
             "unit__to_node",
