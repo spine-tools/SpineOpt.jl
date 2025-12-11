@@ -53,7 +53,7 @@ An example for how the docstring looks:
 Balance equation for nodes.
 
 In **SpineOpt**, [node](@ref) is the place where an energy balance is enforced. As universal aggregators,
-they are the glue that brings all components of the energy system together. An energy balance is created for each [node](@ref) for all `node_stochastic_time_indices`, unless the [balance\_type](@ref) parameter of the node takes the value [none](@ref balance_type_list) or if the node in question is a member of a node group, for which the [balance\_type](@ref) is [group\_balance](@ref balance_type_list). The parameter [node\_balance\_sense](@ref) defaults to equality, but can be changed to allow overproduction ([node\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list)) or underproduction ([node\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
+they are the glue that brings all components of the energy system together. An energy balance is created for each [node](@ref) for all `node_stochastic_time_indices`, unless the [balance\_type](@ref) parameter of the node takes the value [none](@ref balance_type_list) or if the node in question is a member of a node group, for which the [balance\_type](@ref) is [group\_balance](@ref balance_type_list). The parameter [balance\_sense](@ref) defaults to equality, but can be changed to allow overproduction ([balance\_sense](@ref) [`>=`](@ref constraint_sense_list)) or underproduction ([balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The energy balance is enforced by the following constraint:
 
 ```math

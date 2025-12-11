@@ -1539,7 +1539,7 @@
         ],
         [
             "node",
-            "node_balance_sense",
+            "balance_sense",
             "==",
             "constraint_sense_list",
             "A selector for `nodal_balance` constraint sense."
