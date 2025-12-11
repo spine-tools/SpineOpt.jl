@@ -976,7 +976,7 @@
         ],
         [
             "connection",
-            "has_binary_gas_flow",
+            "binary_gas_flow_activate",
             false,
             "boolean_value_list",
             "A boolean flag for activating a representation based on bidirectional pressure driven gas transfer."

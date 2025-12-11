@@ -123,6 +123,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("connection", "connection_reactance_base"), "reactance_base", ""),
         (("connection", "connection_resistance"), "resistance", ""),
         (("connection", "number_of_connections"), "existing_connections", ""),
+        (("connection", "has_binary_gas_flow"), "binary_gas_flow_activate", ""),
         # connection installing and decommissioning
         (("connection", "connection_decommissioning_cost"), "decommissioning_cost", ""),
         (("connection", "connection_decommissioning_time"), "decommissioning_time", ""),

@@ -290,7 +290,7 @@ function test_constraint_connection_flow_gas_capacity()
         relationships = [["connection__node__node", [ "connection_ca", "node_c", "node_a"]]]
         fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         object_parameter_values = [
-            ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "binary_gas_flow_activate", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values = [
@@ -363,7 +363,7 @@ function test_constraint_fix_node_pressure_point()
         )
         object_parameter_values = [
             ["grid", "gas", "physics_type", "pressure_physics"],
-            ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "binary_gas_flow_activate", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values = [
@@ -443,7 +443,7 @@ function test_constraint_connection_unitary_gas_flow()
             ]
         fixed_pr_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         object_parameter_values = [
-            ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "binary_gas_flow_activate", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values = [

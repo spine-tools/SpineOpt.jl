@@ -10,7 +10,7 @@ For the representation of pressure driven gas transfer, we use the MILP formulat
 ## [Key concept](@id key-concepts-advanced-gas)
 Here, we briefly describe the key objects and relationships required to model pressure driven gas transfers in SpineOpt.
 
-1. **[connection](@ref)**: A connection represents the gas pipeline being modelled. Usually the direction of flow is not known a priory. To ensure that the flow through the gas pipeline is unidirectional, the parameter [has\_binary\_gas\_flow](@ref) needs to be set to `true`.
+1. **[connection](@ref)**: A connection represents the gas pipeline being modelled. Usually the direction of flow is not known a priory. To ensure that the flow through the gas pipeline is unidirectional, the parameter [binary\_gas\_flow\_activate](@ref) needs to be set to `true`.
 2. **[grid](@ref)**: A grid represents a collection of nodes. The [physics\_type](@ref) parameter needs to be set to `pressure_physics`, in order to create the variable [node\_pressure](@ref) for the associated nodes.
 3. **[node](@ref)**: Nodes with different characteristics are used for the representation of pressure driven gas transfer.
     - For each connection, there will be two nodes representing the start and end point of the pipeline. Associated with these nodes are the following parameters: the [pressure\_max](@ref) and [pressure\_min](@ref) to constrain the pressure variable.
