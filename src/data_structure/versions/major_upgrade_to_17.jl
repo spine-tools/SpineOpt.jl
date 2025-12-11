@@ -181,7 +181,7 @@ function major_upgrade_to_17(db_url, log_level)
         (("node__user_constraint", "storages_invested_available_coefficient"), "coefficient_for_storages_invested_available", ""),
         (("node__user_constraint", "storages_invested_coefficient"), "coefficient_for_storages_invested", ""),
 
-        # unit__to_node and node__to_unit, new temporary and renamed classes!
+        # unit__to_node and node__to_unit
         (("unit__to_node", "fix_unit_flow"), "flow_limits_fix", ""),
         (("node__to_unit", "fix_unit_flow"), "flow_limits_fix", ""),
         (("unit__to_node", "fix_unit_flow_op"), "flow_limits_fix_op", ""),
@@ -202,6 +202,9 @@ function major_upgrade_to_17(db_url, log_level)
         (("node__to_unit", "shut_down_limit"), "ramp_limits_shutdown", ""),
         (("unit__to_node", "start_up_limit"), "ramp_limits_startup", ""),
         (("node__to_unit", "start_up_limit"), "ramp_limits_startup", ""),
+
+        # unit__user_constraint
+        (("unit__user_constraint", "units_invested_available_coefficient"), "coefficient_for_units_invested_available", ""),
 
         # connection__from_node and # connection__to_node #TODO: These might be reworked into node__connection__node later.
         (("connection__from_node", "fix_binary_gas_connection_flow"), "binary_gas_flow_limits_fix", ""),

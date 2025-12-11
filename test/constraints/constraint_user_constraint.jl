@@ -104,7 +104,7 @@
             units_on_coefficient = 4
             units_started_up_coefficient = 5
             units_invested_coefficient = 6
-            units_invested_available_coefficient = 7
+            coefficient_for_units_invested_available = 7
             coefficient_for_connections_invested = 8
             coefficient_for_connections_invested_available = 9
             coefficient_for_node_state = 10
@@ -133,7 +133,7 @@
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
                 [relationships[3]..., "units_invested_coefficient", units_invested_coefficient],
-                [relationships[3]..., "units_invested_available_coefficient", units_invested_available_coefficient],
+                [relationships[3]..., "coefficient_for_units_invested_available", coefficient_for_units_invested_available],
                 [relationships[4]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
                 [relationships[4]..., "coefficient_for_connections_invested_available", coefficient_for_connections_invested_available],
                 [relationships[5]..., "coefficient_for_node_state", coefficient_for_node_state],
@@ -173,7 +173,7 @@
             t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
             expected_con = SpineOpt.build_sense_constraint(
                 + 4 * units_invested_coefficient * var_units_invested[unit(:unit_ab), s_parent, t4h1]
-                + 4 * units_invested_available_coefficient
+                + 4 * coefficient_for_units_invested_available
                     * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
                 + 4 * coefficient_for_connections_invested
                     * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
