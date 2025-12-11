@@ -19,7 +19,7 @@ User constraints allow the user to define arbitrary linear constraints involving
 |`connection_flow` (direction=from_node)  |[connection\_\_from\_node\_\_user\_constraint](@ref)   |[coefficient\_for\_connection\_flow](@ref)            |
 |`connection_flow` (direction=to_node)    |[connection\_\_to\_node\_\_user\_constraint](@ref)     |[coefficient\_for\_connection\_flow](@ref)            |
 |`node_state`                             |[node\_\_user\_constraint](@ref)                       |[coefficient\_for\_node\_state](@ref)                 |
-|`storages_invested`                      |[node\_\_user\_constraint](@ref)                       |[storages\_invested\_coefficient](@ref)          |
+|`storages_invested`                      |[node\_\_user\_constraint](@ref)                       |[coefficient\_for\_storages\_invested](@ref)          |
 |`storages_invested_available`            |[node\_\_user\_constraint](@ref)                       |[coefficient\_for\_storages\_invested\_available](@ref)|
 |`demand`                                 |[node\_\_user\_constraint](@ref)                       |[coefficient\_for\_demand](@ref)                      |
 |`units_on`                               |[unit\_\_user\_constraint](@ref)                       |[units\_on\_coefficient](@ref)                   |

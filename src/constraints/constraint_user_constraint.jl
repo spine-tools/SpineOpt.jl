@@ -258,7 +258,7 @@ function _investment_term(m, uc, path, t)
                 + storages_invested_available[n, s, t1]
                 * coefficient_for_storages_invested_available(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
                 + storages_invested[n, s, t1]
-                * storages_invested_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
+                * coefficient_for_storages_invested(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
             )
             * min(duration(t1), duration(t))
             for n in node__user_constraint(user_constraint=uc)
