@@ -36,9 +36,9 @@ For more information, see the dedicated article on [User Constraints](@ref)
 \begin{aligned}
 & \sum_{u, n} \left\{
   \begin{aligned}     
-       & \sum_{op=1}^{\left\| p^{operating\_points}_{(u)} \right\|} p^{unit\_flow\_coefficient}_{(u,n,op,uc,s,t)}
+       & \sum_{op=1}^{\left\| p^{operating\_points}_{(u)} \right\|} p^{coefficient\_for\_unit\_flow}_{(u,n,op,uc,s,t)}
        \cdot v^{unit\_flow\_op}_{(u,n,d,op,s,t)} &\text{if } \left\| p^{operating\_points}_{(u)} \right\| > 1 & \\
-       & p^{unit\_flow\_coefficient}_{(u,n,uc,s,t)} \cdot v^{unit\_flow}_{(u,n,d,s,t)} &\text{otherwise} & \\       
+       & p^{coefficient\_for\_unit\_flow}_{(u,n,uc,s,t)} \cdot v^{unit\_flow}_{(u,n,d,s,t)} &\text{otherwise} & \\       
   \end{aligned}
   \right.
 \\
@@ -87,7 +87,7 @@ function _operations_term(m, uc, path, t)
     (
         + sum(
             + unit_flow_op[u, n, d, op, s, t_short]
-            * unit_flow_coefficient(
+            * coefficient_for_unit_flow(
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
@@ -99,7 +99,7 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + unit_flow[u, n, d, s, t_short]
-            * unit_flow_coefficient(
+            * coefficient_for_unit_flow(
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
@@ -112,7 +112,7 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + unit_flow_op[u, n, d, op, s, t_short]
-            * unit_flow_coefficient(
+            * coefficient_for_unit_flow(
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
@@ -124,7 +124,7 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + unit_flow[u, n, d, s, t_short]
-            * unit_flow_coefficient(
+            * coefficient_for_unit_flow(
                 m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)

@@ -1920,8 +1920,8 @@ function test_constraint_user_constraint()
         @testset for sense in ("==", ">=", "<=")
             url_in = _test_constraint_unit_setup()
             rhs = 40
-            unit_flow_coefficient_a = 25
-            unit_flow_coefficient_b = 30
+            coefficient_for_unit_flow_a = 25
+            coefficient_for_unit_flow_b = 30
             units_on_coefficient = 20
             units_started_up_coefficient = 35
             objects = [["user_constraint", "constraint_x"]]
@@ -1935,8 +1935,8 @@ function test_constraint_user_constraint()
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
-                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
+                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
+                [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
             ]
@@ -1959,9 +1959,9 @@ function test_constraint_user_constraint()
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con = SpineOpt.build_sense_constraint(
-                + unit_flow_coefficient_a
+                + coefficient_for_unit_flow_a
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
-                2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h] +
+                2 * coefficient_for_unit_flow_b * var_unit_flow[key_b..., s_parent, t2h] +
                 units_on_coefficient
                 * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
                 units_started_up_coefficient * (
@@ -1983,8 +1983,8 @@ function test_constraint_user_constraint_with_unit_operating_segments()
         @testset for sense in ("==", ">=", "<=")
             url_in = _test_constraint_unit_setup()
             rhs = 40
-            unit_flow_coefficient_a = 25
-            unit_flow_coefficient_b = 30
+            coefficient_for_unit_flow_a = 25
+            coefficient_for_unit_flow_b = 30
             units_on_coefficient = 20
             units_started_up_coefficient = 35
             points = [0.1, 0.5, 1.0]
@@ -2002,8 +2002,8 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             relationship_parameter_values = [
                 ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points],
                 ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
-                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
+                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
+                [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
             ]
@@ -2026,11 +2026,11 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con = SpineOpt.build_sense_constraint(
-                + unit_flow_coefficient_a * sum(
+                + coefficient_for_unit_flow_a * sum(
                     var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
                     for i in 1:3
                 )
-                + 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
+                + 2 * sum(coefficient_for_unit_flow_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
                 + units_on_coefficient
                 * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
                 + units_started_up_coefficient * (

@@ -1313,7 +1313,7 @@ function test_constraint_user_constraint_node_connection()
         @testset for sense in ("==", ">=", "<=")
             url_in = _test_constraint_connection_setup()
             rhs = 40
-            unit_flow_coefficient = 25
+            coefficient_for_unit_flow = 25
             coefficient_for_connection_flow = 25
             coefficient_for_demand = 45
             coefficient_for_node_state = 55
@@ -1337,7 +1337,7 @@ function test_constraint_user_constraint_node_connection()
                 ["node", "node_b", "storage_active", true],
             ]
             relationship_parameter_values = [
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient],
+                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow],
                 [relationships[2]..., "units_on_coefficient", units_on_coefficient],
                 [relationships[2]..., "units_started_up_coefficient", units_started_up_coefficient],
                 [relationships[3]..., "coefficient_for_connection_flow", coefficient_for_connection_flow],
@@ -1365,7 +1365,7 @@ function test_constraint_user_constraint_node_connection()
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con = SpineOpt.build_sense_constraint(
-                + unit_flow_coefficient
+                + coefficient_for_unit_flow
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2])
                 + 2 * coefficient_for_connection_flow * var_connection_flow[key_b..., s_parent, t2h]
                 + units_on_coefficient

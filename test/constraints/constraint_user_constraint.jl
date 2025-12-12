@@ -99,8 +99,8 @@
         @testset for sense in ("==", ">=", "<=")
             _load_test_data(url_in, test_data)
             rhs = 1
-            unit_flow_coefficient_a = 2
-            unit_flow_coefficient_b = 3
+            coefficient_for_unit_flow_a = 2
+            coefficient_for_unit_flow_b = 3
             units_on_coefficient = 4
             units_started_up_coefficient = 5
             units_invested_coefficient = 6
@@ -128,8 +128,8 @@
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
-                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
+                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
+                [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
                 [relationships[3]..., "units_invested_coefficient", units_invested_coefficient],
@@ -195,13 +195,13 @@
                     + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
                 )
-                + unit_flow_coefficient_a * (
+                + coefficient_for_unit_flow_a * (
                     + var_unit_flow[key_uf_a..., s_parent, t1h1]
                     + var_unit_flow[key_uf_a..., s_child, t1h2]
                     + var_unit_flow[key_uf_a..., s_child, t1h3]
                     + var_unit_flow[key_uf_a..., s_child, t1h4]
                 )
-                + 2 * unit_flow_coefficient_b * (
+                + 2 * coefficient_for_unit_flow_b * (
                     + var_unit_flow[key_uf_b..., s_parent, t2h1]
                     + var_unit_flow[key_uf_b..., s_parent, t2h2]
                 )

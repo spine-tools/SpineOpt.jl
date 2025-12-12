@@ -2896,7 +2896,7 @@
         ],
         [
             "unit_flow__user_constraint",
-            "unit_flow_coefficient",
+            "coefficient_for_unit_flow",
             0.0,
             null,
             "Coefficient of a `unit_flow` variable for a custom `user_constraint`."
