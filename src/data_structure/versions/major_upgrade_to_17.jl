@@ -204,6 +204,8 @@ function major_upgrade_to_17(db_url, log_level)
         (("node__to_unit", "start_up_limit"), "ramp_limits_startup", ""),
         (("unit__to_node", "unit_capacity"), "capacity_per_unit", ""),
         (("node__to_unit", "unit_capacity"), "capacity_per_unit", ""),
+        (("unit__to_node", "unit_conv_cap_to_flow"), "capacity_to_flow_conversion_factor", ""),
+        (("node__to_unit", "unit_conv_cap_to_flow"), "capacity_to_flow_conversion_factor", ""),
 
         # unit__user_constraint
         (("unit__user_constraint", "units_invested_available_coefficient"), "coefficient_for_units_invested_available", ""),

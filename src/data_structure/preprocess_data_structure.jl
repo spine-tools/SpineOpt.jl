@@ -865,7 +865,7 @@ function generate_unit_flow_capacity()
         _prod_or_nothing(
             f(capacity_per_unit; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
             f(availability_factor; unit=unit, kwargs...),
-            f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
+            f(capacity_to_flow_conversion_factor; unit=unit, node=node, direction=direction, kwargs...),
         )
     end
 

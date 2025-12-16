@@ -2644,7 +2644,7 @@
         ],
         [
             "node__to_unit",
-            "unit_conv_cap_to_flow",
+            "capacity_to_flow_conversion_factor",
             1.0,
             null,
             "Optional coefficient for `capacity_per_unit` unit conversions in the case the `capacity_per_unit` value is incompatible with the desired `unit_flow` units."
@@ -2868,7 +2868,7 @@
         ],
         [
             "unit__to_node",
-            "unit_conv_cap_to_flow",
+            "capacity_to_flow_conversion_factor",
             1.0,
             null,
             "Optional coefficient for `capacity_per_unit` unit conversions in the case the `capacity_per_unit` value is incompatible with the desired `unit_flow` units."

@@ -149,7 +149,7 @@ The curtailment costs of renewable units can be accounted for by defining the pa
 \begin{aligned}
 & {renewable\_curtailment\_costs}
  = \sum_{(u,n,d,s,t)}
- \left(v^{units\_available}_{(u, s, t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,n,d,s,t)}
+ \left(v^{units\_available}_{(u, s, t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u,n,d,s,t)}
  - v^{unit\_flow}_{(u, n, d, s, t)} \right)
  \cdot p^{curtailment\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}

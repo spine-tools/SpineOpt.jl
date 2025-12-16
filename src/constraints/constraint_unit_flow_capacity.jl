@@ -39,7 +39,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
         p^{reserve\_active}_{(n)} \land p^{reserve\_upward}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
     \right]\\
 & \le \\
-& p^{capacity\_per\_unit}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& p^{capacity\_per\_unit}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
 & \qquad v^{units\_on}_{(u,s,t)} \\
 & \qquad - \left(1 - p^{ramp\_limits\_shutdown}_{(u,ng,d,s,t)}\right)
@@ -62,7 +62,7 @@ where
 ```
 
 !!! note
-    The conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
+    The conversion factor [capacity\_to\_flow\_conversion\_factor](@ref) has a default value of `1`, but can be adjusted
     in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
 
 !!! note
@@ -84,7 +84,7 @@ See also
 [is\_non\_spinning](@ref),
 [capacity\_per\_unit](@ref),
 [availability\_factor](@ref),
-[unit\_conv\_cap\_to\_flow](@ref),
+[capacity\_to\_flow\_conversion\_factor](@ref),
 [ramp\_limits\_startup](@ref),
 [ramp\_limits\_shutdown](@ref).
 """

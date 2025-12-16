@@ -26,7 +26,7 @@ The last segment does not need this constraint.
 ```math
 \begin{aligned}
 & v^{unit\_flow\_op}{(u, n, d, op, s, t)} \\
-& \geq p^{capacity\_per\_unit}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \\
+& \geq p^{capacity\_per\_unit}_{(u, n, d, s, t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u, n, d, s, t)} \\
 & \cdot \left(p^{operating\_points}_{(u, n, op, s, t)} - \begin{cases}       
    p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if } op > 1 \\
    0 & \text{otherwise} \\
@@ -40,7 +40,7 @@ The last segment does not need this constraint.
 
 See also
 [capacity\_per\_unit](@ref),
-[unit\_conv\_cap\_to\_flow](@ref),
+[capacity\_to\_flow\_conversion\_factor](@ref),
 [operating\_points](@ref),
 [ordered\_unit\_flow\_op](@ref).
 """
