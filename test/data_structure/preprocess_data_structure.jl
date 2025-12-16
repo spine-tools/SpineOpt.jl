@@ -165,10 +165,10 @@ end
             ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
-            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_ab],
-            ["connection__from_node", ["connection_ab", "node_b"], "connection_capacity", conn_cap_ab],
-            ["connection__from_node", ["connection_bc", "node_b"], "connection_capacity", conn_cap_bc],
-            ["connection__from_node", ["connection_ca", "node_c"], "connection_capacity", conn_cap_ca],
+            ["connection__from_node", ["connection_ab", "node_a"], "capacity_per_connection", conn_cap_ab],
+            ["connection__from_node", ["connection_ab", "node_b"], "capacity_per_connection", conn_cap_ab],
+            ["connection__from_node", ["connection_bc", "node_b"], "capacity_per_connection", conn_cap_bc],
+            ["connection__from_node", ["connection_ca", "node_c"], "capacity_per_connection", conn_cap_ca],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["stochastic", "parent"],
@@ -189,9 +189,9 @@ end
         (connection(:connection_bc), node(:node_b), node(:node_c)),
         (connection(:connection_ca), node(:node_c), node(:node_a)),
     )
-        @test connection_capacity(connection=conn, node=n1, direction=direction(:from_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n1, direction=direction(:to_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n2, direction=direction(:from_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n2, direction=direction(:to_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n1, direction=direction(:from_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n1, direction=direction(:to_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n2, direction=direction(:from_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n2, direction=direction(:to_node)) == capacities_dict[conn]
     end
 end

@@ -21,7 +21,7 @@
 @doc raw"""
 In a multi-commodity setting, there can be different commodities entering/leaving a certain connection.
 These can be energy-related commodities (e.g., electricity, natural gas, etc.),
-emissions, or other commodities (e.g., water, steel). The [connection\_capacity](@ref) and [connection\_min\_factor](@ref) 
+emissions, or other commodities (e.g., water, steel). The [capacity\_per\_connection](@ref) and [connection\_min\_factor](@ref) 
 should be specified for at least one [connection\_\_to\_node](@ref) or [connection\_\_from\_node](@ref) relationship,
 in order to trigger a constraint on the minimum commodity flows to this location in each time step.
 When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
@@ -30,15 +30,15 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 \begin{aligned}
 & \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
 & \geq \\
-& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_min\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& p^{capacity\_per\_connection}_{(conn,ng,d,s,t)} \cdot p^{connection\_min\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
 & \cdot \left( p^{existing\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
-& \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
+& \forall (conn,ng,d) \in indices(p^{capacity\_per\_connection}) \\
 & \forall (s,t)
 \end{aligned}
 ```
 
 See also
-[connection\_capacity](@ref),
+[capacity\_per\_connection](@ref),
 [connection\_min\_factor](@ref),
 [connection\_conv\_cap\_to\_flow](@ref),
 [existing\_connections](@ref),
@@ -49,7 +49,7 @@ See also
     with different temporal resolutions, the constraint is only generated for the lowest resolution,
     and only the average of the higher resolution flow is constrained.
     In other words, what gets constrained is the "average power" (e.g. MWh/h) rather than the "instantaneous power"
-    (e.g. MW). If instantaneous power needs to be constrained as well, then [connection_capacity](@ref) needs to be
+    (e.g. MW). If instantaneous power needs to be constrained as well, then [capacity_per_connection](@ref) needs to be
     specified separately for each [node](@ref) served by the [connection](@ref).
 
 !!! note
@@ -132,8 +132,8 @@ only one tuple and the direction will be a `Vector` of the two directions.
 In this case we can write a tight compact formulation.
 """
 function _connection_node_direction_for_min_flow(m)
-    froms = indices(connection_capacity, connection__from_node)
-    tos = indices(connection_capacity, connection__to_node)
+    froms = indices(capacity_per_connection, connection__from_node)
+    tos = indices(capacity_per_connection, connection__to_node)
     iter = Iterators.flatten((froms, tos))
     if tight_compact_formulations_active(model=m.ext[:spineopt].instance)
         bidirectional = intersect(((x.connection, x.node) for x in froms), ((x.connection, x.node) for x in tos))

@@ -91,7 +91,7 @@ function _are_unit_flows_related(u, n_from, n_to)
 end
 
 function _connection_issue(c)
-	parameters = (connection_capacity, connection_flow_cost)
+	parameters = (capacity_per_connection, connection_flow_cost)
 	node_from_has_cap_or_cost = _has_cap_or_cost(connection__from_node(connection=c, _compact=false), parameters)
 	node_to_has_cap_or_cost = _has_cap_or_cost(connection__to_node(connection=c, _compact=false), parameters)
 	for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost

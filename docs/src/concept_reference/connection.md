@@ -13,7 +13,7 @@ according to the above relationships.
 
 The operation of the [connection](@ref) is specified through a number of parameter values.
 For example, the capacity of the connection, as the maximum amount of energy that can enter or leave it,
-is given by [connection\_capacity](@ref).
+is given by [capacity\_per\_connection](@ref).
 The conversion ratio of input to output can be specified using any of [fix\_ratio\_out\_in\_connection\_flow](@ref),
 [max\_ratio\_out\_in\_connection\_flow](@ref), and [min\_ratio\_out\_in\_connection\_flow](@ref) parameters
 in the [connection\_\_node\_\_node](@ref) relationship.

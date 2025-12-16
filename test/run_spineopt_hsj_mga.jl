@@ -171,8 +171,8 @@ function generate_simple_system(algorithm::String, no_iterations=nothing)
         ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 5],
         ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
         ["unit__to_node", ["unit_bc", "node_c"], "capacity_per_unit", 5],
-        ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
-        ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
+        ["connection__to_node", ["connection_ab","node_b"], "capacity_per_connection", 5],
+        ["connection__to_node", ["connection_bc","node_c"], "capacity_per_connection", 5]
     ]
     return object_parameter_values, relationship_parameter_values
 end

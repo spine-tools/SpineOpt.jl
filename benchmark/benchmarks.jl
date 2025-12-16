@@ -160,7 +160,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
             ] for (c, n1, n2) in zip(conns, conns_to, conns_from)
         ),
     )
-    append!(rel_pvs, (["connection__from_node", (c, n), "connection_capacity", 1] for (c, n) in zip(conns, conns_from)))
+    append!(rel_pvs, (["connection__from_node", (c, n), "capacity_per_connection", 1] for (c, n) in zip(conns, conns_from)))
     obj_grp = [["node", "node_group_reserve", "reserve"]]
     test_data = Dict(
         :objects => objs,

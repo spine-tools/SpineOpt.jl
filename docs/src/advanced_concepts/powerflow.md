@@ -19,7 +19,7 @@ Here we discuss the method of using power transfer distribution factors (PTDF) f
 3. **Defining your network** To identify the network for which ptdfs, lodfs and connection_flows will be calculated according to the ptdf method, one does the following:
    - Create [node](@ref) objects for each bus in the model.
    - Create [connection](@ref) objects representing each line of the network: For each connection specify the [reactance](@ref) parameter and the [connection\_type](@ref) parameter. Setting [connection\_type](@ref)=`connection_type_lossless_bidirectional` simplifies the amount of data that needs to be specified for an eletrical network. See [connection\_type](@ref) for more details   
-   - Set the [connection\_\_to\_node](@ref) and [connection\_\_from\_node](@ref) relationships to define the topology of each connection along with the [connection\_capacity](@ref) parameter on one or both of these relationships.
+   - Set the [connection\_\_to\_node](@ref) and [connection\_\_from\_node](@ref) relationships to define the topology of each connection along with the [capacity\_per\_connection](@ref) parameter on one or both of these relationships.
    - Set the [connection\_emergency\_capacity](@ref) parameter to define the post contingency rating if lodf-based N-1 security constraints are to be included
    - Create a [grid](@ref) object and [node__grid](@ref) relationships for all the nodes that comprise the electrical network for which PTDFs are to be calculated.
    - Specify the [physics_type](@ref) parameter for the grid to `:ptdf_physics` if ptdf-based DC load flow is desired with no N-1 security constraints or to `:lodf_physics` if it is desired to include lodf-based N-1 security constraints

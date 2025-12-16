@@ -28,7 +28,7 @@ equals [connection\_intact\_flow](@ref) otherwise.
 & v^{connection\_flow}_{(c, n, d, s, t)} \\
 & \geq \\
 & v^{connection\_intact\_flow}_{(c, n, d, s, t)}
-- p^{connection\_capacity}_{(c, n, d, s, t)} \cdot \left(
+- p^{capacity\_per\_connection}_{(c, n, d, s, t)} \cdot \left(
     p^{investment\_count\_max\_cumulative}_{(c, s, t)} - v^{connections\_invested\_available}_{(c, s, t)} \right) \\
 & \forall c \in connection : p^{investment\_count\_max\_cumulative}_{(c)} \neq 0 \\
 & \forall (s,t)
@@ -74,7 +74,7 @@ function _build_constraint_candidate_connection_flow_lb(m::Model, conn, n, d, s_
             )
         )
         * sum(
-            connection_capacity(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t, _default=1e6)
+            capacity_per_connection(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t, _default=1e6)
             * duration(t)
             for (conn, n, d, s, t) in connection_intact_flow_indices(
                 m; connection=conn, direction=d, node=n, stochastic_scenario=s_path, t=t_in_t(m; t_long=t)

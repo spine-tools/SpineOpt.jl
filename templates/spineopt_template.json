@@ -819,14 +819,14 @@
             "availability_factor",
             1.0,
             null,
-            "Availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
+            "Availability of the `connection`, acting as a multiplier on its `capacity_per_connection`. Typically between 0-1."
         ],
         [
             "connection",
             "connection_min_factor",
             0.0,
             null,
-            "Minimum availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
+            "Minimum availability of the `connection`, acting as a multiplier on its `capacity_per_connection`. Typically between 0-1."
         ],
         [
             "connection",
@@ -2109,7 +2109,7 @@
     "relationship_parameters": [
         [
             "connection__from_node",
-            "connection_capacity",
+            "capacity_per_connection",
             null,
             null,
             "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
@@ -2119,7 +2119,7 @@
             "connection_conv_cap_to_flow",
             1.0,
             null,
-            "Optional coefficient for `connection_capacity` unit conversions in the case that the `connection_capacity` value is incompatible with the desired `connection_flow` units."
+            "Optional coefficient for `capacity_per_connection` unit conversions in the case that the `capacity_per_connection` value is incompatible with the desired `connection_flow` units."
         ],
         [
             "connection__from_node",
@@ -2273,7 +2273,7 @@
         ],
         [
             "connection__to_node",
-            "connection_capacity",
+            "capacity_per_connection",
             null,
             null,
             "Limits the `connection_flow` variable to the `to_node`. `to_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
@@ -2283,7 +2283,7 @@
             "connection_conv_cap_to_flow",
             1.0,
             null,
-            "Optional coefficient for `connection_capacity` unit conversions in the case the `connection_capacity` value is incompatible with the desired `connection_flow` units."
+            "Optional coefficient for `capacity_per_connection` unit conversions in the case the `capacity_per_connection` value is incompatible with the desired `connection_flow` units."
         ],
         [
             "connection__to_node",

@@ -119,7 +119,7 @@ function _group_capacity_invested_available(m, ig, s, t)
         )
         + sum(
             + connections_invested_available[conn, s, t]
-            * connection_capacity(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
+            * capacity_per_connection(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
             for (conn, s, t) in connections_invested_available_indices(
                 m;
                 connection=connection__investment_group(investment_group=ig),
@@ -129,13 +129,13 @@ function _group_capacity_invested_available(m, ig, s, t)
             for (conn, n, d) in Iterators.flatten(
                 (
                     indices(
-                        connection_capacity;
+                        capacity_per_connection;
                         connection=conn,
                         node=connection__from_node__investment_group(connection=conn, investment_group=ig),
                         direction=direction(:from_node),
                     ),
                     indices(
-                        connection_capacity;
+                        capacity_per_connection;
                         connection=conn,
                         node=connection__to_node__investment_group(connection=conn, investment_group=ig),
                         direction=direction(:to_node),

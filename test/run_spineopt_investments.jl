@@ -117,7 +117,7 @@ function _test_capacity_investments()
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_a", "node_a"], "capacity_per_unit", 1],
-            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", 1],
+            ["connection__from_node", ["connection_ab", "node_a"], "capacity_per_connection", 1],
         ]
         import_count, errors = SpineInterface.import_data(
             url_in;

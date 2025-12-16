@@ -175,7 +175,7 @@ function _test_min_max_capacity_invested_available()
         ]
         relationship_parameter_values = [
             ("node__to_unit", ("node_a", "unit_ab"), "capacity_per_unit", 150),
-            ("connection__to_node", ("connection_bc", "node_c"), "connection_capacity", 250),
+            ("connection__to_node", ("connection_bc", "node_c"), "capacity_per_connection", 250),
         ]
         SpineInterface.import_data(
             url_in;

@@ -145,7 +145,7 @@ function process_lossless_bidirectional_connections()
         pvals = Dict{Symbol,Any}(:connection_conv_cap_to_flow => parameter_value(1.0))
         conn_cap = get(conn_cap_pvals, conn, nothing)
         conn_emergency_cap = get(conn_emergency_cap_values, conn, nothing)
-        conn_cap !== nothing && (pvals[:connection_capacity] = parameter_value(conn_cap))
+        conn_cap !== nothing && (pvals[:capacity_per_connection] = parameter_value(conn_cap))
         conn_emergency_cap !== nothing && (pvals[:connection_emergency_capacity] = parameter_value(conn_emergency_cap))
         pvals
     end
@@ -165,7 +165,7 @@ function process_lossless_bidirectional_connections()
         collect((conn, n1, n2) for (conn, x, y) in conn_from_to for (n1, n2) in ((x, y), (y, x)))
     # New pvals
     conn_caps = (
-        (conn, connection_capacity(connection=conn, node=n, _strict=false, _raw=true)) for
+        (conn, capacity_per_connection(connection=conn, node=n, _strict=false, _raw=true)) for
         (conn, n) in Iterators.flatten((new_connection__from_node_rels, new_connection__to_node_rels))
     )
     conn_emergency_caps = (
@@ -886,7 +886,7 @@ function generate_connection_flow_capacity()
         kwargs...,
     )
         _prod_or_nothing(
-            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+            f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
             f(availability_factor; connection=connection, kwargs...),
             f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
         )
@@ -909,7 +909,7 @@ function generate_connection_flow_lower_limit()
         kwargs...,
     )
         _prod_or_nothing(
-            f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+            f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
             f(connection_min_factor; connection=connection, kwargs...),
             f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
         )
