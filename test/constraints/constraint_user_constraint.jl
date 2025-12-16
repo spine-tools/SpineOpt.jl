@@ -101,7 +101,7 @@
             rhs = 1
             coefficient_for_unit_flow_a = 2
             coefficient_for_unit_flow_b = 3
-            units_on_coefficient = 4
+            coefficient_for_units_on = 4
             units_started_up_coefficient = 5
             coefficient_for_units_invested = 6
             coefficient_for_units_invested_available = 7
@@ -130,7 +130,7 @@
             relationship_parameter_values = [
                 [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
                 [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
                 [relationships[3]..., "coefficient_for_units_invested", coefficient_for_units_invested],
                 [relationships[3]..., "coefficient_for_units_invested_available", coefficient_for_units_invested_available],
@@ -187,7 +187,7 @@
                     + var_storages_invested_available[node(:node_c), s_parent, t2h1]
                     + var_storages_invested_available[node(:node_c), s_parent, t2h2]
                 )
-                + 2 * units_on_coefficient * (
+                + 2 * coefficient_for_units_on * (
                     + var_units_on[unit(:unit_ab), s_parent, t2h1]
                     + var_units_on[unit(:unit_ab), s_child, t2h2] 
                 )
@@ -333,7 +333,7 @@ end
             ["user_constraint", "constraint_x", "right_hand_side", rhs],
         ]
         relationship_parameter_values = [
-            ["unit__user_constraint", ["pwrplant", "constraint_x"], "units_on_coefficient", units_on_coeff]
+            ["unit__user_constraint", ["pwrplant", "constraint_x"], "coefficient_for_units_on", units_on_coeff]
         ]
         SpineInterface.import_data(
             url_in;

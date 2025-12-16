@@ -1317,7 +1317,7 @@ function test_constraint_user_constraint_node_connection()
             coefficient_for_connection_flow = 25
             coefficient_for_demand = 45
             coefficient_for_node_state = 55
-            units_on_coefficient = 20
+            coefficient_for_units_on = 20
             units_started_up_coefficient = 35
             demand = 150
             objects = [["user_constraint", "constraint_x"], ["unit", "unit_c"]]
@@ -1338,7 +1338,7 @@ function test_constraint_user_constraint_node_connection()
             ]
             relationship_parameter_values = [
                 [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow],
-                [relationships[2]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[2]..., "coefficient_for_units_on", coefficient_for_units_on],
                 [relationships[2]..., "units_started_up_coefficient", units_started_up_coefficient],
                 [relationships[3]..., "coefficient_for_connection_flow", coefficient_for_connection_flow],
                 [relationships[4]..., "coefficient_for_demand", coefficient_for_demand],
@@ -1368,7 +1368,7 @@ function test_constraint_user_constraint_node_connection()
                 + coefficient_for_unit_flow
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2])
                 + 2 * coefficient_for_connection_flow * var_connection_flow[key_b..., s_parent, t2h]
-                + units_on_coefficient
+                + coefficient_for_units_on
                 * (var_units_on[unit(:unit_c), s_parent, t1h1] + var_units_on[unit(:unit_c), s_child, t1h2])
                 + units_started_up_coefficient * (
                     + var_units_started_up[unit(:unit_c), s_parent, t1h1]

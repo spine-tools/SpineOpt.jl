@@ -206,6 +206,7 @@ function major_upgrade_to_17(db_url, log_level)
         # unit__user_constraint
         (("unit__user_constraint", "units_invested_available_coefficient"), "coefficient_for_units_invested_available", ""),
         (("unit__user_constraint", "units_invested_coefficient"), "coefficient_for_units_invested", ""),
+        (("unit__user_constraint", "units_on_coefficient"), "coefficient_for_units_on", ""),
 
         # connection__from_node and # connection__to_node #TODO: These might be reworked into node__connection__node later.
         (("connection__from_node", "fix_binary_gas_connection_flow"), "binary_gas_flow_limits_fix", ""),

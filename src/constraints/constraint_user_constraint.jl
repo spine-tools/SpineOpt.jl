@@ -43,7 +43,7 @@ For more information, see the dedicated article on [User Constraints](@ref)
   \right.
 \\
 &+\sum_{u} p^{units\_started\_up\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_started\_up}_{(u,s,t)} \\
-&+\sum_{u} p^{units\_on\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
+&+\sum_{u} p^{coefficient\_for\_units\_on}_{(u,uc,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
 &+\sum_{c} p^{coefficient\_for\_connection\_flow}_{(c,n,uc,s,t)} \cdot v^{connection\_flow}_{(c,n,d,s,t)} \\
 &+\sum_{n} p^{coefficient\_for\_node\_state}_{(n,uc,s,t)} \cdot v^{node\_state}_{(n,s,t)} \\
 &+\sum_{n} p^{coefficient\_for\_demand}_{(n,uc,s,t)} \cdot p^{demand}_{(n,s,t)} \\
@@ -137,7 +137,7 @@ function _operations_term(m, uc, path, t)
         )
         + sum(
             + units_on[u, s, t1]
-            * units_on_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
+            * coefficient_for_units_on(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
             * min(duration(t1), duration(t))
             for u in unit__user_constraint(user_constraint=uc)
             for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=path, t=t_overlaps_t(m; t=t));

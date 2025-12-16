@@ -1922,7 +1922,7 @@ function test_constraint_user_constraint()
             rhs = 40
             coefficient_for_unit_flow_a = 25
             coefficient_for_unit_flow_b = 30
-            units_on_coefficient = 20
+            coefficient_for_units_on = 20
             units_started_up_coefficient = 35
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
@@ -1937,7 +1937,7 @@ function test_constraint_user_constraint()
             relationship_parameter_values = [
                 [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
                 [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
             ]
             SpineInterface.import_data(
@@ -1962,7 +1962,7 @@ function test_constraint_user_constraint()
                 + coefficient_for_unit_flow_a
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
                 2 * coefficient_for_unit_flow_b * var_unit_flow[key_b..., s_parent, t2h] +
-                units_on_coefficient
+                coefficient_for_units_on
                 * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
                 units_started_up_coefficient * (
                     var_units_started_up[unit(:unit_ab), s_parent, t1h1]
@@ -1985,7 +1985,7 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             rhs = 40
             coefficient_for_unit_flow_a = 25
             coefficient_for_unit_flow_b = 30
-            units_on_coefficient = 20
+            coefficient_for_units_on = 20
             units_started_up_coefficient = 35
             points = [0.1, 0.5, 1.0]
             operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
@@ -2004,7 +2004,7 @@ function test_constraint_user_constraint_with_unit_operating_segments()
                 ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
                 [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
                 [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
             ]
             SpineInterface.import_data(
@@ -2031,7 +2031,7 @@ function test_constraint_user_constraint_with_unit_operating_segments()
                     for i in 1:3
                 )
                 + 2 * sum(coefficient_for_unit_flow_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-                + units_on_coefficient
+                + coefficient_for_units_on
                 * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
                 + units_started_up_coefficient * (
                     + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
