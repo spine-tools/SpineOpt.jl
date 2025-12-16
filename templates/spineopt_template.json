@@ -2924,7 +2924,7 @@
         ],
         [
             "unit__user_constraint",
-            "units_started_up_coefficient",
+            "coefficient_for_units_started_up",
             0.0,
             null,
             "Coefficient of a `units_started_up` variable for a custom `user_constraint`."

@@ -102,7 +102,7 @@
             coefficient_for_unit_flow_a = 2
             coefficient_for_unit_flow_b = 3
             coefficient_for_units_on = 4
-            units_started_up_coefficient = 5
+            coefficient_for_units_started_up = 5
             coefficient_for_units_invested = 6
             coefficient_for_units_invested_available = 7
             coefficient_for_connections_invested = 8
@@ -131,7 +131,7 @@
                 [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
                 [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
                 [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
-                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
+                [relationships[3]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
                 [relationships[3]..., "coefficient_for_units_invested", coefficient_for_units_invested],
                 [relationships[3]..., "coefficient_for_units_invested_available", coefficient_for_units_invested_available],
                 [relationships[4]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
@@ -191,7 +191,7 @@
                     + var_units_on[unit(:unit_ab), s_parent, t2h1]
                     + var_units_on[unit(:unit_ab), s_child, t2h2] 
                 )
-                + 2 * units_started_up_coefficient * (
+                + 2 * coefficient_for_units_started_up * (
                     + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
                 )
