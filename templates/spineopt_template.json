@@ -2116,7 +2116,7 @@
         ],
         [
             "connection__from_node",
-            "connection_conv_cap_to_flow",
+            "capacity_to_flow_conversion_factor",
             1.0,
             null,
             "Optional coefficient for `capacity_per_connection` unit conversions in the case that the `capacity_per_connection` value is incompatible with the desired `connection_flow` units."
@@ -2280,7 +2280,7 @@
         ],
         [
             "connection__to_node",
-            "connection_conv_cap_to_flow",
+            "capacity_to_flow_conversion_factor",
             1.0,
             null,
             "Optional coefficient for `capacity_per_connection` unit conversions in the case the `capacity_per_connection` value is incompatible with the desired `connection_flow` units."

@@ -30,7 +30,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 \begin{aligned}
 & \sum_{n \in ng} v^{connection\_flow}_{(conn,n,d,s,t)} \\
 & <= \\
-& p^{capacity\_per\_connection}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)} \cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
+& p^{capacity\_per\_connection}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(conn,ng,d,s,t)} \\
 & \cdot \left( p^{existing\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
 & \forall (conn,ng,d) \in indices(p^{capacity\_per\_connection}) \\
 & \forall (s,t)
@@ -40,7 +40,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 See also
 [capacity\_per\_connection](@ref),
 [availability\_factor](@ref),
-[connection\_conv\_cap\_to\_flow](@ref),
+[capacity\_to\_flow\_conversion\_factor](@ref),
 [existing\_connections](@ref),
 [investment\_count\_max\_cumulative](@ref)
 
@@ -53,7 +53,7 @@ See also
     specified separately for each [node](@ref) served by the [connection](@ref).
 
 !!! note
-    The conversion factor [connection\_conv\_cap\_to\_flow](@ref) has a default value of `1`,
+    The conversion factor [capacity\_to\_flow\_conversion\_factor](@ref) has a default value of `1`,
     but can be adjusted in case the unit of measurement for the capacity is different to the connection flows
     unit of measurement.
 

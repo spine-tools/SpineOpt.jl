@@ -41,8 +41,8 @@
     @test length(connection__node__node()) == 2
     @test (connection=conn_ab, node1=n_a, node2=n_b) in connection__node__node()
     @test (connection=conn_ab, node1=n_b, node2=n_a) in connection__node__node()
-    @test connection_conv_cap_to_flow(connection=conn_ab, node=n_a) == 1
-    @test connection_conv_cap_to_flow(connection=conn_ab, node=n_b) == 1
+    @test capacity_to_flow_conversion_factor(connection=conn_ab, node=n_a) == 1
+    @test capacity_to_flow_conversion_factor(connection=conn_ab, node=n_b) == 1
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_a, node2=n_b) == 1
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_b, node2=n_a) == 1
 end

@@ -142,7 +142,7 @@ and this function creates the additional relationships on the fly.
 """
 function process_lossless_bidirectional_connections()
     function _connection_pvals(conn, conn_cap_pvals, conn_emergency_cap_values)
-        pvals = Dict{Symbol,Any}(:connection_conv_cap_to_flow => parameter_value(1.0))
+        pvals = Dict{Symbol,Any}(:capacity_to_flow_conversion_factor => parameter_value(1.0))
         conn_cap = get(conn_cap_pvals, conn, nothing)
         conn_emergency_cap = get(conn_emergency_cap_values, conn, nothing)
         conn_cap !== nothing && (pvals[:capacity_per_connection] = parameter_value(conn_cap))
@@ -888,7 +888,7 @@ function generate_connection_flow_capacity()
         _prod_or_nothing(
             f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
             f(availability_factor; connection=connection, kwargs...),
-            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
+            f(capacity_to_flow_conversion_factor; connection=connection, node=node, direction=direction, kwargs...),
         )
     end
 
@@ -911,7 +911,7 @@ function generate_connection_flow_lower_limit()
         _prod_or_nothing(
             f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
             f(connection_min_factor; connection=connection, kwargs...),
-            f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
+            f(capacity_to_flow_conversion_factor; connection=connection, node=node, direction=direction, kwargs...),
         )
     end
 

@@ -105,7 +105,7 @@ function connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
     minimum(
         + connection_emergency_capacity(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
         * availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t)
-        * connection_conv_cap_to_flow(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
+        * capacity_to_flow_conversion_factor(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
         for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
         for s in s_path
     )

@@ -228,6 +228,8 @@ function major_upgrade_to_17(db_url, log_level)
         (("connection__to_node", "initial_connection_intact_flow"), "flow_limits_initial_intact", ""),
         (("connection__from_node", "connection_capacity"), "capacity_per_connection", ""),
         (("connection__to_node", "connection_capacity"), "capacity_per_connection", ""),
+        (("connection__from_node", "connection_conv_cap_to_flow"), "capacity_to_flow_conversion_factor", ""),
+        (("connection__to_node", "connection_conv_cap_to_flow"), "capacity_to_flow_conversion_factor", ""),
 
         # connection__from_node__user_constraint #TODO: These might be reworked into node__connection__node later.
         (("connection__from_node__user_constraint", "connection_flow_coefficient"), "coefficient_for_connection_flow", ""),
