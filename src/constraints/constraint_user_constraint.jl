@@ -228,7 +228,7 @@ function _investment_term(m, uc, path, t)
                 + units_invested_available[u, s, t1]
                 * coefficient_for_units_invested_available(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
                 + units_invested[u, s, t1]
-                * units_invested_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
+                * coefficient_for_units_invested(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
             )
             * min(duration(t1), duration(t))
             for u in unit__user_constraint(user_constraint=uc)

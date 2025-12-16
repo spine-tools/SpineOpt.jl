@@ -2910,7 +2910,7 @@
         ],
         [
             "unit__user_constraint",
-            "units_invested_coefficient",
+            "coefficient_for_units_invested",
             0.0,
             null,
             "Coefficient of the `units_invested` variable in the specified `user_constraint`."
