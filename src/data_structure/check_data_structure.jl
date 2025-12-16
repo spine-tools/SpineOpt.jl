@@ -152,18 +152,18 @@ end
 """
     check_minimum_operating_point_unit_capacity()
 
-Check if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
+Check if every defined `minimum_operating_point` parameter has a corresponding `capacity_per_unit` parameter defined.
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
         (u, n, d)
         for (u, n, d) in indices(minimum_operating_point)
-        if unit_capacity(unit=u, node=n, direction=d) === nothing
+        if capacity_per_unit(unit=u, node=n, direction=d) === nothing
     ]
     _check(
         isempty(error_indices),
-        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) - ",
-        "`unit_capacity` must be specified where `minimum_operating_point` is",
+        "missing `capacity_per_unit` value for indices: $(join(error_indices, ", ", " and ")) - ",
+        "`capacity_per_unit` must be specified where `minimum_operating_point` is",
     )
 end
 

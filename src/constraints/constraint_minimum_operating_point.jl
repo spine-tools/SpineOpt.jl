@@ -32,7 +32,7 @@ v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[\neg p^{reserve\_active}_{(n)}\right]
         n \in ng
 }
 v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[p^{reserve\_active}_{(n)} \land p^{reserve\_downward}_{(n)}\right] \\
-& \ge p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& \ge p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{capacity\_per\_unit}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot \left( v^{units\_on}_{(u,s,t)}
 - \sum_{
     n \in ng
@@ -61,7 +61,7 @@ See also
 [reserve\_downward](@ref),
 [is\_non\_spinning](@ref),
 [minimum\_operating\_point](@ref),
-[unit\_capacity](@ref),
+[capacity\_per\_unit](@ref),
 [unit\_conv\_cap\_to\_flow](@ref)
 """
 function add_constraint_minimum_operating_point!(m::Model)
@@ -108,7 +108,7 @@ function _build_constraint_minimum_operating_point(m::Model, u, ng, d, s_path, t
             )
             * min(duration(t), duration(t_over))
             * minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
-            * unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            * capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             * unit_conv_cap_to_flow(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             for (u, s, t_over) in unit_stochastic_time_indices(
                 m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)

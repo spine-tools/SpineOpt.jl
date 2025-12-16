@@ -42,14 +42,14 @@ Next, we have to decide the [online\_variable\_type](@ref) for this unit, which 
 The classical UC framework can only be applied when the `existing_units` equals 1.
 
 ### Step 3: imposing a minimum operating point
-The output of an online unit to a specific node can be restricted to be above a certain minimum by choosing a value for the [minimum\_operating\_point](@ref) parameter. This parameter is defined for the [unit\_\_to\_node](@ref) relationship, and is given as a fraction of the [unit_capacity](@ref). If we continue with the example above, and define the following objects, relationships, and parameters:
+The output of an online unit to a specific node can be restricted to be above a certain minimum by choosing a value for the [minimum\_operating\_point](@ref) parameter. This parameter is defined for the [unit\_\_to\_node](@ref) relationship, and is given as a fraction of the [capacity_per_unit](@ref). If we continue with the example above, and define the following objects, relationships, and parameters:
 
 * `unit_1`
   * `existing_units`: 2
   * `unit_online_variable_type`: "integer"
 * `unit_1_to__node_1`
   * `minimum_operating_point`: 0.2
-  * `unit_capacity`: 200
+  * `capacity_per_unit`: 200
 It can be seen that in this case the [unit_flow](@ref Variables) form `unit_1` to `node_1` must for any timestep ``t`` be larger than ``units\_on(t) * 0.2 * 200``
 
 ### Step 4: imposing a minimum up or down time
@@ -61,7 +61,7 @@ Spine units can also be restricted in their commitment status with minimum up- o
   * `min_up_time`: 2h
 * `unit_1_to__node_1`
   * `minimum_operating_point`: 0.2
-  * `unit_capacity`: 200
+  * `capacity_per_unit`: 200
 
 Whereas the `units_on` variable was restricted (before inclusion of the `min_up_time` parameter) to be smaller than or equal to the `existing_units` for any timestep ``t``, it now has to be smaller than or equal to the `existing_units` decremented with the [units\_started\_up](@ref Variables) summed over the timesteps that include `t - min_up_time`. This implies that a unit which has started up, has to stay online for at least the `min_up_time`
 

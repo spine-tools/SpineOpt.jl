@@ -53,7 +53,7 @@ To take into account storage investments in the objective function, the paramete
 
 # Fixed O&M costs
 
-Fixed operation and maintenance costs associated with a specific unit can be accounted for by defining the parameters [fom\_cost](@ref) and [unit\_capacity](@ref). For all tuples of (unit, {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep) exist in the set `units_on_indices`, a fixed O&M cost term is added to the objective function. Note that, as the `units_on_indices` are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should be given per resolution of the [units\_on](@ref).
+Fixed operation and maintenance costs associated with a specific unit can be accounted for by defining the parameters [fom\_cost](@ref) and [capacity\_per\_unit](@ref). For all tuples of (unit, {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep) exist in the set `units_on_indices`, a fixed O&M cost term is added to the objective function. Note that, as the `units_on_indices` are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should be given per resolution of the [units\_on](@ref).
 The total fixed O&M costs can be expressed as:
 
 ```math
@@ -62,7 +62,7 @@ The total fixed O&M costs can be expressed as:
  = 
 \sum_{(u,n,d,s,t)}
  \left( p^{existing\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)} \right)
- \cdot p^{unit\_capacity}_{(u,n,d,s,t)} \cdot p^{fom\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
+ \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot p^{fom\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -143,13 +143,13 @@ where
 ```
 
 # Renewable curtailment costs
-The curtailment costs of renewable units can be accounted for by defining the parameters [curtailment\_cost](@ref) and [unit\_capacity](@ref). For all tuples of (unit,  {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep\_long) exist in the set `units_on_indices`, and for which tuples (unit, {node,node\_group}, direction, scenario, timestep\_short) exist in the set `unit_flow_indices`, a renewable curtailment cost term is added to the objective function. The total renewable curtailment costs can be expressed as:
+The curtailment costs of renewable units can be accounted for by defining the parameters [curtailment\_cost](@ref) and [capacity\_per\_unit](@ref). For all tuples of (unit,  {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep\_long) exist in the set `units_on_indices`, and for which tuples (unit, {node,node\_group}, direction, scenario, timestep\_short) exist in the set `unit_flow_indices`, a renewable curtailment cost term is added to the objective function. The total renewable curtailment costs can be expressed as:
 
 ```math
 \begin{aligned}
 & {renewable\_curtailment\_costs}
  = \sum_{(u,n,d,s,t)}
- \left(v^{units\_available}_{(u, s, t)} \cdot p^{unit\_capacity}_{(u,n,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,n,d,s,t)}
+ \left(v^{units\_available}_{(u, s, t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,n,d,s,t)}
  - v^{unit\_flow}_{(u, n, d, s, t)} \right)
  \cdot p^{curtailment\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}

@@ -175,17 +175,17 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
             ["unit", "wind", "investment_variable_type", "linear"],
         ],
         :relationship_parameter_values => [
-            ["node__to_unit", ["elec_node", "batt_unit"], "unit_capacity", 50],
-            ["unit__to_node", ["batt_unit", "elec_node"], "unit_capacity", 55],
+            ["node__to_unit", ["elec_node", "batt_unit"], "capacity_per_unit", 50],
+            ["unit__to_node", ["batt_unit", "elec_node"], "capacity_per_unit", 55],
             ["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"], "constraint_equality_flow_ratio", 0.9],
             ["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"], "constraint_equality_flow_ratio", 0.8],
-            ["node__to_unit", ["elec_node", "electrolizer"], "unit_capacity", 1000],
+            ["node__to_unit", ["elec_node", "electrolizer"], "capacity_per_unit", 1000],
             ["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"], "constraint_equality_flow_ratio", 1.5],
-            ["unit__to_node", ["h2_gen", "elec_node"], "unit_capacity", 100],
+            ["unit__to_node", ["h2_gen", "elec_node"], "capacity_per_unit", 100],
             ["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"], "constraint_equality_flow_ratio", 1.6],
-            ["unit__to_node", ["pv", "elec_node"], "unit_capacity", 300],
-            ["unit__to_node", ["wind", "elec_node"], "unit_capacity", 300],
-            ["unit__to_node", ["conventional", "elec_node"], "unit_capacity", 100],
+            ["unit__to_node", ["pv", "elec_node"], "capacity_per_unit", 300],
+            ["unit__to_node", ["wind", "elec_node"], "capacity_per_unit", 300],
+            ["unit__to_node", ["conventional", "elec_node"], "capacity_per_unit", 100],
             ["unit__to_node", ["conventional", "elec_node"], "vom_cost", 500],
             ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition", true],
             ["node__temporal_block", ["h2_node", "operations"], "cyclic_condition_sense", "=="],
@@ -556,13 +556,13 @@ function _expected_representative_periods_constraint(
         @test d in direction()
         cls = Dict(d_from => "node__to_unit", d_to => "unit__to_node")[d]
         entity_inds_by_class = Dict("node__to_unit" => [2, 1], "unit__to_node" => [1, 2])
-        vals[cls, ["batt_unit", "elec_node"][entity_inds_by_class[cls]], "unit_capacity"]
+        vals[cls, ["batt_unit", "elec_node"][entity_inds_by_class[cls]], "capacity_per_unit"]
     elseif u == unit(:electrolizer)
         @test d in d_from
-        vals["node__to_unit", [string(n), string(u)], "unit_capacity"]
+        vals["node__to_unit", [string(n), string(u)], "capacity_per_unit"]
     else
         @test d in d_to
-        vals["unit__to_node", [string(u), string(n)], "unit_capacity"]
+        vals["unit__to_node", [string(u), string(n)], "capacity_per_unit"]
     end
     if u in (unit(:batt_unit), unit(:h2_gen), unit(:electrolizer), unit(:pv), unit(:wind))
         rhs *= units_on[u, s, t]

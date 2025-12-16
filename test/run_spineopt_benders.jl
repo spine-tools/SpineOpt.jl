@@ -125,9 +125,9 @@ function _test_benders_unit()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
-                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
             ]
             SpineInterface.import_data(
@@ -243,7 +243,7 @@ function _test_benders_storage()
             relationship_parameter_values = [
                 ["unit__to_node", ["unit_a", "node_a"], "flow_limits_fix", fixuflow],
                 ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -375,8 +375,8 @@ function _test_benders_unit_storage()
             ]
             relationship_parameter_values = [
                 ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
-                ["unit__to_node", ["unit_a", "node_a"], "unit_capacity", ucap2],
+                ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
+                ["unit__to_node", ["unit_a", "node_a"], "capacity_per_unit", ucap2],
                 ["unit__to_node", ["unit_a", "node_a"], "minimum_operating_point", mop],
             ]
             SpineInterface.import_data(
@@ -512,9 +512,9 @@ function _test_benders_rolling_representative_periods()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(rf))],
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
-                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
             ]
             SpineInterface.import_data(
@@ -615,9 +615,9 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             object_parameter_values,
             [["unit", c, "unit_investment_cost", 20 * k] for (k, c) in enumerate(candidates)]
         )
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 0]]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 0]]
         append!(
-            relationship_parameter_values, [["unit__to_node", [c, "node_b"], "unit_capacity", 1] for c in candidates]
+            relationship_parameter_values, [["unit__to_node", [c, "node_b"], "capacity_per_unit", 1] for c in candidates]
         )
         append!(
             relationship_parameter_values,
@@ -703,9 +703,9 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
-                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
             ]
             SpineInterface.import_data(
@@ -824,9 +824,9 @@ function _test_benders_starting_units_invested()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
-                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
             ]
             SpineInterface.import_data(

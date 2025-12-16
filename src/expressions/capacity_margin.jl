@@ -28,7 +28,7 @@ Create an expression for `capacity_margin`. This represents the available produc
 ```math 
 \begin{aligned}
 expr^{capacity\_margin}_{n,s,t} = \\
-& + \sum_{u\in{U_{n\_to}}}(p^{unit\_capacity}_{u,s,t} \cdot p^{availability\_factor}_{u,s,t} \cdot v^{units\_available}_{u,s,t}) \\
+& + \sum_{u\in{U_{n\_to}}}(p^{capacity\_per\_unit}_{u,s,t} \cdot p^{availability\_factor}_{u,s,t} \cdot v^{units\_available}_{u,s,t}) \\
 & + \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,to,s,t}) \\
 & - \sum_{u\in{U_{storage_n}}}(v^{unit\_flow}_{u,n,from,s,t}) \\
 & - p^{demand}_{n,s,t} \\
@@ -99,7 +99,7 @@ function add_expression_capacity_margin!(m::Model)
                         init=0,
                     )
                 )
-                for (u, n, d) in indices(unit_capacity; node=n, direction=direction(:to_node))
+                for (u, n, d) in indices(capacity_per_unit; node=n, direction=direction(:to_node))
                 if !is_storage_unit(u)
             )
         )
@@ -127,7 +127,7 @@ function expression_capacity_margin_indices(m::Model)
                         m;
                         unit=Iterators.filter(
                             !is_storage_unit,
-                            (u for (u, n, d) in indices(unit_capacity; node=n, direction=direction(:to_node))),
+                            (u for (u, n, d) in indices(capacity_per_unit; node=n, direction=direction(:to_node))),
                         ),
                         t=t_overlaps_t(m; t=t),
                     ),

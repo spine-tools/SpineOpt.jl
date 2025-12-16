@@ -512,8 +512,8 @@ function _test_saving_outputs()
         relationship_parameter_values = [
             ["node__to_unit", ["node_a", "unit_ab"], "vom_cost", 25],
             ["node__to_unit", ["node_a", "unit_ab_only_operation"], "vom_cost", 25],
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 200],
-            ["unit__to_node", ["unit_ab_only_operation", "node_b"], "unit_capacity", 100],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 200],
+            ["unit__to_node", ["unit_ab_only_operation", "node_b"], "capacity_per_unit", 100],
             ["unit_flow__unit_flow", ["unit_ab_only_operation", "node_b", "node_a", "unit_ab_only_operation"], "constraint_equality_flow_ratio", 1.0],
         ]
         object_parameter_values = [

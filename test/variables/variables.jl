@@ -336,7 +336,7 @@ function test_unit_flow_simple_bounds()
         ]
         rel_pvals = [
             ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", cap_to_node],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -372,7 +372,7 @@ function test_unit_flow_ub_with_number_of_units_time_series()
         ]
         rel_pvals = [
             ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", cap_to_node],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)

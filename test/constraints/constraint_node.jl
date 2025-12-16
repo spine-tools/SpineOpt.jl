@@ -1061,7 +1061,7 @@ function test_constraint_min_capacity_margin()
             ["unit", "unit_ab", "units_on_cost", 1],  # To have unis_on variables
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity]
         ]      
         SpineInterface.import_data(
             url_in;
@@ -1100,7 +1100,7 @@ function test_constraint_min_capacity_margin_penalty()
             ["node", "node_b", "demand", demand_b],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity]
         ]      
         SpineInterface.import_data(
             url_in;

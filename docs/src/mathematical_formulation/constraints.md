@@ -292,7 +292,7 @@ min&
 + \sum_{n,d} p^{operational\_cost}_{(u,n,d,s,t)} \cdot v^{unit\_flow}_{(u, n, d, s, t)} \right) \\
 s.t. &
 \\
-& v^{unit\_flow}_{(u,n,d,s,t)} \le p^{unit\_capacity}_{(u, n, d, s, t)} \cdot \left(
+& v^{unit\_flow}_{(u,n,d,s,t)} \le p^{capacity\_per\_unit}_{(u, n, d, s, t)} \cdot \left(
     v^{units\_available}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)}
 \right) \quad \forall u \in unit, n \in node, s, t
 \\
@@ -332,7 +332,7 @@ min&
 & sp\_obj_b = \sum_{u,n,d,s,t} p^{operational\_cost}_{(u,n,d,s,t)} \cdot v^{unit\_flow}_{(u, n, d, s, t)}\\
 s.t.&
 \\
-& v^{unit\_flow}_{(u,n,d,s,t)} \le p^{unit\_capacity}_{(u, n, d, s, t)} \cdot \left(
+& v^{unit\_flow}_{(u,n,d,s,t)} \le p^{capacity\_per\_unit}_{(u, n, d, s, t)} \cdot \left(
     v^{units\_available}_{(u,s,t)} + p^{units\_invested\_available}_{(b, u, s, t)}
 \right) \\ 
 & \qquad \forall u \in unit, n \in node, s,t \qquad [\mu_{(b,u,s,t)}]
@@ -351,7 +351,7 @@ and can be interpreted as the decrease in the objective function for an addition
 Thus, an upper bound on the sub problem objective function is obtained as follows:
 
 ```math
-sp\_obj_{b} + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{unit\_capacity}_{(u,n,d,s,t)} 
+sp\_obj_{b} + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} 
 \cdot \left(v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(b,u,s,t)}\right)
 ```
 
@@ -367,7 +367,7 @@ min & \\
 s.t. & \\
 
 & v^{sp\_objective} \geq sp\_obj_{b} \\
-& \quad + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{unit\_capacity}_{(u,n,d,s,t)}
+& \quad + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)}
 \cdot \left(v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(b,u,s,t)}\right) \quad \forall b \\
 \end{aligned}
 ```

@@ -97,9 +97,9 @@ function _test_expressions_setup()
                 "stochastic_scenario_end",
                 Dict("type" => "duration", "data" => "1h"),
             ],
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 75],
-            ["unit__to_node", ["unit_b", "node_b"], "unit_capacity", 30],
-            ["unit__to_node", ["unit_cb", "node_b"], "unit_capacity", 10],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 75],
+            ["unit__to_node", ["unit_b", "node_b"], "capacity_per_unit", 30],
+            ["unit__to_node", ["unit_cb", "node_b"], "capacity_per_unit", 10],
         ]
     )
     _load_test_data(url_in, test_data)

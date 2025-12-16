@@ -4,7 +4,7 @@ added to the model, i.e.
 a commodity flow of a unit to or from a specific node, respectively.
 
 Various parameters can be defined on the [node\_\_to\_unit](@ref) relationship, in order to
-constrain the associated unit flows. In most cases a [unit\_capacity](@ref) will be defined for
+constrain the associated unit flows. In most cases a [capacity\_per\_unit](@ref) will be defined for
 an upper bound on the commodity flows. Apart from that, ramping abilities of a unit can be
 defined. For further details on ramps see [Ramping](@ref).
 
@@ -13,5 +13,5 @@ can be included for the [node\_\_to\_unit](@ref) relationship.
 
 It is important to note, that the parameters associated with the [node\_\_to\_unit](@ref) can be defined either
 for a specific [node](@ref), or for a group of nodes. Grouping nodes for the described parameters will result
-in an aggregation of the unit flows for the triggered constraint, e.g. the definition of the [unit\_capacity](@ref)
+in an aggregation of the unit flows for the triggered constraint, e.g. the definition of the [capacity\_per\_unit](@ref)
 on a group of nodes will result in an upper bound on the sum of all individual [unit\_flow](@ref)s.

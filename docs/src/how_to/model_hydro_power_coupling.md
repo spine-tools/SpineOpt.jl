@@ -242,9 +242,9 @@ minimisation to be added in the objective function.
         relationship between the *Språnget\_spill* and the *Fallet\_upper* node,
 
 -   Add the relationship parameter values for the new units:
-    -   Set the *unit\_capacity* (to apply a
+    -   Set the *capacity\_per\_unit* (to apply a
         maximum), the *minimum\_operating\_point* (defined as a
-        percentage of the *unit\_capacity*)
+        percentage of the *capacity\_per\_unit*)
         to impose a minimum, and the *vom\_cost* to penalise the water that is
         spilt:
     ![Setting minimum (the minimal value is defined as percentage of capacity), maximum, and spillage penalty.](figs_two_hydro/two_hydro_min_spill_unit_node_node.png)

@@ -93,8 +93,8 @@ function _ref_setup(storage_count)
         append!(
             test_data[:relationship_parameter_values],
             (
-                ("unit__to_node", (u, "demand_node"), "unit_capacity", discharge_cap),
-                ("unit__to_node", (u, n), "unit_capacity", charge_cap),
+                ("unit__to_node", (u, "demand_node"), "capacity_per_unit", discharge_cap),
+                ("unit__to_node", (u, n), "capacity_per_unit", charge_cap),
                 ("unit__to_node", (u, "demand_node"), "vom_cost", base_cost),
                 ("unit_flow__unit_flow", (u, n, "demand_node", u), "constraint_equality_flow_ratio", 0.8),
                 ("unit_flow__unit_flow", (u, "demand_node", n, u), "constraint_equality_flow_ratio", 1),

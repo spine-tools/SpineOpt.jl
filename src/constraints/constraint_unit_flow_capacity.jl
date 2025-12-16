@@ -21,7 +21,7 @@
 @doc raw"""
 In a multi-commodity setting, there can be different commodities entering/leaving a certain
 technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
-emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) must be specified
+emissions, or other commodities (e.g., water, steel). The [capacity\_per\_unit](@ref) must be specified
 for at least one [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship,
 in order to trigger a constraint on the maximum commodity flows to this location in each time step.
 When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
@@ -39,7 +39,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
         p^{reserve\_active}_{(n)} \land p^{reserve\_upward}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
     \right]\\
 & \le \\
-& p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& p^{capacity\_per\_unit}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
 & \qquad v^{units\_on}_{(u,s,t)} \\
 & \qquad - \left(1 - p^{ramp\_limits\_shutdown}_{(u,ng,d,s,t)}\right)
@@ -49,7 +49,7 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 } v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
 & \qquad - \left(1 - p^{ramp\_limits\_startup}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
 & ) \\
-& \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
+& \forall (u,ng,d) \in indices(p^{capacity\_per\_unit}) \\
 & \forall (s,t)
 \end{aligned}
 ```
@@ -82,7 +82,7 @@ See also
 [reserve\_active](@ref),
 [reserve\_upward](@ref),
 [is\_non\_spinning](@ref),
-[unit\_capacity](@ref),
+[capacity\_per\_unit](@ref),
 [availability\_factor](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
 [ramp\_limits\_startup](@ref),
@@ -200,7 +200,7 @@ end
 function constraint_unit_flow_capacity_tight_compact_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
-        for (u, ng, d) in indices(unit_capacity)
+        for (u, ng, d) in indices(capacity_per_unit)
         for t in t_highest_resolution(
             m,
             Iterators.flatten(
@@ -278,7 +278,7 @@ end
 function constraint_unit_flow_capacity_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(unit_capacity)
+        for (u, ng, d) in indices(capacity_per_unit)
         if has_online_variable(unit=u) || members(ng) != [ng]
         for t in t_highest_resolution(
             m,

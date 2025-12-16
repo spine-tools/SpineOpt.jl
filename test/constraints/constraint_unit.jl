@@ -308,8 +308,8 @@ function test_constraint_unit_flow_capacity_simple()
         ucap = 100
         uaf = 0.5
         relationship_parameter_values = [
-            ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", ucap],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", ucap],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", ucap],
         ]
         object_parameter_values = [
             ["unit", "unit_ab", "availability_factor", uaf],
@@ -366,10 +366,10 @@ function test_constraint_unit_flow_capacity_tight_and_compact()
         sul = 0.4
         sdl = 0.3
         relationship_parameter_values = [
-            ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", ucap],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", ucap],
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_startup", sul],
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_shutdown", sdl],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", ucap],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_startup", sul],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_shutdown", sdl],
         ]
@@ -460,9 +460,9 @@ function test_constraint_minimum_operating_point()
         uc = 100
         mop = 0.25
         relationship_parameter_values = [
-            ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
             ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
@@ -543,9 +543,9 @@ function test_constraint_non_spinning_reserves_lower_bound()
             ["node", "reserves_a", "is_non_spinning", true], ["node", "reserves_bc", "is_non_spinning", true]
         ]
         relationship_parameter_values = [
-            ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
             ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         SpineInterface.import_data(
@@ -604,9 +604,9 @@ function test_constraint_non_spinning_reserves_upper_bounds()
                 ["node", "reserves_a", "is_non_spinning", true], ["node", "reserves_bc", "is_non_spinning", true]
             ]
             relationship_parameter_values = [
-                ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
+                ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
                 ["node__to_unit", ["node_group_a", "unit_ab"], limit_name, l],
-                ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+                ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
                 ["unit__to_node", ["unit_ab", "node_group_bc"], limit_name, l],
             ]
             SpineInterface.import_data(
@@ -655,13 +655,13 @@ end
 function test_constraint_operating_point_bounds()
     @testset "constraint_operating_point_bounds" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [["unit__to_node", ["unit_ab", "node_a"]]]
         relationship_parameter_values = [
-            ["node__to_unit", ["node_a", "unit_ab"], "unit_capacity", unit_capacity],
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
             ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points],
         ]
         SpineInterface.import_data(
@@ -700,13 +700,13 @@ end
 function test_constraint_operating_point_rank()
     @testset "constraint_operating_point_rank" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [["unit__to_node", ["unit_ab", "node_a"]]]
         relationship_parameter_values = [
-            ["node__to_unit", ["node_a", "unit_ab"], "unit_capacity", unit_capacity],
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
             ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
@@ -748,7 +748,7 @@ end
 function test_constraint_unit_flow_op_bounds()
     @testset "constraint_unit_flow_op_bounds" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
@@ -756,7 +756,7 @@ function test_constraint_unit_flow_op_bounds()
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
         relationship_parameter_values = [
-            ["node__to_unit", ["node_a", "unit_ab"], "unit_capacity", unit_capacity],
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
             ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
@@ -777,7 +777,7 @@ function test_constraint_unit_flow_op_bounds()
                 var_u_flow_op = var_unit_flow_op[var_u_flow_op_key...]
                 var_units_on_key = (unit(:unit_ab), s, t)
                 var_us_on = var_units_on[var_units_on_key...]
-                expected_con = @build_constraint(var_u_flow_op - delta * var_us_on * unit_capacity <= 0)
+                expected_con = @build_constraint(var_u_flow_op - delta * var_us_on * capacity_per_unit <= 0)
                 observed_con = constraint_object(constraint[var_u_flow_op_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -806,7 +806,7 @@ function test_constraint_unit_flow_op_bounds()
                 var_u_flow_op = var_unit_flow_op[var_u_flow_op_key...]
                 var_u_flow_op_active_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
                 var_u_flow_op_active = var_unit_flow_op_active[var_u_flow_op_active_key...]
-                expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * unit_capacity <= 0)
+                expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * capacity_per_unit <= 0)
                 observed_con = constraint_object(constraint[var_u_flow_op_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -817,7 +817,7 @@ end
 function test_constraint_unit_flow_op_rank()
     @testset "constraint_unit_flow_op_rank" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
@@ -825,7 +825,7 @@ function test_constraint_unit_flow_op_rank()
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
         relationship_parameter_values = [
-            ["node__to_unit", ["node_a", "unit_ab"], "unit_capacity", unit_capacity],
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
             ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
@@ -863,7 +863,7 @@ function test_constraint_unit_flow_op_rank()
                 if i < lastindex(deltas)
                     var_u_flow_op_active_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i+1, s, t)
                     var_u_flow_op_active = var_unit_flow_op_active[var_u_flow_op_active_key...]
-                    expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * unit_capacity >= 0)
+                    expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * capacity_per_unit >= 0)
                     observed_con = constraint_object(constraint[var_u_flow_op_key...])
                     @test _is_constraint_equal(observed_con, expected_con)
                 else
@@ -878,7 +878,7 @@ end
 function test_constraint_unit_flow_op_sum()
     @testset "constraint_unit_flow_op_sum" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationship_parameter_values = [
@@ -1216,7 +1216,7 @@ function test_constraint_min_up_time_with_non_spinning_reserves()
                 ["node", "node_a", "is_non_spinning", true],
             ]
             relationship_parameter_values = [
-                ["node__to_unit", ["node_a", "unit_ab"], "unit_capacity", 0],
+                ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", 0],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1344,7 +1344,7 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
                 ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
             ]
             relationship_parameter_values = [
-                ["node__to_unit", ["node_a", "unit_ab"], "unit_capacity", 0],
+                ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", 0],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1708,11 +1708,11 @@ function test_constraint_ramp_up()
         relationship_parameter_values = [
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_up", rul],
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_startup", sul],
-            ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
             ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_up", rul],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_startup", sul],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
@@ -1816,11 +1816,11 @@ function test_constraint_ramp_down()
         relationship_parameter_values = [
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_down", rdl],
             ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_shutdown", sdl],
-            ["node__to_unit", ["node_group_a", "unit_ab"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
             ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_down", rdl],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_shutdown", sdl],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))

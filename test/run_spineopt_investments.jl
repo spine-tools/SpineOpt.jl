@@ -83,7 +83,7 @@ function _test_run_spineopt_investments_setup()
         ],
         :relationship_parameter_values => [
             ["unit__to_node", ["unit_a", "node_a"], "vom_cost", unparse_db_value(vom_cost_ts)],
-            ["unit__to_node", ["unit_b", "node_b"], "unit_capacity", 200],
+            ["unit__to_node", ["unit_b", "node_b"], "capacity_per_unit", 200],
             ["unit__to_node", ["unit_b", "node_b"], "vom_cost", 1],
         ]
     )
@@ -116,7 +116,7 @@ function _test_capacity_investments()
             ["node", "node_a", "storage_state_max", 1]
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_a", "node_a"], "unit_capacity", 1],
+            ["unit__to_node", ["unit_a", "node_a"], "capacity_per_unit", 1],
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", 1],
         ]
         import_count, errors = SpineInterface.import_data(

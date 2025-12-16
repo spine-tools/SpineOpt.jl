@@ -30,7 +30,7 @@ besides being bounded by the segment capacity.
 ```math
 \begin{aligned}
 & v^{unit\_flow\_op}_{(u, n, d, op, s, t)} \\
-& \leq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \cdot p^{availability\_factor}_{(u, s, t)} \\
+& \leq p^{capacity\_per\_unit}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \cdot p^{availability\_factor}_{(u, s, t)} \\
 & \cdot \left( p^{operating\_points}_{(u, n, d, op, s, t)}
 - \begin{cases}       
    p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if } op > 1\\
@@ -40,14 +40,14 @@ besides being bounded by the segment capacity.
     v^{unit\_flow\_op\_active}_{(u,n,d,op,s,t)} & \text{if } p^{ordered\_unit\_flow\_op}_{(u,s,t)} \\
     v^{units\_on}_{(u,s,t)} & \text{otherwise}\\
 \end{cases} \\
-& \forall (u,n,d) \in indices(p^{unit\_capacity}) \cup indices(p^{operating\_points}) \\
+& \forall (u,n,d) \in indices(p^{capacity\_per\_unit}) \cup indices(p^{operating\_points}) \\
 & \forall op \in \{ 1, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| \} \\
 & \forall (s,t)
 \end{aligned}
 ```
 
 See also
-[unit\_capacity](@ref),
+[capacity\_per\_unit](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
 [availability\_factor](@ref),
 [operating\_points](@ref),
@@ -79,7 +79,7 @@ end
 function constraint_unit_flow_op_bounds_indices(m::Model)
     (
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, node=n, direction=d)
     )
 end

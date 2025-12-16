@@ -173,9 +173,9 @@ function _test_run_spineopt_mga()
             ["node", "node_c", "demand", 1],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 5],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 5],
             ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
-            ["unit__to_node", ["unit_bc", "node_c"], "unit_capacity", 5],
+            ["unit__to_node", ["unit_bc", "node_c"], "capacity_per_unit", 5],
             ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
             ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
         ]
@@ -538,9 +538,9 @@ function _test_run_spineopt_mga_2()
             ["node", "node_c", "demand", 1],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 5],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 5],
             ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
-            ["unit__to_node", ["unit_bc", "node_c"], "unit_capacity", 5],
+            ["unit__to_node", ["unit_bc", "node_c"], "capacity_per_unit", 5],
             ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
             ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
         ]

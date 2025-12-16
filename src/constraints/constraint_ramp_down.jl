@@ -57,7 +57,7 @@ v^{unit\_flow}_{(u,n,d,s,t')} \cdot \Delta(t'\cap t) \cdot \left[ p^{reserve\_ac
 \sum_{t' \in overlapping(t-1)} \left( p^{ramp\_limits\_down}_{(u,ng,d,s,t)}
  \cdot v^{units\_on}_{(u,s,t')} \cdot \Delta(t'\cap t-1) \right)    \\
 
-& ) \cdot p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& ) \cdot p^{capacity\_per\_unit}_{(u,ng,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
 
 
 & \forall (u,ng,d) \in indices(p^{ramp\_limits\_up}) \cup indices(p^{ramp\_limits\_startup}) \\
@@ -79,7 +79,7 @@ Here``overlapping(t)`` is the set of time slices which overlap ``t``, and
 See also
 [reserve\_active](@ref),
 [reserve\_downward](@ref),
-[unit\_capacity](@ref),
+[capacity\_per\_unit](@ref),
 [unit\_conv\_cap\_to\_flow](@ref),
 [ramp\_limits\_down](@ref),
 [ramp\_limits\_shutdown](@ref),

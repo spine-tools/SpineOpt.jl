@@ -52,7 +52,7 @@ end
     concept_dictionary(template::Dict; translation::Dict=Dict())
 
 A `Dict` mapping keys from the template ("object_classes", "relationship_classes", etc.)
-to another `Dict` mapping 'concept' names ("unit", "node", "node__to_unit", "unit_capacity" etc.)
+to another `Dict` mapping 'concept' names ("unit", "node", "node__to_unit", "capacity_per_unit" etc.)
 to a third `Dict` containing information to document that concept.
 
 Unfortunately, the template is not uniform when it comes to the location of the name of each concept, their related

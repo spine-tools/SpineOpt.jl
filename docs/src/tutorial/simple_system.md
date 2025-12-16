@@ -348,7 +348,7 @@ For the capacity of the power plants:
 
 -   *entity\_by\_name*: 'power\_plant\_a|electricity'
 
--   *parameter\_name*: *unit\_capacity*
+-   *parameter\_name*: *capacity\_per\_unit*
 
 -   *alternative\_name*: *Base*
 

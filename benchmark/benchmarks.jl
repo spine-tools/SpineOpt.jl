@@ -130,11 +130,11 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         append!(obj_pvs, [["temporal_block", "hourly", "block_end", unparse_db_value(Hour(168))]])
     end
     rel_pvs = []
-    append!(rel_pvs, (["unit__to_node", (u, n), "unit_capacity", 1] for (u, n) in zip(units, nodes_to)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "capacity_per_unit", 1] for (u, n) in zip(units, nodes_to)))
     append!(rel_pvs, (["unit__to_node", (u, n), "ramp_limits_up", 0.9] for (u, n) in zip(units, nodes_to)))
     append!(rel_pvs, (["unit__to_node", (u, n), "ramp_limits_down", 0.9] for (u, n) in zip(units, nodes_to)))
     append!(rel_pvs, (["unit__to_node", (u, n), "minimum_operating_point", 0.2] for (u, n) in zip(units, nodes_to)))
-    append!(rel_pvs, (["unit__to_node", [u, "node_group_reserve"], "unit_capacity", 0.1] for u in units))
+    append!(rel_pvs, (["unit__to_node", [u, "node_group_reserve"], "capacity_per_unit", 0.1] for u in units))
     append!(
         rel_pvs,
         (

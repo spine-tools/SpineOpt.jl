@@ -104,10 +104,10 @@ function _test_monte_carlo()
                 # ["unit", "ccgt", "scheduled_outage_duration", unparse_db_value(ccgt_sod_map)],
             ],
             :relationship_parameter_values => [
-                ["unit__to_node", ["pv", "elec"], "unit_capacity", 200],
-                ["unit__to_node", ["wind", "elec"], "unit_capacity", 300],
-                ["unit__to_node", ["ocgt", "elec"], "unit_capacity", 150],
-                ["unit__to_node", ["ccgt", "elec"], "unit_capacity", 100],
+                ["unit__to_node", ["pv", "elec"], "capacity_per_unit", 200],
+                ["unit__to_node", ["wind", "elec"], "capacity_per_unit", 300],
+                ["unit__to_node", ["ocgt", "elec"], "capacity_per_unit", 150],
+                ["unit__to_node", ["ccgt", "elec"], "capacity_per_unit", 100],
             ],
         )
         import_data(url_in, "Add test data"; test_data...)

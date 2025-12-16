@@ -6,7 +6,7 @@ the [connection\_capacity](@ref). In other words, [investment\_count\_max\_cumul
 
 Unit: Within an investments problem `investment_count_max_cumulative` determines the upper bound on the [unit](@ref) 
 investment decision variable in constraint `units_invested_available`. In constraint `unit_flow_capacity` the maximum 
-`unit_flow` will be the product of the `units_invested_available` and the corresponding [unit\_capacity](@ref). Thus, 
+`unit_flow` will be the product of the `units_invested_available` and the corresponding [capacity\_per\_unit](@ref). Thus, 
 the interpretation of `investment_count_max_cumulative` depends on [investment\_variable\_type](@ref) which determines 
 the [unit](@ref) investment decision variable type. If [investment\_variable\_type](@ref) is integer or binary, then 
 `investment_count_max_cumulative` represents the maximum number of discrete units that may be invested in. If 

@@ -36,7 +36,7 @@ function _build_constraint_non_spinning_reserves_lower_bound(m::Model, u, ng, d,
     @build_constraint(
         sum(
             + minimum_operating_point(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_over, _default=0)
-            * unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_over)
+            * capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_over)
             * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_over]
             * min(duration(t), duration(t_over))
             for (u, n, s, t_over) in _switch(
@@ -91,7 +91,7 @@ function _build_constraint_non_spinning_reserves_upper_bound(m::Model, u, ng, d,
         <=
         sum(
             + limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_over, _default=1)
-            * unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_over)
+            * capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_over)
             * _switch(d; from_node=nonspin_units_shut_down, to_node=nonspin_units_started_up)[u, n, s, t_over]
             * min(duration(t), duration(t_over))
             for (u, n, s, t_over) in _switch(
@@ -105,7 +105,7 @@ end
 function constraint_non_spinning_reserves_bounds_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(unit_capacity)
+        for (u, ng, d) in indices(capacity_per_unit)
         if any(reserve_active(node=n) && is_non_spinning(node=n) for n in members(ng))
         for (t, path) in t_lowest_resolution_path(
             m,

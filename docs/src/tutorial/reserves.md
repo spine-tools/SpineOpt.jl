@@ -77,7 +77,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 - In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | reserve\_upward\_node*.
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the *unit\_capacity* parameter and the *Base* alternative, and enter the value *100* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_a*.
+- In the *Relationship parameter* table (typically at the bottom-center), select the *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *100* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_a*.
 
 !!! note
     The value is equal to the unit capacity defined for the electricity node. However, the value can be lower if the unit cannot provide reserves with its total capacity.
@@ -86,21 +86,21 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 - In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | reserve\_upward\_node*.
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the *unit\_capacity* parameter and the *Base* alternative, and enter the value *200* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_b*.
+- In the *Relationship parameter* table (typically at the bottom-center), select the *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *200* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_b*.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_b_reserve_capacity.png)
 
 - In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | reserve\_upward\_group*.
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
-  - *unit\_capacity* parameter and the *Base* alternative, and enter the value *100*. This will set the total capacity for *power\_plant\_a* in the group.
+  - *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *100*. This will set the total capacity for *power\_plant\_a* in the group.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
 
 - In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | reserve\_upward\_group*.
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
-  - *unit\_capacity* parameter and the *Base* alternative, and enter the value *200*. This will set the total capacity for *power\_plant\_b* in the group.
+  - *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *200*. This will set the total capacity for *power\_plant\_b* in the group.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
 

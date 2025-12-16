@@ -14,7 +14,7 @@ according to the above relationships.
 
 The operation of the [unit](@ref) is specified through a number of parameter values.
 For example, the capacity of the unit, as the maximum amount of energy that can enter or leave it,
-is given by [unit\_capacity](@ref).
+is given by [capacity\_per\_unit](@ref).
 The conversion ratio of input to output can be specified using any of [fix\_ratio\_out\_in\_unit\_flow](@ref),
 [max\_ratio\_out\_in\_unit\_flow](@ref), and [min\_ratio\_out\_in\_unit\_flow](@ref).
 The variable operating cost is given by [vom\_cost](@ref).

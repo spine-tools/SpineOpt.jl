@@ -1873,7 +1873,7 @@
             "fom_cost",
             null,
             null,
-            "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the existing units (incl. `existing_units` and `units_invested_available`) and `unit_capacity` parameters. Currently, the value needs to be defined per duration unit (i.e. 1 hour). E.g. EUR/MW/h."
+            "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the existing units (incl. `existing_units` and `units_invested_available`) and `capacity_per_unit` parameters. Currently, the value needs to be defined per duration unit (i.e. 1 hour). E.g. EUR/MW/h."
         ],
         [
             "unit",
@@ -1971,7 +1971,7 @@
             "availability_factor",
             1.0,
             null,
-            "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."
+            "Availability of the `unit`, acting as a multiplier on its `capacity_per_unit`. Typically between 0-1."
         ],
         [
             "unit",
@@ -2605,14 +2605,14 @@
             "ramp_limits_down",
             null,
             null,
-            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the unit_capacity. [ramp_limits_down] = %/t, e.g. 0.2/h"
+            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_down] = %/t, e.g. 0.2/h"
         ],
         [
             "node__to_unit",
             "ramp_limits_up",
             null,
             null,
-            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_limits_up] = %/t, e.g. 0.2/h"
+            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_up] = %/t, e.g. 0.2/h"
         ],
         [
             "node__to_unit",
@@ -2637,7 +2637,7 @@
         ],
         [
             "node__to_unit",
-            "unit_capacity",
+            "capacity_per_unit",
             null,
             null,
             "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."
@@ -2647,7 +2647,7 @@
             "unit_conv_cap_to_flow",
             1.0,
             null,
-            "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."
+            "Optional coefficient for `capacity_per_unit` unit conversions in the case the `capacity_per_unit` value is incompatible with the desired `unit_flow` units."
         ],
         [
             "node__to_unit",
@@ -2829,14 +2829,14 @@
             "ramp_limits_down",
             null,
             null,
-            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the unit_capacity. [ramp_limits_down] = %/t, e.g. 0.2/h"
+            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_down] = %/t, e.g. 0.2/h"
         ],
         [
             "unit__to_node",
             "ramp_limits_up",
             null,
             null,
-            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_limits_up] = %/t, e.g. 0.2/h"
+            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_up] = %/t, e.g. 0.2/h"
         ],
         [
             "unit__to_node",
@@ -2861,7 +2861,7 @@
         ],
         [
             "unit__to_node",
-            "unit_capacity",
+            "capacity_per_unit",
             null,
             null,
             "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."
@@ -2871,7 +2871,7 @@
             "unit_conv_cap_to_flow",
             1.0,
             null,
-            "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."
+            "Optional coefficient for `capacity_per_unit` unit conversions in the case the `capacity_per_unit` value is incompatible with the desired `unit_flow` units."
         ],
         [
             "unit__to_node",

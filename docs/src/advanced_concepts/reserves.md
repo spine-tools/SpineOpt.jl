@@ -19,7 +19,7 @@ The reserve group definition allows the creation of a [unit flow capacity constr
 
 The definition of the reserve group also allows the creation of [minimum operating point](../mathematical_formulation/constraints.md#constraint_minimum_operating_point), [ramp up](../mathematical_formulation/constraints.md#constraint_ramp_up), and [ramp down](../mathematical_formulation/constraints.md#constraint_ramp_down) constraints, considering flows and reserve provisions.
 
-The relationship between the unit and the node group (i.e., [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref)) is essential to define the parameters needed for the constraints (e.g., [unit\_capacity](@ref), [minimum\_operating\_point](@ref), [ramp\_limits\_up](@ref), or [ramp\_limits\_down](@ref)).
+The relationship between the unit and the node group (i.e., [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref)) is essential to define the parameters needed for the constraints (e.g., [capacity\_per\_unit](@ref), [minimum\_operating\_point](@ref), [ramp\_limits\_up](@ref), or [ramp\_limits\_down](@ref)).
 
 ## Illustrative examples
 
@@ -31,7 +31,7 @@ Let's take a look to the [unit flow capacity constraint](../mathematical_formula
 
 Assuming the following parameters, we are considering a fully flexible unit taking into account the definition of the [unit flow capacity constraint](../mathematical_formulation/constraints.md#constraint_unit_flow_capacity):
 
-* `unit_capacity`  : **100**
+* `capacity_per_unit`  : **100**
 * `ramp_limits_shutdown`: **1**
 * `ramp_limits_startup` : **1**
 

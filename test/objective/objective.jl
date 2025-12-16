@@ -76,14 +76,14 @@ function test_fom_cost_case_1a()
     # the model uses the template default `existing_units`=1. 
     @testset "fom_cost case 1a" begin
         url_in = _test_objective_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         fom_cost = 8
         existing_units_template_default = 1
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
         ]
         SpineInterface.import_data(
             url_in; 
@@ -95,7 +95,7 @@ function test_fom_cost_case_1a()
         # duration = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        expected_obj = fom_cost * unit_capacity * sum(             
+        expected_obj = fom_cost * capacity_per_unit * sum(             
             existing_units_template_default * length(t) for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -107,7 +107,7 @@ function test_fom_cost_case_1b()
     # When a non-investable unit with `existing_units` explicitly defined ... 
     @testset "fom_cost case 1b" begin
         url_in = _test_objective_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         fom_cost = 8
         existing_units = 2
         object_parameter_values = [
@@ -115,7 +115,7 @@ function test_fom_cost_case_1b()
             ["unit", "unit_ab", "existing_units", existing_units],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
         ]
         SpineInterface.import_data(
             url_in; 
@@ -126,7 +126,7 @@ function test_fom_cost_case_1b()
         
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        expected_obj = fom_cost * unit_capacity * sum(             
+        expected_obj = fom_cost * capacity_per_unit * sum(             
             existing_units * length(t) for (s, t) in zip(scenarios, time_slices)
         )
         observed_obj = objective_function(m)
@@ -139,7 +139,7 @@ function test_fom_cost_case_2a()
     # the model uses the new default `existing_units`=0. 
     @testset "fom_cost case 2a" begin
         url_in = _test_objective_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         fom_cost = 8
         existing_units_fomulation_default = 0
         investment_count_max_cumulative = 3
@@ -152,7 +152,7 @@ function test_fom_cost_case_2a()
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
         ]
         SpineInterface.import_data(
             url_in; 
@@ -165,7 +165,7 @@ function test_fom_cost_case_2a()
         
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        expected_obj = fom_cost * unit_capacity * sum(             
+        expected_obj = fom_cost * capacity_per_unit * sum(             
             (existing_units_fomulation_default + var_units_invested_available[unit(:unit_ab), s, t]) * length(t)
             for (s, t) in zip(scenarios, time_slices)
         )
@@ -178,7 +178,7 @@ function test_fom_cost_case_2b()
     # When an investable unit with `existing_units` explicitly defined ... 
     @testset "fom_cost case 2b" begin
         url_in = _test_objective_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         fom_cost = 8
         existing_units = 2
         investment_count_max_cumulative = 3
@@ -192,7 +192,7 @@ function test_fom_cost_case_2b()
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
         ]
         SpineInterface.import_data(
             url_in; 
@@ -205,7 +205,7 @@ function test_fom_cost_case_2b()
         
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        expected_obj = fom_cost * unit_capacity * sum(             
+        expected_obj = fom_cost * capacity_per_unit * sum(             
             (existing_units + var_units_invested_available[unit(:unit_ab), s, t]) * length(t)
             for (s, t) in zip(scenarios, time_slices)
         )
