@@ -483,6 +483,12 @@ function create_superclasses_and_subclasses(db_url, log_level)
         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
             "name" => "unit_flow__unit_flow", "dimension_name_list" => ["unit_flow", "unit_flow"])), log_level
         )
+        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
+            "name" => "unit_flow__investment_group", "dimension_name_list" => ["unit_flow", "investment_group"])), log_level
+        )
+        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
+            "name" => "unit_flow__user_constraint", "dimension_name_list" => ["unit_flow", "user_constraint"])), log_level
+        )
         check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
             "superclass_name" => "unit_flow", "subclass_name" => "node__to_unit")), log_level
         )
