@@ -104,7 +104,7 @@ function _test_report_relative_optimality_gap()
         @testset for k in 1:24
             t1 = DateTime(2000, 1, 1, k - 1)
             t = TimeSlice(t1, t1 + Hour(1))
-            @test Y.relative_optimality_gap(model=first(Y.model()), report=Y.report(:report_x), t=t) !== nothing
+            @test Y.relative_optimality_gap(report=Y.report(:report_x), model=first(Y.model()), t=t) !== nothing
         end
     end
 end
@@ -135,7 +135,7 @@ function _test_rolling()
             m = run_spineopt(url_in, url_out; log_level=0, write_as_roll=write_as_roll)
             con = m.ext[:spineopt].constraints[:unit_flow_capacity]
             using_spinedb(url_out, Y)
-            cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+            cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
             flow_key = (
                 report=Y.report(:report_x),
                 unit=Y.unit(:unit_ab),
@@ -196,7 +196,7 @@ function _test_rolling_with_updating_data()
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
         flow_key = (
             report=Y.report(:report_x),
             unit=Y.unit(:unit_ab),
@@ -251,7 +251,7 @@ function _test_rolling_with_unused_dummy_stochastic_data()
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
         flow_key = (
             report=Y.report(:report_x),
             unit=Y.unit(:unit_ab),
@@ -291,7 +291,7 @@ function _test_rolling_without_varying_terms()
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
         flow_key = (
             report=Y.report(:report_x),
             unit=Y.unit(:unit_ab),
@@ -699,7 +699,7 @@ function _test_dual_values()
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
         @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
-            expected = SpineOpt.vom_cost(node=node(:node_b), unit=unit(:unit_ab), direction=direction(:to_node), t=t)
+            expected = SpineOpt.vom_cost(unit=unit(:unit_ab), node=node(:node_b), direction=direction(:to_node), t=t)
             @test Y.constraint_nodal_balance(; key..., t=t) == expected
         end
     end
@@ -737,7 +737,7 @@ function _test_dual_values_with_two_time_indices()
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
         @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
             expected = if t < DateTime(2000, 1, 2)
-                -SpineOpt.vom_cost(node=node(:node_b), unit=unit(:unit_ab), direction=direction(:to_node), t=t)
+                -SpineOpt.vom_cost(unit=unit(:unit_ab), node=node(:node_b), direction=direction(:to_node), t=t)
             else
                 nothing
             end
