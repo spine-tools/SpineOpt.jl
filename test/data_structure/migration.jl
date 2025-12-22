@@ -442,6 +442,160 @@ function _test_dummy_migrations_functions()
 	end
 end
 
+function _test_major_update_to_17()
+	url = "sqlite://"
+	log_level = 0
+	@testset "major_update_to_17" begin # Non-comprehensive migration test. Samples every sub-function, though.
+		original_data = Dict(
+			:object_classes => [
+				"commodity",
+				"connection",
+				"investment_group",
+				"node",
+				"unit",
+				"user_constraint"
+			],
+			:relationship_classes => [
+				("unit__commodity", ("unit", "commodity")),
+				("unit__from_node", ("unit", "node")),
+				("unit__from_node__investment_group", ("unit", "node", "investment_group")),
+				("unit__from_node__user_constraint", ("unit", "node", "user_constraint")),
+				("unit__to_node", ("unit", "node")),
+				("unit__to_node__investment_group", ("unit", "node", "investment_group")),
+				("unit__to_node__user_constraint", ("unit", "node", "user_constraint")),
+				("unit__node__node", ("unit", "node", "node")),
+			],
+			:objects => [
+				("commodity", "com"),
+				("unit", "u"),
+				("node", "n"),
+				("user_constraint", "uc"),
+				("investment_group", "ig"),
+			],
+			:relationships => [
+				("unit__from_node", ("u", "n")),
+				("unit__from_node__user_constraint", ("u", "n", "uc")),
+				("unit__from_node__investment_group", ("u", "n", "ig")),
+				("unit__to_node", ("u", "n")),
+				("unit__to_node__user_constraint", ("u", "n", "uc")),
+				("unit__node__node", ("u", "n", "n")),
+			],
+			:object_parameters => [
+				("commodity", "commodity_lodf_tolerance"),
+				("unit", "number_of_units"),
+			],
+			:object_parameter_values => [
+				("commodity", "com", "commodity_lodf_tolerance", 1),
+			],
+			:relationship_parameters => [
+				("unit__from_node", "fix_unit_flow"),
+				("unit__from_node__user_constraint", "unit_flow_coefficient"),
+				("unit__to_node", "fix_unit_flow"),
+				("unit__node__node", "fix_ratio_in_out_unit_flow"),
+			],
+			:relationship_parameter_values => [
+				("unit__from_node", ("u", "n"), "fix_unit_flow", 2),
+				("unit__to_node", ("u", "n"), "fix_unit_flow", 3),
+				("unit__from_node__user_constraint", ("u", "n", "uc"), "unit_flow_coefficient", 4),
+				("unit__node__node", ("u", "n", "n"), "fix_ratio_in_out_unit_flow", 5),
+				("unit__node__node", ("u", "n", "n"), "fix_ratio_out_in_unit_flow", 6), # Conflicting definition, let's see what happens.
+			],
+			:parameter_value_lists => [
+				("balance_type_list", "balance_type_none"),
+				("balance_type_list", "balance_type_node"),
+				("balance_type_list", "balance_type_group"),
+				("commodity_physics_list", "commodity_physics_lodf"),
+				("commodity_physics_list", "commodity_physics_none"),
+				("commodity_physics_list", "commodity_physics_ptdf"),
+				("db_lp_solver_list", "HiGHS.jl"),
+				("db_mip_solver_list", "Gurobi.jl"),
+				("unit_online_variable_type_list", "unit_online_variable_type_binary"),
+				("unit_online_variable_type_list", "unit_online_variable_type_integer"),
+				("unit_online_variable_type_list", "unit_online_variable_type_linear"),
+				("unit_online_variable_type_list", "unit_online_variable_type_none"),
+				("connection_investment_variable_type_list", "connection_investment_variable_type_continuous"),
+				("connection_investment_variable_type_list", "connection_investment_variable_type_integer"),
+				("storage_investment_variable_type_list", "storage_investment_variable_type_continuous"),
+				("storage_investment_variable_type_list", "storage_investment_variable_type_integer"),
+				("unit_investment_variable_type_list", "unit_investment_variable_type_continuous"),
+				("unit_investment_variable_type_list", "unit_investment_variable_type_integer"),
+			]
+		)
+		_load_test_data_without_template(url, original_data)
+		SpineOpt.major_upgrade_to_17(url, log_level) # This runs the migration.
+		migrated_data = export_data(url) # Export migrated data (required for examining parameter value lists)
+		Y = Module() # Empty module for loading DB into.
+		using_spinedb(url, Y) # Load DB into the module.
+		obj_class_names = getproperty.(object_classes(Y), :name)
+		rel_class_names = getproperty.(relationship_classes(Y), :name)
+		param_names = getproperty.(parameters(Y), :name)
+		# Check that class and parameter renaming works as intended.
+		@test !in(:commodity, obj_class_names)
+		@test getproperty.(Y.grid(), :name) == [:com] # New class has the entity from the old one.
+		@test Y.lodf_tolerance(grid=Y.grid(:com)) == 1 # New class has the parameters from the old one (renamed).
+		@test !in(:commodity_lodf_tolerance, param_names) # Old parameter deleted.
+		# Check that all necessary superclasses are created correctly.
+		@test only(Y.unit__to_node()) == (unit=Y.unit(:u), node=Y.node(:n)) # Correct entities
+		@test only(Y.node__to_unit()) == (node=Y.node(:n), unit=Y.unit(:u)) # Correct entities
+		@test !in(:unit__from_node, rel_class_names) # Old class deleted.
+		@test Y.unit_flow() == [ # Correct entities.
+			(node=Y.node(:n), unit=Y.unit(:u)),
+			(unit=Y.unit(:u), node=Y.node(:n))
+		]
+		@test Y.flow_limits_fix(node=Y.node(:n), unit=Y.unit(:u)) == 2 # Check parameter value.
+		@test Y.flow_limits_fix(unit=Y.unit(:u), node=Y.node(:n)) == 3 # Check parameter value.
+		@test !in(:fix_unit_flow, param_names) # Old parameter deleted.
+		@test Y.unit_flow__investment_group() == [ # Correct entities
+			(node=Y.node(:n), unit=Y.unit(:u), investment_group=Y.investment_group(:ig))
+		]
+		@test !in(:unit__from_node__investment_group, rel_class_names) # Old class deleted.
+		@test !in(:unit__to_node__investment_group, rel_class_names) # Old class deleted.
+		@test Y.unit_flow__user_constraint() == [ # Correct entities.
+			(node=Y.node(:n), unit=Y.unit(:u), user_constraint=Y.user_constraint(:uc)),
+			(unit=Y.unit(:u), node=Y.node(:n), user_constraint=Y.user_constraint(:uc)),
+		]
+		@test !in(:unit__from_node__user_constraint, rel_class_names) # Old class deleted.
+		@test !in(:unit__to_node__user_constraint, rel_class_names) # Old class deleted.
+		@test Y.coefficient_for_unit_flow( # Check parameter value.
+			node=Y.node(:n), unit=Y.unit(:u), user_constraint=Y.user_constraint(:uc)
+		) == 4
+		@test !in(:unit_flow_coefficient, param_names) # Old parameter deleted.
+		# Check multidimensional class parameters.
+		@test Y.constraint_equality_flow_ratio( # Check parameter value.
+			node1=Y.node(:n), unit1=Y.unit(:u), unit2=Y.unit(:u), node2=Y.node(:n)
+		) == 5 # Only the first definition seems to end up in the db?
+		@test !in(:fix_ratio_in_out_unit_flow, param_names) # Old parameter deleted.
+		@test !in(:fix_ratio_out_in_unit_flow, param_names) # Old parameter deleted.
+		# Check classes to be removed.
+		@test !in(:unit__commodity, rel_class_names)
+		# Check parameter value lists, which we first need to parse.
+		parameter_value_lists = Dict()
+		for (list_name, list_value) in migrated_data["parameter_value_lists"]
+			list = get!(parameter_value_lists, list_name, [])
+			push!(list, parse_db_value(list_value))
+		end
+		@test Set(parameter_value_lists["grid_physics_list"]) == Set( # Correct list elements.
+			["none", "lodf_physics", "ptdf_physics", "voltage_angle_physics", "pressure_physics"]
+		)
+		@test !in("commodity_physics_list", keys(parameter_value_lists)) # Old list removed.
+		@test !in(:has_voltage_angle, param_names) # Converted parameter removed.
+		@test !in(:pressure_physics, param_names) # Converted parameter removed.
+		@test parameter_value_lists["solver_lp_list"] == ["HiGHS.jl"] # Correct list elements.
+		@test !in("db_lp_solver_list", keys(parameter_value_lists)) # Old list removed.
+		@test parameter_value_lists["solver_mip_list"] == ["Gurobi.jl"] # Correct list elements.
+		@test !in("db_mip_solver_list", keys(parameter_value_lists)) # Old list removed.
+		@test Set(parameter_value_lists["balance_type_list"]) == Set(
+			["none", "node_balance", "group_balance"] # Correct list elements.
+		)
+		@test Set(parameter_value_lists["variable_type_list"]) == Set(
+			["binary", "integer", "linear", "none"] # Correct list elements.
+		)
+		@test !in("connection_investment_variable_type_list", keys(parameter_value_lists)) # Old list removed.
+		@test !in("storage_investment_variable_type_list", keys(parameter_value_lists)) # Old list removed.
+		@test !in("unit_investment_variable_type_list", keys(parameter_value_lists)) # Old list removed.
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -454,4 +608,5 @@ end
 	_test_translate_heatrate_parameters()
 	_test_translate_use_economic_representation__use_milestone_years()
 	_test_dummy_migrations_functions()
+	_test_major_update_to_17()
 end

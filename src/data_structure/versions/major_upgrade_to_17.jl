@@ -213,6 +213,9 @@ function major_upgrade_to_17(db_url, log_level)
         (("unit__user_constraint", "units_on_coefficient"), "coefficient_for_units_on", ""),
         (("unit__user_constraint", "units_started_up_coefficient"), "coefficient_for_units_started_up", ""),
 
+        # unit_flow__user_constraint (These renamings happen after the class updates defined above)
+        (("unit_flow__user_constraint", "unit_flow_coefficient"), "coefficient_for_unit_flow", ""),
+
         # connection__from_node and # connection__to_node #TODO: These might be reworked into node__connection__node later.
         (("connection__from_node", "fix_binary_gas_connection_flow"), "binary_gas_flow_limits_fix", ""),
         (("connection__to_node", "fix_binary_gas_connection_flow"), "binary_gas_flow_limits_fix", ""),
@@ -316,12 +319,6 @@ function major_upgrade_to_17(db_url, log_level)
         (("unit__node__node", "unit_start_flow"),
             ("unit_flow__unit_flow", "unit_start_flow", [1, 2, 1, 3])),
         =#
-
-        # unit__to_node__user_constraint and unit__from_node__user_constraint
-        (("unit__to_node__user_constraint", "unit_flow_coefficient"),
-            ("unit_flow__user_constraint", "coefficient_for_unit_flow", [1, 2, 3])),
-        (("unit__from_node__user_constraint", "unit_flow_coefficient"),
-            ("unit_flow__user_constraint", "coefficient_for_unit_flow", [2, 1, 3])),
     ]
 
     # original class,
