@@ -712,12 +712,16 @@ end
 # Find parameter values and move them into another class
 function move_parameter_to_multidimensional_class(db_url, old_class_name, old_par_name, new_class_name, 
     new_par_name, mapping, log_level)
-    # Add new parameter definition
-    try
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
-            "entity_class_name" => new_class_name, "name" => new_par_name)), log_level
-        )
-    catch
+    # Add new parameter definition unless it already exists
+    new_def = Dict("entity_class_name" => new_class_name, "name" => new_par_name)
+    if isempty(run_request(db_url, "call_method", ("get_parameter_definition_item",), new_def))
+        try
+            check_run_request_return_value(
+                run_request(db_url, "call_method", ("add_parameter_definition_item",), new_def),
+                log_level
+            )
+        catch
+        end
     end
     # Find old parameters in all entities and alternatives
     pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
