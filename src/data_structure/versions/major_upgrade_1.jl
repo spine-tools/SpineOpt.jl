@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    major_upgrade_to_17(db_url, log_level)
+    major_upgrade_1(db_url, log_level)
 
 Run several migrations to update the class structure and to rename, modify and move parameters.
 """
-function major_upgrade_to_17(db_url, log_level)
+function major_upgrade_1(db_url, log_level)
     @log log_level 0 string(
         "Running several migrations to update the class structure and to rename, modify and move parameters..."
     )

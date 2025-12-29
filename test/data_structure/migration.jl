@@ -442,10 +442,10 @@ function _test_dummy_migrations_functions()
 	end
 end
 
-function _test_major_update_to_17()
+function _test_major_upgrade_1()
 	url = "sqlite://"
 	log_level = 0
-	@testset "major_update_to_17" begin # Non-comprehensive migration test. Samples every sub-function, though.
+	@testset "major_upgrade_1" begin # Non-comprehensive migration test. Samples every sub-function, though.
 		original_data = Dict(
 			:object_classes => [
 				"commodity",
@@ -522,7 +522,7 @@ function _test_major_update_to_17()
 			]
 		)
 		_load_test_data_without_template(url, original_data)
-		SpineOpt.major_upgrade_to_17(url, log_level) # This runs the migration.
+		SpineOpt.major_upgrade_1(url, log_level) # This runs the migration.
 		migrated_data = export_data(url) # Export migrated data (required for examining parameter value lists)
 		Y = Module() # Empty module for loading DB into.
 		using_spinedb(url, Y) # Load DB into the module.
@@ -608,5 +608,5 @@ end
 	_test_translate_heatrate_parameters()
 	_test_translate_use_economic_representation__use_milestone_years()
 	_test_dummy_migrations_functions()
-	_test_major_update_to_17()
+	_test_major_upgrade_1()
 end
