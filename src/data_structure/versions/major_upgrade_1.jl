@@ -25,14 +25,14 @@ function major_upgrade_1(db_url, log_level)
     @log log_level 0 string(
         "Running several migrations to update the class structure and to rename, modify and move parameters..."
     )
-    # (original class, new class, dimensions, mapping of dimensions)
+    # (original class, new class, dimensions, mapping of dimensions, print errors)
     classes_to_be_updated = [
-        ("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1]),
-        ("unit__to_node_", "unit__to_node", ["unit", "node"], [1, 2]), # Tasku: This is apparently a trick useful for superclass creation later.
-        ("unit__from_node__investment_group", "unit_flow__investment_group", ["node", "unit", "investment_group"], [2, 1, 3]),
-        ("unit__from_node__user_constraint", "unit_flow__user_constraint", ["node", "unit", "user_constraint"], [2, 1, 3]),
-        ("unit__to_node__investment_group", "unit_flow__investment_group", ["unit", "node", "investment_group"], [1, 2, 3]),
-        ("unit__to_node__user_constraint", "unit_flow__user_constraint", ["unit", "node", "user_constraint"], [1, 2, 3]),
+        ("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1], true),
+        ("unit__to_node_", "unit__to_node", ["unit", "node"], [1, 2], true), # Tasku: This is apparently a trick useful for superclass creation later.
+        ("unit__from_node__investment_group", "unit_flow__investment_group", ["node", "unit", "investment_group"], [2, 1, 3], true),
+        ("unit__from_node__user_constraint", "unit_flow__user_constraint", ["node", "unit", "user_constraint"], [2, 1, 3], true),
+        ("unit__to_node__investment_group", "unit_flow__investment_group", ["unit", "node", "investment_group"], [1, 2, 3], false),
+        ("unit__to_node__user_constraint", "unit_flow__user_constraint", ["unit", "node", "user_constraint"], [1, 2, 3], false),
     ]
     # (original class, original parameter name), new parameter name, merge method("sum")
     parameters_to_be_renamed = [
@@ -360,6 +360,9 @@ function major_upgrade_1(db_url, log_level)
     @log log_level 0 string("Renaming classes...")
     rename_classes(db_url, classes_to_be_renamed, log_level)
     @log log_level 0 string("Moving parameters to multidimensional classes...")
+    @log log_level 0 string("Note: Pay attention to the error messages. Some old databases may include mistakes where \
+        unit__node__node entities do not have the corresponding unit__to_node or unit__from_node entities. In that case, \
+        fix the database manually after noting the problematic entities from the error messages, and then try again.")
     move_parameters_to_multidimensional_classes(db_url, parameters_to_multidimensional_classes, log_level)
     @log log_level 0 string("Removing classes...")
     remove_classes(db_url, classes_to_be_removed, log_level)
@@ -510,8 +513,10 @@ end
 
 # Go through the classes, update ordering of their dimensions and commit session
 function update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
-    for (old_class, new_class, dimensions, mapping) in classes_to_be_updated
-        update_ordering_of_multidimensional_class(db_url, old_class, new_class, dimensions, mapping, log_level)
+    for (old_class, new_class, dimensions, mapping, print_errors) in classes_to_be_updated
+        update_ordering_of_multidimensional_class(db_url, old_class, new_class, dimensions, mapping, print_errors, 
+            log_level
+        )
         # Remove old class
         class_item = run_request(db_url, "call_method", ("get_entity_class_item",), Dict("name" => old_class))
         if length(class_item) > 0
@@ -523,7 +528,8 @@ function update_ordering_of_multidimensional_classes(db_url, classes_to_be_updat
 end
 
 # Update ordering of class dimensions, add as a new class
-function update_ordering_of_multidimensional_class(db_url, old_class, new_class, dimensions, mapping, log_level)
+function update_ordering_of_multidimensional_class(db_url, old_class, new_class, dimensions, mapping, print_errors, 
+                                                   log_level)
     try
         # Create new class
         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
@@ -543,7 +549,7 @@ function update_ordering_of_multidimensional_class(db_url, old_class, new_class,
                 "default_value" => pdef["default_value"],
                 "default_type" => pdef["default_type"],
                 "parameter_value_list_name" => pdef["parameter_value_list_name"],
-                "description" => pdef["description"])), log_level
+                "description" => pdef["description"])), log_level, print_errors
             )
         catch
         end
@@ -607,17 +613,16 @@ function rename_parameter(db_url, class_name, old_par_name, new_par_name, merge_
         "entity_class_name" => class_name, "name" => old_par_name)
     )
     if length(pdef) > 0
-        try
-            check_run_request_return_value(run_request(db_url, "call_method", ("update_item", "parameter_definition"), Dict(
-                "id" => pdef["id"], "name" => new_par_name)), log_level
-            )
-        catch
-            if merge_method == "sum"
-                sum_to_existing_parameter(db_url, class_name, old_par_name, new_par_name, log_level)
-            end
-            # Remove old parameter definition
+        if merge_method == "sum"
+            sum_to_existing_parameter(db_url, class_name, old_par_name, new_par_name, log_level)
             check_run_request_return_value(run_request(
                 db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
+            )
+        else
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                "id" => pdef["id"], "name" => new_par_name)
+                ), log_level
             )
         end
     end
@@ -835,6 +840,23 @@ function merge_variable_type_lists(db_url, log_level)
         "unit_online_variable_type_linear" => "linear",
         "unit_online_variable_type_none" => "none"
     )
+    # Check if variable_type_list already exists in the database and if it can be removed to allow renaming
+    pval_list_existing = run_request(db_url, "call_method", ("find_parameter_value_lists",), Dict(
+        "name" => pval_list_new_name)
+    )
+    if (length(pval_list_existing) > 0)
+        pdefs_using_list = find_pdefs_linked_to_pval_list(db_url, pval_list_new_name)
+        if length(pdefs_using_list) > 0
+            @log log_level 0 string("Error: The variable_type_list is already in use by some parameter definitions \
+                although SpineOpt wasn't using it. Rename the variable_type_list in your input database and try again.")
+            throw(error())
+        else
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("remove_parameter_value_list_item", pval_list_existing[1]["id"])), log_level
+            )
+        end
+    end
+    # Continue with renaming
     rename_pval_list_values(db_url, pval_list_old_name, name_mapping, log_level)
     rename_pval_list(db_url, pval_list_old_name, pval_list_new_name, log_level)
     lists_to_be_updated = (
@@ -1056,4 +1078,15 @@ function move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
             db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
         )
     end
+end
+
+function find_pdefs_linked_to_pval_list(db_url, pval_list)
+    pdefs = []
+    pdefs_all = run_request(db_url, "call_method", ("find_parameter_definitions",), Dict())
+    for pdef in pdefs_all
+        if pdef["parameter_value_list_name"] == pval_list
+            push!(pdefs, pdef["name"])
+        end
+    end
+    return pdefs
 end
