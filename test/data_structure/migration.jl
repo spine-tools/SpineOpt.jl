@@ -482,10 +482,13 @@ function _test_major_upgrade_1()
 			],
 			:object_parameters => [
 				("commodity", "commodity_lodf_tolerance"),
-				("unit", "number_of_units"),
+				("unit", "fix_units_out_of_service"),
+				("unit", "units_unavailable"),
 			],
 			:object_parameter_values => [
 				("commodity", "com", "commodity_lodf_tolerance", 1),
+				("unit", "u", "fix_units_out_of_service", 1),
+				("unit", "u", "units_unavailable", 2),
 			],
 			:relationship_parameters => [
 				("unit__from_node", "fix_unit_flow"),
@@ -534,6 +537,9 @@ function _test_major_upgrade_1()
 		@test getproperty.(Y.grid(), :name) == [:com] # New class has the entity from the old one.
 		@test Y.lodf_tolerance(grid=Y.grid(:com)) == 1 # New class has the parameters from the old one (renamed).
 		@test !in(:commodity_lodf_tolerance, param_names) # Old parameter deleted.
+		@test Y.out_of_service_count_fix(unit=Y.unit(:u)) == 3 # Combined parameters sum.
+		@test !in(:fix_units_out_of_service, param_names) # Old parameter deleted.
+		@test !in(:units_unavailable, param_names) # Old parameter deleted.
 		# Check that all necessary superclasses are created correctly.
 		@test only(Y.unit__to_node()) == (unit=Y.unit(:u), node=Y.node(:n)) # Correct entities
 		@test only(Y.node__to_unit()) == (node=Y.node(:n), unit=Y.unit(:u)) # Correct entities
