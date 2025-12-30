@@ -27,7 +27,7 @@ function add_min_unit_flow(db_url, log_level)
 	@log log_level 0 "Adding `min_unit_flow` to `unit__from_node` and `unit__to_node`... "
 	new_data = Dict()
 	new_data[:relationship_parameters] = [
-		x for x in template()["relationship_parameters"] if x[2] == "min_unit_flow"
+		x for x in template()["parameter_definitions"] if x[2] == "min_unit_flow"
 	]
 	# Add new data
 	run_request(db_url, "import_data", (new_data, ""))
