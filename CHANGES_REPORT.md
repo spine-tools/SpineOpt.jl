@@ -19,7 +19,7 @@ Major architectural changes, new features, and model enhancements:
    [PR #1076](https://github.com/spine-tools/SpineOpt.jl/pull/1076)
 
 5. **Monte Carlo algorithm and blended representative periods** - Stochastic sampling methods  
-   [Commit dc9ce6b](https://github.com/spine-tools/SpineOpt.jl/commit/5787a1345a183fc23585b1305c6c42641a22ca0c)
+   [Commit 5787a13](https://github.com/spine-tools/SpineOpt.jl/commit/5787a1345a183fc23585b1305c6c42641a22ca0c)
 
 6. **Minimum node state constraint** - New constraint for storage state lower bounds  
    [PR #1204](https://github.com/spine-tools/SpineOpt.jl/pull/1204)
