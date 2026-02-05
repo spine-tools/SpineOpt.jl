@@ -549,7 +549,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
                             m; stochastic_scenario=s, invest_temporal_block=invest_temporal_block_,
                         )
                         push!(stoch_map_ind, scenario_to_query)
-                        push!(stoch_map_val, TimeSeries(timeseries_ind, timeseries_val, false, false))
+                        push!(stoch_map_val, SpineInterface.TimeSeries(timeseries_ind, timeseries_val, false, false))
                     end
                 end
                 pvals = parameter_value(SpineInterface.Map(stoch_map_ind, stoch_map_val))
@@ -558,7 +558,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
             else
                 timeseries_ind, timeseries_val =
                     create_discounted_duration(m; invest_temporal_block=invest_temporal_block_)
-                pvals = parameter_value(TimeSeries(timeseries_ind, timeseries_val, false, false))
+                pvals = parameter_value(SpineInterface.TimeSeries(timeseries_ind, timeseries_val, false, false))
             end
             add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
         end
