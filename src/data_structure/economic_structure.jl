@@ -251,10 +251,15 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
     for id in obj_cls()
         # if the discount rate is 0 or not defined, the conversion factor is 1
         # or if the object is not investable, the conversion factor is also 1
-        if (discount_rate(model=model()[1]) == 0 || isnothing(discount_rate(model=model()[1])) || !(id in invest_temporal_block(temporal_block=anything)))
+        if (discount_rate(model=model()[1]) == 0 || 
+            isnothing(discount_rate(model=model()[1])) || 
+            !(id in invest_temporal_block(temporal_block=anything))
+        )
             pvals = parameter_value(1)
         else
-            stochastic_map_vector = unique([x.stochastic_scenario for x in investment_indices(m)])
+            stochastic_map_vector = unique(
+                [x.stochastic_scenario for x in investment_indices(m; Dict(obj_cls.name => id)...)]
+            )
             stochastic_map_indices = []
             sizehint!(stochastic_map_indices, length(stochastic_map_vector))
             stochastic_map_vals = []
@@ -366,9 +371,9 @@ Generate salvage fraction of units, whose economic lifetime exceeds the modeling
 """
 function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
-    discnt_year = discount_year(model=instance)
+    # discnt_year = discount_year(model=instance)
     p_eoh = model_end(model=instance)
-    salvage_fraction = Dict()
+    # salvage_fraction = Dict()
     investment_indices = economic_parameters[obj_cls][:set_investment_indices]
     lead_time = economic_parameters[obj_cls][:set_lead_time]
     econ_lifetime = economic_parameters[obj_cls][:set_econ_lifetime]
@@ -383,8 +388,10 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_par
 
     # Only for investable objects
     for id in invest_temporal_block(temporal_block=anything)
-        if id in indices(econ_lifetime)
-            stochastic_map_vector = unique([x.stochastic_scenario for x in investment_indices(m)])
+        if is_candidate(m; Dict(obj_cls.name => id)...) && !isnothing(econ_lifetime(m; Dict(obj_cls.name => id)...))
+            stochastic_map_vector = unique(
+                [x.stochastic_scenario for x in investment_indices(m; Dict(obj_cls.name => id)...)]
+            )
             stochastic_map_ind = []
             sizehint!(stochastic_map_ind, length(stochastic_map_vector))
             stochastic_map_val = []
