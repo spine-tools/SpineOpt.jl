@@ -55,7 +55,8 @@ end
 """
     generate_is_candidate()
 
-Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
+Generate `is_candidate` parameter for the `node`, `unit` and `connection` `ObjectClass`es.
+Note: `is_candidate` is `false` when `candidate_units/connections/storages` is set to 0 or not defined.
 """
 function generate_is_candidate()
     is_candidate = Parameter(:is_candidate, [node, unit, connection])
