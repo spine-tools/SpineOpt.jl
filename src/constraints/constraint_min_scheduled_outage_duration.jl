@@ -19,11 +19,11 @@
 #############################################################################
 
 @doc raw"""
-The unit must be taken out of service for maintenance for a duration equal to scheduled_outage_duration:
+The unit must be taken out of service for maintenance for a duration equal to outage_scheduled_duration:
 
 ```math
 \sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t
-\geq scheduled\_outage\_duration_{(u,s,t)}number\_of\_units_u \quad \forall u \in unit, \, \forall (s,t)
+\geq outage\_scheduled\_duration_{(u,s,t)}existing\_units_u \quad \forall u \in unit, \, \forall (s,t)
 ```
 
 """
@@ -77,10 +77,10 @@ end
 function _max_sch_out_dur(m::Model, u, s_path, t)
     maximum(
         (
-            + scheduled_outage_duration(m; unit=u, stochastic_scenario=s, t=t)
+            + outage_scheduled_duration(m; unit=u, stochastic_scenario=s, t=t)
             * round(
-                + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
-                + candidate_units(m; unit=u, stochastic_scenario=s, t=t, _default=0)
+                + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+                + investment_count_max_cumulative(m; unit=u, stochastic_scenario=s, t=t, _default=0)
             )
         )
         for s in s_path
@@ -99,7 +99,7 @@ constraint generation.
 function constraint_min_scheduled_outage_duration_indices(m::Model)
     (
         (unit=u, stochastic_path=path, t=current_window(m), bound=bound)
-        for u in indices(scheduled_outage_duration)
+        for u in indices(outage_scheduled_duration)
         for path in active_stochastic_paths(m, units_out_of_service_indices(m; unit=u))
         for bound in (Object(:lb, :bound), Object(:ub, :bound))
     )

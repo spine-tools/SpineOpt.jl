@@ -40,7 +40,7 @@ function _test_variable_unit_setup()
         :relationships => [
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_ab", "node_c"]],
             ["node__temporal_block", ["node_a", "hourly"]],
@@ -61,13 +61,13 @@ function _test_variable_unit_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "instance", "max_gap", "0.05"],
-            ["model", "instance", "max_iterations", "2"],
+            ["model", "instance", "decomposition_max_gap", "0.05"],
+            ["model", "instance", "decomposition_max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
             ["unit", "unit_ab", "units_on_cost", 1],  # Just to have units_on variables
         ],
         :relationship_parameter_values => [
@@ -133,12 +133,12 @@ function _test_variable_connection_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "instance", "max_gap", "0.05"],
-            ["model", "instance", "max_iterations", "2"],
+            ["model", "instance", "decomposition_max_gap", "0.05"],
+            ["model", "instance", "decomposition_max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [
@@ -153,12 +153,12 @@ function _test_variable_connection_setup()
     url_in
 end
 
-function test_initial_units_on()
-    @testset "initial_units_on" begin
+function test_online_count_initial()
+    @testset "online_count_initial" begin
         url_in = _test_variable_unit_setup()
         init_units_on = 123
         object_parameter_values = [
-            ["unit", "unit_ab", "initial_units_on", init_units_on],
+            ["unit", "unit_ab", "online_count_initial", init_units_on],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -177,10 +177,10 @@ end
 function test_unit_online_variable_type_none()
     @testset "unit_online_variable_type_none" begin
         url_in = _test_variable_unit_setup()
-        unit_availability_factor = 0.5
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_none"],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
+            ["unit", "unit_ab", "online_variable_type", "none"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -201,23 +201,23 @@ function test_unit_history_parameters()
     @testset "unit_history_parameters" begin
         min_up_minutes = 120
         min_down_minutes = 180
-        scheduled_outage_duration_minutes = 60
+        outage_scheduled_duration_minutes = 60
         lifetime_minutes = 240
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         
         url_in = _test_variable_unit_setup()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
         min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-        scheduled_outage_duration = Dict("type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m"))
-        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        outage_scheduled_duration = Dict("type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         object_parameter_values = [
             ["unit", "unit_ab", "min_up_time", min_up_time],
             ["unit", "unit_ab", "min_down_time", min_down_time],
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
-            ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
-            ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
+            ["unit", "unit_ab", "outage_variable_type", "integer"],
+            ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [
@@ -253,15 +253,15 @@ function test_connection_history_parameters()
         flow_ratio = 0.8
         conn_flow_minutes_delay = 180
         lifetime_minutes = 240
-        candidate_connections = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
 
         url_in = _test_variable_connection_setup()
-        connection_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         connection_flow_delay = Dict("type" => "duration", "data" => string(conn_flow_minutes_delay, "m"))
         object_parameter_values = [
-            ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_tech_lifetime", connection_investment_tech_lifetime],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["connection", "connection_ab", "lifetime_technical", lifetime_technical],
             ["model", "instance", "model_end", model_end],
         ]
         relationships = [
@@ -306,18 +306,18 @@ function _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
             ["model__default_temporal_block", ["instance", "hourly"]],
             ["model__default_stochastic_structure", ["instance", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"]],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]],
         ],
         :object_parameter_values => [
             ["model", "instance", "model_start", unparse_db_value(m_start)],
             ["model", "instance", "model_end", unparse_db_value(m_end)],
             ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
+            ["unit", "unit_ab", "online_variable_type", "integer"],
         ],
     )
     _load_test_data(url_in, test_data)
@@ -332,11 +332,11 @@ function test_unit_flow_simple_bounds()
         cap_to_node = 200
         url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_linear"],
+            ["unit", "unit_ab", "online_variable_type", "linear"],
         ]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", cap_to_node],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -367,12 +367,12 @@ function test_unit_flow_ub_with_number_of_units_time_series()
         number_of_units_ts = TimeSeries([DateTime(2000, 1, 1, 0), DateTime(2000, 1, 1, 1)], [1, 0])
         url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_linear"],
-            ["unit", "unit_ab", "number_of_units", unparse_db_value(number_of_units_ts)],
+            ["unit", "unit_ab", "online_variable_type", "linear"],
+            ["unit", "unit_ab", "existing_units", unparse_db_value(number_of_units_ts)],
         ]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", cap_to_node],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -401,9 +401,9 @@ function test_fix_ratio_out_in_unit_flow_simple()
         usf = 2.4
         url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_units_on_coefficient_out_in", fuoc],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "unit_start_flow", usf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_online_coefficient", fuoc],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "unit_start_flow", usf],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -439,9 +439,9 @@ function test_fix_ratio_in_out_unit_flow_simple()
         usf = 2.4
         url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_in_out_unit_flow", fruf],
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_units_on_coefficient_in_out", fuoc],
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "unit_start_flow", usf],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_online_coefficient", fuoc],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "unit_start_flow", usf],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -478,11 +478,11 @@ function test_two_fix_ratio_out_in_unit_flow_simple()
         objs = [["node", "node_b2"]]
         rels = [
             ["unit__to_node", ["unit_ab", "node_b2"]],
-            ["unit__node__node", ["unit_ab", "node_b2", "node_a"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"]],
         ]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
-            ["unit__node__node", ["unit_ab", "node_b2", "node_a"], "fix_ratio_out_in_unit_flow", fruf2],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf2],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -511,12 +511,12 @@ function test_two_fix_ratio_in_out_unit_flow_simple()
         url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         objs = [["node", "node_a2"]]
         rels = [
-            ["unit__from_node", ["unit_ab", "node_a2"]],
-            ["unit__node__node", ["unit_ab", "node_a2", "node_b"]],
+            ["node__to_unit", ["node_a2", "unit_ab"]],
+            ["unit_flow__unit_flow", ["node_a2", "unit_ab", "unit_ab", "node_b"]],
         ]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_in_out_unit_flow", fruf],
-            ["unit__node__node", ["unit_ab", "node_a2", "node_b"], "fix_ratio_in_out_unit_flow", fruf2],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["node_a2", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf2],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -546,11 +546,11 @@ function test_fix_ratio_out_in_and_in_out_unit_flow_simple()
         objs = [["node", "node_b2"]]
         rels = [
             ["unit__to_node", ["unit_ab", "node_b2"]],
-            ["unit__node__node", ["unit_ab", "node_b2", "node_a"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"]],
         ]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_a", "node_b"], "fix_ratio_in_out_unit_flow", fruf],
-            ["unit__node__node", ["unit_ab", "node_b2", "node_a"], "fix_ratio_out_in_unit_flow", fruf2],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf2],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -583,13 +583,13 @@ function test_two_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
         rels = [
             ["unit__to_node", ["unit_ab", "node_b2"]],
             ["unit__to_node", ["unit_ab", "node_b3"]],
-            ["unit__node__node", ["unit_ab", "node_b2", "node_a"]],
-            ["unit__node__node", ["unit_ab", "node_b3", "node_b2"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"]],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b3", "unit_ab", "node_b2"]],
         ]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
-            ["unit__node__node", ["unit_ab", "node_b2", "node_a"], "fix_ratio_out_in_unit_flow", fruf2],
-            ["unit__node__node", ["unit_ab", "node_b3", "node_b2"], "fix_ratio_out_out_unit_flow", froouf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf2],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b3", "unit_ab", "node_b2"], "constraint_equality_flow_ratio", froouf],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -622,8 +622,8 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
         url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [("model", "instance", "roll_forward", unparse_db_value(Hour(1)))]
         rel_pvals = [
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", fruf],
-            ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_units_on_coefficient_out_in", fuoc],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_online_coefficient", fuoc],
         ]
         import_data(url_in; object_parameter_values=obj_pvals, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=true, update_names=true) do m
@@ -681,8 +681,8 @@ function _test_fix_ratio_connection_flow_simple_setup(m_start, m_end)
             ["model", "instance", "model_start", unparse_db_value(m_start)],
             ["model", "instance", "model_end", unparse_db_value(m_end)],
             ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
     )
     _load_test_data(url_in, test_data)
@@ -764,7 +764,7 @@ function test_fix_ratio_out_in_connection_flow_simple_rolling()
 end
 
 @testset "variables" begin
-    test_initial_units_on()
+    test_online_count_initial()
     test_unit_online_variable_type_none()
     test_unit_history_parameters()
     test_connection_history_parameters()

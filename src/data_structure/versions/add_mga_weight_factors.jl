@@ -27,13 +27,11 @@ function add_mga_weight_factors(db_url, log_level)
 	@log log_level 0 "Adding `unit/connection_(intact_)flow_non_anticipativity_time`..."
 	new_data = Dict()
 	new_data[:object_parameters] = [
-		x for x in template()["object_parameters"] if x[2] in (
-			"units_invested_mga_weight",
-			"connections_invested_mga_weight",
-			"storages_invested_mga_weight",
-			"units_invested_big_m_mga",
-			"storages_invested_big_m_mga",
-			"connections_invested_big_m_mga"
+		x for x in template()["parameter_definitions"] if x[2] in (
+			"mga_investment_weight",
+			"mga_storage_investment_weight",
+			"mga_investment_big_m",
+			"mga_storage_investment_big_m"
 		)
 	]
 	# Add new data

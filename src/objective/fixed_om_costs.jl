@@ -28,13 +28,13 @@ function fixed_om_costs(m, t_range)
     @expression(
         m,
         sum(
-            + unit_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            + capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
             * (
-                + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+                + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
                 + (is_candidate(unit=u) ? units_invested_available[u, s, t] : 0)
-                # Default value of `number_of_units` is 1 in the template: assumption for non-investable units.
-                # For investable unit, we assume the `number_of_units`=0 (existing ones) unless explicitly specified.
+                # Default value of `existing_units` is 1 in the template: assumption for non-investable units.
+                # For investable unit, we assume the `existing_units`=0 (existing ones) unless explicitly specified.
             )
             * (
                 !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
@@ -50,7 +50,7 @@ function fixed_om_costs(m, t_range)
                 unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s) : 
                 node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             )
-            for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for (u, ng, d) in indices(capacity_per_unit; unit=indices(fom_cost))
             for (u, s, t) in Iterators.flatten(
                 is_candidate(unit=u) ? (units_invested_available_indices(m; unit=u, t=t_range),) :
                 (

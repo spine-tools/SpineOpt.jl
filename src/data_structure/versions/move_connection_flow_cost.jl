@@ -43,7 +43,7 @@ function move_connection_flow_cost(db_url, log_level)
 	# Prepare new_data
 	new_data = Dict()
 	new_data[:relationship_parameters] = [
-		x for x in template()["relationship_parameters"] if x[2] == "connection_flow_cost"
+		x for x in get(template(), "parameter_definitions", []) if x[2] == "connection_flow_cost"
 	]
 	# Compute new_pvals and invalid_conns
 	new_data[:relationship_parameter_values] = new_pvals = []

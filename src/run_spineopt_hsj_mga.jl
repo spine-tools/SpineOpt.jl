@@ -59,8 +59,8 @@ function generic_run_mga!(m::Model, url_out, algorithm_type::Val, log_level, upd
         m, 
         m.ext[:spineopt].variables,
         prepare_variable_groups(m),
-        something(max_mga_iterations(model=instance), 0),
-        max_mga_slack(model=instance),
+        something(mga_max_iterations(model=instance), 0),
+        mga_max_slack(model=instance),
         algorithm_type,
         (m; iteration) ->  solve_model!(
                 m;

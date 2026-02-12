@@ -42,6 +42,7 @@ include("versions/add_model_algorithm.jl")
 include("versions/rename_lifetime_to_tech_lifetime.jl")
 include("versions/translate_heatrate_parameters.jl")
 include("versions/translate_use_economic_representation__use_milestone_years.jl")
+include("versions/major_upgrade_1.jl")
 
 function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
 	# No changes, just make sure we load the newest template
@@ -88,6 +89,7 @@ _upgrade_functions = [
 	add_node_state_min_factor,
 	add_connection_min_factor,
 	translate_use_economic_representation__use_milestone_years,
+	major_upgrade_1,
 ]
 
 """
@@ -129,11 +131,11 @@ function find_version(url)
 	obj_clss = run_request(url, "query", ("object_class_sq",))["object_class_sq"]
 	i = findfirst(x -> x["name"] == "settings", obj_clss)
 	if isnothing(i)
-		settings_class = first([x for x in _template["object_classes"] if x[1] == "settings"])
+		settings_class = first([x for x in _template["entity_classes"] if x[1] == "settings"])
 		run_request(
 			url,
 			"import_data",
-			(Dict("object_classes" => [settings_class]), "Add settings object class")
+			(Dict("entity_classes" => [settings_class]), "Add settings entity class")
 		)
 		return find_version(url)
 	end
@@ -141,7 +143,8 @@ function find_version(url)
 	pdefs = run_request(url, "query", ("parameter_definition_sq",))["parameter_definition_sq"]
 	j = findfirst(x -> x["name"] == "version" && x["entity_class_id"] == settings_class["id"], pdefs)
 	if isnothing(j)
-		version_par_def = first([x for x in _template["object_parameters"] if x[1:2] == ["settings", "version"]])
+		parameters = get(_template, "object_parameters", _template["parameter_definitions"])
+		version_par_def = first([x for x in parameters if x[1:2] == ["settings", "version"]])
 		version_par_def[3] = 1  # position 3 is default_value
 		run_request(
 			url,
@@ -154,8 +157,56 @@ function find_version(url)
 	_parse_version(version)
 end
 
-
-
 _parse_version(version::String) = _parse_version(parse(Float64, version))
 _parse_version(version::Float64) = _parse_version(round(Int, version))
 _parse_version(version::Int) = version
+
+
+"""
+	upgrade_json(
+		path::String;
+		log_level::Int=3,
+		omit_template::Bool=false,
+		output_path::String=path,
+	)
+
+Upgrade the data structure in `path` to the latest version.
+
+By default, writes the upgraded JSON over the given `path`,
+but this can be changed by giving a separate `output_path`.
+Includes the contents of the spineopt_template.json by default,
+but giving `omit_template=true` removes them for more compact output.
+
+Based on [`upgrade_db`](@ref).
+"""
+function upgrade_json(
+	path::String;
+	log_level::Int=3,
+	omit_template::Bool=false,
+	output_path::String=path,
+)
+	@info "upgrading `$path`"
+	data = JSON.parsefile(path, use_mmap=false) 
+	# memory mapped files causing issues on windows https://discourse.julialang.org/t/error-when-trying-to-open-a-file/78782
+	db_url = "sqlite://" # In-memory db
+	SpineInterface.close_connection(db_url) # Close and reopen DB to clear its contents.
+	SpineInterface.open_connection(db_url)
+	import_data(db_url, data, "Import $path") # Import data.
+	SpineOpt.upgrade_db(db_url; log_level=log_level) # Run migration.
+	new_data = SpineInterface.parse_db_dict!(export_data(db_url)) # Export and parse migrated data.
+	if omit_template # Omit stuff included in the template.
+		template = SpineOpt.template() # Load template
+		for (k,v) in template # Iterate over the template.
+			vals = get!(new_data, k, [])
+			if isempty(vals) # If no values found, pop the key and move on.
+				pop!(new_data, k)
+				continue
+			end
+			setdiff!(vals, v) # Remove entries already in the template.
+			isempty(vals) && pop!(new_data, k) # If no entries remain, pop the key.
+		end
+	end
+	open(output_path, "w") do f # Write new JSON file.
+		JSON.print(f, new_data, 4)
+	end
+end

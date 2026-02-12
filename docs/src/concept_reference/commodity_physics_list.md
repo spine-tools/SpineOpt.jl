@@ -1,1 +1,1 @@
-`commodity_physics_list` holds the possible values for the commodity parameter [commodity_physics](@ref) parameter. See [commodity_physics](@ref) for more details
+`grid_physics_list` holds the possible values for the grid parameter [physics_type](@ref) parameter. See [physics_type](@ref) for more details

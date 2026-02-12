@@ -38,7 +38,7 @@ function unit_flow_op_indices(
     i=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
     unit = members(unit)
     node = members(node)
@@ -63,7 +63,7 @@ function add_variable_unit_flow_op!(m::Model)
         :unit_flow_op,
         unit_flow_op_indices;
         lb=constant(0),
-        fix_value=fix_unit_flow_op,
-        initial_value=initial_unit_flow_op,
+        fix_value=flow_limits_fix_op,
+        initial_value=flow_limits_initial_op,
     )
 end

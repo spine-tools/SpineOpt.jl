@@ -20,7 +20,7 @@ using HiGHS
 
 array_to_dict(arr::AbstractArray) = Dict(k=>v for (k,v) in enumerate(arr))
 
-function _test_run_spineopt_mga_setup()
+function _test_run_spineopt_hsj_mga_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -84,8 +84,8 @@ function _test_run_spineopt_mga_setup()
             ["units_on__temporal_block", ["unit_bc", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["units_on__stochastic_structure", ["unit_bc", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
-            ["unit__from_node", ["unit_bc", "node_b"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
+            ["node__to_unit", ["node_b", "unit_bc"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_bc", "node_c"]],
             ["report__output",["report_a", "units_invested"]],
@@ -139,47 +139,47 @@ function generate_simple_system(algorithm::String, no_iterations=nothing)
     fuel_cost = 5
     mga_slack = 0.05
     object_parameter_values = [
-        ["unit", "unit_ab", "candidate_units", candidate_units],
-        ["unit", "unit_bc", "candidate_units", candidate_units],
-        ["unit", "unit_ab", "number_of_units", 0],
-        ["unit", "unit_bc", "number_of_units", 0],
-        ["unit", "unit_group_abbc", "units_invested_mga", true],
+        ["unit", "unit_ab", "investment_count_max_cumulative", candidate_units],
+        ["unit", "unit_bc", "investment_count_max_cumulative", candidate_units],
+        ["unit", "unit_ab", "existing_units", 0],
+        ["unit", "unit_bc", "existing_units", 0],
+        ["unit", "unit_group_abbc", "mga_investment_active", true],
         ["unit", "unit_ab", "unit_investment_cost", 1],
-        ["connection", "connection_ab", "candidate_connections", candidate_connections],
-        ["connection", "connection_bc", "candidate_connections", candidate_connections],
-        ["connection", "connection_group_abbc", "connections_invested_mga", true],
-        ["node", "node_b", "candidate_storages", candidate_storages],
-        ["node", "node_c", "candidate_storages", candidate_storages],
-        ["node", "node_a", "balance_type", :balance_type_none],
-        ["node", "node_b", "has_state", true],
-        ["node", "node_c", "has_state", true],
-        ["node", "node_b", "fix_node_state",0],
-        ["node", "node_c", "fix_node_state",0],
-        ["node", "node_b", "node_state_cap", 0],
-        ["node", "node_c", "node_state_cap", 0],
-        ["node", "node_group_bc", "storages_invested_mga", true],
+        ["connection", "connection_ab", "investment_count_max_cumulative", candidate_connections],
+        ["connection", "connection_bc", "investment_count_max_cumulative", candidate_connections],
+        ["connection", "connection_group_abbc", "mga_investment_active", true],
+        ["node", "node_b", "storage_investment_count_max_cumulative", candidate_storages],
+        ["node", "node_c", "storage_investment_count_max_cumulative", candidate_storages],
+        ["node", "node_a", "balance_type", :none],
+        ["node", "node_b", "storage_active", true],
+        ["node", "node_c", "storage_active", true],
+        ["node", "node_b", "storage_state_fix",0],
+        ["node", "node_c", "storage_state_fix",0],
+        ["node", "node_b", "storage_state_max", 0],
+        ["node", "node_c", "storage_state_max", 0],
+        ["node", "node_group_bc", "mga_storage_investment_active", true],
         ["model", "instance", "model_algorithm", algorithm],
-        ["model", "instance", "max_mga_slack", mga_slack],
+        ["model", "instance", "mga_max_slack", mga_slack],
         # ["node", "node_a", "demand", 1],
         ["node", "node_b", "demand", 1],
         ["node", "node_c", "demand", 1],
     ]
     if no_iterations !== nothing
-        push!(object_parameter_values, ["model", "instance", "max_mga_iterations", no_iterations])
+        push!(object_parameter_values, ["model", "instance", "mga_max_iterations", no_iterations])
     end
     relationship_parameter_values = [
-        ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 5],
+        ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 5],
         ["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost],
-        ["unit__to_node", ["unit_bc", "node_c"], "unit_capacity", 5],
-        ["connection__to_node", ["connection_ab","node_b"], "connection_capacity", 5],
-        ["connection__to_node", ["connection_bc","node_c"], "connection_capacity", 5]
+        ["unit__to_node", ["unit_bc", "node_c"], "capacity_per_unit", 5],
+        ["connection__to_node", ["connection_ab","node_b"], "capacity_per_connection", 5],
+        ["connection__to_node", ["connection_bc","node_c"], "capacity_per_connection", 5]
     ]
     return object_parameter_values, relationship_parameter_values
 end
 
 function _test_run_spineopt_hsj_mga()
     @testset "run_spineopt_hsj_mga_no_max_iterations" begin
-        url_in = _test_run_spineopt_mga_setup()
+        url_in = _test_run_spineopt_hsj_mga_setup()
         object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm")
         SpineInterface.import_data(
             url_in;
@@ -204,7 +204,7 @@ function _test_run_spineopt_hsj_mga()
         end
     end
     @testset "run_spineopt_hsj_mga" begin
-        url_in = _test_run_spineopt_mga_setup()
+        url_in = _test_run_spineopt_hsj_mga_setup()
         object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm", 2)
         SpineInterface.import_data(
             url_in;
@@ -240,7 +240,7 @@ end
 
 function _test_run_spineopt_fuzzy_mga()
     @testset "run_spineopt_fuzzy_mga_no_max_iterations" begin
-        url_in = _test_run_spineopt_mga_setup()
+        url_in = _test_run_spineopt_hsj_mga_setup()
         object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm")
         SpineInterface.import_data(
             url_in;
@@ -265,7 +265,7 @@ function _test_run_spineopt_fuzzy_mga()
         end
     end
     @testset "run_spineopt_fuzzy_mga" begin
-        url_in = _test_run_spineopt_mga_setup()
+        url_in = _test_run_spineopt_hsj_mga_setup()
         object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm", 2)
         SpineInterface.import_data(
             url_in;

@@ -46,7 +46,7 @@ When `multiyear_economic_discounting` is set to a valid value:
 
 More information can be found in the following files.
 
-- [Economic discounting in SpineOpt](https://github.com/Spine-project/SpineOpt.jl/files/9130471/Spine_invest.3.pdf) contains the details of the calculation of the economic prameters. Note that this document covers more concepts than what is currently available in SpineOpt (the available ones are the parameters listed above and the adaptions in the objective), the rest is under development.
+- [Economic discounting in SpineOpt](https://github.com/Spine-project/SpineOpt.jl/files/9130471/Spine_invest.3.pdf) contains the details of the calculation of the economic parameters. Note that this document covers more concepts than what is currently available in SpineOpt (the available ones are the parameters listed above and the adaptions in the objective), the rest is under development.
 
 - [Economic parameters calculation tool](https://github.com/Spine-project/SpineOpt.jl/files/9130469/parameter_illustration.2.xlsx) is an excel tool that you can use to calculate the economic parameters on your own.
 

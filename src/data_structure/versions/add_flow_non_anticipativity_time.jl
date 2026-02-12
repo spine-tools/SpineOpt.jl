@@ -27,7 +27,7 @@ function add_flow_non_anticipativity_time(db_url, log_level)
 	@log log_level 0 "Adding `unit/connection_(intact_)flow_non_anticipativity_time`..."
 	new_data = Dict()
 	new_data[:relationship_parameters] = [
-		x for x in template()["relationship_parameters"] if x[2] in (
+		x for x in template()["parameter_definitions"] if x[2] in (
 			"unit_flow_non_anticipativity_time",
 			"connection_flow_non_anticipativity_time",
 			"connection_intact_flow_non_anticipativity_time",

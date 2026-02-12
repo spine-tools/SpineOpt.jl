@@ -38,11 +38,11 @@ function _diagnose(class::ObjectClass, issue_fn)
 end
 
 function _node_issue(n)
-	if any(balance_type(node=ng) === :balance_type_group for ng in groups(n))
+	if any(balance_type(node=ng) === :group_balance  for ng in groups(n))
 		return nothing
 	end
-	if balance_type(node=n) === :balance_type_none
-		return "balance_type is set to balance_type_none"
+	if balance_type(node=n) === :none
+		return "balance_type is set to none"
 	end
 end
 
@@ -51,8 +51,8 @@ function _has_cap_or_cost(indices, parameters)
 end
 
 function _unit_issue(u)
-	parameters = (unit_capacity, fuel_cost, vom_cost)
-	node_from_has_cap_or_cost = _has_cap_or_cost(unit__from_node(unit=u, _compact=false), parameters)
+	parameters = (capacity_per_unit, fuel_cost, vom_cost)
+	node_from_has_cap_or_cost = _has_cap_or_cost(node__to_unit(unit=u, _compact=false), parameters)
 	node_to_has_cap_or_cost = _has_cap_or_cost(unit__to_node(unit=u, _compact=false), parameters)
 	for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost
 		has_cap_or_cost_from || any(
@@ -69,17 +69,29 @@ function _unit_issue(u)
 end
 
 function _are_unit_flows_related(u, n_from, n_to)
-	any(
-		ratio(unit=u, node1=n_to, node2=n_from, _strict=false) !== nothing
-		for ratio in (fix_ratio_out_in_unit_flow, max_ratio_out_in_unit_flow, min_ratio_out_in_unit_flow)
-	) || any(
-		ratio(unit=u, node1=n_from, node2=n_to, _strict=false) !== nothing
-		for ratio in (fix_ratio_in_out_unit_flow, max_ratio_in_out_unit_flow, min_ratio_in_out_unit_flow)
-	)
+    any(
+        ratio(
+            unit1=u, node1=n_to, direction1=:to_node, 
+            unit2=u, node2=n_from, direction2=:from_node, 
+            _strict=false
+        ) !== nothing
+        for ratio in (
+            constraint_equality_flow_ratio, constraint_less_than_flow_ratio, constraint_greater_than_flow_ratio
+        )
+    ) || any(
+        ratio(
+            unit1=u, node1=n_from, direction1=:from_node, 
+            unit2=u, node2=n_to, direction2=:to_node, 
+            _strict=false
+        ) !== nothing
+        for ratio in (
+            constraint_equality_flow_ratio, constraint_less_than_flow_ratio, constraint_greater_than_flow_ratio
+        )
+    )
 end
 
 function _connection_issue(c)
-	parameters = (connection_capacity, connection_flow_cost)
+	parameters = (capacity_per_connection, connection_flow_cost)
 	node_from_has_cap_or_cost = _has_cap_or_cost(connection__from_node(connection=c, _compact=false), parameters)
 	node_to_has_cap_or_cost = _has_cap_or_cost(connection__to_node(connection=c, _compact=false), parameters)
 	for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost

@@ -26,18 +26,18 @@ Let's begin! We will be trying to write a simplified version of the unit capacit
 
 ```math
 \begin{aligned}
-& v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{unit\_capacity}_{(u,n,d,s,t)} \cdot \left( v^{units\_on}_{(u,s,t)} - \left(1 - p^{shut\_down\_limit}_{u,n,d,s,t} \right) \cdot v^{units\_shut\_down}_{(u,s,t+1)} \right) \\
-& \forall (u, n, d) \in unit\_\_from\_node \cup unit\_\_to\_node: p^{unit\_capacity}_{(u,n,d)} \neq null \\
+& v^{unit\_flow}_{(u,n,d,s,t)} \leq p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot \left( v^{units\_on}_{(u,s,t)} - \left(1 - p^{ramp\_limits\_shutdown}_{u,n,d,s,t} \right) \cdot v^{units\_shut\_down}_{(u,s,t+1)} \right) \\
+& \forall (u, n, d) \in node\_\_to\_unit \cup unit\_\_to\_node: p^{capacity\_per\_unit}_{(u,n,d)} \neq null \\
 & \forall (s, t)
 \end{aligned}
 ```
 
 In other words, the [unit\_flow](@ref) between a [unit](@ref) and a [node](@ref) has to be lower than or equal to:
-- the specified [unit\_capacity](@ref), if the [unit](@ref) is online and not shutting down in the next period;
-- the [unit\_capacity](@ref) multiplied by the [shut\_down\_limit](@ref), if the [unit](@ref) is shutting down in the next period;
+- the specified [capacity\_per\_unit](@ref), if the [unit](@ref) is online and not shutting down in the next period;
+- the [capacity\_per\_unit](@ref) multiplied by the [ramp\_limits\_shutdown](@ref), if the [unit](@ref) is shutting down in the next period;
 - zero, if the [unit](@ref) is offline.
 
-Note that we ignore the [start\_up\_limit](@ref) in this formulation, just for simplicity.
+Note that we ignore the [ramp\_limits\_startup](@ref) in this formulation, just for simplicity.
 (And actually, it looks like we also assume that a unit cannot start up and shut down in the same period.)
 
 ## First steps
@@ -64,8 +64,8 @@ That's it!? Well, it actually is a bit more complex than that. Let's expand...
 This is probably the simplest part, as you just need to identify the system elements
 that would be affected by the constraint.
 In our case, it will probably be the tuples of [unit](@ref) and [node](@ref)
-associated via [unit\_\_from\_node](@ref) and/or [unit\_\_to\_node](@ref)
-for which [unit\_capacity](@ref) is specified.
+associated via [node\_\_to\_unit](@ref) and/or [unit\_\_to\_node](@ref)
+for which [capacity\_per\_unit](@ref) is specified.
 
 #### Collect the 'temporal' indices
 
@@ -91,11 +91,11 @@ Ultimately, the question we need to ask ourselves is what is the 'lowest-resolut
 the individual resolutions of all our 'spatial' indices so we never miss a period where we should be enforcing the
 constraint.
 In our case, we need to guarantee that the flow between a [unit](@ref) and a [node](@ref)
-is *never* higher than the [unit\_capacity](@ref). So it looks like we should be taking the *highest* resolution
+is *never* higher than the [capacity\_per\_unit](@ref). So it looks like we should be taking the *highest* resolution
 of the [unit\_flow](@ref) variable.
 
-But we also need to guarantee that the flow is lower than the [unit\_capacity](@ref) times the
-[shut\_down\_limit](@ref) if the [unit](@ref) is shutting down in the next period. How does that affect the
+But we also need to guarantee that the flow is lower than the [capacity\_per\_unit](@ref) times the
+[ramp\_limits\_shutdown](@ref) if the [unit](@ref) is shutting down in the next period. How does that affect the
 resolution of the constraint? Is it still Ok to use the resolution of [unit\_flow](@ref)?
 What happens if [units\_on](@ref) has higher resolution than [unit\_flow](@ref)?
 Would we violate this last part of the constraint eventually?
@@ -226,7 +226,7 @@ import_data(
         ("stochastic_structure__stochastic_scenario", ("two_stage", "realisation")),
         ("stochastic_structure__stochastic_scenario", ("two_stage", "forecast1")),
         ("stochastic_structure__stochastic_scenario", ("two_stage", "forecast2")),
-        ("unit__from_node", ("pwrplant", "fuel")),
+        ("node__to_unit", ("pwrplant", "fuel")),
         ("unit__to_node", ("pwrplant", "elec")),
         ("node__temporal_block", ("fuel", "3hourly")),
         ("node__temporal_block", ("elec", "hourly")),
@@ -250,9 +250,9 @@ import_data(
             "stochastic_scenario_end",
             unparse_db_value(Hour(6))
         ),
-        ("unit__from_node", ("pwrplant", "fuel"), "unit_capacity", 200),
-        ("unit__to_node", ("pwrplant", "elec"), "unit_capacity", 100),
-        ("unit__to_node", ("pwrplant", "elec"), "shut_down_limit", 0.2),
+        ("node__to_unit", ("pwrplant", "fuel"), "capacity_per_unit", 200),
+        ("unit__to_node", ("pwrplant", "elec"), "capacity_per_unit", 100),
+        ("unit__to_node", ("pwrplant", "elec"), "ramp_limits_shutdown", 0.2),
     ],
 )
 ```
@@ -273,9 +273,9 @@ The [model](@ref) consists of two [node](@ref)s, `fuel` and `elec`, with a [unit
 `pwrplant`. The `fuel` [node](@ref) is modelled at three-hour resolution and one-stage stochastics;
 the `elec` [node](@ref) is modelled at one-hour resolution and two-stage stochastics;
 and the `pwrplant` [unit](@ref) is modelled at two-hour resolution and one-stage stochastics.
-Finally, the [unit\_capacity](@ref) is 200 for flows coming to the `pwrplant` from the `fuel` [node](@ref),
+Finally, the [capacity\_per\_unit](@ref) is 200 for flows coming to the `pwrplant` from the `fuel` [node](@ref),
 and 300 for flows going from the `pwrplant` to the `elec` [node](@ref);
-the [shut\_down\_limit](@ref) is 0.2 for the `elec` [node](@ref) flows
+the [ramp\_limits\_shutdown](@ref) is 0.2 for the `elec` [node](@ref) flows
 (and none, thus irrestricted, for the `fuel` [node](@ref) flows).
 
 !!! note
@@ -330,40 +330,43 @@ the 'spatial' indices.
 
 We will start very slow.
 We are looking for the tuples of [unit](@ref) and [node](@ref)
-associated via [unit\_\_from\_node](@ref) and/or [unit\_\_to\_node](@ref)
-for which [unit\_capacity](@ref) is specified.
+associated via [node\_\_to\_unit](@ref) and/or [unit\_\_to\_node](@ref)
+for which [capacity\_per\_unit](@ref) is specified.
+
+Note that the `direction` dimension is added to the [node\_\_to\_unit](@ref) and [unit\_\_to\_node](@ref) classes by the 
+`generate_direction_and_reorganise_classes()` function, which also reorganises the dimensions of the classes.
 
 So we could try something like this:
 
 ```julia
 function my_unit_flow_capacity_constraint_indices(m)
-    [(unit=u, node=n, direction=d) for (u, n, d) in unit__from_node()]
+    [(unit=u, node=n, direction=d) for (u, n, d) in node__to_unit()]
 end
 ```
 
-Will the above work? Well, it's only considering flows *from* a [node](@ref) to a [unit](@ref).
+Will the above work? Well, it's only considering flows from a [node](@ref) to a [unit](@ref).
 We also need the flows in the opposite direction. Let's try again:
 
 ```julia
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in vcat(unit__from_node(), unit__to_node())
+        for (u, n, d) in unit__node__direction()
     ]
 end
 ```
 
-That seems better. We are concatenating the output of `unit__from_node()` and `unit__to_node()` using
-Julia's `vcat` function.
-But we also need to make sure that the [unit\_capacity](@ref) is specified for our
+That seems better. We are using the `unit__node__direction` superclass that is created by the 
+`generate_variable_indexing_support()` function.
+But we also need to make sure that the [capacity\_per\_unit](@ref) is specified for our
 [unit](@ref)/[node](@ref)(/`direction`) combination. So we need to add a condition to our array comprehension:
 
 ```julia
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in vcat(unit__from_node(), unit__to_node())
-        if unit_capacity(unit=u, node=n, direction=d) != nothing
+        for (u, n, d) in unit__node__direction()
+        if capacity_per_unit(unit=u, node=n, direction=d) != nothing
     ]
 end
 ```
@@ -377,7 +380,7 @@ called `indices`. The above can be rewritten simply as:
 using SpineInterface
 
 function my_unit_flow_capacity_constraint_indices(m)
-    [(unit=u, node=n, direction=d) for (u, n, d) in indices(unit_capacity)]
+    [(unit=u, node=n, direction=d) for (u, n, d) in indices(capacity_per_unit)]
 end
 ```
 
@@ -442,7 +445,7 @@ Let's start simple. Let's begin by taking only the time-slices associated to the
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d, t=t)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for t in time_slice(m; temporal_block=units_on__temporal_block(unit=u))
     ]
 end
@@ -480,7 +483,7 @@ Let's try to take the time-slices of the [node](@ref) then:
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d, t=t)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for t in time_slice(m; temporal_block=node__temporal_block(node=n))
     ]
 end
@@ -504,9 +507,9 @@ my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2
 
 So now we're getting time-slices at one-hour resolution on the `elec` side, and three-hour on the `fuel` side.
 This seems enough to enforce that the [unit\_flow](@ref) is never higher than the
-[unit\_capacity](@ref).
-However, we also need to enforce that the [unit\_flow](@ref) is never higher than the [unit\_capacity](@ref) times
-the [shut\_down\_limit](@ref) if the unit is shutting down the next period.
+[capacity\_per\_unit](@ref).
+However, we also need to enforce that the [unit\_flow](@ref) is never higher than the [capacity\_per\_unit](@ref) times
+the [ramp\_limits\_shutdown](@ref) if the unit is shutting down the next period.
 Since the unit is able to shut-down 'at two-hour resolution' so to say, clearly taking the
 three-hour resolution on the `fuel` side is not enough to check if the [unit](@ref) is shutting down in the next period.
 Worst-case scenario, the [unit](@ref) could be shutting down in the *current* period, because the current period
@@ -519,7 +522,7 @@ We could do it this way:
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d, t=t)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for t in time_slice(
             m; temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u))
         )
@@ -562,7 +565,7 @@ Let's try again:
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d, t=t)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for t in t_highest_resolution(
             time_slice(
                 m; temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u))
@@ -620,7 +623,7 @@ But the *next* should also come *after* the *current*. So basically we can try s
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d, t=t, t_next=t_next)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for t in t_highest_resolution(
             time_slice(
                 m; temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u))
@@ -693,7 +696,7 @@ We can use it as follows:
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d, t=t, t_next=t_next, s_path=s_path)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for t in t_highest_resolution(
             time_slice(
                 m; temporal_block=vcat(node__temporal_block(node=n), units_on__temporal_block(unit=u))

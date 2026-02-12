@@ -49,7 +49,7 @@
             ["model__stochastic_structure", ["instance", "investments_deterministic"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["node__temporal_block", ["node_a", "hourly"]],
             ["node__temporal_block", ["node_b", "two_hourly"]],
@@ -76,17 +76,17 @@
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["node", "node_c", "has_state", true],
-            ["node", "node_c", "node_state_cap", 100],
-            ["node", "node_c", "candidate_storages", 2],
-            ["unit", "unit_ab", "candidate_units", 3],
-            ["connection", "connection_bc", "candidate_connections", 1],
+            ["node", "node_c", "storage_active", true],
+            ["node", "node_c", "storage_state_max", 100],
+            ["node", "node_c", "storage_investment_count_max_cumulative", 2],
+            ["unit", "unit_ab", "investment_count_max_cumulative", 3],
+            ["connection", "connection_bc", "investment_count_max_cumulative", 1],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_four_hourly", "resolution", Dict("type" => "duration", "data" => "4h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",
@@ -99,23 +99,23 @@
         @testset for sense in ("==", ">=", "<=")
             _load_test_data(url_in, test_data)
             rhs = 1
-            unit_flow_coefficient_a = 2
-            unit_flow_coefficient_b = 3
-            units_on_coefficient = 4
-            units_started_up_coefficient = 5
-            units_invested_coefficient = 6
-            units_invested_available_coefficient = 7
-            connections_invested_coefficient = 8
-            connections_invested_available_coefficient = 9
-            node_state_coefficient = 10
-            storages_invested_coefficient = 11
-            storages_invested_available_coefficient = 12
-            connection_flow_coefficient_b = 13
-            connection_flow_coefficient_c = 14
+            coefficient_for_unit_flow_a = 2
+            coefficient_for_unit_flow_b = 3
+            coefficient_for_units_on = 4
+            coefficient_for_units_started_up = 5
+            coefficient_for_units_invested = 6
+            coefficient_for_units_invested_available = 7
+            coefficient_for_connections_invested = 8
+            coefficient_for_connections_invested_available = 9
+            coefficient_for_node_state = 10
+            coefficient_for_storages_invested = 11
+            coefficient_for_storages_invested_available = 12
+            coefficient_for_connection_flow_b = 13
+            coefficient_for_connection_flow_c = 14
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
-                ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
-                ["unit__to_node__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit_flow__user_constraint", ["node_a", "unit_ab", "constraint_x"]],
+                ["unit_flow__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
                 ["unit__user_constraint", ["unit_ab", "constraint_x"]],
                 ["connection__user_constraint", ["connection_bc", "constraint_x"]],
                 ["node__user_constraint", ["node_c", "constraint_x"]],
@@ -128,19 +128,19 @@
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
-                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
-                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
-                [relationships[3]..., "units_invested_coefficient", units_invested_coefficient],
-                [relationships[3]..., "units_invested_available_coefficient", units_invested_available_coefficient],
-                [relationships[4]..., "connections_invested_coefficient", connections_invested_coefficient],
-                [relationships[4]..., "connections_invested_available_coefficient", connections_invested_available_coefficient],
-                [relationships[5]..., "node_state_coefficient", node_state_coefficient],
-                [relationships[5]..., "storages_invested_coefficient", storages_invested_coefficient],
-                [relationships[5]..., "storages_invested_available_coefficient", storages_invested_available_coefficient],
-                [relationships[6]..., "connection_flow_coefficient", connection_flow_coefficient_b],
-                [relationships[7]..., "connection_flow_coefficient", connection_flow_coefficient_c],
+                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
+                [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
+                [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
+                [relationships[3]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
+                [relationships[3]..., "coefficient_for_units_invested", coefficient_for_units_invested],
+                [relationships[3]..., "coefficient_for_units_invested_available", coefficient_for_units_invested_available],
+                [relationships[4]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
+                [relationships[4]..., "coefficient_for_connections_invested_available", coefficient_for_connections_invested_available],
+                [relationships[5]..., "coefficient_for_node_state", coefficient_for_node_state],
+                [relationships[5]..., "coefficient_for_storages_invested", coefficient_for_storages_invested],
+                [relationships[5]..., "coefficient_for_storages_invested_available", coefficient_for_storages_invested_available],
+                [relationships[6]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_b],
+                [relationships[7]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_c],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -172,50 +172,50 @@
             t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
             t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
             expected_con = SpineOpt.build_sense_constraint(
-                + 4 * units_invested_coefficient * var_units_invested[unit(:unit_ab), s_parent, t4h1]
-                + 4 * units_invested_available_coefficient
+                + 4 * coefficient_for_units_invested * var_units_invested[unit(:unit_ab), s_parent, t4h1]
+                + 4 * coefficient_for_units_invested_available
                     * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
-                + 4 * connections_invested_coefficient
+                + 4 * coefficient_for_connections_invested
                     * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
-                + 4 * connections_invested_available_coefficient
+                + 4 * coefficient_for_connections_invested_available
                     * var_connections_invested_available[connection(:connection_bc), s_parent, t4h1]
-                + 2 * storages_invested_coefficient * (
+                + 2 * coefficient_for_storages_invested * (
                     + var_storages_invested[node(:node_c), s_parent, t2h1]
                     + var_storages_invested[node(:node_c), s_parent, t2h2]
                 )
-                + 2 * storages_invested_available_coefficient * (
+                + 2 * coefficient_for_storages_invested_available * (
                     + var_storages_invested_available[node(:node_c), s_parent, t2h1]
                     + var_storages_invested_available[node(:node_c), s_parent, t2h2]
                 )
-                + 2 * units_on_coefficient * (
+                + 2 * coefficient_for_units_on * (
                     + var_units_on[unit(:unit_ab), s_parent, t2h1]
                     + var_units_on[unit(:unit_ab), s_child, t2h2] 
                 )
-                + 2 * units_started_up_coefficient * (
+                + 2 * coefficient_for_units_started_up * (
                     + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
                 )
-                + unit_flow_coefficient_a * (
+                + coefficient_for_unit_flow_a * (
                     + var_unit_flow[key_uf_a..., s_parent, t1h1]
                     + var_unit_flow[key_uf_a..., s_child, t1h2]
                     + var_unit_flow[key_uf_a..., s_child, t1h3]
                     + var_unit_flow[key_uf_a..., s_child, t1h4]
                 )
-                + 2 * unit_flow_coefficient_b * (
+                + 2 * coefficient_for_unit_flow_b * (
                     + var_unit_flow[key_uf_b..., s_parent, t2h1]
                     + var_unit_flow[key_uf_b..., s_parent, t2h2]
                 )
-                + 2 * connection_flow_coefficient_b * (
+                + 2 * coefficient_for_connection_flow_b * (
                     + var_connection_flow[key_cf_b..., s_parent, t2h1]
                     + var_connection_flow[key_cf_b..., s_parent, t2h2]
                 )
-                + connection_flow_coefficient_c * (
+                + coefficient_for_connection_flow_c * (
                     + var_connection_flow[key_cf_c..., s_parent, t1h1]
                     + var_connection_flow[key_cf_c..., s_parent, t1h2]
                     + var_connection_flow[key_cf_c..., s_parent, t1h3]
                     + var_connection_flow[key_cf_c..., s_parent, t1h4]
                 )
-                + node_state_coefficient * (
+                + coefficient_for_node_state * (
                     + var_node_state[node(:node_c), s_parent, t1h1]
                     + var_node_state[node(:node_c), s_parent, t1h2]
                     + var_node_state[node(:node_c), s_parent, t1h3]
@@ -231,7 +231,7 @@
     end
     @testset "constraint_user_constraint_slack_penalty" begin
         rhs = 10
-        node_state_coefficient = 10
+        coefficient_for_node_state = 10
         penalty = 1000
         @testset for sense in ("==", ">=", "<=")
             _load_test_data(url_in, test_data)
@@ -243,7 +243,7 @@
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
-                [relationships[1]..., "node_state_coefficient", node_state_coefficient],
+                [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -267,7 +267,7 @@
             for (t2h, t1h_arr) in t1h_arr_by_t2h
                 obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t2h)])
                 exp_con = SpineOpt.build_sense_constraint(
-                    node_state_coefficient * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
+                    coefficient_for_node_state * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
                     + var_uc_slack_pos[ucx, parent, t2h] - var_uc_slack_neg[ucx, parent, t2h]
                     ,
                     Symbol(sense),
@@ -318,8 +318,8 @@ end
             ["temporal_block", "6hquarterly", "block_end", Dict("type" => "duration", "data" => "6h")],
             ["temporal_block", "18hdaily", "block_end", Dict("type" => "duration", "data" => "1D")],
             ["temporal_block", "look_ahead", "block_end", Dict("type" => "duration", "data" => "2D")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
     )
     @testset "constraint_user_constraint_must_run" begin
@@ -333,7 +333,7 @@ end
             ["user_constraint", "constraint_x", "right_hand_side", rhs],
         ]
         relationship_parameter_values = [
-            ["unit__user_constraint", ["pwrplant", "constraint_x"], "units_on_coefficient", units_on_coeff]
+            ["unit__user_constraint", ["pwrplant", "constraint_x"], "coefficient_for_units_on", units_on_coeff]
         ]
         SpineInterface.import_data(
             url_in;
