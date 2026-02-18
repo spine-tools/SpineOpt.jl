@@ -36,7 +36,7 @@ function generate_economic_structure!(m; log_level=3)
     end
     economic_parameters = _create_set_parameters_and_relationships()
     for (obj, name) in [(unit, :unit), (node, :storage), (connection, :connection)]
-        @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" begin
+        @timelog log_level 3 "\n- [Generated discounted durations for $(obj)s]" begin
             generate_discount_timeslice_duration!(m, obj, economic_parameters)
         end
         @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" begin
@@ -248,10 +248,15 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
     for id in obj_cls()
         # if the discount rate is 0 or not defined, the conversion factor is 1
         # or if the object is not investable, the conversion factor is also 1
-        if (discount_rate(model=model()[1]) == 0 || isnothing(discount_rate(model=model()[1])) || !(id in invest_temporal_block(temporal_block=anything)))
+        if (discount_rate(model=model()[1]) == 0 || 
+            isnothing(discount_rate(model=model()[1])) || 
+            !(id in invest_temporal_block(temporal_block=anything))
+        )
             pvals = parameter_value(1)
         else
-            stochastic_map_vector = unique([x.stochastic_scenario for x in investment_indices(m)])
+            stochastic_map_vector = unique(
+                [x.stochastic_scenario for x in investment_indices(m; Dict(obj_cls.name => id)...)]
+            )
             stochastic_map_indices = []
             sizehint!(stochastic_map_indices, length(stochastic_map_vector))
             stochastic_map_vals = []
@@ -360,9 +365,9 @@ Generate salvage fraction of units, whose economic lifetime exceeds the modeling
 """
 function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
     instance = m.ext[:spineopt].instance
-    discnt_year = discount_year(model=instance)
+    # discnt_year = discount_year(model=instance)
     p_eoh = model_end(model=instance)
-    salvage_fraction = Dict()
+    # salvage_fraction = Dict()
     investment_indices = economic_parameters[obj_cls][:set_investment_indices]
     lead_time = economic_parameters[obj_cls][:set_lead_time]
     econ_lifetime = economic_parameters[obj_cls][:set_econ_lifetime]
@@ -377,8 +382,10 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_par
 
     # Only for investable objects
     for id in invest_temporal_block(temporal_block=anything)
-        if id in indices(econ_lifetime)
-            stochastic_map_vector = unique([x.stochastic_scenario for x in investment_indices(m)])
+        if is_candidate(m; Dict(obj_cls.name => id)...) && !isnothing(econ_lifetime(m; Dict(obj_cls.name => id)...))
+            stochastic_map_vector = unique(
+                [x.stochastic_scenario for x in investment_indices(m; Dict(obj_cls.name => id)...)]
+            )
             stochastic_map_ind = []
             sizehint!(stochastic_map_ind, length(stochastic_map_vector))
             stochastic_map_val = []
@@ -491,49 +498,67 @@ This is used to scale and translate operational blocks according to their associ
 discount them to the models `discount_year`.
 """
 function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, economic_parameters::Dict)
+    #NOTE: discount_timeslice_duration also applies to the non-investable entities for calculating non-investment-related costs
     instance = m.ext[:spineopt].instance
-    discnt_year = discount_year(model=instance)
-    discounted_duration = Dict()
+    # discnt_year = discount_year(model=instance)
+    # discounted_duration = Dict()
     invest_stoch_struct = economic_parameters[obj_cls][:set_invest_stoch_struct]
     invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     param_name = economic_parameters[obj_cls][:set_discounted_duration]
 
     if multiyear_economic_discounting(model=instance) == :milestone_years
         for id in obj_cls()
-            if isempty(invest_temporal_block()) || isempty(invest_temporal_block(; Dict(obj_cls.name => id)...))
-                invest_temporal_block_ = model__default_investment_temporal_block(model=instance)
-                @info "No specific investment temporal block is defined for $obj_cls '$id', use the default investment temporal block."
-            else
-                invest_temporal_block_ = invest_temporal_block(; Dict(obj_cls.name => id)...) # set specific investment temporal block
-            end
+            invest_temporal_block_ = isempty(invest_temporal_block(; Dict(obj_cls.name => id)...)) ?
+                # to discount the costs associated with non-investable entities
+                #TODO: what if there are multiple default investment temporal blocks?    
+                model__default_investment_temporal_block(model=instance) :
+                invest_temporal_block(; Dict(obj_cls.name => id)...)
             stoch_map_vector = invest_stoch_struct(; Dict(obj_cls.name => id)...)
             if !isempty(stoch_map_vector)
                 stoch_map_val = []
                 sizehint!(stoch_map_val, length(stoch_map_vector))
                 stoch_map_ind = []
                 sizehint!(stoch_map_ind, length(stoch_map_vector))
-                for s in stoch_map_vector
-                    for (s_all, t) in stochastic_time_indices(
-                        m;
-                        temporal_block=invest_temporal_block_,
-                        stochastic_scenario=_find_children(s),
-                    )
-                        timeseries_ind, timeseries_val =
-                            create_discounted_duration(m; stochastic_scenario=s, invest_temporal_block=t.block)
-                        push!(stoch_map_ind, s_all)
-                        push!(stoch_map_val, TimeSeries(timeseries_ind, timeseries_val, false, false))
+                # # Tentative fix to the original code:
+                # for s in stoch_map_vector
+                #     scenario_to_query = isa(_find_children(s), Any) ? s : _find_children(s)
+                #     #TODO: why using stochastic_time_indices? 
+                #     for (s_all, t) in stochastic_time_indices(
+                #         m;
+                #         temporal_block=invest_temporal_block_,
+                #         stochastic_scenario=scenario_to_query,
+                #     )
+                #         timeseries_ind, timeseries_val =
+                #             create_discounted_duration(m; stochastic_scenario=s, invest_temporal_block=t.block)
+                #             #TODO: t.block looks an error, alternatively, `invest_temporal_block_` would be duplicated.
+                #         push!(stoch_map_ind, s_all)
+                #         push!(stoch_map_val, TimeSeries(timeseries_ind, timeseries_val, false, false))
+                #     end
+                # end
+                for ss in stoch_map_vector  # ss is stochastic_structure
+                    # First get the scenarios belonging to this structure
+                    scenarios = stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+                    for s in scenarios  # s is now a stochastic_scenario
+                        scenario_to_query = isa(_find_children(s), Any) ? s : _find_children(s)
+                        timeseries_ind, timeseries_val = create_discounted_duration(
+                            m; stochastic_scenario=s, invest_temporal_block=invest_temporal_block_,
+                        )
+                        push!(stoch_map_ind, scenario_to_query)
+                        push!(stoch_map_val, SpineInterface.TimeSeries(timeseries_ind, timeseries_val, false, false))
                     end
                 end
                 pvals = parameter_value(SpineInterface.Map(stoch_map_ind, stoch_map_val))
+            #NOTE: how this case would happen? 
+            # SpineOpt requires at least one stochastic structure, so stoch_map_vector should never be empty.
             else
                 timeseries_ind, timeseries_val =
                     create_discounted_duration(m; invest_temporal_block=invest_temporal_block_)
-                pvals = parameter_value(TimeSeries(timeseries_ind, timeseries_val, false, false))
+                pvals = parameter_value(SpineInterface.TimeSeries(timeseries_ind, timeseries_val, false, false))
             end
             add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
         end
-    elseif  multiyear_economic_discounting(model=instance) == :consecutive_years 
-    # if using consecutive years, we only need a discount rate for each year 
+    elseif multiyear_economic_discounting(model=instance) == :consecutive_years 
+    # when using consecutive years, we only need a discount rate for each year 
         for id in obj_cls()
             timeseries_ind = []
             timeseries_val = []

@@ -191,13 +191,15 @@ function _test_run_spineopt_hsj_mga()
         @test length(variable_values) == 1
         expected_values= Dict(
             0 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 1.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 1.0,
             )
         )
-        for (iter, dict) in variable_values
-            for (key, value) in dict[:units_invested]
-                @test isapprox(expected_values[iter][key.unit], value)
+        for (iter, dict) in expected_values
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
@@ -214,21 +216,23 @@ function _test_run_spineopt_hsj_mga()
         @test length(variable_values) == 3
         expected_values= Dict(
             0 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 1.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 1.0,
             ),
             1 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 0.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 0.0,
             ),
             2 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 0.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 0.0,
             ),
         )
-        for (iter, dict) in variable_values
-            for (key, value) in dict[:units_invested]
-                @test isapprox(expected_values[iter][key.unit], value)
+        for (iter, dict) in expected_values
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
@@ -248,13 +252,15 @@ function _test_run_spineopt_fuzzy_mga()
         @test length(variable_values) == 1
         expected_values= Dict(
             0 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 1.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 1.0,
             ),
         )
-        for (iter, dict) in variable_values
-            for (key, value) in dict[:units_invested]
-                @test isapprox(expected_values[iter][key.unit], value)
+        for (iter, dict) in expected_values
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
@@ -271,21 +277,23 @@ function _test_run_spineopt_fuzzy_mga()
         @test length(variable_values) == 3
         expected_values= Dict(
             0 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 1.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 1.0,
             ),
             1 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 0.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 0.0,
             ),
             2 => Dict(
-                Object(:unit_ab, :unit) => 0.0,
-                Object(:unit_bc, :unit) => 0.0,
+                unit(:unit_ab) => 0.0,
+                unit(:unit_bc) => 0.0,
             ),
         )
-        for (iter, dict) in variable_values
-            for (key, value) in dict[:units_invested]
-                @test isapprox(expected_values[iter][key.unit], value)
+        for (iter, dict) in expected_values
+            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                @test unit == units_invested[i][1].unit
+                @test isapprox(v1, units_invested[i][2])
             end
         end
     end
