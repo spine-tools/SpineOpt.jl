@@ -531,7 +531,7 @@ function _test_major_upgrade_1()
 		_load_test_data_without_template(url, original_data)
 		SpineOpt.major_upgrade_1(url, log_level) # This runs the migration.
 		migrated_data = export_data(url) # Export migrated data (required for examining parameter value lists)
-		Y = Module() # Empty module for loading DB into.
+		Y = Bind() # Empty Bind for loading DB into.
 		using_spinedb(url, Y) # Load DB into the module.
 		obj_class_names = getproperty.(object_classes(Y), :name)
 		rel_class_names = getproperty.(relationship_classes(Y), :name)
