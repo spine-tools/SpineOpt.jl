@@ -19,6 +19,9 @@ const stochastic_structure = ObjectClass(:stochastic_structure)
 const temporal_block = ObjectClass(:temporal_block)
 const unit = ObjectClass(:unit)
 const unit_flow = ObjectClass(:unit_flow)
+const unit_flow__investment_group = ObjectClass(:unit_flow__investment_group)
+const unit_flow__unit_flow = ObjectClass(:unit_flow__unit_flow)
+const unit_flow__user_constraint = ObjectClass(:unit_flow__user_constraint)
 const user_constraint = ObjectClass(:user_constraint)
 ## Relationship classes
 const connection__from_node = RelationshipClass(:connection__from_node)
@@ -64,15 +67,12 @@ const unit__investment_temporal_block = RelationshipClass(:unit__investment_temp
 const unit__node__direction = RelationshipClass(:unit__node__direction)
 const unit__to_node = RelationshipClass(:unit__to_node)
 const unit__user_constraint = RelationshipClass(:unit__user_constraint)
-const unit_flow__investment_group = RelationshipClass(:unit_flow__investment_group)
 const unit_flow__investment_group__node__unit__investment_group = RelationshipClass(:unit_flow__investment_group__node__unit__investment_group)
 const unit_flow__investment_group__unit__node__investment_group = RelationshipClass(:unit_flow__investment_group__unit__node__investment_group)
-const unit_flow__unit_flow = RelationshipClass(:unit_flow__unit_flow)
 const unit_flow__unit_flow__node__unit__node__unit = RelationshipClass(:unit_flow__unit_flow__node__unit__node__unit)
 const unit_flow__unit_flow__node__unit__unit__node = RelationshipClass(:unit_flow__unit_flow__node__unit__unit__node)
 const unit_flow__unit_flow__unit__node__node__unit = RelationshipClass(:unit_flow__unit_flow__unit__node__node__unit)
 const unit_flow__unit_flow__unit__node__unit__node = RelationshipClass(:unit_flow__unit_flow__unit__node__unit__node)
-const unit_flow__user_constraint = RelationshipClass(:unit_flow__user_constraint)
 const unit_flow__user_constraint__node__unit__user_constraint = RelationshipClass(:unit_flow__user_constraint__node__unit__user_constraint)
 const unit_flow__user_constraint__unit__node__user_constraint = RelationshipClass(:unit_flow__user_constraint__unit__node__user_constraint)
 const units_on__stochastic_structure = RelationshipClass(:units_on__stochastic_structure)
@@ -359,6 +359,9 @@ export stochastic_structure
 export temporal_block
 export unit
 export unit_flow
+export unit_flow__investment_group
+export unit_flow__unit_flow
+export unit_flow__user_constraint
 export user_constraint
 ## Relationship classes
 export connection__from_node
@@ -404,15 +407,12 @@ export unit__investment_temporal_block
 export unit__node__direction
 export unit__to_node
 export unit__user_constraint
-export unit_flow__investment_group
 export unit_flow__investment_group__node__unit__investment_group
 export unit_flow__investment_group__unit__node__investment_group
-export unit_flow__unit_flow
 export unit_flow__unit_flow__node__unit__node__unit
 export unit_flow__unit_flow__node__unit__unit__node
 export unit_flow__unit_flow__unit__node__node__unit
 export unit_flow__unit_flow__unit__node__unit__node
-export unit_flow__user_constraint
 export unit_flow__user_constraint__node__unit__user_constraint
 export unit_flow__user_constraint__unit__node__user_constraint
 export units_on__stochastic_structure
