@@ -10,6 +10,7 @@ objective_function_reference_values = Dict(
     "multi-year_investment_without_econ_discounting.json" => 131520100.0,
     "capacity_planning.json" => 328503000.0,
     "stochastic.json" => 126964.2857142857,
+    "representative_periods.json" => 279438.4922720359,
 )
 
 @testset for (file, obj_fn_val) in objective_function_reference_values
