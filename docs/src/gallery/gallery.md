@@ -18,5 +18,6 @@ Each example has a link to the JSON file with the input data.
 - [**Reserves constraints**](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/reserves.json): Extension of the simple system including operating reserve constraints.
 - [**Unit commitment constraints**](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/unit_commitment.json): Extension of the sinple system including unit commitment constraints.
 - [**Rolling horizon**](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/rolling_horizon.json): This is an Example with a total time horizon of one week, an optimization window of one day, and rolling forward one day at a time.
+- [**Representative periods**](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/representative_periods.json): Example with representative periods for a simple case with seasonal and short-term storage nodes.
 
 Some archived examples are also in the spine tools repository, e.g. [case study A5](https://github.com/spine-tools/spine-cs-a5).
