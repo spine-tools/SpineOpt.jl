@@ -132,7 +132,7 @@ function find_version(url)
 	obj_clss = run_request(url, "query", ("object_class_sq",))["object_class_sq"]
 	i = findfirst(x -> x["name"] == "settings", obj_clss)
 	if isnothing(i)
-		settings_class = first([x for x in _template["entity_classes"] if x[1] == "settings"])
+		settings_class = first([x for x in template["entity_classes"] if x[1] == "settings"])
 		run_request(
 			url,
 			"import_data",
@@ -144,7 +144,7 @@ function find_version(url)
 	pdefs = run_request(url, "query", ("parameter_definition_sq",))["parameter_definition_sq"]
 	j = findfirst(x -> x["name"] == "version" && x["entity_class_id"] == settings_class["id"], pdefs)
 	if isnothing(j)
-		parameters = get(_template, "object_parameters", _template["parameter_definitions"])
+		parameters = template["parameter_definitions"]
 		version_par_def = first([x for x in parameters if x[1:2] == ["settings", "version"]])
 		version_par_def[3] = 1  # position 3 is default_value
 		run_request(
