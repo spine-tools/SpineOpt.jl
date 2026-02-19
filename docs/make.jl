@@ -48,6 +48,7 @@ pages = [
         "Reserve requirements" => joinpath("tutorial", "reserves.md"),
         "Ramping constraints" => joinpath("tutorial", "ramping.md"),
         "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
+        "Representative periods" => joinpath("tutorial", "representative_periods.md"),
     ],
     "How to" => [],
     "Example gallery" => joinpath("gallery", "gallery.md"),    
