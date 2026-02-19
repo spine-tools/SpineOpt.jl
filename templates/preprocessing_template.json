@@ -1,19 +1,25 @@
 {
-    "object_classes": [
-        ["direction"],
-        ["mga_iteration"],
-        ["node_with_slack_penalty"],
-        ["node_with_min_capacity_margin_penalty"],
-        ["benders_iteration"]
-    ],
-    "relationship_classes": [
+    "entity_classes": [
+        ["benders_iteration", []],
+        ["direction", []],
+        ["mga_iteration", []],
+        ["node_with_slack_penalty", []],
+        ["node_with_min_capacity_margin_penalty", []],
+        ["connection__node__direction", ["connection", "node", "direction"]],
+        ["lodf_connection__connection", ["connection", "connection"]],
         ["ptdf_connection__node", ["connection", "node"]],
         ["ptdf_unfiltered_connection__node", ["connection", "node"]],
-        ["lodf_connection__connection", ["connection", "connection"]],
-        ["unit__node__direction", ["unit", "node", "direction"]],
-        ["connection__node__direction", ["connection", "node", "direction"]]
+        ["unit_flow__investment_group__node__unit__investment_group", ["node", "unit", "investment_group"]],
+        ["unit_flow__investment_group__unit__node__investment_group", ["unit", "node", "investment_group"]],
+        ["unit_flow__user_constraint__node__unit__user_constraint", ["node", "unit", "user_constraint"]],
+        ["unit_flow__user_constraint__unit__node__user_constraint", ["unit", "node", "user_constraint"]],
+        ["unit_flow__unit_flow__node__unit__node__unit", ["node", "unit", "node", "unit"]],
+        ["unit_flow__unit_flow__node__unit__unit__node", ["node", "unit", "unit", "node"]],
+        ["unit_flow__unit_flow__unit__node__node__unit", ["unit", "node", "node", "unit"]],
+        ["unit_flow__unit_flow__unit__node__unit__node", ["unit", "node", "unit", "node"]],
+        ["unit__node__direction", ["unit", "node", "direction"]]
     ],
-    "object_parameters": [
+    "parameter_definitions": [
         ["connection", "connection_capacity_transfer_factor", null, null],
         ["connection", "connection_conversion_to_discounted_annuities", null, null],
         ["connection", "connection_decommissioning_conversion_to_discounted_annuities", null, null],
@@ -44,9 +50,7 @@
         ["unit", "unit_decommissioning_conversion_to_discounted_annuities", null, null],
         ["unit", "unit_discounted_duration", null, null],
         ["unit", "unit_salvage_fraction", null, null],
-        ["unit", "unit_tech_discount_factor", null, null]
-    ],
-    "relationship_parameters": [
+        ["unit", "unit_tech_discount_factor", null, null],
         ["ptdf_connection__node", "ptdf", null, null],
         ["ptdf_unfiltered_connection__node", "ptdf_unfiltered", null, null],
         ["lodf_connection__connection", "lodf", null, null]

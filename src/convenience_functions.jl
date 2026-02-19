@@ -1,9 +1,9 @@
 # Convenience functors
 ## Object classes
 const benders_iteration = ObjectClass(:benders_iteration)
-const commodity = ObjectClass(:commodity)
 const connection = ObjectClass(:connection)
 const direction = ObjectClass(:direction)
+const grid = ObjectClass(:grid)
 const investment_group = ObjectClass(:investment_group)
 const mga_iteration = ObjectClass(:mga_iteration)
 const model = ObjectClass(:model)
@@ -18,6 +18,7 @@ const stochastic_scenario = ObjectClass(:stochastic_scenario)
 const stochastic_structure = ObjectClass(:stochastic_structure)
 const temporal_block = ObjectClass(:temporal_block)
 const unit = ObjectClass(:unit)
+const unit_flow = ObjectClass(:unit_flow)
 const user_constraint = ObjectClass(:user_constraint)
 ## Relationship classes
 const connection__from_node = RelationshipClass(:connection__from_node)
@@ -38,13 +39,14 @@ const model__default_investment_temporal_block = RelationshipClass(:model__defau
 const model__default_stochastic_structure = RelationshipClass(:model__default_stochastic_structure)
 const model__default_temporal_block = RelationshipClass(:model__default_temporal_block)
 const model__report = RelationshipClass(:model__report)
-const node__commodity = RelationshipClass(:node__commodity)
+const node__grid = RelationshipClass(:node__grid)
 const node__investment_group = RelationshipClass(:node__investment_group)
 const node__investment_stochastic_structure = RelationshipClass(:node__investment_stochastic_structure)
 const node__investment_temporal_block = RelationshipClass(:node__investment_temporal_block)
 const node__node = RelationshipClass(:node__node)
 const node__stochastic_structure = RelationshipClass(:node__stochastic_structure)
 const node__temporal_block = RelationshipClass(:node__temporal_block)
+const node__to_unit = RelationshipClass(:node__to_unit)
 const node__user_constraint = RelationshipClass(:node__user_constraint)
 const parent_stochastic_scenario__child_stochastic_scenario = RelationshipClass(:parent_stochastic_scenario__child_stochastic_scenario)
 const ptdf_connection__node = RelationshipClass(:ptdf_connection__node)
@@ -56,255 +58,224 @@ const stage__output__connection = RelationshipClass(:stage__output__connection)
 const stage__output__node = RelationshipClass(:stage__output__node)
 const stage__output__unit = RelationshipClass(:stage__output__unit)
 const stochastic_structure__stochastic_scenario = RelationshipClass(:stochastic_structure__stochastic_scenario)
-const unit__commodity = RelationshipClass(:unit__commodity)
-const unit__from_node = RelationshipClass(:unit__from_node)
-const unit__from_node__investment_group = RelationshipClass(:unit__from_node__investment_group)
-const unit__from_node__user_constraint = RelationshipClass(:unit__from_node__user_constraint)
 const unit__investment_group = RelationshipClass(:unit__investment_group)
 const unit__investment_stochastic_structure = RelationshipClass(:unit__investment_stochastic_structure)
 const unit__investment_temporal_block = RelationshipClass(:unit__investment_temporal_block)
 const unit__node__direction = RelationshipClass(:unit__node__direction)
-const unit__node__node = RelationshipClass(:unit__node__node)
 const unit__to_node = RelationshipClass(:unit__to_node)
-const unit__to_node__investment_group = RelationshipClass(:unit__to_node__investment_group)
-const unit__to_node__user_constraint = RelationshipClass(:unit__to_node__user_constraint)
 const unit__user_constraint = RelationshipClass(:unit__user_constraint)
+const unit_flow__investment_group = RelationshipClass(:unit_flow__investment_group)
+const unit_flow__investment_group__node__unit__investment_group = RelationshipClass(:unit_flow__investment_group__node__unit__investment_group)
+const unit_flow__investment_group__unit__node__investment_group = RelationshipClass(:unit_flow__investment_group__unit__node__investment_group)
+const unit_flow__unit_flow = RelationshipClass(:unit_flow__unit_flow)
+const unit_flow__unit_flow__node__unit__node__unit = RelationshipClass(:unit_flow__unit_flow__node__unit__node__unit)
+const unit_flow__unit_flow__node__unit__unit__node = RelationshipClass(:unit_flow__unit_flow__node__unit__unit__node)
+const unit_flow__unit_flow__unit__node__node__unit = RelationshipClass(:unit_flow__unit_flow__unit__node__node__unit)
+const unit_flow__unit_flow__unit__node__unit__node = RelationshipClass(:unit_flow__unit_flow__unit__node__unit__node)
+const unit_flow__user_constraint = RelationshipClass(:unit_flow__user_constraint)
+const unit_flow__user_constraint__node__unit__user_constraint = RelationshipClass(:unit_flow__user_constraint__node__unit__user_constraint)
+const unit_flow__user_constraint__unit__node__user_constraint = RelationshipClass(:unit_flow__user_constraint__unit__node__user_constraint)
 const units_on__stochastic_structure = RelationshipClass(:units_on__stochastic_structure)
 const units_on__temporal_block = RelationshipClass(:units_on__temporal_block)
 ## Parameters
+const availability_factor = Parameter(:availability_factor)
+const balance_penalty = Parameter(:balance_penalty)
+const balance_sense = Parameter(:balance_sense)
 const balance_type = Parameter(:balance_type)
+const benders_iterations_reporting_active = Parameter(:benders_iterations_reporting_active)
 const benders_starting_connections_invested = Parameter(:benders_starting_connections_invested)
 const benders_starting_storages_invested = Parameter(:benders_starting_storages_invested)
 const benders_starting_units_invested = Parameter(:benders_starting_units_invested)
 const big_m = Parameter(:big_m)
+const binary_gas_flow_active = Parameter(:binary_gas_flow_active)
+const binary_gas_flow_limits_fix = Parameter(:binary_gas_flow_limits_fix)
+const binary_gas_flow_limits_initial = Parameter(:binary_gas_flow_limits_initial)
 const block_end = Parameter(:block_end)
 const block_start = Parameter(:block_start)
-const candidate_connections = Parameter(:candidate_connections)
-const candidate_storages = Parameter(:candidate_storages)
-const candidate_units = Parameter(:candidate_units)
-const commodity_lodf_tolerance = Parameter(:commodity_lodf_tolerance)
-const commodity_physics = Parameter(:commodity_physics)
-const commodity_physics_duration = Parameter(:commodity_physics_duration)
-const commodity_ptdf_threshold = Parameter(:commodity_ptdf_threshold)
+const capacity_margin_min = Parameter(:capacity_margin_min)
+const capacity_margin_penalty = Parameter(:capacity_margin_penalty)
+const capacity_per_connection = Parameter(:capacity_per_connection)
+const capacity_per_unit = Parameter(:capacity_per_unit)
+const capacity_to_flow_conversion_factor = Parameter(:capacity_to_flow_conversion_factor)
+const coefficient_for_connection_flow = Parameter(:coefficient_for_connection_flow)
+const coefficient_for_connections_invested = Parameter(:coefficient_for_connections_invested)
+const coefficient_for_connections_invested_available = Parameter(:coefficient_for_connections_invested_available)
+const coefficient_for_demand = Parameter(:coefficient_for_demand)
+const coefficient_for_node_state = Parameter(:coefficient_for_node_state)
+const coefficient_for_storages_invested = Parameter(:coefficient_for_storages_invested)
+const coefficient_for_storages_invested_available = Parameter(:coefficient_for_storages_invested_available)
+const coefficient_for_unit_flow = Parameter(:coefficient_for_unit_flow)
+const coefficient_for_units_invested = Parameter(:coefficient_for_units_invested)
+const coefficient_for_units_invested_available = Parameter(:coefficient_for_units_invested_available)
+const coefficient_for_units_on = Parameter(:coefficient_for_units_on)
+const coefficient_for_units_started_up = Parameter(:coefficient_for_units_started_up)
 const compression_factor = Parameter(:compression_factor)
-const connection_availability_factor = Parameter(:connection_availability_factor)
-const connection_capacity = Parameter(:connection_capacity)
 const connection_capacity_transfer_factor = Parameter(:connection_capacity_transfer_factor)
-const connection_contingency = Parameter(:connection_contingency)
-const connection_conv_cap_to_flow = Parameter(:connection_conv_cap_to_flow)
 const connection_conversion_to_discounted_annuities = Parameter(:connection_conversion_to_discounted_annuities)
 const connection_decommissioning_conversion_to_discounted_annuities = Parameter(:connection_decommissioning_conversion_to_discounted_annuities)
-const connection_decommissioning_cost = Parameter(:connection_decommissioning_cost)
-const connection_decommissioning_time = Parameter(:connection_decommissioning_time)
-const connection_discount_rate_technology_specific = Parameter(:connection_discount_rate_technology_specific)
 const connection_discounted_duration = Parameter(:connection_discounted_duration)
 const connection_emergency_capacity = Parameter(:connection_emergency_capacity)
-const connection_flow_coefficient = Parameter(:connection_flow_coefficient)
 const connection_flow_cost = Parameter(:connection_flow_cost)
 const connection_flow_delay = Parameter(:connection_flow_delay)
+const connection_flow_highest_resolution_active = Parameter(:connection_flow_highest_resolution_active)
 const connection_flow_non_anticipativity_margin = Parameter(:connection_flow_non_anticipativity_margin)
 const connection_flow_non_anticipativity_time = Parameter(:connection_flow_non_anticipativity_time)
 const connection_intact_flow_non_anticipativity_margin = Parameter(:connection_intact_flow_non_anticipativity_margin)
 const connection_intact_flow_non_anticipativity_time = Parameter(:connection_intact_flow_non_anticipativity_time)
 const connection_investment_cost = Parameter(:connection_investment_cost)
-const connection_investment_econ_lifetime = Parameter(:connection_investment_econ_lifetime)
-const connection_investment_lifetime_sense = Parameter(:connection_investment_lifetime_sense)
-const connection_investment_tech_lifetime = Parameter(:connection_investment_tech_lifetime)
-const connection_investment_variable_type = Parameter(:connection_investment_variable_type)
-const connection_lead_time = Parameter(:connection_lead_time)
+const connection_investment_power_flow_impact_active = Parameter(:connection_investment_power_flow_impact_active)
 const connection_linepack_constant = Parameter(:connection_linepack_constant)
 const connection_min_factor = Parameter(:connection_min_factor)
-const connection_monitored = Parameter(:connection_monitored)
-const connection_reactance = Parameter(:connection_reactance)
-const connection_reactance_base = Parameter(:connection_reactance_base)
-const connection_resistance = Parameter(:connection_resistance)
 const connection_salvage_fraction = Parameter(:connection_salvage_fraction)
 const connection_tech_discount_factor = Parameter(:connection_tech_discount_factor)
 const connection_type = Parameter(:connection_type)
-const connections_invested_available_coefficient = Parameter(:connections_invested_available_coefficient)
-const connections_invested_big_m_mga = Parameter(:connections_invested_big_m_mga)
-const connections_invested_coefficient = Parameter(:connections_invested_coefficient)
-const connections_invested_mga = Parameter(:connections_invested_mga)
-const connections_invested_mga_weight = Parameter(:connections_invested_mga_weight)
 const connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance)
+const constraint_equality_flow_ratio = Parameter(:constraint_equality_flow_ratio)
+const constraint_equality_online_coefficient = Parameter(:constraint_equality_online_coefficient)
+const constraint_greater_than_flow_ratio = Parameter(:constraint_greater_than_flow_ratio)
+const constraint_greater_than_online_coefficient = Parameter(:constraint_greater_than_online_coefficient)
+const constraint_less_than_flow_ratio = Parameter(:constraint_less_than_flow_ratio)
+const constraint_less_than_online_coefficient = Parameter(:constraint_less_than_online_coefficient)
 const constraint_sense = Parameter(:constraint_sense)
+const contingency_active = Parameter(:contingency_active)
 const curtailment_cost = Parameter(:curtailment_cost)
 const cyclic_condition = Parameter(:cyclic_condition)
 const cyclic_condition_sense = Parameter(:cyclic_condition_sense)
-const db_lp_solver = Parameter(:db_lp_solver)
-const db_lp_solver_options = Parameter(:db_lp_solver_options)
-const db_mip_solver = Parameter(:db_mip_solver)
-const db_mip_solver_options = Parameter(:db_mip_solver_options)
+const decommissioning_cost = Parameter(:decommissioning_cost)
+const decommissioning_time = Parameter(:decommissioning_time)
+const decomposition_max_gap = Parameter(:decomposition_max_gap)
+const decomposition_max_iterations = Parameter(:decomposition_max_iterations)
+const decomposition_min_iterations = Parameter(:decomposition_min_iterations)
 const demand = Parameter(:demand)
-const demand_coefficient = Parameter(:demand_coefficient)
-const diff_coeff = Parameter(:diff_coeff)
+const demand_fraction = Parameter(:demand_fraction)
+const diffusion_coefficient = Parameter(:diffusion_coefficient)
 const discount_rate = Parameter(:discount_rate)
+const discount_rate_technology_specific = Parameter(:discount_rate_technology_specific)
 const discount_year = Parameter(:discount_year)
-const downward_reserve = Parameter(:downward_reserve)
 const duration_unit = Parameter(:duration_unit)
-const equal_investments = Parameter(:equal_investments)
-const fix_binary_gas_connection_flow = Parameter(:fix_binary_gas_connection_flow)
-const fix_connection_flow = Parameter(:fix_connection_flow)
-const fix_connection_intact_flow = Parameter(:fix_connection_intact_flow)
-const fix_connections_invested = Parameter(:fix_connections_invested)
-const fix_connections_invested_available = Parameter(:fix_connections_invested_available)
-const fix_node_pressure = Parameter(:fix_node_pressure)
-const fix_node_state = Parameter(:fix_node_state)
-const fix_node_voltage_angle = Parameter(:fix_node_voltage_angle)
+const equal_investments_active = Parameter(:equal_investments_active)
+const existing_connections = Parameter(:existing_connections)
+const existing_storages = Parameter(:existing_storages)
+const existing_units = Parameter(:existing_units)
 const fix_nonspin_units_shut_down = Parameter(:fix_nonspin_units_shut_down)
 const fix_nonspin_units_started_up = Parameter(:fix_nonspin_units_started_up)
-const fix_ratio_in_in_unit_flow = Parameter(:fix_ratio_in_in_unit_flow)
-const fix_ratio_in_out_unit_flow = Parameter(:fix_ratio_in_out_unit_flow)
 const fix_ratio_out_in_connection_flow = Parameter(:fix_ratio_out_in_connection_flow)
-const fix_ratio_out_in_unit_flow = Parameter(:fix_ratio_out_in_unit_flow)
-const fix_ratio_out_out_unit_flow = Parameter(:fix_ratio_out_out_unit_flow)
-const fix_storages_invested = Parameter(:fix_storages_invested)
-const fix_storages_invested_available = Parameter(:fix_storages_invested_available)
-const fix_unit_flow = Parameter(:fix_unit_flow)
-const fix_unit_flow_op = Parameter(:fix_unit_flow_op)
-const fix_units_invested = Parameter(:fix_units_invested)
-const fix_units_invested_available = Parameter(:fix_units_invested_available)
-const fix_units_on = Parameter(:fix_units_on)
-const fix_units_on_coefficient_in_in = Parameter(:fix_units_on_coefficient_in_in)
-const fix_units_on_coefficient_in_out = Parameter(:fix_units_on_coefficient_in_out)
-const fix_units_on_coefficient_out_in = Parameter(:fix_units_on_coefficient_out_in)
-const fix_units_on_coefficient_out_out = Parameter(:fix_units_on_coefficient_out_out)
-const fix_units_out_of_service = Parameter(:fix_units_out_of_service)
 const fixed_pressure_constant_0 = Parameter(:fixed_pressure_constant_0)
 const fixed_pressure_constant_1 = Parameter(:fixed_pressure_constant_1)
+const flow_limits_fix = Parameter(:flow_limits_fix)
+const flow_limits_fix_intact = Parameter(:flow_limits_fix_intact)
+const flow_limits_fix_op = Parameter(:flow_limits_fix_op)
+const flow_limits_initial = Parameter(:flow_limits_initial)
+const flow_limits_initial_intact = Parameter(:flow_limits_initial_intact)
+const flow_limits_initial_op = Parameter(:flow_limits_initial_op)
+const flow_limits_max_cumulative = Parameter(:flow_limits_max_cumulative)
+const flow_limits_min = Parameter(:flow_limits_min)
+const flow_limits_min_cumulative = Parameter(:flow_limits_min_cumulative)
 const fom_cost = Parameter(:fom_cost)
-const frac_state_loss = Parameter(:frac_state_loss)
-const fractional_demand = Parameter(:fractional_demand)
 const fuel_cost = Parameter(:fuel_cost)
-const has_binary_gas_flow = Parameter(:has_binary_gas_flow)
 const has_lodf = Parameter(:has_lodf)
 const has_online_variable = Parameter(:has_online_variable)
 const has_out_of_service_variable = Parameter(:has_out_of_service_variable)
-const has_pressure = Parameter(:has_pressure)
 const has_ptdf = Parameter(:has_ptdf)
-const has_state = Parameter(:has_state)
 const has_switched_variable = Parameter(:has_switched_variable)
-const has_voltage_angle = Parameter(:has_voltage_angle)
 const include_in_non_representative_periods = Parameter(:include_in_non_representative_periods)
-const initial_binary_gas_connection_flow = Parameter(:initial_binary_gas_connection_flow)
-const initial_connection_flow = Parameter(:initial_connection_flow)
-const initial_connection_intact_flow = Parameter(:initial_connection_intact_flow)
-const initial_connections_invested = Parameter(:initial_connections_invested)
-const initial_connections_invested_available = Parameter(:initial_connections_invested_available)
-const initial_node_pressure = Parameter(:initial_node_pressure)
-const initial_node_state = Parameter(:initial_node_state)
-const initial_node_voltage_angle = Parameter(:initial_node_voltage_angle)
 const initial_nonspin_units_shut_down = Parameter(:initial_nonspin_units_shut_down)
 const initial_nonspin_units_started_up = Parameter(:initial_nonspin_units_started_up)
-const initial_storages_invested = Parameter(:initial_storages_invested)
-const initial_storages_invested_available = Parameter(:initial_storages_invested_available)
-const initial_unit_flow = Parameter(:initial_unit_flow)
-const initial_unit_flow_op = Parameter(:initial_unit_flow_op)
-const initial_units_invested = Parameter(:initial_units_invested)
-const initial_units_invested_available = Parameter(:initial_units_invested_available)
-const initial_units_on = Parameter(:initial_units_on)
-const initial_units_out_of_service = Parameter(:initial_units_out_of_service)
+const investment_capacity_total_max_cumulative = Parameter(:investment_capacity_total_max_cumulative)
+const investment_capacity_total_min_cumulative = Parameter(:investment_capacity_total_min_cumulative)
+const investment_count_fix_cumulative = Parameter(:investment_count_fix_cumulative)
+const investment_count_fix_new = Parameter(:investment_count_fix_new)
+const investment_count_initial_cumulative = Parameter(:investment_count_initial_cumulative)
+const investment_count_initial_new = Parameter(:investment_count_initial_new)
+const investment_count_max_cumulative = Parameter(:investment_count_max_cumulative)
+const investment_count_total_max_cumulative = Parameter(:investment_count_total_max_cumulative)
+const investment_count_total_min_cumulative = Parameter(:investment_count_total_min_cumulative)
+const investment_variable_type = Parameter(:investment_variable_type)
 const is_boundary_connection = Parameter(:is_boundary_connection)
 const is_boundary_node = Parameter(:is_boundary_node)
 const is_candidate = Parameter(:is_candidate)
-const is_longterm_storage = Parameter(:is_longterm_storage)
 const is_non_spinning = Parameter(:is_non_spinning)
 const is_renewable = Parameter(:is_renewable)
-const is_reserve_node = Parameter(:is_reserve_node)
+const lead_time = Parameter(:lead_time)
+const lifetime_constraint_sense = Parameter(:lifetime_constraint_sense)
+const lifetime_economic = Parameter(:lifetime_economic)
+const lifetime_technical = Parameter(:lifetime_technical)
 const lodf = Parameter(:lodf)
-const max_cum_in_unit_flow_bound = Parameter(:max_cum_in_unit_flow_bound)
-const max_gap = Parameter(:max_gap)
-const max_iterations = Parameter(:max_iterations)
-const max_mga_iterations = Parameter(:max_mga_iterations)
-const max_mga_slack = Parameter(:max_mga_slack)
-const max_node_pressure = Parameter(:max_node_pressure)
-const max_ratio_in_in_unit_flow = Parameter(:max_ratio_in_in_unit_flow)
-const max_ratio_in_out_unit_flow = Parameter(:max_ratio_in_out_unit_flow)
+const lodf_tolerance = Parameter(:lodf_tolerance)
 const max_ratio_out_in_connection_flow = Parameter(:max_ratio_out_in_connection_flow)
-const max_ratio_out_in_unit_flow = Parameter(:max_ratio_out_in_unit_flow)
-const max_ratio_out_out_unit_flow = Parameter(:max_ratio_out_out_unit_flow)
-const max_total_cumulated_unit_flow_from_node = Parameter(:max_total_cumulated_unit_flow_from_node)
-const max_total_cumulated_unit_flow_to_node = Parameter(:max_total_cumulated_unit_flow_to_node)
-const max_units_on_coefficient_in_in = Parameter(:max_units_on_coefficient_in_in)
-const max_units_on_coefficient_in_out = Parameter(:max_units_on_coefficient_in_out)
-const max_units_on_coefficient_out_in = Parameter(:max_units_on_coefficient_out_in)
-const max_units_on_coefficient_out_out = Parameter(:max_units_on_coefficient_out_out)
-const max_voltage_angle = Parameter(:max_voltage_angle)
-const maximum_capacity_invested_available = Parameter(:maximum_capacity_invested_available)
-const maximum_entities_invested_available = Parameter(:maximum_entities_invested_available)
-const min_capacity_margin = Parameter(:min_capacity_margin)
-const min_capacity_margin_penalty = Parameter(:min_capacity_margin_penalty)
+const mga_investment_active = Parameter(:mga_investment_active)
+const mga_investment_big_m = Parameter(:mga_investment_big_m)
+const mga_investment_weight = Parameter(:mga_investment_weight)
+const mga_max_iterations = Parameter(:mga_max_iterations)
+const mga_max_slack = Parameter(:mga_max_slack)
+const mga_storage_investment_active = Parameter(:mga_storage_investment_active)
+const mga_storage_investment_big_m = Parameter(:mga_storage_investment_big_m)
+const mga_storage_investment_weight = Parameter(:mga_storage_investment_weight)
 const min_down_time = Parameter(:min_down_time)
-const min_iterations = Parameter(:min_iterations)
-const min_node_pressure = Parameter(:min_node_pressure)
-const min_ratio_in_in_unit_flow = Parameter(:min_ratio_in_in_unit_flow)
-const min_ratio_in_out_unit_flow = Parameter(:min_ratio_in_out_unit_flow)
 const min_ratio_out_in_connection_flow = Parameter(:min_ratio_out_in_connection_flow)
-const min_ratio_out_in_unit_flow = Parameter(:min_ratio_out_in_unit_flow)
-const min_ratio_out_out_unit_flow = Parameter(:min_ratio_out_out_unit_flow)
-const min_total_cumulated_unit_flow_from_node = Parameter(:min_total_cumulated_unit_flow_from_node)
-const min_total_cumulated_unit_flow_to_node = Parameter(:min_total_cumulated_unit_flow_to_node)
-const min_unit_flow = Parameter(:min_unit_flow)
-const min_units_on_coefficient_in_in = Parameter(:min_units_on_coefficient_in_in)
-const min_units_on_coefficient_in_out = Parameter(:min_units_on_coefficient_in_out)
-const min_units_on_coefficient_out_in = Parameter(:min_units_on_coefficient_out_in)
-const min_units_on_coefficient_out_out = Parameter(:min_units_on_coefficient_out_out)
 const min_up_time = Parameter(:min_up_time)
-const min_voltage_angle = Parameter(:min_voltage_angle)
-const minimum_capacity_invested_available = Parameter(:minimum_capacity_invested_available)
-const minimum_entities_invested_available = Parameter(:minimum_entities_invested_available)
 const minimum_operating_point = Parameter(:minimum_operating_point)
 const minimum_reserve_activation_time = Parameter(:minimum_reserve_activation_time)
 const model_algorithm = Parameter(:model_algorithm)
 const model_end = Parameter(:model_end)
 const model_start = Parameter(:model_start)
 const model_type = Parameter(:model_type)
+const monitoring_active = Parameter(:monitoring_active)
 const monte_carlo_scenarios = Parameter(:monte_carlo_scenarios)
 const mp_min_res_gen_to_demand_ratio = Parameter(:mp_min_res_gen_to_demand_ratio)
 const mp_min_res_gen_to_demand_ratio_slack_penalty = Parameter(:mp_min_res_gen_to_demand_ratio_slack_penalty)
 const multiyear_economic_discounting = Parameter(:multiyear_economic_discounting)
-const nodal_balance_sense = Parameter(:nodal_balance_sense)
-const node_availability_factor = Parameter(:node_availability_factor)
 const node_opf_type = Parameter(:node_opf_type)
-const node_slack_penalty = Parameter(:node_slack_penalty)
-const node_state_cap = Parameter(:node_state_cap)
-const node_state_coefficient = Parameter(:node_state_coefficient)
-const node_state_min = Parameter(:node_state_min)
-const node_state_min_factor = Parameter(:node_state_min_factor)
-const number_of_connections = Parameter(:number_of_connections)
-const number_of_storages = Parameter(:number_of_storages)
-const number_of_units = Parameter(:number_of_units)
+const online_count_fix = Parameter(:online_count_fix)
+const online_count_initial = Parameter(:online_count_initial)
 const online_variable_type = Parameter(:online_variable_type)
 const operating_points = Parameter(:operating_points)
 const ordered_unit_flow_op = Parameter(:ordered_unit_flow_op)
+const out_of_service_count_fix = Parameter(:out_of_service_count_fix)
+const out_of_service_count_initial = Parameter(:out_of_service_count_initial)
+const outage_scheduled_duration = Parameter(:outage_scheduled_duration)
 const outage_variable_type = Parameter(:outage_variable_type)
 const output_db_url = Parameter(:output_db_url)
 const output_resolution = Parameter(:output_resolution)
 const output_type = Parameter(:output_type)
 const overwrite_results_on_rolling = Parameter(:overwrite_results_on_rolling)
+const physics_duration = Parameter(:physics_duration)
+const physics_type = Parameter(:physics_type)
+const pressure_fix = Parameter(:pressure_fix)
+const pressure_initial = Parameter(:pressure_initial)
+const pressure_max = Parameter(:pressure_max)
+const pressure_min = Parameter(:pressure_min)
 const ptdf = Parameter(:ptdf)
 const ptdf_duration = Parameter(:ptdf_duration)
+const ptdf_threshold = Parameter(:ptdf_threshold)
 const ptdf_unfiltered = Parameter(:ptdf_unfiltered)
-const ramp_down_limit = Parameter(:ramp_down_limit)
-const ramp_up_limit = Parameter(:ramp_up_limit)
-const report_benders_iterations = Parameter(:report_benders_iterations)
-const representative_period_index = Parameter(:representative_period_index)
-const representative_periods_mapping = Parameter(:representative_periods_mapping)
+const ramp_limits_down = Parameter(:ramp_limits_down)
+const ramp_limits_shutdown = Parameter(:ramp_limits_shutdown)
+const ramp_limits_startup = Parameter(:ramp_limits_startup)
+const ramp_limits_up = Parameter(:ramp_limits_up)
+const reactance = Parameter(:reactance)
+const reactance_base = Parameter(:reactance_base)
+const representative_block_index = Parameter(:representative_block_index)
+const representative_blocks_by_period = Parameter(:representative_blocks_by_period)
+const reserve_active = Parameter(:reserve_active)
+const reserve_downward = Parameter(:reserve_downward)
 const reserve_procurement_cost = Parameter(:reserve_procurement_cost)
+const reserve_upward = Parameter(:reserve_upward)
+const resistance = Parameter(:resistance)
 const resolution = Parameter(:resolution)
 const right_hand_side = Parameter(:right_hand_side)
 const roll_forward = Parameter(:roll_forward)
-const scheduled_outage_duration = Parameter(:scheduled_outage_duration)
 const shared_values = Parameter(:shared_values)
 const shut_down_cost = Parameter(:shut_down_cost)
-const shut_down_limit = Parameter(:shut_down_limit)
 const slack_penalty = Parameter(:slack_penalty)
-const solution_stats = Parameter(:solution_stats)
+const solver_lp = Parameter(:solver_lp)
+const solver_lp_options = Parameter(:solver_lp_options)
+const solver_mip = Parameter(:solver_mip)
+const solver_mip_options = Parameter(:solver_mip_options)
 const stage_scenario = Parameter(:stage_scenario)
 const start_up_cost = Parameter(:start_up_cost)
-const start_up_limit = Parameter(:start_up_limit)
-const state_coeff = Parameter(:state_coeff)
 const stochastic_scenario_end = Parameter(:stochastic_scenario_end)
+const storage_active = Parameter(:storage_active)
 const storage_capacity_transfer_factor = Parameter(:storage_capacity_transfer_factor)
 const storage_conversion_to_discounted_annuities = Parameter(:storage_conversion_to_discounted_annuities)
 const storage_decommissioning_conversion_to_discounted_annuities = Parameter(:storage_decommissioning_conversion_to_discounted_annuities)
@@ -312,63 +283,53 @@ const storage_decommissioning_cost = Parameter(:storage_decommissioning_cost)
 const storage_decommissioning_time = Parameter(:storage_decommissioning_time)
 const storage_discount_rate_technology_specific = Parameter(:storage_discount_rate_technology_specific)
 const storage_discounted_duration = Parameter(:storage_discounted_duration)
-const storage_fom_cost = Parameter(:storage_fom_cost)
+const storage_fixed_annual_cost = Parameter(:storage_fixed_annual_cost)
 const storage_investment_cost = Parameter(:storage_investment_cost)
-const storage_investment_econ_lifetime = Parameter(:storage_investment_econ_lifetime)
-const storage_investment_lifetime_sense = Parameter(:storage_investment_lifetime_sense)
-const storage_investment_tech_lifetime = Parameter(:storage_investment_tech_lifetime)
+const storage_investment_count_fix_cumulative = Parameter(:storage_investment_count_fix_cumulative)
+const storage_investment_count_fix_new = Parameter(:storage_investment_count_fix_new)
+const storage_investment_count_initial_cumulative = Parameter(:storage_investment_count_initial_cumulative)
+const storage_investment_count_initial_new = Parameter(:storage_investment_count_initial_new)
+const storage_investment_count_max_cumulative = Parameter(:storage_investment_count_max_cumulative)
 const storage_investment_variable_type = Parameter(:storage_investment_variable_type)
 const storage_lead_time = Parameter(:storage_lead_time)
+const storage_lifetime_constraint_sense = Parameter(:storage_lifetime_constraint_sense)
+const storage_lifetime_economic = Parameter(:storage_lifetime_economic)
+const storage_lifetime_technical = Parameter(:storage_lifetime_technical)
+const storage_longterm_active = Parameter(:storage_longterm_active)
 const storage_salvage_fraction = Parameter(:storage_salvage_fraction)
+const storage_self_discharge = Parameter(:storage_self_discharge)
+const storage_state_coefficient = Parameter(:storage_state_coefficient)
+const storage_state_fix = Parameter(:storage_state_fix)
+const storage_state_initial = Parameter(:storage_state_initial)
+const storage_state_max = Parameter(:storage_state_max)
+const storage_state_max_fraction = Parameter(:storage_state_max_fraction)
+const storage_state_min = Parameter(:storage_state_min)
+const storage_state_min_fraction = Parameter(:storage_state_min_fraction)
 const storage_tech_discount_factor = Parameter(:storage_tech_discount_factor)
-const storages_invested_available_coefficient = Parameter(:storages_invested_available_coefficient)
-const storages_invested_big_m_mga = Parameter(:storages_invested_big_m_mga)
-const storages_invested_coefficient = Parameter(:storages_invested_coefficient)
-const storages_invested_mga = Parameter(:storages_invested_mga)
-const storages_invested_mga_weight = Parameter(:storages_invested_mga_weight)
 const tax_in_unit_flow = Parameter(:tax_in_unit_flow)
 const tax_net_unit_flow = Parameter(:tax_net_unit_flow)
 const tax_out_unit_flow = Parameter(:tax_out_unit_flow)
-const unit_availability_factor = Parameter(:unit_availability_factor)
-const unit_capacity = Parameter(:unit_capacity)
+const tight_compact_formulations_active = Parameter(:tight_compact_formulations_active)
 const unit_capacity_transfer_factor = Parameter(:unit_capacity_transfer_factor)
-const unit_conv_cap_to_flow = Parameter(:unit_conv_cap_to_flow)
 const unit_conversion_to_discounted_annuities = Parameter(:unit_conversion_to_discounted_annuities)
 const unit_decommissioning_conversion_to_discounted_annuities = Parameter(:unit_decommissioning_conversion_to_discounted_annuities)
 const unit_decommissioning_cost = Parameter(:unit_decommissioning_cost)
-const unit_decommissioning_time = Parameter(:unit_decommissioning_time)
-const unit_discount_rate_technology_specific = Parameter(:unit_discount_rate_technology_specific)
 const unit_discounted_duration = Parameter(:unit_discounted_duration)
-const unit_flow_coefficient = Parameter(:unit_flow_coefficient)
 const unit_flow_non_anticipativity_margin = Parameter(:unit_flow_non_anticipativity_margin)
 const unit_flow_non_anticipativity_time = Parameter(:unit_flow_non_anticipativity_time)
 const unit_investment_cost = Parameter(:unit_investment_cost)
-const unit_investment_econ_lifetime = Parameter(:unit_investment_econ_lifetime)
-const unit_investment_lifetime_sense = Parameter(:unit_investment_lifetime_sense)
-const unit_investment_tech_lifetime = Parameter(:unit_investment_tech_lifetime)
-const unit_investment_variable_type = Parameter(:unit_investment_variable_type)
-const unit_lead_time = Parameter(:unit_lead_time)
 const unit_salvage_fraction = Parameter(:unit_salvage_fraction)
 const unit_start_flow = Parameter(:unit_start_flow)
 const unit_tech_discount_factor = Parameter(:unit_tech_discount_factor)
-const units_invested_available_coefficient = Parameter(:units_invested_available_coefficient)
-const units_invested_big_m_mga = Parameter(:units_invested_big_m_mga)
-const units_invested_coefficient = Parameter(:units_invested_coefficient)
-const units_invested_mga = Parameter(:units_invested_mga)
-const units_invested_mga_weight = Parameter(:units_invested_mga_weight)
-const units_on_coefficient = Parameter(:units_on_coefficient)
 const units_on_cost = Parameter(:units_on_cost)
 const units_on_non_anticipativity_margin = Parameter(:units_on_non_anticipativity_margin)
 const units_on_non_anticipativity_time = Parameter(:units_on_non_anticipativity_time)
-const units_started_up_coefficient = Parameter(:units_started_up_coefficient)
-const units_unavailable = Parameter(:units_unavailable)
-const upward_reserve = Parameter(:upward_reserve)
-const use_connection_intact_flow = Parameter(:use_connection_intact_flow)
-const use_highest_resolution_constraint_ratio_out_in_connection_flow = Parameter(:use_highest_resolution_constraint_ratio_out_in_connection_flow)
-const use_tight_compact_formulations = Parameter(:use_tight_compact_formulations)
-const use_unit_capacity_for_investment_cost_scaling = Parameter(:use_unit_capacity_for_investment_cost_scaling)
 const user_constraint_slack_penalty = Parameter(:user_constraint_slack_penalty)
 const version = Parameter(:version)
+const voltage_angle_fix = Parameter(:voltage_angle_fix)
+const voltage_angle_initial = Parameter(:voltage_angle_initial)
+const voltage_angle_max = Parameter(:voltage_angle_max)
+const voltage_angle_min = Parameter(:voltage_angle_min)
 const vom_cost = Parameter(:vom_cost)
 const weight = Parameter(:weight)
 const weight_relative_to_parents = Parameter(:weight_relative_to_parents)
@@ -380,9 +341,9 @@ const write_ptdf_file = Parameter(:write_ptdf_file)
 ## Exports
 ## Object classes
 export benders_iteration
-export commodity
 export connection
 export direction
+export grid
 export investment_group
 export mga_iteration
 export model
@@ -397,6 +358,7 @@ export stochastic_scenario
 export stochastic_structure
 export temporal_block
 export unit
+export unit_flow
 export user_constraint
 ## Relationship classes
 export connection__from_node
@@ -417,13 +379,14 @@ export model__default_investment_temporal_block
 export model__default_stochastic_structure
 export model__default_temporal_block
 export model__report
-export node__commodity
+export node__grid
 export node__investment_group
 export node__investment_stochastic_structure
 export node__investment_temporal_block
 export node__node
 export node__stochastic_structure
 export node__temporal_block
+export node__to_unit
 export node__user_constraint
 export parent_stochastic_scenario__child_stochastic_scenario
 export ptdf_connection__node
@@ -435,255 +398,224 @@ export stage__output__connection
 export stage__output__node
 export stage__output__unit
 export stochastic_structure__stochastic_scenario
-export unit__commodity
-export unit__from_node
-export unit__from_node__investment_group
-export unit__from_node__user_constraint
 export unit__investment_group
 export unit__investment_stochastic_structure
 export unit__investment_temporal_block
 export unit__node__direction
-export unit__node__node
 export unit__to_node
-export unit__to_node__investment_group
-export unit__to_node__user_constraint
 export unit__user_constraint
+export unit_flow__investment_group
+export unit_flow__investment_group__node__unit__investment_group
+export unit_flow__investment_group__unit__node__investment_group
+export unit_flow__unit_flow
+export unit_flow__unit_flow__node__unit__node__unit
+export unit_flow__unit_flow__node__unit__unit__node
+export unit_flow__unit_flow__unit__node__node__unit
+export unit_flow__unit_flow__unit__node__unit__node
+export unit_flow__user_constraint
+export unit_flow__user_constraint__node__unit__user_constraint
+export unit_flow__user_constraint__unit__node__user_constraint
 export units_on__stochastic_structure
 export units_on__temporal_block
 ## Parameters
+export availability_factor
+export balance_penalty
+export balance_sense
 export balance_type
+export benders_iterations_reporting_active
 export benders_starting_connections_invested
 export benders_starting_storages_invested
 export benders_starting_units_invested
 export big_m
+export binary_gas_flow_active
+export binary_gas_flow_limits_fix
+export binary_gas_flow_limits_initial
 export block_end
 export block_start
-export candidate_connections
-export candidate_storages
-export candidate_units
-export commodity_lodf_tolerance
-export commodity_physics
-export commodity_physics_duration
-export commodity_ptdf_threshold
+export capacity_margin_min
+export capacity_margin_penalty
+export capacity_per_connection
+export capacity_per_unit
+export capacity_to_flow_conversion_factor
+export coefficient_for_connection_flow
+export coefficient_for_connections_invested
+export coefficient_for_connections_invested_available
+export coefficient_for_demand
+export coefficient_for_node_state
+export coefficient_for_storages_invested
+export coefficient_for_storages_invested_available
+export coefficient_for_unit_flow
+export coefficient_for_units_invested
+export coefficient_for_units_invested_available
+export coefficient_for_units_on
+export coefficient_for_units_started_up
 export compression_factor
-export connection_availability_factor
-export connection_capacity
 export connection_capacity_transfer_factor
-export connection_contingency
-export connection_conv_cap_to_flow
 export connection_conversion_to_discounted_annuities
 export connection_decommissioning_conversion_to_discounted_annuities
-export connection_decommissioning_cost
-export connection_decommissioning_time
-export connection_discount_rate_technology_specific
 export connection_discounted_duration
 export connection_emergency_capacity
-export connection_flow_coefficient
 export connection_flow_cost
 export connection_flow_delay
+export connection_flow_highest_resolution_active
 export connection_flow_non_anticipativity_margin
 export connection_flow_non_anticipativity_time
 export connection_intact_flow_non_anticipativity_margin
 export connection_intact_flow_non_anticipativity_time
 export connection_investment_cost
-export connection_investment_econ_lifetime
-export connection_investment_lifetime_sense
-export connection_investment_tech_lifetime
-export connection_investment_variable_type
-export connection_lead_time
+export connection_investment_power_flow_impact_active
 export connection_linepack_constant
 export connection_min_factor
-export connection_monitored
-export connection_reactance
-export connection_reactance_base
-export connection_resistance
 export connection_salvage_fraction
 export connection_tech_discount_factor
 export connection_type
-export connections_invested_available_coefficient
-export connections_invested_big_m_mga
-export connections_invested_coefficient
-export connections_invested_mga
-export connections_invested_mga_weight
 export connnection_lodf_tolerance
+export constraint_equality_flow_ratio
+export constraint_equality_online_coefficient
+export constraint_greater_than_flow_ratio
+export constraint_greater_than_online_coefficient
+export constraint_less_than_flow_ratio
+export constraint_less_than_online_coefficient
 export constraint_sense
+export contingency_active
 export curtailment_cost
 export cyclic_condition
 export cyclic_condition_sense
-export db_lp_solver
-export db_lp_solver_options
-export db_mip_solver
-export db_mip_solver_options
+export decommissioning_cost
+export decommissioning_time
+export decomposition_max_gap
+export decomposition_max_iterations
+export decomposition_min_iterations
 export demand
-export demand_coefficient
-export diff_coeff
+export demand_fraction
+export diffusion_coefficient
 export discount_rate
+export discount_rate_technology_specific
 export discount_year
-export downward_reserve
 export duration_unit
-export equal_investments
-export fix_binary_gas_connection_flow
-export fix_connection_flow
-export fix_connection_intact_flow
-export fix_connections_invested
-export fix_connections_invested_available
-export fix_node_pressure
-export fix_node_state
-export fix_node_voltage_angle
+export equal_investments_active
+export existing_connections
+export existing_storages
+export existing_units
 export fix_nonspin_units_shut_down
 export fix_nonspin_units_started_up
-export fix_ratio_in_in_unit_flow
-export fix_ratio_in_out_unit_flow
 export fix_ratio_out_in_connection_flow
-export fix_ratio_out_in_unit_flow
-export fix_ratio_out_out_unit_flow
-export fix_storages_invested
-export fix_storages_invested_available
-export fix_unit_flow
-export fix_unit_flow_op
-export fix_units_invested
-export fix_units_invested_available
-export fix_units_on
-export fix_units_on_coefficient_in_in
-export fix_units_on_coefficient_in_out
-export fix_units_on_coefficient_out_in
-export fix_units_on_coefficient_out_out
-export fix_units_out_of_service
 export fixed_pressure_constant_0
 export fixed_pressure_constant_1
+export flow_limits_fix
+export flow_limits_fix_intact
+export flow_limits_fix_op
+export flow_limits_initial
+export flow_limits_initial_intact
+export flow_limits_initial_op
+export flow_limits_max_cumulative
+export flow_limits_min
+export flow_limits_min_cumulative
 export fom_cost
-export frac_state_loss
-export fractional_demand
 export fuel_cost
-export has_binary_gas_flow
 export has_lodf
 export has_online_variable
 export has_out_of_service_variable
-export has_pressure
 export has_ptdf
-export has_state
 export has_switched_variable
-export has_voltage_angle
 export include_in_non_representative_periods
-export initial_binary_gas_connection_flow
-export initial_connection_flow
-export initial_connection_intact_flow
-export initial_connections_invested
-export initial_connections_invested_available
-export initial_node_pressure
-export initial_node_state
-export initial_node_voltage_angle
 export initial_nonspin_units_shut_down
 export initial_nonspin_units_started_up
-export initial_storages_invested
-export initial_storages_invested_available
-export initial_unit_flow
-export initial_unit_flow_op
-export initial_units_invested
-export initial_units_invested_available
-export initial_units_on
-export initial_units_out_of_service
+export investment_capacity_total_max_cumulative
+export investment_capacity_total_min_cumulative
+export investment_count_fix_cumulative
+export investment_count_fix_new
+export investment_count_initial_cumulative
+export investment_count_initial_new
+export investment_count_max_cumulative
+export investment_count_total_max_cumulative
+export investment_count_total_min_cumulative
+export investment_variable_type
 export is_boundary_connection
 export is_boundary_node
 export is_candidate
-export is_longterm_storage
 export is_non_spinning
 export is_renewable
-export is_reserve_node
+export lead_time
+export lifetime_constraint_sense
+export lifetime_economic
+export lifetime_technical
 export lodf
-export max_cum_in_unit_flow_bound
-export max_gap
-export max_iterations
-export max_mga_iterations
-export max_mga_slack
-export max_node_pressure
-export max_ratio_in_in_unit_flow
-export max_ratio_in_out_unit_flow
+export lodf_tolerance
 export max_ratio_out_in_connection_flow
-export max_ratio_out_in_unit_flow
-export max_ratio_out_out_unit_flow
-export max_total_cumulated_unit_flow_from_node
-export max_total_cumulated_unit_flow_to_node
-export max_units_on_coefficient_in_in
-export max_units_on_coefficient_in_out
-export max_units_on_coefficient_out_in
-export max_units_on_coefficient_out_out
-export max_voltage_angle
-export maximum_capacity_invested_available
-export maximum_entities_invested_available
-export min_capacity_margin
-export min_capacity_margin_penalty
+export mga_investment_active
+export mga_investment_big_m
+export mga_investment_weight
+export mga_max_iterations
+export mga_max_slack
+export mga_storage_investment_active
+export mga_storage_investment_big_m
+export mga_storage_investment_weight
 export min_down_time
-export min_iterations
-export min_node_pressure
-export min_ratio_in_in_unit_flow
-export min_ratio_in_out_unit_flow
 export min_ratio_out_in_connection_flow
-export min_ratio_out_in_unit_flow
-export min_ratio_out_out_unit_flow
-export min_total_cumulated_unit_flow_from_node
-export min_total_cumulated_unit_flow_to_node
-export min_unit_flow
-export min_units_on_coefficient_in_in
-export min_units_on_coefficient_in_out
-export min_units_on_coefficient_out_in
-export min_units_on_coefficient_out_out
 export min_up_time
-export min_voltage_angle
-export minimum_capacity_invested_available
-export minimum_entities_invested_available
 export minimum_operating_point
 export minimum_reserve_activation_time
 export model_algorithm
 export model_end
 export model_start
 export model_type
+export monitoring_active
 export monte_carlo_scenarios
 export mp_min_res_gen_to_demand_ratio
 export mp_min_res_gen_to_demand_ratio_slack_penalty
 export multiyear_economic_discounting
-export nodal_balance_sense
-export node_availability_factor
 export node_opf_type
-export node_slack_penalty
-export node_state_cap
-export node_state_coefficient
-export node_state_min
-export node_state_min_factor
-export number_of_connections
-export number_of_storages
-export number_of_units
+export online_count_fix
+export online_count_initial
 export online_variable_type
 export operating_points
 export ordered_unit_flow_op
+export out_of_service_count_fix
+export out_of_service_count_initial
+export outage_scheduled_duration
 export outage_variable_type
 export output_db_url
 export output_resolution
 export output_type
 export overwrite_results_on_rolling
+export physics_duration
+export physics_type
+export pressure_fix
+export pressure_initial
+export pressure_max
+export pressure_min
 export ptdf
 export ptdf_duration
+export ptdf_threshold
 export ptdf_unfiltered
-export ramp_down_limit
-export ramp_up_limit
-export report_benders_iterations
-export representative_period_index
-export representative_periods_mapping
+export ramp_limits_down
+export ramp_limits_shutdown
+export ramp_limits_startup
+export ramp_limits_up
+export reactance
+export reactance_base
+export representative_block_index
+export representative_blocks_by_period
+export reserve_active
+export reserve_downward
 export reserve_procurement_cost
+export reserve_upward
+export resistance
 export resolution
 export right_hand_side
 export roll_forward
-export scheduled_outage_duration
 export shared_values
 export shut_down_cost
-export shut_down_limit
 export slack_penalty
-export solution_stats
+export solver_lp
+export solver_lp_options
+export solver_mip
+export solver_mip_options
 export stage_scenario
 export start_up_cost
-export start_up_limit
-export state_coeff
 export stochastic_scenario_end
+export storage_active
 export storage_capacity_transfer_factor
 export storage_conversion_to_discounted_annuities
 export storage_decommissioning_conversion_to_discounted_annuities
@@ -691,63 +623,53 @@ export storage_decommissioning_cost
 export storage_decommissioning_time
 export storage_discount_rate_technology_specific
 export storage_discounted_duration
-export storage_fom_cost
+export storage_fixed_annual_cost
 export storage_investment_cost
-export storage_investment_econ_lifetime
-export storage_investment_lifetime_sense
-export storage_investment_tech_lifetime
+export storage_investment_count_fix_cumulative
+export storage_investment_count_fix_new
+export storage_investment_count_initial_cumulative
+export storage_investment_count_initial_new
+export storage_investment_count_max_cumulative
 export storage_investment_variable_type
 export storage_lead_time
+export storage_lifetime_constraint_sense
+export storage_lifetime_economic
+export storage_lifetime_technical
+export storage_longterm_active
 export storage_salvage_fraction
+export storage_self_discharge
+export storage_state_coefficient
+export storage_state_fix
+export storage_state_initial
+export storage_state_max
+export storage_state_max_fraction
+export storage_state_min
+export storage_state_min_fraction
 export storage_tech_discount_factor
-export storages_invested_available_coefficient
-export storages_invested_big_m_mga
-export storages_invested_coefficient
-export storages_invested_mga
-export storages_invested_mga_weight
 export tax_in_unit_flow
 export tax_net_unit_flow
 export tax_out_unit_flow
-export unit_availability_factor
-export unit_capacity
+export tight_compact_formulations_active
 export unit_capacity_transfer_factor
-export unit_conv_cap_to_flow
 export unit_conversion_to_discounted_annuities
 export unit_decommissioning_conversion_to_discounted_annuities
 export unit_decommissioning_cost
-export unit_decommissioning_time
-export unit_discount_rate_technology_specific
 export unit_discounted_duration
-export unit_flow_coefficient
 export unit_flow_non_anticipativity_margin
 export unit_flow_non_anticipativity_time
 export unit_investment_cost
-export unit_investment_econ_lifetime
-export unit_investment_lifetime_sense
-export unit_investment_tech_lifetime
-export unit_investment_variable_type
-export unit_lead_time
 export unit_salvage_fraction
 export unit_start_flow
 export unit_tech_discount_factor
-export units_invested_available_coefficient
-export units_invested_big_m_mga
-export units_invested_coefficient
-export units_invested_mga
-export units_invested_mga_weight
-export units_on_coefficient
 export units_on_cost
 export units_on_non_anticipativity_margin
 export units_on_non_anticipativity_time
-export units_started_up_coefficient
-export units_unavailable
-export upward_reserve
-export use_connection_intact_flow
-export use_highest_resolution_constraint_ratio_out_in_connection_flow
-export use_tight_compact_formulations
-export use_unit_capacity_for_investment_cost_scaling
 export user_constraint_slack_penalty
 export version
+export voltage_angle_fix
+export voltage_angle_initial
+export voltage_angle_max
+export voltage_angle_min
 export vom_cost
 export weight
 export weight_relative_to_parents
