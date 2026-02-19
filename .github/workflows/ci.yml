@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
   check_duplicate_actions:
@@ -28,8 +29,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.10.10"  #  Long-term support (LTS) release
-          - "1.11" # Latest Release of Julia v1.x
+          - "1.8"  # Minimum compatible Release
+          - "1"    # Latest Release of Julia v1.x
         os:
           - ubuntu-latest
           # - macOS-latest
@@ -61,6 +62,7 @@ jobs:
           julia ./.install_spinedb_api.jl
         env:
           PYTHON: python
+      - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest'
@@ -79,9 +81,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11' 
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1.11' 
       - name: Install dependencies
         run: |
           julia ./.install_spinedb_api.jl          

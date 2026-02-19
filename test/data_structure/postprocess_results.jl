@@ -312,7 +312,7 @@ function test_save_contingency_is_binding()
         )
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0, optimize=true)
-        O = Module()
+        O = Bind()
         using_spinedb(url_out, O)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)

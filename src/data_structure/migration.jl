@@ -128,6 +128,7 @@ If the db doesn't have the `settings` object class or the `version` parameter de
 create them, setting `version`'s default_value to 1.
 """
 function find_version(url)
+	template = SpineOpt.template()
 	obj_clss = run_request(url, "query", ("object_class_sq",))["object_class_sq"]
 	i = findfirst(x -> x["name"] == "settings", obj_clss)
 	if isnothing(i)
