@@ -70,8 +70,6 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   Documenter:
-    needs: check_duplicate_actions
-    if: needs.check_duplicate_actions.outputs.should_skip != 'true'
     name: Documentation
     runs-on: ubuntu-latest
     steps:
