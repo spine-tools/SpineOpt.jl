@@ -18,13 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+using Pkg
+#Pkg.activate("test") # Tasku: Uncomment if you want to run this test script manually.
 using SpineOpt
 using SpineInterface
 using Test
 using Dates
 using JuMP
 using PyCall
-using Pkg
 import JSON
 import MathOptInterface as MOI
 
