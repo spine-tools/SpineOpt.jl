@@ -79,7 +79,7 @@ Alternatively, a variable resolution can be defined by choosing an array of dura
 
 Note that, as mentioned above, the [block\_start](@ref) and [block\_end](@ref) parameters can also be entered as absolute values, i.e. `DateTime` values.
 
-#### Rolling window optimization with single block
+#### [Rolling window optimization with single block](@id rolling_horizon_single_block)
 A model with a single `temporal_block` can also be optimized in a rolling horizon framework. In this case, the `roll_forward` parameter has to be defined in the `model` object. The `roll_forward` parameter will then determine how much the optimization moves forward with every step, while the size of the temporal block will determine how large a time frame is optimized in each step. To see this more clearly, let's take a look at an example.
 
 Suppose we want to model a horizon of one week, with a rolling window size of one day. The `roll_forward` parameter will then be a duration value of 1d. If we take the `temporal_block` parameters `block_start` and `block_end` to be the duration values 0h and 1d respectively, the model will optimize each day of the week separately. However, we could also take the `block_end` parameter to be 2d. Now the model will start by optimizing day 1 and day 2 together, after which it keeps only the values obtained for the first day, and moves forward to optimize the second and third day together.
@@ -127,7 +127,7 @@ Multiple temporal blocks can also be used to model different regions or differen
 Similarly, the on- and offline status of a unit can be modeled with a lower resolution than the actual output of that unit, by defining the `units_on_temporal_block` relationship with a different temporal block than the one used for the `node_temporal_block` relationship (of the node to which the unit is connected).
 
 
-#### Rolling horizon with multiple blocks
+#### [Rolling horizon with multiple blocks](@id rolling_horizon_multiple_blocks)
 ##### Rolling horizon with different window sizes
 Similar to what has been discussed above in [Different regions/commodities in different resolutions](@ref), different commodities or regions can be modeled with a different resolution in the rolling horizon setting. The way to do it is completely analogous. Furthermore, when using the rolling horizon framework, a different window size can be chosen for the different modeled components, by simply using a different `block_end` parameter. However, using different [block\_end](@ref)s e.g. for interconnected regions should be treated with care, as the variables for each region will only be generated for their respective [temporal\_block](@ref), which in most cases will lead to inconsistent linking constraints.
 

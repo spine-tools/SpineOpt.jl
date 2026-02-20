@@ -34,7 +34,7 @@ In this tutorial, you will learn how to add unit commitment constraints to the S
 - Locate the *Object parameter* table (typically at the top-center).
 - In the *Object parameter* table, identify the *demand* parameter which should have a 150 value from the Simple System first run.
 - Right click on the value cell and then select *edit* from the context menu. The *Edit value* dialog will pop up.
-- Change the *Parameter type* to *Time series fixed resolution*, *Resolution* to *1h*, and the demand values to the time series as in the image below. You can copy and paste the values from the file: [uc_electricity_node_demand.csv](figs_unit_commitment/uc_electricity_node_demand.csv)
+- Change the *Parameter type* to *Time series fixed resolution*, *Resolution* to *1h*, and the demand values to the time series as in the image below. You can copy and paste the values from the file: [uc\_electricity\_node\_demand.csv](figs_unit_commitment/uc_electricity_node_demand.csv)
 - Finish by pressing *OK* in the *Edit value* menu. In the *Object parameter* table you will see that the value of the *demand* has changed to *Time series*.
 
 ![image](figs_unit_commitment/uc_electricity_demand.png)
@@ -166,6 +166,7 @@ You know the drill, go ahead :wink:
 - You can also activate the table view by pressing **Alt + F** for the shortcut to the hamburger menu, and select **View -> Table**.
 - Remember to select the latest run in the *Alternative tree*. Expand the *Output* element if not expanded.
 - In the *Relationship parameter value* table, double click in the *Time series* values to explore the results of the different variables.
+- In the *Relationship parameter value* table, double click in the *Time series* values to explore the results of the different variables.
 - The image below shows the electricity flow results for both power plants. Interesting. Don't you think?
 
 ![image](figs_unit_commitment/uc_flow_results_min_up_time.png)
@@ -218,4 +219,5 @@ One last time, don't give up!
 
 ![image](figs_unit_commitment/uc_costs_results_min_down_time.png)
 
-If you have completed this tutorial, congratulations! You have mastered the basic concepts of unit commitment using SpineToolbox and SpineOpt. Keep up the good work!
+!!! info "You have completed this tutorial, congratulations!"
+    You have mastered the basic concepts of unit commitment using SpineToolbox and SpineOpt. Keep up the good work!

@@ -70,6 +70,7 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   Documenter:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
     name: Documentation
     runs-on: ubuntu-latest
     steps:
