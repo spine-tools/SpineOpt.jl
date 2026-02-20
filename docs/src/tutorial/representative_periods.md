@@ -36,11 +36,11 @@ The temporal structure of the model is shown in the image below. We can see that
 !!! tip "Representative definitions"
     The representative periods are not necessarily consecutive, they can be any block of time that represents the original temporal block. For instance, *rp1* takes the information from the time series in day 1, while *rp2* takes information from the time series in day 3. Check the `block_start` and `block_end` parameters for each rp temporal block to see this in the input data.
 
-The key parameter that defines the mapping of the original temporal block to the representative periods is [representative_period_mapping](@ref). The values in this parameter map each original temporal block to the representative periods through and array that has the weights in each case. For instance, the following figure shows that the second day maps half to *rp1* and half to *rp2*:
+The key parameter that defines the mapping of the original temporal block to the representative periods is [representative\_period\_mapping](@ref). The values in this parameter map each original temporal block to the representative periods through and array that has the weights in each case. For instance, the following figure shows that the second day maps half to *rp1* and half to *rp2*:
 
 ![image](figs_representative_periods/rp_mapping.png)
 
-Please note that the [representative_period_index](@ref) defines the order of the representative periods, which is relevant for the array definition of the weights in the [representative_period_mapping](@ref) parameter.
+Please note that the [representative\_period\_index](@ref) defines the order of the representative periods, which is relevant for the array definition of the weights in the [representative\_period\_mapping](@ref) parameter.
 
 !!! tip "Remember!"
     Bare in mind in the previuos figure that Python is 0-index based, so the first element of the array corresponds to *rp1* and the second element to *rp2*.
@@ -74,7 +74,7 @@ The *electricity\_node* is a demand node with a time series of three days of 24-
 
 ### Battery storage node
 
-The configuration of the *battery\_storage* includes the [has_state](@ref) parameter set to `true` to allow the battery to have a state variable, the [node_state_cap](@ref), and the [number_of_storages](@ref) as the basic information.
+The configuration of the *battery\_storage* includes the [has\_state](@ref) parameter set to `true` to allow the battery to have a state variable, the [node\_state\_cap](@ref), and the [number\_of\_storages](@ref) as the basic information.
 
 ![image](figs_representative_periods/rp_battery_node.png)
 
@@ -84,7 +84,7 @@ The configuration of the *battery\_storage* includes the [has_state](@ref) param
 
 ### Fuel node
 
-The configuration of the *fuel\_node* is similar to the *battery_storage* node. In addition, we can define an initial value for the fuel node at the beginning of the model's time horizon using the [initial_node_state](@ref) parameter.
+The configuration of the *fuel\_node* is similar to the *battery_storage* node. In addition, we can define an initial value for the fuel node at the beginning of the model's time horizon using the [initial\_node\_state](@ref) parameter.
 
 The parameter *is\_longterm\_storage* is set to `true` for the fuel node, which means that the state of the fuel node can be carried over the whole time horizon, allowing to properly account for seasonal storage in the model. This is a key feature of SpineOpt that allows to capture the dynamics of seasonal storage in representative periods models.
 
@@ -102,9 +102,9 @@ Let's check first the battery storage node. We can see that the state of charge 
 
 ![image](figs_representative_periods/rp_battery_node_results.png)
 
-In contrast, the fuel node has a state variable for all the periods, since it is a long-term storage. We can see that the node state of the fuel node changes across the representative periods, which allows to capture the seasonal dynamics of the fuel node in the model. In order to stimate the node state of the fuel node in the non-representative periods, SpineOpt uses the changes (or deltas) in the node state of the corresponding representative periods according to the mapping defined in the [representative_period_mapping](@ref) parameter. For instance, for the second day, which is mapped half to *rp1* and half to *rp2*, the node state of the fuel node is estimated as a weighted average of the change in the node state in *rp1* and *rp2*. This formulation is known as the [delta formulation](https://www.sciencedirect.com/science/article/pii/S0306261918306950) for representative periods, and it is a common approach to estimate the state of long-term storage in non-representative periods based on the changes in the representative periods.
+In contrast, the fuel node has a state variable for all the periods, since it is a long-term storage. We can see that the node state of the fuel node changes across the representative periods, which allows to capture the seasonal dynamics of the fuel node in the model. In order to stimate the node state of the fuel node in the non-representative periods, SpineOpt uses the changes (or deltas) in the node state of the corresponding representative periods according to the mapping defined in the [representative\_period\_mapping](@ref) parameter. For instance, for the second day, which is mapped half to *rp1* and half to *rp2*, the node state of the fuel node is estimated as a weighted average of the change in the node state in *rp1* and *rp2*. This formulation is known as the [delta formulation](https://www.sciencedirect.com/science/article/pii/S0306261918306950) for representative periods, and it is a common approach to estimate the state of long-term storage in non-representative periods based on the changes in the representative periods.
 
 ![image](figs_representative_periods/rp_fuel_node_results.png)
 
-!!! tip "You have completed this tutorial, congratulations!"
+!!! info "You have completed this tutorial, congratulations!"
     You have mastered the basic concepts of representative periods and modelling seasonal and non-seasonal storage using SpineToolbox and SpineOpt. Keep up the good work!
