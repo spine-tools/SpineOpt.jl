@@ -2198,13 +2198,6 @@
         ],
         [
             "node__to_unit",
-            "use_unit_capacity_for_investment_cost_scaling",
-            false,
-            "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__from_node` capacity will be used to scale investment costs (given in e.g. Ã¢â€šÂ¬/MW)"
-        ],
-        [
-            "node__to_unit",
             "vom_cost",
             null,
             null,
@@ -2925,13 +2918,6 @@
             null,
             null,
             "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."
-        ],
-        [
-            "unit__to_node",
-            "use_unit_capacity_for_investment_cost_scaling",
-            false,
-            "boolean_value_list",
-            "If this boolean parameter is set to `true`, the capacity defined on this `unit__to_node` capacity will be used to scale investment costs (given in e.g. Ã¢â€šÂ¬/MW)"
         ],
         [
             "unit__to_node",
