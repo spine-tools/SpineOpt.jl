@@ -186,13 +186,13 @@ end
 """
     generate_direction_and_reorganise_classes()
 
-Generate the `direction` `ObjectClass` and reorganise affected relationships.
+Generate `direction` `Object`s and reorganise affected relationships.
 """
 function generate_direction_and_reorganise_classes()
-    # Create the new `direction` `ObjectClass` and its element `Objects`.
+    # Create the new `direction` `Object`s.
     from_node = Object(:from_node, :direction)
     to_node = Object(:to_node, :direction)
-    direction = ObjectClass(:direction, [from_node, to_node])
+    add_objects!(direction, [from_node, to_node])
     # Add `direction` to the mapped classes.
     directions_by_class = [
         node__to_unit => from_node,
@@ -226,11 +226,6 @@ function generate_direction_and_reorganise_classes()
     ]
     for (cls, dims) in dimensions_by_class
         reorder_dimensions!(cls, dims)
-    end
-    # Eval and export the new class to the global namespace
-    @eval begin
-        direction = $direction
-        export direction
     end
 end
 
@@ -266,7 +261,6 @@ function generate_node_has_ptdf()
         ptdf_duration = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
         Dict(:has_ptdf => parameter_value(!isempty(ptdf_comms)), :ptdf_duration => parameter_value(ptdf_duration))
     end
-
     add_object_parameter_values!(node, Dict(n => _new_node_pvals(n) for n in node()))
 end
 
@@ -290,7 +284,6 @@ function generate_connection_has_ptdf()
         ptdf_duration_ = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
         Dict(:has_ptdf => parameter_value(has_ptdf_), :ptdf_duration => parameter_value(ptdf_duration_))
     end
-
     add_object_parameter_values!(connection, Dict(conn => _new_connection_pvals(conn) for conn in connection()))
     push_class!(has_ptdf, connection)
     push_class!(ptdf_duration, connection)
@@ -313,7 +306,6 @@ function generate_connection_has_lodf()
                 parameter_value(reduce(max, (lodf_tolerance(grid=g) for g in lodf_comms); init=0.05)),
         )
     end
-
     add_object_parameter_values!(
         connection, Dict(conn => _new_connection_pvals(conn) for conn in connection(has_ptdf=true))
     )
@@ -540,9 +532,9 @@ PENDING REMOVAL? We don't really need these,
 as the filtering can be easily done when needed without these superfluous classes.
 """
 function generate_variable_indexing_support()
-    add_objects!(node_with_slack_penalty, collect(indices(node_slack_penalty)))
-    add_objects!(node_with_min_capacity_margin_penalty, collect(indices(min_capacity_margin_penalty)))
-    add_relationships!(unit__node__direction, [unit__from_node(); unit__to_node()])
+    add_objects!(node_with_slack_penalty, collect(indices(balance_penalty)))
+    add_objects!(node_with_capacity_margin_penalty, collect(indices(capacity_margin_penalty)))
+    add_relationships!(unit__node__direction, [node__to_unit(); unit__to_node()])
     add_relationships!(connection__node__direction, [connection__from_node(); connection__to_node()])
 end
 

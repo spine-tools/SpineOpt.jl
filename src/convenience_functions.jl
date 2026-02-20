@@ -8,7 +8,7 @@ const investment_group = ObjectClass(:investment_group)
 const mga_iteration = ObjectClass(:mga_iteration)
 const model = ObjectClass(:model)
 const node = ObjectClass(:node)
-const node_with_min_capacity_margin_penalty = ObjectClass(:node_with_min_capacity_margin_penalty)
+const node_with_capacity_margin_penalty = ObjectClass(:node_with_capacity_margin_penalty)
 const node_with_slack_penalty = ObjectClass(:node_with_slack_penalty)
 const output = ObjectClass(:output)
 const report = ObjectClass(:report)
@@ -348,7 +348,7 @@ export investment_group
 export mga_iteration
 export model
 export node
-export node_with_min_capacity_margin_penalty
+export node_with_capacity_margin_penalty
 export node_with_slack_penalty
 export output
 export report

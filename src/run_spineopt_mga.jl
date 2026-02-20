@@ -35,8 +35,6 @@ function do_run_spineopt!(
     outputs = Dict()
     mga_iteration_count = 0
     max_mga_iters = mga_max_iterations(model=m.ext[:spineopt].instance)
-    mga_iteration = ObjectClass(:mga_iteration, [])
-    @eval mga_iteration = $mga_iteration
     build_model!(m; log_level)
     solve_model!(
         m;

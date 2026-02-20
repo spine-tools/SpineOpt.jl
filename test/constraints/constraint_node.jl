@@ -632,7 +632,7 @@ function test_constraint_min_node_state_investments()
         url_in = _test_constraint_node_setup()
         candidate_storages = 1
         node_capacity = 400
-        node_state_min = 60
+        storage_state_min = 60
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         storage_state_min_fraction = Dict("type" => "time_series", 
                                      "data" => [0.1, 0.2], 
@@ -640,7 +640,7 @@ function test_constraint_min_node_state_investments()
                                 )
         object_parameter_values = [
             ["node", "node_c", "storage_state_max", node_capacity],
-            ["node", "node_c", "storage_state_min", node_state_min],
+            ["node", "node_c", "storage_state_min", storage_state_min],
             ["node", "node_c", "storage_state_min_fraction", storage_state_min_fraction],
             ["node", "node_c", "storage_active", true],
             ["node", "node_c", "storage_investment_count_max_cumulative", candidate_storages],
@@ -666,7 +666,7 @@ function test_constraint_min_node_state_investments()
             var_n_st = var_node_state[var_n_st_key...]
             var_s_inv_av = var_storages_invested_available[var_s_in_av_key...]
             expected_con = @build_constraint(var_n_st >= maximum([node_capacity * storage_state_min_fraction["data"][k],
-                                                                  node_state_min]
+                                                                  storage_state_min]
                                                         ) * var_s_inv_av
                                             )
             con = constraint[con_key...]
@@ -1087,8 +1087,8 @@ function test_constraint_min_capacity_margin()
     end
 end
 
-function test_constraint_min_capacity_margin_penalty()
-    @testset "constraint_min_capacity_margin_penalty" begin
+function test_constraint_capacity_margin_penalty()
+    @testset "constraint_capacity_margin_penalty" begin
         url_in = _test_constraint_node_setup()        
         margin_b = 100
         demand_b = 105
@@ -1152,5 +1152,5 @@ end
     test_constraint_storage_lifetime_sense()
     test_constraint_storage_lifetime_mp()
     test_constraint_min_capacity_margin()
-    test_constraint_min_capacity_margin_penalty()
+    test_constraint_capacity_margin_penalty()
 end

@@ -20,9 +20,9 @@
 
 function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
     _prod_or_nothing(
-        f(unit_capacity; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
-        f(unit_availability_factor; unit=unit, kwargs...),
-        f(unit_conv_cap_to_flow; unit=unit, node=node, direction=direction, kwargs...),
+        f(capacity_per_unit; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
+        f(availability_factor; unit=unit, kwargs...),
+        f(capacity_to_flow_conversion_factor; unit=unit, node=node, direction=direction, kwargs...),
     )
 end
 
@@ -30,9 +30,9 @@ function _connection_flow_capacity(
     f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
 )
     _prod_or_nothing(
-        f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
-        f(connection_availability_factor; connection=connection, kwargs...),
-        f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
+        f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+        f(availability_factor; connection=connection, kwargs...),
+        f(capacity_to_flow_conversion_factor; connection=connection, node=node, direction=direction, kwargs...),
     )
 end
 
@@ -40,16 +40,16 @@ function _connection_flow_lower_limit(
     f; connection=connection, node=node, direction=direction, _default=0, kwargs...
 )
     _prod_or_nothing(
-        f(connection_capacity; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+        f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
         f(connection_min_factor; connection=connection, kwargs...),
-        f(connection_conv_cap_to_flow; connection=connection, node=node, direction=direction, kwargs...),
+        f(capacity_to_flow_conversion_factor; connection=connection, node=node, direction=direction, kwargs...),
     )
 end
 
 function _node_state_capacity(f; node=node, _default=nothing, kwargs...)
     _prod_or_nothing(
-        f(node_state_cap; node=node, _default=_default, kwargs...),
-        f(node_availability_factor; node=node, kwargs...),
+        f(storage_state_max; node=node, _default=_default, kwargs...),
+        f(storage_state_max_fraction; node=node, kwargs...),
     )
 end
 
@@ -57,12 +57,12 @@ function _node_state_lower_limit(f; node=node, _default=0, kwargs...)
     max(
         something(
             _prod_or_nothing(
-                f(node_state_cap; node=node, _default=_default, kwargs...),
-                f(node_state_min_factor; node=node, kwargs...),
+                f(storage_state_max; node=node, _default=_default, kwargs...),
+                f(storage_state_min_fraction; node=node, kwargs...),
             ),
             0,
         ),
-        f(node_state_min; node=node, kwargs...),
+        f(storage_state_min; node=node, kwargs...),
     )
 end
 

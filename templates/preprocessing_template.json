@@ -4,7 +4,7 @@
         ["direction", []],
         ["mga_iteration", []],
         ["node_with_slack_penalty", []],
-        ["node_with_min_capacity_margin_penalty", []],
+        ["node_with_capacity_margin_penalty", []],
         ["connection__node__direction", ["connection", "node", "direction"]],
         ["lodf_connection__connection", ["connection", "connection"]],
         ["ptdf_connection__node", ["connection", "node"]],
