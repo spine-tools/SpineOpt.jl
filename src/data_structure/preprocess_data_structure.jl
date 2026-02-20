@@ -240,12 +240,7 @@ function generate_node_has_physics(parameter_name::Symbol, physics_key::Symbol)
         matching_grids = Tuple(g for g in node__grid(node=n) if physics_type(grid=g) == physics_key)
         Dict(parameter_name => parameter_value(!isempty(matching_grids)))
     end
-
     add_object_parameter_values!(node, Dict(n => _new_node_physics(n) for n in node()))
-    param = Parameter(parameter_name, [node])
-    @eval begin
-        $(parameter_name) = $param
-    end
 end
 
 """
