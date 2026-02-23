@@ -217,7 +217,7 @@ function upgrade_json(
 			"parameter_definitions",
 			"parameter_types",
 		]
-			data[k] = template[k]
+			data[k] = deepcopy(template[k])
 		end
 		filter!( # Entities need to belong to current classes (check by name).
 			row -> row[1] in getindex.(data["entity_classes"], 1),
@@ -233,12 +233,15 @@ function upgrade_json(
 	function _omit_template!(data, template)
 		for (k,v) in template # Iterate over the template.
 			vals = get!(data, k, [])
-			if isempty(vals) # If no values found, pop the key and move on.
-				pop!(data, k)
-				continue
-			end
 			setdiff!(vals, v) # Remove entries already in the template.
 			isempty(vals) && pop!(data, k) # If no entries remain, pop the key.
+		end
+		filter!(pair -> !isempty(pair[2]), data) # Remove empty keys.
+		# Ensure that version information remains.
+		if isempty(get(data, "parameter_definitions", []))
+			settings_index = findfirst(getindex.(template["parameter_definitions"], 2) .== "version")
+			settings = template["parameter_definitions"][settings_index]
+			data["parameter_definitions"] = [settings]
 		end
 	end
 	omit_template && _omit_template!(new_data, template)

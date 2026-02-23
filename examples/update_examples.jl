@@ -9,8 +9,8 @@ for path in readdir(@__DIR__; join=true)
     if splitext(path)[end] == ".json"
         SpineOpt.upgrade_json(
             path;
-            #version=1, # Force full migration. Unnecessary but serves as a test of the scripts. # DOES NOT WORK!
-            #force=true, # Forces the migration, suppressing some errors/warnings. # DOES NOT WORK?
+            #version=1, # DO NOT USE! # Run full migration. Unnecessary but serves as a test of the scripts.
+            #force=true, # DO NOT USE! # Forces the migration, suppressing some errors/warnings.
             clean_to_latest=true # Removes content incompatible with latest template.
         )
     end
