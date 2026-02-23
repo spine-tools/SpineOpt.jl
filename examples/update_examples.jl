@@ -6,7 +6,7 @@ using SpineOpt
 @info "Upgrading example .jsons..."
 for path in readdir(@__DIR__; join=true)
     if splitext(path)[end] == ".json"
-        SpineOpt.upgrade_json(path)
+        SpineOpt.upgrade_json(path; clean_to_latest=true)
     end
 end
 @info "Done!"

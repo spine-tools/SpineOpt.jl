@@ -168,6 +168,7 @@ _parse_version(version::Int) = version
 		path::String;
 		log_level::Int=3,
 		omit_template::Bool=false,
+		clean_to_latest::Bool=false,
 		output_path::String=path,
 	)
 
@@ -177,6 +178,8 @@ By default, writes the upgraded JSON over the given `path`,
 but this can be changed by giving a separate `output_path`.
 Includes the contents of the spineopt_template.json by default,
 but giving `omit_template=true` removes them for more compact output.
+The `clean_to_latest` keyword cleans the output to match the latest
+template, omitting obsolete content.
 
 Based on [`upgrade_db`](@ref).
 """
@@ -184,6 +187,7 @@ function upgrade_json(
 	path::String;
 	log_level::Int=3,
 	omit_template::Bool=false,
+	clean_to_latest::Bool=false,
 	output_path::String=path,
 )
 	@info "upgrading `$path`"
@@ -195,18 +199,42 @@ function upgrade_json(
 	import_data(db_url, data, "Import $path") # Import data.
 	SpineOpt.upgrade_db(db_url; log_level=log_level) # Run migration.
 	new_data = SpineInterface.parse_db_dict!(export_data(db_url)) # Export and parse migrated data.
-	if omit_template # Omit stuff included in the template.
-		template = SpineOpt.template() # Load template
+	template = SpineOpt.template() # Load template
+	# Sub-function for omitting data redundant with the template.
+	function _omit_template!(data, template)
 		for (k,v) in template # Iterate over the template.
-			vals = get!(new_data, k, [])
+			vals = get!(data, k, [])
 			if isempty(vals) # If no values found, pop the key and move on.
-				pop!(new_data, k)
+				pop!(data, k)
 				continue
 			end
 			setdiff!(vals, v) # Remove entries already in the template.
-			isempty(vals) && pop!(new_data, k) # If no entries remain, pop the key.
+			isempty(vals) && pop!(data, k) # If no entries remain, pop the key.
 		end
 	end
+	omit_template && _omit_template!(new_data, template)
+	# Sub-function for cleaning out content not compatible with the latest version.
+	function _clean_to_latest!(data, template)
+		for k in [ # These are forced to be equivalent to current template.
+			"entity_classes",
+			"superclass_subclasses",
+			"parameter_value_lists",
+			"parameter_definitions",
+			"parameter_types",
+		]
+			data[k] = template[k]
+		end
+		filter!( # Entities need to belong to current classes (check by name).
+			row -> row[1] in getindex.(data["entity_classes"], 1),
+			data["entities"]
+		)
+		filter!( # Parameter values for match latest definitions (check by class and name).
+			row -> [row[1], row[3]] in (def[1:2] for def in data["parameter_definitions"]),
+			data["parameter_values"]
+		)
+	end
+	clean_to_latest && _clean_to_latest!(new_data, template)
+	# Write output
 	open(output_path, "w") do f # Write new JSON file.
 		JSON.print(f, new_data, 4)
 	end
