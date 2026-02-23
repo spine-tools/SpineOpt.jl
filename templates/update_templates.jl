@@ -1,8 +1,10 @@
 # Update all JSON files in the sub-folders, including
 # 1. upgrade the data items to the latest DB version (e.g. renamining, refactoring, etc.)
 # 2. omit duplicating content with template.
-# FIXME: THIS SCRIPT IS NOT GUARANTEED TO WORK PROPERLY!
+
+#= # FIXME: THIS SCRIPT IS NOT GUARANTEED TO WORK PROPERLY!
 # WHILE THE TEMPLATES CAN BE MIGRATED, THERE'S NO WAY TO TEST WHETHER THEY WORK!
+
 using SpineOpt
 
 @info "Upgrading templates .jsons..."
@@ -21,3 +23,5 @@ for folder in ["archetypes", "models"]
     end
 end
 @info "Done!"
+
+=#
