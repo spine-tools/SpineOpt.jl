@@ -18,10 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-module Y
-using SpineInterface
-end
-
 function _vals_from_data(data)
     Dict{Any,Any}(
         (cls, ent, param) => val isa Tuple ? parse_db_value(val...) : val for
