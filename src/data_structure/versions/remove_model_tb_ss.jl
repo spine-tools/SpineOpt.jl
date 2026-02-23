@@ -19,11 +19,11 @@
 #############################################################################
 
 """
-	remove_model_tb_ss(db_url)
+	remove_model_tb_ss(db_url, log_level; kwargs...)
 
 Get rid of model__temporal_block and model__stochastic_structure.
 """
-function remove_model_tb_ss(db_url, log_level)
+function remove_model_tb_ss(db_url, log_level; kwargs...)
 	to_rm_ec_names = ("model__temporal_block", "model__stochastic_structure")
 	to_rm_str = join(("`$x`" for x in to_rm_ec_names), " and ")
 	@log log_level 0 "Removing $to_rm_str"

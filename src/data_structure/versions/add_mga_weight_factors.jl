@@ -19,11 +19,11 @@
 #############################################################################
 
 """
-	add_mga_weight_factors(db_url, log_level)
+	add_mga_weight_factors(db_url, log_level; kwargs...)
 
 Add mga weight factors and use more sensible default parameters.
 """
-function add_mga_weight_factors(db_url, log_level)
+function add_mga_weight_factors(db_url, log_level; kwargs...)
 	@log log_level 0 "Adding `unit/connection_(intact_)flow_non_anticipativity_time`..."
 	new_data = Dict()
 	new_data[:object_parameters] = [

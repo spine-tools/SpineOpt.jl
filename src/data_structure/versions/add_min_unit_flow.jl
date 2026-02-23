@@ -19,11 +19,11 @@
 #############################################################################
 
 """
-	add_min_unit_flow(db_url, log_level)
+	add_min_unit_flow(db_url, log_level; kwargs...)
 
 Add min_unit_flow parameter.
 """
-function add_min_unit_flow(db_url, log_level)
+function add_min_unit_flow(db_url, log_level; kwargs...)
 	@log log_level 0 "Adding `min_unit_flow` to `unit__from_node` and `unit__to_node`... "
 	new_data = Dict()
 	new_data[:relationship_parameters] = [

@@ -19,11 +19,11 @@
 #############################################################################
 
 """
-	add_flow_non_anticipativity_time(db_url, log_level)
+	add_flow_non_anticipativity_time(db_url, log_level; kwargs...)
 
 Add non-anticip-time parameters.
 """
-function add_flow_non_anticipativity_time(db_url, log_level)
+function add_flow_non_anticipativity_time(db_url, log_level; kwargs...)
 	@log log_level 0 "Adding `unit/connection_(intact_)flow_non_anticipativity_time`..."
 	new_data = Dict()
 	new_data[:relationship_parameters] = [

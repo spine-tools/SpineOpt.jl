@@ -44,27 +44,27 @@ include("versions/translate_heatrate_parameters.jl")
 include("versions/translate_use_economic_representation__use_milestone_years.jl")
 include("versions/major_upgrade_1.jl")
 
-function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
+function add_units_out_of_service_and_min_capacity_margin(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_stage_output(db_url, log_level)
+function add_stage_output(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_node_availability_factor(db_url, log_level)
+function add_node_availability_factor(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_node_state_min_factor(db_url, log_level)
+function add_node_state_min_factor(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_connection_min_factor(db_url, log_level)
+function add_connection_min_factor(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
@@ -100,23 +100,25 @@ The current version of the db structure as an integer.
 current_version() = length(_upgrade_functions) + 1
 
 """
-	run_migrations(url, version)
+	run_migrations(url, version; force::Bool=false)
 
 Run migrations on the given url starting from the given version.
+
+Giving `force=true` suppresses migration errors/warnings to try and force output.
 """
-function run_migrations(url, version, log_level)
+function run_migrations(url, version, log_level; force::Bool=false)
 	without_filters(url) do clean_url
-		while _run_migration(clean_url, version, log_level)
+		while _run_migration(clean_url, version, log_level; force)
 			version += 1
 		end
 		run_request(clean_url, "import_data", (SpineOpt.template(), "Upgrade data structure to version $(version - 1)"))
 	end
 end
 
-function _run_migration(url, version, log_level)
+function _run_migration(url, version, log_level; force::Bool=false)
 	upgrade_fn = get(_upgrade_functions, version, nothing)
 	upgrade_fn === nothing && return false
-	upgrade_fn(url, log_level) || return false
+	upgrade_fn(url, log_level; force) || return false
 	true
 end
 
@@ -170,6 +172,8 @@ _parse_version(version::Int) = version
 		omit_template::Bool=false,
 		clean_to_latest::Bool=false,
 		output_path::String=path,
+		version=nothing,
+		force::Bool=false,
 	)
 
 Upgrade the data structure in `path` to the latest version.
@@ -180,6 +184,8 @@ Includes the contents of the spineopt_template.json by default,
 but giving `omit_template=true` removes them for more compact output.
 The `clean_to_latest` keyword cleans the output to match the latest
 template, omitting obsolete content.
+Giving `version::Int` forces migration to start from a specific version number,
+while `force=true` suppresser migration errors/warnings. 
 
 Based on [`upgrade_db`](@ref).
 """
@@ -189,6 +195,8 @@ function upgrade_json(
 	omit_template::Bool=false,
 	clean_to_latest::Bool=false,
 	output_path::String=path,
+	version=nothing,
+	force::Bool=false,
 )
 	@info "upgrading `$path`"
 	data = JSON.parsefile(path, use_mmap=false) 
@@ -197,22 +205,9 @@ function upgrade_json(
 	SpineInterface.close_connection(db_url) # Close and reopen DB to clear its contents.
 	SpineInterface.open_connection(db_url)
 	import_data(db_url, data, "Import $path") # Import data.
-	SpineOpt.upgrade_db(db_url; log_level=log_level) # Run migration.
+	SpineOpt.upgrade_db(db_url; log_level, version, force) # Run migration.
 	new_data = SpineInterface.parse_db_dict!(export_data(db_url)) # Export and parse migrated data.
 	template = SpineOpt.template() # Load template
-	# Sub-function for omitting data redundant with the template.
-	function _omit_template!(data, template)
-		for (k,v) in template # Iterate over the template.
-			vals = get!(data, k, [])
-			if isempty(vals) # If no values found, pop the key and move on.
-				pop!(data, k)
-				continue
-			end
-			setdiff!(vals, v) # Remove entries already in the template.
-			isempty(vals) && pop!(data, k) # If no entries remain, pop the key.
-		end
-	end
-	omit_template && _omit_template!(new_data, template)
 	# Sub-function for cleaning out content not compatible with the latest version.
 	function _clean_to_latest!(data, template)
 		for k in [ # These are forced to be equivalent to current template.
@@ -234,6 +229,19 @@ function upgrade_json(
 		)
 	end
 	clean_to_latest && _clean_to_latest!(new_data, template)
+	# Sub-function for omitting data redundant with the template.
+	function _omit_template!(data, template)
+		for (k,v) in template # Iterate over the template.
+			vals = get!(data, k, [])
+			if isempty(vals) # If no values found, pop the key and move on.
+				pop!(data, k)
+				continue
+			end
+			setdiff!(vals, v) # Remove entries already in the template.
+			isempty(vals) && pop!(data, k) # If no entries remain, pop the key.
+		end
+	end
+	omit_template && _omit_template!(new_data, template)
 	# Write output
 	open(output_path, "w") do f # Write new JSON file.
 		JSON.print(f, new_data, 4)

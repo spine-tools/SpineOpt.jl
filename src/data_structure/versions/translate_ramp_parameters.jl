@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-	translate_ramp_parameters(db_url)
+	translate_ramp_parameters(db_url, log_level; kwargs...)
 
 Get rid of all the lower bound parameters,
 min_startup_ramp, min_shutdown_ramp, min_res_startup_ramp, min_res_shutdown_ramp;
@@ -28,7 +28,7 @@ Get rid of max_res_startup_ramp and max_res_shutdown_ramp parameters;
 instead, use max_startup_ramp and max_shutdown_ramp also for the non-spinning reserve flows 
 - but rename these parameters to startup_limit and shutdown_limit.
 """
-function translate_ramp_parameters(db_url, log_level)
+function translate_ramp_parameters(db_url, log_level; kwargs...)
 	to_rm_pnames = (
 		"min_startup_ramp",
 		"min_shutdown_ramp",

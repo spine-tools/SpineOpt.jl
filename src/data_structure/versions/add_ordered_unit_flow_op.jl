@@ -19,11 +19,11 @@
 #############################################################################
 
 """
-	add_ordered_unit_flow_op(db_url, log_level)
+	add_ordered_unit_flow_op(db_url, log_level; kwargs...)
 
 Add ordered_unit_flow_op parameter.
 """
-function add_ordered_unit_flow_op(db_url, log_level)
+function add_ordered_unit_flow_op(db_url, log_level; kwargs...)
 	@log log_level 0 "Adding `ordered_unit_flow_op` to `unit__from_node` and `unit__to_node`... "
 	new_data = Dict()
 	new_data[:relationship_parameters] = [

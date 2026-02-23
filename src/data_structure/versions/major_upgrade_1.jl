@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    major_upgrade_1(db_url, log_level)
+    major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
 
 Run several migrations to update the class structure and to rename, modify and move parameters.
 """
-function major_upgrade_1(db_url, log_level)
+function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     @log log_level 0 string(
         "Running several migrations to update the class structure and to rename, modify and move parameters..."
     )
@@ -371,7 +371,7 @@ function major_upgrade_1(db_url, log_level)
     @log log_level 0 string("Renaming list values...")
     rename_list_values(db_url, list_values_to_be_renamed, log_level)
     @log log_level 0 string("Merging variable type lists...")
-    merge_variable_type_lists(db_url, log_level)
+    merge_variable_type_lists(db_url, log_level; force)
     @log log_level 0 string("Move node physics parameters to grid physics...")
     move_parameters(db_url, log_level)
     true
@@ -514,12 +514,14 @@ end
 # Go through the classes, update ordering of their dimensions and commit session
 function update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
     for (old_class, new_class, dimensions, mapping, print_errors) in classes_to_be_updated
-        update_ordering_of_multidimensional_class(db_url, old_class, new_class, dimensions, mapping, print_errors, 
-            log_level
-        )
-        # Remove old class
+        # Check if old class exists to be updated
         class_item = run_request(db_url, "call_method", ("get_entity_class_item",), Dict("name" => old_class))
         if length(class_item) > 0
+            # Create (update) new class
+            update_ordering_of_multidimensional_class(
+                db_url, old_class, new_class, dimensions, mapping, print_errors, log_level
+            )
+            # Remove old class
             check_run_request_return_value(run_request(
                 db_url, "call_method", ("remove_entity_class_item", class_item["id"])), log_level
             )
@@ -528,8 +530,9 @@ function update_ordering_of_multidimensional_classes(db_url, classes_to_be_updat
 end
 
 # Update ordering of class dimensions, add as a new class
-function update_ordering_of_multidimensional_class(db_url, old_class, new_class, dimensions, mapping, print_errors, 
-                                                   log_level)
+function update_ordering_of_multidimensional_class(
+    db_url, old_class, new_class, dimensions, mapping, print_errors, log_level
+)
     try
         # Create new class
         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
@@ -831,7 +834,7 @@ function rename_list_values(db_url, list_values_to_be_renamed, log_level)
     end
 end
 
-function merge_variable_type_lists(db_url, log_level)
+function merge_variable_type_lists(db_url, log_level; force::Bool=false)
     pval_list_old_name = "unit_online_variable_type_list"
     pval_list_new_name = "variable_type_list"
     name_mapping = Dict(
@@ -844,7 +847,7 @@ function merge_variable_type_lists(db_url, log_level)
     pval_list_existing = run_request(db_url, "call_method", ("find_parameter_value_lists",), Dict(
         "name" => pval_list_new_name)
     )
-    if (length(pval_list_existing) > 0)
+    if !force && (length(pval_list_existing) > 0)
         pdefs_using_list = find_pdefs_linked_to_pval_list(db_url, pval_list_new_name)
         if length(pdefs_using_list) > 0
             @log log_level 0 string("Error: The variable_type_list is already in use by some parameter definitions \

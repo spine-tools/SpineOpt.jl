@@ -19,11 +19,11 @@
 #############################################################################
 
 """
-	move_connection_flow_cost(db_url)
+	move_connection_flow_cost(db_url, log_level; kwargs...)
 
 Move connection_flow_cost from connection to connection__from_node and connection__to_node.
 """
-function move_connection_flow_cost(db_url, log_level)
+function move_connection_flow_cost(db_url, log_level; kwargs...)
 	@log log_level 0 "Moving `connection_flow_cost` from `connection` to `connection__from_node`, `connection__to_node`"
 	data = run_request(
 		db_url, "query", ("parameter_definition_sq", "object_parameter_value_sq", "wide_relationship_sq")

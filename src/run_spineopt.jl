@@ -328,9 +328,9 @@ function _check_version(url_in::String; log_level, upgrade)
 end
 _check_version(data::Dict; kwargs...) = nothing
 
-function _do_upgrade_db(url_in, version; log_level)
+function _do_upgrade_db(url_in, version; log_level, force::Bool=false)
     @log log_level 0 "Upgrading data structure to the latest version... "
-    run_migrations(url_in, version, log_level)
+    run_migrations(url_in, version, log_level; force)
     @log log_level 0 "Done!"
 end
 
@@ -599,14 +599,19 @@ A stage model associated to given model.
 stage_model(m, stage_name::Symbol) = get(m.ext[:spineopt].model_by_stage, stage(stage_name), nothing)
 
 """
-    upgrade_db(url_in; log_level=3)
+    upgrade_db(url_in; log_level=3, version=nothing, force::Bool=false)
 
 Upgrade the data structure in `url_in` to latest.
+
+The `version` (Int) keyword forces the migration to start at a specific number if given,
+while `force=true` suppresses some errors and warnings in migration to try and force output.
 """
-function upgrade_db(url_in; log_level=3)
-    version = find_version(url_in)
-    if version < current_version()
-        _do_upgrade_db(url_in, version; log_level)
+function upgrade_db(url_in; log_level=3, version=nothing, force::Bool=false)
+    if isnothing(version)
+        version = find_version(url_in)
+    end
+    if version::Int < current_version()
+        _do_upgrade_db(url_in, version; log_level, force)
     end
 end
 
