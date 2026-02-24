@@ -132,13 +132,13 @@ end
 function _total_demand(m, n, s, t_after)
     @expression(
         m,
-        + sum(demand(m; node=n, stochastic_scenario=s, t=t) * coef for (t, coef) in _first_repr_t_comb(m, t_after))
+        + sum(demand(m; node=n, stochastic_scenario=s, t=t) * coef for (t, coef) in _repr_t_coefs(m, t_after))
         + sum(
             + sum(
                 + fractional_demand(m; node=n, stochastic_scenario=s, t=t)
                 * demand(m; node=ng, stochastic_scenario=s, t=t)
                 * coef
-                for (t, coef) in _first_repr_t_comb(m, t_after)
+                for (t, coef) in _repr_t_coefs(m, t_after)
             )
             for ng in groups(n);
             init=0,
@@ -149,8 +149,7 @@ end
 function constraint_node_injection_indices(m::Model)
     (
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (n, t_before, t_after) in node_dynamic_time_indices(m; temporal_block=anything)
-        if (has_state(node=n) && is_longterm_storage(node=n)) || _is_representative(t_after)
+        for (n, t_before, t_after) in node_dynamic_time_indices(m)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

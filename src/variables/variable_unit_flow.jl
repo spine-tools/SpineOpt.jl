@@ -128,7 +128,7 @@ Add `unit_flow` variables to model `m`.
 function add_variable_unit_flow!(m::Model)
     fix_ratio_d1_d2 = ((r, _ratio_to_d1_d2(r)...) for r in _fix_unit_flow_ratios())
     replacement_expressions = OrderedDict(
-        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t) => Dict(
+        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t) => [
             :unit_flow => Dict(
                 (
                     unit=u,
@@ -146,7 +146,7 @@ function add_variable_unit_flow!(m::Model)
                     _signed_unit_start_flow(m, u, n, n_ref, s, t, fix_ratio, direct), duration(t)
                 )
             ),
-        )
+        ]
         for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_flows(fix_ratio_d1_d2)
         if _has_simple_fix_ratio_unit_flow(m, u, n, d, n_ref, d_ref, fix_ratio)
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_ref)

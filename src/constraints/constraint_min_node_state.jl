@@ -47,7 +47,7 @@ function _build_constraint_min_node_state(m::Model, ng, s_path, t)
     @build_constraint(
         + sum(
             + node_state[n, s, t]
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
         >=
@@ -63,7 +63,7 @@ function _build_constraint_min_node_state(m::Model, ng, s_path, t)
                     init=0,
                 )
             )
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
     )
@@ -72,16 +72,14 @@ end
 function constraint_min_node_state_indices(m::Model)
     (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(
-            m; node=intersect(indices(node_state_cap), indices(candidate_storages)), temporal_block=anything
-        )
-        if ((has_state(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t))
-        && !_is_zero(node_state_lower_limit(m; node=ng, t=t, _strict=false))
+        for ng in intersect(node(has_state=true), indices(node_state_cap), indices(candidate_storages))
+        for t in _node_state_time_slices(m, ng)
+        if !_is_zero(node_state_lower_limit(m; node=ng, t=t, _strict=false))
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
                 (
-                    node_state_indices(m; node=ng, t=t),
+                    node_state_indices(m; node=ng, t=t, temporal_block=anything),
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )

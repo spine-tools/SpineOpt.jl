@@ -433,7 +433,9 @@ function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:R
     Base.haskey(d, NamedTuple{J}(key))
 end
 
-Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
+function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
+    getindex(d, NamedTuple{J}(key))
+end
 function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
     Base.getindex(d, NamedTuple{J}(key))
 end
