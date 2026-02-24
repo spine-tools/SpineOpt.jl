@@ -174,6 +174,7 @@ _parse_version(version::Int) = version
 		output_path::String=path,
 		version=nothing,
 		force::Bool=false,
+		remove_empty::Bool=false,
 	)
 
 Upgrade the data structure in `path` to the latest version.
@@ -186,6 +187,7 @@ The `clean_to_latest` keyword cleans the output to match the latest
 template, omitting obsolete content.
 Giving `version::Int` forces migration to start from a specific version number,
 while `force=true` suppresser migration errors/warnings. 
+Setting `remove_empty=true` removes empty categories from the output JSON.
 
 Based on [`upgrade_db`](@ref).
 """
@@ -197,6 +199,7 @@ function upgrade_json(
 	output_path::String=path,
 	version=nothing,
 	force::Bool=false,
+	remove_empty::Bool=false,
 )
 	@info "upgrading `$path`"
 	data = JSON.parsefile(path, use_mmap=false) 
@@ -236,7 +239,6 @@ function upgrade_json(
 			setdiff!(vals, v) # Remove entries already in the template.
 			isempty(vals) && pop!(data, k) # If no entries remain, pop the key.
 		end
-		filter!(pair -> !isempty(pair[2]), data) # Remove empty keys.
 		# Ensure that version information remains.
 		if isempty(get(data, "parameter_definitions", []))
 			settings_index = findfirst(getindex.(template["parameter_definitions"], 2) .== "version")
@@ -245,7 +247,8 @@ function upgrade_json(
 		end
 	end
 	omit_template && _omit_template!(new_data, template)
-	# Write output
+	# Clean and write output
+	remove_empty && filter!(pair -> !isempty(pair[2]), new_data) # Remove empty keys.
 	open(output_path, "w") do f # Write new JSON file.
 		JSON.print(f, new_data, 4)
 	end

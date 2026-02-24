@@ -16,6 +16,7 @@ for folder in ["archetypes", "models"]
                 path;
                 omit_template=true, # Omits duplicate content with template.
                 clean_to_latest=true, # Removes content incompatible with latest template.
+                remove_empty=true, # Removes empty categories from the output JSON.
                 version=1, # DO NOT USE UNLESS NECESSARY! # Forces full migration. Unnecessary but serves as a test.
                 force=true # DO NOT USE UNLESS NECESSARY! # Forces migration, suppressing some warnings/errors.
             )
