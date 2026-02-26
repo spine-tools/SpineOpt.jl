@@ -22,7 +22,7 @@
 To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-v^{node\_state}_{(n, s, t)} \leq p^{node\_state\_cap}_{(n, s, t)} \cdot p^{node\_availability\_factor}_{(n, s, t)} \quad \forall n \in node : p^{has\_state}_{(n)}, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \leq p^{storage\_state\_max}_{(n, s, t)} \cdot p^{storage\_state\_max\_fraction}_{(n, s, t)} \quad \forall n \in node : p^{storage\_active}_{(n)}, \, \forall (s,t)
 ```
 
 The discharging and charging behavior of storage nodes can be described through unit(s),
@@ -32,9 +32,9 @@ See the [capacity constraint](@ref constraint_unit_flow_capacity) and
 the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
 
 See also
-[node\_state\_cap](@ref),
-[node\_availability\_factor](@ref),
-[has\_state](@ref).
+[storage\_state\_max](@ref),
+[storage\_state\_max\_fraction](@ref),
+[storage\_active](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
     _add_constraint!(
@@ -54,7 +54,7 @@ function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
         + sum(
             + node_state_capacity(m; node=ng, stochastic_scenario=s, t=t)
             * (
-                + number_of_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
+                + existing_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
                 + sum(
                     storages_invested_available[n, s, t1]
                     for (n, s, t1) in storages_invested_available_indices(
@@ -73,9 +73,9 @@ function constraint_node_state_capacity_indices(m::Model)
     (
         (node=ng, stochastic_path=path, t=t)
         for (ng, t) in node_time_indices(
-            m; node=intersect(indices(node_state_cap), indices(candidate_storages)), temporal_block=anything
+            m; node=intersect(indices(storage_state_max), indices(storage_investment_count_max_cumulative)), temporal_block=anything
         )
-        if (has_state(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
+        if (storage_active(node=ng) && storage_longterm_active(node=ng)) || _is_representative(t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(

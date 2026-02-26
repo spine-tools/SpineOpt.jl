@@ -1,3 +1,0 @@
-The definition of the `max_total_cumulated_unit_flow_from_node` parameter will trigger the creation of the [constraint\_total\_cumulated\_unit\_flow](@ref constraint_total_cumulated_unit_flow). It sets an upper bound on the sum of the [unit\_flow](@ref) variable for all timesteps.
-
-It can be defined for the [unit\_\_from\_node](@ref) relationships, as well as their counterparts for node- and unit groups. It will then restrict the total accumulation of `unit_flow` variables to be below the given value. A possible use case is limiting the consumption of commodities such as oil or gas. The parameter is given as an absolute value thus has to be coherent with the units used for the unit flows.

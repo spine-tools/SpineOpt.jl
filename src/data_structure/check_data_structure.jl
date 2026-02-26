@@ -152,18 +152,18 @@ end
 """
     check_minimum_operating_point_unit_capacity()
 
-Check if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
+Check if every defined `minimum_operating_point` parameter has a corresponding `capacity_per_unit` parameter defined.
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
         (u, n, d)
         for (u, n, d) in indices(minimum_operating_point)
-        if unit_capacity(unit=u, node=n, direction=d) === nothing
+        if capacity_per_unit(unit=u, node=n, direction=d) === nothing
     ]
     _check(
         isempty(error_indices),
-        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) - ",
-        "`unit_capacity` must be specified where `minimum_operating_point` is",
+        "missing `capacity_per_unit` value for indices: $(join(error_indices, ", ", " and ")) - ",
+        "`capacity_per_unit` must be specified where `minimum_operating_point` is",
     )
 end
 
@@ -215,14 +215,14 @@ function check_operating_points()
 end
 
 function check_ramp_parameters()
-    for param in (ramp_up_limit, ramp_down_limit, start_up_limit, shut_down_limit)
+    for param in (ramp_limits_up, ramp_limits_down, ramp_limits_startup, ramp_limits_shutdown)
         # value between 0 and 1
         error_indices = [(u, n, d) for (u, n, d) in indices(param) if !(0 < param(unit=u, node=n, direction=d) <= 1)]
         _check(
             isempty(error_indices), "$param has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
         )
     end
-    for param in (start_up_limit, shut_down_limit)
+    for param in (ramp_limits_startup, ramp_limits_shutdown)
         # value greater than minimum_operating_point
         error_indices = [
             (u, n, d)

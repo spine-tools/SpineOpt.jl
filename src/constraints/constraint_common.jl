@@ -99,12 +99,12 @@ function _unit_flow_capacity(m, u, ng, d, s, t)
     unit_flow_capacity(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
 end
 
-function _start_up_limit(m, u, ng, d, s, t)
-    start_up_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
+function _ramp_limits_startup(m, u, ng, d, s, t)
+    ramp_limits_startup(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
-function _shut_down_limit(m, u, ng, d, s, t)
-    shut_down_limit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
+function _ramp_limits_shutdown(m, u, ng, d, s, t)
+    ramp_limits_shutdown(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t, _default=1)
 end
 
 """
@@ -147,10 +147,10 @@ function _default_parameter_value(p::Parameter, entity_class::ObjectClass)
     entity_class.parameter_defaults[p.name].value
 end
 
-_default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(number_of_storages, node)
-_default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(number_of_units, unit)
+_default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(existing_storages, node)
+_default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(existing_units, unit)
 _default_nb_of_conns(conn::Object) = is_candidate(connection=conn) ? 
-    0 : _default_parameter_value(number_of_connections, connection)
+    0 : _default_parameter_value(existing_connections, connection)
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
 
@@ -181,7 +181,7 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
                 for s in s_path, t1 in t_in_t(m; t_short=t);
                 init=0,
             )
-            + number_of_connections(
+            + existing_connections(
                 m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
             )
         )

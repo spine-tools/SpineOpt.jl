@@ -42,28 +42,29 @@ include("versions/add_model_algorithm.jl")
 include("versions/rename_lifetime_to_tech_lifetime.jl")
 include("versions/translate_heatrate_parameters.jl")
 include("versions/translate_use_economic_representation__use_milestone_years.jl")
+include("versions/major_upgrade_1.jl")
 
-function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
+function add_units_out_of_service_and_min_capacity_margin(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_stage_output(db_url, log_level)
+function add_stage_output(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_node_availability_factor(db_url, log_level)
+function add_node_availability_factor(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_node_state_min_factor(db_url, log_level)
+function add_node_state_min_factor(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
 
-function add_connection_min_factor(db_url, log_level)
+function add_connection_min_factor(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
 	return true
 end
@@ -88,6 +89,7 @@ _upgrade_functions = [
 	add_node_state_min_factor,
 	add_connection_min_factor,
 	translate_use_economic_representation__use_milestone_years,
+	major_upgrade_1,
 ]
 
 """
@@ -98,23 +100,25 @@ The current version of the db structure as an integer.
 current_version() = length(_upgrade_functions) + 1
 
 """
-	run_migrations(url, version)
+	run_migrations(url, version; force::Bool=false)
 
 Run migrations on the given url starting from the given version.
+
+Giving `force=true` suppresses migration errors/warnings to try and force output.
 """
-function run_migrations(url, version, log_level)
+function run_migrations(url, version, log_level; force::Bool=false)
 	without_filters(url) do clean_url
-		while _run_migration(clean_url, version, log_level)
+		while _run_migration(clean_url, version, log_level; force)
 			version += 1
 		end
 		run_request(clean_url, "import_data", (SpineOpt.template(), "Upgrade data structure to version $(version - 1)"))
 	end
 end
 
-function _run_migration(url, version, log_level)
+function _run_migration(url, version, log_level; force::Bool=false)
 	upgrade_fn = get(_upgrade_functions, version, nothing)
 	upgrade_fn === nothing && return false
-	upgrade_fn(url, log_level) || return false
+	upgrade_fn(url, log_level; force) || return false
 	true
 end
 
@@ -126,14 +130,15 @@ If the db doesn't have the `settings` object class or the `version` parameter de
 create them, setting `version`'s default_value to 1.
 """
 function find_version(url)
+	template = SpineOpt.template()
 	obj_clss = run_request(url, "query", ("object_class_sq",))["object_class_sq"]
 	i = findfirst(x -> x["name"] == "settings", obj_clss)
 	if isnothing(i)
-		settings_class = first([x for x in _template["object_classes"] if x[1] == "settings"])
+		settings_class = first([x for x in template["entity_classes"] if x[1] == "settings"])
 		run_request(
 			url,
 			"import_data",
-			(Dict("object_classes" => [settings_class]), "Add settings object class")
+			(Dict("entity_classes" => [settings_class]), "Add settings entity class")
 		)
 		return find_version(url)
 	end
@@ -141,7 +146,8 @@ function find_version(url)
 	pdefs = run_request(url, "query", ("parameter_definition_sq",))["parameter_definition_sq"]
 	j = findfirst(x -> x["name"] == "version" && x["entity_class_id"] == settings_class["id"], pdefs)
 	if isnothing(j)
-		version_par_def = first([x for x in _template["object_parameters"] if x[1:2] == ["settings", "version"]])
+		parameters = template["parameter_definitions"]
+		version_par_def = first([x for x in parameters if x[1:2] == ["settings", "version"]])
 		version_par_def[3] = 1  # position 3 is default_value
 		run_request(
 			url,
@@ -154,8 +160,96 @@ function find_version(url)
 	_parse_version(version)
 end
 
-
-
 _parse_version(version::String) = _parse_version(parse(Float64, version))
 _parse_version(version::Float64) = _parse_version(round(Int, version))
 _parse_version(version::Int) = version
+
+
+"""
+	upgrade_json(
+		path::String;
+		log_level::Int=3,
+		omit_template::Bool=false,
+		clean_to_latest::Bool=false,
+		output_path::String=path,
+		version=nothing,
+		force::Bool=false,
+		remove_empty::Bool=false,
+	)
+
+Upgrade the data structure in `path` to the latest version.
+
+By default, writes the upgraded JSON over the given `path`,
+but this can be changed by giving a separate `output_path`.
+Includes the contents of the spineopt_template.json by default,
+but giving `omit_template=true` removes them for more compact output.
+The `clean_to_latest` keyword cleans the output to match the latest
+template, omitting obsolete content.
+Giving `version::Int` forces migration to start from a specific version number,
+while `force=true` suppresser migration errors/warnings. 
+Setting `remove_empty=true` removes empty categories from the output JSON.
+
+Based on [`upgrade_db`](@ref).
+"""
+function upgrade_json(
+	path::String;
+	log_level::Int=3,
+	omit_template::Bool=false,
+	clean_to_latest::Bool=false,
+	output_path::String=path,
+	version=nothing,
+	force::Bool=false,
+	remove_empty::Bool=false,
+)
+	@info "upgrading `$path`"
+	data = JSON.parsefile(path, use_mmap=false) 
+	# memory mapped files causing issues on windows https://discourse.julialang.org/t/error-when-trying-to-open-a-file/78782
+	db_url = "sqlite://" # In-memory db
+	SpineInterface.close_connection(db_url) # Close and reopen DB to clear its contents.
+	SpineInterface.open_connection(db_url)
+	import_data(db_url, data, "Import $path") # Import data.
+	SpineOpt.upgrade_db(db_url; log_level, version, force) # Run migration.
+	new_data = SpineInterface.parse_db_dict!(export_data(db_url)) # Export and parse migrated data.
+	template = SpineOpt.template() # Load template
+	# Sub-function for cleaning out content not compatible with the latest version.
+	function _clean_to_latest!(data, template)
+		for k in [ # These are forced to be equivalent to current template.
+			"entity_classes",
+			"superclass_subclasses",
+			"parameter_value_lists",
+			"parameter_definitions",
+			"parameter_types",
+		]
+			data[k] = deepcopy(template[k])
+		end
+		filter!( # Entities need to belong to current classes (check by name).
+			row -> row[1] in getindex.(data["entity_classes"], 1),
+			data["entities"]
+		)
+		filter!( # Parameter values for match latest definitions (check by class and name).
+			row -> [row[1], row[3]] in (def[1:2] for def in data["parameter_definitions"]),
+			data["parameter_values"]
+		)
+	end
+	clean_to_latest && _clean_to_latest!(new_data, template)
+	# Sub-function for omitting data redundant with the template.
+	function _omit_template!(data, template)
+		for (k,v) in template # Iterate over the template.
+			vals = get!(data, k, [])
+			setdiff!(vals, v) # Remove entries already in the template.
+			isempty(vals) && pop!(data, k) # If no entries remain, pop the key.
+		end
+		# Ensure that version information remains.
+		if isempty(get(data, "parameter_definitions", []))
+			settings_index = findfirst(getindex.(template["parameter_definitions"], 2) .== "version")
+			settings = template["parameter_definitions"][settings_index]
+			data["parameter_definitions"] = [settings]
+		end
+	end
+	omit_template && _omit_template!(new_data, template)
+	# Clean and write output
+	remove_empty && filter!(pair -> !isempty(pair[2]), new_data) # Remove empty keys.
+	open(output_path, "w") do f # Write new JSON file.
+		JSON.print(f, new_data, 4)
+	end
+end

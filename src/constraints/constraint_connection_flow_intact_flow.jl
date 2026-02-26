@@ -31,7 +31,7 @@ from investment connections that are not invested in.
 - \left(v^{connection\_intact\_flow}_{(c, n_{to}, from\_node, s, t)}
 - v^{connection\_intact\_flow}_{(c, n_{to}, to\_node, s, t)} \right) \\
 & =\\
-& \sum_{c_{cand}} p^{lodf}_{(c_{cand}, c)} \cdot \left[p^{candidate\_connections}_{(c_{cand})} \neq 0 \right] \cdot \Big( \\
+& \sum_{c_{cand}} p^{lodf}_{(c_{cand}, c)} \cdot \left[p^{investment\_count\_max\_cumulative}_{(c_{cand})} \neq 0 \right] \cdot \Big( \\
 & \qquad \left(
     v^{connection\_flow}_{(c_{cand}, n_{to\_cand}, from\_node, s, t)}
     - v^{connection\_flow}_{(c_{cand}, n_{to\_cand}, to\_node, s, t)} 
@@ -44,13 +44,13 @@ from investment connections that are not invested in.
 \right)
 \\
 & \Big) \\
-& \forall c \in connection : p^{is\_monitored}_{(c)} \land p^{candidate\_connections}_{(c)} = 0 \\
+& \forall c \in connection : p^{is\_monitored}_{(c)} \land p^{investment\_count\_max\_cumulative}_{(c)} = 0 \\
 & \forall (s,t)
 \end{aligned}
 ```
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_active(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :connection_flow_intact_flow,
@@ -104,7 +104,7 @@ end
 function constraint_connection_flow_intact_flow_indices(m::Model)
     (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
-        for conn in connection(connection_monitored=true, has_ptdf=true, is_candidate=false)
+        for conn in connection(monitoring_active=true, has_ptdf=true, is_candidate=false)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (t, path) in t_lowest_resolution_path(
             m, 

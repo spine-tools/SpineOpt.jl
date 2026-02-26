@@ -24,8 +24,8 @@ investment candidate connections.
 
 ```math
 \begin{aligned}
-& v^{connections\_invested\_available}_{(c,s,t)} < p^{candidate\_connections}_{(c)} \\
-& \forall c \in connection: p^{candidate\_connections}_{(c)} \neq 0 \\
+& v^{connections\_invested\_available}_{(c,s,t)} < p^{investment\_count\_max\_cumulative}_{(c)} \\
+& \forall c \in connection: p^{investment\_count\_max\_cumulative}_{(c)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```
@@ -44,6 +44,6 @@ function _build_constraint_connections_invested_available(m::Model, conn, s, t)
     @build_constraint(
         + connections_invested_available[conn, s, t]
         <=
-        + candidate_connections(m; connection=conn, stochastic_scenario=s, t=t)
+        + investment_count_max_cumulative(m; connection=conn, stochastic_scenario=s, t=t)
     )
 end

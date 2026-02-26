@@ -25,7 +25,7 @@ by defining the [min\_down\_time](@ref) parameter. This will trigger the generat
 
 ```math
 \begin{aligned}
-& p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} - v^{units\_on}_{(u,s,t)} \\
+& p^{existing\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} - v^{units\_on}_{(u,s,t)} \\
 & - \sum_{n} v^{nonspin\_units\_started\_up}_{(u,n,s,t)} \\
 & \geq
 \sum_{t'=t-p^{min\_down\_time}_{(u,s,t)} + 1}^{t}
@@ -35,7 +35,7 @@ v^{units\_shut\_down}_{(u,s,t')} \\
 \end{aligned}
 ```
 
-See also [number\_of\_units](@ref), [min\_down\_time](@ref).
+See also [existing\_units](@ref), [min\_down\_time](@ref).
 """
 function add_constraint_min_down_time!(m::Model)
     _add_constraint!(m, :min_down_time, constraint_min_down_time_indices, _build_constraint_min_down_time)
@@ -45,7 +45,7 @@ function _build_constraint_min_down_time(m::Model, u, s_path, t)
     @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:spineopt].variables
     @build_constraint(
         + sum(
-            + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+            + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
             + sum(
                 units_invested_available[u, s, t1]
                 for (u, s, t1) in units_invested_available_indices(

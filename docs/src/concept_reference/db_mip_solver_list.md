@@ -1,2 +1,0 @@
-List of supported MIP solvers which may be specified for the [db\_mip\_solver\_options](@ref) parameter.
-The value must correspond exactly to the name of the Julia solver package (e.g. `Cbc.jl`) and is case sensitive.

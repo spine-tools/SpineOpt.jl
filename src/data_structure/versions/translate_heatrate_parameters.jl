@@ -18,12 +18,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-	translate_heatrate_parameters(db_url, log_level)
+	translate_heatrate_parameters(db_url, log_level; kwargs...)
 
 Replace unit_idle_heat_rate by fix_units_on_coefficient_in_out and unit_incremental_heat_rate by 
 fix_ratio_in_out_unit_flow.
 """
-function translate_heatrate_parameters(db_url, log_level)
+function translate_heatrate_parameters(db_url, log_level; kwargs...)
 	@log log_level 0 string(
 		"Replacing `unit_idle_heat_rate` by `fix_units_on_coefficient_in_out`, and `unit_incremental_heat_rate` by 
 		`fix_ratio_in_out_unit_flow`..."

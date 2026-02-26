@@ -67,7 +67,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 To generate forced outages for a unit, specify `mean_time_to_failure` and optionally
 `mean_time_to_repair` for that unit as a duration in the input DB.
 
-Parameter `units_unavailable` will be written for those units in the output DB holding a time series.
+Parameter `out_of_service_count_fix` will be written for those units in the output DB holding a time series.
 
 # Arguments
 
@@ -95,13 +95,13 @@ function generate_forced_outages(url_in, url_out=url_in; alternative="Base")
             m_end,
             mean_time_to_failure(unit=u, _strict=false),
             mean_time_to_repair(unit=u, _strict=false),
-            number_of_units(unit=u, _default=_default_nb_of_units(u)),
+            existing_units(unit=u, _default=_default_nb_of_units(u)),
         )
         for u in indices(mean_time_to_failure)
     )
     if !isempty(forced_outage_ts)
         write_parameters(
-            Dict(:units_unavailable => forced_outage_ts), url_out; alternative=alternative
+            Dict(:out_of_service_count_fix => forced_outage_ts), url_out; alternative=alternative
         )
     end
 end

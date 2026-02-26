@@ -18,10 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-module Y
-using SpineInterface
-end
-
 function _test_monte_carlo_setup(mc_scens)
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
@@ -93,21 +89,21 @@ function _test_monte_carlo()
                 ["unit__to_node", ["wind", "elec"]],
                 ["unit__to_node", ["ocgt", "elec"]],
                 ["unit__to_node", ["ccgt", "elec"]],
-                ["unit__from_node", ["ocgt", "fuel"]],
-                ["unit__from_node", ["ccgt", "fuel"]],
+                ["node__to_unit", ["fuel", "ocgt"]],
+                ["node__to_unit", ["fuel", "ccgt"]],
             ],
             :object_parameter_values => [
                 ["node", "elec", "demand", 200],
-                ["unit", "pv", "unit_availability_factor", unparse_db_value(pv_af_map)],
-                ["unit", "wind", "unit_availability_factor", unparse_db_value(wind_af_map)],
+                ["unit", "pv", "availability_factor", unparse_db_value(pv_af_map)],
+                ["unit", "wind", "availability_factor", unparse_db_value(wind_af_map)],
                 # ["unit", "ocgt", "scheduled_outage_duration", unparse_db_value(ocgt_sod_map)],
                 # ["unit", "ccgt", "scheduled_outage_duration", unparse_db_value(ccgt_sod_map)],
             ],
             :relationship_parameter_values => [
-                ["unit__to_node", ["pv", "elec"], "unit_capacity", 200],
-                ["unit__to_node", ["wind", "elec"], "unit_capacity", 300],
-                ["unit__to_node", ["ocgt", "elec"], "unit_capacity", 150],
-                ["unit__to_node", ["ccgt", "elec"], "unit_capacity", 100],
+                ["unit__to_node", ["pv", "elec"], "capacity_per_unit", 200],
+                ["unit__to_node", ["wind", "elec"], "capacity_per_unit", 300],
+                ["unit__to_node", ["ocgt", "elec"], "capacity_per_unit", 150],
+                ["unit__to_node", ["ccgt", "elec"], "capacity_per_unit", 100],
             ],
         )
         import_data(url_in, "Add test data"; test_data...)

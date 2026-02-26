@@ -26,21 +26,21 @@ The last segment does not need this constraint.
 ```math
 \begin{aligned}
 & v^{unit\_flow\_op}{(u, n, d, op, s, t)} \\
-& \geq p^{unit\_capacity}_{(u, n, d, s, t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u, n, d, s, t)} \\
+& \geq p^{capacity\_per\_unit}_{(u, n, d, s, t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u, n, d, s, t)} \\
 & \cdot \left(p^{operating\_points}_{(u, n, op, s, t)} - \begin{cases}       
    p^{operating\_points}_{(u, n, op-1, s, t)} & \text{if } op > 1 \\
    0 & \text{otherwise} \\
 \end{cases} \right) \\
 & \cdot v^{unit\_flow\_op\_active}_{(u, n, d, op+1, s, t)} \\
-& \forall (u,n,d) \in indices(p^{unit\_capacity}) \cup indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
+& \forall (u,n,d) \in indices(p^{capacity\_per\_unit}) \cup indices(p^{operating\_points}): p^{ordered\_unit\_flow\_op}_{(u,n,d)} \\
 & \forall op \in \{ 1, \ldots, \left\|p^{operating\_points}_{(u,n,d)}\right\| - 1\} \\
 & \forall (s,t)
 \end{aligned}
 ```
 
 See also
-[unit\_capacity](@ref),
-[unit\_conv\_cap\_to\_flow](@ref),
+[capacity\_per\_unit](@ref),
+[capacity\_to\_flow\_conversion\_factor](@ref),
 [operating\_points](@ref),
 [ordered\_unit\_flow\_op](@ref).
 """
@@ -65,7 +65,7 @@ end
 function constraint_unit_flow_op_rank_indices(m::Model)
     (
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t)
-        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d) in indices(capacity_per_unit)
         for (u, n, d, op, s, t) in unit_flow_op_active_indices(m; unit=u, node=n, direction=d)
         if op < lastindex(operating_points(unit=u, node=n, direction=d))
         # the partial unit flow at the last operating point does not need this constraint.

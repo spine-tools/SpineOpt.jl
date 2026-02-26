@@ -57,10 +57,10 @@ function _ref_setup(storage_count)
         :object_parameter_values => Any[
             ("model", "test_model", "model_start", unparse_db_value(m_start)),
             ("model", "test_model", "model_end", unparse_db_value(m_end)),
-            ("model", "test_model", "max_iterations", 20),
+            ("model", "test_model", "decomposition_max_iterations", 20),
             ("temporal_block", "flat", "resolution", unparse_db_value(res)),
             ("node", "demand_node", "demand", unparse_db_value(demand_ts)),
-            ("node", "demand_node", "node_slack_penalty", 10000),
+            ("node", "demand_node", "balance_penalty", 10000),
         ],
         :relationship_parameter_values => Any[
             ("unit__to_node", ("other_unit", "demand_node"), "vom_cost", unparse_db_value(cost_ts)),
@@ -72,32 +72,32 @@ function _ref_setup(storage_count)
         append!(
             test_data[:relationships],
             (
-                ("unit__from_node", (u, "demand_node")),
-                ("unit__from_node", (u, n)),
+                ("node__to_unit", ("demand_node", u)),
+                ("node__to_unit", (n, u)),
                 ("unit__to_node", (u, "demand_node")),
                 ("unit__to_node", (u, n)),
-                ("unit__node__node", (u, n, "demand_node")),
-                ("unit__node__node", (u, "demand_node", n)),
+                ("unit_flow__unit_flow", (u, n, "demand_node", u)),
+                ("unit_flow__unit_flow", (u, "demand_node", n, u)),
             )
         )
         append!(
             test_data[:object_parameter_values],
             (
-                ("node", n, "has_state", true),
-                ("node", n, "state_coeff", 1.0),
-                ("node", n, "initial_node_state", storage_cap / 2),
-                ("node", n, "node_state_cap", storage_cap),
-                ("node", n, "node_slack_penalty", 10000),
+                ("node", n, "storage_active", true),
+                ("node", n, "storage_state_coefficient", 1.0),
+                ("node", n, "storage_state_initial", storage_cap / 2),
+                ("node", n, "storage_state_max", storage_cap),
+                ("node", n, "balance_penalty", 10000),
             )
         )
         append!(
             test_data[:relationship_parameter_values],
             (
-                ("unit__to_node", (u, "demand_node"), "unit_capacity", discharge_cap),
-                ("unit__to_node", (u, n), "unit_capacity", charge_cap),
+                ("unit__to_node", (u, "demand_node"), "capacity_per_unit", discharge_cap),
+                ("unit__to_node", (u, n), "capacity_per_unit", charge_cap),
                 ("unit__to_node", (u, "demand_node"), "vom_cost", base_cost),
-                ("unit__node__node", (u, n, "demand_node"), "fix_ratio_out_in_unit_flow", 0.8),
-                ("unit__node__node", (u, "demand_node", n), "fix_ratio_out_in_unit_flow", 1),
+                ("unit_flow__unit_flow", (u, n, "demand_node", u), "constraint_equality_flow_ratio", 0.8),
+                ("unit_flow__unit_flow", (u, "demand_node", n, u), "constraint_equality_flow_ratio", 1),
             )
         )
     end
@@ -126,10 +126,10 @@ function _ref_investments_setup(storage_count)
         append!(
             investment_data[:object_parameter_values],
             (
-                ("node", n, "candidate_storages", 4),
+                ("node", n, "storage_investment_count_max_cumulative", 4),
                 ("node", n, "benders_starting_storages_invested", 0.01),
                 ("node", n, "storage_investment_cost", 100),
-                ("node", n, "storage_investment_variable_type", "storage_investment_variable_type_continuous"),
+                ("node", n, "storage_investment_variable_type", "linear"),
             )
         )
     end
@@ -193,7 +193,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
     storage_count = 1
     url_in, url_out = _ref_investments_setup(storage_count)
     m = run_spineopt(url_in, url_out; log_level=0)
-    R = Module()
+    R = Bind()
     using_spinedb(url_out, R)
     last_t = maximum(end_.(time_slice(m)))
     extend_ts!(ts) = (ts[last_t] = NaN; ts)
@@ -223,7 +223,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment_with_slack_pen
     storage_count = 1
     url_in, url_out = _ref_investments_setup(storage_count)
     m = run_spineopt(url_in, url_out; log_level=0)
-    R = Module()
+    R = Bind()
     using_spinedb(url_out, R)
     last_t = maximum(end_.(time_slice(m)))
     extend_ts!(ts) = (ts[last_t] = NaN; ts)

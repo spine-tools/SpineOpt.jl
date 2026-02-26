@@ -53,7 +53,7 @@ To take into account storage investments in the objective function, the paramete
 
 # Fixed O&M costs
 
-Fixed operation and maintenance costs associated with a specific unit can be accounted for by defining the parameters [fom\_cost](@ref) and [unit\_capacity](@ref). For all tuples of (unit, {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep) exist in the set `units_on_indices`, a fixed O&M cost term is added to the objective function. Note that, as the `units_on_indices` are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should be given per resolution of the [units\_on](@ref).
+Fixed operation and maintenance costs associated with a specific unit can be accounted for by defining the parameters [fom\_cost](@ref) and [capacity\_per\_unit](@ref). For all tuples of (unit, {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep) exist in the set `units_on_indices`, a fixed O&M cost term is added to the objective function. Note that, as the `units_on_indices` are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should be given per resolution of the [units\_on](@ref).
 The total fixed O&M costs can be expressed as:
 
 ```math
@@ -61,8 +61,8 @@ The total fixed O&M costs can be expressed as:
 & {fixed\_om\_costs}
  = 
 \sum_{(u,n,d,s,t)}
- \left( p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)} \right)
- \cdot p^{unit\_capacity}_{(u,n,d,s,t)} \cdot p^{fom\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
+ \left( p^{existing\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)} \right)
+ \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot p^{fom\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
 ```
 
@@ -131,7 +131,7 @@ The procurement costs for reserves provided by a specific unit can be accounted 
 & {res\_proc\_costs}
  = \sum_{(u,n,d,s,t)}
 v^{unit\_flow}_{(u, n, d, s, t)} \cdot p^{reserve\_procurement\_cost}_{(u,n,d,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t
-\cdot \left[p^{is\_reserve\_node}_{n}\right] \\
+\cdot \left[p^{reserve\_active}_{n}\right] \\
 \end{aligned}
 ```
 where
@@ -143,13 +143,13 @@ where
 ```
 
 # Renewable curtailment costs
-The curtailment costs of renewable units can be accounted for by defining the parameters [curtailment\_cost](@ref) and [unit\_capacity](@ref). For all tuples of (unit,  {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep\_long) exist in the set `units_on_indices`, and for which tuples (unit, {node,node\_group}, direction, scenario, timestep\_short) exist in the set `unit_flow_indices`, a renewable curtailment cost term is added to the objective function. The total renewable curtailment costs can be expressed as:
+The curtailment costs of renewable units can be accounted for by defining the parameters [curtailment\_cost](@ref) and [capacity\_per\_unit](@ref). For all tuples of (unit,  {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep\_long) exist in the set `units_on_indices`, and for which tuples (unit, {node,node\_group}, direction, scenario, timestep\_short) exist in the set `unit_flow_indices`, a renewable curtailment cost term is added to the objective function. The total renewable curtailment costs can be expressed as:
 
 ```math
 \begin{aligned}
 & {renewable\_curtailment\_costs}
  = \sum_{(u,n,d,s,t)}
- \left(v^{units\_available}_{(u, s, t)} \cdot p^{unit\_capacity}_{(u,n,d,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,n,d,s,t)}
+ \left(v^{units\_available}_{(u, s, t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u,n,d,s,t)}
  - v^{unit\_flow}_{(u, n, d, s, t)} \right)
  \cdot p^{curtailment\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
 \end{aligned}
@@ -174,13 +174,13 @@ v^{unit\_flow}_{(u, n, to\_node, s, t)} \cdot p^{tax\_in\_unit\_flow}_{(n,s,t)} 
 
 
 # Objective penalties
-Penalty cost terms associated with the slack variables of a specific constraint can be accounted for by defining a [node\_slack\_penalty](@ref) parameter. For all tuples of ({node,node\_group}, scenario, timestep) in the set `node_slack_indices` for which this parameter is defined, a penalty term is added to the objective function. The total objective penalties can be expressed as:
+Penalty cost terms associated with the slack variables of a specific constraint can be accounted for by defining a [balance\_penalty](@ref) parameter. For all tuples of ({node,node\_group}, scenario, timestep) in the set `node_slack_indices` for which this parameter is defined, a penalty term is added to the objective function. The total objective penalties can be expressed as:
 
 ```math
 \begin{aligned}
 & {objective\_penalties}
  = \sum_{(n,s,t)}
-\left(v^{node\_slack\_neg}_{(n, s, t)} - v^{node\_slack\_pos}_{(n, s, t)} \right) \cdot p^{node\_slack\_penalty}_{(n,s,t)}
+\left(v^{node\_slack\_neg}_{(n, s, t)} - v^{node\_slack\_pos}_{(n, s, t)} \right) \cdot p^{balance\_penalty}_{(n,s,t)}
 \cdot p^{weight}_{(n,s,t)} \cdot \Delta t \\
 \end{aligned}
 ```

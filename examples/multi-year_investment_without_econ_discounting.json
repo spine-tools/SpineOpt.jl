@@ -48,7 +48,17 @@
             "node",
             "fuel",
             "balance_type",
-            "balance_type_none",
+            "none",
+            "Base"
+        ],
+        [
+            "node__to_unit",
+            [
+                "fuel",
+                "power_plant"
+            ],
+            "vom_cost",
+            25,
             "Base"
         ],
         [
@@ -481,6 +491,20 @@
         [
             "output",
             "constraint_fix_ratio_out_out_unit_flow",
+            "output_type",
+            "constraint_dual",
+            "Base"
+        ],
+        [
+            "output",
+            "constraint_flow_limits_max_cumulative",
+            "output_type",
+            "constraint_dual",
+            "Base"
+        ],
+        [
+            "output",
+            "constraint_flow_limits_min_cumulative",
             "output_type",
             "constraint_dual",
             "Base"
@@ -1228,15 +1252,42 @@
         [
             "unit",
             "power_plant",
-            "candidate_units",
+            "discount_rate_technology_specific",
+            0.07,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant",
+            "investment_count_max_cumulative",
             1,
             "Base"
         ],
         [
             "unit",
             "power_plant",
-            "unit_discount_rate_technology_specific",
-            0.07,
+            "investment_variable_type",
+            "linear",
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant",
+            "lifetime_economic",
+            {
+                "data": "10Y",
+                "type": "duration"
+            },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant",
+            "lifetime_technical",
+            {
+                "data": "10Y",
+                "type": "duration"
+            },
             "Base"
         ],
         [
@@ -1247,70 +1298,41 @@
             "Base"
         ],
         [
-            "unit",
-            "power_plant",
-            "unit_investment_econ_lifetime",
-            {
-                "data": "10Y",
-                "type": "duration"
-            },
-            "Base"
-        ],
-        [
-            "unit",
-            "power_plant",
-            "unit_investment_tech_lifetime",
-            {
-                "data": "10Y",
-                "type": "duration"
-            },
-            "Base"
-        ],
-        [
-            "unit__from_node",
-            [
-                "power_plant",
-                "fuel"
-            ],
-            "vom_cost",
-            25,
-            "Base"
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant",
-                "electricity",
-                "fuel"
-            ],
-            "fix_ratio_out_in_unit_flow",
-            1,
-            "Base"
-        ],
-        [
             "unit__to_node",
             [
                 "power_plant",
                 "electricity"
             ],
-            "unit_capacity",
+            "capacity_per_unit",
             100,
+            "Base"
+        ],
+        [
+            "unit_flow__unit_flow",
+            [
+                "power_plant",
+                "electricity",
+                "fuel",
+                "power_plant"
+            ],
+            "constraint_equality_flow_ratio",
+            1,
             "Base"
         ]
     ],
     "entity_classes": [
         [
-            "commodity",
-            [],
-            "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...",
-            281473533932880,
-            true
-        ],
-        [
             "connection",
             [],
             "A transfer of commodities between nodes. E.g. electricity line, gas pipeline...",
             280378317271233,
+            true
+        ],
+        [
+            "grid",
+            [],
+            "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...",
+            281473533932880,
             true
         ],
         [
@@ -1388,6 +1410,13 @@
             [],
             "A conversion of one/many commodities between nodes.",
             281470681805429,
+            true
+        ],
+        [
+            "unit_flow",
+            [],
+            "A superclass for unit__to_node and node__to_unit classes.",
+            281470681805659,
             true
         ],
         [
@@ -1508,12 +1537,12 @@
             true
         ],
         [
-            "node__commodity",
+            "node__grid",
             [
                 "node",
-                "commodity"
+                "grid"
             ],
-            "A `commodity` for a `node`. Only a single `commodity` is permitted per `node`.",
+            "The `grid` the `node` is connected to. Only a single `grid` is permitted per `node`.",
             null,
             true
         ],
@@ -1578,6 +1607,16 @@
             true
         ],
         [
+            "node__to_unit",
+            [
+                "node",
+                "unit"
+            ],
+            "A flow on a `unit` from a `node`.",
+            281470681805657,
+            true
+        ],
+        [
             "node__user_constraint",
             [
                 "node",
@@ -1638,26 +1677,6 @@
             true
         ],
         [
-            "unit__commodity",
-            [
-                "unit",
-                "commodity"
-            ],
-            "Holds parameters for `commodities` used by the `unit`.",
-            null,
-            true
-        ],
-        [
-            "unit__from_node",
-            [
-                "unit",
-                "node"
-            ],
-            "A flow on a `unit` from a `node`.",
-            281470681805657,
-            true
-        ],
-        [
             "unit__investment_group",
             [
                 "unit",
@@ -1704,6 +1723,36 @@
                 "user_constraint"
             ],
             "A `unit` commitment constrained by a `user_constraint`.",
+            null,
+            true
+        ],
+        [
+            "unit_flow__investment_group",
+            [
+                "unit_flow",
+                "investment_group"
+            ],
+            "A flow on a `unit` from/to a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
+            null,
+            true
+        ],
+        [
+            "unit_flow__unit_flow",
+            [
+                "unit_flow",
+                "unit_flow"
+            ],
+            "Two `unit_flow` entities (and variables) that are constrained by each other.",
+            null,
+            true
+        ],
+        [
+            "unit_flow__user_constraint",
+            [
+                "unit_flow",
+                "user_constraint"
+            ],
+            "A flow on a `unit` from/to a `node` constrained by a `user_constraint`.",
             null,
             true
         ],
@@ -1814,61 +1863,16 @@
             "An `output` that should be fixed by a `stage` for a `unit` in all its children (EXPERIMENTAL).",
             null,
             true
+        ]
+    ],
+    "superclass_subclasses": [
+        [
+            "unit_flow",
+            "node__to_unit"
         ],
         [
-            "unit__from_node__investment_group",
-            [
-                "unit",
-                "node",
-                "investment_group"
-            ],
-            "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
-            null,
-            true
-        ],
-        [
-            "unit__from_node__user_constraint",
-            [
-                "unit",
-                "node",
-                "user_constraint"
-            ],
-            "A flow on a `unit` from a `node` constrained by a `user_constraint`.",
-            null,
-            true
-        ],
-        [
-            "unit__node__node",
-            [
-                "unit",
-                "node",
-                "node"
-            ],
-            "A `unit` acting over two `node`s.",
-            null,
-            true
-        ],
-        [
-            "unit__to_node__investment_group",
-            [
-                "unit",
-                "node",
-                "investment_group"
-            ],
-            "A flow on a `unit` from a `node` whose capacity should be counted in the capacity invested available of an `investment_group`.",
-            null,
-            true
-        ],
-        [
-            "unit__to_node__user_constraint",
-            [
-                "unit",
-                "node",
-                "user_constraint"
-            ],
-            "A flow on a `unit` to a `node` constrained by a `user_constraint`.",
-            null,
-            true
+            "unit_flow",
+            "unit__to_node"
         ]
     ],
     "alternatives": [
@@ -1879,185 +1883,39 @@
     ],
     "parameter_definitions": [
         [
-            "commodity",
-            "commodity_lodf_tolerance",
-            0.1,
+            "connection",
+            "availability_factor",
+            1.0,
             null,
-            "The minimum absolute value of the line outage distribution factor (LODF) that is considered meaningful."
-        ],
-        [
-            "commodity",
-            "commodity_physics",
-            "commodity_physics_none",
-            "commodity_physics_list",
-            "Defines if the `commodity` follows lodf or ptdf physics."
-        ],
-        [
-            "commodity",
-            "commodity_physics_duration",
-            null,
-            null,
-            "For how long the `commodity_physics` should apply relative to the start of the window."
-        ],
-        [
-            "commodity",
-            "commodity_ptdf_threshold",
-            0.001,
-            null,
-            "The minimum absolute value of the power transfer distribution factor (PTDF) that is considered meaningful."
-        ],
-        [
-            "commodity",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "commodity",
-            "mp_min_res_gen_to_demand_ratio",
-            null,
-            null,
-            "Minimum ratio of renewable generation to demand for this commodity - used in the minimum renewable generation constraint within the Benders master problem"
-        ],
-        [
-            "commodity",
-            "mp_min_res_gen_to_demand_ratio_slack_penalty",
-            null,
-            null,
-            "Penalty for violating the minimum renewable generation to demand ratio."
+            "Availability of the `connection`, acting as a multiplier on its `capacity_per_connection`. Typically between 0-1."
         ],
         [
             "connection",
             "benders_starting_connections_invested",
             null,
             null,
-            "Fixes the number of connections invested during the first Benders iteration"
+            "Fixes the number of connections invested during the first Benders iteration."
         ],
         [
             "connection",
-            "candidate_connections",
-            null,
-            null,
-            "The number of connections that may be invested in"
-        ],
-        [
-            "connection",
-            "connection_availability_factor",
-            1,
-            null,
-            "Maximum availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
-        ],
-        [
-            "connection",
-            "connection_contingency",
-            null,
+            "binary_gas_flow_active",
+            false,
             "boolean_value_list",
-            "A boolean flag for defining a contingency `connection`."
-        ],
-        [
-            "connection",
-            "connection_decommissioning_cost",
-            null,
-            null,
-            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
-        ],
-        [
-            "connection",
-            "connection_decommissioning_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A connection's decommissioning time, i.e., the time between the moment at which a connection decommissioning decision is takien, and the moment at which decommissioning is complete."
-        ],
-        [
-            "connection",
-            "connection_discount_rate_technology_specific",
-            0,
-            null,
-            "connection-specific discount rate used to calculate the connection's investment costs. If not specified, the model discount rate is used."
+            "A boolean flag for activating a representation based on bidirectional pressure driven gas transfer."
         ],
         [
             "connection",
             "connection_investment_cost",
             null,
             null,
-            "The per unit investment cost for the connection over the `connection_investment_tech_lifetime`"
-        ],
-        [
-            "connection",
-            "connection_investment_econ_lifetime",
-            null,
-            null,
-            "Economic lifetime for connection investment decisions: the duration for investment cost payment."
-        ],
-        [
-            "connection",
-            "connection_investment_lifetime_sense",
-            ">=",
-            "constraint_sense_list",
-            "Formula sense of the constraint `connection_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
-        ],
-        [
-            "connection",
-            "connection_investment_tech_lifetime",
-            null,
-            null,
-            "Technical lifetime for connection investment decisions: the duration for the invested connection to be available."
-        ],
-        [
-            "connection",
-            "connection_investment_variable_type",
-            "connection_investment_variable_type_integer",
-            "connection_investment_variable_type_list",
-            "Determines whether the investment variable is integer `variable_type_integer` or continuous `variable_type_continuous`"
-        ],
-        [
-            "connection",
-            "connection_lead_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A connection's lead time, i.e., the time between the moment at which a connection investment decision is takien, and the moment at which the connection investment becomes operational."
+            "Investment cost per 'sub connection' over the `lifetime_technical`. E.g. EUR/'sub connection'."
         ],
         [
             "connection",
             "connection_min_factor",
-            0,
+            0.0,
             null,
-            "Minimum availability of the `connection`, acting as a multiplier on its `connection_capacity`. Typically between 0-1."
-        ],
-        [
-            "connection",
-            "connection_monitored",
-            false,
-            "boolean_value_list",
-            "A boolean flag for defining a contingency `connection`."
-        ],
-        [
-            "connection",
-            "connection_reactance",
-            null,
-            null,
-            "The per unit reactance of a `connection`."
-        ],
-        [
-            "connection",
-            "connection_reactance_base",
-            1,
-            null,
-            "If the reactance is given for a p.u.  (e.g. p.u. = 100MW), the `connection_reactance_base` can be set to perform this conversion (e.g. *100)."
-        ],
-        [
-            "connection",
-            "connection_resistance",
-            null,
-            null,
-            "The per unit resistance of a `connection`."
+            "Minimum availability of the `connection`, acting as a multiplier on its `capacity_per_connection`. Typically between 0-1."
         ],
         [
             "connection",
@@ -2068,94 +1926,191 @@
         ],
         [
             "connection",
-            "connections_invested_big_m_mga",
+            "contingency_active",
             null,
-            null,
-            "big_m_mga should be chosen as small as possible but sufficiently large. For units_invested_mga an appropriate big_m_mga would be twice the candidate connections."
+            "boolean_value_list",
+            "A boolean flag for defining a contingency `connection`."
         ],
         [
             "connection",
-            "connections_invested_mga",
+            "decommissioning_cost",
+            null,
+            null,
+            "To be implemented. Costs associated with decommissioning a `connection`. The costs will be distributed equally over the `decommissioning_time` and discounted to the `discount_year`."
+        ],
+        [
+            "connection",
+            "decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "The decommissioning time of the connection, i.e., the time between the moment at which a connection decommissioning decision is taken, and the moment at which decommissioning is complete."
+        ],
+        [
+            "connection",
+            "discount_rate_technology_specific",
+            0.0,
+            null,
+            "Connection-specific discount rate for calculating the investment costs of the connection. If not specified, the model discount rate is used."
+        ],
+        [
+            "connection",
+            "existing_connections",
+            1.0,
+            null,
+            "The number of 'sub connections' aggregated to form the modelled `connection`."
+        ],
+        [
+            "connection",
+            "investment_count_fix_cumulative",
+            null,
+            null,
+            "Fixes the cumulative number of new connection investments, i.e., the `connections_invested_available` variable, to the provided value."
+        ],
+        [
+            "connection",
+            "investment_count_fix_new",
+            null,
+            null,
+            "Fixes the number of new connection investments, i.e., the `connections_invested` variable, to the provided value."
+        ],
+        [
+            "connection",
+            "investment_count_initial_cumulative",
+            null,
+            null,
+            "Initializes the cumulative number of new connection investments, i.e., the `connections_invested_available` variable, to the provided value."
+        ],
+        [
+            "connection",
+            "investment_count_initial_new",
+            null,
+            null,
+            "Initializes the number of new connection investments, i.e., the `connections_invested` variable, to the provided value."
+        ],
+        [
+            "connection",
+            "investment_count_max_cumulative",
+            null,
+            null,
+            "Maximum cumulative number of new connections that may be invested in."
+        ],
+        [
+            "connection",
+            "investment_variable_type",
+            "integer",
+            "variable_type_list",
+            "A selector for the type of the connection investment variable (`connections_invested`): whether it is continuous (usually representing invested capacity) or integer (representing discrete 'sub connection' investments)."
+        ],
+        [
+            "connection",
+            "lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "The lead time of the connection, i.e., the time between the moment at which a connection investment decision is taken, and the moment at which the connection investment becomes operational."
+        ],
+        [
+            "connection",
+            "lifetime_constraint_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `connection_lifetime` constraint sense. The default '>=' represents minimum technical lifetime."
+        ],
+        [
+            "connection",
+            "lifetime_economic",
+            null,
+            null,
+            "Economic lifetime for connection investments: the duration for investment cost payment."
+        ],
+        [
+            "connection",
+            "lifetime_technical",
+            null,
+            null,
+            "Technical lifetime for connection investments. Represents minimum technical lifetime by default, but the interpretation can be changed via `lifetime_constraint_sense`."
+        ],
+        [
+            "connection",
+            "mga_investment_active",
             false,
             "boolean_value_list",
-            "Defines whether a certain variable (here: connections_invested) will be considered in the maximal-differences of the mga objective"
+            "A boolean flag for whether a certain variable (here: `connections_invested`) will be considered in the maximal-differences of the MGA objective."
         ],
         [
             "connection",
-            "connections_invested_mga_weight",
+            "mga_investment_big_m",
+            null,
+            null,
+            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_investment_active an appropriate `mga_investment_big_m` would be twice the `investment_count_max_cumulative`."
+        ],
+        [
+            "connection",
+            "mga_investment_weight",
             1,
             null,
-            "Used to scale mga variables. For weightd sum mga method, the length of this weight given as an Array will determine the number of iterations."
+            "Weight for scaling the MGA variables. For weighted-sum MGA method, the length of this weight given as an Array will determine the number of iterations."
         ],
         [
             "connection",
-            "fix_connections_invested",
-            null,
-            null,
-            "Setting a value fixes the connections_invested variable accordingly"
-        ],
-        [
-            "connection",
-            "fix_connections_invested_available",
-            null,
-            null,
-            "Setting a value fixes the connections_invested_available variable accordingly"
-        ],
-        [
-            "connection",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "connection",
-            "has_binary_gas_flow",
+            "monitoring_active",
             false,
             "boolean_value_list",
-            "This parameter needs to be set to `true` in order to represent bidirectional pressure drive gas transfer."
+            "A boolean flag for activating monitoring of a `connection` in PTDF-based load flow."
         ],
         [
             "connection",
-            "initial_connections_invested",
+            "reactance",
             null,
             null,
-            "Setting a value fixes the connections_invested variable at the beginning"
+            "The per unit reactance of a `connection`."
         ],
         [
             "connection",
-            "initial_connections_invested_available",
-            null,
-            null,
-            "Setting a value fixes the connections_invested_available variable at the beginning"
-        ],
-        [
-            "connection",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "connection",
-            "number_of_connections",
+            "reactance_base",
             1,
             null,
-            "Denotes the number of 'sub connections' aggregated to form the modelled `connection`."
+            "If the reactance is given for a p.u. (e.g. p.u. = 100MW), the `reactance_base` can be set to perform this conversion (e.g. *100)."
+        ],
+        [
+            "connection",
+            "resistance",
+            null,
+            null,
+            "To be implemented. The per unit resistance of a `connection`."
         ],
         [
             "connection__from_node",
-            "connection_capacity",
+            "binary_gas_flow_limits_fix",
+            null,
+            null,
+            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__from_node",
+            "binary_gas_flow_limits_initial",
+            null,
+            null,
+            "Set the initial value for the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__from_node",
+            "capacity_per_connection",
             null,
             null,
             "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
         ],
         [
             "connection__from_node",
-            "connection_conv_cap_to_flow",
-            1,
+            "capacity_to_flow_conversion_factor",
+            1.0,
             null,
-            "Optional coefficient for `connection_capacity` unit conversions in the case that the `connection_capacity` value is incompatible with the desired `connection_flow` units."
+            "Optional coefficient for `capacity_per_connection` unit conversions in the case that the `capacity_per_connection` value is incompatible with the desired `connection_flow` units."
         ],
         [
             "connection__from_node",
@@ -2201,59 +2156,38 @@
         ],
         [
             "connection__from_node",
-            "fix_binary_gas_connection_flow",
-            null,
-            null,
-            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__from_node",
-            "fix_connection_flow",
+            "flow_limits_fix",
             null,
             null,
             "Fix the value of the `connection_flow` variable."
         ],
         [
             "connection__from_node",
-            "fix_connection_intact_flow",
+            "flow_limits_fix_intact",
             null,
             null,
             "Fix the value of the `connection_intact_flow` variable."
         ],
         [
             "connection__from_node",
-            "graph_view_position",
+            "flow_limits_initial",
             null,
             null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
+            "Set the initial value for the `connection_flow` variable."
         ],
         [
             "connection__from_node",
-            "initial_binary_gas_connection_flow",
+            "flow_limits_initial_intact",
             null,
             null,
-            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__from_node",
-            "initial_connection_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_flow` variable."
-        ],
-        [
-            "connection__from_node",
-            "initial_connection_intact_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_intact_flow` variable."
+            "Set the initial value for the `connection_intact_flow` variable."
         ],
         [
             "connection__from_node__user_constraint",
-            "connection_flow_coefficient",
-            0,
+            "coefficient_for_connection_flow",
+            0.0,
             null,
-            "defines the user constraint coefficient on the connection flow variable in the from direction"
+            "Defines the user constraint coefficient on the connection flow variable in the from direction."
         ],
         [
             "connection__node__node",
@@ -2316,17 +2250,31 @@
         ],
         [
             "connection__to_node",
-            "connection_capacity",
+            "binary_gas_flow_limits_fix",
+            null,
+            null,
+            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__to_node",
+            "binary_gas_flow_limits_initial",
+            null,
+            null,
+            "Set the initial value for the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
+        ],
+        [
+            "connection__to_node",
+            "capacity_per_connection",
             null,
             null,
             "Limits the `connection_flow` variable to the `to_node`. `to_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."
         ],
         [
             "connection__to_node",
-            "connection_conv_cap_to_flow",
-            1,
+            "capacity_to_flow_conversion_factor",
+            1.0,
             null,
-            "Optional coefficient for `connection_capacity` unit conversions in the case the `connection_capacity` value is incompatible with the desired `connection_flow` units."
+            "Optional coefficient for `capacity_per_connection` unit conversions in the case the `capacity_per_connection` value is incompatible with the desired `connection_flow` units."
         ],
         [
             "connection__to_node",
@@ -2372,108 +2320,136 @@
         ],
         [
             "connection__to_node",
-            "fix_binary_gas_connection_flow",
-            null,
-            null,
-            "Fix the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__to_node",
-            "fix_connection_flow",
+            "flow_limits_fix",
             null,
             null,
             "Fix the value of the `connection_flow` variable."
         ],
         [
             "connection__to_node",
-            "fix_connection_intact_flow",
+            "flow_limits_fix_intact",
             null,
             null,
             "Fix the value of the `connection_intact_flow` variable."
         ],
         [
             "connection__to_node",
-            "graph_view_position",
+            "flow_limits_initial",
             null,
             null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
+            "Set the initial value for the `connection_flow` variable."
         ],
         [
             "connection__to_node",
-            "initial_binary_gas_connection_flow",
+            "flow_limits_initial_intact",
             null,
             null,
-            "Initialize the value of the `connection_flow_binary` variable, and hence pre-determine the direction of flow in the connection."
-        ],
-        [
-            "connection__to_node",
-            "initial_connection_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_flow` variable."
-        ],
-        [
-            "connection__to_node",
-            "initial_connection_intact_flow",
-            null,
-            null,
-            "Initialize the value of the `connection_intact_flow` variable."
+            "Set the initial value for the `connection_intact_flow` variable."
         ],
         [
             "connection__to_node__user_constraint",
-            "connection_flow_coefficient",
-            0,
+            "coefficient_for_connection_flow",
+            0.0,
             null,
-            "defines the user constraint coefficient on the connection flow variable in the to direction"
+            "Defines the user constraint coefficient on the connection flow variable in the to direction."
         ],
         [
             "connection__user_constraint",
-            "connections_invested_available_coefficient",
-            0,
+            "coefficient_for_connections_invested",
+            0.0,
             null,
-            "coefficient of `connections_invested_available` in the specific `user_constraint`"
+            "Coefficient of `connections_invested` in the specific `user_constraint`"
         ],
         [
             "connection__user_constraint",
-            "connections_invested_coefficient",
-            0,
+            "coefficient_for_connections_invested_available",
+            0.0,
             null,
-            "coefficient of `connections_invested` in the specific `user_constraint`"
+            "Coefficient of `connections_invested_available` in the specific `user_constraint`"
+        ],
+        [
+            "grid",
+            "lodf_tolerance",
+            0.1,
+            null,
+            "The minimum absolute value of the line outage distribution factor (LODF) that is considered meaningful."
+        ],
+        [
+            "grid",
+            "mp_min_res_gen_to_demand_ratio",
+            null,
+            null,
+            "Minimum ratio of renewable generation to demand for this grid - used in the minimum renewable generation constraint within the Benders master problem"
+        ],
+        [
+            "grid",
+            "mp_min_res_gen_to_demand_ratio_slack_penalty",
+            null,
+            null,
+            "Penalty for violating the minimum renewable generation to demand ratio."
+        ],
+        [
+            "grid",
+            "physics_duration",
+            null,
+            null,
+            "For how long the `physics_type` (currently only for PTDF and LODF) should apply relative to the start of the window."
+        ],
+        [
+            "grid",
+            "physics_type",
+            "none",
+            "grid_physics_list",
+            "Defines if the `grid` follows lodf or ptdf physics."
+        ],
+        [
+            "grid",
+            "ptdf_threshold",
+            0.001,
+            null,
+            "The minimum absolute value of the power transfer distribution factor (PTDF) that is considered meaningful."
         ],
         [
             "investment_group",
-            "equal_investments",
+            "equal_investments_active",
             false,
             "boolean_value_list",
             "Whether all entities in the group must have the same investment decision."
         ],
         [
             "investment_group",
-            "maximum_capacity_invested_available",
+            "investment_capacity_total_max_cumulative",
             null,
             null,
             "Upper bound on the capacity invested available in the group at any point in time."
         ],
         [
             "investment_group",
-            "maximum_entities_invested_available",
-            null,
-            null,
-            "Upper bound on the number of entities invested available in the group at any point in time."
-        ],
-        [
-            "investment_group",
-            "minimum_capacity_invested_available",
+            "investment_capacity_total_min_cumulative",
             null,
             null,
             "Lower bound on the capacity invested available in the group at any point in time."
         ],
         [
             "investment_group",
-            "minimum_entities_invested_available",
+            "investment_count_total_max_cumulative",
+            null,
+            null,
+            "Upper bound on the number of entities invested available in the group at any point in time."
+        ],
+        [
+            "investment_group",
+            "investment_count_total_min_cumulative",
             null,
             null,
             "Lower bound on the number of entities invested available in the group at any point in time."
+        ],
+        [
+            "model",
+            "benders_iterations_reporting_active",
+            false,
+            "boolean_value_list",
+            "Whether to save results from Benders iterations before convergence."
         ],
         [
             "model",
@@ -2484,126 +2460,38 @@
         ],
         [
             "model",
-            "db_lp_solver",
-            "HiGHS.jl",
-            "db_lp_solver_list",
-            "Solver for MIP problems. Solver package must be added and pre-configured in Julia. Overrides lp_solver RunSpineOpt kwarg"
+            "connection_flow_highest_resolution_active",
+            true,
+            "boolean_value_list",
+            "Whether to use highest resolution for constraint ratio out in connection flow."
         ],
         [
             "model",
-            "db_lp_solver_options",
-            {
-                "data": [
-                    [
-                        "Clp.jl",
-                        {
-                            "data": [
-                                [
-                                    "LogLevel",
-                                    0
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
-                    ],
-                    [
-                        "HiGHS.jl",
-                        {
-                            "data": [
-                                [
-                                    "presolve",
-                                    "on"
-                                ],
-                                [
-                                    "time_limit",
-                                    300.01
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
-                    ]
-                ],
-                "type": "map",
-                "index_type": "str"
-            },
+            "connection_investment_power_flow_impact_active",
+            true,
+            "boolean_value_list",
+            "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
+        ],
+        [
+            "model",
+            "decomposition_max_gap",
+            0.05,
             null,
-            "Map parameter containing LP solver option name option value pairs. See solver documentation for supported solver options"
+            "Specifies the maximum optimality gap for the model. Currently only used for the master problem within a decomposed structure"
         ],
         [
             "model",
-            "db_mip_solver",
-            "HiGHS.jl",
-            "db_mip_solver_list",
-            "Solver for MIP problems. Solver package must be added and pre-configured in Julia. Overrides mip_solver RunSpineOpt kwarg"
-        ],
-        [
-            "model",
-            "db_mip_solver_options",
-            {
-                "data": [
-                    [
-                        "CPLEX.jl",
-                        {
-                            "data": [
-                                [
-                                    "CPX_PARAM_EPGAP",
-                                    0.01
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
-                    ],
-                    [
-                        "Cbc.jl",
-                        {
-                            "data": [
-                                [
-                                    "logLevel",
-                                    0
-                                ],
-                                [
-                                    "ratioGap",
-                                    0.01
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
-                    ],
-                    [
-                        "HiGHS.jl",
-                        {
-                            "data": [
-                                [
-                                    "mip_rel_gap",
-                                    0.01
-                                ],
-                                [
-                                    "presolve",
-                                    "on"
-                                ],
-                                [
-                                    "threads",
-                                    0
-                                ],
-                                [
-                                    "time_limit",
-                                    300.01
-                                ]
-                            ],
-                            "type": "map",
-                            "index_type": "str"
-                        }
-                    ]
-                ],
-                "type": "map",
-                "index_type": "str"
-            },
+            "decomposition_max_iterations",
+            10.0,
             null,
-            "Map parameter containing MIP solver option name option value pairs for MIP. See solver documentation for supported solver options"
+            "Specifies the maximum number of iterations for the model. Currently only used for the master problem within a decomposed structure"
+        ],
+        [
+            "model",
+            "decomposition_min_iterations",
+            1.0,
+            null,
+            "Specifies the minimum number of iterations for the model. Currently only used for the master problem within a decomposed structure"
         ],
         [
             "model",
@@ -2628,45 +2516,17 @@
         ],
         [
             "model",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "model",
-            "max_gap",
-            0.05,
-            null,
-            "Specifies the maximum optimality gap for the model. Currently only used for the master problem within a decomposed structure"
-        ],
-        [
-            "model",
-            "max_iterations",
-            10,
-            null,
-            "Specifies the maximum number of iterations for the model. Currently only used for the master problem within a decomposed structure"
-        ],
-        [
-            "model",
-            "max_mga_iterations",
+            "mga_max_iterations",
             null,
             null,
             "Define the number of mga iterations, i.e. how many alternative solutions will be generated."
         ],
         [
             "model",
-            "max_mga_slack",
+            "mga_max_slack",
             0.05,
             null,
             "Defines the maximum slack by which the alternative solution may differ from the original solution (e.g. 5% more than initial objective function value)"
-        ],
-        [
-            "model",
-            "min_iterations",
-            1,
-            null,
-            "Specifies the minimum number of iterations for the model. Currently only used for the master problem within a decomposed structure"
         ],
         [
             "model",
@@ -2679,17 +2539,17 @@
             "model",
             "model_end",
             {
-                "data": "2000-01-02T00:00:00.0",
+                "data": "2000-01-02T00:00:00",
                 "type": "date_time"
             },
             null,
-            "Defines the last timestamp to be modelled. Rolling optimization terminates after passing this point."
+            "Defines the last timestamp to be modelled, either as a static date-time or a duration relative to `model_start`. Rolling optimization terminates after passing this point."
         ],
         [
             "model",
             "model_start",
             {
-                "data": "2000-01-01T00:00:00.0",
+                "data": "2000-01-01T00:00:00",
                 "type": "date_time"
             },
             null,
@@ -2718,13 +2578,6 @@
         ],
         [
             "model",
-            "report_benders_iterations",
-            false,
-            "boolean_value_list",
-            "Whether to save results from Benders iterations before convergence."
-        ],
-        [
-            "model",
             "roll_forward",
             null,
             null,
@@ -2739,21 +2592,130 @@
         ],
         [
             "model",
-            "use_connection_intact_flow",
-            true,
-            "boolean_value_list",
-            "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."
+            "solver_lp",
+            "HiGHS.jl",
+            "solver_lp_list",
+            "Solver for LP problems. Solver package must be added and pre-configured in Julia. Overrides lp_solver RunSpineOpt kwarg"
         ],
         [
             "model",
-            "use_highest_resolution_constraint_ratio_out_in_connection_flow",
-            true,
-            "boolean_value_list",
-            "Whether to use highest resolution for constraint ratio out in connection flow."
+            "solver_lp_options",
+            {
+                "data": [
+                    [
+                        "HiGHS.jl",
+                        {
+                            "data": [
+                                [
+                                    "presolve",
+                                    "on"
+                                ],
+                                [
+                                    "time_limit",
+                                    300.01
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
+                    ],
+                    [
+                        "Clp.jl",
+                        {
+                            "data": [
+                                [
+                                    "LogLevel",
+                                    0.0
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
+                    ]
+                ],
+                "type": "map",
+                "index_type": "str"
+            },
+            null,
+            "Map parameter containing LP solver option name option value pairs. See solver documentation for supported solver options"
         ],
         [
             "model",
-            "use_tight_compact_formulations",
+            "solver_mip",
+            "HiGHS.jl",
+            "solver_mip_list",
+            "Solver for MIP problems. Solver package must be added and pre-configured in Julia. Overrides mip_solver RunSpineOpt kwarg"
+        ],
+        [
+            "model",
+            "solver_mip_options",
+            {
+                "data": [
+                    [
+                        "HiGHS.jl",
+                        {
+                            "data": [
+                                [
+                                    "presolve",
+                                    "on"
+                                ],
+                                [
+                                    "mip_rel_gap",
+                                    0.01
+                                ],
+                                [
+                                    "threads",
+                                    0.0
+                                ],
+                                [
+                                    "time_limit",
+                                    300.01
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
+                    ],
+                    [
+                        "Cbc.jl",
+                        {
+                            "data": [
+                                [
+                                    "ratioGap",
+                                    0.01
+                                ],
+                                [
+                                    "logLevel",
+                                    0.0
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
+                    ],
+                    [
+                        "CPLEX.jl",
+                        {
+                            "data": [
+                                [
+                                    "CPX_PARAM_EPGAP",
+                                    0.01
+                                ]
+                            ],
+                            "type": "map",
+                            "index_type": "str"
+                        }
+                    ]
+                ],
+                "type": "map",
+                "index_type": "str"
+            },
+            null,
+            "Map parameter containing MIP solver option name option value pairs for MIP. See solver documentation for supported solver options"
+        ],
+        [
+            "model",
+            "tight_compact_formulations_active",
             false,
             "boolean_value_list",
             "Whether to use tight and compact constraint formulations."
@@ -2795,220 +2757,94 @@
         ],
         [
             "node",
+            "balance_penalty",
+            null,
+            null,
+            "Penalty cost applied to violations of the `nodal_balance` constraint, i.e., to the `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a penalty defined for them."
+        ],
+        [
+            "node",
+            "balance_sense",
+            "==",
+            "constraint_sense_list",
+            "A selector for `nodal_balance` constraint sense."
+        ],
+        [
+            "node",
             "balance_type",
-            "balance_type_node",
+            "node_balance",
             "balance_type_list",
-            "A selector for how the `nodal_balance` constraint should be handled."
+            "A selector for how the `nodal_balance` constraint should be handled: whether the constraint is created for nodes, node groups, or not at all, and whether the flows are instantaneously balanced or the node can store its commodity."
         ],
         [
             "node",
             "benders_starting_storages_invested",
             null,
             null,
-            "Fixes the number of storages invested during the first Benders iteration"
+            "Fixes the number of storages invested during the first Benders iteration."
         ],
         [
             "node",
-            "candidate_storages",
+            "capacity_margin_min",
             null,
             null,
-            "Determines the maximum number of new storages which may be invested in"
+            "Minimum capacity margin for the `node` or `node_group`. The required margin by which available production capacity must exceed demand."
+        ],
+        [
+            "node",
+            "capacity_margin_penalty",
+            null,
+            null,
+            "Penalty cost applied to violations of the min capacity_margin constraint of the `node` or `node_group`."
         ],
         [
             "node",
             "demand",
-            0,
+            0.0,
             null,
-            "Demand for the `commodity` of a `node`. Energy gains can be represented using negative `demand`."
+            "Demand for the commodity of a `node`. Energy gains can be represented using negative `demand`."
         ],
         [
             "node",
-            "downward_reserve",
-            false,
-            null,
-            "Identifier for `node`s providing downward reserves"
-        ],
-        [
-            "node",
-            "fix_node_pressure",
-            null,
-            null,
-            "Fixes the corresponding `node_pressure` variable to the provided value"
-        ],
-        [
-            "node",
-            "fix_node_state",
-            null,
-            null,
-            "Fixes the corresponding `node_state` variable to the provided value. Can be used for e.g. fixing boundary conditions."
-        ],
-        [
-            "node",
-            "fix_node_voltage_angle",
-            null,
-            null,
-            "Fixes the corresponding `node_voltage_angle` variable to the provided value"
-        ],
-        [
-            "node",
-            "fix_storages_invested",
-            null,
-            null,
-            "Used to fix the value of the storages_invested variable"
-        ],
-        [
-            "node",
-            "fix_storages_invested_available",
-            null,
-            null,
-            "Used to fix the value of the storages_invested_available variable"
-        ],
-        [
-            "node",
-            "frac_state_loss",
-            0,
-            null,
-            "Self-discharge coefficient for `node_state` variables. Effectively, represents the *loss power per unit of state*."
-        ],
-        [
-            "node",
-            "fractional_demand",
-            0,
+            "demand_fraction",
+            0.0,
             null,
             "The fraction of a `node` group's `demand` applied for the `node` in question."
         ],
         [
             "node",
-            "graph_view_position",
+            "existing_storages",
+            1.0,
             null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "node",
-            "has_pressure",
-            false,
-            "boolean_value_list",
-            "A boolean flag for whether a `node` has a `node_pressure` variable."
-        ],
-        [
-            "node",
-            "has_state",
-            false,
-            "boolean_value_list",
-            "A boolean flag for whether a `node` has a `node_state` variable."
-        ],
-        [
-            "node",
-            "has_voltage_angle",
-            false,
-            "boolean_value_list",
-            "A boolean flag for whether a `node` has a `node_voltage_angle` variable."
-        ],
-        [
-            "node",
-            "initial_node_pressure",
-            null,
-            null,
-            "Initializes the corresponding `node_pressure` variable to the provided value"
-        ],
-        [
-            "node",
-            "initial_node_state",
-            null,
-            null,
-            "Initializes the corresponding `node_state` variable to the provided value."
-        ],
-        [
-            "node",
-            "initial_node_voltage_angle",
-            null,
-            null,
-            "Initializes the corresponding `node_voltage_angle` variable to the provided value"
-        ],
-        [
-            "node",
-            "initial_storages_invested",
-            null,
-            null,
-            "Used to initialze the value of the storages_invested variable"
-        ],
-        [
-            "node",
-            "initial_storages_invested_available",
-            null,
-            null,
-            "Used to initialze the value of the storages_invested_available variable"
-        ],
-        [
-            "node",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "node",
-            "is_longterm_storage",
-            false,
-            null,
-            "If true, `node` has a state variable for representative and non-representative timeslices"
+            "The number of 'sub storages' aggregated to form the modelled `node`. The default value becomes zero if `storage_investment_count_max_cumulative` has been defined."
         ],
         [
             "node",
             "is_non_spinning",
             false,
             "boolean_value_list",
-            "A boolean flag for whether a `node` is acting as a non-spinning reserve"
+            "A boolean flag for whether a `node` is acting as a non-spinning reserve."
         ],
         [
             "node",
-            "is_reserve_node",
+            "mga_storage_investment_active",
             false,
             "boolean_value_list",
-            "A boolean flag for whether a `node` is acting as a `reserve_node`"
+            "A boolean flag for whether a certain variable (here: `storages_invested`) will be considered in the maximal-differences of the MGA objective."
         ],
         [
             "node",
-            "max_node_pressure",
+            "mga_storage_investment_big_m",
             null,
             null,
-            "Maximum allowed gas pressure at `node`."
+            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_storage_investment_active an appropriate `mga_storage_investment_big_m` would be twice the `storage_investment_count_max_cumulative`."
         ],
         [
             "node",
-            "max_voltage_angle",
+            "mga_storage_investment_weight",
+            1,
             null,
-            null,
-            "Maximum allowed voltage angle at `node`."
-        ],
-        [
-            "node",
-            "min_capacity_margin",
-            null,
-            null,
-            "minimum capacity margin applying to the `node` or `node_group`"
-        ],
-        [
-            "node",
-            "min_capacity_margin_penalty",
-            null,
-            null,
-            "penalty to apply to violations of the min capacity_margin constraint of the `node` or `node_group`"
-        ],
-        [
-            "node",
-            "min_node_pressure",
-            null,
-            null,
-            "Minimum allowed gas pressure at `node`."
-        ],
-        [
-            "node",
-            "min_voltage_angle",
-            null,
-            null,
-            "Minimum allowed voltage angle at `node`. "
+            "Weight for scaling the MGA variables. For weighted-sum MGA method, the length of this weight given as an Array will determine the number of iterations."
         ],
         [
             "node",
@@ -3019,20 +2855,6 @@
         ],
         [
             "node",
-            "nodal_balance_sense",
-            "==",
-            "constraint_sense_list",
-            "A selector for `nodal_balance` constraint sense."
-        ],
-        [
-            "node",
-            "node_availability_factor",
-            1,
-            null,
-            "Availability of the `node`, acting as a multiplier on its `node_state_cap`. Typically between 0-1."
-        ],
-        [
-            "node",
             "node_opf_type",
             "node_opf_type_normal",
             "node_opf_type_list",
@@ -3040,52 +2862,66 @@
         ],
         [
             "node",
-            "node_slack_penalty",
+            "pressure_fix",
             null,
             null,
-            "A penalty cost for `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a cost defined for them."
+            "Fixes the `node_pressure` variable to the provided value."
         ],
         [
             "node",
-            "node_state_cap",
+            "pressure_initial",
             null,
             null,
-            "The maximum permitted value for a `node_state` variable."
+            "Initializes the `node_pressure` variable to the provided value"
         ],
         [
             "node",
-            "node_state_min",
-            0,
+            "pressure_max",
             null,
-            "The minimum permitted absolute value for a `node_state` variable."
+            null,
+            "Maximum allowed gas pressure at `node`."
         ],
         [
             "node",
-            "node_state_min_factor",
-            0,
+            "pressure_min",
             null,
-            "The minimum permitted per unit value for a `node_state` variable."
+            null,
+            "Minimum allowed gas pressure at `node`."
         ],
         [
             "node",
-            "number_of_storages",
-            1,
-            null,
-            "Denotes the number of 'sub storages' aggregated to form the modelled `node`."
+            "reserve_active",
+            false,
+            "boolean_value_list",
+            "A boolean flag for whether a `node` is acting as a `reserve_node`."
         ],
         [
             "node",
-            "state_coeff",
-            1,
-            null,
-            "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `node_injection` constraint."
+            "reserve_downward",
+            false,
+            "boolean_value_list",
+            "Identifier for `node`s providing downward reserves."
+        ],
+        [
+            "node",
+            "reserve_upward",
+            false,
+            "boolean_value_list",
+            "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `reserve_active` is also set to `true`."
+        ],
+        [
+            "node",
+            "storage_active",
+            false,
+            "boolean_value_list",
+            "A boolean flag for whether the flows are instantaneously balanced (false) or the node can store its commodity (true)."
         ],
         [
             "node",
             "storage_decommissioning_cost",
             null,
             null,
-            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
+            "To be implemented. Costs associated with decommissioning a storage. The costs will be distributed equally over the `storage_decommissioning_time` and discounted to the `discount_year`."
         ],
         [
             "node",
@@ -3095,56 +2931,70 @@
                 "type": "duration"
             },
             null,
-            "A storage's decommissioning time, i.e., the time between the moment at which a storage decommissioning decision is takien, and the moment at which decommissioning is complete."
+            "The decommissioning time of the storage, i.e., the time between the moment at which a storage decommissioning decision is taken, and the moment at which decommissioning is complete."
         ],
         [
             "node",
             "storage_discount_rate_technology_specific",
-            0,
+            0.0,
             null,
-            "storage-specific discount rate used to calculate the storage's investment costs. If not specified, the model discount rate is used."
+            "Storage-specific discount rate for calculating the investment costs of the storage. If not specified, the model discount rate is used."
         ],
         [
             "node",
-            "storage_fom_cost",
+            "storage_fixed_annual_cost",
             null,
             null,
-            "Fixed operation and maintenance costs of a `node`. Essentially, a cost coefficient on the number of installed units and `node_state_cap` parameters. E.g. EUR/MWh"
+            "To be implemented. Fixed annual operation and maintenance costs of the storage. Essentially, a cost coefficient on the number of installed storages and `storage_state_max` parameters. E.g. EUR/MWh/a."
         ],
         [
             "node",
             "storage_investment_cost",
             null,
             null,
-            "Determines the investment cost per unit state_cap over the investment life of a storage"
+            "Investment cost per 'sub storage' over the lifetime of a storage. E.g. EUR/'sub storage'."
         ],
         [
             "node",
-            "storage_investment_econ_lifetime",
+            "storage_investment_count_fix_cumulative",
             null,
             null,
-            "Economic lifetime for storage investment decisions: the duration for investment cost payment."
+            "Fixes the cumulative number of new storage investments, i.e., the `storages_invested_available` variable, to the provided value."
         ],
         [
             "node",
-            "storage_investment_lifetime_sense",
-            ">=",
-            "constraint_sense_list",
-            "Formula sense of the constraint `storage_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
+            "storage_investment_count_fix_new",
+            null,
+            null,
+            "Fixes the number of new storage investments, i.e., the `storages_invested` variable, to the provided value."
         ],
         [
             "node",
-            "storage_investment_tech_lifetime",
+            "storage_investment_count_initial_cumulative",
             null,
             null,
-            "Technical lifetime for storage investment decisions: the duration for the invested straoge to be available."
+            "Initializes the cumulative number of new storage investments, i.e., the `storages_invested_available` variable, to the provided value."
+        ],
+        [
+            "node",
+            "storage_investment_count_initial_new",
+            null,
+            null,
+            "Initializes the number of new storage investments, i.e., the `storages_invested` variable, to the provided value."
+        ],
+        [
+            "node",
+            "storage_investment_count_max_cumulative",
+            null,
+            null,
+            "Maximum cumulative number of new storages which may be invested in."
         ],
         [
             "node",
             "storage_investment_variable_type",
-            "storage_investment_variable_type_integer",
-            "storage_investment_variable_type_list",
-            "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"
+            "integer",
+            "variable_type_list",
+            "A selector for the type of the storage investment variable (`storages_invested`): whether it is continuous (usually representing invested capacity) or integer (representing discrete 'sub storage' investments)."
         ],
         [
             "node",
@@ -3154,28 +3004,91 @@
                 "type": "duration"
             },
             null,
-            "A storage's lead time, i.e., the time between the moment at which a storage investment decision is takien, and the moment at which the storage investment becomes operational."
+            "The lead time of the storage, i.e., the time between the moment at which a storage investment decision is taken, and the moment at which the storage investment becomes operational."
         ],
         [
             "node",
-            "storages_invested_big_m_mga",
-            null,
-            null,
-            "big_m_mga should be chosen as small as possible but sufficiently large. For units_invested_mga an appropriate big_m_mga would be twice the candidate storages."
+            "storage_lifetime_constraint_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `storage_lifetime` constraint sense. The default '>=' represents minimum technical lifetime."
         ],
         [
             "node",
-            "storages_invested_mga",
+            "storage_lifetime_economic",
+            null,
+            null,
+            "Economic lifetime for storage investments: the duration for investment cost payment."
+        ],
+        [
+            "node",
+            "storage_lifetime_technical",
+            null,
+            null,
+            "Technical lifetime for storage investments. Represents minimum technical lifetime by default, but the interpretation can be changed via `storage_lifetime_constraint_sense`."
+        ],
+        [
+            "node",
+            "storage_longterm_active",
             false,
             "boolean_value_list",
-            "Defines whether a certain variable (here: storages_invested) will be considered in the maximal-differences of the mga objective"
+            "If true, `node` has a state variable for representative and non-representative timeslices"
         ],
         [
             "node",
-            "storages_invested_mga_weight",
-            1,
+            "storage_self_discharge",
+            0.0,
             null,
-            "Used to scale mga variables. For weighted-sum mga method, the length of this weight given as an Array will determine the number of iterations."
+            "Self-discharge coefficient for the `node_state` variable. Effectively, represents the *loss power per unit of state*."
+        ],
+        [
+            "node",
+            "storage_state_coefficient",
+            1.0,
+            null,
+            "The commodity content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `node_injection` constraint."
+        ],
+        [
+            "node",
+            "storage_state_fix",
+            null,
+            null,
+            "Fixes the `node_state` variable to the provided value. Can be used for e.g. fixing boundary conditions."
+        ],
+        [
+            "node",
+            "storage_state_initial",
+            null,
+            null,
+            "Initializes the `node_state` variable to the provided value."
+        ],
+        [
+            "node",
+            "storage_state_max",
+            null,
+            null,
+            "Maximum allowed storage state per 'sub storage', i.e., maximum allowed value for the `node_state` variable."
+        ],
+        [
+            "node",
+            "storage_state_max_fraction",
+            1.0,
+            null,
+            "Fraction of `storage_state_max` that is actually available. Typically between 0-1."
+        ],
+        [
+            "node",
+            "storage_state_min",
+            0.0,
+            null,
+            "Minimum allowed storage state per 'sub storage', i.e., minimum allowed value for the `node_state` variable."
+        ],
+        [
+            "node",
+            "storage_state_min_fraction",
+            0.0,
+            null,
+            "Fraction of `storage_state_max` that is the minimum allowed level. Typically between 0-1."
         ],
         [
             "node",
@@ -3200,24 +3113,38 @@
         ],
         [
             "node",
-            "upward_reserve",
-            false,
+            "voltage_angle_fix",
             null,
-            "Identifier for `node`s providing upward reserves"
+            null,
+            "Fixes the `node_voltage_angle` variable to the provided value."
+        ],
+        [
+            "node",
+            "voltage_angle_initial",
+            null,
+            null,
+            "Initializes the `node_voltage_angle` variable to the provided value."
+        ],
+        [
+            "node",
+            "voltage_angle_max",
+            null,
+            null,
+            "Maximum allowed voltage angle at `node`."
+        ],
+        [
+            "node",
+            "voltage_angle_min",
+            null,
+            null,
+            "Minimum allowed voltage angle at `node`. "
         ],
         [
             "node__node",
-            "diff_coeff",
-            0,
+            "diffusion_coefficient",
+            0.0,
             null,
             "Commodity diffusion coefficient between two `nodes`. Effectively, denotes the *diffusion power per unit of state* from the first `node` to the second."
-        ],
-        [
-            "node__stochastic_structure",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "node__temporal_block",
@@ -3234,46 +3161,193 @@
             "Sense for the cyclic condition constraint of a node."
         ],
         [
-            "node__temporal_block",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "node__user_constraint",
-            "demand_coefficient",
-            0,
+            "node__to_unit",
+            "capacity_per_unit",
             null,
-            "coefficient of the specified node's demand in the specified user constraint"
+            null,
+            "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."
+        ],
+        [
+            "node__to_unit",
+            "capacity_to_flow_conversion_factor",
+            1.0,
+            null,
+            "Optional coefficient for `capacity_per_unit` unit conversions in the case the `capacity_per_unit` value is incompatible with the desired `unit_flow` units."
+        ],
+        [
+            "node__to_unit",
+            "fix_nonspin_units_started_up",
+            null,
+            null,
+            "Fix the `nonspin_units_started_up` variable."
+        ],
+        [
+            "node__to_unit",
+            "flow_limits_fix",
+            null,
+            null,
+            "Fix the values of the `unit_flow` variable."
+        ],
+        [
+            "node__to_unit",
+            "flow_limits_fix_op",
+            null,
+            null,
+            "Fix the values of the `unit_flow_op` variable, essentially fixing the flows per operating point."
+        ],
+        [
+            "node__to_unit",
+            "flow_limits_initial",
+            null,
+            null,
+            "Set the initial value for the `unit_flow` variable."
+        ],
+        [
+            "node__to_unit",
+            "flow_limits_initial_op",
+            null,
+            null,
+            "Set the initial value for the `unit_flow_op` variable, essentially fixing the initial flow per operating point."
+        ],
+        [
+            "node__to_unit",
+            "flow_limits_max_cumulative",
+            null,
+            null,
+            "Bound on the maximum cumulated flows of a unit group from a node group e.g max consumption of certain commodity."
+        ],
+        [
+            "node__to_unit",
+            "flow_limits_min",
+            0.0,
+            null,
+            "Set lower bound of the `unit_flow` variable."
+        ],
+        [
+            "node__to_unit",
+            "flow_limits_min_cumulative",
+            null,
+            null,
+            "Bound on the minimum cumulated flows of a unit group from a node group."
+        ],
+        [
+            "node__to_unit",
+            "fuel_cost",
+            null,
+            null,
+            "Variable fuel costs than can be attributed to a `unit_flow`. E.g. EUR/MWh"
+        ],
+        [
+            "node__to_unit",
+            "initial_nonspin_units_started_up",
+            null,
+            null,
+            "Initialize the `nonspin_units_started_up` variable."
+        ],
+        [
+            "node__to_unit",
+            "minimum_operating_point",
+            null,
+            null,
+            "Minimum level for the `unit_flow` relative to the `units_on` online capacity."
+        ],
+        [
+            "node__to_unit",
+            "operating_points",
+            null,
+            null,
+            "Operating points for piecewise-linear `unit` efficiency approximations."
+        ],
+        [
+            "node__to_unit",
+            "ordered_unit_flow_op",
+            false,
+            "boolean_value_list",
+            "Defines whether the segments of this unit flow are ordered as per the rank of their operating points."
+        ],
+        [
+            "node__to_unit",
+            "ramp_limits_down",
+            null,
+            null,
+            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_down] = %/t, e.g. 0.2/h"
+        ],
+        [
+            "node__to_unit",
+            "ramp_limits_shutdown",
+            null,
+            null,
+            "Maximum ramp-down during shutdowns"
+        ],
+        [
+            "node__to_unit",
+            "ramp_limits_startup",
+            null,
+            null,
+            "Maximum ramp-up during startups"
+        ],
+        [
+            "node__to_unit",
+            "ramp_limits_up",
+            null,
+            null,
+            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_up] = %/t, e.g. 0.2/h"
+        ],
+        [
+            "node__to_unit",
+            "reserve_procurement_cost",
+            null,
+            null,
+            "Procurement cost for reserves"
+        ],
+        [
+            "node__to_unit",
+            "unit_flow_non_anticipativity_margin",
+            null,
+            null,
+            "Margin by which `unit_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
+        ],
+        [
+            "node__to_unit",
+            "unit_flow_non_anticipativity_time",
+            null,
+            null,
+            "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."
+        ],
+        [
+            "node__to_unit",
+            "vom_cost",
+            null,
+            null,
+            "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
         ],
         [
             "node__user_constraint",
-            "node_state_coefficient",
-            0,
+            "coefficient_for_demand",
+            0.0,
+            null,
+            "Coefficient of the specified node's demand in the specified user constraint."
+        ],
+        [
+            "node__user_constraint",
+            "coefficient_for_node_state",
+            0.0,
             null,
             "Coefficient of the specified node's state variable in the specified user constraint."
         ],
         [
             "node__user_constraint",
-            "storages_invested_available_coefficient",
-            0,
-            null,
-            "Coefficient of the specified node's storages invested available variable in the specified user constraint."
-        ],
-        [
-            "node__user_constraint",
-            "storages_invested_coefficient",
-            0,
+            "coefficient_for_storages_invested",
+            0.0,
             null,
             "Coefficient of the specified node's storage investment variable in the specified user constraint."
         ],
         [
-            "output",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+            "node__user_constraint",
+            "coefficient_for_storages_invested_available",
+            0.0,
+            null,
+            "Coefficient of the specified node's storages invested available variable in the specified user constraint."
         ],
         [
             "output",
@@ -3291,13 +3365,6 @@
         ],
         [
             "report",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "report",
             "output_db_url",
             null,
             null,
@@ -3307,22 +3374,15 @@
             "report__output",
             "overwrite_results_on_rolling",
             true,
-            null,
+            "boolean_value_list",
             "Whether or not results from further windows should overwrite results from previous ones."
         ],
         [
             "settings",
             "version",
-            20,
+            21,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
-        ],
-        [
-            "stage",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
         ],
         [
             "stage",
@@ -3381,30 +3441,16 @@
             "A penalty for violating the constraint that fixes this output for this stage (EXPERIMENTAL)."
         ],
         [
-            "stochastic_scenario",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "stochastic_structure",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
             "stochastic_structure__stochastic_scenario",
             "stochastic_scenario_end",
             null,
             null,
-            "A `Duration` for when a `stochastic_scenario` ends and its `child_stochastic_scenarios` start. Values are interpreted relative to the start of the current solve, and if no value is given, the `stochastic_scenario` is assumed to continue indefinitely."
+            "A `duration` for when a `stochastic_scenario` ends and its `child_stochastic_scenarios` start. Values are interpreted relative to the start of the current solve, and if no value is given, the `stochastic_scenario` is assumed to continue indefinitely."
         ],
         [
             "stochastic_structure__stochastic_scenario",
             "weight_relative_to_parents",
-            1,
+            1.0,
             null,
             "The weight of the `stochastic_scenario` in the objective function relative to its parents."
         ],
@@ -3413,35 +3459,28 @@
             "block_end",
             null,
             null,
-            "The end time for the `temporal_block`. Can be given either as a `DateTime` for a static end point, or as a `Duration` for an end point relative to the start of the current optimization."
+            "The end time for the `temporal_block`. Can be given either as a `DateTime` for a static end point, or as a `Duration` for an end point relative to the `model_start`."
         ],
         [
             "temporal_block",
             "block_start",
             null,
             null,
-            "The start time for the `temporal_block`. Can be given either as a `DateTime` for a static start point, or as a `Duration` for an start point relative to the start of the current optimization."
+            "The start time for the `temporal_block`. Can be given either as a `DateTime` for a static start point, or as a `Duration` for an start point relative to `model_start`."
         ],
         [
             "temporal_block",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+            "representative_block_index",
+            null,
+            null,
+            "Index for the array of coefficients defined in `representative_blocks_by_period`"
         ],
         [
             "temporal_block",
-            "representative_period_index",
+            "representative_blocks_by_period",
             null,
             null,
-            "Index for the array of coefficients defined in `representative_periods_mapping`"
-        ],
-        [
-            "temporal_block",
-            "representative_periods_mapping",
-            null,
-            null,
-            "Map from date time to representative temporal block combination (either a single block's name, or an array of coefficients for each block that has a `representative_period_index`)"
+            "Map from date time to representative temporal block combination (either a single block's name, or an array of coefficients for each block that has a `representative_block_index`)"
         ],
         [
             "temporal_block",
@@ -3456,23 +3495,23 @@
         [
             "temporal_block",
             "weight",
-            1,
+            1.0,
             null,
             "Weighting factor of the temporal block associated with the objective function"
+        ],
+        [
+            "unit",
+            "availability_factor",
+            1.0,
+            null,
+            "Availability of the `unit`, acting as a multiplier on its `capacity_per_unit`. Typically between 0-1."
         ],
         [
             "unit",
             "benders_starting_units_invested",
             null,
             null,
-            "Fixes the number of units invested during the first Benders iteration"
-        ],
-        [
-            "unit",
-            "candidate_units",
-            null,
-            null,
-            "Number of units which may be additionally constructed"
+            "Fixes the number of units invested during the first Benders iteration."
         ],
         [
             "unit",
@@ -3483,87 +3522,135 @@
         ],
         [
             "unit",
-            "fix_units_invested",
+            "decommissioning_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
             null,
-            null,
-            "Fix the value of the `units_invested` variable."
+            "The decommissioning time of the unit, i.e., the time between the moment at which a unit decommissioning decision is taken, and the moment at which decommissioning is complete."
         ],
         [
             "unit",
-            "fix_units_invested_available",
+            "discount_rate_technology_specific",
+            0.0,
             null,
-            null,
-            "Fix the value of the `units_invested_available` variable"
+            "Unit-specific discount rate for calculating the investment costs of the unit. If not specified, the model discount rate is used."
         ],
         [
             "unit",
-            "fix_units_on",
+            "existing_units",
+            1.0,
             null,
-            null,
-            "Fix the value of the `units_on` variable."
-        ],
-        [
-            "unit",
-            "fix_units_out_of_service",
-            null,
-            null,
-            "Fix the value of the `units_out_of_service` variable."
+            "The number of 'sub units' aggregated to form the modelled `unit`. The default value becomes zero if `investment_count_max_cumulative` has been defined."
         ],
         [
             "unit",
             "fom_cost",
             null,
             null,
-            "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the existing units (incl. `number_of_units` and `units_invested_available`) and `unit_capacity` parameters. Currently, the value needs to be defined per duration unit (i.e. 1 hour), E.g. EUR/MW/h"
+            "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the existing units (incl. `existing_units` and `units_invested_available`) and `capacity_per_unit` parameters. Currently, the value needs to be defined per duration unit (i.e. 1 hour). E.g. EUR/MW/h."
         ],
         [
             "unit",
-            "graph_view_position",
+            "investment_count_fix_cumulative",
             null,
             null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
+            "Fixes the cumulative number of new unit investments, i.e., the `units_invested_available` variable, to the provided value."
         ],
         [
             "unit",
-            "initial_units_invested",
+            "investment_count_fix_new",
             null,
             null,
-            "Initialize the value of the `units_invested` variable."
+            "Fixes the number of new unit investments, i.e., the `units_invested` variable, to the provided value."
         ],
         [
             "unit",
-            "initial_units_invested_available",
+            "investment_count_initial_cumulative",
             null,
             null,
-            "Initialize the value of the `units_invested_available` variable"
+            "Initializes the cumulative number of new unit investments, i.e., the `units_invested_available` variable, to the provided value."
         ],
         [
             "unit",
-            "initial_units_on",
+            "investment_count_initial_new",
             null,
             null,
-            "Initialize the value of the `units_on` variable."
+            "Initializes the number of new unit investments, i.e., the `units_invested` variable, to the provided value."
         ],
         [
             "unit",
-            "initial_units_out_of_service",
+            "investment_count_max_cumulative",
             null,
             null,
-            "Initialize the value of the `units_out_of_service` variable."
+            "Maximum cumulative number of new units which may be invested in."
         ],
         [
             "unit",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+            "investment_variable_type",
+            "linear",
+            "variable_type_list",
+            "A selector for the type of the unit investment variable (`units_invested`): whether it is continuous (usually representing invested capacity), integer (representing discrete 'sub unit' investments), binary (0 or 1 'sub unit' investments) or none (no investments)."
         ],
         [
             "unit",
             "is_renewable",
             false,
             "boolean_value_list",
-            "Whether the unit is renewable - used in the minimum renewable generation constraint within the Benders master problem"
+            "A boolean flag for whether the `unit` is renewable - used in the minimum renewable generation constraint within the Benders master problem."
+        ],
+        [
+            "unit",
+            "lead_time",
+            {
+                "data": "0h",
+                "type": "duration"
+            },
+            null,
+            "The lead time of the unit, i.e., the time between the moment at which a unit investment decision is taken, and the moment at which the unit investment becomes operational."
+        ],
+        [
+            "unit",
+            "lifetime_constraint_sense",
+            ">=",
+            "constraint_sense_list",
+            "A selector for `unit_lifetime` constraint sense. The default '>=' represents minimum technical lifetime."
+        ],
+        [
+            "unit",
+            "lifetime_economic",
+            null,
+            null,
+            "Economic lifetime for unit investments."
+        ],
+        [
+            "unit",
+            "lifetime_technical",
+            null,
+            null,
+            "Technical lifetime for unit investments. Represents minimum technical lifetime by default, but the interpretation can be changed via `lifetime_constraint_sense`."
+        ],
+        [
+            "unit",
+            "mga_investment_active",
+            false,
+            "boolean_value_list",
+            "A boolean flag for whether a certain variable (here: `units_invested`) will be considered in the maximal-differences of the MGA objective."
+        ],
+        [
+            "unit",
+            "mga_investment_big_m",
+            null,
+            null,
+            "Upper bound on the maximum difference between any MGA iteration. Should be chosen as small as possible but sufficiently large. For mga_investment_active an appropriate `mga_investment_big_m` would be twice the `investment_count_max_cumulative`."
+        ],
+        [
+            "unit",
+            "mga_investment_weight",
+            1,
+            null,
+            "Weight for scaling the MGA variables. For weighted-sum MGA method, the length of this weight given as an Array will determine the number of iterations."
         ],
         [
             "unit",
@@ -3581,149 +3668,87 @@
         ],
         [
             "unit",
-            "number_of_units",
-            1,
+            "online_count_fix",
             null,
-            "Denotes the number of 'sub units' aggregated to form the modelled `unit`. The default value becomes zero if `candidate_units` has been defined."
+            null,
+            "Fixes the `units_on` variable to the provided value."
+        ],
+        [
+            "unit",
+            "online_count_initial",
+            null,
+            null,
+            "Initializes the `units_on` variable to the provided value."
         ],
         [
             "unit",
             "online_variable_type",
-            "unit_online_variable_type_linear",
-            "unit_online_variable_type_list",
+            "linear",
+            "variable_type_list",
             "A selector for how the `units_on` variable is represented within the model."
         ],
         [
             "unit",
-            "outage_variable_type",
-            "unit_online_variable_type_none",
-            "unit_online_variable_type_list",
-            "Determines whether the outage variable is integer or continuous or none(no optimisation of maintenance outages)."
+            "out_of_service_count_fix",
+            null,
+            null,
+            "Fixes the `units_out_of_service` variable to the provided value."
         ],
         [
             "unit",
-            "scheduled_outage_duration",
+            "out_of_service_count_initial",
             null,
             null,
-            "Specifies the amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window"
+            "Initializes the `units_out_of_service` variable to the provided value."
+        ],
+        [
+            "unit",
+            "outage_scheduled_duration",
+            null,
+            null,
+            "The amount of time a unit must be out of service for maintenance as a single block over the course of the optimisation window."
+        ],
+        [
+            "unit",
+            "outage_variable_type",
+            "none",
+            "variable_type_list",
+            "A selector for whether the outage variable (`units_out_of_service`) is integer or continuous or none. None means no optimisation of maintenance outages."
         ],
         [
             "unit",
             "shut_down_cost",
             null,
             null,
-            "Costs of shutting down a 'sub unit', e.g. EUR/shutdown."
+            "Costs of shutting down a 'sub unit'. E.g. EUR/shutdown."
         ],
         [
             "unit",
             "start_up_cost",
             null,
             null,
-            "Costs of starting up a 'sub unit', e.g. EUR/startup."
-        ],
-        [
-            "unit",
-            "unit_availability_factor",
-            1,
-            null,
-            "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."
+            "Costs of starting up a 'sub unit'. E.g. EUR/startup."
         ],
         [
             "unit",
             "unit_decommissioning_cost",
             null,
             null,
-            "Costs associated with decommissioning a power plant. The costs will b discounted to the `discount_year``at distribted equally over the decommissioning time."
-        ],
-        [
-            "unit",
-            "unit_decommissioning_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A unit's decommissioning time, i.e., the time between the moment at which a unit decommissioning decision is takien, and the moment at which decommissioning is complete."
-        ],
-        [
-            "unit",
-            "unit_discount_rate_technology_specific",
-            0,
-            null,
-            "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."
+            "To be implemented. Costs associated with decommissioning a `unit`. The costs will be distributed equally over the `decommissioning_time` and discounted to the `discount_year`."
         ],
         [
             "unit",
             "unit_investment_cost",
             null,
             null,
-            "Investment cost per 'sub unit' built."
-        ],
-        [
-            "unit",
-            "unit_investment_econ_lifetime",
-            null,
-            null,
-            "Economic lifetime for unit investment decisions: the duration for investment cost payment."
-        ],
-        [
-            "unit",
-            "unit_investment_lifetime_sense",
-            ">=",
-            "constraint_sense_list",
-            "Formula sense of the constraint `unit_lifetime`, which specifies the technical lifetime functionality: minimum (>=), maximum (<=), and fixed (==)."
-        ],
-        [
-            "unit",
-            "unit_investment_tech_lifetime",
-            null,
-            null,
-            "Technical lifetime for unit investment decisions: the duration for the invested unit to be available."
-        ],
-        [
-            "unit",
-            "unit_investment_variable_type",
-            "unit_investment_variable_type_continuous",
-            "unit_investment_variable_type_list",
-            "Determines whether investment variable is integer or continuous."
-        ],
-        [
-            "unit",
-            "unit_lead_time",
-            {
-                "data": "0h",
-                "type": "duration"
-            },
-            null,
-            "A unit's lead time, i.e., the time between the moment at which a unit investment decision is takien, and the moment at which the unit investment becomes operational."
-        ],
-        [
-            "unit",
-            "units_invested_big_m_mga",
-            null,
-            null,
-            "big_m_mga should be chosen as small as possible but sufficiently large. For units_invested_mga an appropriate big_m_mga would be twice the candidate units."
-        ],
-        [
-            "unit",
-            "units_invested_mga",
-            false,
-            "boolean_value_list",
-            "Defines whether a certain variable (here: units_invested) will be considered in the maximal-differences of the mga objective"
-        ],
-        [
-            "unit",
-            "units_invested_mga_weight",
-            1,
-            null,
-            "Used to scale mga variables. For weightd sum mga method, the length of this weight given as an Array will determine the number of iterations."
+            "Investment cost per 'sub unit' over the lifetime of a `unit`. E.g. EUR/'sub unit'."
         ],
         [
             "unit",
             "units_on_cost",
             null,
             null,
-            "Objective function coefficient on `units_on`. An idling cost, for example"
+            "Costs of keeping a 'sub unit' online. An idling cost, for example. E.g. EUR/'sub unit'."
         ],
         [
             "unit",
@@ -3740,382 +3765,18 @@
             "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."
         ],
         [
-            "unit",
-            "units_unavailable",
-            0,
-            null,
-            "Represents the number of units out of service"
-        ],
-        [
-            "unit__commodity",
-            "max_cum_in_unit_flow_bound",
-            null,
-            null,
-            "Set a maximum cumulative upper bound for a `unit_flow`"
-        ],
-        [
-            "unit__from_node",
-            "fix_nonspin_units_started_up",
-            null,
-            null,
-            "Fix the `nonspin_units_started_up` variable."
-        ],
-        [
-            "unit__from_node",
-            "fix_unit_flow",
-            null,
-            null,
-            "Fix the `unit_flow` variable."
-        ],
-        [
-            "unit__from_node",
-            "fix_unit_flow_op",
-            null,
-            null,
-            "Fix the `unit_flow_op` variable."
-        ],
-        [
-            "unit__from_node",
-            "fuel_cost",
-            null,
-            null,
-            "Variable fuel costs than can be attributed to a `unit_flow`. E.g. EUR/MWh"
-        ],
-        [
-            "unit__from_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "unit__from_node",
-            "initial_nonspin_units_started_up",
-            null,
-            null,
-            "Initialize the `nonspin_units_started_up` variable."
-        ],
-        [
-            "unit__from_node",
-            "initial_unit_flow",
-            null,
-            null,
-            "Initialize the `unit_flow` variable."
-        ],
-        [
-            "unit__from_node",
-            "initial_unit_flow_op",
-            null,
-            null,
-            "Initialize the `unit_flow_op` variable."
-        ],
-        [
-            "unit__from_node",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "unit__from_node",
-            "max_total_cumulated_unit_flow_from_node",
-            null,
-            null,
-            "Bound on the maximum cumulated flows of a unit group from a node group e.g max consumption of certain commodity."
-        ],
-        [
-            "unit__from_node",
-            "min_total_cumulated_unit_flow_from_node",
-            null,
-            null,
-            "Bound on the minimum cumulated flows of a unit group from a node group."
-        ],
-        [
-            "unit__from_node",
-            "min_unit_flow",
-            0,
-            null,
-            "Set lower bound of the `unit_flow` variable."
-        ],
-        [
-            "unit__from_node",
-            "minimum_operating_point",
-            null,
-            null,
-            "Minimum level for the `unit_flow` relative to the `units_on` online capacity."
-        ],
-        [
-            "unit__from_node",
-            "operating_points",
-            null,
-            null,
-            "Operating points for piecewise-linear `unit` efficiency approximations."
-        ],
-        [
-            "unit__from_node",
-            "ordered_unit_flow_op",
-            false,
-            "boolean_value_list",
-            "Defines whether the segments of this unit flow are ordered as per the rank of their operating points."
-        ],
-        [
-            "unit__from_node",
-            "ramp_down_limit",
-            null,
-            null,
-            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the unit_capacity. [ramp_down_limit] = %/t, e.g. 0.2/h"
-        ],
-        [
-            "unit__from_node",
-            "ramp_up_limit",
-            null,
-            null,
-            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_up_limit] = %/t, e.g. 0.2/h"
-        ],
-        [
-            "unit__from_node",
-            "reserve_procurement_cost",
-            null,
-            null,
-            "Procurement cost for reserves"
-        ],
-        [
-            "unit__from_node",
-            "shut_down_limit",
-            null,
-            null,
-            "Maximum ramp-down during shutdowns"
-        ],
-        [
-            "unit__from_node",
-            "start_up_limit",
-            null,
-            null,
-            "Maximum ramp-up during startups"
-        ],
-        [
-            "unit__from_node",
-            "unit_capacity",
+            "unit__to_node",
+            "capacity_per_unit",
             null,
             null,
             "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."
         ],
         [
-            "unit__from_node",
-            "unit_conv_cap_to_flow",
-            1,
+            "unit__to_node",
+            "capacity_to_flow_conversion_factor",
+            1.0,
             null,
-            "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."
-        ],
-        [
-            "unit__from_node",
-            "unit_flow_non_anticipativity_margin",
-            null,
-            null,
-            "Margin by which `unit_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."
-        ],
-        [
-            "unit__from_node",
-            "unit_flow_non_anticipativity_time",
-            null,
-            null,
-            "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."
-        ],
-        [
-            "unit__from_node",
-            "vom_cost",
-            null,
-            null,
-            "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
-        ],
-        [
-            "unit__from_node__user_constraint",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "unit__from_node__user_constraint",
-            "unit_flow_coefficient",
-            0,
-            null,
-            "Coefficient of a `unit_flow` variable for a custom `user_constraint`."
-        ],
-        [
-            "unit__node__node",
-            "fix_ratio_in_in_unit_flow",
-            null,
-            null,
-            "Fix the ratio between two `unit_flows` coming into the `unit` from the two `nodes`."
-        ],
-        [
-            "unit__node__node",
-            "fix_ratio_in_out_unit_flow",
-            null,
-            null,
-            "Fix the ratio between an incoming `unit_flow` from the first `node` and an outgoing `unit_flow` to the second `node`."
-        ],
-        [
-            "unit__node__node",
-            "fix_ratio_out_in_unit_flow",
-            null,
-            null,
-            "Fix the ratio between an outgoing `unit_flow` to the first `node` and an incoming `unit_flow` from the second `node`."
-        ],
-        [
-            "unit__node__node",
-            "fix_ratio_out_out_unit_flow",
-            null,
-            null,
-            "Fix the ratio between two `unit_flows` going from the `unit` into the two `nodes`."
-        ],
-        [
-            "unit__node__node",
-            "fix_units_on_coefficient_in_in",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `fix_ratio_in_in_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "fix_units_on_coefficient_in_out",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `fix_ratio_in_out_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "fix_units_on_coefficient_out_in",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `fix_ratio_out_in_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "fix_units_on_coefficient_out_out",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `fix_ratio_out_out_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "max_ratio_in_in_unit_flow",
-            null,
-            null,
-            "Maximum ratio between two `unit_flows` coming into the `unit` from the two `nodes`."
-        ],
-        [
-            "unit__node__node",
-            "max_ratio_in_out_unit_flow",
-            null,
-            null,
-            "Maximum ratio between an incoming `unit_flow` from the first `node` and an outgoing `unit_flow` to the second `node`."
-        ],
-        [
-            "unit__node__node",
-            "max_ratio_out_in_unit_flow",
-            null,
-            null,
-            "Maximum ratio between an outgoing `unit_flow` to the first `node` and an incoming `unit_flow` from the second `node`."
-        ],
-        [
-            "unit__node__node",
-            "max_ratio_out_out_unit_flow",
-            null,
-            null,
-            "Maximum ratio between two `unit_flows` going from the `unit` into the two `nodes`."
-        ],
-        [
-            "unit__node__node",
-            "max_units_on_coefficient_in_in",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `max_ratio_in_in_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "max_units_on_coefficient_in_out",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `max_ratio_in_out_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "max_units_on_coefficient_out_in",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `max_ratio_out_in_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "max_units_on_coefficient_out_out",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `max_ratio_out_out_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "min_ratio_in_in_unit_flow",
-            null,
-            null,
-            "Minimum ratio between two `unit_flows` coming into the `unit` from the two `nodes`."
-        ],
-        [
-            "unit__node__node",
-            "min_ratio_in_out_unit_flow",
-            null,
-            null,
-            "Minimum ratio between an incoming `unit_flow` from the first `node` and an outgoing `unit_flow` to the second `node`."
-        ],
-        [
-            "unit__node__node",
-            "min_ratio_out_in_unit_flow",
-            null,
-            null,
-            "Minimum ratio between an outgoing `unit_flow` to the first `node` and an incoming `unit_flow` from the second `node`."
-        ],
-        [
-            "unit__node__node",
-            "min_ratio_out_out_unit_flow",
-            null,
-            null,
-            "Minimum ratio between two `unit_flows` going from the `unit` into the two `nodes`."
-        ],
-        [
-            "unit__node__node",
-            "min_units_on_coefficient_in_in",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `min_ratio_in_in_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "min_units_on_coefficient_in_out",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `min_ratio_in_out_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "min_units_on_coefficient_out_in",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `min_ratio_out_in_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "min_units_on_coefficient_out_out",
-            0,
-            null,
-            "Optional coefficient for the `units_on` variable impacting the `min_ratio_out_out_unit_flow` constraint."
-        ],
-        [
-            "unit__node__node",
-            "unit_start_flow",
-            0,
-            null,
-            "Flow from node1 that is incurred when a unit is started up."
+            "Optional coefficient for `capacity_per_unit` unit conversions in the case the `capacity_per_unit` value is incompatible with the desired `unit_flow` units."
         ],
         [
             "unit__to_node",
@@ -4133,17 +3794,52 @@
         ],
         [
             "unit__to_node",
-            "fix_unit_flow",
+            "flow_limits_fix",
             null,
             null,
-            "Fix the `unit_flow` variable."
+            "Fix the values of the `unit_flow` variable."
         ],
         [
             "unit__to_node",
-            "fix_unit_flow_op",
+            "flow_limits_fix_op",
             null,
             null,
-            "Fix the `unit_flow_op` variable."
+            "Fix the values of the `unit_flow_op` variable, essentially fixing the flows per operating point."
+        ],
+        [
+            "unit__to_node",
+            "flow_limits_initial",
+            null,
+            null,
+            "Set the initial value for the `unit_flow` variable."
+        ],
+        [
+            "unit__to_node",
+            "flow_limits_initial_op",
+            null,
+            null,
+            "Set the initial value for the `unit_flow_op` variable, essentially fixing the initial flow per operating point."
+        ],
+        [
+            "unit__to_node",
+            "flow_limits_max_cumulative",
+            null,
+            null,
+            "Bound on the maximum cumulated flows of a unit group to a node group, e.g. total GHG emissions."
+        ],
+        [
+            "unit__to_node",
+            "flow_limits_min",
+            0.0,
+            null,
+            "Set lower bound of the `unit_flow` variable."
+        ],
+        [
+            "unit__to_node",
+            "flow_limits_min_cumulative",
+            null,
+            null,
+            "Bound on the minimum cumulated flows of a unit group to a node group, e.g. total renewable production."
         ],
         [
             "unit__to_node",
@@ -4151,13 +3847,6 @@
             null,
             null,
             "Variable fuel costs than can be attributed to a `unit_flow`. E.g. EUR/MWh"
-        ],
-        [
-            "unit__to_node",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
         ],
         [
             "unit__to_node",
@@ -4172,48 +3861,6 @@
             null,
             null,
             "Initialize the `nonspin_units_started_up` variable."
-        ],
-        [
-            "unit__to_node",
-            "initial_unit_flow",
-            null,
-            null,
-            "Initialize the `unit_flow` variable."
-        ],
-        [
-            "unit__to_node",
-            "initial_unit_flow_op",
-            null,
-            null,
-            "Initialize the `unit_flow_op` variable."
-        ],
-        [
-            "unit__to_node",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "unit__to_node",
-            "max_total_cumulated_unit_flow_to_node",
-            null,
-            null,
-            "Bound on the maximum cumulated flows of a unit group to a node group, e.g. total GHG emissions."
-        ],
-        [
-            "unit__to_node",
-            "min_total_cumulated_unit_flow_to_node",
-            null,
-            null,
-            "Bound on the minimum cumulated flows of a unit group to a node group, e.g. total renewable production."
-        ],
-        [
-            "unit__to_node",
-            "min_unit_flow",
-            0,
-            null,
-            "Set lower bound of the `unit_flow` variable."
         ],
         [
             "unit__to_node",
@@ -4238,17 +3885,31 @@
         ],
         [
             "unit__to_node",
-            "ramp_down_limit",
+            "ramp_limits_down",
             null,
             null,
-            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the unit_capacity. [ramp_down_limit] = %/t, e.g. 0.2/h"
+            "Limit the maximum ramp-down rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_down] = %/t, e.g. 0.2/h"
         ],
         [
             "unit__to_node",
-            "ramp_up_limit",
+            "ramp_limits_shutdown",
             null,
             null,
-            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the unit_capacity. [ramp_up_limit] = %/t, e.g. 0.2/h"
+            "Maximum ramp-down during shutdowns"
+        ],
+        [
+            "unit__to_node",
+            "ramp_limits_startup",
+            null,
+            null,
+            "Maximum ramp-up during startups"
+        ],
+        [
+            "unit__to_node",
+            "ramp_limits_up",
+            null,
+            null,
+            "Limit the maximum ramp-up rate of an online unit, given as a fraction of the capacity_per_unit. [ramp_limits_up] = %/t, e.g. 0.2/h"
         ],
         [
             "unit__to_node",
@@ -4256,34 +3917,6 @@
             null,
             null,
             "Procurement cost for reserves"
-        ],
-        [
-            "unit__to_node",
-            "shut_down_limit",
-            null,
-            null,
-            "Maximum ramp-down during shutdowns"
-        ],
-        [
-            "unit__to_node",
-            "start_up_limit",
-            null,
-            null,
-            "Maximum ramp-up during startups"
-        ],
-        [
-            "unit__to_node",
-            "unit_capacity",
-            null,
-            null,
-            "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."
-        ],
-        [
-            "unit__to_node",
-            "unit_conv_cap_to_flow",
-            1,
-            null,
-            "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."
         ],
         [
             "unit__to_node",
@@ -4307,60 +3940,88 @@
             "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
         ],
         [
-            "unit__to_node__user_constraint",
-            "graph_view_position",
-            null,
-            null,
-            "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."
-        ],
-        [
-            "unit__to_node__user_constraint",
-            "unit_flow_coefficient",
-            0,
-            null,
-            "Coefficient of a `unit_flow` variable for a custom `user_constraint`."
-        ],
-        [
             "unit__user_constraint",
-            "units_invested_available_coefficient",
-            0,
-            null,
-            "Coefficient of the `units_invested_available` variable in the specified `user_constraint`."
-        ],
-        [
-            "unit__user_constraint",
-            "units_invested_coefficient",
-            0,
+            "coefficient_for_units_invested",
+            0.0,
             null,
             "Coefficient of the `units_invested` variable in the specified `user_constraint`."
         ],
         [
             "unit__user_constraint",
-            "units_on_coefficient",
-            0,
+            "coefficient_for_units_invested_available",
+            0.0,
+            null,
+            "Coefficient of the `units_invested_available` variable in the specified `user_constraint`."
+        ],
+        [
+            "unit__user_constraint",
+            "coefficient_for_units_on",
+            0.0,
             null,
             "Coefficient of a `units_on` variable for a custom `user_constraint`."
         ],
         [
             "unit__user_constraint",
-            "units_started_up_coefficient",
-            0,
+            "coefficient_for_units_started_up",
+            0.0,
             null,
             "Coefficient of a `units_started_up` variable for a custom `user_constraint`."
         ],
         [
-            "units_on__stochastic_structure",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+            "unit_flow__unit_flow",
+            "constraint_equality_flow_ratio",
+            null,
+            null,
+            "Fix the ratio between two `unit_flows`."
         ],
         [
-            "units_on__temporal_block",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
+            "unit_flow__unit_flow",
+            "constraint_equality_online_coefficient",
+            0.0,
+            null,
+            "Optional coefficient for the `units_on` variable impacting the `fix_ratio_unit_flow` constraint."
+        ],
+        [
+            "unit_flow__unit_flow",
+            "constraint_greater_than_flow_ratio",
+            null,
+            null,
+            "Minimum ratio between two `unit_flows`."
+        ],
+        [
+            "unit_flow__unit_flow",
+            "constraint_greater_than_online_coefficient",
+            0.0,
+            null,
+            "Optional coefficient for the `units_on` variable impacting the `min_ratio_unit_flow` constraint."
+        ],
+        [
+            "unit_flow__unit_flow",
+            "constraint_less_than_flow_ratio",
+            null,
+            null,
+            "Maximum ratio between two `unit_flows`."
+        ],
+        [
+            "unit_flow__unit_flow",
+            "constraint_less_than_online_coefficient",
+            0.0,
+            null,
+            "Optional coefficient for the `units_on` variable impacting the `max_ratio_unit_flow` constraint."
+        ],
+        [
+            "unit_flow__unit_flow",
+            "unit_start_flow",
+            0.0,
+            null,
+            "Enforces additional flow for the first `unit_flow` based on the `units_started_up`."
+        ],
+        [
+            "unit_flow__user_constraint",
+            "coefficient_for_unit_flow",
+            0.0,
+            null,
+            "Coefficient of a `unit_flow` variable for a custom `user_constraint`."
         ],
         [
             "user_constraint",
@@ -4378,15 +4039,8 @@
         ],
         [
             "user_constraint",
-            "is_active",
-            true,
-            "boolean_value_list",
-            "If false, the object is excluded from the model if the tool filter object activity control is specified"
-        ],
-        [
-            "user_constraint",
             "right_hand_side",
-            0,
+            0.0,
             null,
             "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."
         ],
@@ -4722,6 +4376,16 @@
         [
             "output",
             "constraint_fix_ratio_out_out_unit_flow",
+            null
+        ],
+        [
+            "output",
+            "constraint_flow_limits_max_cumulative",
+            null
+        ],
+        [
+            "output",
+            "constraint_flow_limits_min_cumulative",
             null
         ],
         [
@@ -5287,6 +4951,14 @@
             null
         ],
         [
+            "node__to_unit",
+            [
+                "fuel",
+                "power_plant"
+            ],
+            null
+        ],
+        [
             "report__output",
             [
                 "report1",
@@ -5359,14 +5031,6 @@
             null
         ],
         [
-            "unit__from_node",
-            [
-                "power_plant",
-                "fuel"
-            ],
-            null
-        ],
-        [
             "unit__investment_temporal_block",
             [
                 "power_plant",
@@ -5383,11 +5047,12 @@
             null
         ],
         [
-            "unit__node__node",
+            "unit_flow__unit_flow",
             [
                 "power_plant",
                 "electricity",
-                "fuel"
+                "fuel",
+                "power_plant"
             ],
             null
         ]
@@ -5395,15 +5060,15 @@
     "parameter_value_lists": [
         [
             "balance_type_list",
-            "balance_type_group"
+            "none"
         ],
         [
             "balance_type_list",
-            "balance_type_node"
+            "node_balance"
         ],
         [
             "balance_type_list",
-            "balance_type_none"
+            "group_balance"
         ],
         [
             "boolean_value_list",
@@ -5412,26 +5077,6 @@
         [
             "boolean_value_list",
             true
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_lodf"
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_none"
-        ],
-        [
-            "commodity_physics_list",
-            "commodity_physics_ptdf"
-        ],
-        [
-            "connection_investment_variable_type_list",
-            "connection_investment_variable_type_continuous"
-        ],
-        [
-            "connection_investment_variable_type_list",
-            "connection_investment_variable_type_integer"
         ],
         [
             "connection_type_list",
@@ -5454,146 +5099,6 @@
             ">="
         ],
         [
-            "db_lp_solver_list",
-            "CDCS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CDDLib.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Clp.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "COSMO.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CPLEX.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "CSDP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "ECOS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "GLPK.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Gurobi.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "HiGHS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Hypatia.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Ipopt.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "KNITRO.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "MadNLP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "MosekTools.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "NLopt.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "OSQP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "ProxSDP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SCIP.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SCS.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPA.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPNAL.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SDPT3.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "SeDuMi.jl"
-        ],
-        [
-            "db_lp_solver_list",
-            "Xpress.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Cbc.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "CPLEX.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "GLPK.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Gurobi.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "HiGHS.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Juniper.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "KNITRO.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "MosekTools.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "SCIP.jl"
-        ],
-        [
-            "db_mip_solver_list",
-            "Xpress.jl"
-        ],
-        [
             "duration_unit_list",
             "hour"
         ],
@@ -5602,12 +5107,40 @@
             "minute"
         ],
         [
+            "grid_physics_list",
+            "none"
+        ],
+        [
+            "grid_physics_list",
+            "ptdf_physics"
+        ],
+        [
+            "grid_physics_list",
+            "lodf_physics"
+        ],
+        [
+            "grid_physics_list",
+            "voltage_angle_physics"
+        ],
+        [
+            "grid_physics_list",
+            "pressure_physics"
+        ],
+        [
             "model_algorithm_list",
             "basic_algorithm"
         ],
         [
             "model_algorithm_list",
             "mga_algorithm"
+        ],
+        [
+            "model_algorithm_list",
+            "hsj_mga_algorithm"
+        ],
+        [
+            "model_algorithm_list",
+            "fuzzy_mga_algorithm"
         ],
         [
             "model_algorithm_list",
@@ -5670,36 +5203,160 @@
             "solving_info"
         ],
         [
-            "storage_investment_variable_type_list",
-            "storage_investment_variable_type_continuous"
+            "solver_lp_list",
+            "CDCS.jl"
         ],
         [
-            "storage_investment_variable_type_list",
-            "storage_investment_variable_type_integer"
+            "solver_lp_list",
+            "CDDLib.jl"
         ],
         [
-            "unit_investment_variable_type_list",
-            "unit_investment_variable_type_continuous"
+            "solver_lp_list",
+            "Clp.jl"
         ],
         [
-            "unit_investment_variable_type_list",
-            "unit_investment_variable_type_integer"
+            "solver_lp_list",
+            "COSMO.jl"
         ],
         [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_binary"
+            "solver_lp_list",
+            "CPLEX.jl"
         ],
         [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_integer"
+            "solver_lp_list",
+            "CSDP.jl"
         ],
         [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_linear"
+            "solver_lp_list",
+            "ECOS.jl"
         ],
         [
-            "unit_online_variable_type_list",
-            "unit_online_variable_type_none"
+            "solver_lp_list",
+            "GLPK.jl"
+        ],
+        [
+            "solver_lp_list",
+            "Gurobi.jl"
+        ],
+        [
+            "solver_lp_list",
+            "HiGHS.jl"
+        ],
+        [
+            "solver_lp_list",
+            "Hypatia.jl"
+        ],
+        [
+            "solver_lp_list",
+            "Ipopt.jl"
+        ],
+        [
+            "solver_lp_list",
+            "KNITRO.jl"
+        ],
+        [
+            "solver_lp_list",
+            "MadNLP.jl"
+        ],
+        [
+            "solver_lp_list",
+            "MosekTools.jl"
+        ],
+        [
+            "solver_lp_list",
+            "NLopt.jl"
+        ],
+        [
+            "solver_lp_list",
+            "OSQP.jl"
+        ],
+        [
+            "solver_lp_list",
+            "ProxSDP.jl"
+        ],
+        [
+            "solver_lp_list",
+            "SCIP.jl"
+        ],
+        [
+            "solver_lp_list",
+            "SCS.jl"
+        ],
+        [
+            "solver_lp_list",
+            "SDPA.jl"
+        ],
+        [
+            "solver_lp_list",
+            "SDPNAL.jl"
+        ],
+        [
+            "solver_lp_list",
+            "SDPT3.jl"
+        ],
+        [
+            "solver_lp_list",
+            "SeDuMi.jl"
+        ],
+        [
+            "solver_lp_list",
+            "Xpress.jl"
+        ],
+        [
+            "solver_mip_list",
+            "Cbc.jl"
+        ],
+        [
+            "solver_mip_list",
+            "CPLEX.jl"
+        ],
+        [
+            "solver_mip_list",
+            "GLPK.jl"
+        ],
+        [
+            "solver_mip_list",
+            "Gurobi.jl"
+        ],
+        [
+            "solver_mip_list",
+            "HiGHS.jl"
+        ],
+        [
+            "solver_mip_list",
+            "Juniper.jl"
+        ],
+        [
+            "solver_mip_list",
+            "KNITRO.jl"
+        ],
+        [
+            "solver_mip_list",
+            "MosekTools.jl"
+        ],
+        [
+            "solver_mip_list",
+            "SCIP.jl"
+        ],
+        [
+            "solver_mip_list",
+            "Xpress.jl"
+        ],
+        [
+            "variable_type_list",
+            "binary"
+        ],
+        [
+            "variable_type_list",
+            "integer"
+        ],
+        [
+            "variable_type_list",
+            "linear"
+        ],
+        [
+            "variable_type_list",
+            "none"
         ],
         [
             "write_mps_file_list",
@@ -5712,6 +5369,596 @@
         [
             "write_mps_file_list",
             "write_mps_on_no_solve"
+        ]
+    ],
+    "parameter_types": [
+        [
+            "connection",
+            "binary_gas_flow_active",
+            "bool",
+            0
+        ],
+        [
+            "connection",
+            "connection_type",
+            "str",
+            0
+        ],
+        [
+            "connection",
+            "contingency_active",
+            "bool",
+            0
+        ],
+        [
+            "connection",
+            "decommissioning_time",
+            "duration",
+            0
+        ],
+        [
+            "connection",
+            "investment_variable_type",
+            "str",
+            0
+        ],
+        [
+            "connection",
+            "lead_time",
+            "duration",
+            0
+        ],
+        [
+            "connection",
+            "lifetime_constraint_sense",
+            "str",
+            0
+        ],
+        [
+            "connection",
+            "lifetime_economic",
+            "duration",
+            0
+        ],
+        [
+            "connection",
+            "lifetime_technical",
+            "duration",
+            0
+        ],
+        [
+            "connection",
+            "mga_investment_active",
+            "bool",
+            0
+        ],
+        [
+            "connection",
+            "monitoring_active",
+            "bool",
+            0
+        ],
+        [
+            "connection__from_node",
+            "connection_flow_non_anticipativity_time",
+            "duration",
+            0
+        ],
+        [
+            "connection__from_node",
+            "connection_intact_flow_non_anticipativity_time",
+            "duration",
+            0
+        ],
+        [
+            "connection__node__node",
+            "connection_flow_delay",
+            "duration",
+            0
+        ],
+        [
+            "grid",
+            "physics_duration",
+            "duration",
+            0
+        ],
+        [
+            "grid",
+            "physics_type",
+            "str",
+            0
+        ],
+        [
+            "investment_group",
+            "equal_investments_active",
+            "bool",
+            0
+        ],
+        [
+            "model",
+            "benders_iterations_reporting_active",
+            "bool",
+            0
+        ],
+        [
+            "model",
+            "connection_flow_highest_resolution_active",
+            "bool",
+            0
+        ],
+        [
+            "model",
+            "connection_investment_power_flow_impact_active",
+            "bool",
+            0
+        ],
+        [
+            "model",
+            "discount_year",
+            "date_time",
+            0
+        ],
+        [
+            "model",
+            "discount_year",
+            "duration",
+            0
+        ],
+        [
+            "model",
+            "duration_unit",
+            "str",
+            0
+        ],
+        [
+            "model",
+            "model_algorithm",
+            "str",
+            0
+        ],
+        [
+            "model",
+            "model_end",
+            "date_time",
+            0
+        ],
+        [
+            "model",
+            "model_end",
+            "duration",
+            0
+        ],
+        [
+            "model",
+            "model_start",
+            "date_time",
+            0
+        ],
+        [
+            "model",
+            "model_type",
+            "str",
+            0
+        ],
+        [
+            "model",
+            "roll_forward",
+            "duration",
+            0
+        ],
+        [
+            "model",
+            "solver_lp",
+            "str",
+            0
+        ],
+        [
+            "model",
+            "solver_lp_options",
+            "map",
+            2
+        ],
+        [
+            "model",
+            "solver_mip",
+            "str",
+            0
+        ],
+        [
+            "model",
+            "solver_mip_options",
+            "map",
+            2
+        ],
+        [
+            "model",
+            "tight_compact_formulations_active",
+            "bool",
+            0
+        ],
+        [
+            "model",
+            "window_duration",
+            "duration",
+            0
+        ],
+        [
+            "model",
+            "write_lodf_file",
+            "bool",
+            0
+        ],
+        [
+            "model",
+            "write_mps_file",
+            "str",
+            0
+        ],
+        [
+            "model",
+            "write_ptdf_file",
+            "bool",
+            0
+        ],
+        [
+            "node",
+            "balance_sense",
+            "str",
+            0
+        ],
+        [
+            "node",
+            "balance_type",
+            "str",
+            0
+        ],
+        [
+            "node",
+            "is_non_spinning",
+            "bool",
+            0
+        ],
+        [
+            "node",
+            "mga_storage_investment_active",
+            "bool",
+            0
+        ],
+        [
+            "node",
+            "minimum_reserve_activation_time",
+            "duration",
+            0
+        ],
+        [
+            "node",
+            "node_opf_type",
+            "str",
+            0
+        ],
+        [
+            "node",
+            "reserve_active",
+            "bool",
+            0
+        ],
+        [
+            "node",
+            "reserve_downward",
+            "bool",
+            0
+        ],
+        [
+            "node",
+            "reserve_upward",
+            "bool",
+            0
+        ],
+        [
+            "node",
+            "storage_active",
+            "bool",
+            0
+        ],
+        [
+            "node",
+            "storage_decommissioning_time",
+            "duration",
+            0
+        ],
+        [
+            "node",
+            "storage_investment_variable_type",
+            "str",
+            0
+        ],
+        [
+            "node",
+            "storage_lead_time",
+            "duration",
+            0
+        ],
+        [
+            "node",
+            "storage_lifetime_constraint_sense",
+            "str",
+            0
+        ],
+        [
+            "node",
+            "storage_lifetime_economic",
+            "duration",
+            0
+        ],
+        [
+            "node",
+            "storage_lifetime_technical",
+            "duration",
+            0
+        ],
+        [
+            "node",
+            "storage_longterm_active",
+            "bool",
+            0
+        ],
+        [
+            "node__temporal_block",
+            "cyclic_condition",
+            "bool",
+            0
+        ],
+        [
+            "node__temporal_block",
+            "cyclic_condition_sense",
+            "str",
+            0
+        ],
+        [
+            "node__to_unit",
+            "ordered_unit_flow_op",
+            "bool",
+            0
+        ],
+        [
+            "node__to_unit",
+            "unit_flow_non_anticipativity_time",
+            "duration",
+            0
+        ],
+        [
+            "output",
+            "output_resolution",
+            "duration",
+            0
+        ],
+        [
+            "output",
+            "output_type",
+            "str",
+            0
+        ],
+        [
+            "report",
+            "output_db_url",
+            "str",
+            0
+        ],
+        [
+            "report__output",
+            "overwrite_results_on_rolling",
+            "bool",
+            0
+        ],
+        [
+            "settings",
+            "version",
+            "float",
+            0
+        ],
+        [
+            "stage__output",
+            "output_resolution",
+            "array",
+            1
+        ],
+        [
+            "stage__output",
+            "output_resolution",
+            "duration",
+            0
+        ],
+        [
+            "stage__output__connection",
+            "output_resolution",
+            "array",
+            1
+        ],
+        [
+            "stage__output__connection",
+            "output_resolution",
+            "duration",
+            0
+        ],
+        [
+            "stage__output__node",
+            "output_resolution",
+            "array",
+            1
+        ],
+        [
+            "stage__output__node",
+            "output_resolution",
+            "duration",
+            0
+        ],
+        [
+            "stage__output__unit",
+            "output_resolution",
+            "array",
+            1
+        ],
+        [
+            "stage__output__unit",
+            "output_resolution",
+            "duration",
+            0
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            "stochastic_scenario_end",
+            "duration",
+            0
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            "weight_relative_to_parents",
+            "float",
+            0
+        ],
+        [
+            "temporal_block",
+            "block_end",
+            "date_time",
+            0
+        ],
+        [
+            "temporal_block",
+            "block_end",
+            "duration",
+            0
+        ],
+        [
+            "temporal_block",
+            "block_start",
+            "date_time",
+            0
+        ],
+        [
+            "temporal_block",
+            "block_start",
+            "duration",
+            0
+        ],
+        [
+            "temporal_block",
+            "resolution",
+            "duration",
+            0
+        ],
+        [
+            "temporal_block",
+            "weight",
+            "float",
+            0
+        ],
+        [
+            "unit",
+            "decommissioning_time",
+            "duration",
+            0
+        ],
+        [
+            "unit",
+            "investment_variable_type",
+            "str",
+            0
+        ],
+        [
+            "unit",
+            "is_renewable",
+            "bool",
+            0
+        ],
+        [
+            "unit",
+            "lead_time",
+            "duration",
+            0
+        ],
+        [
+            "unit",
+            "lifetime_constraint_sense",
+            "str",
+            0
+        ],
+        [
+            "unit",
+            "lifetime_economic",
+            "duration",
+            0
+        ],
+        [
+            "unit",
+            "lifetime_technical",
+            "duration",
+            0
+        ],
+        [
+            "unit",
+            "mga_investment_active",
+            "bool",
+            0
+        ],
+        [
+            "unit",
+            "min_down_time",
+            "duration",
+            0
+        ],
+        [
+            "unit",
+            "min_up_time",
+            "duration",
+            0
+        ],
+        [
+            "unit",
+            "online_variable_type",
+            "str",
+            0
+        ],
+        [
+            "unit",
+            "outage_variable_type",
+            "str",
+            0
+        ],
+        [
+            "unit",
+            "units_on_non_anticipativity_time",
+            "duration",
+            0
+        ],
+        [
+            "unit__to_node",
+            "operating_points",
+            "array",
+            1
+        ],
+        [
+            "unit__to_node",
+            "ordered_unit_flow_op",
+            "bool",
+            0
+        ],
+        [
+            "unit__to_node",
+            "unit_flow_non_anticipativity_time",
+            "duration",
+            0
+        ],
+        [
+            "user_constraint",
+            "constraint_sense",
+            "str",
+            0
+        ],
+        [
+            "user_constraint",
+            "include_in_non_representative_periods",
+            "bool",
+            0
         ]
     ],
     "entity_alternatives": [
@@ -5878,38 +6125,10 @@
             true
         ],
         [
-            "unit__from_node",
-            [
-                "power_plant",
-                "fuel"
-            ],
-            "Base",
-            true
-        ],
-        [
             "unit__investment_temporal_block",
             [
                 "power_plant",
                 "investment"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "unit__node__node",
-            [
-                "power_plant",
-                "electricity",
-                "fuel"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "unit__to_node",
-            [
-                "power_plant",
-                "electricity"
             ],
             "Base",
             true

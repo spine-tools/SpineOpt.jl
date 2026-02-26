@@ -20,7 +20,7 @@
 
 @doc raw"""
 Similarly to [this](@ref constraint_connection_flow_capacity), limits [connection\_intact\_flow](@ref)
-according to [connection\_capacity](@ref)
+according to [capacity\_per\_connection](@ref)
 
 ```math
 \begin{aligned}
@@ -28,17 +28,17 @@ according to [connection\_capacity](@ref)
 n \in ng
 } v^{connection\_intact\_flow}_{(conn,n,d,s,t)} \\
 & \leq \\
-& p^{connection\_capacity}_{(conn,ng,d,s,t)} \cdot p^{connection\_availability\_factor}_{(conn,s,t)}
-\cdot p^{connection\_conv\_cap\_to\_flow}_{(conn,ng,d,s,t)} \\
-& \cdot \left( p^{number\_of\_connections}_{(conn,s,t)} + p^{candidate\_connections}_{(conn,s,t)} \right)
+& p^{capacity\_per\_connection}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)}
+\cdot p^{capacity\_to\_flow\_conversion\_factor}_{(conn,ng,d,s,t)} \\
+& \cdot \left( p^{existing\_connections}_{(conn,s,t)} + p^{investment\_count\_max\_cumulative}_{(conn,s,t)} \right)
 \\
-& \forall (conn,ng,d) \in indices(p^{connection\_capacity}) \\
+& \forall (conn,ng,d) \in indices(p^{capacity\_per\_connection}) \\
 & \forall (s,t)
 \end{aligned}
 ```
 """
 function add_constraint_connection_intact_flow_capacity!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_active(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :connection_intact_flow_capacity,
@@ -59,12 +59,12 @@ function _build_constraint_connection_intact_flow_capacity(m::Model, conn, ng, d
         )
         <=
         sum(
-            + connection_capacity(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
-            * connection_availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
-            * connection_conv_cap_to_flow(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
+            + capacity_per_connection(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
+            * availability_factor(m; connection=conn, stochastic_scenario=s, t=t)
+            * capacity_to_flow_conversion_factor(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
             * (
-                + candidate_connections(m; connection=conn, stochastic_scenario=s, t=t, _default=0)
-                + number_of_connections(
+                + investment_count_max_cumulative(m; connection=conn, stochastic_scenario=s, t=t, _default=0)
+                + existing_connections(
                     m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
                 )
             )
@@ -80,7 +80,7 @@ end
 function constraint_connection_intact_flow_capacity_indices(m::Model)
     (
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
-        for (c, ng, d) in indices(connection_capacity; connection=connection(has_ptdf=true))
+        for (c, ng, d) in indices(capacity_per_connection; connection=connection(has_ptdf=true))
         for (t, path) in t_lowest_resolution_path(
             m, connection_intact_flow_indices(m; connection=c, node=ng, direction=d)
         )

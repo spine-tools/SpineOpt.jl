@@ -41,8 +41,8 @@
     @test length(connection__node__node()) == 2
     @test (connection=conn_ab, node1=n_a, node2=n_b) in connection__node__node()
     @test (connection=conn_ab, node1=n_b, node2=n_a) in connection__node__node()
-    @test connection_conv_cap_to_flow(connection=conn_ab, node=n_a) == 1
-    @test connection_conv_cap_to_flow(connection=conn_ab, node=n_b) == 1
+    @test capacity_to_flow_conversion_factor(connection=conn_ab, node=n_a) == 1
+    @test capacity_to_flow_conversion_factor(connection=conn_ab, node=n_b) == 1
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_a, node2=n_b) == 1
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_b, node2=n_a) == 1
 end
@@ -96,7 +96,7 @@ end
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["commodity", "electricity"],
+            ["grid", "electricity"],
             ["model", "instance"],
             ["temporal_block", "hourly"],
             ["temporal_block", "investments_hourly"],
@@ -120,9 +120,9 @@ end
             ["connection__to_node", ["connection_bc", "node_c"]],
             ["connection__from_node", ["connection_ca", "node_c"]],
             ["connection__to_node", ["connection_ca", "node_a"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
             ["model__stochastic_structure", ["instance", "deterministic"]],
@@ -149,26 +149,26 @@ end
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
             ["connection", "connection_bc", "connection_type", "connection_type_lossless_bidirectional"],
             ["connection", "connection_ca", "connection_type", "connection_type_lossless_bidirectional"],
-            ["connection", "connection_ab", "connection_monitored", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
-            ["connection", "connection_ab", "connection_resistance", conn_r],
-            ["connection", "connection_bc", "connection_monitored", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
-            ["connection", "connection_bc", "connection_resistance", conn_r],
-            ["connection", "connection_ca", "connection_monitored", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
-            ["connection", "connection_ca", "connection_resistance", conn_r],
-            ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
+            ["connection", "connection_ab", "monitoring_active", true],
+            ["connection", "connection_ab", "reactance", conn_x],
+            ["connection", "connection_ab", "resistance", conn_r],
+            ["connection", "connection_bc", "monitoring_active", true],
+            ["connection", "connection_bc", "reactance", conn_x],
+            ["connection", "connection_bc", "resistance", conn_r],
+            ["connection", "connection_ca", "monitoring_active", true],
+            ["connection", "connection_ca", "reactance", conn_x],
+            ["connection", "connection_ca", "resistance", conn_r],
+            ["grid", "electricity", "physics_type", "ptdf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "connection_contingency", true],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["connection", "connection_ca", "contingency_active", true],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
-            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_ab],
-            ["connection__from_node", ["connection_ab", "node_b"], "connection_capacity", conn_cap_ab],
-            ["connection__from_node", ["connection_bc", "node_b"], "connection_capacity", conn_cap_bc],
-            ["connection__from_node", ["connection_ca", "node_c"], "connection_capacity", conn_cap_ca],
+            ["connection__from_node", ["connection_ab", "node_a"], "capacity_per_connection", conn_cap_ab],
+            ["connection__from_node", ["connection_ab", "node_b"], "capacity_per_connection", conn_cap_ab],
+            ["connection__from_node", ["connection_bc", "node_b"], "capacity_per_connection", conn_cap_bc],
+            ["connection__from_node", ["connection_ca", "node_c"], "capacity_per_connection", conn_cap_ca],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["stochastic", "parent"],
@@ -189,9 +189,9 @@ end
         (connection(:connection_bc), node(:node_b), node(:node_c)),
         (connection(:connection_ca), node(:node_c), node(:node_a)),
     )
-        @test connection_capacity(connection=conn, node=n1, direction=direction(:from_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n1, direction=direction(:to_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n2, direction=direction(:from_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n2, direction=direction(:to_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n1, direction=direction(:from_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n1, direction=direction(:to_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n2, direction=direction(:from_node)) == capacities_dict[conn]
+        @test capacity_per_connection(connection=conn, node=n2, direction=direction(:to_node)) == capacities_dict[conn]
     end
 end

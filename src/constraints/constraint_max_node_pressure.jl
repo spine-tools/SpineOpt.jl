@@ -20,17 +20,17 @@
 
 @doc raw"""
 In order to impose an upper limit on the maximum pressure at a node
-the parameter [max\_node\_pressure](@ref) can be specified which triggers the following constraint:
+the parameter [pressure\_max](@ref) can be specified which triggers the following constraint:
 
 ```math
-\sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \leq p^{max\_node\_pressure}_{(ng,s,t)}
-\quad \forall (ng) \in indices(p^{max\_node\_pressure}), \, \forall (s,t)
+\sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \leq p^{pressure\_max}_{(ng,s,t)}
+\quad \forall (ng) \in indices(p^{pressure\_max}), \, \forall (s,t)
 ```
 
-As indicated in the equation, the parameter [max\_node\_pressure](@ref) can also be defined on a node group,
+As indicated in the equation, the parameter [pressure\_max](@ref) can also be defined on a node group,
 in order to impose an upper limit on the aggregated [node\_pressure](@ref) within one node group.
 
-See also [max\_node\_pressure](@ref).
+See also [pressure\_max](@ref).
 """
 function add_constraint_max_node_pressure!(m::Model)
     _add_constraint!(m, :max_node_pressure, constraint_max_node_pressure_indices, _build_constraint_max_node_pressure)
@@ -41,7 +41,7 @@ function _build_constraint_max_node_pressure(m::Model, ng, s_path, t)
     @build_constraint(
         sum(
             + node_pressure[n, s, t]
-            - max_node_pressure(m; node=ng, stochastic_scenario=s, t=t)
+            - pressure_max(m; node=ng, stochastic_scenario=s, t=t)
             for (n, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t);
             init=0,
         )
@@ -51,7 +51,7 @@ function _build_constraint_max_node_pressure(m::Model, ng, s_path, t)
 end
 
 function constraint_max_node_pressure_indices(m::Model)
-    ((node=ng, stochastic_path=[s], t=t) for (ng, s, t) in node_pressure_indices(m; node=indices(max_node_pressure)))
+    ((node=ng, stochastic_path=[s], t=t) for (ng, s, t) in node_pressure_indices(m; node=indices(pressure_max)))
 end
 
 """

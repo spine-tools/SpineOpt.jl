@@ -74,16 +74,16 @@ function _test_run_spineopt_investments_setup()
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "operations", "resolution", unparse_db_value(Hour(1))],
             ["temporal_block", "investments", "resolution", unparse_db_value(Year(1))],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
             ["node", "node_b", "demand", unparse_db_value(demand_ts)],
-            ["node", "node_a", "has_state", true],
-            ["node", "node_a", "initial_node_state", 0],
+            ["node", "node_a", "storage_active", true],
+            ["node", "node_a", "storage_state_initial", 0],
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
         ],
         :relationship_parameter_values => [
             ["unit__to_node", ["unit_a", "node_a"], "vom_cost", unparse_db_value(vom_cost_ts)],
-            ["unit__to_node", ["unit_b", "node_b"], "unit_capacity", 200],
+            ["unit__to_node", ["unit_b", "node_b"], "capacity_per_unit", 200],
             ["unit__to_node", ["unit_b", "node_b"], "vom_cost", 1],
         ]
     )
@@ -95,29 +95,29 @@ function _test_capacity_investments()
     @testset "capacity_investments" begin
         url_in, url_out, file_path_out = _test_run_spineopt_investments_setup()
         object_parameter_values = [
-            ["model", "instance", "use_connection_intact_flow", false],
-            ["unit", "unit_a", "number_of_units", 10],
-            ["unit", "unit_a", "candidate_units", 40],
+            ["model", "instance", "connection_investment_power_flow_impact_active", false],
+            ["unit", "unit_a", "existing_units", 10],
+            ["unit", "unit_a", "investment_count_max_cumulative", 40],
             ["unit", "unit_a", "unit_investment_cost", 0],
-            ["unit", "unit_a", "unit_investment_variable_type", "unit_investment_variable_type_continuous"],
-            ["node", "node_a", "number_of_storages", 5],
-            ["node", "node_a", "candidate_storages", 20],
+            ["unit", "unit_a", "investment_variable_type", "linear"],
+            ["node", "node_a", "existing_storages", 5],
+            ["node", "node_a", "storage_investment_count_max_cumulative", 20],
             ["node", "node_a", "storage_investment_cost", 0],
-            ["node", "node_a", "storage_investment_variable_type", "storage_investment_variable_type_continuous"],
-            ["connection", "connection_ab", "number_of_connections", 5],
-            ["connection", "connection_ab", "candidate_connections", 20],
+            ["node", "node_a", "storage_investment_variable_type", "linear"],
+            ["connection", "connection_ab", "existing_connections", 5],
+            ["connection", "connection_ab", "investment_count_max_cumulative", 20],
             ["connection", "connection_ab", "connection_investment_cost", 0],
             [
                 "connection",
                 "connection_ab",
-                "connection_investment_variable_type",
-                "connection_investment_variable_type_continuous"
+                "investment_variable_type",
+                "linear"
             ],
-            ["node", "node_a", "node_state_cap", 1]
+            ["node", "node_a", "storage_state_max", 1]
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_a", "node_a"], "unit_capacity", 1],
-            ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", 1],
+            ["unit__to_node", ["unit_a", "node_a"], "capacity_per_unit", 1],
+            ["connection__from_node", ["connection_ab", "node_a"], "capacity_per_connection", 1],
         ]
         import_count, errors = SpineInterface.import_data(
             url_in;
@@ -127,8 +127,7 @@ function _test_capacity_investments()
         @test isempty(errors)
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=3)
-        Y = Module()
-        @eval Y using SpineInterface
+        Y = Bind()
         using_spinedb(url_out, Y)
         @test Y.units_invested(unit=Y.unit(:unit_a), t=DateTime(2000)) == 40
         @test Y.connections_invested(connection=Y.connection(:connection_ab), t=DateTime(2000)) == 20

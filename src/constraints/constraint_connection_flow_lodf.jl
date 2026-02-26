@@ -63,7 +63,7 @@ function _build_constraint_connection_flow_lodf(m::Model, conn_cont, conn_mon, s
         - connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
         <=
         + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s_path, t, sum)
-        * maximum(connection_availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t) for s in s_path)
+        * maximum(availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t) for s in s_path)
         <=
         + connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
     )
@@ -104,8 +104,8 @@ end
 function connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
     minimum(
         + connection_emergency_capacity(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
-        * connection_availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t)
-        * connection_conv_cap_to_flow(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
+        * availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t)
+        * capacity_to_flow_conversion_factor(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
         for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
         for s in s_path
     )
@@ -113,13 +113,12 @@ end
 
 function constraint_connection_flow_lodf_indices(m::Model)
     (
-        (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=path, t=t)
+        (contingency_active=conn_cont, monitoring_active=conn_mon, stochastic_path=path, t=t)
         for (conn_cont, conn_mon) in lodf_connection__connection()
         if all(
             [
-                connection_contingency(connection=conn_cont, _default=false),
-                connection_monitored(connection=conn_mon, _default=false),
-                has_lodf(connection=conn_cont),
+                contingency_active(connection=conn_cont, _default=false),
+                monitoring_active(connection=conn_mon, _default=false),                has_lodf(connection=conn_cont),
                 has_lodf(connection=conn_mon)
             ]
         )
@@ -143,16 +142,16 @@ Keyword arguments can be used for filtering the resulting Array.
 """
 function constraint_connection_flow_lodf_indices_filtered(
     m::Model;
-    connection_contingency=anything,
-    connection_monitored=anything,
+    contingency_active=anything,
+    monitoring_active=anything,
     stochastic_path=anything,
     t=anything,
 )
     function f(ind)
         _index_in(
             ind;
-            connection_contingency=connection_contingency,
-            connection_monitored=connection_monitored,
+            contingency_active=contingency_active,
+            monitoring_active=monitoring_active,
             stochastic_path=stochastic_path,
             t=t,
         )

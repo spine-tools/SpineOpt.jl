@@ -64,8 +64,8 @@
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-04T00:00:00")],
             ["temporal_block", "only_block", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [

@@ -1,3 +1,0 @@
-The definition of the `shut_down_limit` parameter sets an upper bound on the [unit\_flow](@ref) variable for the timestep right before a shutdown.
-
-It can be defined for [unit__to_node](@ref) or [unit__from_node](@ref) relationships, as well as their counterparts for node groups. It will then impose restrictions on the `unit_flow` variables that indicate flows between the two members of the relationship for which the parameter is defined. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. When the parameter is not specified the limit will not be imposed, which is equivalent to choosing a value of 1.

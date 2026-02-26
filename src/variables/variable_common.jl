@@ -67,40 +67,40 @@ function add_variable!(
     t_start = start(first(time_slice(m)))
     t_history = TimeSlice(t_start - required_history_period, t_start)
     history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
-    represented_indices =_represented_indices(m, indices, replacement_expressions)
+    represented_indices = _represented_indices(m, indices, replacement_expressions)
     first_ind = iterate(indices(m))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
-    vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
-        ind => _add_variable!(m, name, ind)
-        for kwargs in ((t=history_time_slices, temporal_block=anything), (t=time_slice(m),))
-        for ind in setdiff(indices(m; kwargs...), represented_indices, keys(replacement_expressions))
-    )
+    vars =
+        m.ext[:spineopt].variables[name] = Dict{K,V}(
+            ind => _add_variable!(m, name, ind) for
+            kwargs in ((t=history_time_slices, temporal_block=anything), (t=time_slice(m),)) for
+            ind in setdiff(indices(m; kwargs...), represented_indices, keys(replacement_expressions))
+        )
     history_vars_by_ind = Dict(
         ind => [
-            history_var
-            for history_var in (get(vars, history_ind, nothing) for history_ind in indices(m; ind..., t=history_t))
-            if history_var !== nothing
-        ]
-        for (ind, history_t) in (
-            (ind, t_history_t(m; t=ind.t)) for ind in indices(m; t=time_slice(m)) if haskey(ind, :t)
+            history_var for
+            history_var in (get(vars, history_ind, nothing) for history_ind in indices(m; ind..., t=history_t)) if
+            history_var !== nothing
+        ] for (ind, history_t) in
+        ((ind, t_history_t(m; t=ind.t)) for ind in indices(m; t=time_slice(m)) if haskey(ind, :t)) if
+        history_t !== nothing
+    )
+    m.ext[:spineopt].variables_definition[name] =
+        def = _variable_definition(
+            indices=indices,
+            bin=bin,
+            int=int,
+            lb=lb,
+            ub=ub,
+            fix_value=fix_value,
+            non_anticipativity_time=non_anticipativity_time,
+            non_anticipativity_margin=non_anticipativity_margin,
+            history_vars_by_ind=history_vars_by_ind,
+            history_time_slices=history_time_slices,
+            replacement_expressions=replacement_expressions,
+            represented_indices=represented_indices,
         )
-        if history_t !== nothing
-    )
-    m.ext[:spineopt].variables_definition[name] = def = _variable_definition(
-        indices=indices,
-        bin=bin,
-        int=int,
-        lb=lb,
-        ub=ub,
-        fix_value=fix_value,
-        non_anticipativity_time=non_anticipativity_time,
-        non_anticipativity_margin=non_anticipativity_margin,
-        history_vars_by_ind=history_vars_by_ind,
-        history_time_slices=history_time_slices,
-        replacement_expressions=replacement_expressions,
-        represented_indices=represented_indices,
-    )
     _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
@@ -121,7 +121,7 @@ end
 _nothing_if_empty(p::Parameter) = isempty(indices(p)) ? nothing : p
 _nothing_if_empty(x) = x
 
-_add_variable!(m, name, ind) = @variable(m, base_name=_base_name(name, ind))
+_add_variable!(m, name, ind) = @variable(m, base_name = _base_name(name, ind))
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
@@ -159,7 +159,7 @@ function _add_dependent_variables!(m; log_level)
     for name in sort!(collect(keys(m.ext[:spineopt].variables_definition)))
         def = m.ext[:spineopt].variables_definition[name]
         @fetch replacement_expressions, represented_indices, indices = def
-        isempty(replacement_expressions) && isempty(represented_indices) &&continue
+        isempty(replacement_expressions) && isempty(represented_indices) && continue
         @timelog log_level 3 "- [variable_$name]" begin
             vars = m.ext[:spineopt].variables[name]
             exprs = Dict()
@@ -169,8 +169,8 @@ function _add_dependent_variables!(m; log_level)
             _finalize_expressions!(m, exprs, name, def)
             for ind in represented_indices
                 vars[ind] = sum(
-                    coef * vars[representative_ind]
-                    for (representative_ind, coef) in _representative_index_to_coefficient(m, ind, indices)
+                    coef * vars[representative_ind] for
+                    (representative_ind, coef) in _representative_index_to_coefficient(m, ind, indices)
                 )
             end
         end
@@ -179,9 +179,8 @@ end
 
 function _resolve_formula(m, formula)
     sum(
-        coeff * _get_var_with_replacement(m, ref_name, ref_ind)
-        for (ref_name, reference_index_to_coef) in formula
-        for (ref_ind, coeff) in reference_index_to_coef
+        coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, reference_index_to_coef) in formula for
+        (ref_ind, coeff) in reference_index_to_coef
     )
 end
 
@@ -269,10 +268,10 @@ end
 A collection of represented indices.
 """
 function _represented_indices(m::Model, indices::Function, replacement_expressions::OrderedDict)
-    isempty(SpineInterface.indices(representative_periods_mapping)) && return []
+    isempty(SpineInterface.indices(representative_blocks_by_period)) && return []
     # By default, `indices` only returns representative time slices for operational variables other than node_state
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
-    # to `temporal_block(representative_periods_mapping=nothing)` - so only blocks that don't define a mapping are
+    # to `temporal_block(representative_blocks_by_period=nothing)` - so only blocks that don't define a mapping are
     # returned.
     # To also retrieve represented time slices, we need to specify `temporal_block=anything`.
     # Note that for node_state and investment variables, the result will be empty.
@@ -286,7 +285,7 @@ function _is_longterm_index(ind)
     if haskey(ind, :node)
         _is_longterm_node(ind.node)
     elseif haskey(ind, :unit)
-        nodes = (n for unit__node in (unit__from_node, unit__to_node) for (n, _d) in unit__node(unit=ind.unit))
+        nodes = (n for unit__node in (node__to_unit, unit__to_node) for (n, _d) in unit__node(unit=ind.unit))
         any(_is_longterm_node(n) for n in nodes)
     else
         true
@@ -294,7 +293,7 @@ function _is_longterm_index(ind)
 end
 
 function _is_longterm_node(n)
-    has_state(node=n) && is_longterm_storage(node=n)
+    storage_active(node=n) && storage_longterm_active(node=n)
 end
 
 """
@@ -303,19 +302,15 @@ A `Dict` mapping representative indidces to coefficient.
 function _representative_index_to_coefficient(m, ind, indices)
     representative_t_to_coef_arr = representative_time_slice_combinations(m, ind.t)
     representative_inds_to_coef_arr = [
-        Dict(indices(m; ind..., t=representative_t) => coef for (representative_t, coef) in representative_t_to_coef)
-        for representative_t_to_coef in representative_t_to_coef_arr
+        Dict(indices(m; ind..., t=representative_t) => coef for (representative_t, coef) in representative_t_to_coef) for representative_t_to_coef in representative_t_to_coef_arr
     ]
     filter!(representative_inds_to_coef_arr) do representative_inds_to_coef
         !any(isempty.(keys(representative_inds_to_coef)))
     end
     if isempty(representative_inds_to_coef_arr)
         representative_blocks = unique(
-            blk
-            for representative_t_to_coef in representative_t_to_coef_arr
-            for t in keys(representative_t_to_coef)
-            for blk in blocks(t)
-            if representative_periods_mapping(temporal_block=blk) === nothing
+            blk for representative_t_to_coef in representative_t_to_coef_arr for t in keys(representative_t_to_coef) for
+            blk in blocks(t) if representative_blocks_by_period(temporal_block=blk) === nothing
         )
         node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
         error(
