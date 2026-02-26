@@ -322,8 +322,9 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     ]
 
     # original class,
-    classes_to_be_removed = [
-        "unit__commodity"
+    classes_to_be_removed = [ # These happen after other processing has already been done.
+        "unit__commodity",
+        "unit__node__node"
     ]
     # (original parameter value list, new parameter value list)
     lists_to_be_renamed = [

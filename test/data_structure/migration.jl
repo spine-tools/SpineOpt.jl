@@ -578,6 +578,7 @@ function _test_major_upgrade_1()
 		@test !in(:fix_ratio_out_in_unit_flow, param_names) # Old parameter deleted.
 		# Check classes to be removed.
 		@test !in(:unit__commodity, rel_class_names)
+		@test !in(:unit__node__node, rel_class_names) # Old class deleted.
 		# Check parameter value lists, which we first need to parse.
 		parameter_value_lists = Dict()
 		for (list_name, list_value) in migrated_data["parameter_value_lists"]
