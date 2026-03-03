@@ -1,3 +1,0 @@
-Defines how many members a certain [unit](@ref) object represents. Typically this parameter takes a binary (UC) or integer (clustered UC) value. Together with the [unit\_availability\_factor](@ref) and [units\_unavailable](@ref), this will determine the maximum number of members that can be online at any given time. (Thus restricting the [units\_on](@ref) variable). It is possible to allow the model to increase the `number_of_units` itself, through [Investment Optimization](@ref). It is also possible to schedule maintenance outages using [outage\_variable\_type](@ref) and [scheduled\_outage\_duration](@ref).
-
-The default value for this parameter is 1. The default value is 0 when [candidate\_units](@ref) has been defined for the unit in question.

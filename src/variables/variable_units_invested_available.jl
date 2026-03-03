@@ -31,22 +31,28 @@ function units_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    unit = intersect(indices(candidate_units), members(unit))
+    unit = intersect(indices(investment_count_max_cumulative), members(unit))
     unit_investment_stochastic_time_indices(
         m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 
 """
+    units_invested_available_bin(x)
+
+Check if unit investment variable type is defined to be binary.
+"""
+units_invested_available_bin(x) = investment_variable_type(unit=x.unit) == :binary
+
+"""
     units_invested_available_int(x)
 
 Check if unit investment variable type is defined to be an integer.
 """
-
-units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
+units_invested_available_int(x) = investment_variable_type(unit=x.unit) == :integer
 
 function _initial_units_invested_available(; kwargs...)
-    something(initial_units_invested_available(; kwargs...), 0)
+    something(investment_count_initial_cumulative(; kwargs...), 0)
 end
 
 """
@@ -60,9 +66,10 @@ function add_variable_units_invested_available!(m::Model)
         :units_invested_available,
         units_invested_available_indices;
         lb=constant(0),
+        bin=units_invested_available_bin,
         int=units_invested_available_int,
-        fix_value=fix_units_invested_available,
+        fix_value=investment_count_fix_cumulative,
         initial_value=_initial_units_invested_available,
-        required_history_period=maximum_parameter_value(unit_investment_tech_lifetime),
+        required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end

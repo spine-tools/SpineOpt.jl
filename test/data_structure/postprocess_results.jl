@@ -58,8 +58,8 @@ function _test_save_connection_avg_throughflow_setup()
             ["node", "node_b", "demand", 100],
             ["output", "connection_avg_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
             ["output", "connection_avg_intact_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",
@@ -123,17 +123,17 @@ function test_save_connection_avg_throughflow()
         # The case where the connection between node a and b is bidirectional, including the ptdf calculation.
         url_in = _test_save_connection_avg_throughflow_setup()
         objects = [
-            ["commodity", "electricity"],
+            ["grid", "electricity"],
         ]
         relationships = [
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_monitored", true],
-            ["connection", "connection_ab", "connection_reactance", 0.1],
-            ["connection", "connection_ab", "connection_resistance", 0.9],
-            ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
+            ["connection", "connection_ab", "monitoring_active", true],
+            ["connection", "connection_ab", "reactance", 0.1],
+            ["connection", "connection_ab", "resistance", 0.9],
+            ["grid", "electricity", "physics_type", "ptdf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
         ]
@@ -207,8 +207,8 @@ function _test_save_contingency_is_binding_setup()
             ["model", "instance", "model_type", "spineopt_standard"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [
@@ -235,7 +235,7 @@ function test_save_contingency_is_binding()
         d_values = [100, 50, 200, 75, 100]
         demand_ = TimeSeries(d_timestamps, d_values, false, false)
         objects = [
-            ["commodity", "electricity"],
+            ["grid", "electricity"],
             ["report", "report_x"],
             #FIXME: Another report with the same output will fail the test by an error
             # Uncomment the following line and that in "relationships" to see the error
@@ -249,9 +249,9 @@ function test_save_contingency_is_binding()
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -262,18 +262,18 @@ function test_save_contingency_is_binding()
             # ["report__output", ["report_y", "contingency_is_binding"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_monitored", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
-            ["connection", "connection_ab", "connection_resistance", conn_r],
-            ["connection", "connection_bc", "connection_monitored", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
-            ["connection", "connection_bc", "connection_resistance", conn_r],
-            ["connection", "connection_ca", "connection_monitored", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
-            ["connection", "connection_ca", "connection_resistance", conn_r],
-            ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
+            ["connection", "connection_ab", "monitoring_active", true],
+            ["connection", "connection_ab", "reactance", conn_x],
+            ["connection", "connection_ab", "resistance", conn_r],
+            ["connection", "connection_bc", "monitoring_active", true],
+            ["connection", "connection_bc", "reactance", conn_x],
+            ["connection", "connection_bc", "resistance", conn_r],
+            ["connection", "connection_ca", "monitoring_active", true],
+            ["connection", "connection_ca", "reactance", conn_x],
+            ["connection", "connection_ca", "resistance", conn_r],
+            ["grid", "electricity", "physics_type", "lodf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "connection_contingency", true],
+            ["connection", "connection_ca", "contingency_active", true],
             ["node", "node_c", "demand", unparse_db_value(demand_)],
             ["node", "node_b", "demand", unparse_db_value(-demand_)],
         ]
@@ -312,7 +312,7 @@ function test_save_contingency_is_binding()
         )
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0, optimize=true)
-        O = Module()
+        O = Bind()
         using_spinedb(url_out, O)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)

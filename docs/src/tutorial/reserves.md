@@ -30,14 +30,14 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 - Always in the Spine DB editor, locate the *Object tree* (typically at the top-left). Expand the [root] element if not expanded.
 - Right click on the [node] class, and select *Add objects* from the context menu. The *Add objects* dialog will pop up.
-- Enter the names for the new reserve node as seen in the image below, then press *Ok*. This will create a new object of class *node*, called *upward\_reserve\_node*.
+- Enter the names for the new reserve node as seen in the image below, then press *Ok*. This will create a new object of class *node*, called *reserve\_upward\_node*.
 
 ![image](figs_reserves/reserves_tutorial_reserve_node.png)
 
-- Right click on the *node* class, and select *Add object group* from the context menu. The *Add object group* dialog will pop up. In the *Group name* field write *upward\_reserve\_group* to refer to this group. Then, add as a members of the group the nodes *electricity\_node* and *upward\_reserve\_node*, as shown in the image below; then press *Ok*.
+- Right click on the *node* class, and select *Add object group* from the context menu. The *Add object group* dialog will pop up. In the *Group name* field write *reserve\_upward\_group* to refer to this group. Then, add as a members of the group the nodes *electricity\_node* and *reserve\_upward\_node*, as shown in the image below; then press *Ok*.
 
 !!! note
-    In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *upward\_reserve\_group* will help to link the flow variables for electricity production and reserve procurement.
+    In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *reserve\_upward\_group* will help to link the flow variables for electricity production and reserve procurement.
 
 ![image](figs_reserves/reserves_tutorial_reserve_group.png)
 
@@ -45,7 +45,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 - Always in the Spine DB editor, locate the *Relationship tree* (typically at the bottom-left). Expand the *root* element if not expanded.
 - Right click on the *unit\_\_to_node* class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
-- Select the names of the two units and their **receiving** nodes, as seen in the image below; then press *Ok*. This will establish that both *power\_plant\_a* and *power\_plant\_b* release energy into both the *upward\_reserve\_node* and the *upward\_reserve\_group*.
+- Select the names of the two units and their **receiving** nodes, as seen in the image below; then press *Ok*. This will establish that both *power\_plant\_a* and *power\_plant\_b* release energy into both the *reserve\_upward\_node* and the *reserve\_upward\_group*.
 
 ![image](figs_reserves/reserves_tutorial_unit__to_node_relationships.png)
 
@@ -57,50 +57,50 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 #### Specifying object parameter values
 
-- Back to *Object tree*, expand the *node* class and select *upward\_reserve\_node*.
+- Back to *Object tree*, expand the *node* class and select *reserve\_upward\_node*.
 - Locate the *Object parameter* table (typically at the top-center).
 - In the *Object parameter* table (typically at the top-center), select the following parameter as seen in the image below:
   - *demand* parameter and the *Base* alternative, and enter the value *20*. This will establish that there's a demand of '20' at the reverse node.
-  - *is\_reserve\_node* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
-  - *upward\_reserve* parameter and the *Base* alternative, then right-click on the value cell and then, in the context menu, select 'Edit...' and select the option *True*. This will establish the direction of the reserve is upwards.
-  - *nodal\_balance\_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
+  - *reserve\_active* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
+  - *reserve\_upward* parameter and the *Base* alternative, then right-click on the value cell and then, in the context menu, select 'Edit...' and select the option *True*. This will establish the direction of the reserve is upwards.
+  - *balance\_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
 
 ![image](figs_reserves/reserves_tutorial_reserve_node_parameters.png)
 
-- Select *upward\_reserve\_group* in the *Object tree*.
+- Select *reserve\_upward\_group* in the *Object tree*.
 
-- In the *Object parameter* table, select the *balance\_type* parameter and the *Base* alternative, and enter the value *balance\_type\_none* as seen in the image below. This will establish that there is no need to create an extra balance between the members of the group.
+- In the *Object parameter* table, select the *balance\_type* parameter and the *Base* alternative, and enter the value *none* as seen in the image below. This will establish that there is no need to create an extra balance between the members of the group.
 
 ![image](figs_reserves/reserves_tutorial_reserve_group_parameters.png)
 
 #### Specifying relationship parameter values
 
-- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | upward\_reserve\_node*.
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | reserve\_upward\_node*.
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the *unit\_capacity* parameter and the *Base* alternative, and enter the value *100* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_a*.
+- In the *Relationship parameter* table (typically at the bottom-center), select the *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *100* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_a*.
 
 !!! note
     The value is equal to the unit capacity defined for the electricity node. However, the value can be lower if the unit cannot provide reserves with its total capacity.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_a_reserve_capacity.png)
 
-- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | upward\_reserve\_node*.
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | reserve\_upward\_node*.
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the *unit\_capacity* parameter and the *Base* alternative, and enter the value *200* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_b*.
+- In the *Relationship parameter* table (typically at the bottom-center), select the *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *200* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_b*.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_b_reserve_capacity.png)
 
-- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | upward\_reserve\_group*.
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | reserve\_upward\_group*.
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
-  - *unit\_capacity* parameter and the *Base* alternative, and enter the value *100*. This will set the total capacity for *power\_plant\_a* in the group.
+  - *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *100*. This will set the total capacity for *power\_plant\_a* in the group.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
 
-- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | upward\_reserve\_group*.
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | reserve\_upward\_group*.
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
-  - *unit\_capacity* parameter and the *Base* alternative, and enter the value *200*. This will set the total capacity for *power\_plant\_b* in the group.
+  - *capacity\_per\_unit* parameter and the *Base* alternative, and enter the value *200*. This will set the total capacity for *power\_plant\_b* in the group.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
 
@@ -134,13 +134,13 @@ So, is it possible to assign costs to this reserve procurement in SpineOpt? Yes,
 
 #### Specifying a reserve procurement cost value
 
-- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | upward\_reserve\_node*.
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | reserve\_upward\_node*.
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the *reserve\_procurement\_cost* parameter and the *Base* alternative, and enter the value *5* as seen in the image below. This will set the cost of providing reserve for *power\_plant\_a*.
 
 ![image](figs_reserves/reserves_tutorial_power_plant_a_res_procurement_cost.png)
 
-- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | upward\_reserve\_node*.
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | reserve\_upward\_node*.
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the *reserve\_procurement\_cost* parameter and the *Base* alternative, and enter the value *35* as seen in the image below. This will set the cost of providing reserve for *power\_plant\_b*.
 

@@ -20,9 +20,7 @@
 
 import Logging: Warn
 
-module Y
-using SpineInterface
-end
+const Y = Bind()
 
 function _test_run_spineopt_setup()
     url_in = "sqlite://"
@@ -65,8 +63,8 @@ function _test_run_spineopt_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "unit_flow", "output_resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"]
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"]
         ],
     )
     _load_test_data(url_in, test_data)
@@ -81,13 +79,13 @@ function _test_report_relative_optimality_gap()
         vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         demand_data = [2 * k for k in 1:24]
         demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
-        unit_capacity = demand
+        capacity_per_unit = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         objects = [["output", "relative_optimality_gap"]]
@@ -104,7 +102,7 @@ function _test_report_relative_optimality_gap()
         @testset for k in 1:24
             t1 = DateTime(2000, 1, 1, k - 1)
             t = TimeSlice(t1, t1 + Hour(1))
-            @test Y.relative_optimality_gap(model=first(Y.model()), report=Y.report(:report_x), t=t) !== nothing
+            @test Y.relative_optimality_gap(report=Y.report(:report_x), model=first(Y.model()), t=t) !== nothing
         end
     end
 end
@@ -117,13 +115,13 @@ function _test_rolling()
         vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         demand_data = [2 * k for k in 0:23]
         demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
-        unit_capacity = demand
+        capacity_per_unit = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         SpineInterface.import_data(
@@ -135,7 +133,7 @@ function _test_rolling()
             m = run_spineopt(url_in, url_out; log_level=0, write_as_roll=write_as_roll)
             con = m.ext[:spineopt].constraints[:unit_flow_capacity]
             using_spinedb(url_out, Y)
-            cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+            cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
             flow_key = (
                 report=Y.report(:report_x),
                 unit=Y.unit(:unit_ab),
@@ -179,13 +177,13 @@ function _test_rolling_with_updating_data()
         )
         demand_data = [2 * k for k in 0:23]
         demand = Dict("type" => "time_series", "data" => demand_data, "index" => inds)
-        unit_capacity = demand
+        capacity_per_unit = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         SpineInterface.import_data(
@@ -196,7 +194,7 @@ function _test_rolling_with_updating_data()
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
         flow_key = (
             report=Y.report(:report_x),
             unit=Y.unit(:unit_ab),
@@ -234,13 +232,13 @@ function _test_rolling_with_unused_dummy_stochastic_data()
         )
         demand_data = [2 * k for k in 0:23]
         demand = Dict("type" => "time_series", "data" => demand_data, "index" => inds)
-        unit_capacity = demand
+        capacity_per_unit = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         SpineInterface.import_data(
@@ -251,7 +249,7 @@ function _test_rolling_with_unused_dummy_stochastic_data()
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
         flow_key = (
             report=Y.report(:report_x),
             unit=Y.unit(:unit_ab),
@@ -274,13 +272,13 @@ function _test_rolling_without_varying_terms()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost = 1200
         demand = 24
-        unit_capacity = demand
+        capacity_per_unit = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         SpineInterface.import_data(
@@ -291,7 +289,7 @@ function _test_rolling_without_varying_terms()
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        cost_key = (report=Y.report(:report_x), model=Y.model(:instance))
         flow_key = (
             report=Y.report(:report_x),
             unit=Y.unit(:unit_ab),
@@ -313,7 +311,7 @@ function _test_units_on_non_anticipativity_time()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         vom_cost = 20
         demand = 200
-        unit_capacity = demand
+        capacity_per_unit = demand
         objects = [["output", "units_on"]]
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
@@ -323,7 +321,7 @@ function _test_units_on_non_anticipativity_time()
         ]
         relationships = [["report__output", ["report_x", "units_on"]]]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         SpineInterface.import_data(
@@ -351,13 +349,13 @@ function _test_unit_flow_non_anticipativity_time()
         demand_inds = collect(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 3))
         demand = TimeSeries(demand_inds, demand_vals, false, false)
         demand_pv = parameter_value(demand)
-        unit_capacity = 200
+        capacity_per_unit = 200
         @testset for nat in 1:6
             non_anticip_time = Dict("type" => "duration", "data" => string(nat, "h"))
             objects = [["output", "units_on"], ["temporal_block", "quarterly"]]
             object_parameter_values = [
                 ["node", "node_b", "demand", unparse_db_value(demand)],
-                ["node", "node_b", "node_slack_penalty", 1000],
+                ["node", "node_b", "balance_penalty", 1000],
                 ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
                 ["temporal_block", "quarterly", "resolution", Dict("type" => "duration", "data" => "15m")],
                 ["temporal_block", "quarterly", "block_end", Dict("type" => "duration", "data" => "6h")],
@@ -371,7 +369,7 @@ function _test_unit_flow_non_anticipativity_time()
                 ["units_on__temporal_block", ["unit_ab", "quarterly"]]
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+                ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
                 ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
                 ["unit__to_node", ["unit_ab", "node_b"], "unit_flow_non_anticipativity_time", non_anticip_time],
             ]
@@ -408,14 +406,14 @@ function _test_dont_overwrite_results_on_rolling()
             "type" => "time_series",
             "data" => Dict("2000-01-01T00:00:00" => 50.0, "2000-01-01T12:00:00" => 90.0, "2000-01-03T00:00:00" => 90.0)
         )
-        unit_capacity = 90
+        capacity_per_unit = 90
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
             ["temporal_block", "hourly", "block_end", Dict("type" => "duration", "data" => "9h")]
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
             ["report__output", ["report_x", "unit_flow"], "overwrite_results_on_rolling", false],
         ]
@@ -456,7 +454,7 @@ function _test_unfeasible()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         demand = 100
         object_parameter_values = [["node", "node_b", "demand", demand]]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand - 1]]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", demand - 1]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -478,7 +476,7 @@ function _test_unknown_output()
             ["node", "node_b", "demand", demand]
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", demand],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         SpineInterface.import_data(
@@ -489,7 +487,7 @@ function _test_unknown_output()
             relationship_parameter_values=relationship_parameter_values,
         )
         msg = "can't find any values for 'unknown_output'"
-        @test_logs min_level=Warn (:warn, msg) run_spineopt(url_in, url_out; log_level=0)
+        @test_logs min_level=Warn (:warn, msg) run_spineopt(url_in, url_out; log_level=0, upgrade=true)
     end
 end
 
@@ -521,7 +519,7 @@ function _test_write_inputs_overlapping_temporal_blocks()
         demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
         objects = [["output", "demand"], ["temporal_block", "8hourly"], ["node", "node_a"]]
         relationships = [
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["model__temporal_block", ["instance", "8hourly"]],
             ["node__temporal_block", ["node_a", "8hourly"]],  # NOTE: 8hourly is associated to the *non*-demand node
             ["node__stochastic_structure", ["node_a", "deterministic"]],
@@ -612,10 +610,10 @@ function _test_db_solvers()
         )
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
-            ["model", "instance", "db_mip_solver_options", mip_solver_options],
-            ["model", "instance", "db_lp_solver_options", lp_solver_options]
+            ["model", "instance", "solver_mip_options", mip_solver_options],
+            ["model", "instance", "solver_lp_options", lp_solver_options]
         ]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", demand]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -633,7 +631,7 @@ function _test_fixing_variables_when_rolling()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
         demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
-        unit_capacity = demand
+        capacity_per_unit = demand
         objects = [["output", "constraint_nodal_balance"]]
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
@@ -642,7 +640,7 @@ function _test_fixing_variables_when_rolling()
             ["unit", "unit_ab", "min_up_time", Dict("type" => "duration", "data" => "6h")],
         ]  # NOTE: min_up_time is only so we have a history
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity]
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit]
         ]
         SpineInterface.import_data(
             url_in;
@@ -672,20 +670,20 @@ function _test_dual_values()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
         demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
-        unit_capacity = 31
+        capacity_per_unit = 31
         vom_cost_data = [100, 200, 300]
         vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         objects = [["output", "constraint_nodal_balance"]]
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
             # Uncomment to test for a particular solver, e.g., CPLEX
-            # ["model", "instance", "db_mip_solver", "CPLEX.jl"],
+            # ["model", "instance", "solver_mip", "CPLEX.jl"],
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "binary"]
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
         ]
         SpineInterface.import_data(
@@ -699,7 +697,7 @@ function _test_dual_values()
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
         @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
-            expected = SpineOpt.vom_cost(node=node(:node_b), unit=unit(:unit_ab), direction=direction(:to_node), t=t)
+            expected = SpineOpt.vom_cost(unit=unit(:unit_ab), node=node(:node_b), direction=direction(:to_node), t=t)
             @test Y.constraint_nodal_balance(; key..., t=t) == expected
         end
     end
@@ -711,7 +709,7 @@ function _test_dual_values_with_two_time_indices()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
         demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
-        unit_capacity = 31
+        capacity_per_unit = 31
         vom_cost_data = [100, 200, 300]
         vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         objects = [["output", "constraint_node_injection"]]
@@ -719,10 +717,10 @@ function _test_dual_values_with_two_time_indices()
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+            ["unit", "unit_ab", "online_variable_type", "binary"]
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
         ]
         SpineInterface.import_data(
@@ -737,7 +735,7 @@ function _test_dual_values_with_two_time_indices()
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
         @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
             expected = if t < DateTime(2000, 1, 2)
-                -SpineOpt.vom_cost(node=node(:node_b), unit=unit(:unit_ab), direction=direction(:to_node), t=t)
+                -SpineOpt.vom_cost(unit=unit(:unit_ab), node=node(:node_b), direction=direction(:to_node), t=t)
             else
                 nothing
             end
@@ -746,8 +744,8 @@ function _test_dual_values_with_two_time_indices()
     end
 end
 
-function _test_fix_unit_flow_with_rolling()
-    @testset "fix_unit_flow with rolling" begin
+function _test_flow_limits_fix_with_rolling()
+    @testset "flow_limits_fix with rolling" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         indexes = [
             DateTime("2000-01-01T00:00:00"),
@@ -758,12 +756,12 @@ function _test_fix_unit_flow_with_rolling()
             DateTime("2000-01-01T18:00:00")
         ]
         values = [1, NaN, 2, NaN, 3, NaN]
-        fix_unit_flow_ = unparse_db_value(TimeSeries(indexes, values, false, false))
+        flow_limits_fix_ = unparse_db_value(TimeSeries(indexes, values, false, false))
         object_parameter_values = [
-            ["node", "node_b", "balance_type", "balance_type_none"],
+            ["node", "node_b", "balance_type", "none"],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(6))],
         ]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fix_unit_flow", fix_unit_flow_]]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "flow_limits_fix", flow_limits_fix_]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -781,8 +779,8 @@ function _test_fix_unit_flow_with_rolling()
     end
 end
 
-function _test_fix_node_state_using_map_with_rolling()
-    @testset "fix_node_state_using_map_with_rolling" begin
+function _test_storage_state_fix_using_map_with_rolling()
+    @testset "storage_state_fix_using_map_with_rolling" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         rf = 2
         look_ahead = 4  # Higher than the roll forward so it's more interesting
@@ -800,17 +798,17 @@ function _test_fix_node_state_using_map_with_rolling()
             end
             push!(values, val)
         end
-        fix_node_state_ = unparse_db_value(Map(indexes, values))
+        storage_state_fix_ = unparse_db_value(Map(indexes, values))
         objects = [["output", "node_state"]]
         relationships = [["report__output", ["report_x", "node_state"]]]
         object_parameter_values = [
-            ["node", "node_b", "has_state", true],
-            ["node", "node_b", "fix_node_state", fix_node_state_],
+            ["node", "node_b", "storage_active", true],
+            ["node", "node_b", "storage_state_fix", storage_state_fix_],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
             ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(look_ahead + 1))],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap]
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap]
         ]
         SpineInterface.import_data(
             url_in;
@@ -842,7 +840,7 @@ function _test_time_limit()
             ),
         )
         object_parameter_values = [
-            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "solver_mip_options", mip_solver_options],
             ["model", "instance", "roll_forward", unparse_db_value(Hour(6))]
         ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 1000]]
@@ -853,7 +851,9 @@ function _test_time_limit()
         )
         windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
         msgs = ["no solution available for instance - window $w - moving on..." for w in windows]
-        @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
+        @test_logs(
+            min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0, upgrade=true)
+        )
     end
 end
 
@@ -867,14 +867,14 @@ function _test_only_linear_model_has_duals()
         @test has_duals(m)
     end
     object_parameter_values = [
-        ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+        ["unit", "unit_ab", "online_variable_type", "binary"]
     ]
     @testset "integer_model_doesnt_have_duals" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         objects = [["output", "bound_units_on"]]
         relationships = [["report__output", ["report_x", "bound_units_on"]]]
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"],
+            ["unit", "unit_ab", "online_variable_type", "binary"],
             ["unit", "unit_ab", "units_on_cost", 1],  # To have units_on variables
         ]
         SpineInterface.import_data(
@@ -915,8 +915,8 @@ end
     _test_fixing_variables_when_rolling()
     _test_dual_values()
     _test_dual_values_with_two_time_indices()
-    _test_fix_unit_flow_with_rolling()
-    _test_fix_node_state_using_map_with_rolling()
+    _test_flow_limits_fix_with_rolling()
+    _test_storage_state_fix_using_map_with_rolling()
     _test_time_limit()
     _test_only_linear_model_has_duals()
     _test_report_relative_optimality_gap()

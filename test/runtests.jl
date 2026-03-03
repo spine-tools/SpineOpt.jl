@@ -18,13 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+using Pkg
+#Pkg.activate("test") # Tasku: Uncomment if you want to run this test script manually.
 using SpineOpt
 using SpineInterface
 using Test
 using Dates
 using JuMP
 using PyCall
-using Pkg
 import JSON
 import MathOptInterface as MOI
 
@@ -153,10 +154,10 @@ function _dismember_function(func)
     println("term constant: ", func.constant)
 end
 
-@testset begin
+@testset begin # Tasku: TODO: Seems like there might be a lot of warnings in the tests, so I might have to take a closer look at each set.
     include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
-    include("data_structure/check_economic_structure.jl") 
+    include("data_structure/check_economic_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
@@ -178,7 +179,7 @@ end
     include("run_spineopt_monte_carlo.jl")
     include("run_spineopt_representative_periods.jl") # FREEZES with multithreading?
     include("run_examples.jl") # CRASHES with multithreading?
-    include("run_benchmark_data.jl") # CRASHES with multithreading?
     include("run_spineopt_hsj_mga.jl")
+    include("run_benchmark_data.jl") # CRASHES with multithreading?
 end
 

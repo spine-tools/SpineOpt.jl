@@ -34,9 +34,7 @@ function do_run_spineopt!(
 )
     outputs = Dict()
     mga_iteration_count = 0
-    max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
-    mga_iteration = ObjectClass(:mga_iteration, [])
-    @eval mga_iteration = $mga_iteration
+    max_mga_iters = mga_max_iterations(model=m.ext[:spineopt].instance)
     build_model!(m; log_level)
     solve_model!(
         m;
@@ -49,20 +47,20 @@ function do_run_spineopt!(
     set_mga_objective!(m)
     # TODO: max_mga_iters can be different now
     if isnothing(max_mga_iters)
-        u_max = if !isempty(indices(units_invested_mga_weight))
-            maximum(length(units_invested_mga_weight(unit=u)) for u in indices(units_invested_mga_weight))
+        u_max = if !isempty(indices(mga_investment_weight, unit))
+            maximum(length(mga_investment_weight(unit=u)) for u in indices(mga_investment_weight, unit))
         else
             0
         end
-        c_max = if !isempty(indices(connections_invested_mga_weight))
+        c_max = if !isempty(indices(mga_investment_weight, connection))
             maximum(
-                length(connections_invested_mga_weight(connection=c)) for c in indices(connections_invested_mga_weight)
+                length(mga_investment_weight(connection=c)) for c in indices(mga_investment_weight, connection)
             )
         else
             0
         end
-        s_max = if !isempty(indices(storages_invested_mga_weight))
-            maximum(length(storages_invested_mga_weight(node=s)) for s in indices(storages_invested_mga_weight))
+        s_max = if !isempty(indices(mga_storage_investment_weight))
+            maximum(length(mga_storage_investment_weight(node=s)) for s in indices(mga_storage_investment_weight))
         else
             0
         end
@@ -80,9 +78,8 @@ function do_run_spineopt!(
         save_mga_objective_values!(m)
         # TODO: needs to clean outputs?
         if (
-            isempty(indices(connections_invested_big_m_mga))
-            && isempty(indices(units_invested_big_m_mga))
-            && isempty(indices(storages_invested_big_m_mga))
+            isempty(indices(mga_investment_big_m))
+            && isempty(indices(mga_storage_investment_big_m))
             && mga_iteration_count < max_mga_iters
         )
             for name in (:mga_objective_ub, :mga_diff_ub1)
@@ -109,33 +106,33 @@ function _add_mga_iteration(k)
 end
 
 function units_invested_mga_indices()
-    unique((unit=ug,) for ug in unit(units_invested_mga=true))
+    unique((unit=ug,) for ug in unit(mga_investment_active=true))
 end
 
 function units_invested_mga_indices(mga_iteration)
-    unique((unit=ug, mga_iteration=mga_it) for ug in unit(units_invested_mga=true) for mga_it in mga_iteration)
+    unique((unit=ug, mga_iteration=mga_it) for ug in unit(mga_investment_active=true) for mga_it in mga_iteration)
 end
 
 function connections_invested_mga_indices()
-    unique((connection=cg,) for cg in connection(connections_invested_mga=true))
+    unique((connection=cg,) for cg in connection(mga_investment_active=true))
 end
 
 function connections_invested_mga_indices(mga_iteration)
     unique(
         (connection=cg, mga_iteration=mga_it)
-        for cg in connection(connections_invested_mga=true)
+        for cg in connection(mga_investment_active=true)
         for mga_it in mga_iteration
     )
 end
 
 function storages_invested_mga_indices()
-    unique((node=ng,) for ng in node(storages_invested_mga=true))
+    unique((node=ng,) for ng in node(mga_storage_investment_active=true))
 end
 
 function storages_invested_mga_indices(mga_iteration)
     unique(
         (node=ng, mga_iteration=mga_it)
-        for ng in node(storages_invested_mga=true)
+        for ng in node(mga_storage_investment_active=true)
         for mga_it in mga_iteration
     )
 end
@@ -148,8 +145,8 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         units_invested_available_indices,
         unit_stochastic_scenario_weight,
         units_invested_mga_indices,
-        units_invested_mga_weight,
-        units_invested_big_m_mga,
+        mga_investment_weight,
+        mga_investment_big_m,
         iteration,
         iteration_number
     )
@@ -159,8 +156,8 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         connections_invested_available_indices,
         connection_stochastic_scenario_weight,
         connections_invested_mga_indices,
-        connections_invested_mga_weight,
-        connections_invested_big_m_mga,
+        mga_investment_weight,
+        mga_investment_big_m,
         iteration,
         iteration_number
     )
@@ -170,8 +167,8 @@ function set_objective_mga_iteration!(m; iteration=nothing, iteration_number=0)
         storages_invested_available_indices,
         node_stochastic_scenario_weight,
         storages_invested_mga_indices,
-        storages_invested_mga_weight,
-        storages_invested_big_m_mga,
+        mga_storage_investment_weight,
+        mga_storage_investment_big_m,
         iteration,
         iteration_number
     )
@@ -206,9 +203,8 @@ function _set_objective_mga_iteration!(
     if !isempty(mga_indices())
         weighted_investments = all(
             [
-                isempty(indices(connections_invested_big_m_mga)),
-                isempty(indices(units_invested_big_m_mga)),
-                isempty(indices(storages_invested_big_m_mga))
+                isempty(indices(mga_investment_big_m)),
+                isempty(indices(mga_storage_investment_big_m))
             ]
         )
         t0 = start(current_window(m))
@@ -313,7 +309,7 @@ function add_mga_objective_constraint!(m::Model)
             m,
             total_costs(m, anything)
             <=
-            (1 + max_mga_slack(model=instance)) * objective_value(m)
+            (1 + mga_max_slack(model=instance)) * objective_value(m)
         )
     )
 end
@@ -330,9 +326,8 @@ end
 function set_mga_objective!(m)
     weighted_investments = all(
         [
-            isempty(indices(connections_invested_big_m_mga)),
-            isempty(indices(units_invested_big_m_mga)),
-            isempty(indices(storages_invested_big_m_mga))
+            isempty(indices(mga_investment_big_m)),
+            isempty(indices(mga_storage_investment_big_m))
         ]
     )
     m.ext[:spineopt].variables[:mga_objective] = Dict(

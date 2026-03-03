@@ -63,11 +63,11 @@ function _create_set_parameters_and_relationships()
             :set_investment_indices => units_invested_available_indices,
             :set_invest_temporal_block => unit__investment_temporal_block,
             :set_invest_stoch_struct => unit__investment_stochastic_structure,
-            :set_lead_time => unit_lead_time,
-            :set_tech_lifetime => unit_investment_tech_lifetime,
-            :set_econ_lifetime => unit_investment_econ_lifetime,
-            :set_discnt_rate_tech => unit_discount_rate_technology_specific,
-            :set_decom_time => unit_decommissioning_time,
+            :set_lead_time => lead_time,
+            :set_tech_lifetime => lifetime_technical,
+            :set_econ_lifetime => lifetime_economic,
+            :set_discnt_rate_tech => discount_rate_technology_specific,
+            :set_decom_time => decommissioning_time,
             :set_decom_cost => unit_decommissioning_cost,
             :set_capacity_transfer_factor => :unit_capacity_transfer_factor,
             :set_conversion_to_discounted_annuities => :unit_conversion_to_discounted_annuities,
@@ -81,8 +81,8 @@ function _create_set_parameters_and_relationships()
             :set_invest_temporal_block => node__investment_temporal_block,
             :set_invest_stoch_struct => node__investment_stochastic_structure,
             :set_lead_time => storage_lead_time,
-            :set_tech_lifetime => storage_investment_tech_lifetime,
-            :set_econ_lifetime => storage_investment_econ_lifetime,
+            :set_tech_lifetime => storage_lifetime_technical,
+            :set_econ_lifetime => storage_lifetime_economic,
             :set_discnt_rate_tech => storage_discount_rate_technology_specific,
             :set_decom_time => storage_decommissioning_time,
             :set_decom_cost => storage_decommissioning_cost,
@@ -97,12 +97,12 @@ function _create_set_parameters_and_relationships()
             :set_investment_indices => connections_invested_available_indices,
             :set_invest_temporal_block => connection__investment_temporal_block,
             :set_invest_stoch_struct => connection__investment_stochastic_structure,
-            :set_lead_time => connection_lead_time,
-            :set_tech_lifetime => connection_investment_tech_lifetime,
-            :set_econ_lifetime => connection_investment_econ_lifetime,
-            :set_discnt_rate_tech => connection_discount_rate_technology_specific,
-            :set_decom_time => connection_decommissioning_time,
-            :set_decom_cost => connection_decommissioning_cost,
+            :set_lead_time => lead_time,
+            :set_tech_lifetime => lifetime_technical,
+            :set_econ_lifetime => lifetime_economic,
+            :set_discnt_rate_tech => discount_rate_technology_specific,
+            :set_decom_time => decommissioning_time,
+            :set_decom_cost => decommissioning_cost,
             :set_capacity_transfer_factor => :connection_capacity_transfer_factor,
             :set_conversion_to_discounted_annuities => :connection_conversion_to_discounted_annuities,
             :set_salvage_fraction => :connection_salvage_fraction,
@@ -225,9 +225,6 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, econ
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
-    end
 end
 
 """
@@ -304,9 +301,6 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
             pvals = parameter_value(SpineInterface.Map(stochastic_map_indices, stochastic_map_vals))
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -441,9 +435,6 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_par
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
-    end
 end
 
 """
@@ -496,9 +487,6 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, economic
             pvals = parameter_value(1)
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -583,9 +571,6 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
             pvals = parameter_value(SpineInterface.TimeSeries(timeseries_ind, timeseries_val, false, false))
             add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
         end
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 """
@@ -709,8 +694,5 @@ function generate_decommissioning_conversion_to_discounted_annuities!(
         end
         pvals = parameter_value(SpineInterface.Map(stochastic_map_indices, stochastic_map_vals))
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end

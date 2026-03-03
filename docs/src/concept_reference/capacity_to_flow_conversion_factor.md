@@ -1,0 +1,5 @@
+For `units`, the `capacity_to_flow_conversion_factor`, as defined for a [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref), allows the user to align between [unit\_flow](@ref) variables and the [capacity_per_unit](@ref) parameter, which may be expressed in different units.
+An example would be when the `capacity_per_unit` is expressed in GWh, while the demand on the node is expressed in MWh. In that case, a `capacity_to_flow_conversion_factor` parameter of 1000 would be applicable.
+The default of this parameter is `1`, i.e. assuming that both are given in the same measurement unit.
+
+Similarly for `connections`, the [capacity\_to\_flow\_conversion\_factor](@ref) can be used to perform the conversion between the measurement unit of the [capacity\_per\_connection](@ref) to the measurement unit of the [connection\_flow](@ref) variable.

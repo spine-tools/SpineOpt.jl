@@ -1,2 +1,0 @@
-List of supported LP solvers which may be specified for the [db\_lp\_solver\_options](@ref) parameter.
-The value must correspond exactly to the name of the Julia solver package (e.g. `Clp.jl`) and is case sensitive.
