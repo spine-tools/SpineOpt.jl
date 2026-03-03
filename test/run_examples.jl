@@ -11,6 +11,7 @@ objective_function_reference_values = Dict(
     "capacity_planning.json" => 328503000.0,
     "stochastic.json" => 126964.2857142857,
     "representative_periods.json" => 279438.4922720359,
+    "multi_stage_model_tutorial.json" => 6.966679316359287e6,
 )
 
 @testset for (file, obj_fn_val) in objective_function_reference_values

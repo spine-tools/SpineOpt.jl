@@ -50,6 +50,7 @@ pages = [
         "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
         "Representative periods" => joinpath("tutorial", "representative_periods.md"),
         "Rolling horizon" => joinpath("tutorial", "rolling_horizon.md"),
+        "Multi-stage optimisation" => joinpath("tutorial", "multi-stage.md"),
     ],
     "How to" => [],
     "Example gallery" => joinpath("gallery", "gallery.md"),    
