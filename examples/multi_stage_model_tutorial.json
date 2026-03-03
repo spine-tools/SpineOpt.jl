@@ -5213,7 +5213,7 @@
             "model",
             "test_model",
             "db_lp_solver",
-            "CPLEX.jl",
+            "HiGHS.jl",
             "Base"
         ],
         [
@@ -5258,7 +5258,7 @@
             "model",
             "test_model",
             "db_mip_solver",
-            "CPLEX.jl",
+            "HiGHS.jl",
             "Base"
         ],
         [
