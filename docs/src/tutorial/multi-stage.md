@@ -7,7 +7,7 @@ The basic idea is we start with a base SpineOpt model, for example, an operation
 ![image](figs_multi_stage/the_idea.png)
 
 ## Creating a Stage Model
-A `stage model` is created very simply by creating an entity of class `stage`. 
+A `stage model` is created by creating an entity of class `stage`. 
 
 ## Specifying the Stage Model Data
 A `stage model` is defined by the data which is unique to it. The is achieved by creating a scenario (`stage scenario`) which represents the stage model. Usually the `base model` and `stage model` will differ only in some limited respects, for example, the temporal structure. In practice, the best way to create the `stage scenario` is to duplicate the scenario which represents the `base model` and creating a `stage alternative` and then adding that altnerative to the `stage scenario` meaning the `base model` and `stage model` will differ only according to the data specified under the `stage_altnernative`
@@ -28,6 +28,8 @@ The simple test system is illustrated below.
 
 ![image](figs_multi_stage/stages_demo_system.svg)
 
+The test system can be found in JSON form at [multi_stage_model_tutorial.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/multi_stage_model_tutorial.json)
+
 The model must invest in wind, solar, battery and storage in order to satisfy demand. The base model is configured as a rolling operational model with the following temporal structure:
 
 Temporal Resolution: 
@@ -43,7 +45,7 @@ Looking at the `node_state` result for the h2_node_candidate `node` we immediate
 We can solve this problem using the stage functionality to create a long term model that sees the full year all at once and passes the node state as an input to the base rolling model.
 
 ### Step 1: Create `stage` entity
-Using Spine Toolbox DB Editor, we right click on the entity class and select: "add entities". We will call our new stage entity: `LT_Stage`
+Using Spine Toolbox DB Editor, we right click on the `stage` entity class and select: "add entities". We will call our new stage entity: `LT_Stage`
  - Commit changes
 
 ### Step 2: Create `stage` alternative
@@ -59,7 +61,7 @@ Using DB Editor, we click into the alternatives pane and create a new alternativ
 
   Your scenario/alternative grid should look like this:
 
-![image](scenarios_alternatives/scenario_alternative.png)
+![image](figs_multi_stage/scenario_alternatives.png)
 
 ### Step 3b: Associate scenario `LT_Stage_Scenario` with the `stage model` 
 We need to tell SpineOpt that the `LT_Stage_Scenario` contains the unique data for the stage entity: `LT_Stage`
