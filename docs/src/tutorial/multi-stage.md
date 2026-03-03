@@ -31,8 +31,8 @@ The simple test system is illustrated below.
 The model must invest in wind, solar, battery and storage in order to satisfy demand. The base model is configured as a rolling operational model with the following temporal structure:
 
 Temporal Resolution: 
- - Days 0 - 30 (operations `temporal_block`) 1h 
- - Days 31 - 60 (look_ahead `temporal_block`) 6h
+ - Days 0 - 30 (`operations`: `temporal_block`) 1h 
+ - Days 31 - 60 (`look_ahead`: `temporal_block`) 6h
  - Rolling duration: 30D
 
 Looking at the `node_state` result for the h2_node_candidate `node` we immediately see that it is not well optimised. Because the model is rolling and sees only 60 days at a time, the store is always emptied at the end of the rolling period because no value is seen beyond 60 days.
@@ -50,19 +50,19 @@ Using Spine Toolbox DB Editor, we right click on the entity class and select: "a
 Using DB Editor, we click into the alternatives pane and create a new alternative called `LT_Stage_Alternative`. 
 
 ### Step 3a: Create `stage` scenario
-  - Using DB Editor, we click into the scenarios pane and create a new scenario called "LT_Stage_Scenario"
+  - Using DB Editor, we click into the scenarios pane and create a new scenario called `LT_Stage_Scenario`
   - Switch to the scenario pivot view by clicking on scenario in the tool ribbon
   - Duplicate the base scenario by right clicking on "base" and selecting "duplicate scenario" from the context menu
-  - Add the base alternative to LT_Stage_Scenario by checking the box. It should indicate "1" indicating that base data gets written first
-  - Add the LT_Stage_Alternative alternative to LT_Stage_Scenario by checking the box. It should indicate "2" indicating that the LT_Stage_Alternative gets written second, overwriting base data
+  - Add the base alternative to `LT_Stage_Scenario` by checking the box. It should indicate "1" indicating that base data gets written first
+  - Add the `LT_Stage_Alternative` alternative to `LT_Stage_Scenario` by checking the box. It should indicate "2" indicating that the `LT_Stage_Alternative` gets written second, overwriting base data
    - Commit changes
 
   Your scenario/alternative grid should look like this:
 
 ![image](scenarios_alternatives/scenario_alternative.png)
 
-### Step 3b: Associate scenario LT_Stage_Scenario with the `stage model` 
-We need to tell SpineOpt that the LT_Stage_Scenario contains the unique data for the stage entity: `LT_Stage`
+### Step 3b: Associate scenario `LT_Stage_Scenario` with the `stage model` 
+We need to tell SpineOpt that the `LT_Stage_Scenario` contains the unique data for the stage entity: `LT_Stage`
  - Select the LT_Stage `stage` entity
  - Switch to the parameter value_pane
  - class and entity_byname should be prefilled
@@ -72,31 +72,31 @@ We need to tell SpineOpt that the LT_Stage_Scenario contains the unique data for
 ### Step 4: Create `LT_Stage` data
 So what is different about our long term model compared to our operations `base model`?
  - The model doesn't roll, it sees the full year all at once.
- - Since it doesn't roll and we see the full year, we don't need the `look_ahead` temporal_block
+ - Since it doesn't roll and we see the full year, we don't need the `look_ahead` `temporal_block`
  - Instead of 1h resolution, we want 6h resolution (otherwise our long term model will take a very long time to solve)
  - Our operations `temporal_block` no longer ends after 30 days.
 
- To implement these changes, we use the LT_Stage_Alternatives to create parameters that will override the corresponding base model data, as follows:
+ To implement these changes, we use the `LT_Stage_Alternatives` to create parameters that will override the corresponding base model data, as follows:
 
-- Turn rolling off for the LT_Stage_Alternative:
+- Turn rolling off for the `LT_Stage_Alternative`:
   - Select the `test_model` entity in the model class
   - Switch to parameter value view
-  - Class and entity_byname should be prefilled. Select `roll_forward` in the parameter name field.
+  - Class and `entity_byname` should be prefilled. Select `roll_forward` in the parameter name field.
   - In the alternative field, select `LT_Stage_Alternative`
   - In the value field, right click the cell and select `edit`. 
   - Select plain value
   - Select `null`
   - Commit changes
-- Remove the look_ahead temporal block from the LT_Stage_Alternative by:
+- Remove the `look_ahead` temporal block from the `LT_Stage_Alternative` by:
   - switch back to table view by clicking `table` in the ribbon
-  - switch to the entity_alternative tab
+  - switch to the `entity_alternative` tab
   - select the `look_ahead` temporal block entity
   - in the bottom row, `class` and `entity_byname` should be prefilled. In the alternative field, select `LT_Stage_Alternative`
   - In the `active` field, select `false`
   - Commit changes
 - Change the temporal resolution of the operations `temporal_block` to 6h
   - Select the operations entity in the `temporal_block` class
-  - Class and entity_byname should be prefilled. 
+  - Class and `entity_byname` should be prefilled. 
   - Select `resolution` in the parameter name field.
   - Right click value field and select edit
   - Select `duration value`
@@ -104,7 +104,7 @@ So what is different about our long term model compared to our operations `base 
   - Commit changes
 - remove `block_end` of the operations `temporal_block`
   - Select the operations entity in the `temporal_block` class
-  - Class and entity_byname should be prefilled. 
+  - Class and `entity_byname` should be prefilled. 
   - Select `block_end` in the parameter name field.
   - Right click value field and select edit
   - Select "plain value"
@@ -138,7 +138,7 @@ To pass outputs for all entities for a certain output, we need to create 2-Dimen
    - For `output` select `storages_invested_available`
  - Commit changes
 
-To pass node state for the h2_node_candidate, we need to create a 3-Dimensional entity of class `stage__output__node`
+To pass node state for the `h2_node_candidate`, we need to create a 3-Dimensional entity of class `stage__output__node`
 - Right click on `stage__output__node` class
 - Select: add entities
 - For `stage` select `LT_Stage`
@@ -146,7 +146,7 @@ To pass node state for the h2_node_candidate, we need to create a 3-Dimensional 
 - For `node` select `h2_node_candidate`
 - Commit changes
 
-For node_state, we don't want to overconstrain the operations problem, so we only want the node_state in the operations model to be fixed at intervals, thus allowing some flexibility in the operations model while also following the seasonal trajectory from the long term model. To do this, we use the `output_resolution` parameter for the `stage__output__node` we just created above
+For `node_state`, we don't want to overconstrain the operations problem, so we only want the `node_state` in the operations model to be fixed at intervals, thus allowing some flexibility in the operations model while also following the seasonal trajectory from the long term model. To do this, we use the `output_resolution` parameter for the `stage__output__node` we just created above
 - Select the `stage__output__node` we just created above in the tree
 - The class and entity_by_name fields should be prefilled
 - For parameter name, select `output_resolution`
@@ -160,4 +160,4 @@ For node_state, we don't want to overconstrain the operations problem, so we onl
 ## Run Model
 Now you have successfully created a Long Term `Stage Model` that feeds a selected node_state and all investment decisions to the `Base Model`
 
-Run the model, making sure to run the "Base" scenario. Remember the LT_Stage_Scenario's purpose is only to specify the unique data for the `stage model`. It's not a scenario that you actually run (unless you would like to see the outputs of the long term model only.
+Run the model, making sure to run the "Base" scenario. Remember the `LT_Stage_Scenario`s purpose is only to specify the unique data for the `stage model`. It's not a scenario that you actually run (unless you would like to see the outputs of the long term model only).
