@@ -37,7 +37,7 @@ Temporal Resolution:
  - Days 31 - 60 (`look_ahead`: `temporal_block`) 6h
  - Rolling duration: 30D
 
-Looking at the `node_state` result for the h2_node_candidate `node` we immediately see that it is not well optimised. Because the model is rolling and sees only 60 days at a time, the store is always emptied at the end of the rolling period because no value is seen beyond 60 days.
+Looking at the `node_state` result for the `h2_node_candidate` `node` we immediately see that it is not well optimised. Because the model is rolling and sees only 60 days at a time, the store is always emptied at the end of the rolling period because no value is seen beyond 60 days.
 
 
 ![image](figs_multi_stage/node_state.png)
@@ -89,6 +89,7 @@ So what is different about our long term model compared to our operations `base 
   - Select plain value
   - Select `null`
   - Commit changes
+
 - Remove the `look_ahead` temporal block from the `LT_Stage_Alternative` by:
   - switch back to table view by clicking `table` in the ribbon
   - switch to the `entity_alternative` tab
@@ -96,6 +97,7 @@ So what is different about our long term model compared to our operations `base 
   - in the bottom row, `class` and `entity_byname` should be prefilled. In the alternative field, select `LT_Stage_Alternative`
   - In the `active` field, select `false`
   - Commit changes
+
 - Change the temporal resolution of the operations `temporal_block` to 6h
   - Select the operations entity in the `temporal_block` class
   - Class and `entity_byname` should be prefilled. 
@@ -104,6 +106,7 @@ So what is different about our long term model compared to our operations `base 
   - Select `duration value`
   - enter "6h"
   - Commit changes
+  
 - remove `block_end` of the operations `temporal_block`
   - Select the operations entity in the `temporal_block` class
   - Class and `entity_byname` should be prefilled. 
@@ -120,7 +123,7 @@ We want to make sure that the following Long Term model outputs pass as inputs t
  - All unit investment decisions
  - All connetion investment decisions
  - All storage investment decisions
- - `node_state` for the seasonal h2_node_candidate node
+ - `node_state` for the seasonal `h2_node_candidate` node
  
 To pass outputs for all entities for a certain output, we need to create 2-Dimensional entities of class `stage__output`
  - For unit investment decisionss
