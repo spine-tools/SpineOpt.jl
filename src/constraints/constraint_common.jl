@@ -86,7 +86,7 @@ function _past_indices(m, indices, param, s_path, t; kwargs...)
             kwargs...,
             stochastic_scenario=s_path,
             t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
-            temporal_block=anything,
+            temporal_block=temporal_block(representative_periods_mapping=nothing),
         )    
     )
 end

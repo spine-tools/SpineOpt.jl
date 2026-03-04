@@ -155,7 +155,7 @@ function _start_and_end_by_block(m::Model, window_start, window_end)
     )
 end
 
-function _blocks_and_mapping_by_interval(start_and_end_by_block)
+function _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
     blocks_and_mapping_by_interval = Dict()
     for blk in members(temporal_block(representative_periods_mapping=nothing))
         blk_start, blk_end = start_and_end_by_block[blk]
@@ -182,8 +182,7 @@ function _blocks_and_mapping_by_interval(start_and_end_by_block)
     blocks_and_mapping_by_interval
 end
 
-function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_by_interval, start_and_end_by_block)
-    blocks_and_mapping_by_represented_interval = Dict()
+function _coef_by_representative_by_start_by_represented()
     representative_blk_by_index = Dict()
     for blk in indices(representative_period_index)
         index = round(Int, representative_period_index(temporal_block=blk))
@@ -196,51 +195,37 @@ function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_b
         end
         representative_blk_by_index[index] = blk
     end
-    for represented_blk in indices(representative_periods_mapping)
+    Dict(
+        represented_blk => Dict(
+            t_start => _coefficient_by_representative_block(repr_comb, representative_blk_by_index)
+            for (t_start, repr_comb) in representative_periods_mapping(temporal_block=represented_blk)
+        )
+        for represented_blk in indices(representative_periods_mapping)
+    )
+end
+
+function _blocks_and_mapping_by_represented_interval(start_and_end_by_block)
+    coef_by_representative_by_start_by_represented = _coef_by_representative_by_start_by_represented()
+    blocks_and_mapping_by_represented_interval = Dict()
+    for (represented_blk, coef_by_representative_by_start) in coef_by_representative_by_start_by_represented
+        represented_t_starts = sort!(collect(keys(coef_by_representative_by_start)))
         blk_start, blk_end = start_and_end_by_block[represented_blk]
-        mapping = representative_periods_mapping(temporal_block=represented_blk)
-        representative_blk_to_coef_by_start = Dict(
-            t_start => _representative_block_to_coefficient(repr_comb, representative_blk_by_index)
-            for (t_start, repr_comb) in mapping
-        )
-        mapping_blocks = unique(
-            blk for blk_to_coef in values(representative_blk_to_coef_by_start) for (blk, _coeff) in blk_to_coef
-        )
-        represented_t_starts = sort!(collect(keys(mapping)))
         filter!(represented_t_starts) do t_start
-            t_start < blk_end
+            blk_start <= t_start < blk_end
         end
         represented_t_ends = [represented_t_starts[2:end]; blk_end]
         for (represented_t_start, represented_t_end) in zip(represented_t_starts, represented_t_ends)
             represented_interval = (represented_t_start, represented_t_end)
-            representative_blk_to_coef = representative_blk_to_coef_by_start[represented_t_start]
-            invalid_blks = setdiff(keys(representative_blk_to_coef), members(temporal_block()))
+            coef_by_representative_blk = coef_by_representative_by_start[represented_t_start]
+            invalid_blks = setdiff(keys(coef_by_representative_blk), members(temporal_block()))
             if !isempty(invalid_blks)
                 error("$represented_interval from '$represented_blk' is mapped to unknown block(s) $invalid_blks")
             end
-            coefs_sum = sum(values(representative_blk_to_coef))
+            coefs_sum = sum(values(coef_by_representative_blk))
             if !isapprox(coefs_sum, 1)
                 error(
                     "sum of coefficients for $represented_interval from '$represented_blk' must be 1 - not $coefs_sum"
                 )
-            end
-            # Make sure no represented interval is overlapping a representative interval.
-            # If that's the case then add its block to each of the overlapping intervals.
-            # This is so representative intervals have all the blocks they need.
-            overlapping_representative_intervals = filter(keys(blocks_and_mapping_by_interval)) do interval
-                t_start, t_end = interval
-                blocks, _mapping = blocks_and_mapping_by_interval[interval]
-                (
-                    !isdisjoint(mapping_blocks, blocks)
-                    && t_end > represented_t_start && t_start < represented_t_end
-                )
-            end
-            if !isempty(overlapping_representative_intervals)
-                for interval in overlapping_representative_intervals
-                    blocks, _mapping = blocks_and_mapping_by_interval[interval]
-                    push!(blocks, represented_blk)
-                end
-                continue
             end
             existing = get(blocks_and_mapping_by_represented_interval, represented_interval, nothing)
             if existing !== nothing
@@ -251,17 +236,17 @@ function _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_b
                 )
             end
             blocks_and_mapping_by_represented_interval[represented_interval] = (
-                Set(represented_blk), representative_blk_to_coef
+                Set(represented_blk), coef_by_representative_blk
             )
         end
     end
-    merge!(blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
+    blocks_and_mapping_by_represented_interval
 end
 
-function _representative_block_to_coefficient(representative_combination::Symbol, _representative_blk_by_index)
+function _coefficient_by_representative_block(representative_combination::Symbol, _representative_blk_by_index)
     Dict(temporal_block(representative_combination) => 1)
 end
-function _representative_block_to_coefficient(representative_combination::Array, representative_blk_by_index)
+function _coefficient_by_representative_block(representative_combination::Array, representative_blk_by_index)
     invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
     if !isempty(invalid_indexes)
         error("there's no representative temporal block(s) with indexes $invalid_indexes") 
@@ -368,8 +353,9 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     start_and_end_by_block = _start_and_end_by_block(m, window_start, window_end)
-    blocks_and_mapping_by_interval = _blocks_and_mapping_by_interval(start_and_end_by_block)
-    _add_blocks_and_mapping_for_represented_intervals!(blocks_and_mapping_by_interval, start_and_end_by_block)
+    blocks_and_mapping_by_interval = _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
+    blocks_and_mapping_by_represented_interval = _blocks_and_mapping_by_represented_interval(start_and_end_by_block)
+    merge!(blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
     _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
     intervals_by_history_interval = _intervals_by_history_interval(
         blocks_and_mapping_by_interval, m, window_start, window_end
@@ -862,13 +848,17 @@ function node_dynamic_time_indices(
     t_before=anything,
     t_after=anything,
 )
+    temporal_block_before = temporal_block
+    if temporal_block_before !== anything
+        temporal_block_before = [temporal_block_before; block__point_zero(temporal_block1=temporal_block_before)]
+    end
     (
         (node=n, t_before=tb, t_after=ta)
         for n in intersect(node, SpineOpt.node())
         for (tb, ta) in dynamic_time_indices(
             m,
             (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)),
-            node__temporal_block(node=n);
+            (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block_before, _compact=false)),
             t_before=t_before,
             t_after=t_after,
         )

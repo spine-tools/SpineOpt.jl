@@ -35,7 +35,11 @@ function add_constraint_cyclic_node_state!(m::Model)
 end
 
 function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end, blk)
-    @fetch node_state = m.ext[:spineopt].variables
+    node_state = if is_longterm_storage(node=n) && representative_periods_mapping(temporal_block=blk) !== nothing
+        m.ext[:spineopt].variables[:longterm_node_state]
+    else
+        m.ext[:spineopt].variables[:node_state]
+    end
     build_sense_constraint(
         sum(
             node_state[n, s, t_end]
@@ -71,7 +75,7 @@ function _t_start(m, n, blk)
     t_before_start = filter!(
         [x.t_before for x in node_dynamic_time_indices(m; node=n, temporal_block=anything, t_after=t_start)]
     ) do t
-        !isdisjoint(members(blk), blocks(t))
+        !isdisjoint(members(blk), blocks(t))  # FIXME: this should work with the point zero blocks
     end
     if isempty(t_before_start)
         t_start

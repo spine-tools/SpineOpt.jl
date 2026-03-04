@@ -50,6 +50,7 @@ function preprocess_data_structure()
     generate_node_state_capacity()
     generate_node_state_lower_limit()
     generate_unit_commitment_parameters()
+    generate_point_zero_temporal_block()
 end
 
 """
@@ -1006,5 +1007,61 @@ function generate_unit_commitment_parameters()
         export has_switched_variable
         export has_online_variable
         export has_out_of_service_variable
+    end
+end
+
+"""
+    generate_point_zero_temporal_block()
+
+For representative temporal blocks that are also associated to a node with state,
+create an equivalent block of one minute duration to represent the start.
+This is needed for constraint_node_injection and constraint_cyclic_node state.
+"""
+function generate_point_zero_temporal_block()
+    coef_by_representative_by_start_by_represented = _coef_by_representative_by_start_by_represented()
+    representative_blocks = unique(
+        blk
+        for coef_by_blk_by_start in values(coef_by_representative_by_start_by_represented)
+        for coef_by_blk in values(coef_by_blk_by_start)
+        for blk in keys(coef_by_blk)
+    )
+    node_state_blocks = (
+        blk for n in node(has_state=true) for blkg in node__temporal_block(node=n) for blk in members(blkg)
+    )
+    intersect!(representative_blocks, node_state_blocks)
+    block_point_zero_tuples = [
+        (blk, Object(string(blk.name, "__point_zero"), :temporal_block)) for blk in representative_blocks
+    ]
+    new_tb_objects = last.(block_point_zero_tuples)
+    for obj in new_tb_objects
+        push!(obj.members, obj)
+    end
+    add_object_parameter_values!(
+        temporal_block,
+        Dict(
+            point_zero => Dict(
+                :representative_periods_mapping => parameter_value(
+                    Map([block_start(temporal_block=blk) - Minute(1)], [point_zero.name])
+                ),
+                :block_start => parameter_value(block_start(temporal_block=blk) - Minute(1)),
+                :block_end => parameter_value(block_start(temporal_block=blk)),
+            )
+            for (blk, point_zero) in block_point_zero_tuples
+        )
+    )
+    add_relationships!(
+        node__temporal_block,
+        [
+            (n, point_zero)
+            for (blk, point_zero) in block_point_zero_tuples
+            for n in node__temporal_block(temporal_block=[blk; groups(blk)])
+        ]
+    )
+    block__point_zero = RelationshipClass(
+        :block__point_zero, [:temporal_block, :temporal_block], block_point_zero_tuples,
+    )
+    @eval begin
+        block__point_zero = $block__point_zero
+        export block__point_zero
     end
 end
