@@ -106,7 +106,7 @@ So what is different about our long term model compared to our operations `base 
   - Select `duration value`
   - enter "6h"
   - Commit changes
-  
+
 - remove `block_end` of the operations `temporal_block`
   - Select the operations entity in the `temporal_block` class
   - Class and `entity_byname` should be prefilled. 
@@ -166,3 +166,10 @@ For `node_state`, we don't want to overconstrain the operations problem, so we o
 Now you have successfully created a Long Term `Stage Model` that feeds a selected node_state and all investment decisions to the `Base Model`
 
 Run the model, making sure to run the "Base" scenario. Remember the `LT_Stage_Scenario`s purpose is only to specify the unique data for the `stage model`. It's not a scenario that you actually run (unless you would like to see the outputs of the long term model only).
+
+## Nested Models
+It is possible to create multiple linked stage models to created a nested structure. To do this, you use the entities of type `stage__child_stage` to specify the relationships between two stages. `stage__child_stage` will determine the directionality of outputs passed using `stage__output`.
+
+In our example, if we wanted to create an intermediary model between the long term model and the base model, we would create a new stage entity called, say `MT_Stage`. To specify that outputs from `LT_Stage` pass as inputs to `MT_Stage` we could create an entity of type `stage__child_stage` where `stage` is `LT_Stage` and `child_stage` is `MT_Stage`. Outputs specified using `stage__output` would now pass from the `LT_Stage` model as inputs to `MT_Stage`. To specify what outputs pass from `MT_Stage` as inputs to the base model, we create new entities of type `stage__output` between `MT_Stage` and the required `output`s
+
+![image](figs_multi_stage/nested_models.png)
