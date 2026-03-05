@@ -25,6 +25,7 @@ function _is_time_slice_set_equal(ts_a, ts_b)
 end
 
 function _model()
+    SpineOpt.preprocess_data_structure()
     m = Model(; add_bridges = false)
     JuMP.set_string_names_on_creation(m, false)
     m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model()), nothing)
@@ -70,7 +71,6 @@ function _test_discontinuity_at_the_first_time_step()
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)

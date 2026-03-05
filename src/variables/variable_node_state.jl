@@ -29,7 +29,7 @@ function node_state_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     node = intersect(node, SpineOpt.node(has_state=true))
     temporal_block = _vcat(temporal_block, block__starting_point(temporal_block1=temporal_block))
@@ -46,8 +46,7 @@ function longterm_node_state_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=[tb for tb in temporal_block() if representative_periods_mapping(temporal_block=tb) !== nothing],
-    # FIXME: The above include zero_point blocks, but it shouldn't
+    temporal_block=temporal_block(is_representative=false),
 )
     node = intersect(node, SpineOpt.node(has_state=true, is_longterm_storage=true))
     (

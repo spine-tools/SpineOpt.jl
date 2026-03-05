@@ -86,7 +86,7 @@ function _past_indices(m, indices, param, s_path, t; kwargs...)
             kwargs...,
             stochastic_scenario=s_path,
             t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
-            temporal_block=temporal_block(representative_periods_mapping=nothing),
+            temporal_block=temporal_block(is_representative=true),
         )    
     )
 end
@@ -163,17 +163,17 @@ function _check_ptdf_duration(m, t, conns...)
     Dates.toms(duration - elapsed) >= 0
 end
 
-function _node_state_time_slices(m, n)
-    Iterators.flatten((_node_state_representative_time_slices(m, n), _node_state_represented_time_slices(m, n)))
+function _node_state_time_slices(m, n; longterm=false)
+    _node_state_time_slices(m, n, Val(longterm))
 end
 
-function _node_state_representative_time_slices(m, node)
+function _node_state_time_slices(m, node, ::Val{false})
     (t for (_n, t) in node_time_indices(m; node=node))
 end
 
-function _node_state_represented_time_slices(m, node)
+function _node_state_time_slices(m, node, ::Val{true})
     node = intersect(node, SpineOpt.node(is_longterm_storage=true))
-    (t for (_n, t) in node_time_indices(m; node=node, t=represented_time_slices(m), temporal_block=anything))
+    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false)))
 end
 
 function _term_connection_flow(m, conn, ng, d, s_path, t)

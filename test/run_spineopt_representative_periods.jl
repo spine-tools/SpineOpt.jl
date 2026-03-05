@@ -253,6 +253,15 @@ function _test_representative_periods_variables(m, ::Val{:longterm_node_state}, 
         (node=node(:h2_node), stochastic_scenario=s, t=t)
         for t in [time_slice(m; temporal_block=tb); history_time_slice(m; temporal_block=tb)]
     ]
+    for (ind, var) in vars
+        @test has_lower_bound(var)
+        @test has_upper_bound(var)
+        @test lower_bound(var) == 0
+        nos = vals["node", "h2_node", "number_of_storages"]
+        nsc = vals["node", "h2_node", "node_state_cap"]
+        @test upper_bound(var) == nos * nsc
+
+    end
     @test isempty(symdiff(expected_inds, observed_inds))
 end
 function _test_representative_periods_variables(m, ::Val{X}, vars, vals, all_rt, t_invest) where X
@@ -401,32 +410,6 @@ function _expected_representative_periods_constraint(
     s = only(s_path)
     nsc = vals["node", string(n), "node_state_cap"]
     @build_constraint(node_state[n, s, t] <= nsc * storages_invested_available[n, s, t_invest])
-end
-function _expected_representative_periods_constraint(
-    m, ::Val{:node_state_lb}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
-)
-    n, s, t = ind
-    @test n == node(:h2_node)
-    @test s == stochastic_scenario(:realisation)
-    @test !(t in all_rt)
-    rpm = vals["temporal_block", "operations", "representative_periods_mapping"]
-    coefs = get(rpm, start(ind.t), nothing)
-    var = _delta_expr_from_index(m, ind, coefs, all_rt)
-    @build_constraint(var >= 0)
-end
-function _expected_representative_periods_constraint(
-    m, ::Val{:node_state_ub}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
-)
-    n, s, t = ind
-    @test n == node(:h2_node)
-    @test s == stochastic_scenario(:realisation)
-    @test !(t in all_rt)
-    rpm = vals["temporal_block", "operations", "representative_periods_mapping"]
-    coefs = get(rpm, start(ind.t), nothing)
-    var = _delta_expr_from_index(m, ind, coefs, all_rt)
-    nos = vals["node", string(n), "number_of_storages"]
-    nsc = vals["node", string(n), "node_state_cap"]
-    @build_constraint(var <= nos * nsc)
 end
 function _expected_representative_periods_constraint(
     m, ::Val{:storages_invested_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to

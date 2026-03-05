@@ -159,7 +159,7 @@ _only_or_nothing(arr) = length(arr) == 1 ? only(arr) : nothing
 
 function _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
     blocks_and_mapping_by_interval = Dict()
-    for blk in members(temporal_block(representative_periods_mapping=nothing))
+    for blk in members(temporal_block(is_representative=true))
         blk_start, blk_end = start_and_end_by_block[blk]
         # Create starting_point time interval of one minute duration for the block
         starting_point = _only_or_nothing(block__starting_point(temporal_block1=blk))
@@ -797,7 +797,7 @@ function _repr_t_coefs(m, t)
 end
 
 function _is_representative(t)
-    any(representative_periods_mapping(temporal_block=blk) === nothing for blk in blocks(t))
+    any(is_representative(temporal_block=blk) for blk in blocks(t))
 end
 
 function represented_time_slices(m)
@@ -826,7 +826,7 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 function node_time_indices(
     m::Model;
     node=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
     t=anything,
 )
     (
@@ -852,7 +852,7 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with 
 function node_dynamic_time_indices(
     m::Model;
     node=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
     t_before=anything,
     t_after=anything,
 )
@@ -878,7 +878,7 @@ Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online var
 function unit_time_indices(
     m::Model;
     unit=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
     t=anything,
 )
     (
@@ -904,7 +904,7 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 function unit_dynamic_time_indices(
     m::Model;
     unit=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
     t_before=anything,
     t_after=anything,
 )

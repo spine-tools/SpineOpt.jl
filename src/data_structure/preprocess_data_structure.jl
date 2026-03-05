@@ -51,6 +51,7 @@ function preprocess_data_structure()
     generate_node_state_lower_limit()
     generate_unit_commitment_parameters()
     generate_starting_point()
+    generate_is_representative()
 end
 
 """
@@ -1062,5 +1063,22 @@ function generate_starting_point()
         block__starting_point = $block__starting_point
         export starting_point
         export block__starting_point
+    end
+end
+
+function generate_is_representative()
+    add_object_parameter_values!(
+        temporal_block,
+        Dict(
+            blk => Dict(
+                :is_representative => parameter_value(representative_periods_mapping(temporal_block=blk) === nothing)
+            )
+            for blk in temporal_block()
+        )
+    )
+    is_representative = Parameter(:is_representative, [temporal_block])
+    @eval begin
+        is_representative = $is_representative
+        export is_representative
     end
 end
