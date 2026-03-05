@@ -32,17 +32,11 @@ function node_state_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     node = intersect(node, SpineOpt.node(has_state=true))
-    if temporal_block !== anything
-        temporal_block = [temporal_block; block__point_zero(temporal_block1=temporal_block)]
-    end
+    temporal_block = _vcat(temporal_block, block__starting_point(temporal_block1=temporal_block))
     (
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=node,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=temporal_block,
-            t=t,
+            m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
     )
 end

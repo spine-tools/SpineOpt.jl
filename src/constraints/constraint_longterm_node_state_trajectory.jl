@@ -43,7 +43,7 @@ end
 
 function _block_delta(m, n, s, blk)
     last_t = last(time_slice(m; temporal_block=blk))
-    first_t = only(time_slice(m; temporal_block=block__point_zero(temporal_block1=blk)))
+    first_t = only(time_slice(m; temporal_block=block__starting_point(temporal_block1=blk)))
     @fetch node_state = m.ext[:spineopt].variables
     (
         + sum(node_state[n, s, t] for (n, s, t) in node_state_indices(m; node=n, stochastic_scenario=s, t=last_t))

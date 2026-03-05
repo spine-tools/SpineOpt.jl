@@ -217,7 +217,6 @@ function _test_representative_periods()
         all_rt = [rt1, rt2, rt3, rt4]
         t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
         @testset for con_name in keys(m.ext[:spineopt].constraints)
-            # con_name == :min_down_time || continue
             cons = m.ext[:spineopt].constraints[con_name]
             _test_representative_periods_constraints(m, Val(con_name), cons, vals, all_rt, t_invest)
             @testset for ind in keys(cons)
@@ -238,7 +237,7 @@ function _test_representative_periods()
 end
 
 function _get_t0(m, rt)
-    only(time_slice(m; temporal_block=block__point_zero(temporal_block1=blocks(rt))))
+    only(time_slice(m; temporal_block=block__starting_point(temporal_block1=blocks(rt))))
 end
 
 function _delta_expr_from_index(m, ind, coefs, all_rt)

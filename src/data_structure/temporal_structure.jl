@@ -155,10 +155,18 @@ function _start_and_end_by_block(m::Model, window_start, window_end)
     )
 end
 
+_only_or_nothing(arr) = length(arr) == 1 ? only(arr) : nothing
+
 function _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
     blocks_and_mapping_by_interval = Dict()
     for blk in members(temporal_block(representative_periods_mapping=nothing))
         blk_start, blk_end = start_and_end_by_block[blk]
+        # Create starting_point time interval of one minute duration for the block
+        starting_point = _only_or_nothing(block__starting_point(temporal_block1=blk))
+        if starting_point !== nothing
+            blocks, _m = get!(blocks_and_mapping_by_interval, (blk_start - Minute(1), blk_start), (Set(), nothing))
+            push!(blocks, starting_point)
+        end
         t_start = blk_start
         i = 1
         while t_start < blk_end
@@ -848,10 +856,7 @@ function node_dynamic_time_indices(
     t_before=anything,
     t_after=anything,
 )
-    temporal_block_before = temporal_block
-    if temporal_block_before !== anything
-        temporal_block_before = [temporal_block_before; block__point_zero(temporal_block1=temporal_block_before)]
-    end
+    temporal_block_before = _vcat(temporal_block, block__starting_point(temporal_block1=temporal_block))
     (
         (node=n, t_before=tb, t_after=ta)
         for n in intersect(node, SpineOpt.node())

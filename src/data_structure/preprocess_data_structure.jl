@@ -50,7 +50,7 @@ function preprocess_data_structure()
     generate_node_state_capacity()
     generate_node_state_lower_limit()
     generate_unit_commitment_parameters()
-    generate_point_zero_temporal_block()
+    generate_starting_point()
 end
 
 """
@@ -1011,17 +1011,22 @@ function generate_unit_commitment_parameters()
 end
 
 """
-    generate_point_zero_temporal_block()
+    generate_starting_point()
 
 For representative temporal blocks that are also associated to a node with state,
-create an equivalent block of one minute duration to represent the start.
+create an equivalent block to represent the starting point.
 This is needed for constraint_node_injection and constraint_cyclic_node state.
+
+Note that this starting point temporal blocks are not added to the original `temporal_block` class,
+but instead are kept in another class called `starting_point`,
+that nonetheless also uses the `temporal_block` dimension.
+This is possible in SpineInterface and helps with isolation
+(we don't want this starting point blocks to be treated entirely as normal `temporal_block`s)
 """
-function generate_point_zero_temporal_block()
-    coef_by_representative_by_start_by_represented = _coef_by_representative_by_start_by_represented()
+function generate_starting_point()
     representative_blocks = unique(
         blk
-        for coef_by_blk_by_start in values(coef_by_representative_by_start_by_represented)
+        for coef_by_blk_by_start in values(_coef_by_representative_by_start_by_represented())
         for coef_by_blk in values(coef_by_blk_by_start)
         for blk in keys(coef_by_blk)
     )
@@ -1029,39 +1034,33 @@ function generate_point_zero_temporal_block()
         blk for n in node(has_state=true) for blkg in node__temporal_block(node=n) for blk in members(blkg)
     )
     intersect!(representative_blocks, node_state_blocks)
-    block_point_zero_tuples = [
-        (blk, Object(string(blk.name, "__point_zero"), :temporal_block)) for blk in representative_blocks
+    block_starting_point_relationships = [
+        (blk, Object(string(blk.name, "_starting_point"), :temporal_block)) for blk in representative_blocks
     ]
-    new_tb_objects = last.(block_point_zero_tuples)
-    for obj in new_tb_objects
+    starting_point_objects = last.(block_starting_point_relationships)
+    for obj in starting_point_objects
         push!(obj.members, obj)
     end
-    add_object_parameter_values!(
-        temporal_block,
-        Dict(
-            point_zero => Dict(
-                :representative_periods_mapping => parameter_value(
-                    Map([block_start(temporal_block=blk) - Minute(1)], [point_zero.name])
-                ),
-                :block_start => parameter_value(block_start(temporal_block=blk) - Minute(1)),
-                :block_end => parameter_value(block_start(temporal_block=blk)),
-            )
-            for (blk, point_zero) in block_point_zero_tuples
-        )
+    starting_point_values = Dict(
+        obj => Dict(:has_free_start => parameter_value(false)) for obj in starting_point_objects
+    )
+    starting_point = ObjectClass(:temporal_block, starting_point_objects, starting_point_values)
+    block__starting_point = RelationshipClass(
+        :block__starting_point, [:temporal_block, :temporal_block], block_starting_point_relationships,
     )
     add_relationships!(
         node__temporal_block,
         [
-            (n, point_zero)
-            for (blk, point_zero) in block_point_zero_tuples
+            (n, starting_point)
+            for (blk, starting_point) in block_starting_point_relationships
             for n in node__temporal_block(temporal_block=[blk; groups(blk)])
         ]
     )
-    block__point_zero = RelationshipClass(
-        :block__point_zero, [:temporal_block, :temporal_block], block_point_zero_tuples,
-    )
+    push_class!(has_free_start, starting_point)
     @eval begin
-        block__point_zero = $block__point_zero
-        export block__point_zero
+        starting_point = $starting_point
+        block__starting_point = $block__starting_point
+        export starting_point
+        export block__starting_point
     end
 end
