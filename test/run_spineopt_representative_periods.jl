@@ -224,15 +224,10 @@ function _test_representative_periods()
                 _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
             end
         end
-        #=
         @testset for var_name in keys(m.ext[:spineopt].variables)
             vars = m.ext[:spineopt].variables[var_name]
-            @testset for ind in keys(vars)
-                var = vars[ind]
-                _test_representative_periods_variable(m, var_name, ind, var, vals, all_rt, t_invest)
-            end
+            _test_representative_periods_variables(m, Val(var_name), vars, vals, all_rt, t_invest)
         end
-        =#
     end
 end
 
@@ -250,26 +245,22 @@ function _delta_expr_from_index(m, ind, coefs, all_rt)
     )
 end
 
-function _test_representative_periods_variable(m, var_name, ind, var, vals, all_rt, t_invest)
-    rpm = vals["temporal_block", "operations", "representative_periods_mapping"]
-    (ind.t in all_rt || ind.t == t_invest) && return
-    coefs = get(rpm, start(ind.t), nothing)
-    if coefs !== nothing
-        @test ind.node.name == :h2_node
-        t_before = last(
-            t
-            for t in [history_time_slice(m); time_slice(m)]
-            if blocks(t) == (temporal_block(:operations),)
-            && end_(t) <= start(ind.t)
-        )
-        delta_coefs = vcat(([-c, c] for c in coefs)...)
-        exp_var = _delta_expr_from_index(m, ind, coefs, all_rt)
-        @test var == exp_var
-    end
+function _test_representative_periods_variables(m, ::Val{:longterm_node_state}, vars, vals, all_rt, t_invest)
+    observed_inds = collect(keys(vars))
+    s = stochastic_scenario(:realisation)
+    tb = temporal_block(:operations)
+    expected_inds = [
+        (node=node(:h2_node), stochastic_scenario=s, t=t)
+        for t in [time_slice(m; temporal_block=tb); history_time_slice(m; temporal_block=tb)]
+    ]
+    @test isempty(symdiff(expected_inds, observed_inds))
+end
+function _test_representative_periods_variables(m, ::Val{X}, vars, vals, all_rt, t_invest) where X
+    # Untested variable X - perhaps you want to write the test?
+    nothing
 end
 
 function _test_representative_periods_constraints(m, ::Val{:node_injection}, cons, vals, all_rt, t_invest)
-    inds = keys(cons)
     observed_inds = collect(keys(cons))
     path = [stochastic_scenario(:realisation)]
     rt1, rt2, rt3, rt4 = all_rt

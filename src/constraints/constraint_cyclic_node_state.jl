@@ -71,17 +71,8 @@ function constraint_cyclic_node_state_indices(m::Model)
 end
 
 function _t_start(m, n, blk)
-    t_start = first(collect(time_slice(m; temporal_block=members(blk))))
-    t_before_start = filter!(
-        [x.t_before for x in node_dynamic_time_indices(m; node=n, temporal_block=anything, t_after=t_start)]
-    ) do t
-        !isdisjoint(members(blk), blocks(t))  # FIXME: this should work with the point zero blocks
-    end
-    if isempty(t_before_start)
-        t_start
-    else
-        t_before_start
-    end
+    t_after = first(collect(time_slice(m; temporal_block=members(blk))))
+    [x.t_before for x in node_dynamic_time_indices(m; node=n, temporal_block=anything, t_after=t_after)]
 end
 
 function constraint_cyclic_node_state_indices_filtered(
