@@ -49,7 +49,7 @@ function add_constraint_node_state_capacity!(m::Model)
 end
 
 function _build_constraint_longterm_node_state_capacity(m::Model, ng, s_path, t)
-    _build_constraint_longterm_node_state_capacity(m, ng, s_path, t; longterm=true)
+    _build_constraint_node_state_capacity(m, ng, s_path, t; longterm=true)
 end
 
 function _build_constraint_node_state_capacity(m::Model, ng, s_path, t; longterm=false)
