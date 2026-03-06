@@ -40,14 +40,26 @@ function add_constraint_node_state_capacity!(m::Model)
     _add_constraint!(
         m, :node_state_capacity, constraint_node_state_capacity_indices, _build_constraint_node_state_capacity
     )
+    _add_constraint!(
+        m,
+        :longterm_node_state_capacity, 
+        constraint_longterm_node_state_capacity_indices,
+        _build_constraint_longterm_node_state_capacity,
+    )
 end
 
-function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
-    @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
+function _build_constraint_longterm_node_state_capacity(m::Model, ng, s_path, t)
+    _build_constraint_node_state_capacity(m, ng, s_path, t; longterm=true)
+end
+
+function _build_constraint_node_state_capacity(m::Model, ng, s_path, t; longterm=false)
+    @fetch node_state, longterm_node_state, storages_invested_available = m.ext[:spineopt].variables
+    state_indices = longterm ? longterm_node_state_indices : node_state_indices
+    state = longterm ? longterm_node_state : node_state
     @build_constraint(
         + sum(
-            + node_state[n, s, t]
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            + state[n, s, t]
+            for (n, s, t) in state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
         <=
@@ -63,24 +75,26 @@ function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
                     init=0,
                 )
             )
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            for (n, s, t) in state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
     )
 end
 
-function constraint_node_state_capacity_indices(m::Model)
+function constraint_longterm_node_state_capacity_indices(m::Model)
+    constraint_node_state_capacity_indices(m; longterm=true)
+end
+
+function constraint_node_state_capacity_indices(m::Model; longterm=false)
     (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(
-            m; node=intersect(indices(node_state_cap), indices(candidate_storages)), temporal_block=anything
-        )
-        if (has_state(node=ng) && is_longterm_storage(node=ng)) || _is_representative(t)
+        for ng in intersect(node(has_state=true), indices(node_state_cap), indices(candidate_storages))
+        for t in _node_state_time_slices(m, ng; longterm)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
                 (
-                    node_state_indices(m; node=ng, t=t),
+                    (longterm ? longterm_node_state_indices : node_state_indices)(m; node=ng, t=t),
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )

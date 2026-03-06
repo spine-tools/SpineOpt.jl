@@ -132,6 +132,7 @@ function _add_variables!(m; log_level=3)
             add_variable_connections_decommissioned!,
             add_variable_connections_invested!,
             add_variable_connections_invested_available!,
+            add_variable_longterm_node_state!,
             add_variable_min_capacity_margin_slack!,
             add_variable_node_injection!,
             add_variable_node_pressure!,
@@ -208,6 +209,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_investment_group_maximum_entities_invested_available!,
             add_constraint_investment_group_minimum_capacity_invested_available!,
             add_constraint_investment_group_minimum_entities_invested_available!,
+            add_constraint_longterm_node_state_trajectory!,
             add_constraint_max_node_pressure!,
             add_constraint_max_node_voltage_angle!,
             add_constraint_max_ratio_in_in_unit_flow!,
@@ -284,6 +286,9 @@ function _create_objective_terms!(m)
     window_very_end = maximum(end_.(time_slice(m)))
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
+    middle_history = history_time_slice(m; temporal_block=temporal_block(has_free_start=true))
+    setdiff!(beyond_window, middle_history)
+    setdiff!(in_window, middle_history)
     filter!(t -> !(t in in_window), beyond_window)
     for term in objective_terms(m; benders_master=!_is_benders_subproblem(m))
         func = getproperty(SpineOpt, term)

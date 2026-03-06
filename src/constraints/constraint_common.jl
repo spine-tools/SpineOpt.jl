@@ -86,7 +86,7 @@ function _past_indices(m, indices, param, s_path, t; kwargs...)
             kwargs...,
             stochastic_scenario=s_path,
             t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
-            temporal_block=anything,
+            temporal_block=temporal_block(is_representative=true),
         )    
     )
 end
@@ -161,6 +161,19 @@ function _check_ptdf_duration(m, t, conns...)
     duration = minimum(durations)
     elapsed = end_(t) - start(current_window(m))
     Dates.toms(duration - elapsed) >= 0
+end
+
+function _node_state_time_slices(m, n; longterm=false)
+    _node_state_time_slices(m, n, Val(longterm))
+end
+
+function _node_state_time_slices(m, node, ::Val{false})
+    (t for (_n, t) in node_time_indices(m; node=node))
+end
+
+function _node_state_time_slices(m, node, ::Val{true})
+    node = intersect(node, SpineOpt.node(is_longterm_storage=true))
+    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false)))
 end
 
 function _term_connection_flow(m, conn, ng, d, s_path, t)
