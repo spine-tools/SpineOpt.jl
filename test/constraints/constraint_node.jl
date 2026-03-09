@@ -1180,8 +1180,6 @@ function test_constraint_unit_flow_reactive()
         
         @test value( var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
         direction(:to_node), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.2087 atol=0.0001
-
-      
     end
 end
 
