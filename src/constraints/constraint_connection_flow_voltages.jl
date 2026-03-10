@@ -121,10 +121,18 @@ end
 """
     constraint_connection_flow_voltage_indices(m::Model)
 
-    The connection flow indices for which AC flow connection flows are calculated. 
+    The connection flow indices for which AC flow constraint for connection flows 
+    are set. The connection must have AC flow set, and the node in question must 
+    have voltage. This assumes that the connection only has two end nodes.
 """
 function constraint_connection_flow_voltage_indices(m::Model)
-    connection_flow_indices(m, node=SpineOpt.node(has_voltage=true))
+    connection_flow_indices(m,
+        connection = unique(x.connection 
+                for x in indices(connection_has_ac_flow) 
+                      if connection_has_ac_flow(; x...) == true),
+        node=SpineOpt.node(has_voltage=true)
+    )
+       
 end
 
 
