@@ -70,9 +70,12 @@ function connection_reactive_flow_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing))
 
-    #TBA: check for the connection_has_ac_flow flag
-    connection_flow_indices(m, connection=connection,
-        node=intersect(node, SpineOpt.node(has_voltage=true)),
+    connection_flow_indices(m, 
+        connection = unique(x.connection 
+            for x in indices(connection_has_ac_flow; connection=connection)
+                    #if connection_has_ac_flow(node1=x.node1, node2=x.node2, connection=x.connection) == true),
+                    if connection_has_ac_flow(; x...) == true),
+                    node=intersect(node, SpineOpt.node(has_voltage=true)),
         direction=direction,
         stochastic_scenario=stochastic_scenario,
         t=t,
