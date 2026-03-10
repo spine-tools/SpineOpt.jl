@@ -20,7 +20,10 @@
 """
     node_voltageproduct_indices(    )
 
-A list of `NamedTuple`s corresponding to indices for the `node_voltageproduct_cosine` and `node_voltageproduct_sine` variables.
+A list of `NamedTuple`s corresponding to indices for the `node_voltageproduct_cosine` and 
+`node_voltageproduct_sine` variables. These are defined for all pairs of nodes (node1, node2) 
+where the relationship parameter connection_has_ac_flow(node1, node2, connection) has been
+set as true.
 
 """
 function node_voltageproduct_indices(
@@ -39,18 +42,11 @@ function node_voltageproduct_indices(
             if connection_has_ac_flow(node1=n1, node2=n2, connection=conn) == true
             for (conn_, n_, d, s, t) in connection_flow_indices(m; connection=conn, node=n2, direction=direction(:to_node))
            
-        #for (conn, n1, d) in connection__from_node()
-        #    for (n2, d) in connection__to_node(connection=conn)
-        #        if fix_ratio_out_in_connection_flow[(connection=conn, node1=n2, node2=n1)] == 1
-        #            for (conn_, n_, d, s, t) in connection_flow_indices(m; 
-        #                connection=conn, node=n2, direction=direction(:to_node))
     )
     
-     
     # filter the index set with respect to other indices
     f(ind) = _index_in(ind; node1=node1, node2=node2, stochastic_scenario=stochastic_scenario, t=t)
-    filter(f, ind)
-                    
+    filter(f, ind)            
 end
 
 """
