@@ -36,7 +36,7 @@ function add_constraint_nodal_reactive_balance!(m::Model)
             # Reactive power flows from connections (can be negative)
             + sum(
                 connection_flow_reactive[conn, n1, d, s, t]
-                for (conn, n1, d, s, t) in connection_flow_indices(
+                for (conn, n1, d, s, t) in connection_reactive_flow_indices(
                     m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t1
                 )
                 if !_issubset(
@@ -47,7 +47,7 @@ function add_constraint_nodal_reactive_balance!(m::Model)
             # Reactive power to connections (can be negative)
             - sum(
                 connection_flow_reactive[conn, n1, d, s, t]
-                for (conn, n1, d, s, t) in connection_flow_indices(
+                for (conn, n1, d, s, t) in connection_reactive_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t1
                 )
                 if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
