@@ -22,6 +22,10 @@
 
 @@add_constraint_cyclic_node_state!
 
+### [Long-term storage trajectory](@id constraint_node_state_longterm_trajectory)
+
+@@add_constraint_node_state_longterm_trajectory!
+
 ## Unit operation
 
 In the following, the operational constraints on the variables associated with units will be elaborated on. The static constraints, in contrast to the dynamic constraints, are addressing constraints without sequential time-coupling. It should however be noted that static constraints can still perform temporal aggregation.
