@@ -1,4 +1,4 @@
-# Constraints
+# [Constraints](@id Constraints)
 
 ## Balance constraint
 
