@@ -150,11 +150,15 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
             ["node", "batt_node", "number_of_storages", 0],
             ["node", "batt_node", "storage_investment_cost", 2000000],
             ["node", "batt_node", "storage_investment_variable_type", "storage_investment_variable_type_integer"],
+            ["node", "h2_node", "candidate_storages", 100],
             ["node", "h2_node", "has_state", true],
             ["node", "h2_node", "is_longterm_storage", true],
+            ["node", "h2_node", "initial_node_state", 0.5],         
             ["node", "h2_node", "node_slack_penalty", 10000],
             ["node", "h2_node", "node_state_cap", 20000],
-            ["node", "h2_node", "number_of_storages", 100],
+            ["node", "h2_node", "number_of_storages", 10],
+            ["node", "h2_node", "storage_investment_cost", 5000000],
+            ["node", "h2_node", "storage_investment_variable_type", "storage_investment_variable_type_integer"],            
             ["unit", "batt_unit", "candidate_units", 100],
             ["unit", "batt_unit", "number_of_units", 0],
             ["unit", "batt_unit", "unit_investment_cost", 750000],
@@ -249,18 +253,26 @@ function _test_representative_periods_variables(m, ::Val{:node_state_longterm}, 
     observed_inds = collect(keys(vars))
     s = stochastic_scenario(:realisation)
     tb = temporal_block(:operations)
+    history_ts = Set(history_time_slice(m; temporal_block=tb))
     expected_inds = [
         (node=node(:h2_node), stochastic_scenario=s, t=t)
         for t in [time_slice(m; temporal_block=tb); history_time_slice(m; temporal_block=tb)]
     ]
     for (ind, var) in vars
-        @test has_lower_bound(var)
-        @test has_upper_bound(var)
-        @test lower_bound(var) == 0
-        nos = vals["node", "h2_node", "number_of_storages"]
-        nsc = vals["node", "h2_node", "node_state_cap"]
-        @test upper_bound(var) == nos * nsc
-
+        if ind.t in history_ts
+            @test is_fixed(var)
+            @test !has_lower_bound(var)
+            @test !has_upper_bound(var)
+        else
+            @test !is_fixed(var)
+            @test has_lower_bound(var)
+            @test has_upper_bound(var)
+            @test lower_bound(var) == 0
+            nos = vals["node", "h2_node", "number_of_storages"]
+            nsc = vals["node", "h2_node", "node_state_cap"]
+            cs = vals["node", "h2_node", "candidate_storages"]
+            @test upper_bound(var) == nsc * (nos + cs)
+        end
     end
     @test isempty(symdiff(expected_inds, observed_inds))
 end
@@ -403,19 +415,20 @@ function _expected_representative_periods_constraint(
     m, ::Val{:node_state_capacity}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t = ind
-    @test n == node(:batt_node)
+    @test n in (node(:batt_node), node(:h2_node))
     @test s_path == [stochastic_scenario(:realisation)]
     @test t in all_rt
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
     s = only(s_path)
     nsc = vals["node", string(n), "node_state_cap"]
-    @build_constraint(node_state[n, s, t] <= nsc * storages_invested_available[n, s, t_invest])
+    nos = vals["node", string(n), "number_of_storages"]
+    @build_constraint(node_state[n, s, t] <= nsc * (nos + storages_invested_available[n, s, t_invest]))
 end
 function _expected_representative_periods_constraint(
     m, ::Val{:storages_invested_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t_before, t_after = ind
-    @test n == node(:batt_node)
+    @test n in (node(:batt_node), node(:h2_node))
     @test s_path == [stochastic_scenario(:realisation)]
     @test t_after == t_invest
     @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt].variables
@@ -432,7 +445,7 @@ function _expected_representative_periods_constraint(
     m, ::Val{:storages_invested_available}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t = ind
-    @test n == node(:batt_node)
+    @test n in (node(:batt_node), node(:h2_node))
     @test s == stochastic_scenario(:realisation)
     @test t == t_invest
     @fetch storages_invested_available = m.ext[:spineopt].variables
@@ -642,6 +655,19 @@ function _expected_representative_periods_constraint(
             for (u, s_past, t_past) in past_units_on_indices
         )
     )
+end
+function _expected_representative_periods_constraint(
+    m, ::Val{:node_state_longterm_capacity}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
+)
+    n, s_path, t = ind
+    @test n == node(:h2_node)
+    @test s_path == [stochastic_scenario(:realisation)]
+    @test !(t in all_rt)
+    @fetch node_state_longterm, storages_invested_available = m.ext[:spineopt].variables
+    s = only(s_path)
+    nsc = vals["node", string(n), "node_state_cap"]
+    nos = vals["node", string(n), "number_of_storages"]
+    @build_constraint(node_state_longterm[n, s, t] <= nsc * (nos + storages_invested_available[n, s, t_invest]))
 end
 function _expected_representative_periods_constraint(
     m, ::Val{:node_state_longterm_trajectory}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
