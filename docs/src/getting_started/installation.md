@@ -18,6 +18,7 @@ The figures below are a summary of this process that will be further explained i
 
 ## Prerequisites
 Spine Toolbox needs [Python](https://www.python.org/) (version 3.10 or above) and SpineOpt needs [Julia](https://julialang.org/) (version 1.10 up to 1.11).
+[Juliaup](https://github.com/JuliaLang/juliaup) is the recommended way of installing and managing specific Julia versions for multiple platforms.
 
 To check whether these are installed properly, open the terminal and type:
 

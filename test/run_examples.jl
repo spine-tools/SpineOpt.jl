@@ -10,6 +10,8 @@ objective_function_reference_values = Dict(
     "multi-year_investment_without_econ_discounting.json" => 131520100.0,
     "capacity_planning.json" => 328503000.0,
     "stochastic.json" => 126964.2857142857,
+    "representative_periods.json" => 279438.4922720359,
+    "multi_stage_model_tutorial.json" => 1.91746092844232e9,
 )
 
 @testset for (file, obj_fn_val) in objective_function_reference_values
@@ -21,7 +23,7 @@ objective_function_reference_values = Dict(
     import_data(db_url, input_data, "No comment")
     m = run_spineopt(db_url, nothing; log_level=0, upgrade=true)
     @test termination_status(m) == MOI.OPTIMAL
-    mip_cases = ("6_unit_system.json", "unit_commitment.json")
+    mip_cases = ("6_unit_system.json", "unit_commitment.json", "multi_stage_model_tutorial.json")
     if file in mip_cases
         @test abs(objective_value(m) - obj_fn_val) / obj_fn_val ≤ 0.01 
     else

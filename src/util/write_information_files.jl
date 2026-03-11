@@ -33,7 +33,12 @@ function _without_printing_limits(f, m)
         for cref in all_constraints(m, F, S)
     ]
     JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[] = length(constraint_functions)
-    JuMP._TERM_LIMIT_FOR_PRINTING[] = maximum(_term_count.(constraint_functions); init=0)
+    # Get max terms from constraints
+    max_constraint_terms = maximum(_term_count.(constraint_functions); init=0)
+    # Also count terms in objective function
+    obj_terms = _term_count(objective_function(m))
+    # Use the maximum of both
+    JuMP._TERM_LIMIT_FOR_PRINTING[] = max(max_constraint_terms, obj_terms)
     try
         return f()
     finally

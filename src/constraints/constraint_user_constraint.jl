@@ -196,8 +196,10 @@ function _operations_term(m, uc, path, t)
             init=0,
         )
         + sum(
-            user_constraint_slack_pos[uc, s, t] - user_constraint_slack_neg[uc, s, t]
-            for (uc, s, t) in user_constraint_slack_indices(m; user_constraint=uc, stochastic_scenario=path, t=t);
+            # user constraint slack (only exists when user_constraint_slack_penalty is set for this uc)
+            + get(user_constraint_slack_pos, (user_constraint=uc, stochastic_scenario=s, t=t), 0)
+            - get(user_constraint_slack_neg, (user_constraint=uc, stochastic_scenario=s, t=t), 0)
+            for s in path;
             init=0,
         )
     )

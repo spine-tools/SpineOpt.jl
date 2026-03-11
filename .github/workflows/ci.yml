@@ -70,8 +70,7 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   Documenter:
-    needs: check_duplicate_actions
-    if: needs.check_duplicate_actions.outputs.should_skip != 'true'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
     name: Documentation
     runs-on: ubuntu-latest
     steps:
