@@ -3913,6 +3913,11 @@
         ],
         [
             "output",
+            "node_state_longterm",
+            null
+        ],
+        [
+            "output",
             "node_voltage_angle",
             null
         ],
@@ -5550,6 +5555,13 @@
         [
             "output",
             "node_state",
+            "output_type",
+            "variable",
+            "Base"
+        ],
+        [
+            "output",
+            "node_state_longterm",
             "output_type",
             "variable",
             "Base"
