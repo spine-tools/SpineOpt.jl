@@ -22,21 +22,21 @@
 Delta
 
 """
-function add_constraint_longterm_node_state_trajectory!(m::Model)
+function add_constraint_node_state_longterm_trajectory!(m::Model)
     _add_constraint!(
         m,
-        :longterm_node_state_trajectory,
-        constraint_longterm_node_state_trajectory_indices,
-        _build_constraint_longterm_node_state_trajectory,
+        :node_state_longterm_trajectory,
+        constraint_node_state_longterm_trajectory_indices,
+        _build_constraint_node_state_longterm_trajectory,
     )
 end
 
-function _build_constraint_longterm_node_state_trajectory(m::Model, n, s, t_before, t_after)
-    @fetch longterm_node_state = m.ext[:spineopt].variables
+function _build_constraint_node_state_longterm_trajectory(m::Model, n, s, t_before, t_after)
+    @fetch node_state_longterm = m.ext[:spineopt].variables
     @build_constraint(
-        + longterm_node_state[n, s, t_after]
+        + node_state_longterm[n, s, t_after]
         ==
-        + longterm_node_state[n, s, t_before]
+        + node_state_longterm[n, s, t_before]
         + sum(coef * _block_delta(m, n, s, blk) for (blk, coef) in representative_block_coefficients(m, t_after))
     )
 end
@@ -51,14 +51,14 @@ function _block_delta(m, n, s, blk)
     )
 end
 
-function constraint_longterm_node_state_trajectory_indices(m::Model)
+function constraint_node_state_longterm_trajectory_indices(m::Model)
     (
         (node=n, stochastic_scenario=s, t_before=t_before, t_after=t_after)
-        for (n, s, t_after) in longterm_node_state_indices(m)
+        for (n, s, t_after) in node_state_longterm_indices(m)
         for t_before in Iterators.take(
             (
                 x.t
-                for x in longterm_node_state_indices(
+                for x in node_state_longterm_indices(
                     m; node=n, stochastic_scenario=s, t=t_before_t(m; t_after=t_after)
                 )
             ),

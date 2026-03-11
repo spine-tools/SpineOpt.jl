@@ -42,20 +42,20 @@ function add_constraint_node_state_capacity!(m::Model)
     )
     _add_constraint!(
         m,
-        :longterm_node_state_capacity, 
-        constraint_longterm_node_state_capacity_indices,
-        _build_constraint_longterm_node_state_capacity,
+        :node_state_longterm_capacity, 
+        constraint_node_state_longterm_capacity_indices,
+        _build_constraint_node_state_longterm_capacity,
     )
 end
 
-function _build_constraint_longterm_node_state_capacity(m::Model, ng, s_path, t)
+function _build_constraint_node_state_longterm_capacity(m::Model, ng, s_path, t)
     _build_constraint_node_state_capacity(m, ng, s_path, t; longterm=true)
 end
 
 function _build_constraint_node_state_capacity(m::Model, ng, s_path, t; longterm=false)
-    @fetch node_state, longterm_node_state, storages_invested_available = m.ext[:spineopt].variables
-    state_indices = longterm ? longterm_node_state_indices : node_state_indices
-    state = longterm ? longterm_node_state : node_state
+    @fetch node_state, node_state_longterm, storages_invested_available = m.ext[:spineopt].variables
+    state_indices = longterm ? node_state_longterm_indices : node_state_indices
+    state = longterm ? node_state_longterm : node_state
     @build_constraint(
         + sum(
             + state[n, s, t]
@@ -81,7 +81,7 @@ function _build_constraint_node_state_capacity(m::Model, ng, s_path, t; longterm
     )
 end
 
-function constraint_longterm_node_state_capacity_indices(m::Model)
+function constraint_node_state_longterm_capacity_indices(m::Model)
     constraint_node_state_capacity_indices(m; longterm=true)
 end
 
@@ -94,7 +94,7 @@ function constraint_node_state_capacity_indices(m::Model; longterm=false)
             m,
             Iterators.flatten(
                 (
-                    (longterm ? longterm_node_state_indices : node_state_indices)(m; node=ng, t=t),
+                    (longterm ? node_state_longterm_indices : node_state_indices)(m; node=ng, t=t),
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )

@@ -245,7 +245,7 @@ function _delta_expr_from_index(m, ind, coefs, all_rt)
     )
 end
 
-function _test_representative_periods_variables(m, ::Val{:longterm_node_state}, vars, vals, all_rt, t_invest)
+function _test_representative_periods_variables(m, ::Val{:node_state_longterm}, vars, vals, all_rt, t_invest)
     observed_inds = collect(keys(vars))
     s = stochastic_scenario(:realisation)
     tb = temporal_block(:operations)
@@ -316,8 +316,8 @@ function _expected_representative_periods_constraint(
     @test t_start == TimeSlice(DateTime(1999, 12, 31), DateTime(2000, 1, 1), temporal_block(:operations))
     @test t_end == TimeSlice(DateTime(2000, 1, 10), DateTime(2000, 1, 11), temporal_block(:operations))
     @test tb == temporal_block(:operations)
-    @fetch longterm_node_state = m.ext[:spineopt].variables
-    @build_constraint(longterm_node_state[n, only(s_path), t_end] == longterm_node_state[n, only(s_path), t_start])
+    @fetch node_state_longterm = m.ext[:spineopt].variables
+    @build_constraint(node_state_longterm[n, only(s_path), t_end] == node_state_longterm[n, only(s_path), t_start])
 end
 function _expected_representative_periods_constraint(
     m, ::Val{:min_node_state}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
@@ -644,7 +644,7 @@ function _expected_representative_periods_constraint(
     )
 end
 function _expected_representative_periods_constraint(
-    m, ::Val{:longterm_node_state_trajectory}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
+    m, ::Val{:node_state_longterm_trajectory}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t_before, t_after = ind
     @test n == node(:h2_node)
@@ -654,11 +654,11 @@ function _expected_representative_periods_constraint(
     rt1, rt2, rt3, rt4 = all_rt
     rpm = vals["temporal_block", "operations", "representative_periods_mapping"]
     coefs = get(rpm, start(t_after), nothing)
-    @fetch longterm_node_state, node_state = m.ext[:spineopt].variables
+    @fetch node_state_longterm, node_state = m.ext[:spineopt].variables
     @build_constraint(
-        + longterm_node_state[n, s, t_after]
+        + node_state_longterm[n, s, t_after]
         == 
-        + longterm_node_state[n, s, t_before]
+        + node_state_longterm[n, s, t_before]
         + coefs[1] * (node_state[n, s, rt2] - node_state[n, s, _get_t0(m, rt1)])
         + coefs[2] * (node_state[n, s, rt4] - node_state[n, s, _get_t0(m, rt3)])
     )

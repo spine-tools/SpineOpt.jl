@@ -41,7 +41,7 @@ function node_state_indices(
     )
 end
 
-function longterm_node_state_indices(
+function node_state_longterm_indices(
     m::Model;
     node=anything,
     stochastic_scenario=anything,
@@ -87,11 +87,11 @@ function add_variable_node_state!(m::Model)
     )
 end
 
-function add_variable_longterm_node_state!(m::Model)
+function add_variable_node_state_longterm!(m::Model)
     add_variable!(
         m,
-        :longterm_node_state,
-        longterm_node_state_indices;
+        :node_state_longterm,
+        node_state_longterm_indices;
         lb=node_state_lb,
         ub=node_state_ub,
         fix_value=fix_node_state,
