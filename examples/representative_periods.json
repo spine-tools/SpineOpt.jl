@@ -5792,6 +5792,14 @@
             "report__output",
             [
                 "report1",
+                "node_state_longterm"
+            ],
+            null
+        ],        
+        [
+            "report__output",
+            [
+                "report1",
                 "unit_flow"
             ],
             null
