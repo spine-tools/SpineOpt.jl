@@ -138,6 +138,7 @@ function _add_variables!(m; log_level=3)
             add_variable_node_slack_neg!,
             add_variable_node_slack_pos!,
             add_variable_node_state!,
+            add_variable_node_state_longterm!,            
             add_variable_node_voltage_angle!,
             add_variable_nonspin_units_shut_down!,
             add_variable_nonspin_units_started_up!,
@@ -234,6 +235,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_nodal_balance!,
             add_constraint_node_injection!,
             add_constraint_node_state_capacity!,
+            add_constraint_node_state_longterm_trajectory!,            
             add_constraint_min_node_state!,
             add_constraint_node_voltage_angle!,
             add_constraint_non_spinning_reserves_lower_bound!,
@@ -284,6 +286,9 @@ function _create_objective_terms!(m)
     window_very_end = maximum(end_.(time_slice(m)))
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
+    middle_history = history_time_slice(m; temporal_block=temporal_block(has_free_start=true))
+    setdiff!(beyond_window, middle_history)
+    setdiff!(in_window, middle_history)
     filter!(t -> !(t in in_window), beyond_window)
     for term in objective_terms(m; benders_master=!_is_benders_subproblem(m))
         func = getproperty(SpineOpt, term)

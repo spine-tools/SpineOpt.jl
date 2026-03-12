@@ -53,6 +53,11 @@ function add_stage_output(db_url, log_level)
 	return true
 end
 
+function add_node_state_longterm_output(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	return true
+end
+
 function add_node_availability_factor(db_url, log_level)
 	# No changes, just make sure we load the newest template
 	return true
@@ -84,6 +89,7 @@ _upgrade_functions = [
 	rename_lifetime_to_tech_lifetime,
 	translate_heatrate_parameters,
 	add_stage_output,
+	add_node_state_longterm_output,
 	add_node_availability_factor,
 	add_node_state_min_factor,
 	add_connection_min_factor,

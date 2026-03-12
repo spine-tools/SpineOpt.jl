@@ -23,7 +23,7 @@ function units_out_of_service_indices(
     unit=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     unit = intersect(unit, _unit_with_out_of_service_variable())
     unit_stochastic_time_indices(

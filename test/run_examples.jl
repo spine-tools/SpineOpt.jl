@@ -10,7 +10,7 @@ objective_function_reference_values = Dict(
     "multi-year_investment_without_econ_discounting.json" => 131520100.0,
     "capacity_planning.json" => 328503000.0,
     "stochastic.json" => 126964.2857142857,
-    "representative_periods.json" => 279438.4922720359,
+    "representative_periods.json" => 314610.23274110217,
     "multi_stage_model_tutorial.json" => 1.91746092844232e9,
 )
 

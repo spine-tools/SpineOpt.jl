@@ -329,7 +329,6 @@ function test_constraint_unit_flow_capacity_simple()
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
-        case_part = (Object(:min_up_time_gt_time_step, :case), Object(:one, :part))
         @testset for con_key in keys(constraint)
             con = constraint[con_key]
             u, n, d, s, t = con_key
@@ -400,7 +399,6 @@ function test_constraint_unit_flow_capacity_tight_and_compact()
                 t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
                 t2h = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
                 s_by_t = Dict(t1h1 => s_parent, t1h2 => s_child)
-                case_part = (Object(:min_up_time_gt_time_step, :case), Object(:one, :part))
                 @testset for con_key in keys(constraint)
                     con = constraint[con_key]
                     u, n, d, s, t, t_after, case, part = con_key

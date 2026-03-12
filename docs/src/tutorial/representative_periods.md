@@ -86,7 +86,10 @@ The configuration of the *battery\_storage* includes the [has\_state](@ref) para
 
 The configuration of the *fuel\_node* is similar to the *battery_storage* node. In addition, we can define an initial value for the fuel node at the beginning of the model's time horizon using the [initial\_node\_state](@ref) parameter.
 
-The parameter *is\_longterm\_storage* is set to `true` for the fuel node, which means that the state of the fuel node can be carried over the whole time horizon, allowing to properly account for seasonal storage in the model. This is a key feature of SpineOpt that allows to capture the dynamics of seasonal storage in representative periods models.
+The parameter *is\_longterm\_storage* is set to `true` for the fuel node, which means that the state of the fuel node can be carried over the whole time horizon, allowing to properly account for seasonal storage in the model by triggering the constraint [constraint\_node\_state\_longterm\_trajectory`](@ref constraint_node_state_longterm_trajectory), see the mathematical formulation of the model for more details on this constraint in the [Constraints](@ref) section. This is a key feature of SpineOpt that allows to capture the dynamics of seasonal storage in representative periods models.
+
+!!! info "Two node state variables"
+    Since the fuel node is a long-term storage, it has two node state variables: one for the representative periods `node\_state` and another to track the node state along the whole time horizon, `node\_state\_longterm`. Remember this when checking the results 😉
 
 ![image](figs_representative_periods/rp_fuel_node.png)
 
@@ -102,9 +105,20 @@ Let's check first the battery storage node. We can see that the state of charge 
 
 ![image](figs_representative_periods/rp_battery_node_results.png)
 
-In contrast, the fuel node has a state variable for all the periods, since it is a long-term storage. We can see that the node state of the fuel node changes across the representative periods, which allows to capture the seasonal dynamics of the fuel node in the model. In order to stimate the node state of the fuel node in the non-representative periods, SpineOpt uses the changes (or deltas) in the node state of the corresponding representative periods according to the mapping defined in the [representative\_period\_mapping](@ref) parameter. For instance, for the second day, which is mapped half to *rp1* and half to *rp2*, the node state of the fuel node is estimated as a weighted average of the change in the node state in *rp1* and *rp2*. This formulation is known as the [delta formulation](https://www.sciencedirect.com/science/article/pii/S0306261918306950) for representative periods, and it is a common approach to estimate the state of long-term storage in non-representative periods based on the changes in the representative periods.
+Let's check the fuel node, but first! Remember that the fuel node has two node state variables: `node\_state` for the representative periods and `node\_state\_longterm` for the whole time horizon. The former only has values for the representative periods, while the latter has values for all the periods in the original temporal block. That means that you need to define the output for both variables in order to properly analyze the results for the fuel node, see the figure below:
 
-![image](figs_representative_periods/rp_fuel_node_results.png)
+![image](figs_representative_periods/rp_node_state_longterm_output.png)
+
+The figure below shows the results for both variables (notice that it is double-axis plot). We can see that the `node\_state\_longterm` of the fuel node changes across the representative periods, which allows to capture the seasonal dynamics of the fuel node in the model. In order to stimate the node state of the fuel node in the non-representative periods, SpineOpt uses the changes (or deltas) in the node state of the corresponding representative periods according to the mapping defined in the [representative\_period\_mapping](@ref) parameter. For instance, for the second day, which is mapped half to *rp1* and half to *rp2*, the node state of the fuel node is estimated as a weighted average of the change/delta in the node state in *rp1* and *rp2* of the `node\_state`.
+
+![image](figs_representative_periods/rp_fuel_node_results_1.png)
+
+This formulation is known as the [delta formulation](https://www.sciencedirect.com/science/article/pii/S0306261918306950) for representative periods, and it is a common approach to estimate the state of long-term storage in non-representative periods based on the changes in the representative periods.
+
+!!! warning "Important! Interpretation of the node state results"
+    The `node\_state\_longterm` and `node_state` variables values are at the end of the time block; however, SpineToolbox shows value at the first timestamp of the the timeblock. So, keep in mind this information when looking at the results.
+
+![image](figs_representative_periods/rp_fuel_node_results_2.png)
 
 !!! info "You have completed this tutorial, congratulations!"
     You have mastered the basic concepts of representative periods and modelling seasonal and non-seasonal storage using SpineToolbox and SpineOpt. Keep up the good work!
