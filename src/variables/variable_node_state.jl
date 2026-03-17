@@ -24,14 +24,36 @@
 A set of tuples for indexing the `node_state` variable where filtering options can be specified
 for `node`, `s`, and `t`.
 """
-function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
+function node_state_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(is_representative=true),
+)
     node = intersect(node, SpineOpt.node(has_state=true))
+    temporal_block = _vcat(temporal_block, block__starting_point(temporal_block1=temporal_block))
     (
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(
             m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
-        if is_longterm_storage(node=n) || _is_representative(t)
+    )
+end
+
+function node_state_longterm_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(is_representative=false),
+)
+    node = intersect(node, SpineOpt.node(has_state=true, is_longterm_storage=true))
+    (
+        (node=n, stochastic_scenario=s, t=t)
+        for (n, s, t) in node_stochastic_time_indices(
+            m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+        )
     )
 end
 
@@ -58,6 +80,18 @@ function add_variable_node_state!(m::Model)
         m,
         :node_state,
         node_state_indices;
+        lb=node_state_lb,
+        ub=node_state_ub,
+        fix_value=fix_node_state,
+        initial_value=initial_node_state,
+    )
+end
+
+function add_variable_node_state_longterm!(m::Model)
+    add_variable!(
+        m,
+        :node_state_longterm,
+        node_state_longterm_indices;
         lb=node_state_lb,
         ub=node_state_ub,
         fix_value=fix_node_state,

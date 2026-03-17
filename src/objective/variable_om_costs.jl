@@ -30,8 +30,8 @@ function variable_om_costs(m::Model, t_range)
         sum(
             + unit_flow[u, n, d, s, t]
             * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
-               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
-            ) 
+               unit_discounted_duration(m; unit=u, stochastic_scenario=s, t=t) : 1
+            )
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * vom_cost(m; unit=ug, node=ng, direction=d, stochastic_scenario=s, t=t)

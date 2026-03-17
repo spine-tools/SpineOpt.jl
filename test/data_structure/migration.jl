@@ -418,6 +418,7 @@ function _test_dummy_migrations_functions()
 	@testset "dummy_migrations_functions" begin
 		@test SpineOpt.add_units_out_of_service_and_min_capacity_margin(url_in,0)
 		@test SpineOpt.add_stage_output(url_in,0)
+		@test SpineOpt.add_node_state_longterm_output(url_in,0)
 		@test SpineOpt.add_node_availability_factor(url_in,0)
 		@test SpineOpt.add_node_state_min_factor(url_in,0)
 		@test SpineOpt.add_connection_min_factor(url_in,0)

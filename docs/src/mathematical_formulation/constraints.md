@@ -1,4 +1,4 @@
-# Constraints
+# [Constraints](@id Constraints)
 
 ## Balance constraint
 
@@ -21,6 +21,10 @@
 ### [Cyclic condition on node state variable](@id constraint_cyclic_node_state)
 
 @@add_constraint_cyclic_node_state!
+
+### [Long-term storage trajectory](@id constraint_node_state_longterm_trajectory)
+
+@@add_constraint_node_state_longterm_trajectory!
 
 ## Unit operation
 

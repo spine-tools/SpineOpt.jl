@@ -3,7 +3,7 @@
 Assuming you already have an investment model with a certain temporal structure that works, you can turn it into a representative periods model with the following steps.
 
 !!! info
-   Note that representative days often limit the ability to properly account for seasonal storages. However, SpineOpt takes this into account and allows for seasonal storage.
+    Note that representative days often limit the ability to properly account for seasonal storages. However, SpineOpt takes this into account and allows for seasonal storage.
 
 1. Select the representative periods. For example if you are modelling a year, you can select a few weeks
    (one in summer, one in winder, and one in mid season).
@@ -28,5 +28,10 @@ In SpineOpt, this will be interpreted in the following way:
 - The [node\_state](@ref) variable and the investment [variables](@ref Variables) will be created for **all** periods,
   representative and non-representative.
 
-The [**SpinePeriods.jl**](https://github.com/Spine-project/SpinePeriods.jl) package provides an alternative, perhaps simpler way
-to setup a representative periods model based on the automatic selection and ordering of periods.
+## Tools to set up representative periods
+
+Defining this parameters can be tedious, especially for large models. However, there are some tools that can help you with this process:
+
+1. The [**SpinePeriods.jl**](https://github.com/Spine-project/SpinePeriods.jl) package provides an alternative to setup a representative periods model based on the automatic selection and ordering of periods.
+
+2. The [**TulipaClustering.jl**](https://github.com/TulipaEnergy/TulipaClustering.jl) package provides a method to select representative periods based on clustering techniques, which includes an approach known as hull clustering with blended representative periods, i.e., non-represented periods are a linear combination of the representative periods.
