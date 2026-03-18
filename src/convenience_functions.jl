@@ -177,6 +177,7 @@ const frac_state_loss = Parameter(:frac_state_loss)
 const fractional_demand = Parameter(:fractional_demand)
 const fuel_cost = Parameter(:fuel_cost)
 const has_binary_gas_flow = Parameter(:has_binary_gas_flow)
+const has_free_start = Parameter(:has_free_start)
 const has_lodf = Parameter(:has_lodf)
 const has_online_variable = Parameter(:has_online_variable)
 const has_out_of_service_variable = Parameter(:has_out_of_service_variable)
@@ -556,6 +557,7 @@ export frac_state_loss
 export fractional_demand
 export fuel_cost
 export has_binary_gas_flow
+export has_free_start
 export has_lodf
 export has_online_variable
 export has_out_of_service_variable
