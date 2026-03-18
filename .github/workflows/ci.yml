@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.8"  # Minimum compatible Release
+          - "lts"  # Long-term support (LTS) release
           - "1"    # Latest Release of Julia v1.x
         os:
           - ubuntu-latest

@@ -17,7 +17,7 @@ The figures below are a summary of this process that will be further explained i
 ![Configure spine tools](figs_installation/configure_spinetools.png)
 
 ## Prerequisites
-Spine Toolbox needs [Python](https://www.python.org/) (version 3.10 or above) and SpineOpt needs [Julia](https://julialang.org/) (version 1.8 or above).
+Spine Toolbox needs [Python](https://www.python.org/) (version 3.10 or above) and SpineOpt needs [Julia](https://julialang.org/) (version Long-term support (LTS) release or above). You can check the latest LTS release on the [Julia downloads page](https://julialang.org/downloads/).
 
 To check whether these are installed properly, open the terminal and type:
 
