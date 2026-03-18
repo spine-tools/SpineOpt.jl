@@ -35,7 +35,9 @@ at each [resolution](@ref).
 
 ## What are the time slice convenience functions?
 
-To facilitate querying the temporal structure, we have developed the following convenience functions:
+![Time slice convenience functions, figure from Maren Ihlemann's dissertation](figs/time_slice_convenience_functions.png)
+
+To facilitate querying the temporal structure, we have developed the following convenience functions (which are also depicted above in the figure from Maren Ihlemann's dissertation):
 
 - [time\_slice](@ref)
 - [t\_before\_t](@ref)
