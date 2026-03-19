@@ -32,7 +32,6 @@ const connection__to_node = RelationshipClass(:connection__to_node)
 const connection__to_node__investment_group = RelationshipClass(:connection__to_node__investment_group)
 const connection__to_node__user_constraint = RelationshipClass(:connection__to_node__user_constraint)
 const connection__user_constraint = RelationshipClass(:connection__user_constraint)
-const block__starting_point = RelationshipClass(:block__starting_point, [:temporal_block, :temporal_block])
 const lodf_connection__connection = RelationshipClass(:lodf_connection__connection)
 const model__default_investment_stochastic_structure = RelationshipClass(:model__default_investment_stochastic_structure)
 const model__default_investment_temporal_block = RelationshipClass(:model__default_investment_temporal_block)
@@ -413,7 +412,6 @@ export connection__to_node
 export connection__to_node__investment_group
 export connection__to_node__user_constraint
 export connection__user_constraint
-export block__starting_point
 export lodf_connection__connection
 export model__default_investment_stochastic_structure
 export model__default_investment_temporal_block
