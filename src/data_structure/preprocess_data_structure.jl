@@ -871,9 +871,12 @@ function generate_starting_point()
         obj => Dict(:has_free_start => parameter_value(false)) for obj in starting_point_objects
     )
     starting_point = ObjectClass(:temporal_block, starting_point_objects, starting_point_values)
-    block__starting_point = RelationshipClass(
-        :block__starting_point, [:temporal_block, :temporal_block], block_starting_point_relationships,
-    )
+    active_env = SpineInterface._active_env()
+    if !haskey(block__starting_point.env_dict, active_env)
+        relationship_class = RelationshipClass(:block__starting_point, [:temporal_block, :temporal_block])
+        block__starting_point.env_dict[active_env] = relationship_class.env_dict[active_env]
+    end
+    add_relationships!(block__starting_point, block_starting_point_relationships)
     add_relationships!(
         node__temporal_block,
         [
@@ -883,12 +886,6 @@ function generate_starting_point()
         ]
     )
     push_class!(has_free_start, starting_point)
-    @eval begin
-        starting_point = $starting_point
-        block__starting_point = $block__starting_point
-        export starting_point
-        export block__starting_point
-    end
 end
 
 function generate_is_representative()
