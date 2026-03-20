@@ -575,7 +575,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, output_su
     model_name = _model_name(m)
     @timelog log_level 0 "Optimizing $model_name..." optimize!(m)
     termination_st = termination_status(m)
-    if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
+    if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT, MOI.ALMOST_OPTIMAL)
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
             @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
