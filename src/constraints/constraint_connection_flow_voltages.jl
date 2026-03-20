@@ -34,7 +34,7 @@ function add_constraint_connection_flow_reactive!(m::Model)
     m.ext[:spineopt].constraints[:connection_flow_reactive] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            + connection_flow_reactive[conn, ng, d, s, t] 
+            + connection_flow_reactive[conn, ng, d, s, t] * 1.0 / connection_power_base(connection=conn)
                 
            ==
 
@@ -84,7 +84,7 @@ function add_constraint_connection_flow_real!(m::Model)
     m.ext[:spineopt].constraints[:connection_flow_real] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + connection_flow[conn, ng, d, s, t] 
+            + connection_flow[conn, ng, d, s, t] * 1.0 / connection_power_base(connection=conn)
                 
            ==
             
