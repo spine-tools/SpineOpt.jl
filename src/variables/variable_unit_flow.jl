@@ -70,7 +70,7 @@ function unit_flow_reactive_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    [(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+    ((unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d, s, t) in unit_flow_indices(m; unit = unit, 
                                     node = intersect(members(node), SpineOpt.node(has_voltage=true)), 
                                     direction=direction, 
@@ -78,7 +78,7 @@ function unit_flow_reactive_indices(
                                     t=t, temporal_block = temporal_block)
         
     
-    ]
+    )
 end
 
 function unit_flow_ub(m; unit, node, direction, kwargs...)

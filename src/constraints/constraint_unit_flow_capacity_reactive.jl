@@ -53,11 +53,25 @@ function add_constraint_unit_flow_capacity_reactive!(m::Model)
 end
 
 function constraint_unit_flow_capacity_reactive_indices(m::Model)
-    unique(
+    
+(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity_reactive)
-        for (t, path) in t_lowest_resolution_path(
-            m, vcat(unit_flow_reactive_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u))
+        if has_online_variable(unit=u) || members(ng) != [ng]
+        for t in t_highest_resolution(
+            m,
+            Iterators.flatten(
+                ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
+            )
+        )
+        for path in active_stochastic_paths(
+            m,
+            Iterators.flatten(
+                (
+                    units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t)),
+                    unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
+                )
+            )
         )
     )
 end
