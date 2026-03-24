@@ -225,9 +225,6 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, econ
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
-    end
 end
 
 """
@@ -304,9 +301,6 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
             pvals = parameter_value(SpineInterface.Map(stochastic_map_indices, stochastic_map_vals))
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -441,9 +435,6 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, economic_par
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
     end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
-    end
 end
 
 """
@@ -496,9 +487,6 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, economic
             pvals = parameter_value(1)
         end
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 
@@ -583,9 +571,6 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
             pvals = parameter_value(SpineInterface.TimeSeries(timeseries_ind, timeseries_val, false, false))
             add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
         end
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end
 """
@@ -709,8 +694,5 @@ function generate_decommissioning_conversion_to_discounted_annuities!(
         end
         pvals = parameter_value(SpineInterface.Map(stochastic_map_indices, stochastic_map_vals))
         add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
-    end
-    @eval begin
-        $(param_name) = $(Parameter(param_name, [obj_cls]; mod = @__MODULE__))
     end
 end

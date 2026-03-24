@@ -13,5 +13,20 @@ SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 SpineOpt = "0d8fc150-4032-4b6e-9540-20efcb304861"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[sources]
+SpineOpt = { path = ".." }
+
 [compat]
-julia = "^1.2"
+DataStructures = "^0.19"
+DelimitedFiles = "1"
+HiGHS = "1"
+JSON = "^0.21"
+JuMP = "^1.23.5"
+MathOptInterface = "1"
+PyCall = "1"
+SpineInterface = "0.17"
+Dates = "1"
+Logging = "1"
+Pkg = "1"
+Test = "1"
+julia = "^1.10"

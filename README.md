@@ -5,10 +5,6 @@
 
 A Julia package containing a state-of-the-art energy system optimization model.
 
-## Compatibility
-
-This package supports Julia 1.10.10 (LTS by June 27, 2025) up to version 1.11.
-
 ## :loudspeaker: Community and how to ask help :rocket:
 
 There are several ways to stay in touch with the community and to get help with SpineOpt.

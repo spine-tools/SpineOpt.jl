@@ -18,10 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-module Y
-using SpineInterface
-end
-
 function _test_run_spineopt_benders_setup()
     url_in = "sqlite://"
     file_path_out = tempname(cleanup=true)

@@ -193,7 +193,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment()
     storage_count = 1
     url_in, url_out = _ref_investments_setup(storage_count)
     m = run_spineopt(url_in, url_out; log_level=0)
-    R = Module()
+    R = Bind()
     using_spinedb(url_out, R)
     last_t = maximum(end_.(time_slice(m)))
     extend_ts!(ts) = (ts[last_t] = NaN; ts)
@@ -223,7 +223,7 @@ function _test_run_spineopt_lt_storage_benders_storage_investment_with_slack_pen
     storage_count = 1
     url_in, url_out = _ref_investments_setup(storage_count)
     m = run_spineopt(url_in, url_out; log_level=0)
-    R = Module()
+    R = Bind()
     using_spinedb(url_out, R)
     last_t = maximum(end_.(time_slice(m)))
     extend_ts!(ts) = (ts[last_t] = NaN; ts)
