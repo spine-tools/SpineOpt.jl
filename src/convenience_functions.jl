@@ -20,6 +20,7 @@ const temporal_block = ObjectClass(:temporal_block)
 const unit = ObjectClass(:unit)
 const user_constraint = ObjectClass(:user_constraint)
 ## Relationship classes
+const block__starting_point = RelationshipClass(:block__starting_point)
 const connection__from_node = RelationshipClass(:connection__from_node)
 const connection__from_node__investment_group = RelationshipClass(:connection__from_node__investment_group)
 const connection__from_node__user_constraint = RelationshipClass(:connection__from_node__user_constraint)
@@ -400,6 +401,7 @@ export temporal_block
 export unit
 export user_constraint
 ## Relationship classes
+export block__starting_point
 export connection__from_node
 export connection__from_node__investment_group
 export connection__from_node__user_constraint
