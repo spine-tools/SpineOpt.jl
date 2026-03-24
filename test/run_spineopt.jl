@@ -20,8 +20,6 @@
 
 import Logging: Warn
 
-const Y = Bind()
-
 function _test_run_spineopt_setup()
     url_in = "sqlite://"
     file_path_out = tempname(cleanup=true)

@@ -18,10 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-module Y
-using SpineInterface
-end
-
 function _test_monte_carlo_setup(mc_scens)
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
