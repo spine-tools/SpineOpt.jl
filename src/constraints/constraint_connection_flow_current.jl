@@ -44,7 +44,7 @@ function add_constraint_connection_flow_current!(m::Model)
            <= connection_current_max[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * connection_current_max[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
         )   
-        for conn in SpineOpt.connection()
+        for conn in indices(connection_current_max)
         for (n1, n2, s, t) in node_voltageproduct_indices(m; connection=conn)
     )
 end

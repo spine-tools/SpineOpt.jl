@@ -22,6 +22,7 @@ module SpineOpt
 
 # Load packages
 using Dates
+using LinearAlgebra
 using SpineInterface
 using JSON
 using Printf
