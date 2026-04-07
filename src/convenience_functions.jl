@@ -24,6 +24,7 @@ const unit_flow__unit_flow = ObjectClass(:unit_flow__unit_flow)
 const unit_flow__user_constraint = ObjectClass(:unit_flow__user_constraint)
 const user_constraint = ObjectClass(:user_constraint)
 ## Relationship classes
+const block__starting_point = RelationshipClass(:block__starting_point)
 const connection__from_node = RelationshipClass(:connection__from_node)
 const connection__from_node__investment_group = RelationshipClass(:connection__from_node__investment_group)
 const connection__from_node__user_constraint = RelationshipClass(:connection__from_node__user_constraint)
@@ -173,6 +174,7 @@ const flow_limits_min = Parameter(:flow_limits_min)
 const flow_limits_min_cumulative = Parameter(:flow_limits_min_cumulative)
 const fom_cost = Parameter(:fom_cost)
 const fuel_cost = Parameter(:fuel_cost)
+const has_free_start = Parameter(:has_free_start)
 const has_lodf = Parameter(:has_lodf)
 const has_online_variable = Parameter(:has_online_variable)
 const has_out_of_service_variable = Parameter(:has_out_of_service_variable)
@@ -366,6 +368,7 @@ export unit_flow__unit_flow
 export unit_flow__user_constraint
 export user_constraint
 ## Relationship classes
+export block__starting_point
 export connection__from_node
 export connection__from_node__investment_group
 export connection__from_node__user_constraint
@@ -515,6 +518,7 @@ export flow_limits_min
 export flow_limits_min_cumulative
 export fom_cost
 export fuel_cost
+export has_free_start
 export has_lodf
 export has_online_variable
 export has_out_of_service_variable

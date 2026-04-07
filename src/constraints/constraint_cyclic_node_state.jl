@@ -35,17 +35,25 @@ function add_constraint_cyclic_node_state!(m::Model)
 end
 
 function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end, blk)
-    @fetch node_state = m.ext[:spineopt].variables
+    node_state = if storage_longterm_active(node=n) && !is_representative(temporal_block=blk)
+        m.ext[:spineopt].variables[:node_state_longterm]
+    else
+        m.ext[:spineopt].variables[:node_state]
+    end
     build_sense_constraint(
         sum(
             node_state[n, s, t_end]
-            for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_end);
+            for (n, s, t_end) in node_state_indices(
+                m; node=n, stochastic_scenario=s_path, t=t_end, temporal_block=anything
+            );
             init=0,
         ),        
         eval(cyclic_condition_sense(node=n, temporal_block=blk)),
         sum(
             node_state[n, s, t_start]
-            for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s_path, t=t_start);
+            for (n, s, t_start) in node_state_indices(
+                m; node=n, stochastic_scenario=s_path, t=t_start, temporal_block=anything
+            );
             init=0,
         )        
     )
@@ -56,12 +64,15 @@ function constraint_cyclic_node_state_indices(m::Model)
         (node=n, stochastic_path=path, t_start=t_start, t_end=t_end, temporal_block=blk)
         for (n, blk) in indices(cyclic_condition)
         if cyclic_condition(node=n, temporal_block=blk)
-        for t_start in filter(
-            x -> blk in blocks(x), t_before_t(m; t_after=first(collect(time_slice(m; temporal_block=members(blk)))))
-        )
+        for t_start in _t_start(m, n, blk)
         for t_end in last(collect(time_slice(m; temporal_block=members(blk))))
         for path in active_stochastic_paths(m, node_state_indices(m; node=n, t=[t_start, t_end]))
     )
+end
+
+function _t_start(m, n, blk)
+    t_after = first(collect(time_slice(m; temporal_block=members(blk))))
+    [x.t_before for x in node_dynamic_time_indices(m; node=n, temporal_block=anything, t_after=t_after)]
 end
 
 function constraint_cyclic_node_state_indices_filtered(

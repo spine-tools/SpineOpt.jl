@@ -9,7 +9,7 @@ The methodology is based on mixed-integer linear programming (MILP), and *SpineO
 While, in principle, it is possible to run *SpineOpt* by itself, it has been designed to be used through the
 [Spine toolbox](https://github.com/spine-tools/Spine-Toolbox), and take maximum advantage of the data and modelling
 workflow management tools therein.
-Thus, we highly recommend installing *Spine Toolbox* as well, as outlined in the [Installation](@ref) guide.
+Thus, we highly recommend installing *Spine Toolbox* as well, as outlined in the [Installation](@ref installation) guide.
 
 ## Important remark on spine entities
 
@@ -55,7 +55,7 @@ Part 2 explains the core principles, features and design decisions of SpineOpt w
 - **Standard model framework**
   covers the temporal and stochastic framework present in very SpineOpt model.
   The [Temporal Framework](@ref) section explains how defining *time* works in *SpineOpt.jl*, and how it can be used
-  for different purposes. The [Stochastic Framework](@ref) section details how different stochastic structures can be
+  for different purposes. The [Stochastic Framework](@ref stochastic_framework) section details how different stochastic structures can be
   defined, how they interact with each other, and how this impacts writing [Constraints](@ref) in *SpineOpt.jl*.
 
 - **Standard model features**
@@ -94,4 +94,6 @@ Part 3 contains all the detailed information you need when you are looking for s
   explains some parts of the code (for those who are interested in how things work under the hood).
   Note that this chapter is particularly sensitive to changes in the code and as such might get out of sync.
   If you do notice a discrepancy, please create an [issue in github](https://github.com/spine-tools/SpineOpt.jl/issues).
+
   That is also the place to be if you don't find what you are looking for in this documentation.
+

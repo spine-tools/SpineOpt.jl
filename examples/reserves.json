@@ -2060,7 +2060,7 @@
         [
             "settings",
             "version",
-            21,
+            22,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
         ],
@@ -3413,6 +3413,11 @@
         [
             "output",
             "node_state",
+            null
+        ],
+        [
+            "output",
+            "node_state_longterm",
             null
         ],
         [
@@ -5644,6 +5649,13 @@
         [
             "output",
             "node_state",
+            "output_type",
+            "variable",
+            "Base"
+        ],
+        [
+            "output",
+            "node_state_longterm",
             "output_type",
             "variable",
             "Base"

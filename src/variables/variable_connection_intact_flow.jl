@@ -36,7 +36,7 @@ function connection_intact_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_blocks_by_period=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     connection_investment_power_flow_impact_active(model=m.ext[:spineopt].instance) || return ()
     connection_flow_indices(

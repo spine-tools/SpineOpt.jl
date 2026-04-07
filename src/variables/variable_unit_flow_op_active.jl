@@ -37,7 +37,7 @@ function unit_flow_op_active_indices(
     i=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_blocks_by_period=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     (
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)

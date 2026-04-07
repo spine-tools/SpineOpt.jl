@@ -18,8 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-const Y = Bind()
-
 function _test_run_spineopt_benders_setup()
     url_in = "sqlite://"
     file_path_out = tempname(cleanup=true)

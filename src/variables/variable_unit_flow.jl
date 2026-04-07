@@ -36,7 +36,7 @@ function unit_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_blocks_by_period=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     unit = members(unit)
     node = members(node)
@@ -200,7 +200,7 @@ Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
     replacement_expressions = OrderedDict(
-        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t) => Dict(
+        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t) => [
             :unit_flow => Dict(
                 (
                     unit=u,
@@ -222,7 +222,7 @@ function add_variable_unit_flow!(m::Model)
                     _signed_unit_start_flow(m, u, n, d, u, n_ref, d_ref, s, t, fix_ratio, direct), duration(t)
                 )
             ),
-        )
+        ]
         for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_unit_flows(constraint_equality_flow_ratio)
         if _has_simple_fix_ratio_unit_flow(m, u, n, d, u, n_ref, d_ref, fix_ratio)
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_ref)

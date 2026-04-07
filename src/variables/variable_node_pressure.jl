@@ -31,7 +31,7 @@ function node_pressure_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_blocks_by_period=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     node_stochastic_time_indices(
         m;

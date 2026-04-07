@@ -17,7 +17,7 @@ The figures below are a summary of this process that will be further explained i
 ![Configure spine tools](figs_installation/configure_spinetools.png)
 
 ## Prerequisites
-Spine Toolbox needs [Python](https://www.python.org/) (version 3.10 or above) and SpineOpt needs [Julia](https://julialang.org/) (version 1.10 or above).
+Spine Toolbox needs [Python](https://www.python.org/) (version 3.10 or above) and SpineOpt needs [Julia](https://julialang.org/) (version Long-term support (LTS) release or above). You can check the latest LTS release on the [Julia downloads page](https://julialang.org/downloads/).
 
 To check whether these are installed properly, open the terminal and type:
 
@@ -30,15 +30,14 @@ julia --version
     We try to keep up with the latest versions of these programming languages. But sometimes we need a little time.
 
 !!! tip
-    Typically you'd install Julia from the [website](https://julialang.org/downloads/).
+    [Juliaup](https://github.com/JuliaLang/juliaup) is a cross platform julia installer and is the recommended way to install and manage your Julia installation.
 
-    However, on Linux, it may be more convenient to install Julia through Python:
+    Note that by default, Juliaup installs the latest julia version. To change to a specific Julia version, for example Julia 1.11, use the following commands in the terminal:
     ```
-    pip install jill
-    jill install
+    juliaup add 1.11
+    juliaup default 1.11
     ```
-
-    And, on Windows, it may be more convenient to install Julia from the Windows store (as that automatically configures the registry as well).
+    To see all the commands type `juliaup --help` and to see the status type `juliaup status`. Julia 1.11 should now have an asterisk showing that it is the default version that will be used during the installation of SpineOpt.
 
 ## Prepare the folder structure
 

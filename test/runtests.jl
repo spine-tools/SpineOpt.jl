@@ -52,6 +52,8 @@ import SpineOpt:
 # Test code uses legacy syntax for `import_data`, so interpret here.
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, "testing"; kwargs...)
 
+const Y = Bind()
+
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
