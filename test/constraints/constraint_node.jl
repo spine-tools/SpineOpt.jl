@@ -1193,7 +1193,7 @@ function test_constraint_cyclic_node_state_free_start()
             ["temporal_block", "overlapping_block"],
         ]
         node_capacity = Dict("node_b" => 120, "node_c" => 400)
-        storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(180, "m"))
+        storage_lifetime_technical = Dict("type" => "duration", "data" => string(180, "m"))
         object_parameter_values = [
             ["node", "node_b", "storage_state_max", node_capacity["node_b"]],
             ["node", "node_c", "storage_state_max", node_capacity["node_c"]],
@@ -1213,7 +1213,7 @@ function test_constraint_cyclic_node_state_free_start()
             # bridge gaps into a block with free start
             ["temporal_block", "investments_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T06:00:00"))],
             ["model", "instance", "model_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
-            ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
+            ["node", "node_c", "storage_lifetime_technical", storage_lifetime_technical],
         ]
         relationship_parameter_values = [
             ["node__temporal_block", ["node_b", "discontinuous_block"], "cyclic_condition", true],
