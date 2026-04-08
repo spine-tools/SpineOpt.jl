@@ -368,7 +368,6 @@ const upward_reserve = Parameter(:upward_reserve)
 const use_connection_intact_flow = Parameter(:use_connection_intact_flow)
 const use_highest_resolution_constraint_ratio_out_in_connection_flow = Parameter(:use_highest_resolution_constraint_ratio_out_in_connection_flow)
 const use_tight_compact_formulations = Parameter(:use_tight_compact_formulations)
-const use_unit_capacity_for_investment_cost_scaling = Parameter(:use_unit_capacity_for_investment_cost_scaling)
 const user_constraint_slack_penalty = Parameter(:user_constraint_slack_penalty)
 const version = Parameter(:version)
 const vom_cost = Parameter(:vom_cost)
@@ -749,7 +748,6 @@ export upward_reserve
 export use_connection_intact_flow
 export use_highest_resolution_constraint_ratio_out_in_connection_flow
 export use_tight_compact_formulations
-export use_unit_capacity_for_investment_cost_scaling
 export user_constraint_slack_penalty
 export version
 export vom_cost
