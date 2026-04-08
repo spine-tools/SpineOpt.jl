@@ -96,8 +96,8 @@ function _test_monte_carlo()
                 ["node", "elec", "demand", 200],
                 ["unit", "pv", "availability_factor", unparse_db_value(pv_af_map)],
                 ["unit", "wind", "availability_factor", unparse_db_value(wind_af_map)],
-                # ["unit", "ocgt", "scheduled_outage_duration", unparse_db_value(ocgt_sod_map)],
-                # ["unit", "ccgt", "scheduled_outage_duration", unparse_db_value(ccgt_sod_map)],
+                # ["unit", "ocgt", "outage_scheduled_duration", unparse_db_value(ocgt_sod_map)],
+                # ["unit", "ccgt", "outage_scheduled_duration", unparse_db_value(ccgt_sod_map)],
             ],
             :relationship_parameter_values => [
                 ["unit__to_node", ["pv", "elec"], "capacity_per_unit", 200],
