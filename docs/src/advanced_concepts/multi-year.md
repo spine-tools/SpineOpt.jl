@@ -21,6 +21,8 @@ This factor translates the overnight costs of investment into discounted (to the
 
 In such a case, we first calculate the fraction of payment per year (e.g. something like 0.25, 0.5, 0.75, 1 over the lead time; 1 for the economic lifetime minus the lead time, and 0.75, 0.5, 0.25 and 0 for the remaining economic lifetime). Each payment fraction is then multiplied by the discounting factor of the payment year with respect to the discounting year (e.g. start of optimization).
 
+!!! info "Lead time is only use for the economic representation of investment costs"
+    The lead time does not affect the technical aspects of the investment, but only its economic representation. For example, if a unit (or a storage or a connection) invested in 2040 has a lead time of 2 years, and an economic lifetime of 10 years, then the investment payments will be distributed over 12 years (2 years of lead time + 10 years of economic lifetime), but the unit will be available for operation for 10 years starting from year 2040. This means that SpineOpt assumes that if the investment is available for operation in year 2040, the investment decision must have been taken in year 2038, and the payments are distributed over the years 2038-2050.
 
 **Salvage fraction**
 

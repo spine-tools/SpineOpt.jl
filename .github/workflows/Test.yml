@@ -18,7 +18,7 @@ on:
       spinedb-api-ref-name:
         required: false
         type: string
-        default: 'master'
+        default: "master"
       coverage:
         required: false
         type: boolean
@@ -32,10 +32,10 @@ jobs:
     name: Julia ${{ inputs.julia-version }} - ${{ inputs.host-os }}
     runs-on: ${{ inputs.host-os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: ${{ inputs.repository }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python-version }}
       - uses: julia-actions/setup-julia@v2
@@ -43,16 +43,15 @@ jobs:
           version: ${{ inputs.julia-version }}
           arch: x64
       - name: Install spinedb_api
-        run:
-          julia ./.install_spinedb_api.jl ${{ inputs.spinedb-api-ref-name }}
+        run: julia ./.install_spinedb_api.jl ${{ inputs.spinedb-api-ref-name }}
         env:
           PYTHON: python
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-processcoverage@v1
         if: inputs.coverage && inputs.julia-version == '1' && inputs.host-os == 'ubuntu-latest'
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v6
         if: inputs.coverage && inputs.julia-version == '1' && inputs.host-os == 'ubuntu-latest'
         with:
-          file: lcov.info
+          files: lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
