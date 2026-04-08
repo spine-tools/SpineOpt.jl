@@ -19,7 +19,7 @@
 #############################################################################
 
 using Pkg
-#Pkg.activate("test") # Tasku: Uncomment if you want to run this test script manually.
+#Pkg.activate(@__DIR__) # Tasku: Uncomment if you want to run this test script manually.
 using SpineOpt
 using SpineInterface
 using Test
