@@ -23,7 +23,7 @@ SpineOpt.jl requires Julia versions between 1.10.10 - 1.11. If you encounter com
 When configuring a model with the same block appearing twice in temporal blocks—once with `has_free_start = true` and another with `has_free_start = false`—in combination with the `unit_lifetime` constraint, investment-related variables are reported incorrectly.  Specifically:
 
 - The `units_invested` variable consistently reports as 0, regardless of actual investments made
-- The `units_mothballed` and `units_decommissioned` variables fail to account for initial unit counts (`number_of_units`)
+- The `units_mothballed` and `units_decommissioned` variables fail to account for initial unit counts (`existing_units`)
 - Investment variables are aggregated and reported at annual resolution even when the investment block uses a different temporal resolution
 
 **Operational Impact:** While the model's operational variables (dispatch, flows, etc.) calculate correctly, investment planning results are unreliable, making it unsuitable for multiyear capacity expansion studies with flexible temporal resolution.

@@ -51,7 +51,7 @@ Let's check the electricity demand time series for the *electricity\_node* in th
 
 ![image](figs_rolling_horizon/rh_electricity_node.png)
 
-In addition, you can see that the parameters `has_state` and `state_coeff` for the storage representation in the *electricity\_node*.
+In addition, you can see that the parameters `storage_active` and `storage_state_coefficient` for the storage representation in the *electricity\_node*.
 
 ## Results analysis
 

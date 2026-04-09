@@ -10,18 +10,18 @@ This section briefs the model instance setup with illustrating the key system sp
 
 The base system consists of 
 - a `node` "demand_A" with a fixed energy `demand` of 100 over the entire modelling horizon
-- an existing `unit` "generator_A" to supply "demand_A" with `capacity_per_unit`="100" and `vom_cost`="2". This unit, however, will retire as of hour 5, specified by the 'Time series' value of parameter `fix_units_invested_available`.
-- an investable `unit` "generator_A_new" of the same techno-economic characteristics as "generator_A", with `unit_investment_cost`="1000" and a 15 year `unit_investment_tech_lifetime`. This unit represents the as-usual replacement of "generator_A" when it gets retired.
+- an existing `unit` "generator_A" to supply "demand_A" with `capacity_per_unit`="100" and `vom_cost`="2". This unit, however, will retire as of hour 5, specified by the 'Time series' value of parameter `investment_count_fix_cumulative`.
+- an investable `unit` "generator_A_new" of the same techno-economic characteristics as "generator_A", with `unit_investment_cost`="1000" and a 15 year `lifetime_technical`. This unit represents the as-usual replacement of "generator_A" when it gets retired.
 
 ![Basic system setup.](./retrofit_material/example_1_system_basic.png)
 
 ### Retrofitting Setup
 
-For retrofitting, we introduce a new `unit` "generator_A_retro" as an alternative investment option of "generator_A_new", with the same `vom_cost` and `unit_investment_tech_lifetime`, and different `capacity_per_unit`="80" and `unit_investment_cost`="400". In this configuration, we would model the case where 80% of "generator_A"'s capacity can be retrofitted in a cheaper investment cost than building a new one.
+For retrofitting, we introduce a new `unit` "generator_A_retro" as an alternative investment option of "generator_A_new", with the same `vom_cost` and `lifetime_technical`, and different `capacity_per_unit`="80" and `unit_investment_cost`="400". In this configuration, we would model the case where 80% of "generator_A"'s capacity can be retrofitted in a cheaper investment cost than building a new one.
 
 Particularly, the last and key steps to make "generator_A_retro" a retrofitting option for "generator_A" include:
 1. create an `investment_group` entity "retrofitting", and connect it to "generator_A" and "generator_A_retro",
-2. define the parameter `maximum_entities_invested_available`="1".
+2. define the parameter `investment_count_total_max_cumulative`="1".
 
 ![Configuration of retrofitting unit](./retrofit_material/example_1_system_retrofit_unit.png)
 
@@ -29,7 +29,7 @@ This way, "generator_A_retro" can only be invested in if "generator_A" is retire
 
 ### Model Structure
 
-For simplicity, the example model spans 20 hour with an hourly resolution for both operationa and investment. Investment decisions are modelled as continuous value by defining the paramter `unit_investment_variable_type`="unit_investment_variable_type_continuous".
+For simplicity, the example model spans 20 hour with an hourly resolution for both operations and investment. Investment decisions are modelled as continuous value by defining the parameter `investment_variable_type`="continuous".
 
 The complete model configuration is provided below:
 ![Complete model specification](./retrofit_material/example_1_system_complete.png)
