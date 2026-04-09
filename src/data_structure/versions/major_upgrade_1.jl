@@ -380,7 +380,7 @@ end
 
 # Always check the last item
 function check_run_request_return_value(value_to_be_checked, log_level, print_value=true)
-    if value_to_be_checked[end] != nothing && value_to_be_checked[end] != ""
+    if !isnothing(value_to_be_checked[end]) && value_to_be_checked[end] != ""
         if print_value
             @log log_level 0 string(value_to_be_checked[end])
         end
