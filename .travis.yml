@@ -29,7 +29,7 @@ addons:
     - python3.6
     - python3-pip
 before_script: # homebrew for mac
-  - julia --project=docs/ -e 'using Pkg; pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"; pkg"registry add General"'
+  - julia --project=docs/ -e 'using Pkg; pkg"registry add General"'
 
 script:
   - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'

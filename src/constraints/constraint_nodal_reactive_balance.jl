@@ -81,9 +81,8 @@ function add_constraint_nodal_reactive_balance!(m::Model)
                 init=0,
             )
             
-            == demand_reactive[
-                (node=n, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t1))
-            ]
+            == demand_reactive(m; node=n, stochastic_scenario=s, t=t1)
+            
         )
         for n in node()
         if has_voltage(node=n) == true

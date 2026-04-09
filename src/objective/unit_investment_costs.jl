@@ -1,14 +1,15 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -29,7 +30,7 @@ function unit_investment_costs(m::Model, t_range)
         m,
         + sum(
             + units_invested[u, s, t]
-            * _unit_weight_for_economic_representation(m; u, s, t)
+            * _unit_weight_for_multiyear_economic_discounting(m; u, s, t)
             * unit_investment_cost(m; unit=u, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             # This term is activated when there is a representative temporal block in those containing TimeSlice t.
@@ -42,8 +43,8 @@ function unit_investment_costs(m::Model, t_range)
     )
 end
 
-function _unit_weight_for_economic_representation(m; u, s, t)
-    if use_economic_representation(model=m.ext[:spineopt].instance)
+function _unit_weight_for_multiyear_economic_discounting(m; u, s, t)
+    if !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance))
         return (1- unit_salvage_fraction[(unit=u, stochastic_scenario=s, t=t)]) * 
                 unit_tech_discount_factor[(unit=u, stochastic_scenario=s, t=t)] * 
                 unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, t=t)]

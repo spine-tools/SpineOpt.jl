@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -53,10 +54,9 @@ function _build_constraint_units_available(m, u, s, t)
             init=0,
         )
         <=
-        # Change the default number of units so that it is zero when candidate units are present
+        # Change the default `number_of_units` so that it is zero when candidate units are present
         # and otherwise 1.
-        + ifelse(is_candidate(unit=u), number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
-            number_of_units(m; unit=u, stochastic_scenario=s, t=t) )
+        + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
         - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
     )
 end

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -70,13 +71,7 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
     @build_constraint(
         + sum(
             + node_injection[n, s, t_after]
-            + demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
-            + sum(
-                + fractional_demand(m; node=n, stochastic_scenario=s, t=_first_repr_t(m, t_after))
-                * demand(m; node=ng, stochastic_scenario=s, t=_first_repr_t(m, t_after))
-                for ng in groups(n);
-                init=0,
-            )
+            + _total_demand(m, n, s, t_after)
             # node slack
             - get(node_slack_pos, (n, s, t_after), 0) + get(node_slack_neg, (n, s, t_after), 0)
             for s in s_path
@@ -129,6 +124,23 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
             for (u, d) in unit__from_node(node=n1)
             for s in s_path
             for t_short in t_in_t(m; t_long=t_after);
+            init=0,
+        )
+    )
+end
+
+function _total_demand(m, n, s, t_after)
+    @expression(
+        m,
+        + sum(demand(m; node=n, stochastic_scenario=s, t=t) * coef for (t, coef) in _repr_t_coefs(m, t_after))
+        + sum(
+            + sum(
+                + fractional_demand(m; node=n, stochastic_scenario=s, t=t)
+                * demand(m; node=ng, stochastic_scenario=s, t=t)
+                * coef
+                for (t, coef) in _repr_t_coefs(m, t_after)
+            )
+            for ng in groups(n);
             init=0,
         )
     )

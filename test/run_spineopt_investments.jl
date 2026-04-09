@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -126,8 +127,7 @@ function _test_capacity_investments()
         @test isempty(errors)
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=3)
-        Y = Module()
-        @eval Y using SpineInterface
+        Y = Bind()
         using_spinedb(url_out, Y)
         @test Y.units_invested(unit=Y.unit(:unit_a), t=DateTime(2000)) == 40
         @test Y.connections_invested(connection=Y.connection(:connection_ab), t=DateTime(2000)) == 20

@@ -35,14 +35,20 @@ Thanks for taking the plunge!
 Releases are discussed among the developers first. When there is a new release version for SpineOpt, it can proceed with it's own release. However, when there is an update to SpineInterface (that affects SpineOpt), both of them need a new version number and release. Here are the steps:
 
 SpineInterface (in case SpineInterface has been updated in a way that affects SpineOpt):
-* Update project.toml, version: x.y.z (using semantic version numbering)
-* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
-* Make a new release (and tag) for SpineInterface with the same version x.y.z
+* Update project.toml, version: x.y.z (using semantic version numbering).
+* Ideally, make a separate commit just to "Bump version".
+* Go to the commit you want to register in GitHub.
+* Write a comment `@JuliaRegistrator register` to activate [the Julia Registrator bot](https://github.com/JuliaRegistries/Registrator.jl).
+* Follow the instructions in the resulting comment by the Registrator bot _(might take a moment to respond)_.
+* After completing the steps required by the Registrator bot, the new version tag should be added by the bot automatically _(this might take several minutes)_.
 
 SpineOpt (if either has been udpated):
 * update project.toml, version: a.b.c & point to correct SpineInterface version x.y.z (same as above)
-* Update registry following [SpineJuliaRegistry](https://github.com/spine-tools/SpineJuliaRegistry)
-* Make a new release (and tag) a.b.c for SpineOpt
+* Ideally, make a separate commit just to "Bump version".
+* Go to the commit you want to register in GitHub.
+* Write a comment `@JuliaRegistrator register` to activate [the Julia Registrator bot](https://github.com/JuliaRegistries/Registrator.jl).
+* Follow the instructions in the resulting comment by the Registrator bot _(might take a moment to respond)_.
+* After completing the steps required by the Registrator bot, the new version tag should be added by the bot automatically _(this might take several minutes)_.
 
 If Spine Toolbox gets an update that requires changes in SpineInterface, then it also needs to be included in the loop. In this case, before updating SpineInterface, make a branch that can hold the version that worked with the old Spine Toolbox (and similarly should be done in Spine Toolbox side). The branch should be named e.g. v0.8.x-release.
 

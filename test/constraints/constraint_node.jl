@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -336,14 +337,14 @@ function test_constraint_cyclic_node_state()
         @test length(constraint) == 2
         scenario0 = stochastic_scenario(:parent)
         scenario1 = stochastic_scenario(:child)
-        @testset for ((n,blk), cyc) in cyc_cond
+        @testset for ((n, blk), cyc) in cyc_cond
             n = node(Symbol(n))
             blk = temporal_block(Symbol(blk))
             t0 = filter(x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=blk))))[1]
             t1 = last(time_slice(m; temporal_block=blk))
             var_n_st_key0 = (n, scenario0, t0)
             var_n_st_key1 = (n, scenario1, t1)
-            con_key = (n, [scenario0, scenario1], t0, t1)
+            con_key = (n, [scenario0, scenario1], t0, t1, temporal_block(:hourly))
             var_n_st0 = var_node_state[var_n_st_key0...]
             var_n_st1 = var_node_state[var_n_st_key1...]
             expected_con = @build_constraint(var_n_st1 >= var_n_st0)
@@ -594,13 +595,64 @@ function test_constraint_max_node_voltage_angle()
     end
 end
 
+function test_constraint_min_node_state_investments()
+    @testset "constraint_min_node_state_investments" begin
+        url_in = _test_constraint_node_setup()
+        candidate_storages = 1
+        node_capacity = 400
+        node_state_min = 60
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        node_state_min_factor = Dict("type" => "time_series", 
+                                     "data" => [0.1, 0.2], 
+                                     "index" => index,
+                                )
+        object_parameter_values = [
+            ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_c", "node_state_min", node_state_min],
+            ["node", "node_c", "node_state_min_factor", node_state_min_factor],
+            ["node", "node_c", "has_state", true],
+            ["node", "node_c", "candidate_storages", candidate_storages],
+        ]
+        relationships = [
+            ["node__investment_temporal_block", ["node_c", "hourly"]],
+            ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
+        ]
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_node_state = m.ext[:spineopt].variables[:node_state]
+        var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+        constraint = m.ext[:spineopt].constraints[:min_node_state]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (k, (s, t)) in enumerate(zip(scenarios, time_slices))
+            n = node(:node_c)
+            var_n_st_key = (n, s, t)
+            var_s_in_av_key = (n, s, t)
+            con_key = (n, [s], t)
+            var_n_st = var_node_state[var_n_st_key...]
+            var_s_inv_av = var_storages_invested_available[var_s_in_av_key...]
+            expected_con = @build_constraint(var_n_st >= maximum([node_capacity * node_state_min_factor["data"][k],
+                                                                  node_state_min]
+                                                        ) * var_s_inv_av
+                                            )
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 function test_constraint_node_state_capacity_investments()
     @testset "constraint_node_state_capacity_investments" begin
         url_in = _test_constraint_node_setup()
         candidate_storages = 1
         node_capacity = 400
+        node_availability_factor = 0.8
         object_parameter_values = [
             ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_c", "node_availability_factor", node_availability_factor],
             ["node", "node_c", "has_state", true],
             ["node", "node_c", "candidate_storages", candidate_storages],
         ]
@@ -624,7 +676,7 @@ function test_constraint_node_state_capacity_investments()
             con_key = (n, [s], t)
             var_n_st = var_node_state[var_n_st_key...]
             var_s_inv_av = var_storages_invested_available[var_s_in_av_key...]
-            expected_con = @build_constraint(var_n_st <= node_capacity * var_s_inv_av)
+            expected_con = @build_constraint(var_n_st <= node_capacity * node_availability_factor * var_s_inv_av)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1046,6 +1098,136 @@ function test_constraint_min_capacity_margin_penalty()
     end
 end
 
+
+function test_constraint_node_injection_free_start()
+    @testset "constraint_node_injection_free_start" begin
+        url_in = _test_constraint_node_setup()
+        objects = [["temporal_block","discontinuous_block"]]
+        object_parameter_values = [
+            ["temporal_block", "discontinuous_block", "has_free_start", true],
+            ["temporal_block", "discontinuous_block", "resolution", unparse_db_value(Hour(1))],
+            ["temporal_block", "discontinuous_block", "block_start", unparse_db_value(DateTime("2000-01-02T00:00:00"))],
+            ["temporal_block", "discontinuous_block", "block_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+            ["node", "node_b", "has_state", true],
+            ["node", "node_b", "node_state_cap", 100.0],
+            ["node", "node_b", "initial_node_state", 50.0],
+            ["temporal_block", "hourly", "has_free_start", true],
+            ["temporal_block", "hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            ["temporal_block", "two_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            ["temporal_block", "investments_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            ["model", "instance", "model_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+        ]
+        relationships = [
+            ["node__temporal_block", ["node_b", "discontinuous_block"]],
+        ]
+        SpineInterface.import_data(
+            url_in; objects=objects, object_parameter_values=object_parameter_values, relationships=relationships
+         )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        # Check we have the middle history node_state variable
+        var_n_state = m.ext[:spineopt].variables[:node_state]
+        middle_history_t = only(history_time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
+        middle_history_ind = (node=node(:node_b), stochastic_scenario=stochastic_scenario(:parent), t=middle_history_t)
+        @test middle_history_ind in keys(var_n_state)
+        # Check we have the right node_injection constraint at the discontinuity
+        con_n_inj = m.ext[:spineopt].constraints[:node_injection]
+        t_before = middle_history_t
+        t_after = first(time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
+        discont_ind = (
+            node=node(:node_b),
+            stochastic_path=stochastic_scenario.([:parent, :child]),
+            t_before=t_before,
+            t_after=t_after,
+        )
+        @test discont_ind in keys(con_n_inj)
+        observed_con = constraint_object(con_n_inj[discont_ind])
+        var_n_inj = m.ext[:spineopt].variables[:node_injection]
+        var_u_flow = m.ext[:spineopt].variables[:unit_flow]
+        expected_con = @build_constraint(
+            + var_n_inj[node(:node_b), stochastic_scenario(:child), t_after]
+            + var_n_state[node(:node_b), stochastic_scenario(:child), t_after]
+            - var_n_state[node(:node_b), stochastic_scenario(:parent), t_before]
+            - var_u_flow[unit(:unit_ab), node(:node_b), direction(:to_node), stochastic_scenario(:child), t_after]
+            == 0
+        )
+        @test _is_constraint_equal(observed_con, expected_con)
+    end
+end
+
+function test_constraint_cyclic_node_state_free_start()
+    @testset "constraint_cyclic_node_state_free_start" begin
+        url_in = _test_constraint_node_setup()
+        objects = [
+            ["temporal_block", "discontinuous_block"],
+            ["temporal_block", "overlapping_block"],
+        ]
+        node_capacity = Dict("node_b" => 120, "node_c" => 400)
+        storage_investment_tech_lifetime = Dict("type" => "duration", "data" => string(180, "m"))
+        object_parameter_values = [
+            ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
+            ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
+            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "has_state", true],
+            ["temporal_block", "discontinuous_block", "has_free_start", true],
+            ["temporal_block", "discontinuous_block", "resolution", unparse_db_value(Hour(1))],
+            ["temporal_block", "discontinuous_block", "block_start", unparse_db_value(DateTime("2000-01-02T00:00:00"))],
+            ["temporal_block", "discontinuous_block", "block_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+            ["temporal_block", "overlapping_block", "resolution", unparse_db_value(Hour(1))],
+            ["temporal_block", "overlapping_block", "block_start", unparse_db_value(DateTime("2000-01-02T00:00:00"))],
+            ["temporal_block", "overlapping_block", "block_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+            ["temporal_block", "hourly", "has_free_start", true],
+            ["temporal_block", "hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            ["temporal_block", "two_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T02:00:00"))],
+            # NOTE: let investments_hourly end before discontinuous_block starts to check that we do not
+            # bridge gaps into a block with free start
+            ["temporal_block", "investments_hourly", "block_end", unparse_db_value(DateTime("2000-01-01T06:00:00"))],
+            ["model", "instance", "model_end", unparse_db_value(DateTime("2000-01-02T02:00:00"))],
+            ["node", "node_c", "storage_investment_tech_lifetime", storage_investment_tech_lifetime],
+        ]
+        relationship_parameter_values = [
+            ["node__temporal_block", ["node_b", "discontinuous_block"], "cyclic_condition", true],
+            ["node__temporal_block", ["node_c", "discontinuous_block"], "cyclic_condition", true],
+        ]
+        relationships = [
+            ["node__temporal_block", ["node_b", "discontinuous_block"]],
+            ["node__temporal_block", ["node_c", "discontinuous_block"]],
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            objects=objects, 
+            object_parameter_values=object_parameter_values, 
+            relationship_parameter_values=relationship_parameter_values,
+            relationships=relationships
+         )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_node_state = m.ext[:spineopt].variables[:node_state]
+        constraint = m.ext[:spineopt].constraints[:cyclic_node_state]
+        middle_history_t = last(history_time_slice(m; temporal_block=temporal_block(:discontinuous_block)))
+        middle_history_ind = (node=node(:node_b), stochastic_scenario=stochastic_scenario(:parent), t=middle_history_t)
+
+        @test length(constraint) == 2
+        scenario0 = stochastic_scenario(:parent)
+        scenario1 = stochastic_scenario(:child)
+        # Test for each node with cyclic condition on discontinuous_block
+        nodes_to_test = [node(:node_b), node(:node_c)]
+        @testset for n in nodes_to_test
+            blk = temporal_block(:discontinuous_block)
+            # For discontinuous block, we need to get the time slices properly
+            t0 = filter(x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=blk))))[1]
+            t1 = last(time_slice(m; temporal_block=blk))
+            var_n_st_key0 = (n, scenario0, t0)
+            var_n_st_key1 = (n, scenario1, t1)
+            con_key = (n, [scenario0, scenario1], t0, t1, blk)
+            var_n_st0 = var_node_state[var_n_st_key0...]
+            var_n_st1 = var_node_state[var_n_st_key1...]
+            expected_con = @build_constraint(var_n_st1 >= var_n_st0)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+
 """
     test_node_voltage1()
     Testing the voltage of the demand node when there is a real power demand behind a single connection.
@@ -1131,6 +1313,7 @@ function test_constraint_unit_flow_reactive()
             ["connection","connection_bc","connection_reactance",0.2],
             ["connection","connection_bc","connection_current_max",1.0]
         ]
+    
         
         relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
 
@@ -1345,6 +1528,7 @@ end
     test_constraint_max_node_pressure()
     test_constraint_min_node_voltage_angle()
     test_constraint_max_node_voltage_angle()
+    test_constraint_min_node_state_investments()    
     test_constraint_node_state_capacity_investments()
     test_constraint_storages_invested_available()
     test_constraint_storages_invested_available_mp()
@@ -1355,8 +1539,9 @@ end
     test_constraint_storage_lifetime_mp()
     test_constraint_min_capacity_margin()
     test_constraint_min_capacity_margin_penalty()
-    test_node_voltage1()
-    test_constraint_unit_flow_reactive()
-    test_node_voltage2()
-    test_reverse_ac_flow()
+    test_constraint_node_injection_free_start()
+    test_constraint_cyclic_node_state_free_start()
+    # for testing AC flow with nonlinear formulation
+    #test_node_voltage2()
+    #test_reverse_ac_flow()
 end

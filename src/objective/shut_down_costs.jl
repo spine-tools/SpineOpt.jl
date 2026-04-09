@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -29,7 +30,7 @@ function shut_down_costs(m::Model, t_range)
         sum(
             + units_shut_down[u, s, t]
             * shut_down_cost(m; unit=u, stochastic_scenario=s, t=t)
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
             ) 
             * prod(weight(temporal_block=blk) for blk in blocks(t))

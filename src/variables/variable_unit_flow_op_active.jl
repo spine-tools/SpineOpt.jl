@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -36,7 +37,7 @@ function unit_flow_op_active_indices(
     i=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     (
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)

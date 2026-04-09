@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -143,6 +144,6 @@ function _candidate_connections(conn)
     (
         candidate_conn
         for candidate_conn in connection(is_candidate=true, has_ptdf=true)
-        if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
+        if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn, _strict=false) !== nothing
     )
 end

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -28,7 +29,7 @@ function units_on_indices(
     unit=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     unit = intersect(unit, _unit_with_online_variable())
     unit_stochastic_time_indices(
@@ -46,7 +47,7 @@ function units_switched_indices(
     unit=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     unit = intersect(unit, _unit_with_switched_variable())
     (
@@ -108,7 +109,7 @@ end
 
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(m; unit=u, stochastic_scenario=s, t=t)
+        number_of_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
     end
 end
 

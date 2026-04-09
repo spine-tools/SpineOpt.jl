@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -41,17 +42,13 @@ function _build_constraint_unit_state_transition(m::Model, u, s_path, t_before, 
     @build_constraint(
         sum(
             + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
-            for (u, s, t_after) in units_on_indices(
-                m; unit=u, stochastic_scenario=s_path, t=t_after, temporal_block=anything,
-            );
+            for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_after);
             init=0,
         )
         ==
         sum(
             + units_on[u, s, t_before]
-            for (u, s, t_before) in units_on_indices(
-                m; unit=u, stochastic_scenario=s_path, t=t_before, temporal_block=anything,
-            );
+            for (u, s, t_before) in units_on_indices(m; unit=u, stochastic_scenario=s_path, t=t_before);
             init=0,
         )
     )

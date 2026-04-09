@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -25,7 +26,7 @@ function min_capacity_margin_slack_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     node = intersect(node_with_min_capacity_margin_penalty(), node)
     node_stochastic_time_indices(

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -22,7 +23,7 @@ struct TimeSliceSet
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
     gaps::Array{TimeSlice,1}
     bridges::Array{TimeSlice,1}
-    function TimeSliceSet(time_slices, dur_unit)
+    function TimeSliceSet(time_slices, dur_unit; bridge_gaps=true)
         block_time_slices = Dict{Object,Array{TimeSlice,1}}()
         for t in time_slices
             for block in blocks(t)
@@ -30,25 +31,46 @@ struct TimeSliceSet
             end
         end
         # Bridge gaps in between temporal blocks
-        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
-        sort!(solids)
-        gap_bounds = (
-            (prec_last, succ_first)
-            for ((_pf, prec_last), (succ_first, _sl)) in zip(solids[1 : end - 1], solids[2:end])
-            if end_(prec_last) < start(succ_first)
-        )
-        gaps = [
-            TimeSlice(end_(prec_last), start(succ_first); duration_unit=dur_unit)
-            for (prec_last, succ_first) in gap_bounds
+        solids = [
+            (start(t_first), end_(t_last))
+            for (t_first, t_last) in (
+                (first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)
+            )
+            if !any(has_free_start(temporal_block=blk) for blk in blocks(t_first))
         ]
-        # NOTE: By convention, the first time slice in the succeeding block becomes the 'bridge'
-        bridges = [succ_first for (_pl, succ_first) in gap_bounds]
+        gaps = if isempty(solids)
+            []
+        else
+            gap_dicts = [Dict(:start => minimum(first.(solids)), :end => maximum(last.(solids)))]
+            for (s_start, s_end) in solids
+                new_gap_d = nothing
+                for gap_d in gap_dicts
+                    if gap_d[:start] <= s_start && s_end <= gap_d[:end]
+                        # Split
+                        new_gap_d = Dict(:start => s_end, :end => gap_d[:end])
+                        gap_d[:end] = s_start
+                    elseif s_start <= gap_d[:start] <= s_end
+                        # Adjust start
+                        gap_d[:start] = s_end
+                    elseif s_start <= gap_d[:end] <= s_end
+                        # Adjust end
+                        gap_d[:end] = s_start
+                    end
+                end
+                new_gap_d === nothing || push!(gap_dicts, new_gap_d)
+            end
+            filter!(unique!(gap_dicts)) do gap_d
+                gap_d[:start] < gap_d[:end]
+            end
+            sort!([TimeSlice(gap_d[:start], gap_d[:end]; duration_unit=dur_unit) for gap_d in gap_dicts])
+        end
+        bridges = [first(t for t in time_slices if start(t) == end_(gap)) for gap in gaps]
         new(time_slices, block_time_slices, gaps, bridges)
     end
 end
 
 struct TOverlapsT
-    overlapping_time_slices::Dict{TimeSlice,Array{TimeSlice,1}}
+    overlapping_time_slices::Dict{TimeSlice,Vector{TimeSlice}}
 end
 
 (h::TimeSliceSet)(; temporal_block=anything, t=anything)::Vector{TimeSlice} = h(temporal_block, t)
@@ -113,67 +135,143 @@ _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::Union{Period,Compoun
 _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_start, blk_end)
 
 """
-    _blocks_by_time_interval(m::Model, window_start, window_end)
+    _blocks_by_representative_interval(m::Model, window_start, window_end)
 
-A `Dict` mapping (start, end) tuples to an Array of temporal blocks where found.
+A `Dict` mapping temporal block `Object`s to (start, end) tuples representing their end-points.
 """
-function _blocks_by_time_interval(m::Model, window_start::DateTime, window_end::DateTime)
-    blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
-    # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
+
+function _start_and_end_by_block(m::Model, window_start, window_end)
     model_blocks = members(temporal_block())
-    model_name = _model_name(m)
-    isempty(model_blocks) && error("model $model_name doesn't have any temporal_blocks")
+    isempty(model_blocks) && error("model $(_model_name(m)) doesn't have any temporal_blocks")
     window_very_end = maximum(
         _adjusted_end(window_start, window_end, block_end(temporal_block=tb, _strict=false)) for tb in model_blocks
     )
-    for block in model_blocks
-        adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
-        adjusted_end = _adjusted_end(window_start, window_very_end, block_end(temporal_block=block, _strict=false))
-        time_slice_start = adjusted_start
+    start_and_end_by_block = Dict(
+        blk => (
+            _adjusted_start(window_start, block_start(temporal_block=blk, _strict=false)),
+            _adjusted_end(window_start, window_very_end, block_end(temporal_block=blk, _strict=false)),
+        )
+        for blk in members(temporal_block())
+    )
+end
+
+_only_or_nothing(arr) = length(arr) == 1 ? only(arr) : nothing
+
+function _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
+    blocks_and_mapping_by_interval = Dict()
+    for blk in members(temporal_block(is_representative=true))
+        blk_start, blk_end = start_and_end_by_block[blk]
+        # Create starting_point time interval of one minute duration for the block
+        starting_point = _only_or_nothing(block__starting_point(temporal_block1=blk))
+        if starting_point !== nothing
+            blocks, _m = get!(blocks_and_mapping_by_interval, (blk_start - Minute(1), blk_start), (Set(), nothing))
+            push!(blocks, starting_point)
+        end
+        t_start = blk_start
         i = 1
-        while time_slice_start < adjusted_end
-            res = resolution(temporal_block=block, i=i, _strict=false)
+        while t_start < blk_end
+            res = resolution(temporal_block=blk, i=i, s=t_start, _strict=false)
             res !== nothing || break
             if iszero(res)
                 # TODO: Try to move this to a check...
-                error("`resolution` of temporal block `$(block)` cannot be zero!")
+                error("`resolution` of temporal block `$blk` cannot be zero!")
             end
-            time_slice_end = time_slice_start + res
-            if time_slice_end > adjusted_end
-                time_slice_end = adjusted_end
-                @info "the last time slice of temporal block $block has been cut to fit within the block"
+            t_end = t_start + res
+            if t_end > blk_end
+                t_end = blk_end
+                @info "the last time slice of temporal block $blk has been cut to fit within the block"
             end
-            push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
-            time_slice_start = time_slice_end
+            blocks, _mapping = get!(blocks_and_mapping_by_interval, (t_start, t_end), (Set(), nothing))
+            push!(blocks, blk)
+            t_start = t_end
             i += 1
         end
     end
-    blocks_by_time_interval
+    blocks_and_mapping_by_interval
 end
 
-"""
-    _window_time_slices(m, window_start, window_end)
-
-A sorted `Array` of `TimeSlices` in the given window.
-"""
-function _window_time_slices(m::Model, window_start::DateTime, window_end::DateTime)
-    window_time_slices = [
-        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
-        for (interval, blocks) in _blocks_by_time_interval(m, window_start, window_end)
-    ]
-    sort!(window_time_slices)
-end
-
-function _add_padding_time_slice!(window_time_slices, m, window_end)
-    last_t = window_time_slices[argmax(end_.(window_time_slices))]
-    temp_struct_end = end_(last_t)
-    if temp_struct_end < window_end
-        padding_t = TimeSlice(
-            temp_struct_end, window_end, blocks(last_t)...; duration_unit=_model_duration_unit(m)
+function _coef_by_representative_by_start_by_represented()
+    representative_blk_by_index = Dict()
+    for blk in indices(representative_period_index)
+        index = round(Int, representative_period_index(temporal_block=blk))
+        existing_blk = get(representative_blk_by_index, index, nothing)
+        if existing_blk !== nothing
+            error(
+                "representative blocks `$blk` and `$existing_blk` cannot have the same index `$index` \
+                - each representative block must have a unique `representative_period_index`"
+            )
+        end
+        representative_blk_by_index[index] = blk
+    end
+    Dict(
+        represented_blk => Dict(
+            t_start => _coefficient_by_representative_block(repr_comb, representative_blk_by_index)
+            for (t_start, repr_comb) in representative_periods_mapping(temporal_block=represented_blk)
         )
-        push!(window_time_slices, padding_t)
+        for represented_blk in indices(representative_periods_mapping)
+    )
+end
+
+function _blocks_and_mapping_by_represented_interval(start_and_end_by_block)
+    coef_by_representative_by_start_by_represented = _coef_by_representative_by_start_by_represented()
+    blocks_and_mapping_by_represented_interval = Dict()
+    for (represented_blk, coef_by_representative_by_start) in coef_by_representative_by_start_by_represented
+        represented_t_starts = sort!(collect(keys(coef_by_representative_by_start)))
+        blk_start, blk_end = start_and_end_by_block[represented_blk]
+        filter!(represented_t_starts) do t_start
+            blk_start <= t_start < blk_end
+        end
+        represented_t_ends = [represented_t_starts[2:end]; blk_end]
+        for (represented_t_start, represented_t_end) in zip(represented_t_starts, represented_t_ends)
+            represented_interval = (represented_t_start, represented_t_end)
+            coef_by_representative_blk = coef_by_representative_by_start[represented_t_start]
+            invalid_blks = setdiff(keys(coef_by_representative_blk), members(temporal_block()))
+            if !isempty(invalid_blks)
+                error("$represented_interval from '$represented_blk' is mapped to unknown block(s) $invalid_blks")
+            end
+            coefs_sum = sum(values(coef_by_representative_blk))
+            if !isapprox(coefs_sum, 1)
+                error(
+                    "sum of coefficients for $represented_interval from '$represented_blk' must be 1 - not $coefs_sum"
+                )
+            end
+            existing = get(blocks_and_mapping_by_represented_interval, represented_interval, nothing)
+            if existing !== nothing
+                blocks, _mapping = existing
+                existing_represented_blk = only(blocks)
+                error("cannot map $represented_interval from '$represented_blk' \
+                    because it already belongs in another represented block $existing_represented_blk",
+                )
+            end
+            blocks_and_mapping_by_represented_interval[represented_interval] = (
+                Set(represented_blk), coef_by_representative_blk
+            )
+        end
+    end
+    blocks_and_mapping_by_represented_interval
+end
+
+function _coefficient_by_representative_block(representative_combination::Symbol, _representative_blk_by_index)
+    Dict(temporal_block(representative_combination) => 1)
+end
+function _coefficient_by_representative_block(representative_combination::Array, representative_blk_by_index)
+    invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
+    if !isempty(invalid_indexes)
+        error("there's no representative temporal block(s) with indexes $invalid_indexes") 
+    end
+    Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
+end
+
+function _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
+    intervals = collect(keys(blocks_and_mapping_by_interval))
+    last_i = intervals[argmax(last.(intervals))]
+    temp_struct_end = last(last_i)
+    if temp_struct_end < window_end
+        padding_interval = (temp_struct_end, window_end)
+        blocks, _mapping = get!(blocks_and_mapping_by_interval, padding_interval, (Set(), nothing))
+        union!(blocks, blocks_and_mapping_by_interval[last_i])
         @info string(
-            "an artificial time slice $padding_t has been added to blocks $(blocks(padding_t)), ",
+            "an artificial time slice $padding_interval has been added to blocks $blocks, ",
             "so that the temporal structure fills the optimisation window ",
         )
     end
@@ -199,42 +297,62 @@ function _required_history_duration(m)
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
-function _history_time_slices(m, window_start, window_end, window_time_slices)
-    window_duration = window_end - window_start
+function _intervals_by_history_interval(blocks_and_mapping_by_interval, m, window_start, window_end)
+    intervals_by_history_interval = Dict()
     required_history_duration = _required_history_duration(m)
-    history_start = window_start - required_history_duration
-    history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
-    time_slices_by_history_interval = Dict()
-    for t in window_time_slices
-        t_start, t_end = start(t), min(end_(t), window_end)
-        t_start < t_end || continue
-        push!(get!(time_slices_by_history_interval, (t_start, t_end) .- window_duration, Set()), t)
+    for ((t_start, t_end), (blocks, _mapping)) in blocks_and_mapping_by_interval
+        subwindows = [blk for blk in blocks if has_free_start(temporal_block=blk)]
+        subwindow_start, subwindow_end = if length(subwindows) > 1
+            error("interval $((t_start, t_end)) is in more than one block with free start: $subwindows")
+        elseif length(subwindows) == 1
+            subwindow = only(subwindows)
+            subwindow_start = _adjusted_start(window_start, block_start(temporal_block=subwindow, _strict=false))
+            subwindow_end = _adjusted_end(window_start, window_end, block_end(temporal_block=subwindow, _strict=false))
+            subwindow_start, subwindow_end
+        else
+            window_start, window_end
+        end
+        h_start, h_end = t_start, min(t_end, subwindow_end)
+        h_start < h_end || continue
+        history_start = subwindow_start - required_history_duration
+        subwindow_duration = subwindow_end - subwindow_start
+        while true
+            h_start -= subwindow_duration
+            h_end -= subwindow_duration
+            h_end > history_start || break
+            push!(get!(intervals_by_history_interval, (h_start, h_end), Set()), (t_start, t_end))
+        end
     end
-    history_t_by_interval = Dict(
+    intervals_by_history_interval
+end
+
+function _history_time_slices(m, intervals_by_history_interval, time_slice_by_interval)
+    # Compute mapping from history interval to history time slice
+    history_time_slice_by_interval = Dict(
         (t_start, t_end) => TimeSlice(
             t_start,
             t_end,
-            unique(blk for t in time_slices for blk in blocks(t))...;
+            unique(blk for i in intervals for blk in blocks(time_slice_by_interval[i]))...;
             duration_unit=_model_duration_unit(m),
         )
-        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
+        for ((t_start, t_end), intervals) in intervals_by_history_interval
     )
+    # Collect all history time slices
+    history_time_slices = sort!(collect(values(history_time_slice_by_interval)))
+    # Compute mapping from window time slice to corresponding history time slice
+    # Note that more than one window time slice can map to the same history time slice
     t_history_t = Dict(
-        t => history_t_by_interval[t_start, t_end]
-        for ((t_start, t_end), time_slices) in time_slices_by_history_interval
-        if t_end > history_start
-        for t in time_slices
+        time_slice_by_interval[interval] => history_time_slice_by_interval[h_interval]
+        for (h_interval, intervals) in intervals_by_history_interval
+        for interval in intervals
     )
-    history_window_time_slices = collect(values(history_t_by_interval))
-    sort!(history_window_time_slices)
-    history_time_slices = Array{TimeSlice,1}()
-    for k in Iterators.countfrom(1)
-        prepend!(history_time_slices, history_window_time_slices)
-        k == history_window_count && break
-        history_window_time_slices .-= window_duration
-    end
-    filter!(t -> end_(t) > history_start, history_time_slices)
     history_time_slices, t_history_t
+end
+
+function _merge_blocks_and_mapping!(a, b)
+    blocks_a, mapping_a = a
+    blocks_b, mapping_b = b
+    union!(blocks_a, blocks_b), something(mapping_a, mapping_b)
 end
 
 """
@@ -248,13 +366,36 @@ function _generate_time_slice!(m::Model)
     window = current_window(m)
     window_start = start(window)
     window_end = end_(window)
-    window_time_slices = _window_time_slices(m, window_start, window_end)
-    _add_padding_time_slice!(window_time_slices, m, window_end)
-    history_time_slices, t_history_t = _history_time_slices(m, window_start, window_end, window_time_slices)
+    start_and_end_by_block = _start_and_end_by_block(m, window_start, window_end)
+    blocks_and_mapping_by_interval = _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
+    blocks_and_mapping_by_represented_interval = _blocks_and_mapping_by_represented_interval(start_and_end_by_block)
+    merge!(_merge_blocks_and_mapping!, blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
+    _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
+    intervals_by_history_interval = _intervals_by_history_interval(
+        blocks_and_mapping_by_interval, m, window_start, window_end
+    )
+    time_slice_by_interval = Dict(
+        interval => TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(m))
+        for (interval, (blocks, _mapping)) in blocks_and_mapping_by_interval
+    )
+    window_time_slices = sort!(collect(values(time_slice_by_interval)))
+    m.ext[:spineopt].temporal_structure[:representative_block_coefficients] = Dict(
+        time_slice_by_interval[interval] => mapping
+        for (interval, (_blocks, mapping)) in blocks_and_mapping_by_interval
+        if mapping !== nothing
+    )
+    history_time_slices, t_history_t = _history_time_slices(m, intervals_by_history_interval, time_slice_by_interval)
     dur_unit = _model_duration_unit(m)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
-    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(
+        history_time_slices, dur_unit; bridge_gaps=false
+    )
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
+end
+
+struct _AnnotatedTimeSlice
+    t::TimeSlice
+    is_history::Bool
 end
 
 """
@@ -263,75 +404,102 @@ end
 E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships!(m::Model)
-    all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
-    duration_unit = _model_duration_unit(m)
-    succeeding_time_slices = Dict(
-        t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
+    annotated_time_slices = _annotated_time_slice(m)
+    succeeding_annotated_time_slices = Dict(
+        x => _to_annotated_time_slice(m; t=TimeSlice(end_(x.t), end_(x.t) + Minute(1)))
+        for x in annotated_time_slices
     )
-    overlapping_time_slices = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
+    overlapping_annotated_time_slices = Dict(x => _to_annotated_time_slice(m; t=x.t) for x in annotated_time_slices)
     t_before_t_tuples = unique(
-        (t_before, t_after)
-        for (t_before, time_slices) in succeeding_time_slices
-        for t_after in time_slices
-        if end_(t_before) <= start(t_after)
+        (x_before.t, x_after.t)
+        for (x_before, succeeding) in succeeding_annotated_time_slices
+        for x_after in succeeding
+        if end_(x_before.t) <= start(x_after.t)
+        && _check_affinity(x_before, x_after)
     )
     t_in_t_tuples = unique(
-        (t_short, t_long)
-        for (t_short, time_slices) in overlapping_time_slices
-        for t_long in time_slices
-        if iscontained(t_short, t_long)
+        (x_short.t, x_long.t)
+        for (x_short, overlapping) in overlapping_annotated_time_slices
+        for x_long in overlapping
+        if iscontained(x_short.t, x_long.t)
+        && _check_affinity(x_short, x_long)
     )
     t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
+    t_to_overlapping_t = Dict(
+        x1.t => [x2.t for x2 in overlapping if _check_affinity(x1, x2)]
+        for (x1, overlapping) in overlapping_annotated_time_slices
+    )
     # Create the function-like objects
     temp_struct = m.ext[:spineopt].temporal_structure
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
-    temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
+    temp_struct[:t_overlaps_t] = TOverlapsT(t_to_overlapping_t)
 end
 
 """
-    _generate_representative_time_slice!(m::Model)
-
-Generate a `Dict` mapping all non-representative to representative time-slices
+An iterator over annotated time slices in the model
 """
-function _generate_representative_time_slice!(m::Model)
-    m.ext[:spineopt].temporal_structure[:representative_time_slice] = d = Dict()
-    model_blocks = Set(members(temporal_block()))
-    for represented_blk in indices(representative_periods_mapping)
-        for (represented_t_start, representative_blk_name) in representative_periods_mapping(
-            temporal_block=represented_blk
-        )
-            representative_blk = temporal_block(representative_blk_name)
-            if !(representative_blk in model_blocks)
-                error("representative temporal block $representative_blk is not in model $(m.ext[:spineopt].instance)")
-            end
-            for representative_t in time_slice(m, temporal_block=representative_blk)
-                representative_t_duration = end_(representative_t) - start(representative_t)
-                represented_t_end = represented_t_start + representative_t_duration
-                new_d = Dict(
-                    represented_t => [representative_t]
-                    for represented_t in to_time_slice(m, t=TimeSlice(represented_t_start, represented_t_end))
-                    if represented_blk in represented_t.blocks
-                )
-                merge!(append!, d, new_d)
-                represented_t_start = represented_t_end
-            end
-        end
-    end
+function _annotated_time_slice(m)
+    _flatten_annotated(history_time_slice(m), time_slice(m))
+end
+
+"""
+An iterator over annotated time slices in the model that overlap the given t (which may not be in the model)
+"""
+function _to_annotated_time_slice(m; t::TimeSlice)
+    _flatten_annotated(_to_history_time_slice(m; t), _to_window_time_slice(m; t))
+end
+
+function _flatten_annotated(history, window)
+    history = (_AnnotatedTimeSlice(t, true) for t in history)
+    window = (_AnnotatedTimeSlice(t, false) for t in window)
+    Iterators.flatten((history, window))
+end
+
+"""
+Check if two (annotated) time-slices can be part of a relationship in the context of blocks with free-start.
+The rule is, the history of a block with free start should only be related to that same block, not to any other.
+So, if one of the time slices belongs to the history of a block with free start,
+and the other does not belong to that same block, then return false.
+Otherwise return true.
+"""
+function _check_affinity(x1::_AnnotatedTimeSlice, x2::_AnnotatedTimeSlice)
+    _do_check_affinity(x1, x2) && _do_check_affinity(x2, x1)
+end
+
+function _do_check_affinity(x1, x2)
+    x1.is_history || return true
+    t1_blocks = [blk for blk in blocks(x1.t) if has_free_start(temporal_block=blk)]
+    isempty(t1_blocks) && return true
+    !isdisjoint(t1_blocks, blocks(x2.t))
 end
 
 function _generate_as_number_or_call!(m)
     temp_struct = m.ext[:spineopt].temporal_structure
     algo = model_algorithm(model=m.ext[:spineopt].instance)
     temp_struct[:as_number_or_call] = if (
-            needs_auto_updating(Val(algo)) || _is_benders_subproblem(m) || temp_struct[:window_count] > 1
-        )
+        needs_auto_updating(Val(algo))
+        || temp_struct[:window_count] > 1
+        || _is_benders_subproblem(m)
+        || (_is_child_stage(m) && !_is_benders_master(m))
+    )
         as_call
     else
         as_number
     end
 end
+
+function _is_child_stage(m)
+    st = m.ext[:spineopt].stage
+    parent_stages = if st === nothing
+        setdiff(stage(), stage__child_stage(stage2=anything))
+    else
+        stage__child_stage(stage2=st)
+    end
+    !isempty(parent_stages)
+end
+
 
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
@@ -352,16 +520,25 @@ _to_time_slice(time_slices::Array{TimeSlice,1}, t::TimeSlice) = _to_time_slice(t
 Roll a `TimeSliceSet` in time by a period specified by `forward`.
 """
 function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
-    roll!.(t_set.time_slices, forward)
-    roll!.(values(t_set.gaps), forward)
-    roll!.(values(t_set.bridges), forward)
-    nothing
+    updates = collect(_roll_many!(t_set.time_slices, forward))
+    append!(updates, _roll_many!(values(t_set.gaps), forward))
+    append!(updates, _roll_many!(values(t_set.bridges), forward))
+    updates
 end
 
-function _refresh_time_slice_set!(t_set::TimeSliceSet)
-    refresh!.(t_set.time_slices)
-    refresh!.(values(t_set.gaps))
-    refresh!.(values(t_set.bridges))
+function _roll_many!(t_iter, forward)
+    (upd for t in t_iter for upd in roll!(t, forward; return_updates=true))
+end
+
+function _time_slice_set_collect_updates(t_set::TimeSliceSet)
+    updates = collect(_collect_updates_many(t_set.time_slices))
+    append!(updates, _collect_updates_many(values(t_set.gaps)))
+    append!(updates, _collect_updates_many(values(t_set.bridges)))
+    updates
+end
+
+function _collect_updates_many(t_iter)
+    (upd for t in t_iter for upd in collect_updates(t))
 end
 
 function generate_time_slice!(m::Model)
@@ -419,7 +596,6 @@ function generate_temporal_structure!(m::Model)
     _generate_current_window!(m)
     _generate_windows_and_window_count!(m)
     generate_time_slice!(m)
-    _generate_representative_time_slice!(m)
 end
 
 function _generate_master_window!(m_mp::Model)
@@ -440,7 +616,7 @@ Create the Benders master problem temporal structure for given model.
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window!(m_mp)
     generate_time_slice!(m_mp)
-    m_mp.ext[:spineopt].temporal_structure[:representative_time_slice] = Dict()
+    m_mp.ext[:spineopt].temporal_structure[:representative_block_coefficients] = Dict()
 end
 
 """
@@ -472,9 +648,11 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     !rev && any(
         x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
     ) && return false
-    roll!(current_window, rf)
-    _roll_time_slice_set!(temp_struct[:time_slice], rf)
-    _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
+    updates = roll!(current_window, rf; return_updates=true)
+    append!(updates, _roll_time_slice_set!(temp_struct[:time_slice], rf))
+    append!(updates, _roll_time_slice_set!(temp_struct[:history_time_slice], rf))
+    unique!(updates)
+    _call_many(updates)
     true
 end
 
@@ -491,10 +669,20 @@ function rewind_temporal_structure!(m::Model)
         _update_variable_names!(m)
         _update_constraint_names!(m)
     else
-        refresh!(temp_struct[:current_window])
-        _refresh_time_slice_set!(temp_struct[:time_slice])
-        _refresh_time_slice_set!(temp_struct[:history_time_slice])
+        updates = collect_updates(temp_struct[:current_window])
+        append!(updates, _time_slice_set_collect_updates(temp_struct[:time_slice]))
+        append!(updates, _time_slice_set_collect_updates(temp_struct[:history_time_slice]))
+        unique!(updates)
+        _call_many(updates)
     end
+end
+
+function _call_many(updates)
+    _do_call.(updates)
+end
+
+function _do_call(upd)
+    upd()
 end
 
 """
@@ -503,20 +691,23 @@ end
 An `Array` of `TimeSlice`s in model `m` overlapping the given `TimeSlice` (where `t` may not be in `m`).
 """
 function to_time_slice(m::Model; t::TimeSlice)
-    temp_struct = m.ext[:spineopt].temporal_structure
-    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
-    in_blocks = (
-        s
-        for t_set in t_sets
-        for time_slices in values(t_set.block_time_slices)
-        for s in _to_time_slice(time_slices, t)
-    )
+    vcat(_to_history_time_slice(m; t), _to_window_time_slice(m; t))
+end
+
+function _to_history_time_slice(m::Model; t::TimeSlice)
+    t_set = m.ext[:spineopt].temporal_structure[:history_time_slice]
+    _to_time_slice_from_set(t_set; t)
+end
+
+function _to_window_time_slice(m::Model; t::TimeSlice)
+    t_set = m.ext[:spineopt].temporal_structure[:time_slice]
+    _to_time_slice_from_set(t_set; t)
+end
+
+function _to_time_slice_from_set(t_set; t::TimeSlice)
+    in_blocks = (s for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
     in_gaps = if isempty(indices(representative_periods_mapping))
-        (
-            s
-            for t_set in t_sets
-            for s in _to_time_slice(t_set.bridges, t_set.gaps, t)
-        )
+        _to_time_slice(t_set.bridges, t_set.gaps, t)
     else
         ()
     end
@@ -541,7 +732,7 @@ An `Array` of `TimeSlice`s in model `m`.
   - `temporal_block::Union{Object,Vector{Object}}`: only return `TimeSlice`s in these blocks.
   - `t::Union{TimeSlice,Vector{TimeSlice}}`: only return `TimeSlice`s that are also in this collection.
 """
-time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)
+time_slice(m::Model; kwargs...) = (m.ext[:spineopt].temporal_structure[:time_slice]::TimeSliceSet)(; kwargs...)
 
 history_time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:history_time_slice](; kwargs...)
 
@@ -557,7 +748,11 @@ the second starting when the first ends.
   - `t_before`: if given, return an `Array` of `TimeSlice`s that start when `t_before` ends.
   - `t_after`: if given, return an `Array` of `TimeSlice`s that end when `t_after` starts.
 """
-t_before_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
+function t_before_t(m::Model; kwargs...)
+    _with_model_env(m) do
+        m.ext[:spineopt].temporal_structure[:t_before_t](; kwargs...)
+    end
+end
 
 """
     t_in_t(m; t_short=anything, t_long=anything)
@@ -569,7 +764,11 @@ the second containing the first.
   - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short`.
   - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long`.
 """
-t_in_t(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t](; kwargs...)
+function t_in_t(m::Model; kwargs...)
+    _with_model_env(m) do
+        (m.ext[:spineopt].temporal_structure[:t_in_t]::RelationshipClass)(; kwargs...)
+    end
+end
 
 """
     t_in_t_excl(m; t_short=anything, t_long=anything)
@@ -580,7 +779,11 @@ Same as [t_in_t](@ref) but exclude tuples of the same `TimeSlice`.
   - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short` (other than `t_short` itself).
   - `t_long`: if given, return an `Array` of `TimeSlice`s that are contained in `t_long` (other than `t_long` itself).
 """
-t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+function t_in_t_excl(m::Model; kwargs...)
+    _with_model_env(m) do
+        m.ext[:spineopt].temporal_structure[:t_in_t_excl](; kwargs...)
+    end
+end
 
 """
     t_overlaps_t(m; t)
@@ -589,21 +792,35 @@ An `Array` of `TimeSlice`s in model `m` that overlap the given `t`, where `t` *m
 """
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
 
-representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, [t])
+function representative_block_coefficients(m, t)
+    get(m.ext[:spineopt].temporal_structure[:representative_block_coefficients], t, Dict())
+end
 
-_first_repr_t(m, t) = first(representative_time_slice(m, t))
+function _repr_t_coefs(m, t)
+    blk_coef = representative_block_coefficients(m, t)
+    isempty(blk_coef) && return Dict(t => 1)
+    Dict(first(time_slice(m; temporal_block=blk)) => coef for (blk, coef) in blk_coef)
+end
+
+function _is_representative(t)
+    any(is_representative(temporal_block=blk) for blk in blocks(t))
+end
+
+function represented_time_slices(m)
+    keys(m.ext[:spineopt].temporal_structure[:representative_block_coefficients])
+end
 
 function output_time_slice(m::Model; output::Object)
     get(m.ext[:spineopt].temporal_structure[:output_time_slice], output, nothing)
 end
 
-function dynamic_time_indices(m, blk; t_before=anything, t_after=anything)
+function dynamic_time_indices(m, blk_after, blk_before=blk_after; t_before=anything, t_after=anything)
     (
         (tb, ta)
         for (tb, ta) in t_before_t(
-            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk), t=t_after), _compact=false
+            m; t_before=t_before, t_after=time_slice(m; temporal_block=members(blk_after), t=t_after), _compact=false
         )
-        if !isempty(intersect(members(blk), blocks(tb)))
+        if !isdisjoint(members(blk_before), blocks(tb))
     )
 end
 
@@ -612,11 +829,24 @@ end
 
 Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword arguments that allow filtering.
 """
-function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
+function node_time_indices(
+    m::Model;
+    node=anything,
+    temporal_block=temporal_block(is_representative=true),
+    t=anything,
+)
     (
         (node=n, t=t1)
-        for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+        for n in intersect(node, SpineOpt.node())
+        for t1 in time_slice(
+            m;
+            temporal_block=[
+                tb
+                for (_n, tbg) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)
+                for tb in members(tbg)
+            ],
+            t=t,
+        )
     )
 end
 
@@ -625,11 +855,24 @@ end
 
 Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with keyword arguments that allow filtering.
 """
-function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
+function node_dynamic_time_indices(
+    m::Model;
+    node=anything,
+    temporal_block=temporal_block(is_representative=true),
+    t_before=anything,
+    t_after=anything,
+)
+    temporal_block_before = _vcat(temporal_block, block__starting_point(temporal_block1=temporal_block))
     (
         (node=n, t_before=tb, t_after=ta)
         for n in intersect(node, SpineOpt.node())
-        for (tb, ta) in dynamic_time_indices(m, node__temporal_block(node=n); t_before=t_before, t_after=t_after)
+        for (tb, ta) in dynamic_time_indices(
+            m,
+            (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)),
+            (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block_before, _compact=false)),
+            t_before=t_before,
+            t_after=t_after,
+        )
     )
 end
 
@@ -641,13 +884,21 @@ Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online var
 function unit_time_indices(
     m::Model;
     unit=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
     t=anything,
 )
     (
         (unit=u, t=t1)
-        for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=members(tb), t=t)
+        for u in intersect(unit, SpineOpt.unit())
+        for t1 in time_slice(
+            m;
+            temporal_block=[
+                tb
+                for (_u, tbg) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false)
+                for tb in members(tbg)
+            ],
+            t=t,
+        )
     )
 end
 
@@ -659,13 +910,19 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 function unit_dynamic_time_indices(
     m::Model;
     unit=anything,
+    temporal_block=temporal_block(is_representative=true),
     t_before=anything,
     t_after=anything,
 )
     (
         (unit=u, t_before=tb, t_after=ta)
         for u in intersect(unit, SpineOpt.unit())
-        for (tb, ta) in dynamic_time_indices(m, units_on__temporal_block(unit=u); t_before=t_before, t_after=t_after)
+        for (tb, ta) in dynamic_time_indices(
+            m,
+            (blk for (_u, blk) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false));
+            t_before=t_before,
+            t_after=t_after
+        )
     )
 end
 
@@ -675,6 +932,7 @@ end
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment variables with filter keywords.
 """
 function unit_investment_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
+    unit = intersect(unit, SpineOpt.unit(is_candidate=true))
     (
         (unit=u, t=t1)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
@@ -688,6 +946,7 @@ end
 Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection` investment variables with filter keywords.
 """
 function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
+    connection = intersect(connection, SpineOpt.connection(is_candidate=true))
     (
         (connection=conn, t=t1)
         for (conn, tb) in connection__investment_temporal_block(
@@ -703,6 +962,7 @@ end
 Generate an `Array` of all valid `(node, t)` `NamedTuples` for `node` investment variables (storages) with filter keywords.
 """
 function node_investment_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
+    node = intersect(node, SpineOpt.node(is_candidate=true))
     (
         (node=n, t=t1)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
@@ -718,7 +978,7 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything)
     (
         (unit=u, t_before=tb, t_after=ta)
-        for u in intersect(unit, SpineOpt.unit())
+        for u in intersect(unit, SpineOpt.unit(is_candidate=true))
         for (tb, ta) in dynamic_time_indices(
             m, unit__investment_temporal_block(unit=u); t_before=t_before, t_after=t_after
         )
@@ -733,7 +993,7 @@ Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples`
 function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
     (
         (connection=conn, t_before=tb, t_after=ta)
-        for conn in intersect(connection, SpineOpt.connection())
+        for conn in intersect(connection, SpineOpt.connection(is_candidate=true))
         for (tb, ta) in dynamic_time_indices(
             m, connection__investment_temporal_block(connection=conn); t_before=t_before, t_after=t_after
         )
@@ -749,7 +1009,7 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` for `
 function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     (
         (node=n, t_before=tb, t_after=ta)
-        for n in intersect(node, SpineOpt.node())
+        for n in intersect(node, SpineOpt.node(is_candidate=true))
         for (tb, ta) in dynamic_time_indices(
             m, node__investment_temporal_block(node=n); t_before=t_before, t_after=t_after
         )

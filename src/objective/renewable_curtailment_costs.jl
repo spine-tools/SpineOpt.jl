@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -35,7 +36,7 @@ function renewable_curtailment_costs(m::Model, t_range)
                 - unit_flow[u, n, d, s, t_short]
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t_short))
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
             ) 
             * duration(t_short) for u in indices(curtailment_cost) for (u, n, d) in indices(unit_capacity; unit=u)

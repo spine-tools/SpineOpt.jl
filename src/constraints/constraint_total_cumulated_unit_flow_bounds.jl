@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -61,9 +62,9 @@ function _build_constraint_total_cumulated_unit_flow(m::Model, ug, ng, d, s_path
     @fetch unit_flow = m.ext[:spineopt].variables
     build_sense_constraint(
         + sum(
-            unit_flow[u, n, d, s, t] * duration(t) # * node_stochastic_weight(m; node=n, stochastic_scenario=s)
+            unit_flow[u, n, d, s, t] * duration(t) * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (u, n, d, s, t) in unit_flow_indices(
-                m; unit=ug, node = ng, direction=d, stochastic_scenario=s_path
+                m; unit=ug, node = ng, direction=d, stochastic_scenario=s_path, temporal_block=anything
             );
             init = 0
         ),
@@ -75,9 +76,9 @@ end
 
 function constraint_total_cumulated_unit_flow_indices(m::Model, bound)
     (
-        (unit=ug, node=ng, direction=d, stochastic_path=s)
+        (unit=ug, node=ng, direction=d, stochastic_path=s_path)
         for (ug, ng, d) in indices(bound)
-        for s in active_stochastic_paths(m, unit_flow_indices(m, direction=d, unit=ug, node=ng))
+        for s_path in active_stochastic_paths(m, unit_flow_indices(m, direction=d, unit=ug, node=ng))
     )
 end
 

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -17,6 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"Optimizer bridges are required for MGA algorithm to form inequality constraints"
+needs_bridges(::Val{:mga_algorithm}) = true
+
 function do_run_spineopt!(
     m,
     url_out,
@@ -31,8 +35,6 @@ function do_run_spineopt!(
     outputs = Dict()
     mga_iteration_count = 0
     max_mga_iters = max_mga_iterations(model=m.ext[:spineopt].instance)
-    mga_iteration = ObjectClass(:mga_iteration, [])
-    @eval mga_iteration = $mga_iteration
     build_model!(m; log_level)
     solve_model!(
         m;

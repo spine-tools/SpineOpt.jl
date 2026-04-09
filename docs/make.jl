@@ -36,6 +36,8 @@ pages = [
         "Installation" => joinpath("getting_started", "installation.md"),
         "Verify installation" => joinpath("getting_started", "recommended_workflow.md"),
         "Troubleshooting" => joinpath("getting_started", "troubleshooting.md"),
+        "Performace tips" => joinpath("getting_started", "performance_tips.md"),
+        "Known issues" => joinpath("getting_started", "known_issues.md"),
     ],
     "Tutorials" => Any[
         "Webinars" => joinpath("tutorial", "webinars.md"),
@@ -47,6 +49,9 @@ pages = [
         "Reserve requirements" => joinpath("tutorial", "reserves.md"),
         "Ramping constraints" => joinpath("tutorial", "ramping.md"),
         "Unit Commitment" => joinpath("tutorial", "unit_commitment.md"),
+        "Representative periods" => joinpath("tutorial", "representative_periods.md"),
+        "Rolling horizon" => joinpath("tutorial", "rolling_horizon.md"),
+        "Multi-stage optimisation" => joinpath("tutorial", "multi-stage.md"),
     ],
     "How to" => [],
     "Example gallery" => joinpath("gallery", "gallery.md"),    

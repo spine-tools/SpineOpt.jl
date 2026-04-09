@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -24,7 +25,9 @@ function _is_time_slice_set_equal(ts_a, ts_b)
 end
 
 function _model()
-    m = Model()
+    SpineOpt.preprocess_data_structure()
+    m = Model(; add_bridges = false)
+    JuMP.set_string_names_on_creation(m, false)
     m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model()), nothing)
     m
 end
@@ -39,8 +42,6 @@ function _test_temporal_structure_setup()
             ["temporal_block", "block_b"],
         ],
         :relationships => [
-            ["model__temporal_block", ["instance", "block_a"]],
-            ["model__temporal_block", ["instance", "block_b"]],
             ["node__temporal_block", ["only_node", "block_a"]],
             ["node__temporal_block", ["only_node", "block_b"]],
         ],
@@ -51,6 +52,36 @@ function _test_temporal_structure_setup()
     url_in
 end
 
+function _test_discontinuity_at_the_first_time_step()
+    # NOTE: This test tests that if a temporal block ends earlier than the optimisation window,
+    # nodes associated only to it don't have a node_injection constraint for the first time step.
+    # The point is to illustrate this behavior which may not be the optimal one.
+    @testset "discontinuity" begin
+        url_in = _test_temporal_structure_setup()
+        objects = [
+            ["node", "another_node"],
+        ]
+        relationships = [
+            ["node__temporal_block", ["another_node", "block_b"]],
+        ]
+        object_parameter_values = [
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
+        ]
+        SpineInterface.import_data(
+            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        m = _model()
+        generate_temporal_structure!(m)
+        t = first(time_slice(m))
+        ts = collect(
+            x.t_after for x in SpineOpt.node_dynamic_time_indices(m) if x.node.name == :another_node
+        )
+        @test !(t in ts)
+    end
+end
+
 function _test_representative_time_slice()
     @testset "representative_time_slice" begin
         url_in = _test_temporal_structure_setup()
@@ -59,7 +90,9 @@ function _test_representative_time_slice()
             "index_type" => "date_time",
             "data" => Dict(
                 "2000-01-01T00:00:00" => "rep_blk1",
-                "2000-01-01T08:00:00" => "rep_blk2",
+                "2000-01-01T06:00:00" => "rep_blk2",
+                "2000-01-01T12:00:00" => "rep_blk2",
+                "2000-01-01T18:00:00" => "rep_blk1",
             )
         )
         objects = [["temporal_block", "rep_blk1"], ["temporal_block", "rep_blk2"]]
@@ -69,12 +102,12 @@ function _test_representative_time_slice()
         ]
         object_parameter_values = [
             ["temporal_block", "block_a", "representative_periods_mapping", representative_periods_mapping],
-            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["temporal_block", "rep_blk1", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
-            ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "4h")],
+            ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "6h")],
             ["temporal_block", "rep_blk2", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T12:00:00")],
-            ["temporal_block", "rep_blk2", "block_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-            ["temporal_block", "rep_blk2", "resolution", Dict("type" => "duration", "data" => "4h")]
+            ["temporal_block", "rep_blk2", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T18:00:00")],
+            ["temporal_block", "rep_blk2", "resolution", Dict("type" => "duration", "data" => "6h")]
         ]
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
@@ -82,26 +115,32 @@ function _test_representative_time_slice()
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
-        rep_blk1_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1))
-        rep_blk2_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2))
+        rep_blk1_t = only(SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1)))
+        rep_blk2_t = only(SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2)))
         m_start = model_start(model=first(model(model_type=:spineopt_standard)))
         for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
             t_end = end_(t)
-            if t_end <= m_start + Hour(4)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk1_ts[1]
-            elseif t_end <= m_start + Hour(8)
-                @test first(SpineOpt.representative_time_slice(m, t)) == t
+            if t_end <= m_start + Hour(6)
+                @test _representative_time_slice(m, t) == rep_blk1_t
             elseif t_end <= m_start + Hour(12)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[1]
-            elseif t_end <= m_start + Hour(16)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[2]
-            elseif t_end <= m_start + Hour(20)
-                @test first(SpineOpt.representative_time_slice(m, t)) == rep_blk2_ts[3]
+                @test _representative_time_slice(m, t) == rep_blk2_t
+            elseif t_end <= m_start + Hour(18)
+                @test _representative_time_slice(m, t) == rep_blk2_t
+            elseif t_end <= m_start + Hour(24)
+                @test _representative_time_slice(m, t) == rep_blk1_t
             else
-                @test first(SpineOpt.representative_time_slice(m, t)) == t
+                @test _representative_time_slice(m, t) == t
             end
         end
     end
+end
+
+function _representative_time_slice(m, t)
+    blk_coef = SpineOpt.representative_block_coefficients(m, t)
+    isempty(blk_coef) && return t
+    blk, coef = only(blk_coef)
+    @assert isone(coef)
+    only(time_slice(m; temporal_block=blk))
 end
 
 function _test_zero_resolution()
@@ -469,6 +508,51 @@ function _test_master_temporal_structure()
     end
 end
 
+function _test_subwindows()
+    @testset "subwindows" begin
+        url_in = _test_temporal_structure_setup()
+        res = Day(1)
+        m_start = DateTime(2001, 1, 1)
+        m_end = m_start + Week(1)
+        objects = [["temporal_block", "long_block"]]
+        object_parameter_values = [
+            ["model", "instance", "model_start", unparse_db_value(m_start)],
+            ["model", "instance", "model_end", unparse_db_value(m_end)],
+            ["temporal_block", "block_a", "has_free_start", true],
+            ["temporal_block", "block_b", "has_free_start", true],
+            ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
+            ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
+            ["temporal_block", "block_a", "block_start", unparse_db_value(m_start)],
+            ["temporal_block", "block_a", "block_end", unparse_db_value(m_start + Day(1))],
+            ["temporal_block", "block_b", "block_start", unparse_db_value(m_start + Day(3))],
+            ["temporal_block", "block_b", "block_end", unparse_db_value(m_start + Day(4))],
+            ["temporal_block", "long_block", "resolution", unparse_db_value(Week(1))],
+        ]
+        SpineInterface.import_data(url_in; objects=objects, object_parameter_values=object_parameter_values)
+        using_spinedb(url_in, SpineOpt)
+        m = _model()
+        SpineOpt.generate_temporal_structure!(m)
+        obs_time_slices = time_slice(m)
+        exp_time_slices = [
+            TimeSlice(m_start, m_start + Day(1), temporal_block(:block_a)),
+            TimeSlice(m_start, m_start + Week(1), temporal_block(:long_block)),
+            TimeSlice(m_start + Day(3), m_start + Day(4), temporal_block(:block_b))
+        ]
+        @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
+            @test obs == exp
+        end
+        obs_hist_time_slices = history_time_slice(m)
+        exp_hist_time_slices = [
+            TimeSlice(m_start - Week(1), m_start, temporal_block(:long_block)),
+            TimeSlice(m_start - Day(1), m_start, temporal_block(:block_a)),
+            TimeSlice(m_start + Day(2), m_start + Day(3), temporal_block(:block_b))
+        ]
+        @testset for (obs, exp) in zip(obs_hist_time_slices, exp_hist_time_slices)
+            @test obs == exp
+        end
+    end
+end
+
 @testset "temporal structure" begin
     _test_representative_time_slice()
     _test_zero_resolution()
@@ -480,4 +564,6 @@ end
     _test_to_time_slice_with_rolling()
     _test_history()
     _test_master_temporal_structure()
+    _test_subwindows()
+    _test_discontinuity_at_the_first_time_step()
 end

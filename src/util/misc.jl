@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -24,7 +25,6 @@ macro log(level, threshold, msg)
     quote
         if $(esc(level)) >= $(esc(threshold))
             printstyled($(esc(msg)), "\n"; bold=true)
-            yield()
         end
     end
 end
@@ -34,23 +34,31 @@ end
 """
 macro timelog(level, threshold, msg, expr)
     quote
+        @timelog $(esc(level)) $(esc(threshold)) $(esc(msg)) nothing $(esc(expr))
+    end
+end
+macro timelog(level, threshold, msg, stats, expr)
+    quote
         if $(esc(level)) >= $(esc(threshold))
-            @timemsg $(esc(msg)) $(esc(expr))
+            @timemsg $(esc(msg)) $(esc(stats)) $(esc(expr))
         else
             $(esc(expr))
         end
     end
 end
 
-"""
-    @timemsg(msg, expr)
-"""
-macro timemsg(msg, expr)
-    quote
-        printstyled($(esc(msg)); bold=true)
-        r = @time $(esc(expr))
-        yield()
-        r
+macro timemsg(msg, stats, expr)
+    :(timemsg($(esc(msg)), $(esc(stats)), () -> $(esc(expr))))
+end
+
+function timemsg(msg, stats, f)
+    printstyled(stdout, msg; bold=true)
+    if stats isa Dict
+        result = @timed @time f()
+        push!(get!(stats, strip(msg), []), result.time)
+        result.value
+    else
+        @time f()
     end
 end
 
@@ -68,6 +76,56 @@ macro fetch(expr)
         :($dict[$(Expr(:quote, keys))])
     end
     esc(Expr(:(=), keys, values))
+end
+
+"""
+    @generator function(foo)
+        for x in 1:10
+            @yield x
+        end
+    end
+
+Create a Python-style generator from the given function that calls the @yield macro.
+"""
+macro generator(f)
+    if f.head != :function
+        error("please use @generator with a function")
+    end
+    signature, body = f.args
+    name, args... = signature.args
+    channel = gensym()
+    _expand_yield_macro!(body, channel)
+    producer = gensym()
+    producer_fn = quote
+        function $(producer)($channel)
+            $(body)
+        end
+    end
+    quote
+        function $(esc(name))($(esc.(args)...))  # TODO: Support keyword arguments
+            $(esc(producer_fn))
+            Channel($(esc(producer)))
+        end
+    end
+end
+
+macro yield(x)
+    x
+end
+
+function _expand_yield_macro!(expr::Expr, channel)
+    for (k, x) in enumerate(expr.args)
+        x isa Expr || continue
+        if x.head == :macrocall && x.args[1] == Symbol("@yield")
+            # TODO: make sure @yield is called correctly by checking x.args[2:end]
+            value = x.args[end]
+            expr.args[k] = quote
+                put!($channel, $value)
+            end
+        else
+            _expand_yield_macro!(x, channel)
+        end
+    end
 end
 
 struct ParameterFunction
@@ -162,18 +220,6 @@ function print_solution(m, variable_patterns...)
     end
     println()
 end
-
-function window_sum_duration(m, ts::TimeSeries, window; init=0)
-    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-    time_slice_value_iter = (
-        (TimeSlice(t1, t2; duration_unit=dur_unit), v) for (t1, t2, v) in zip(ts.indexes, ts.indexes[2:end], ts.values)
-    )
-    sum(v * duration(t) for (t, v) in time_slice_value_iter if iscontained(start(t), window) && !isnan(v); init=init)
-end
-window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
-
-window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
-window_sum(x::Number, window; init=0) = x + init
 
 """
     align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead::Bool=true)
@@ -339,6 +385,8 @@ end
 
 _div_or_zero(x, y) = iszero(y) ? zero(y) : x / y
 
+_make_bi(j) = Object(Symbol(:bi_, lpad(j, 3, "0")), :benders_iteration)
+
 """
     _get_max_duration(m::Model, lookback_params::Vector{Parameter})
 
@@ -352,6 +400,26 @@ end
 
 _force_fix(v::VariableRef, x) = fix(v, x; force=true)
 _force_fix(::Call, x) = nothing
+
+_percentage_str(x::Number) = string(@sprintf("%1.4f", x * 100), "%")
+
+_number_str(x::Number) = @sprintf("%.5e", x)
+
+function _with_model_env(f, m)
+    st = m.ext[:spineopt].stage
+    scen = stage_scenario(stage=st, _strict=false)
+    scen === nothing && return f()
+    with_env(scen) do
+        f()
+    end
+end
+
+function _elapsed_time_string(t_start, t_end)
+    string(Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start))))
+end
+
+_vcat(::Anything, x) = anything
+_vcat(x, y) = [x; y]
 
 # Base
 _ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
@@ -368,7 +436,9 @@ function Base.haskey(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}) where {J,K<:R
     Base.haskey(d, NamedTuple{J}(key))
 end
 
-Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V} = getindex(d, NamedTuple{J}(key))
+function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
+    getindex(d, NamedTuple{J}(key))
+end
 function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
     Base.getindex(d, NamedTuple{J}(key))
 end

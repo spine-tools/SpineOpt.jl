@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -34,7 +35,7 @@ function binary_gas_connection_flow_indices(
     direction=direction(:to_node),
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(is_representative=true),
 )
     connection_flow_indices(
         m;

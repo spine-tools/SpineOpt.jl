@@ -1,22 +1,24 @@
-## SpineOpt.jl
+# SpineOpt.jl
 
 [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-tools.github.io/SpineOpt.jl/latest/index.html)
 [![codecov](https://codecov.io/gh/spine-tools/SpineOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/spine-tools/SpineOpt.jl) [![Join the chat at https://gitter.im/spine-tools/SpineOpt.jl](https://badges.gitter.im/spine-tools/SpineOpt.jl.svg)](https://gitter.im/spine-tools/SpineOpt.jl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A Julia package containing a state-of-the-art energy system optimization model.
 
-### :loudspeaker: Community and how to ask help :rocket:
+## :loudspeaker: Community and how to ask help :rocket:
 
-There are four main ways to get help with SpineOpt.
+There are several ways to stay in touch with the community and to get help with SpineOpt.
 
-1. Monthly user meetings for Spine Toolbox and SpineOpt. There you can connect with other users, present problems and exchange experiences. New and old users equally welcome. The meetings are held first Tuesday of every month at 3pm CEST [:calendar: ics zip](https://github.com/spine-tools/SpineOpt.jl/blob/master/SpineTools_user_meeting.ics) and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_ZDBkZjBhNmEtMGFmZi00ZDllLWE4ZmQtMWJhMWZjYjUyNDUy%40thread.v2/0?context=%7b%22Tid%22%3a%223973589b-9e40-4eb5-800e-b0b6383d1621%22%2c%22Oid%22%3a%224c379655-31a5-4c3e-b6d6-b61817a44e14%22%7d). For meeting updates, please checkout [this discussion](https://github.com/spine-tools/SpineOpt.jl/discussions/849).
-2. [Gitter](https://app.gitter.im/#/room/#spine-tools_community:gitter.im) (i.e. Matrix) chat service. You need to register but allows to ask quick questions and hopefullly get quick answers.
-3. [Discussion forum](https://github.com/spine-tools/SpineOpt.jl/discussions/categories/support) (support section) can be used when you don't know how to get something done or you don't quite know why something isn't working. It's highly appreciated if other users can contribute by helping each other (developers are short on time).
-4. [Issue tracker](https://github.com/spine-tools/SpineOpt.jl/issues) should be used only when there is a missing feature or something should work but it's not working. Update your tools and test with latest software before submitting an issue. In case of new feature, make sure there is no existing issue. Issues reporting bugs should provide sufficient information to enable locating and fixing the bug.
+1. To keep up to date with official announcements, [subscribe to our mail list](https://www.tools-for-energy-system-modelling.org/subscribe/).
+2. To keep up to date with informal announcements, check out [this discussion](https://github.com/spine-tools/SpineOpt.jl/discussions/849)
+3. Typically, we organize a monthly meeting to connect with users, identify problems and exchange experiences. However, this year we present you a yearlong series of events and webinars to show of the fruits of our labour during the mopo project. The program of which can be found on the [spine tools project page](https://github.com/spine-tools).
+4. [Gitter](https://app.gitter.im/#/room/#spine-tools_community:gitter.im) (i.e. Matrix) chat service. You need to register but allows to ask quick questions and hopefullly get quick answers.
+5. [Discussion forum](https://github.com/spine-tools/SpineOpt.jl/discussions/categories/support) (support section) can be used when you don't know how to get something done or you don't quite know why something isn't working. It's highly appreciated if other users can contribute by helping each other (developers are short on time).
+6. [Issue tracker](https://github.com/spine-tools/SpineOpt.jl/issues) should be used only when there is a missing feature or something should work but it's not working. Update your tools and test with latest software before submitting an issue. In case of new feature, make sure there is no existing issue. Issues reporting bugs should provide sufficient information to enable locating and fixing the bug.
 
-### Getting started
+## Getting started
 
-We highly recommend you to go through the getting started chapter of the documentation.
+We highly recommend you to go through the `getting started` part of the documentation.
 
 The chapter explains in great detail the different ways to [install](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/installation/) SpineOpt. The prerequisites are also mentioned here.
 
@@ -26,21 +28,21 @@ If any issues arise during the first two steps, you can consult the [trouble sho
 
 Once you have succesfully installed and verified the correct functioning of SpineOpt, you can start learning how to use SpineOpt. To that end you can visit the tutorials chapter of the documentation. The tutorials cover the different features of SpineOpt (the underlying files of the tutorials are part of our tests so these should always be up to date, though the text/images may lag behind some times).
 
-### Reporting Issues and Contributing
+## Reporting Issues and Contributing
 
 For contributing and instructions on reporting issues, see [CONTRIBUTING.md](CONTRIBUTING.md)
 
-### License
+## License
 
 SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.
 
-### Citing SpineOpt
+## Citing SpineOpt
 
 Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when referring to SpineOpt in scientific writing.
 
 `Ihlemann, M., Kouveliotis-Lysikatos, I., Huang, J., Dillon, J., O'Dwyer, C., Rasku, T., Marin, M., Poncelet, K., & Kiviluoma, J. (2022). SpineOpt: A flexible open-source energy system modelling framework. Energy Strategy Reviews, 43, [100902]. https://doi.org/10.1016/j.esr.2022.100902`
 
-### Acknowledgements
+## Acknowledgements
 
 <center>
 <table width=500px frame="none">

@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -17,13 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-module Y
-using SpineInterface
-end
-
 function _test_run_spineopt_benders_setup()
     url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    file_path_out = tempname(cleanup=true)
     url_out = "sqlite:///$file_path_out"
     test_data = Dict(
         :objects => [
@@ -80,8 +77,8 @@ function _test_benders_unit()
         vom_cost_alt = vom_cost_ / 2
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 269.0
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable, 271.0
+        do_inv_cost = do_not_inv_cost - 2  # maximum cost at which investment is profitable, 269.0
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -136,7 +133,6 @@ function _test_benders_unit()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -179,16 +175,16 @@ function _test_benders_storage()
     @testset "benders_storage" begin
         benders_gap = 1e-6  # needed so that we get the exact master problem solution
         mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
-        res = 6
+        res = 6 # resolution
         dem = ucap = 10
-        fixuflow = 2 * dem
-        rf = 6
+        fixuflow = 2 * dem # 20
+        rf = 6 # row forward
         look_ahead = 3
         penalty = 100
-        op_cost_no_inv = (fixuflow - dem) * penalty * (24 + look_ahead)
+        op_cost_no_inv = (fixuflow - dem) * penalty * (24 + look_ahead) # (20-10)*100*(24+3) = 27000
         op_cost_inv = 0
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable, 27001
+        do_inv_cost = do_not_inv_cost - 2  # maximum cost at which investment is profitable, 26999
         @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -229,6 +225,7 @@ function _test_benders_storage()
                 ["node", "node_a", "has_state", true],
                 ["node", "node_a", "node_state_cap", 1000],
                 ["node", "node_a", "initial_node_state", 0],
+                # ["node", "node_a", "initial_storages_invested", 0],
                 ["node", "node_a", "candidate_storages", 1],
                 ["node", "node_a", "storage_investment_cost", s_inv_cost],
                 ["node", "node_a", "storage_investment_variable_type", "variable_type_integer"],
@@ -251,7 +248,6 @@ function _test_benders_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -309,8 +305,8 @@ function _test_benders_unit_storage()
         u_inv_cost = 180
         op_cost_no_inv = (mop * ucap2 - dem) * penalty * (24 + look_ahead)
         op_cost_inv = 0
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable
+        do_inv_cost = do_not_inv_cost - 2  # maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -386,7 +382,6 @@ function _test_benders_unit_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -468,8 +463,8 @@ function _test_benders_rolling_representative_periods()
         vom_cost_alt = vom_cost_ / 2
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)  # 540
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)  # 270
-        do_inv_cost = op_cost_no_inv - op_cost_inv - res  # 269, minimum cost at which investment is not profitable
-        do_not_inv_cost = do_inv_cost + res  # 270, maximum cost at which investment is profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1  # 271, maximum cost at which investment is profitable
+        do_inv_cost = do_not_inv_cost - 2  # 269, minimum cost at which investment is not profitable
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -525,7 +520,6 @@ function _test_benders_rolling_representative_periods()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
             using_spinedb(url_out, Y)
@@ -632,7 +626,6 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         m_mp = master_model(m)
         using_spinedb(url_out, Y)
@@ -654,8 +647,8 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
         vom_cost_alt = vom_cost_ / 2
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable
+        do_inv_cost = do_not_inv_cost - 2  # maximum cost at which investment is profitable
         u_inv_cost = do_not_inv_cost
         @testset for should_invest in (true, false)
             mrg2d_ratio = should_invest ? 0.8 : 0.0
@@ -718,7 +711,6 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
             cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio_cuts]
@@ -783,8 +775,9 @@ function _test_benders_starting_units_invested()
         vom_cost_alt = vom_cost_ / 2
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
-        u_inv_cost = do_not_inv_cost + 1  # needed, not sure why
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv + 1 # minimum cost at which investment is not profitable
+        do_inv_cost = do_not_inv_cost - 2  # maximum cost at which investment is profitable
+        u_inv_cost = do_not_inv_cost
         @testset for (max_iters, should_invest) in ((10, false), (1, true))
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
@@ -839,7 +832,6 @@ function _test_benders_starting_units_invested()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -884,5 +876,5 @@ end
     _test_benders_rolling_representative_periods_yearly_investments_multiple_units()
     _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
     _test_benders_starting_units_invested()
-    # FIXME: _test_benders_unit_storage()
+    #FIXME: _test_benders_unit_storage()
 end

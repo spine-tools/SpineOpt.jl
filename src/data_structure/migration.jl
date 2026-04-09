@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -40,10 +41,36 @@ include("versions/update_investment_variable_type.jl")
 include("versions/add_model_algorithm.jl")
 include("versions/rename_lifetime_to_tech_lifetime.jl")
 include("versions/translate_heatrate_parameters.jl")
+include("versions/translate_use_economic_representation__use_milestone_years.jl")
 
 function add_units_out_of_service_and_min_capacity_margin(db_url, log_level)
 	# No changes, just make sure we load the newest template
-	true
+	return true
+end
+
+function add_stage_output(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	return true
+end
+
+function add_node_state_longterm_output(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	return true
+end
+
+function add_node_availability_factor(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	return true
+end
+
+function add_node_state_min_factor(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	return true
+end
+
+function add_connection_min_factor(db_url, log_level)
+	# No changes, just make sure we load the newest template
+	return true
 end
 
 _upgrade_functions = [
@@ -61,6 +88,12 @@ _upgrade_functions = [
 	add_model_algorithm,
 	rename_lifetime_to_tech_lifetime,
 	translate_heatrate_parameters,
+	add_stage_output,
+	add_node_state_longterm_output,
+	add_node_availability_factor,
+	add_node_state_min_factor,
+	add_connection_min_factor,
+	translate_use_economic_representation__use_milestone_years,
 ]
 
 """
@@ -99,10 +132,11 @@ If the db doesn't have the `settings` object class or the `version` parameter de
 create them, setting `version`'s default_value to 1.
 """
 function find_version(url)
+	template = SpineOpt.template()
 	obj_clss = run_request(url, "query", ("object_class_sq",))["object_class_sq"]
 	i = findfirst(x -> x["name"] == "settings", obj_clss)
 	if isnothing(i)
-		settings_class = first([x for x in _template["object_classes"] if x[1] == "settings"])
+		settings_class = first([x for x in template["object_classes"] if x[1] == "settings"])
 		run_request(
 			url,
 			"import_data",
@@ -114,7 +148,7 @@ function find_version(url)
 	pdefs = run_request(url, "query", ("parameter_definition_sq",))["parameter_definition_sq"]
 	j = findfirst(x -> x["name"] == "version" && x["entity_class_id"] == settings_class["id"], pdefs)
 	if isnothing(j)
-		version_par_def = first([x for x in _template["object_parameters"] if x[1:2] == ["settings", "version"]])
+		version_par_def = first([x for x in template["object_parameters"] if x[1:2] == ["settings", "version"]])
 		version_par_def[3] = 1  # position 3 is default_value
 		run_request(
 			url,

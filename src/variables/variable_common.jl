@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -34,11 +35,12 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
     or nothing
   - `required_history_period::Union{Period,Nothing}=nothing`: given an index, return the required history period
     or nothing
-  - `replacement_expressions::Dict=Dict()`: mapping some of the indices of the variable - as returned by the given
-    `indices` function - to another Dict that defines an expression to use instead of the variable for that index.
-    The expression Dict simply maps variable names to a tuple of reference index and coefficient.
+  - `replacement_expressions::OrderedDict=OrderedDict()`: mapping some of the indices of the variable -
+    as returned by the given `indices` function - to an Array of Pairs defining an expression to use
+    instead of the variable for that index.
+    The expression Array simply maps variable names to a tuple of reference index and coefficient.
     The expression is then built as the sum of the coefficient and the variable for the reference index,
-    over the entire Dict.
+    over the entire Array.
 """
 function add_variable!(
     m::Model,
@@ -48,31 +50,44 @@ function add_variable!(
     int::Union{Function,Nothing}=nothing,
     lb::Union{Parameter,Function,Nothing}=nothing,
     ub::Union{Parameter,Function,Nothing}=nothing,
-    initial_value::Union{Parameter,Nothing}=nothing,
+    initial_value::Union{Parameter,Function,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
-    internal_fix_value::Union{Parameter,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
     required_history_period::Union{Period,Nothing}=nothing,
-    replacement_expressions=Dict(),
+    replacement_expressions=OrderedDict(),
 )
     lb = _nothing_if_empty(lb)
     ub = _nothing_if_empty(ub)
     initial_value = _nothing_if_empty(initial_value)
     fix_value = _nothing_if_empty(fix_value)
-    internal_fix_value = _nothing_if_empty(internal_fix_value)
     if required_history_period === nothing
         required_history_period = _model_duration_unit(m.ext[:spineopt].instance)(1)
     end
-    t_start = start(first(time_slice(m)))
-    t_history = TimeSlice(t_start - required_history_period, t_start)
-    history_time_slices = [t for t in history_time_slice(m) if overlaps(t_history, t)]
-    t = vcat(history_time_slices, time_slice(m))
-    first_ind = iterate(indices(m; t=t))
+    m_start = start(first(time_slice(m)))
+    start_by_block = Dict(
+        blk => start(first(time_slice(m; temporal_block=blk))) for blk in temporal_block(has_free_start=true)
+    )
+    history_time_slices = [
+        t
+        for t in history_time_slice(m; temporal_block=temporal_block(has_free_start=false))
+        if overlaps(t, TimeSlice(m_start - required_history_period, m_start))
+    ]
+    middle_history_time_slices = [
+        t
+        for (blk, blk_start) in start_by_block
+        for t in history_time_slice(m; temporal_block=blk)
+        if overlaps(t, TimeSlice(blk_start - required_history_period, blk_start))
+    ]
+    append!(history_time_slices, middle_history_time_slices)
+    history_indices = indices(m; t=history_time_slices, temporal_block=anything)
+    window_indices = indices(m; t=time_slice(m))
+    all_indices = Iterators.flatten((history_indices, window_indices))
+    first_ind = iterate(indices(m))
     K = first_ind === nothing ? Any : typeof(first_ind[1])
     V = Union{VariableRef,GenericAffExpr{T,VariableRef} where T<:Union{Number,Call}}
     vars = m.ext[:spineopt].variables[name] = Dict{K,V}(
-        ind => _add_variable!(m, name, ind) for ind in indices(m; t=t) if !haskey(replacement_expressions, ind)
+        ind => _add_variable!(m, name, ind) for ind in setdiff(all_indices, keys(replacement_expressions))
     )
     history_vars_by_ind = Dict(
         ind => [
@@ -92,7 +107,6 @@ function add_variable!(
         lb=lb,
         ub=ub,
         fix_value=fix_value,
-        internal_fix_value=internal_fix_value,
         non_anticipativity_time=non_anticipativity_time,
         non_anticipativity_margin=non_anticipativity_margin,
         history_vars_by_ind=history_vars_by_ind,
@@ -102,20 +116,26 @@ function add_variable!(
     _finalize_variables!(m, vars, def)
     # Apply initial value, but make sure it updates itself by using a TimeSeries Call
     if initial_value !== nothing
-        last_history_t = last(history_time_slice(m))
-        t0 = model_start(model=m.ext[:spineopt].instance)
-        dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
-        for (ind, var) in vars
-            overlaps(ind.t, last_history_t) || continue
-            val = initial_value(; ind..., _strict=false)
-            val === nothing && continue
-            initial_value_ts = parameter_value(TimeSeries([t0 - dur_unit(1), t0], [val, NaN]))
-            fix(var, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
+        # Collect history time slices for blocks without free start (may be empty if those blocks
+        # end early in a long window, since history generation uses full window duration)
+        history_ts = collect(
+            t
+            for t in history_time_slice(m; temporal_block=temporal_block(has_free_start=false))
+            if !any(has_free_start(temporal_block=blk) for blk in blocks(t))
+        )
+        last_history_t = isempty(history_ts) ? nothing : last(history_ts)
+        if last_history_t !== nothing
+            t0 = model_start(model=m.ext[:spineopt].instance)
+            dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+            for (ind, var) in vars
+                overlaps(ind.t, last_history_t) || continue
+                val = initial_value(; ind..., _strict=false)
+                val === nothing && continue
+                initial_value_ts = parameter_value(TimeSeries([t0 - dur_unit(1), t0], [val, NaN]))
+                fix(var, Call(initial_value_ts, (t=ind.t,), (Symbol(:initial_, name), ind)))
+            end
         end
     end
-    isempty(SpineInterface.indices(representative_periods_mapping)) || merge!(
-        vars, _representative_periods_mapping(m, vars, indices)
-    )
     vars
 end
 
@@ -133,12 +153,11 @@ function _variable_definition(;
     lb=nothing,
     ub=nothing,
     fix_value=nothing,
-    internal_fix_value=nothing,
     non_anticipativity_time=nothing,
     non_anticipativity_margin=nothing,
     history_time_slices=[],
     history_vars_by_ind=Dict(),
-    replacement_expressions=Dict(),
+    replacement_expressions=OrderedDict(),
 )
     Dict(
         :indices => indices,
@@ -147,7 +166,6 @@ function _variable_definition(;
         :lb => lb,
         :ub => ub,
         :fix_value => fix_value,
-        :internal_fix_value => internal_fix_value,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
         :history_time_slices => history_time_slices,
@@ -156,19 +174,28 @@ function _variable_definition(;
     )
 end
 
-function _expand_replacement_expressions!(m)
-    for (name, def) in m.ext[:spineopt].variables_definition
-        replacement_expressions = def[:replacement_expressions]
+function _add_dependent_variables!(m; log_level)
+    for name in sort!(collect(keys(m.ext[:spineopt].variables_definition)))
+        def = m.ext[:spineopt].variables_definition[name]
+        @fetch replacement_expressions, indices = def
         isempty(replacement_expressions) && continue
-        vars = m.ext[:spineopt].variables[name]
-        exprs = Dict()
-        for (ind, formula) in replacement_expressions
-            vars[ind] = exprs[ind] = sum(
-                coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, (ref_ind, coeff)) in formula
-            )
+        @timelog log_level 3 "- [variable_$name]" begin
+            vars = m.ext[:spineopt].variables[name]
+            exprs = Dict()
+            for (ind, formula) in replacement_expressions
+                vars[ind] = exprs[ind] = _resolve_formula(m, formula)
+            end
+            _finalize_expressions!(m, exprs, name, def)
         end
-        _finalize_expressions!(m, exprs, name, def)
     end
+end
+
+function _resolve_formula(m, formula)
+    sum(
+        coeff * _get_var_with_replacement(m, ref_name, ref_ind)
+        for (ref_name, reference_index_to_coef) in formula
+        for (ref_ind, coeff) in reference_index_to_coef
+    )
 end
 
 function _get_var_with_replacement(m, var_name, ind)
@@ -191,7 +218,6 @@ function _finalize_variables!(m, var_by_ind, def)
     _set_integer.(vars, getindex.(info, :int))
     _set_lower_bound.(vars, getindex.(info, :lb))
     _set_upper_bound.(vars, getindex.(info, :ub))
-    _fix.(vars, getindex.(info, :internal_fix_value))
     _fix.(vars, getindex.(info, :fix_value))
 end
 
@@ -204,14 +230,11 @@ function _finalize_expressions!(m, expr_by_ind, name, def)
     cons = m.ext[:spineopt].constraints
     cons[Symbol(name, :_lb)] = Dict(zip(inds, set_expr_bound.(exprs, >=, getindex.(info, :lb))))
     cons[Symbol(name, :_ub)] = Dict(zip(inds, set_expr_bound.(exprs, <=, getindex.(info, :ub))))
-    cons[Symbol(name, :_internal_fix)] = Dict(
-        zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :internal_fix_value)))
-    )
     cons[Symbol(name, :_fix)] = Dict(zip(inds, set_expr_bound.(exprs, ==, getindex.(info, :fix_value))))
 end
 
 function _collect_info(m, inds, def)
-    @fetch bin, int, lb, ub, fix_value, internal_fix_value = def
+    @fetch bin, int, lb, ub, fix_value = def
     info = NamedTuple[(;) for i in eachindex(inds)]
     Threads.@threads for i in eachindex(inds)
         ind = inds[i]
@@ -221,7 +244,6 @@ function _collect_info(m, inds, def)
             lb=_resolve(lb, m, ind),
             ub=_resolve(ub, m, ind),
             fix_value=_resolve(fix_value, m, ind),
-            internal_fix_value=_resolve(internal_fix_value, m, ind),
         )
     end
     info
@@ -256,46 +278,17 @@ function _fix(var::VariableRef, value::Number)
     end
 end
 
-"""
-    _representative_index(ind)
-
-The representative index corresponding to the given one.
-"""
-function _representative_index(m, ind, indices)
-    representative_t = representative_time_slice(m, ind.t)
-    representative_inds = indices(m; ind..., t=representative_t)
-    if isempty(representative_inds)
-        representative_blocks = unique(
-            blk
-            for t in representative_t
-            for blk in blocks(t)
-            if representative_periods_mapping(temporal_block=blk) === nothing
-        )
-        node_or_unit = hasproperty(ind, :node) ? "node '$(ind.node)'" : "unit '$(ind.unit)'"
-        error(
-            "can't find a representative index for $ind -",
-            " this is probably because ",
-            node_or_unit,
-            " is not associated to any of the representative temporal_blocks ",
-            join(("'$blk'" for blk in representative_blocks), ", "),
-        )
+function _is_longterm_index(ind)
+    if haskey(ind, :node)
+        _is_longterm_node(ind.node)
+    elseif haskey(ind, :unit)
+        nodes = (n for unit__node in (unit__from_node, unit__to_node) for (n, _d) in unit__node(unit=ind.unit))
+        any(_is_longterm_node(n) for n in nodes)
+    else
+        true
     end
-    first(representative_inds)
 end
 
-"""
-    _representative_periods_mapping(v::Dict{VariableRef}, indices::Function)
-
-A `Dict` mapping non representative indices to the variable for the representative index.
-"""
-function _representative_periods_mapping(m::Model, vars::Dict, indices::Function)
-    # By default, `indices` skips represented time slices for operational variables other than node_state,
-    # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
-    # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
-    # To include represented time slices, we need to specify `temporal_block=anything`.
-    # Note that for node_state and investment variables, `represented_indices`, below, will be empty.
-    representative_indices = indices(m)
-    all_indices = indices(m, temporal_block=anything)
-    represented_indices = setdiff(all_indices, representative_indices)
-    Dict(ind => vars[_representative_index(m, ind, indices)] for ind in represented_indices)
+function _is_longterm_node(n)
+    has_state(node=n) && is_longterm_storage(node=n)
 end

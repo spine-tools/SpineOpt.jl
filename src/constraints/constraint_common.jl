@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -71,15 +72,13 @@ past_units_on_indices(m, param, u, s_path, t) = _past_indices(m, units_on_indice
 function _past_indices(m, indices, param, s_path, t; kwargs...)
     look_behind = maximum(maximum_parameter_value(param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
     
-    convert_to_days(duration::Year) = Day(Dates.value(duration) * 366)
-    convert_to_days(duration::Month) = Day(Dates.value(duration) * 31)
-    convert_to_days(duration) = duration
-
     (
         (;
             ind...,
             weight=ifelse(
-                end_(t) - end_(ind.t) < convert_to_days(param(m; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t)), 1, 0
+                end_(t) - end_(ind.t) < align_variable_duration_unit(
+                    param(; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), start(t)
+                ), 1, 0
             ),
         )
         for ind in indices(
@@ -87,7 +86,7 @@ function _past_indices(m, indices, param, s_path, t; kwargs...)
             kwargs...,
             stochastic_scenario=s_path,
             t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
-            temporal_block=anything,
+            temporal_block=temporal_block(is_representative=true),
         )    
     )
 end
@@ -139,6 +138,20 @@ in "src\\data_structure\\preprocess_data_structure.jl".
 """
 _d_reverse(d::Object) = d.name == :to_node ? direction(:from_node) : direction(:to_node)
 
+"""
+    _default_parameter_value(p::Parameter, entity_class::Union{ObjectClass,RelationshipClass})
+
+The default value of parameter `p` defined in `entity_class` as specified in the input DB.
+"""
+function _default_parameter_value(p::Parameter, entity_class::ObjectClass)
+    entity_class.parameter_defaults[p.name].value
+end
+
+_default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(number_of_storages, node)
+_default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(number_of_units, unit)
+_default_nb_of_conns(conn::Object) = is_candidate(connection=conn) ? 
+    0 : _default_parameter_value(number_of_connections, connection)
+
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
 
 function _check_ptdf_duration(m, t, conns...)
@@ -148,4 +161,49 @@ function _check_ptdf_duration(m, t, conns...)
     duration = minimum(durations)
     elapsed = end_(t) - start(current_window(m))
     Dates.toms(duration - elapsed) >= 0
+end
+
+function _node_state_time_slices(m, n; longterm=false)
+    _node_state_time_slices(m, n, Val(longterm))
+end
+
+function _node_state_time_slices(m, node, ::Val{false})
+    (t for (_n, t) in node_time_indices(m; node=node))
+end
+
+function _node_state_time_slices(m, node, ::Val{true})
+    node = intersect(node, SpineOpt.node(is_longterm_storage=true))
+    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false)))
+end
+
+function _term_connection_flow(m, conn, ng, d, s_path, t)
+    @fetch connection_flow = m.ext[:spineopt].variables
+    sum(
+        get(connection_flow, (conn, n, d, s, t), 0) * duration(t)
+        for n in members(ng), s in s_path, t in t_in_t(m; t_long=t);
+        init=0,
+    )
+end
+
+function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
+    @fetch connection_flow, connections_invested_available = m.ext[:spineopt].variables
+    sum(
+        (
+            + sum(
+                get(connections_invested_available, (conn, s, t1), 0)
+                for s in s_path, t1 in t_in_t(m; t_short=t);
+                init=0,
+            )
+            + number_of_connections(
+                m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
+            )
+        )
+        for s in s_path, t in t_in_t(m; t_long=t)
+        if any(haskey(connection_flow, (conn, n, d, s, t)) for n in members(ng));
+        init=0,
+    )
+end
+
+function _is_zero(cap)
+    iszero(collect(values(indexed_values(cap))))
 end

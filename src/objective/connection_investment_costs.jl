@@ -1,14 +1,15 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -29,7 +30,7 @@ function connection_investment_costs(m::Model, t_range)
         m,
         + sum(
             connections_invested[c, s, t]
-            * _connection_weight_for_economic_representation(m; c, s, t)
+            * _connection_weight_for_multiyear_economic_discounting(m; c, s, t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_investment_cost(m; connection=c, stochastic_scenario=s, t=t)
             * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
@@ -39,8 +40,8 @@ function connection_investment_costs(m::Model, t_range)
     )
 end
 
-function _connection_weight_for_economic_representation(m; c, s, t)
-    if use_economic_representation(model=m.ext[:spineopt].instance)
+function _connection_weight_for_multiyear_economic_discounting(m; c, s, t)
+    if !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance))
         return (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, t=t)]) * 
                 connection_tech_discount_factor[(connection=c, stochastic_scenario=s, t=t)] * 
                 connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, t=t)]

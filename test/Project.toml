@@ -1,4 +1,6 @@
 [deps]
+HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
@@ -14,6 +16,20 @@ SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 SpineOpt = "0d8fc150-4032-4b6e-9540-20efcb304861"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[sources]
+SpineOpt = { path = ".." }
+
 [compat]
-julia = "^1.2"
-SpineInterface = "0.15.1"
+DataStructures = "^0.19"
+DelimitedFiles = "1"
+HiGHS = "1"
+JSON = "^0.21"
+JuMP = "^1.23.5"
+MathOptInterface = "1"
+PyCall = "1"
+SpineInterface = "0.17"
+Dates = "1"
+Logging = "1"
+Pkg = "1"
+Test = "1"
+julia = "^1.10"

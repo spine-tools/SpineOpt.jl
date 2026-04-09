@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -21,7 +22,7 @@
 To limit the storage content, the $v_{node\_state}$ variable needs be constrained by the following equation:
 
 ```math
-v^{node\_state}_{(n, s, t)} \leq p^{node\_state\_cap}_{(n, s, t)} \quad \forall n \in node : p^{has\_state}_{(n)}, \, \forall (s,t)
+v^{node\_state}_{(n, s, t)} \leq p^{node\_state\_cap}_{(n, s, t)} \cdot p^{node\_availability\_factor}_{(n, s, t)} \quad \forall n \in node : p^{has\_state}_{(n)}, \, \forall (s,t)
 ```
 
 The discharging and charging behavior of storage nodes can be described through unit(s),
@@ -32,25 +33,38 @@ the [unit flow ratio constraints](@ref constraint_ratio_unit_flow).
 
 See also
 [node\_state\_cap](@ref),
+[node\_availability\_factor](@ref),
 [has\_state](@ref).
 """
 function add_constraint_node_state_capacity!(m::Model)
     _add_constraint!(
         m, :node_state_capacity, constraint_node_state_capacity_indices, _build_constraint_node_state_capacity
     )
+    _add_constraint!(
+        m,
+        :node_state_longterm_capacity, 
+        constraint_node_state_longterm_capacity_indices,
+        _build_constraint_node_state_longterm_capacity,
+    )
 end
 
-function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
-    @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
+function _build_constraint_node_state_longterm_capacity(m::Model, ng, s_path, t)
+    _build_constraint_node_state_capacity(m, ng, s_path, t; longterm=true)
+end
+
+function _build_constraint_node_state_capacity(m::Model, ng, s_path, t; longterm=false)
+    @fetch node_state, node_state_longterm, storages_invested_available = m.ext[:spineopt].variables
+    state_indices = longterm ? node_state_longterm_indices : node_state_indices
+    state = longterm ? node_state_longterm : node_state
     @build_constraint(
         + sum(
-            + node_state[n, s, t]
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            + state[n, s, t]
+            for (n, s, t) in state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
         <=
         + sum(
-            + node_state_cap(m; node=ng, stochastic_scenario=s, t=t)
+            + node_state_capacity(m; node=ng, stochastic_scenario=s, t=t)
             * (
                 + number_of_storages(m; node=ng, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
                 + sum(
@@ -61,21 +75,26 @@ function _build_constraint_node_state_capacity(m::Model, ng, s_path, t)
                     init=0,
                 )
             )
-            for (n, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s_path, t=t);
+            for (n, s, t) in state_indices(m; node=ng, stochastic_scenario=s_path, t=t, temporal_block=anything);
             init=0,
         )
     )
 end
 
-function constraint_node_state_capacity_indices(m::Model)
+function constraint_node_state_longterm_capacity_indices(m::Model)
+    constraint_node_state_capacity_indices(m; longterm=true)
+end
+
+function constraint_node_state_capacity_indices(m::Model; longterm=false)
     (
         (node=ng, stochastic_path=path, t=t)
-        for (ng, t) in node_time_indices(m; node=intersect(indices(node_state_cap), indices(candidate_storages)))
+        for ng in intersect(node(has_state=true), indices(node_state_cap), indices(candidate_storages))
+        for t in _node_state_time_slices(m, ng; longterm)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
                 (
-                    node_state_indices(m; node=ng, t=t),
+                    (longterm ? node_state_longterm_indices : node_state_indices)(m; node=ng, t=t),
                     storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t)),
                 )
             )

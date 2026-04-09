@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -39,47 +40,62 @@ import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
 import SpineInterface: Parameter, parameter_value
 
-export SpineOptExt
-export run_spineopt
-export prepare_spineopt
-export run_spineopt!
+export @fetch
+export @log
+export @timelog
+export active_stochastic_paths
 export add_event_handler!
-export create_model
 export build_model!
-export solve_model!
-export generate_temporal_structure!
+export connection_flow_capacity
+export connection_flow_indices
+export connection_flow_lower_limit
+export create_model
+export current_window
+export forced_outage_time_series
 export generate_economic_structure!
-export roll_temporal_structure!
+export generate_forced_outages
+export generate_stochastic_structure!
+export generate_temporal_structure!
+export master_model
+export node_state_capacity
+export node_state_indices
+export node_state_lower_limit
+export prepare_spineopt
 export rewind_temporal_structure!
-export time_slice
+export roll_temporal_structure!
+export run_spineopt
+export run_spineopt!
+export solve_model!
+export SpineOptExt
+export stage_model
 export t_before_t
 export t_in_t
 export t_in_t_excl
 export t_overlaps_t
+export time_slice
 export to_time_slice
-export current_window
-export generate_stochastic_structure!
-export active_stochastic_paths
+export unit_flow_capacity
+export unit_flow_indices
+export unit_flow_op_indices
+export units_invested_available_indices
+export units_on_indices
+export write_model_file
 export write_report
 export write_report_from_intermediate_results
-export generate_forced_outages
-export forced_outage_time_series
-export master_model
-export stage_model
-export write_model_file
-export @fetch
-export @log
-export @timelog
 
 # Util
 include("util/misc.jl")
 include("util/write_information_files.jl")
 include("util/promise.jl")
 # Main stage
+include("convenience_functions.jl")
+include("parameter_functions.jl")
 include("run_spineopt.jl")
 include("generate_forced_outages.jl")
 include("run_spineopt_basic.jl")
 include("run_spineopt_mga.jl")
+include("run_spineopt_hsj_mga.jl")
+include("run_spineopt_monte_carlo.jl")
 include("benders.jl")
 # Data structure
 include("data_structure/economic_structure.jl")
@@ -161,6 +177,7 @@ include("constraints/constraint_connection_flow_lodf.jl")
 include("constraints/constraint_connection_intact_flow_capacity.jl")
 include("constraints/constraint_connection_intact_flow_ptdf.jl")
 include("constraints/constraint_connection_lifetime.jl")
+include("constraints/constraint_connection_min_flow.jl")
 include("constraints/constraint_connection_unitary_gas_flow.jl")
 include("constraints/constraint_connections_invested_available.jl")
 include("constraints/constraint_connections_invested_transition.jl")
@@ -174,6 +191,7 @@ include("constraints/constraint_max_node_voltage_angle.jl")
 include("constraints/constraint_min_capacity_margin.jl")
 include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_min_node_pressure.jl")
+include("constraints/constraint_min_node_state.jl")
 include("constraints/constraint_min_node_voltage_angle.jl")
 include("constraints/constraint_min_scheduled_outage_duration.jl")
 include("constraints/constraint_min_up_time.jl")
@@ -184,6 +202,7 @@ include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_nodal_reactive_balance.jl")
 include("constraints/constraint_node_injection.jl")
 include("constraints/constraint_node_state_capacity.jl")
+include("constraints/constraint_node_state_longterm_trajectory.jl")
 include("constraints/constraint_node_voltage_angle.jl")
 include("constraints/constraint_node_voltages_conic.jl")
 include("constraints/constraint_non_spinning_reserves_bounds.jl")
@@ -213,24 +232,15 @@ include("constraints/constraint_units_out_of_service_contiguity.jl")
 include("constraints/constraint_units_out_of_service_transition.jl")
 include("constraints/constraint_user_constraint.jl")
 
-
-export unit_flow_indices
-export unit_flow_op_indices
-export connection_flow_indices
-export node_state_indices
-export units_on_indices
-export units_invested_available_indices
-
 const _template = JSON.parsefile(joinpath(@__DIR__, "..", "templates", "spineopt_template.json"))
+const _preproc_template = JSON.parsefile(joinpath(@__DIR__, "..", "templates", "preprocessing_template.json"))
 
 function template()
-    try
-        JSON.parsefile(joinpath(@__DIR__, "..", "templates", "spineopt_template.json"))
-    catch
-        # Template file not found, use _template constant instead.
-        # This will happen in the SpineOpt app
-        _template
-    end
+    deepcopy(_template)
+end
+
+function preproc_template()
+    deepcopy(_preproc_template)
 end
 
 end

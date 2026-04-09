@@ -2,20 +2,35 @@
 
 name: CI
 
-# Run workflow on every push
+# Run workflow on every push and pull request to master branch
 on:
-  push
+  push:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
+  check_duplicate_actions:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: "same_content_newer"
   test:
+    needs: check_duplicate_actions
+    if: needs.check_duplicate_actions.outputs.should_skip != 'true'
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         version:
-          - "1.8"  # Minimum compatible Release
-          - "1"    # Latest Release of Julia v1.x
+          - "1.10" # Replace "lts" with a specific Julia version
+          - "1" # Latest Release of Julia v1.x
         os:
           - ubuntu-latest
           # - macOS-latest
@@ -31,11 +46,11 @@ jobs:
           - os: windows-latest
             arch: x86
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.11' 
-      - uses: julia-actions/setup-julia@v1
+          python-version: "3.11"
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
@@ -43,32 +58,32 @@ jobs:
           git config --global user.name Tester
           git config --global user.email te@st.er
       - name: Install spinedb_api
-        run:
-          julia ./.install_spinedb_api.jl
+        run: julia ./.install_spinedb_api.jl
         env:
           PYTHON: python
+      - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest'
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v6
         with:
-          file: lcov.info
+          files: lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   Documenter:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.11' 
+          python-version: "3.11"
       - name: Install dependencies
         run: |
-          julia ./.install_spinedb_api.jl          
+          julia ./.install_spinedb_api.jl
           julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - uses: julia-actions/julia-docdeploy@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-
