@@ -378,6 +378,7 @@ For the efficiency of the power plants:
     The order of the nodes is important for the *fix\_ratio\_out\_in\_unit\_flow* 
     parameter. If you have swapped the nodes or inverted the efficiency values, 
     the Run SpineOpt tool will run into errors.
+    (NOTE! This describes the old data structure, see `flow_ratio_equality_coefficient` for the updated one)
 
 When you're ready, save/commit all changes to the database.
 

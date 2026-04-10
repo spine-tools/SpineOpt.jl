@@ -96,8 +96,8 @@ function _ref_setup(storage_count)
                 ("unit__to_node", (u, "demand_node"), "capacity_per_unit", discharge_cap),
                 ("unit__to_node", (u, n), "capacity_per_unit", charge_cap),
                 ("unit__to_node", (u, "demand_node"), "vom_cost", base_cost),
-                ("unit_flow__unit_flow", (u, n, "demand_node", u), "constraint_equality_flow_ratio", 0.8),
-                ("unit_flow__unit_flow", (u, "demand_node", n, u), "constraint_equality_flow_ratio", 1),
+                ("unit_flow__unit_flow", (u, n, "demand_node", u), "flow_ratio_equality_coefficient", 0.8),
+                ("unit_flow__unit_flow", (u, "demand_node", n, u), "flow_ratio_equality_coefficient", 1),
             )
         )
     end

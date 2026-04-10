@@ -68,14 +68,14 @@ Direct:
     ==
     fix_ratio(u, n1, n2) * unit_flow[u, n2, d2]
     + fix_units_on_coeff(u, n1, n2) * units_on[u]
-    + startflow_sign(fix_ratio) * unit_start_flow(u, n1, n2) * units_started_up[u]
+    + startflow_sign(fix_ratio) * flow_ratio_start_flow(u, n1, n2) * units_started_up[u]
 
 Inverse:
     unit_flow[u, n1, d1]
     ==
     (1 / fix_ratio(u, n2, n1)) * unit_flow[u, n2, d2]
     - (fix_units_on_coeff(u, n2, n1) / fix_ratio(u, n2, n1)) * units_on[u]
-    - (startflow_sign(fix_ratio) * unit_start_flow(u, n2, n1) / fix_ratio(u, n2, n1)) * units_started_up[u]
+    - (startflow_sign(fix_ratio) * flow_ratio_start_flow(u, n2, n1) / fix_ratio(u, n2, n1)) * units_started_up[u]
 =#
 function _fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
     if direct
@@ -127,11 +127,11 @@ function _fix_units_on_coeff(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
     end
 end
 
-function _signed_unit_start_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
+function _signed_flow_ratio_start_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
     sign = _ratio_and_directions_to_start_flow_sign(fix_ratio, d1, d2)
     iszero(sign) && return 0
     if direct
-        sign * unit_start_flow(
+        sign * flow_ratio_start_flow(
             m; 
             unit1=u1, node1=n1, direction1=d1, 
             unit2=u2, node2=n2, direction2=d2, 
@@ -140,7 +140,7 @@ function _signed_unit_start_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, dir
         )
     else
         - sign * _div_or_zero(
-            unit_start_flow(
+            flow_ratio_start_flow(
                 m; 
                 unit1=u2, node1=n2, direction1=d2, 
                 unit2=u1, node2=n1, direction2=d1, 
@@ -158,7 +158,7 @@ function _signed_unit_start_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, dir
 end
 
 function _has_simple_fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, fix_ratio)
-    _similar(n1, n2) && fix_ratio in (constraint_equality_flow_ratio, ) &&
+    _similar(n1, n2) && fix_ratio in (flow_ratio_equality_coefficient, ) &&
         isempty(unit_flow_op_indices(m; unit=u1, node=n1, direction=d1)) &&
         isempty(unit_flow_op_indices(m; unit=u2, node=n2, direction=d2))
 end
@@ -219,11 +219,11 @@ function add_variable_unit_flow!(m::Model)
                 (
                     unit=u, stochastic_scenario=s, t=t
                 ) => /(
-                    _signed_unit_start_flow(m, u, n, d, u, n_ref, d_ref, s, t, fix_ratio, direct), duration(t)
+                    _signed_flow_ratio_start_flow(m, u, n, d, u, n_ref, d_ref, s, t, fix_ratio, direct), duration(t)
                 )
             ),
         ]
-        for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_unit_flows(constraint_equality_flow_ratio)
+        for (u, n_ref, d_ref, n, d, fix_ratio, direct) in _related_unit_flows(flow_ratio_equality_coefficient)
         if _has_simple_fix_ratio_unit_flow(m, u, n, d, u, n_ref, d_ref, fix_ratio)
         for (_n, s, t) in node_stochastic_time_indices(m; node=n_ref)
     )

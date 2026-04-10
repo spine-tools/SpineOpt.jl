@@ -185,12 +185,12 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
         :relationship_parameter_values => [
             ["node__to_unit", ["elec_node", "batt_unit"], "capacity_per_unit", 50],
             ["unit__to_node", ["batt_unit", "elec_node"], "capacity_per_unit", 55],
-            ["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"], "constraint_equality_flow_ratio", 0.9],
-            ["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"], "constraint_equality_flow_ratio", 0.8],
+            ["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"], "flow_ratio_equality_coefficient", 0.9],
+            ["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"], "flow_ratio_equality_coefficient", 0.8],
             ["node__to_unit", ["elec_node", "electrolizer"], "capacity_per_unit", 1000],
-            ["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"], "constraint_equality_flow_ratio", 1.5],
+            ["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"], "flow_ratio_equality_coefficient", 1.5],
             ["unit__to_node", ["h2_gen", "elec_node"], "capacity_per_unit", 100],
-            ["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"], "constraint_equality_flow_ratio", 1.6],
+            ["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"], "flow_ratio_equality_coefficient", 1.6],
             ["unit__to_node", ["pv", "elec_node"], "capacity_per_unit", 300],
             ["unit__to_node", ["wind", "elec_node"], "capacity_per_unit", 300],
             ["unit__to_node", ["conventional", "elec_node"], "capacity_per_unit", 100],
@@ -361,7 +361,7 @@ function _expected_representative_periods_constraint(
     @fetch node_injection, node_slack_pos, node_slack_neg, node_state, unit_flow = m.ext[:spineopt].variables
     @test t_after in all_rt
     if n == node(:batt_node)
-        fr_e2b = vals["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"], "constraint_equality_flow_ratio"]
+        fr_e2b = vals["unit_flow__unit_flow", ["batt_unit", "batt_node", "elec_node", "batt_unit"], "flow_ratio_equality_coefficient"]
         @build_constraint(
             + node_injection[n, s, t_after]
             ==
@@ -374,8 +374,8 @@ function _expected_representative_periods_constraint(
         )
     elseif n == node(:elec_node)
         elec_demand = parameter_value(vals["node", "elec_node", "demand"])
-        fr_b2e = vals["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"], "constraint_equality_flow_ratio"]
-        fr_e2h = vals["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"], "constraint_equality_flow_ratio"]
+        fr_b2e = vals["unit_flow__unit_flow", ["batt_unit", "elec_node", "batt_node", "batt_unit"], "flow_ratio_equality_coefficient"]
+        fr_e2h = vals["unit_flow__unit_flow", ["elec_node", "electrolizer", "electrolizer", "h2_node"], "flow_ratio_equality_coefficient"]
         @build_constraint(
             + node_injection[n, s, t_after]
             ==
@@ -390,7 +390,7 @@ function _expected_representative_periods_constraint(
         )
     else#if n == node(:h2_node)
         unit_flow_from_node = if t_after in all_rt
-            fr_h2e = vals["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"], "constraint_equality_flow_ratio"]
+            fr_h2e = vals["unit_flow__unit_flow", ["h2_node", "h2_gen", "h2_gen", "elec_node"], "flow_ratio_equality_coefficient"]
             fr_h2e * unit_flow[unit(:h2_gen), node(:elec_node), d_to, s, t_after]
         else
             unit_flow[unit(:h2_gen), node(:h2_node), d_from, s, t_after]
@@ -461,17 +461,17 @@ function _expected_representative_periods_constraint(
         nodes = (node(:batt_node), node(:elec_node))
         @test n in nodes
         other_n = only(setdiff(nodes, n))
-        fr = vals["unit_flow__unit_flow", [string(u), string(n), string(other_n), string(u)], "constraint_equality_flow_ratio"]
+        fr = vals["unit_flow__unit_flow", [string(u), string(n), string(other_n), string(u)], "flow_ratio_equality_coefficient"]
         @build_constraint(fr * unit_flow[u, other_n, d_from, s, t] >= 0)
     elseif u == unit(:electrolizer)
         @test d in d_from
         @test n == node(:elec_node)
-        fr = vals["unit_flow__unit_flow", [string(n), string(u), string(u), "h2_node"], "constraint_equality_flow_ratio"]
+        fr = vals["unit_flow__unit_flow", [string(n), string(u), string(u), "h2_node"], "flow_ratio_equality_coefficient"]
         @build_constraint(fr * unit_flow[u, node(:h2_node), d_to, s, t] >= 0)
     else# u == unit(:h2_gen)
         @test d in d_from
         @test n == node(:h2_node)
-        fr = vals["unit_flow__unit_flow", [string(n), string(u), string(u), "elec_node"], "constraint_equality_flow_ratio"]
+        fr = vals["unit_flow__unit_flow", [string(n), string(u), string(u), "elec_node"], "flow_ratio_equality_coefficient"]
         @build_constraint(fr * unit_flow[u, node(:elec_node), d_to, s, t] >= 0)
     end
 end

@@ -238,7 +238,7 @@ function _test_benders_storage()
             ]
             relationship_parameter_values = [
                 ["unit__to_node", ["unit_a", "node_a"], "flow_limits_fix", fixuflow],
-                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
+                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", 1.0],
                 ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
             ]
             SpineInterface.import_data(
@@ -370,7 +370,7 @@ function _test_benders_unit_storage()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
             relationship_parameter_values = [
-                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
+                ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", 1.0],
                 ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", ucap],
                 ["unit__to_node", ["unit_a", "node_a"], "capacity_per_unit", ucap2],
                 ["unit__to_node", ["unit_a", "node_a"], "minimum_operating_point", mop],

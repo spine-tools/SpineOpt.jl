@@ -119,10 +119,10 @@ function _test_run_spineopt_mga_setup()
             ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
-            ["unit_flow__unit_flow", ["unit_ab", "node_a", "node_b", "unit_ab"], "constraint_equality_flow_ratio", 1.0],
-            ["unit_flow__unit_flow", ["unit_bc", "node_b", "node_c", "unit_bc"], "constraint_equality_flow_ratio", 1.0],
-            ["unit_flow__unit_flow", ["unit_bc", "node_c", "node_b", "unit_bc"], "constraint_equality_flow_ratio", 1.0],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", 1.0],
+            ["unit_flow__unit_flow", ["unit_ab", "node_a", "node_b", "unit_ab"], "flow_ratio_equality_coefficient", 1.0],
+            ["unit_flow__unit_flow", ["unit_bc", "node_b", "node_c", "unit_bc"], "flow_ratio_equality_coefficient", 1.0],
+            ["unit_flow__unit_flow", ["unit_bc", "node_c", "node_b", "unit_bc"], "flow_ratio_equality_coefficient", 1.0],
 
         ],
     )

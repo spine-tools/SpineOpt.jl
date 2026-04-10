@@ -154,7 +154,7 @@ function _build_constraint_ratio_unit_flow(m::Model, u1, ng1, d1, u2, ng2, d2, s
             )
             + start_flow_sign
             * _get_units_started_up(m, u2, s, t1)
-            * unit_start_flow(
+            * flow_ratio_start_flow(
                 m; 
                 unit1=u1, node1=ng1, direction1=d1, 
                 unit2=u2, node2=ng2, direction2=d2, 
@@ -174,7 +174,7 @@ end
 Call `add_constraint_ratio_unit_flow!` with the appropriate parameter.
 """
 function add_constraint_fix_ratio_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, constraint_equality_flow_ratio)
+    add_constraint_ratio_unit_flow!(m, flow_ratio_equality_coefficient)
 end
 
 
@@ -184,7 +184,7 @@ end
 Call `add_constraint_ratio_unit_flow!` with the appropriate parameter.
 """
 function add_constraint_min_ratio_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, constraint_greater_than_flow_ratio)
+    add_constraint_ratio_unit_flow!(m, flow_ratio_greater_than_coefficient)
 end
 
 """
@@ -193,7 +193,7 @@ end
 Call `add_constraint_ratio_unit_flow!` with the appropriate parameter.
 """
 function add_constraint_max_ratio_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, constraint_less_than_flow_ratio)
+    add_constraint_ratio_unit_flow!(m, flow_ratio_less_than_coefficient)
 end
 
 
@@ -215,22 +215,22 @@ end
 
 function _ratio_to_units_on_coeff(ratio)
     Dict(
-        constraint_equality_flow_ratio => constraint_equality_online_coefficient,
-        constraint_less_than_flow_ratio => constraint_less_than_online_coefficient,
-        constraint_greater_than_flow_ratio => constraint_greater_than_online_coefficient,
+        flow_ratio_equality_coefficient => flow_ratio_equality_online_coefficient,
+        flow_ratio_less_than_coefficient => flow_ratio_less_than_online_coefficient,
+        flow_ratio_greater_than_coefficient => flow_ratio_greater_than_online_coefficient,
     )[ratio]
 end
 
 function _ratio_to_sense(ratio)
     Dict(
-        constraint_equality_flow_ratio => ==,
-        constraint_less_than_flow_ratio => <=,
-        constraint_greater_than_flow_ratio => >=,
+        flow_ratio_equality_coefficient => ==,
+        flow_ratio_less_than_coefficient => <=,
+        flow_ratio_greater_than_coefficient => >=,
     )[ratio]
 end
 
 function _ratio_and_directions_to_start_flow_sign(ratio::Parameter, d1::Object, d2::Object)
-    if ratio === constraint_equality_flow_ratio
+    if ratio === flow_ratio_equality_coefficient
         flow_signs = Dict((:to_node, :from_node) => -1, (:from_node, :to_node) => 1)
         get(flow_signs, (d1.name, d2.name), 0)
     else 

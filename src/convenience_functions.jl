@@ -131,12 +131,6 @@ const connection_salvage_fraction = Parameter(:connection_salvage_fraction)
 const connection_tech_discount_factor = Parameter(:connection_tech_discount_factor)
 const connection_type = Parameter(:connection_type)
 const connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance)
-const constraint_equality_flow_ratio = Parameter(:constraint_equality_flow_ratio)
-const constraint_equality_online_coefficient = Parameter(:constraint_equality_online_coefficient)
-const constraint_greater_than_flow_ratio = Parameter(:constraint_greater_than_flow_ratio)
-const constraint_greater_than_online_coefficient = Parameter(:constraint_greater_than_online_coefficient)
-const constraint_less_than_flow_ratio = Parameter(:constraint_less_than_flow_ratio)
-const constraint_less_than_online_coefficient = Parameter(:constraint_less_than_online_coefficient)
 const constraint_sense = Parameter(:constraint_sense)
 const contingency_active = Parameter(:contingency_active)
 const curtailment_cost = Parameter(:curtailment_cost)
@@ -172,6 +166,13 @@ const flow_limits_initial_op = Parameter(:flow_limits_initial_op)
 const flow_limits_max_cumulative = Parameter(:flow_limits_max_cumulative)
 const flow_limits_min = Parameter(:flow_limits_min)
 const flow_limits_min_cumulative = Parameter(:flow_limits_min_cumulative)
+const flow_ratio_equality_coefficient = Parameter(:flow_ratio_equality_coefficient)
+const flow_ratio_equality_online_coefficient = Parameter(:flow_ratio_equality_online_coefficient)
+const flow_ratio_greater_than_coefficient = Parameter(:flow_ratio_greater_than_coefficient)
+const flow_ratio_greater_than_online_coefficient = Parameter(:flow_ratio_greater_than_online_coefficient)
+const flow_ratio_less_than_coefficient = Parameter(:flow_ratio_less_than_coefficient)
+const flow_ratio_less_than_online_coefficient = Parameter(:flow_ratio_less_than_online_coefficient)
+const flow_ratio_start_flow = Parameter(:flow_ratio_start_flow)
 const fom_cost = Parameter(:fom_cost)
 const fuel_cost = Parameter(:fuel_cost)
 const has_free_start = Parameter(:has_free_start)
@@ -323,7 +324,6 @@ const unit_flow_non_anticipativity_margin = Parameter(:unit_flow_non_anticipativ
 const unit_flow_non_anticipativity_time = Parameter(:unit_flow_non_anticipativity_time)
 const unit_investment_cost = Parameter(:unit_investment_cost)
 const unit_salvage_fraction = Parameter(:unit_salvage_fraction)
-const unit_start_flow = Parameter(:unit_start_flow)
 const unit_tech_discount_factor = Parameter(:unit_tech_discount_factor)
 const units_on_cost = Parameter(:units_on_cost)
 const units_on_non_anticipativity_margin = Parameter(:units_on_non_anticipativity_margin)
@@ -475,12 +475,6 @@ export connection_salvage_fraction
 export connection_tech_discount_factor
 export connection_type
 export connnection_lodf_tolerance
-export constraint_equality_flow_ratio
-export constraint_equality_online_coefficient
-export constraint_greater_than_flow_ratio
-export constraint_greater_than_online_coefficient
-export constraint_less_than_flow_ratio
-export constraint_less_than_online_coefficient
 export constraint_sense
 export contingency_active
 export curtailment_cost
@@ -516,6 +510,13 @@ export flow_limits_initial_op
 export flow_limits_max_cumulative
 export flow_limits_min
 export flow_limits_min_cumulative
+export flow_ratio_equality_coefficient
+export flow_ratio_equality_online_coefficient
+export flow_ratio_greater_than_coefficient
+export flow_ratio_greater_than_online_coefficient
+export flow_ratio_less_than_coefficient
+export flow_ratio_less_than_online_coefficient
+export flow_ratio_start_flow
 export fom_cost
 export fuel_cost
 export has_free_start
@@ -667,7 +668,6 @@ export unit_flow_non_anticipativity_margin
 export unit_flow_non_anticipativity_time
 export unit_investment_cost
 export unit_salvage_fraction
-export unit_start_flow
 export unit_tech_discount_factor
 export units_on_cost
 export units_on_non_anticipativity_margin

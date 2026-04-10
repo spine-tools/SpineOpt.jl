@@ -138,7 +138,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     append!(
         rel_pvs,
         (
-            ["unit_flow__unit_flow", (u, n1, n2, u), "constraint_equality_flow_ratio", 2] for
+            ["unit_flow__unit_flow", (u, n1, n2, u), "flow_ratio_equality_coefficient", 2] for
             (u, n1, n2, u) in zip(units, nodes_to, nodes_from, units)
         ),
     )

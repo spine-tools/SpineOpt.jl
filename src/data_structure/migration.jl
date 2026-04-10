@@ -228,14 +228,31 @@ function upgrade_json(
 		]
 			data[k] = deepcopy(template[k])
 		end
-		filter!( # Entities need to belong to current classes (check by name).
-			row -> row[1] in getindex.(data["entity_classes"], 1),
-			data["entities"]
-		)
-		filter!( # Parameter values for match latest definitions (check by class and name).
-			row -> [row[1], row[3]] in (def[1:2] for def in data["parameter_definitions"]),
-			data["parameter_values"]
-		)
+		valid_class_names = getindex.(data["entity_classes"], 1)
+		valid_output_names = getindex.(template["entities"], 2)
+		# Entities need to belong to current classes (check by name), and if they are outputs, match them as well.
+		function _entity_filter(row)
+			if row[1] == "output"
+				return row[2] in valid_output_names
+			elseif row[1] in valid_class_names
+				return true
+			else
+				return false
+			end
+		end
+		filter!(_entity_filter, data["entities"])
+		# Parameter values for match latest definitions (check by class and name), and existing output entities.
+		valid_param_definitions = (def[1:2] for def in data["parameter_definitions"])
+		function _parameter_value_filter(row)
+			if row[1] == "output"
+				return row[2] in valid_output_names
+			elseif [row[1], row[3]] in valid_param_definitions
+				return true
+			else
+				return false
+			end
+		end
+		filter!(_parameter_value_filter, data["parameter_values"])
 	end
 	clean_to_latest && _clean_to_latest!(new_data, template)
 	# Sub-function for omitting data redundant with the template.

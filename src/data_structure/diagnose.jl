@@ -76,7 +76,7 @@ function _are_unit_flows_related(u, n_from, n_to)
             _strict=false
         ) !== nothing
         for ratio in (
-            constraint_equality_flow_ratio, constraint_less_than_flow_ratio, constraint_greater_than_flow_ratio
+            flow_ratio_equality_coefficient, flow_ratio_less_than_coefficient, flow_ratio_greater_than_coefficient
         )
     ) || any(
         ratio(
@@ -85,7 +85,7 @@ function _are_unit_flows_related(u, n_from, n_to)
             _strict=false
         ) !== nothing
         for ratio in (
-            constraint_equality_flow_ratio, constraint_less_than_flow_ratio, constraint_greater_than_flow_ratio
+            flow_ratio_equality_coefficient, flow_ratio_less_than_coefficient, flow_ratio_greater_than_coefficient
         )
     )
 end

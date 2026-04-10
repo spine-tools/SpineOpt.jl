@@ -572,7 +572,7 @@ function _test_major_upgrade_1()
 		) == 4
 		@test !in(:unit_flow_coefficient, param_names) # Old parameter deleted.
 		# Check multidimensional class parameters.
-		@test Y.constraint_equality_flow_ratio( # Check parameter value.
+		@test Y.flow_ratio_equality_coefficient( # Check parameter value.
 			node1=Y.node(:n), unit1=Y.unit(:u), unit2=Y.unit(:u), node2=Y.node(:n)
 		) == 5 # Only the first definition seems to end up in the db?
 		@test !in(:fix_ratio_in_out_unit_flow, param_names) # Old parameter deleted.

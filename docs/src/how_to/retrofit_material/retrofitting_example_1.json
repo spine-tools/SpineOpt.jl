@@ -442,14 +442,14 @@
         ],
         [
             "output",
-            "constraint_fix_ratio_in_in_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
         ],
         [
             "output",
-            "constraint_fix_ratio_in_out_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
@@ -463,14 +463,14 @@
         ],
         [
             "output",
-            "constraint_fix_ratio_out_in_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
         ],
         [
             "output",
-            "constraint_fix_ratio_out_out_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
@@ -540,14 +540,14 @@
         ],
         [
             "output",
-            "constraint_max_ratio_in_in_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
         ],
         [
             "output",
-            "constraint_max_ratio_in_out_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
@@ -561,14 +561,14 @@
         ],
         [
             "output",
-            "constraint_max_ratio_out_in_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
         ],
         [
             "output",
-            "constraint_max_ratio_out_out_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
@@ -617,14 +617,14 @@
         ],
         [
             "output",
-            "constraint_min_ratio_in_in_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
         ],
         [
             "output",
-            "constraint_min_ratio_in_out_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
@@ -638,14 +638,14 @@
         ],
         [
             "output",
-            "constraint_min_ratio_out_in_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
         ],
         [
             "output",
-            "constraint_min_ratio_out_out_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
@@ -4062,49 +4062,49 @@
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_equality_flow_ratio",
+            "flow_ratio_equality_coefficient",
             null,
             null,
             "Fix the ratio between two `unit_flows`."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_equality_online_coefficient",
+            "flow_ratio_equality_online_coefficient",
             0.0,
             null,
-            "Optional coefficient for the `units_on` variable impacting the `fix_ratio_unit_flow` constraint."
+            "Optional coefficient for the `units_on` variable impacting the `flow_ratio_equality_coefficient` constraint."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_greater_than_flow_ratio",
+            "flow_ratio_greater_than_coefficient",
             null,
             null,
             "Minimum ratio between two `unit_flows`."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_greater_than_online_coefficient",
+            "flow_ratio_greater_than_online_coefficient",
             0.0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `min_ratio_unit_flow` constraint."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_less_than_flow_ratio",
+            "flow_ratio_less_than_coefficient",
             null,
             null,
             "Maximum ratio between two `unit_flows`."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_less_than_online_coefficient",
+            "flow_ratio_less_than_online_coefficient",
             0.0,
             null,
             "Optional coefficient for the `units_on` variable impacting the `max_ratio_unit_flow` constraint."
         ],
         [
             "unit_flow__unit_flow",
-            "unit_start_flow",
+            "flow_ratio_start_flow",
             0.0,
             null,
             "Enforces additional flow for the first `unit_flow` based on the `units_started_up`."
@@ -4455,12 +4455,12 @@
         ],
         [
             "output",
-            "constraint_fix_ratio_in_in_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             null
         ],
         [
             "output",
-            "constraint_fix_ratio_in_out_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             null
         ],
         [
@@ -4470,12 +4470,12 @@
         ],
         [
             "output",
-            "constraint_fix_ratio_out_in_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             null
         ],
         [
             "output",
-            "constraint_fix_ratio_out_out_unit_flow",
+            "constraint_flow_ratio_equality_coefficient",
             null
         ],
         [
@@ -4525,12 +4525,12 @@
         ],
         [
             "output",
-            "constraint_max_ratio_in_in_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             null
         ],
         [
             "output",
-            "constraint_max_ratio_in_out_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             null
         ],
         [
@@ -4540,12 +4540,12 @@
         ],
         [
             "output",
-            "constraint_max_ratio_out_in_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             null
         ],
         [
             "output",
-            "constraint_max_ratio_out_out_unit_flow",
+            "constraint_flow_ratio_less_than_coefficient",
             null
         ],
         [
@@ -4580,12 +4580,12 @@
         ],
         [
             "output",
-            "constraint_min_ratio_in_in_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             null
         ],
         [
             "output",
-            "constraint_min_ratio_in_out_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             null
         ],
         [
@@ -4595,12 +4595,12 @@
         ],
         [
             "output",
-            "constraint_min_ratio_out_in_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             null
         ],
         [
             "output",
-            "constraint_min_ratio_out_out_unit_flow",
+            "constraint_flow_ratio_greater_than_coefficient",
             null
         ],
         [

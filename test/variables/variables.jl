@@ -335,7 +335,7 @@ function test_unit_flow_simple_bounds()
             ["unit", "unit_ab", "online_variable_type", "linear"],
         ]
         rel_pvals = [
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf],
             ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
@@ -371,7 +371,7 @@ function test_unit_flow_ub_with_number_of_units_time_series()
             ["unit", "unit_ab", "existing_units", unparse_db_value(number_of_units_ts)],
         ]
         rel_pvals = [
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf],
             ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
@@ -401,9 +401,9 @@ function test_fix_ratio_out_in_unit_flow_simple()
         usf = 2.4
         url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_online_coefficient", fuoc],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "unit_start_flow", usf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_online_coefficient", fuoc],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_start_flow", usf],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -439,9 +439,9 @@ function test_fix_ratio_in_out_unit_flow_simple()
         usf = 2.4
         url_in =_test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         rel_pvals = [
-            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf],
-            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_online_coefficient", fuoc],
-            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "unit_start_flow", usf],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "flow_ratio_equality_coefficient", fruf],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "flow_ratio_equality_online_coefficient", fuoc],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "flow_ratio_start_flow", usf],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -481,8 +481,8 @@ function test_two_fix_ratio_out_in_unit_flow_simple()
             ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"]],
         ]
         rel_pvals = [
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf2],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf2],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -515,8 +515,8 @@ function test_two_fix_ratio_in_out_unit_flow_simple()
             ["unit_flow__unit_flow", ["node_a2", "unit_ab", "unit_ab", "node_b"]],
         ]
         rel_pvals = [
-            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf],
-            ["unit_flow__unit_flow", ["node_a2", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf2],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "flow_ratio_equality_coefficient", fruf],
+            ["unit_flow__unit_flow", ["node_a2", "unit_ab", "unit_ab", "node_b"], "flow_ratio_equality_coefficient", fruf2],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -549,8 +549,8 @@ function test_fix_ratio_out_in_and_in_out_unit_flow_simple()
             ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"]],
         ]
         rel_pvals = [
-            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "constraint_equality_flow_ratio", fruf],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf2],
+            ["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"], "flow_ratio_equality_coefficient", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf2],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -587,9 +587,9 @@ function test_two_fix_ratio_out_in_and_one_out_out_unit_flow_simple()
             ["unit_flow__unit_flow", ["unit_ab", "node_b3", "unit_ab", "node_b2"]],
         ]
         rel_pvals = [
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf2],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b3", "unit_ab", "node_b2"], "constraint_equality_flow_ratio", froouf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b2", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf2],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b3", "unit_ab", "node_b2"], "flow_ratio_equality_coefficient", froouf],
         ]
         import_data(url_in; objects=objs, relationships=rels, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
@@ -622,8 +622,8 @@ function test_fix_ratio_out_in_unit_flow_simple_rolling()
         url_in = _test_fix_ratio_unit_flow_simple_setup(m_start, m_end)
         obj_pvals = [("model", "instance", "roll_forward", unparse_db_value(Hour(1)))]
         rel_pvals = [
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_flow_ratio", fruf],
-            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "constraint_equality_online_coefficient", fuoc],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_coefficient", fruf],
+            ["unit_flow__unit_flow", ["unit_ab", "node_b", "node_a", "unit_ab"], "flow_ratio_equality_online_coefficient", fuoc],
         ]
         import_data(url_in; object_parameter_values=obj_pvals, relationship_parameter_values=rel_pvals)
         m = run_spineopt(url_in, nothing; log_level=0, optimize=true, update_names=true) do m

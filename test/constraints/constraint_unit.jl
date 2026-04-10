@@ -917,14 +917,14 @@ function test_constraint_ratio_unit_flow()
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
         classes_by_prefix = Dict("in" => "node__to_unit", "out" => "unit__to_node")
         ratios_by_prefix = Dict(
-            "min" => "constraint_greater_than_flow_ratio",
-            "fix" => "constraint_equality_flow_ratio",
-            "max" => "constraint_less_than_flow_ratio"
+            "min" => "flow_ratio_greater_than_coefficient",
+            "fix" => "flow_ratio_equality_coefficient",
+            "max" => "flow_ratio_less_than_coefficient"
         )
         coeffs_by_prefix = Dict(
-            "min" => "constraint_greater_than_online_coefficient",
-            "fix" => "constraint_equality_online_coefficient",
-            "max" => "constraint_less_than_online_coefficient"
+            "min" => "flow_ratio_greater_than_online_coefficient",
+            "fix" => "flow_ratio_equality_online_coefficient",
+            "max" => "flow_ratio_less_than_online_coefficient"
         )
         entity_inds_by_class = Dict("node__to_unit" => [2,1], "unit__to_node" => [1,2])
         @testset for (p, a, b) in (
@@ -953,7 +953,7 @@ function test_constraint_ratio_unit_flow()
             relationship_parameter_values =[
                 [class, relationship, ratio, flow_ratio],
                 [class, relationship, coeff, units_on_coeff],
-                [class, relationship, "unit_start_flow", start_flow],
+                [class, relationship, "flow_ratio_start_flow", start_flow],
             ]
             sense = senses_by_prefix[p]
             SpineInterface.import_data(
@@ -2048,18 +2048,18 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw" begin
         url_in = _test_constraint_unit_setup()
-        constraint_equality_online_coefficient = 200
-        unit_start_flow = 100
+        flow_ratio_equality_online_coefficient = 200
+        flow_ratio_start_flow = 100
         points = [0.1, 0.5, 1.0]
         inc_hrs = [10, 20, 30]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
-        constraint_equality_flow_ratio = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
+        flow_ratio_equality_coefficient = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
         relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "constraint_equality_flow_ratio", constraint_equality_flow_ratio],
-            [relationships[1]..., "constraint_equality_online_coefficient", constraint_equality_online_coefficient],
-            [relationships[1]..., "unit_start_flow", unit_start_flow],
+            [relationships[1]..., "flow_ratio_equality_coefficient", flow_ratio_equality_coefficient],
+            [relationships[1]..., "flow_ratio_equality_online_coefficient", flow_ratio_equality_online_coefficient],
+            [relationships[1]..., "flow_ratio_start_flow", flow_ratio_start_flow],
         ]
         SpineInterface.import_data(
             url_in;
@@ -2071,7 +2071,7 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:constraint_equality_flow_ratio]
+        constraint = m.ext[:spineopt].constraints[:flow_ratio_equality_coefficient]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -2082,9 +2082,9 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + constraint_equality_online_coefficient
+            + flow_ratio_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
-            + unit_start_flow * (
+            + flow_ratio_start_flow * (
                 + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                 + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
@@ -2098,17 +2098,17 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple" begin
         url_in = _test_constraint_unit_setup()
-        constraint_equality_online_coefficient = 200
-        unit_start_flow = 0
+        flow_ratio_equality_online_coefficient = 200
+        flow_ratio_start_flow = 0
         points = [0.1, 0.5, 1.0]
         inc_hrs = 10
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "constraint_equality_flow_ratio", inc_hrs],
-            [relationships[1]..., "constraint_equality_online_coefficient", constraint_equality_online_coefficient],
-            [relationships[1]..., "unit_start_flow", unit_start_flow],
+            [relationships[1]..., "flow_ratio_equality_coefficient", inc_hrs],
+            [relationships[1]..., "flow_ratio_equality_online_coefficient", flow_ratio_equality_online_coefficient],
+            [relationships[1]..., "flow_ratio_start_flow", flow_ratio_start_flow],
         ]
         SpineInterface.import_data(
             url_in;
@@ -2120,7 +2120,7 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:constraint_equality_flow_ratio]
+        constraint = m.ext[:spineopt].constraints[:flow_ratio_equality_coefficient]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -2131,7 +2131,7 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + constraint_equality_online_coefficient
+            + flow_ratio_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
         )
         con_key = (key_a..., key_b..., [s_parent, s_child], t2h)
@@ -2143,14 +2143,14 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple2" begin
         url_in = _test_constraint_unit_setup()
-        constraint_equality_online_coefficient = 200
-        unit_start_flow = 0
+        flow_ratio_equality_online_coefficient = 200
+        flow_ratio_start_flow = 0
         inc_hrs = 10
         relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
-            [relationships[1]..., "constraint_equality_flow_ratio", inc_hrs],
-            [relationships[1]..., "constraint_equality_online_coefficient", constraint_equality_online_coefficient],
-            [relationships[1]..., "unit_start_flow", unit_start_flow],
+            [relationships[1]..., "flow_ratio_equality_coefficient", inc_hrs],
+            [relationships[1]..., "flow_ratio_equality_online_coefficient", flow_ratio_equality_online_coefficient],
+            [relationships[1]..., "flow_ratio_start_flow", flow_ratio_start_flow],
         ]
         SpineInterface.import_data(
             url_in;
@@ -2162,7 +2162,7 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:constraint_equality_flow_ratio]
+        constraint = m.ext[:spineopt].constraints[:flow_ratio_equality_coefficient]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -2172,7 +2172,7 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
         expected_con = @build_constraint(
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             == 2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h]
-            + constraint_equality_online_coefficient
+            + flow_ratio_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
         )
         con_key = (key_a..., key_b..., [s_parent, s_child], t2h)

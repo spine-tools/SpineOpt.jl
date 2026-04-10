@@ -2656,49 +2656,49 @@
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_equality_flow_ratio",
+            "flow_ratio_equality_coefficient",
             null,
             null,
-            "Fix the ratio between two `unit_flows`."
+            "Coefficient defining the ratio between two `unit_flow`s for a strict equality like `uf1/uf2=X`. Triggers flow ratio equality constraint generation."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_equality_online_coefficient",
+            "flow_ratio_equality_online_coefficient",
             0.0,
             null,
-            "Optional coefficient for the `units_on` variable impacting the `fix_ratio_unit_flow` constraint."
+            "Optional coefficient for the `units_on` variable impacting the `flow_ratio_equality_coefficient` constraint."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_greater_than_flow_ratio",
+            "flow_ratio_greater_than_coefficient",
             null,
             null,
-            "Minimum ratio between two `unit_flows`."
+            "Coefficient defining the ratio between two `unit_flow`s for an inequality like `uf1/uf2>=X`. Triggers flow ratio inequality constraint generation."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_greater_than_online_coefficient",
+            "flow_ratio_greater_than_online_coefficient",
             0.0,
             null,
-            "Optional coefficient for the `units_on` variable impacting the `min_ratio_unit_flow` constraint."
+            "Optional coefficient for the `units_on` variable impacting the `flow_ratio_greater_than_coefficient` constraint."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_less_than_flow_ratio",
+            "flow_ratio_less_than_coefficient",
             null,
             null,
-            "Maximum ratio between two `unit_flows`."
+            "Coefficient defining the ratio between two `unit_flow`s for an inequality like `uf1/uf2<=X`. Triggers flow ratio inequality constraint generation."
         ],
         [
             "unit_flow__unit_flow",
-            "constraint_less_than_online_coefficient",
+            "flow_ratio_less_than_online_coefficient",
             0.0,
             null,
-            "Optional coefficient for the `units_on` variable impacting the `max_ratio_unit_flow` constraint."
+            "Optional coefficient for the `units_on` variable impacting the `flow_ratio_less_than_coefficient` constraint."
         ],
         [
             "unit_flow__unit_flow",
-            "unit_start_flow",
+            "flow_ratio_start_flow",
             0.0,
             null,
             "Enforces additional flow for the first `unit_flow` based on the `units_started_up`."
@@ -3064,27 +3064,7 @@
         ],
         [
             "output",
-            "constraint_fix_ratio_in_in_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_in_out_unit_flow",
-            null
-        ],
-        [
-            "output",
             "constraint_fix_ratio_out_in_connection_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_out_in_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_out_out_unit_flow",
             null
         ],
         [
@@ -3095,6 +3075,21 @@
         [
             "output",
             "constraint_flow_limits_min_cumulative",
+            null
+        ],
+        [
+            "output",
+            "constraint_flow_ratio_equality_coefficient",
+            null
+        ],
+        [
+            "output",
+            "constraint_flow_ratio_greater_than_coefficient",
+            null
+        ],
+        [
+            "output",
+            "constraint_flow_ratio_less_than_coefficient",
             null
         ],
         [
@@ -3134,37 +3129,7 @@
         ],
         [
             "output",
-            "constraint_max_ratio_in_in_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_max_ratio_in_out_unit_flow",
-            null
-        ],
-        [
-            "output",
             "constraint_max_ratio_out_in_connection_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_max_ratio_out_in_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_max_ratio_out_out_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_max_total_cumulated_unit_flow_from_node",
-            null
-        ],
-        [
-            "output",
-            "constraint_max_total_cumulated_unit_flow_to_node",
             null
         ],
         [
@@ -3189,42 +3154,12 @@
         ],
         [
             "output",
-            "constraint_min_ratio_in_in_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_min_ratio_in_out_unit_flow",
-            null
-        ],
-        [
-            "output",
             "constraint_min_ratio_out_in_connection_flow",
             null
         ],
         [
             "output",
-            "constraint_min_ratio_out_in_unit_flow",
-            null
-        ],
-        [
-            "output",
-            "constraint_min_ratio_out_out_unit_flow",
-            null
-        ],
-        [
-            "output",
             "constraint_min_scheduled_outage_duration",
-            null
-        ],
-        [
-            "output",
-            "constraint_min_total_cumulated_unit_flow_from_node",
-            null
-        ],
-        [
-            "output",
-            "constraint_min_total_cumulated_unit_flow_to_node",
             null
         ],
         [
@@ -3424,11 +3359,6 @@
         ],
         [
             "output",
-            "node_state_longterm",
-            null
-        ],
-        [
-            "output",
             "node_voltage_angle",
             null
         ],
@@ -3445,11 +3375,6 @@
         [
             "output",
             "objective_penalties",
-            null
-        ],
-        [
-            "output",
-            "ramp_costs",
             null
         ],
         [
@@ -3565,11 +3490,6 @@
         [
             "output",
             "unit_tech_discount_factor",
-            null
-        ],
-        [
-            "output",
-            "units_available",
             null
         ],
         [
@@ -5158,35 +5078,7 @@
         ],
         [
             "output",
-            "constraint_fix_ratio_in_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_in_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
             "constraint_fix_ratio_out_in_connection_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_out_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_fix_ratio_out_out_unit_flow",
             "output_type",
             "constraint_dual",
             "Base"
@@ -5201,6 +5093,27 @@
         [
             "output",
             "constraint_flow_limits_min_cumulative",
+            "output_type",
+            "constraint_dual",
+            "Base"
+        ],
+        [
+            "output",
+            "constraint_flow_ratio_equality_coefficient",
+            "output_type",
+            "constraint_dual",
+            "Base"
+        ],
+        [
+            "output",
+            "constraint_flow_ratio_greater_than_coefficient",
+            "output_type",
+            "constraint_dual",
+            "Base"
+        ],
+        [
+            "output",
+            "constraint_flow_ratio_less_than_coefficient",
             "output_type",
             "constraint_dual",
             "Base"
@@ -5256,49 +5169,7 @@
         ],
         [
             "output",
-            "constraint_max_ratio_in_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_in_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
             "constraint_max_ratio_out_in_connection_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_out_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_ratio_out_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_total_cumulated_unit_flow_from_node",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_max_total_cumulated_unit_flow_to_node",
             "output_type",
             "constraint_dual",
             "Base"
@@ -5333,20 +5204,6 @@
         ],
         [
             "output",
-            "constraint_min_ratio_in_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_ratio_in_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
             "constraint_min_ratio_out_in_connection_flow",
             "output_type",
             "constraint_dual",
@@ -5354,35 +5211,7 @@
         ],
         [
             "output",
-            "constraint_min_ratio_out_in_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_ratio_out_out_unit_flow",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
             "constraint_min_scheduled_outage_duration",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_total_cumulated_unit_flow_from_node",
-            "output_type",
-            "constraint_dual",
-            "Base"
-        ],
-        [
-            "output",
-            "constraint_min_total_cumulated_unit_flow_to_node",
             "output_type",
             "constraint_dual",
             "Base"
@@ -5656,13 +5485,6 @@
         [
             "output",
             "node_state",
-            "output_type",
-            "variable",
-            "Base"
-        ],
-        [
-            "output",
-            "node_state_longterm",
             "output_type",
             "variable",
             "Base"
@@ -6030,7 +5852,7 @@
                 "fuel_node",
                 "power_plant_a"
             ],
-            "constraint_equality_flow_ratio",
+            "flow_ratio_equality_coefficient",
             0.7,
             "Base"
         ],
@@ -6042,7 +5864,7 @@
                 "fuel_node",
                 "power_plant_b"
             ],
-            "constraint_equality_flow_ratio",
+            "flow_ratio_equality_coefficient",
             0.8,
             "Base"
         ]

@@ -53,10 +53,10 @@ Three nodes are required to represent this system: an `electricity` node, a `car
 
 Further we introduce the `unit_flow__unit_flow` relationships between `carbon_unit__carbon_cap1__carbon_unit__electricity` and `carbon_unit__carbon_cap2__carbon_unit__electricity`. On these relationships, we will define the ratio between emissions and electricity production. In this fictious example, we will assume 0.5 units of emissions per unit of electricity.
 
-The `constraint_equality_flow_ratio` parameter will now be defined as a time varying parameter in the following way (*simplified representation of TimeSeries parameter*):
+The `flow_ratio_equality_coefficient` parameter will now be defined as a time varying parameter in the following way (*simplified representation of TimeSeries parameter*):
 
-`constraint_equality_flow_ratio(carbon_unit__carbon_cap1__carbon_unit__electricity)` = [2025: 0.5; 2030: 0]
-`constraint_equality_flow_ratio(carbon_unit__carbon_cap2__carbon_unit__electricity)` = [2025: 0; 2030: 0.5]
+`flow_ratio_equality_coefficient(carbon_unit__carbon_cap1__carbon_unit__electricity)` = [2025: 0.5; 2030: 0]
+`flow_ratio_equality_coefficient(carbon_unit__carbon_cap2__carbon_unit__electricity)` = [2025: 0; 2030: 0.5]
 
 This way the first emission-cap node `carbon_cap1` can only be "filled" during the 2025-2030, while `carbon_cap2` can only be "filled" during the second period 2030-2035. 
 
