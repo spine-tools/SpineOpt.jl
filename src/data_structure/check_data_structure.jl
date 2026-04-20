@@ -227,8 +227,8 @@ function check_ramp_parameters()
     for param in (start_up_limit, shut_down_limit)
         # value greater than minimum_operating_point
         error_indices = [
-            (u, n, d) 
-            for (u, n, d) in intersect(indices(minimum_operating_point), indices(param)) 
+            (u, n, d)
+            for (u, n, d) in intersect(indices(minimum_operating_point), indices(param))
             if minimum_operating_point(unit=u, node=n, direction=d) > param(unit=u, node=n, direction=d)
         ]
         _check(
