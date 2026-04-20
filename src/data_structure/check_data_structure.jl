@@ -83,7 +83,7 @@ Check if at least one `node` is defined.
 """
 function check_node_object()
     _check(
-        !isempty(node()), "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model",
+        !isempty(node()), "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model"
     )
 end
 
@@ -184,7 +184,7 @@ function check_branching_before_rolling()
                 cond,
                 "invalid branching of `stochastic_structure` $ss before `model` $m rolls - ",
                 "please make sure that `stochastic_scenario_end` for `stochastic_scenario` $scen ",
-                "is larger than `roll_forward` for `model` $m",
+                "is larger than `roll_forward` for `model` $m"
             )
         end
     end
@@ -210,7 +210,7 @@ function check_operating_points()
     ]
     _check(
         isempty(error_indices),
-        "minimum operating point has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) ",
+        "minimum operating point has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
     )
 end
 
@@ -219,7 +219,7 @@ function check_ramp_parameters()
         # value between 0 and 1
         error_indices = [(u, n, d) for (u, n, d) in indices(param) if !(0 < param(unit=u, node=n, direction=d) <= 1)]
         _check(
-            isempty(error_indices), "$param has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) ",
+            isempty(error_indices), "$param has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
         )
     end
     # start_up_limit >= minimum_operating_point
@@ -227,12 +227,13 @@ function check_ramp_parameters()
     for param in (start_up_limit, shut_down_limit)
         # value greater than minimum_operating_point
         error_indices = [
-            (u, n, d) for (u, n, d) in intersect(indices(minimum_operating_point), indices(param)) if
-            minimum_operating_point(unit=u, node=n, direction=d) > param(unit=u, node=n, direction=d)
+            (u, n, d) 
+            for (u, n, d) in intersect(indices(minimum_operating_point), indices(param)) 
+            if minimum_operating_point(unit=u, node=n, direction=d) > param(unit=u, node=n, direction=d)
         ]
         _check(
             isempty(error_indices),
-            "$param must be greater or equal than minimum_operating_point for $(join(error_indices, ", ", " and ")) ",
+            "$param must be greater or equal than minimum_operating_point for $(join(error_indices, ", ", " and ")) "
         )
     end
     # start_up_limit <= minimum_operating_point + ramp_up_limit
@@ -250,7 +251,7 @@ function _check_startup_ramp_consistency()
     ]
     _check(
         isempty(error_indices),
-        "start_up_limit must be smaller or equal to minimum_operating_point + ramp_up_limit for $(join(error_indices, ", ", " and "))",
+        "start_up_limit must be smaller or equal to minimum_operating_point + ramp_up_limit for $(join(error_indices, ", ", " and "))"
     )
 end
 
@@ -263,6 +264,6 @@ function _check_shutdown_ramp_consistency()
     ]
     _check(
         isempty(error_indices),
-        "shut_down_limit must be smaller or equal to minimum_operating_point + ramp_down_limit for $(join(error_indices, ", ", " and "))",
+        "shut_down_limit must be smaller or equal to minimum_operating_point + ramp_down_limit for $(join(error_indices, ", ", " and "))"
     )
 end
