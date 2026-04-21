@@ -181,6 +181,15 @@ function _run_spineopt(
                 push!(stat_values, time_map)
             end
         end
+        termination_status = Dict(
+            string(_model_name(model)) => string(termination_status(model))
+            for model in models
+        )
+        if !isempty(termination_status)
+            termination_status_map = Map(collect(keys(termination_status)), collect(values(termination_status)))
+            push!(stat_keys, :termination_status)
+            push!(stat_values, termination_status_map)
+        end
         if master_model(m) !== nothing
             m_mp = master_model(m)
             gaps = m_mp.ext[:spineopt].benders_gaps
