@@ -222,6 +222,8 @@ function check_ramp_parameters()
             isempty(error_indices), "$param has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
         )
     end
+    # ramp_limits_startup >= minimum_operating_point
+    # ramp_limits_shutdown >= minimum_operating_point
     for param in (ramp_limits_startup, ramp_limits_shutdown)
         # value greater than minimum_operating_point
         error_indices = [
@@ -234,4 +236,34 @@ function check_ramp_parameters()
             "$param must be greater or equal than minimum_operating_point for $(join(error_indices, ", ", " and ")) "
         )
     end
+    # ramp_limits_startup <= minimum_operating_point + ramp_limits_up
+    _check_startup_ramp_consistency()
+    # ramp_limits_shutdown <= minimum_operating_point + ramp_limits_down
+    _check_shutdown_ramp_consistency()
+end
+
+function _check_startup_ramp_consistency()
+    relevant_indices = union(indices(ramp_limits_startup), indices(ramp_limits_up), indices(minimum_operating_point))
+    error_indices = [
+        (u, n, d) for (u, n, d) in relevant_indices 
+        if ramp_limits_startup(unit=u, node=n, direction=d, _default=1) >
+        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_limits_up(unit=u, node=n, direction=d, _default=1)
+    ]
+    _check(
+        isempty(error_indices),
+        "ramp_limits_startup must be smaller or equal to minimum_operating_point + ramp_limits_up for $(join(error_indices, ", ", " and "))"
+    )
+end
+
+function _check_shutdown_ramp_consistency()
+    relevant_indices = union(indices(ramp_limits_shutdown), indices(ramp_limits_down), indices(minimum_operating_point))
+    error_indices = [
+        (u, n, d) for (u, n, d) in relevant_indices 
+        if ramp_limits_shutdown(unit=u, node=n, direction=d, _default=1) >
+        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_limits_down(unit=u, node=n, direction=d, _default=1)
+    ]
+    _check(
+        isempty(error_indices),
+        "ramp_limits_shutdown must be smaller or equal to minimum_operating_point + ramp_limits_down for $(join(error_indices, ", ", " and "))"
+    )
 end
