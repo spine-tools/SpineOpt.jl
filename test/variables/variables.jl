@@ -763,6 +763,46 @@ function test_fix_ratio_out_in_connection_flow_simple_rolling()
     end
 end
 
+function test_investment_variable_type_none()
+    @testset "investment_variable_type_none" begin
+        # NOTE! Currently tests unit investment variables only!
+        url_in = _test_variable_unit_setup()
+        # Case 1: No investment triggering variables.
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        @test isempty(units_invested_available_indices(m))
+        # Case 2: Investments triggered via `investment_count_max_cumulative`
+        object_parameter_values = [
+            ["unit", "unit_ab", "investment_count_max_cumulative", 1],
+            ["connection", "connection_ab", "investment_count_max_cumulative", 1],
+            ["node", "node_a", "storage_investment_count_max_cumulative", 1],
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+            ["node__investment_temporal_block", ["node_a", "hourly"]],
+            ["node__investment_stochastic_structure", ["node_a", "stochastic"]],
+        ]
+        import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        @test !isempty(units_invested_available_indices(m))
+        # Case 3: Investments disabled using `investment_variable_type = none`
+        object_parameter_values = [
+            ["unit", "unit_ab", "investment_variable_type", "none"],
+            ["connection", "connection_ab", "investment_variable_type", "none"],
+            ["node", "node_a", "storage_investment_variable_type", "none"],
+        ]
+        import_data(url_in; object_parameter_values=object_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        @test isempty(units_invested_available_indices(m))
+    end
+end
+
 @testset "variables" begin
     test_online_count_initial()
     test_unit_online_variable_type_none()
@@ -779,4 +819,5 @@ end
     test_fix_ratio_out_in_unit_flow_simple_rolling()
     test_fix_ratio_out_in_connection_flow_simple()
     test_fix_ratio_out_in_connection_flow_simple_rolling()
+    test_investment_variable_type_none()
 end

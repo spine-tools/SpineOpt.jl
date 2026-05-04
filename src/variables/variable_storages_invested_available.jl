@@ -31,7 +31,7 @@ function storages_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    node = intersect(indices(storage_investment_count_max_cumulative), members(node))
+    node = intersect(SpineOpt.node(is_candidate=true), members(node))
     node_investment_stochastic_time_indices(
         m; node=node, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
