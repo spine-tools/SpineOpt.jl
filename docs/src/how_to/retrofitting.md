@@ -29,7 +29,7 @@ This way, "generator_A_retro" can only be invested in if "generator_A" is retire
 
 ### Model Structure
 
-For simplicity, the example model spans 20 hour with an hourly resolution for both operations and investment. Investment decisions are modelled as continuous value by defining the parameter `investment_variable_type`="continuous".
+For simplicity, the example model spans 20 hour with an hourly resolution for both operations and investment. Investment decisions are modelled as continuous value by defining the parameter `investment_variable_type = linear`.
 
 The complete model configuration is provided below:
 ![Complete model specification](./retrofit_material/example_1_system_complete.png)

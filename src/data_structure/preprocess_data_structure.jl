@@ -55,28 +55,32 @@ end
     generate_is_candidate()
 
 Generate `is_candidate` parameter for the `node`, `unit` and `connection` `ObjectClass`es.
-Note: `is_candidate` is `false` when `candidate_units/connections/storages` is set to 0 or not defined.
+Note: `is_candidate` is `false` when `candidate_units/connections/storages` is set to 0, not defined,
+or `investment_variable_type` is set to `none`.
 """
 function generate_is_candidate()
     add_object_parameter_values!(
         connection,
         Dict(
-            x => Dict(:is_candidate => parameter_value(true)) for
-            x in _nz_indices(investment_count_max_cumulative, connection)
+            c => Dict(:is_candidate => parameter_value(true)) for
+            c in _nz_indices(investment_count_max_cumulative, connection) if
+            investment_variable_type(connection=c) != :none
         ),
     )
     add_object_parameter_values!(
         unit,
         Dict(
-            x => Dict(:is_candidate => parameter_value(true)) for
-            x in _nz_indices(investment_count_max_cumulative, unit)
+            u => Dict(:is_candidate => parameter_value(true)) for
+            u in _nz_indices(investment_count_max_cumulative, unit) if
+            investment_variable_type(unit=u) != :none
         ),
     )
     add_object_parameter_values!(
         node,
         Dict(
-            x => Dict(:is_candidate => parameter_value(true)) for
-            x in _nz_indices(storage_investment_count_max_cumulative)
+            n => Dict(:is_candidate => parameter_value(true)) for
+            n in _nz_indices(storage_investment_count_max_cumulative, node) if
+            storage_investment_variable_type(node=n) != :none
         ),
     )
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
@@ -560,7 +564,7 @@ function expand_model__default_investment_temporal_block()
         unit__investment_temporal_block,
         [
             (u, tb) for u in setdiff(
-                indices(investment_count_max_cumulative, unit),
+                unit(is_candidate=true),
                 unit__investment_temporal_block(temporal_block=anything),
             ) for tb in model__default_investment_temporal_block(model=anything)
         ],
@@ -569,7 +573,7 @@ function expand_model__default_investment_temporal_block()
         connection__investment_temporal_block,
         [
             (conn, tb) for conn in setdiff(
-                indices(investment_count_max_cumulative, connection),
+                connection(is_candidate=true),
                 connection__investment_temporal_block(temporal_block=anything),
             ) for tb in model__default_investment_temporal_block(model=anything)
         ],
@@ -578,7 +582,7 @@ function expand_model__default_investment_temporal_block()
         node__investment_temporal_block,
         [
             (n, tb) for n in setdiff(
-                indices(storage_investment_count_max_cumulative),
+                node(is_candidate=true),
                 node__investment_temporal_block(temporal_block=anything),
             ) for tb in model__default_investment_temporal_block(model=anything)
         ],
@@ -598,7 +602,7 @@ function expand_model__default_investment_stochastic_structure()
         unit__investment_stochastic_structure,
         [
             (u, ss) for u in setdiff(
-                indices(investment_count_max_cumulative, unit),
+                unit(is_candidate=true),
                 unit__investment_stochastic_structure(stochastic_structure=anything),
             ) for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -607,7 +611,7 @@ function expand_model__default_investment_stochastic_structure()
         connection__investment_stochastic_structure,
         [
             (conn, ss) for conn in setdiff(
-                indices(investment_count_max_cumulative, connection),
+                connection(is_candidate=true),
                 connection__investment_stochastic_structure(stochastic_structure=anything),
             ) for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -616,7 +620,7 @@ function expand_model__default_investment_stochastic_structure()
         node__investment_stochastic_structure,
         [
             (n, ss) for n in setdiff(
-                indices(storage_investment_count_max_cumulative),
+                node(is_candidate=true),
                 node__investment_stochastic_structure(stochastic_structure=anything),
             ) for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -821,18 +825,17 @@ function generate_unit_commitment_parameters()
         Iterators.flatten((
             unit_with_switched_variable_set,
             unit_with_out_of_service_variable_set,
-            indices(units_on_cost),
-            indices(units_on_non_anticipativity_time),
-            indices(online_count_fix),
-            (u for u in indices(investment_count_max_cumulative, unit) if is_candidate(unit=u)),
-            (x.unit for x in indices(coefficient_for_units_on) if coefficient_for_units_on(; x...) != 0),
+            indices(units_on_cost, unit),
+            indices(units_on_non_anticipativity_time, unit),
+            indices(online_count_fix, unit),
+            unit(is_candidate=true),
             (x.unit for x in indices(coefficient_for_units_on) if coefficient_for_units_on(; x...) != 0),
             (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
             (x.unit for x in indices(ramp_limits_up)),
             (x.unit for x in indices(ramp_limits_down)),
             (u for (st, u) in stage__output__unit(output=output(:units_on))),
             !isempty(stage__output(output=output(:units_on))) ? unit() : (),
-            (u for u in indices(online_variable_type) if online_variable_type(unit=u) in (:binary, :integer)),
+            (u for u in unit() if online_variable_type(unit=u) in (:binary, :integer)), # TODO: Shouldn't this permit `linear` as well?
         )),
     )
     unit_without_online_variable_iter = (u for u in unit() if online_variable_type(unit=u) == :none)

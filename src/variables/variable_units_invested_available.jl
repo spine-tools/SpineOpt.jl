@@ -31,7 +31,7 @@ function units_invested_available_indices(
     t=anything,
     temporal_block=anything,
 )
-    unit = intersect(indices(investment_count_max_cumulative), members(unit))
+    unit = intersect(SpineOpt.unit(is_candidate=true), members(unit))
     unit_investment_stochastic_time_indices(
         m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )

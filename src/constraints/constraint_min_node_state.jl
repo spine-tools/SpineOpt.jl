@@ -82,7 +82,7 @@ end
 function constraint_min_node_state_indices(m::Model; longterm=false)
     (
         (node=ng, stochastic_path=path, t=t)
-        for ng in intersect(node(storage_active=true), indices(storage_state_max), indices(storage_investment_count_max_cumulative))
+        for ng in intersect(node(storage_active=true, is_candidate=true), indices(storage_state_max, node))
         for t in _node_state_time_slices(m, ng; longterm)
         if !_is_zero(node_state_lower_limit(m; node=ng, t=t, _strict=false))
         for path in active_stochastic_paths(

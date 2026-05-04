@@ -1,3 +1,7 @@
-The `variable_type_list` holds the possible values for the type of a [unit's](@ref unit) commitment status variable and the 
-the type of the investment variable of a [connection]@(ref), [node]@(ref) storage or [unit]@(ref). The value may be 
-chosen from binary, integer, linear or none. 
+The `variable_type_list` holds the possible values for different variable types,
+namely `none`, `linear`, `binary`, or `integer`.
+`none` can be used to remove the variables from the model.
+
+This parameter value list is used for a [connection]@(ref), [node]@(ref) storage or [unit]@(ref).
+Investment decision are handled via the [investment\_variable\_type](@ref) (unit and connection) and [storage\_investment\_variable\_type](@ref) (node) parameters.
+Units also include the [online\_variable\_type](@ref) and [outage\_variable\_type](@ref) parameters.
