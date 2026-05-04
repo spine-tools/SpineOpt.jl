@@ -10,7 +10,7 @@ investment decision variable in constraint `units_invested_available`. In constr
 the interpretation of `investment_count_max_cumulative` depends on [investment\_variable\_type](@ref) which determines 
 the [unit](@ref) investment decision variable type. If [investment\_variable\_type](@ref) is integer or binary, then 
 `investment_count_max_cumulative` represents the maximum number of discrete units that may be invested in. If 
-[investment\_variable\_type](@ref) is continuous, `investment_count_max_cumulative` is more analagous to a maximum 
+[investment\_variable\_type](@ref) is linear, `investment_count_max_cumulative` is more analagous to a maximum 
 storage capacity. Note that `investment_count_max_cumulative` is the main investment switch and setting a value other 
 than none/nothing triggers the creation of the investment variable for the [unit](@ref). Note that a value of zero will 
 still trigger the variable creation but its value will be fixed to zero. This can be useful if an inspection of the 

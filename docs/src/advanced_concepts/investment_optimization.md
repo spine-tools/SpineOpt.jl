@@ -94,19 +94,19 @@ If we have model that is not currently set up for investments and we wish to cre
 | `investment_count_max_cumulative` | `unit` | The number of additional `unit`s of this type that can be invested in
 | `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
 | `lifetime_technical` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
-| `investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
+| `investment_variable_type` | `unit` | Whether the `units_invested_available` variable is linear, integer or binary
 | `investment_count_fix_new` | `unit`| Fix the value of `units_invested`
 | `investment_count_fix_cumulative` | `unit` | Fix the value of `units_invested_available`
 | `investment_count_max_cumulative` | `connection` | The number of additional `connection`s of this type that can be invested in
 | `connection_investment_cost` | `connection` | The total overnight investment cost per candidate `connection` over the model horizon
 | `lifetime_technical` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
-| `investment_variable_type` | `connection` | Whether the `connections_invested_available` variable is continuous, integer or binary
+| `investment_variable_type` | `connection` | Whether the `connections_invested_available` variable is linear, integer or binary
 | `investment_count_fix_new` | `connection`| Fix the value of `connections_invested`
 | `investment_count_fix_cumulative` | `connection` | Fix the value of `connection_invested_available`
 | `storage_investment_count_max_cumulative` | `node` | The number of additional storages of this type that can be invested in at `node`
 | `storage_investment_cost` | `node` | The total overnight investment cost per candidate storage over the model horizon
 | `storage_lifetime_technical` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
-| `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is continuous, integer or binary
+| `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is linear, integer or binary
 | `storage_investment_count_fix_new` | `node`| Fix the value of `storages_invested`
 | `storage_investment_count_fix_cumulative` | `node` | Fix the value of `storages_invested_available`
 
