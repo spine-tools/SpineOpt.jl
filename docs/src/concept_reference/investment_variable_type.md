@@ -6,7 +6,7 @@ See the following for more details for connections and units, respectively.
 Connection: The [investment\_variable\_type](@ref) parameter represents the *type* of the 
 [connections\_invested\_available](@ref) decision variable. The default value, `integer`, means that only 
 integer factors of the [capacity\_per\_connection](@ref) can be invested in. The value `linear` means that 
-any fractional factor can also be invested in. The value `variable_type_binary` means that only a factor of 1 or zero 
+any fractional factor can also be invested in. The value `binary` means that only a factor of 1 or zero 
 are possible.
 
 Unit: Within an investments problem `investment_variable_type` determines the [unit](@ref) investment decision variable 
