@@ -160,9 +160,13 @@ function _run_spineopt(
         )
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
+    @log log_level 3 "\nSpineOpt model instance summary:"
+    log_level >= 3 && map(i -> print_active(m, i), [:variables, :objective_terms, :constraints])
+    @log log_level 3 "\nActive model outputs not included in the report:"
+    log_level >= 3 && map(println, hidden_active_outputs(m))
     t_end = now()
     elapsed_time_string = _elapsed_time_string(t_start, t_end)
-    @log log_level 1 "Execution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
+    @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     if url_out !== nothing
         stat_keys = [
             :SpineOpt_version, :SpineOpt_git_hash, :SpineInterface_version, :SpineInterface_git_hash, :elapsed_time
@@ -689,4 +693,37 @@ function _set_starting_point!(m, k=nothing)
             end
         end
     end
+end
+
+"""
+    print_active(m, field)
+
+Print active items of a field in the built SpineOpt model `m`.
+"""
+function print_active(m::JuMP.Model, field::Symbol)::Nothing
+    println("*** Active SpineOpt `$field`: ***")
+    foreach(println, active_spineopt_ext_items(m.ext[:spineopt], field))
+end
+
+"""
+    active_spineopt_ext_items(spineopt_ext, field)
+
+Active items of a field of an `SpineOptExt` instance.
+"""
+function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Symbol}
+    data = getproperty(spineopt_ext, field)
+    [key for key in keys(data) if !isnothing(data[key]) && !(isempty(data[key]) || isequal(data[key], (0, 0)))]
+end
+
+"""
+     hidden_active_outputs(m)
+
+Active model outputs that are not reported
+"""
+function hidden_active_outputs(m::JuMP.Model)::Vector{Symbol}
+    model_values = m.ext[:spineopt].values
+    model_outputs = m.ext[:spineopt].outputs
+    hidden_values = setdiff(keys(model_values), keys(model_outputs)) |> collect
+    active_values = active_spineopt_ext_items(m.ext[:spineopt], :values)
+    return intersect(hidden_values, active_values) |> collect
 end

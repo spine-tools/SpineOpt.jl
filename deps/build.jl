@@ -16,8 +16,12 @@ srcfile = joinpath(pkgroot, "src", "convenience_functions.jl")
 # - if it is NOT located under the hashed `.julia/packages` depot folder.
 if isdir(joinpath(pkgroot, ".git")) || !occursin("/.julia/packages/", lowercase(pkgroot_unix))
 	@info "Generating convenience_functions.jl for dev package installation at $pkgroot"
-	open(srcfile, "w") do io
-		write_interface(io, template)
+	try
+		open(srcfile, "w") do io
+			write_interface(io, template)
+		end
+	catch
+		@warn "Failed to generate convenience_functions.jl! Likely due to missing permissions."
 	end
 else
 	@info "Skipping generation of convenience_functions.jl for non-dev package installation at $pkgroot"
