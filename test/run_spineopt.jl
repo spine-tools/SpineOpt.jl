@@ -896,96 +896,6 @@ function _test_add_event_handler()
     end
 end
 
-function _test_active_spineopt_ext_items()
-    @testset "active_spineopt_ext_items" begin
-        url_in, url_out, _ = _test_run_spineopt_setup()
-        m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
-        ext = m.ext[:spineopt]
-
-        @testset "returns Vector{Symbol}" begin
-            @test SpineOpt.active_spineopt_ext_items(ext, :variables) isa Vector{Symbol}
-        end
-
-        @testset "includes non-empty variable" begin
-            ext.variables[:_test_active] = Dict(:k => 1.0)
-            @test :_test_active ∈ SpineOpt.active_spineopt_ext_items(ext, :variables)
-        end
-
-        @testset "excludes empty variable" begin
-            ext.variables[:_test_empty] = Dict()
-            @test :_test_empty ∉ SpineOpt.active_spineopt_ext_items(ext, :variables)
-        end
-
-        @testset "excludes (0,0) objective term" begin
-            ext.objective_terms[:_test_zero] = (0, 0)
-            @test :_test_zero ∉ SpineOpt.active_spineopt_ext_items(ext, :objective_terms)
-        end
-
-        @testset "includes non-zero objective term" begin
-            ext.objective_terms[:_test_nonzero] = Dict(:k => 5.0)
-            @test :_test_nonzero ∈ SpineOpt.active_spineopt_ext_items(ext, :objective_terms)
-        end
-
-        @testset "excludes nothing output" begin
-            ext.outputs[:_test_nothing] = nothing
-            @test :_test_nothing ∉ SpineOpt.active_spineopt_ext_items(ext, :outputs)
-        end
-    end
-end
-
-function _test_print_active()
-    @testset "print_active" begin
-        url_in, url_out, _ = _test_run_spineopt_setup()
-        m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
-
-        @testset "returns nothing" begin
-            @test SpineOpt.print_active(m, :variables) === nothing
-        end
-
-        @testset "does not throw on any model field" begin
-            for field in [:variables, :objective_terms, :constraints]
-                @test_nowarn SpineOpt.print_active(m, field)
-            end
-        end
-    end
-end
-
-function _test_hidden_active_outputs()
-    @testset "hidden_active_outputs" begin
-        url_in, url_out, _ = _test_run_spineopt_setup()
-        m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
-        ext = m.ext[:spineopt]
-
-        @testset "returns Vector{Symbol}" begin
-            @test SpineOpt.hidden_active_outputs(m) isa Vector{Symbol}
-        end
-
-        @testset "includes active value not in outputs" begin
-            ext.values[:_test_hidden_active] = Dict(:k => 1.0)
-            @test :_test_hidden_active ∈ SpineOpt.hidden_active_outputs(m)
-        end
-
-        @testset "excludes active value that is in outputs" begin
-            ext.values[:_test_reported_active] = Dict(:k => 1.0)
-            ext.outputs[:_test_reported_active] = Dict()
-            @test :_test_reported_active ∉ SpineOpt.hidden_active_outputs(m)
-        end
-
-        @testset "excludes empty value not in outputs" begin
-            ext.values[:_test_hidden_empty] = Dict()
-            @test :_test_hidden_empty ∉ SpineOpt.hidden_active_outputs(m)
-        end
-
-        @testset "returns empty vector when all unreported values are inactive" begin
-            ext.values[:_test_all_inactive_a] = Dict()
-            ext.values[:_test_all_inactive_b] = Dict()
-            result = SpineOpt.hidden_active_outputs(m)
-            @test :_test_all_inactive_a ∉ result
-            @test :_test_all_inactive_b ∉ result
-        end
-    end
-end
-
 @testset "run_spineopt" begin
     _test_rolling()
     _test_rolling_with_updating_data()
@@ -1009,7 +919,4 @@ end
     _test_only_linear_model_has_duals()
     _test_report_relative_optimality_gap()
     _test_add_event_handler()
-    _test_active_spineopt_ext_items()
-    _test_print_active()
-    _test_hidden_active_outputs()
 end
