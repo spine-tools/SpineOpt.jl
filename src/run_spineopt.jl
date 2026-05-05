@@ -721,5 +721,5 @@ Active model outputs that are not reported
 function hidden_active_outputs(m::JuMP.Model)::Vector{Symbol}
     spineopt_ext = m.ext[:spineopt]
     hidden_outputs = setdiff(keys(spineopt_ext.values), keys(spineopt_ext.outputs))
-    return intersect(hidden_outputs, active_spineopt_ext_items(spineopt_ext, :values)) |> sort
+    return intersect(hidden_outputs, active_spineopt_ext_items(spineopt_ext, :values)) |> collect |> sort
 end
