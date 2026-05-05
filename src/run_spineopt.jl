@@ -166,7 +166,7 @@ function _run_spineopt(
     log_level >= 3 && foreach(println, hidden_active_outputs(m))
     t_end = now()
     elapsed_time_string = _elapsed_time_string(t_start, t_end)
-    @log log_level 1 "Execution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
+    @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     if url_out !== nothing
         stat_keys = [
             :SpineOpt_version, :SpineOpt_git_hash, :SpineInterface_version, :SpineInterface_git_hash, :elapsed_time
