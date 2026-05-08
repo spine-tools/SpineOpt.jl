@@ -17,6 +17,9 @@ const stage = ObjectClass(:stage)
 const stochastic_scenario = ObjectClass(:stochastic_scenario)
 const stochastic_structure = ObjectClass(:stochastic_structure)
 const temporal_block = ObjectClass(:temporal_block)
+# NOTE: `starting_point` uses `:temporal_block` as its dimension (not `:starting_point`) and is
+# manually maintained here — the auto-generation via `deps/build.jl` cannot express this.
+const starting_point = ObjectClass(:temporal_block)
 const unit = ObjectClass(:unit)
 const user_constraint = ObjectClass(:user_constraint)
 ## Relationship classes
@@ -398,6 +401,7 @@ export stage
 export stochastic_scenario
 export stochastic_structure
 export temporal_block
+export starting_point
 export unit
 export user_constraint
 ## Relationship classes

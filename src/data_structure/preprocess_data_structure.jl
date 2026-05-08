@@ -871,28 +871,24 @@ function generate_starting_point()
     block_starting_point_relationships = [
         (blk, Object(string(blk.name, "_starting_point"), :temporal_block)) for blk in representative_blocks
     ]
-    starting_point_objects = last.(block_starting_point_relationships)
-    for obj in starting_point_objects
+    sp_objects = last.(block_starting_point_relationships)
+    for obj in sp_objects
         push!(obj.members, obj)
     end
-    starting_point_values = Dict(
-        obj => Dict(:has_free_start => parameter_value(false)) for obj in starting_point_objects
+    sp_values = Dict(
+        obj => Dict(:has_free_start => parameter_value(false)) for obj in sp_objects
     )
-    starting_point = ObjectClass(:temporal_block, starting_point_objects, starting_point_values)
+    merge!(starting_point.env_dict, ObjectClass(:temporal_block, sp_objects, sp_values).env_dict)
     add_relationships!( # TODO: Tasku: I think this might add `starting_point` objects into the `temporal_block` class, thus nullifying their "separation".
         node__temporal_block,
         [
-            (n, starting_point)
-            for (blk, starting_point) in block_starting_point_relationships
+            (n, sp_obj)
+            for (blk, sp_obj) in block_starting_point_relationships
             for n in node__temporal_block(temporal_block=[blk; groups(blk)])
         ]
     )
     push_class!(has_free_start, starting_point)
     add_relationships!(block__starting_point, block_starting_point_relationships)
-    @eval begin
-        starting_point = $starting_point
-        export starting_point
-    end
 end
 
 function generate_is_representative()
