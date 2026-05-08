@@ -212,6 +212,7 @@ const is_candidate = Parameter(:is_candidate)
 const is_longterm_storage = Parameter(:is_longterm_storage)
 const is_non_spinning = Parameter(:is_non_spinning)
 const is_renewable = Parameter(:is_renewable)
+const is_representative = Parameter(:is_representative)
 const is_reserve_node = Parameter(:is_reserve_node)
 const lodf = Parameter(:lodf)
 const max_cum_in_unit_flow_bound = Parameter(:max_cum_in_unit_flow_bound)
@@ -592,6 +593,7 @@ export is_candidate
 export is_longterm_storage
 export is_non_spinning
 export is_renewable
+export is_representative
 export is_reserve_node
 export lodf
 export max_cum_in_unit_flow_bound
