@@ -65,6 +65,7 @@ function generate_is_candidate()
     add_object_parameter_values!(
         node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in _nz_indices(candidate_storages))
     )
+    # TODO: Tasku: Are parameter defaults like these actually needed, or do we get them from `preprocessing_template.json`?
     add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
     add_object_parameter_defaults!(node, Dict(:is_candidate => parameter_value(false)))
@@ -850,6 +851,13 @@ This is possible in SpineInterface and helps with isolation
 (we don't want this starting point blocks to be treated entirely as normal `temporal_block`s)
 """
 function generate_starting_point()
+    # TODO: Tasku : This needs to change,
+    # `starting_point` as a weird extension to `temporal_block` doesn't work
+    # with the static interface as it currently is implemented.
+    # While it might be possible to hard-code it into `convenience_functions.jl` the way it is now,
+    # That file is automatically regenerated from the `preprocessing_template.json` whenever SpineOpt builds.
+    # I'd rather avoid implementing a custom workaraound for that specific class in SpineInterface.
+    # Maybe use a `is_starting_point` parameter to distinguish starting `temporal_blocks` instead?
     representative_blocks = unique(
         blk
         for coef_by_blk_by_start in values(_coef_by_representative_by_start_by_represented())
@@ -871,7 +879,7 @@ function generate_starting_point()
         obj => Dict(:has_free_start => parameter_value(false)) for obj in starting_point_objects
     )
     starting_point = ObjectClass(:temporal_block, starting_point_objects, starting_point_values)
-    add_relationships!(
+    add_relationships!( # TODO: Tasku: I think this might add `starting_point` objects into the `temporal_block` class, thus nullifying their "separation".
         node__temporal_block,
         [
             (n, starting_point)
@@ -897,9 +905,8 @@ function generate_is_representative()
             for blk in temporal_block()
         )
     )
-    is_representative = Parameter(:is_representative, [temporal_block])
-    @eval begin
-        is_representative = $is_representative
-        export is_representative
-    end
+    # TODO: Tasku: Not 100% sure this is needed or if we get these from `preprocessing_template.json`
+    add_object_parameter_defaults!(
+        temporal_block, Dict(:is_representative => parameter_value(false))
+    )
 end
