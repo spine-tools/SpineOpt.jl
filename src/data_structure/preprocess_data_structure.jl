@@ -871,19 +871,19 @@ function generate_starting_point()
     block_starting_point_relationships = [
         (blk, Object(string(blk.name, "_starting_point"), :temporal_block)) for blk in representative_blocks
     ]
-    sp_objects = last.(block_starting_point_relationships)
-    for obj in sp_objects
+    starting_point_objects = last.(block_starting_point_relationships)
+    for obj in starting_point_objects
         push!(obj.members, obj)
     end
-    sp_values = Dict(
-        obj => Dict(:has_free_start => parameter_value(false)) for obj in sp_objects
+    starting_point_values = Dict(
+        obj => Dict(:has_free_start => parameter_value(false)) for obj in starting_point_objects
     )
-    merge!(starting_point.env_dict, ObjectClass(:temporal_block, sp_objects, sp_values).env_dict)
+    merge!(starting_point.env_dict, ObjectClass(:temporal_block, starting_point_objects, starting_point_values).env_dict)
     add_relationships!( # TODO: Tasku: I think this might add `starting_point` objects into the `temporal_block` class, thus nullifying their "separation".
         node__temporal_block,
         [
-            (n, sp_obj)
-            for (blk, sp_obj) in block_starting_point_relationships
+            (n, starting_point)
+            for (blk, starting_point) in block_starting_point_relationships
             for n in node__temporal_block(temporal_block=[blk; groups(blk)])
         ]
     )
