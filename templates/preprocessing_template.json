@@ -4,8 +4,7 @@
         ["mga_iteration"],
         ["node_with_slack_penalty"],
         ["node_with_min_capacity_margin_penalty"],
-        ["benders_iteration"],
-        ["starting_point"]
+        ["benders_iteration"]
     ],
     "relationship_classes": [
         ["block__starting_point", ["temporal_block", "temporal_block"]],

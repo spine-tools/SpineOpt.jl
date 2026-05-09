@@ -20,6 +20,13 @@ if isdir(joinpath(pkgroot, ".git")) || !occursin("/.julia/packages/", lowercase(
 		open(srcfile, "w") do io
 			write_interface(io, template)
 		end
+		# `starting_point` must use ObjectClass(:temporal_block) as its class dimension (not
+		# :starting_point) so that parameter lookups like `has_free_start(temporal_block=blk)` correctly resolve it.
+		# The template format cannot express this, so we append it manually.
+		open(srcfile, "a") do io
+			write(io, "\n# NOTE: manually appended — see deps/build.jl for explanation.\n")
+			write(io, "const starting_point = ObjectClass(:temporal_block)\nexport starting_point\n")
+		end
 	catch
 		@warn "Failed to generate convenience_functions.jl! Likely due to missing permissions."
 	end
