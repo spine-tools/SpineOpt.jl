@@ -17,7 +17,7 @@ const stage = ObjectClass(:stage)
 const stochastic_scenario = ObjectClass(:stochastic_scenario)
 const stochastic_structure = ObjectClass(:stochastic_structure)
 const temporal_block = ObjectClass(:temporal_block)
-const starting_point = ObjectClass(:starting_point)
+const starting_point = ObjectClass(:temporal_block)
 const unit = ObjectClass(:unit)
 const user_constraint = ObjectClass(:user_constraint)
 ## Relationship classes
