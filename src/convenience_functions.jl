@@ -201,6 +201,7 @@ const is_boundary_node = Parameter(:is_boundary_node)
 const is_candidate = Parameter(:is_candidate)
 const is_non_spinning = Parameter(:is_non_spinning)
 const is_renewable = Parameter(:is_renewable)
+const is_representative = Parameter(:is_representative)
 const lead_time = Parameter(:lead_time)
 const lifetime_constraint_sense = Parameter(:lifetime_constraint_sense)
 const lifetime_economic = Parameter(:lifetime_economic)
@@ -545,6 +546,7 @@ export is_boundary_node
 export is_candidate
 export is_non_spinning
 export is_renewable
+export is_representative
 export lead_time
 export lifetime_constraint_sense
 export lifetime_economic
@@ -690,3 +692,7 @@ export write_ptdf_file
 const _spine_object_classes = Dict{Symbol,ObjectClass}()
 const _spine_relationship_classes = Dict{Symbol,RelationshipClass}()
 const _spine_parameters = Dict{Symbol,Parameter}()
+
+# NOTE: manually appended — see deps/build.jl for explanation.
+const starting_point = ObjectClass(:temporal_block)
+export starting_point

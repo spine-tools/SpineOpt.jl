@@ -161,9 +161,9 @@ function _run_spineopt(
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
     @log log_level 3 "\nSpineOpt model instance summary:"
-    log_level >= 3 && map(i -> print_active(m, i), [:variables, :objective_terms, :constraints])
+    log_level >= 3 && foreach(i -> print_active(m, i), [:variables, :objective_terms, :constraints])
     @log log_level 3 "\nActive model outputs not included in the report:"
-    log_level >= 3 && map(println, hidden_active_outputs(m))
+    log_level >= 3 && foreach(println, hidden_active_outputs(m))
     t_end = now()
     elapsed_time_string = _elapsed_time_string(t_start, t_end)
     @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
@@ -711,8 +711,11 @@ end
 Active items of a field of an `SpineOptExt` instance.
 """
 function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Symbol}
-    data = getproperty(spineopt_ext, field)
-    [key for key in keys(data) if !isnothing(data[key]) && !(isempty(data[key]) || isequal(data[key], (0, 0)))]
+    items = getproperty(spineopt_ext, field)
+    sort([
+        key for key in keys(items) 
+        if !isnothing(items[key]) && !isempty(items[key]) && !isequal(items[key], (0, 0))
+    ])
 end
 
 """
@@ -721,9 +724,7 @@ end
 Active model outputs that are not reported
 """
 function hidden_active_outputs(m::JuMP.Model)::Vector{Symbol}
-    model_values = m.ext[:spineopt].values
-    model_outputs = m.ext[:spineopt].outputs
-    hidden_values = setdiff(keys(model_values), keys(model_outputs)) |> collect
-    active_values = active_spineopt_ext_items(m.ext[:spineopt], :values)
-    return intersect(hidden_values, active_values) |> collect
+    spineopt_ext = m.ext[:spineopt]
+    hidden_outputs = setdiff(keys(spineopt_ext.values), keys(spineopt_ext.outputs))
+    return intersect(hidden_outputs, active_spineopt_ext_items(spineopt_ext, :values)) |> collect |> sort
 end

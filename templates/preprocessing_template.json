@@ -54,6 +54,7 @@
         ["unit", "unit_discounted_duration", null, null],
         ["unit", "unit_salvage_fraction", null, null],
         ["unit", "unit_tech_discount_factor", null, null],
+        ["temporal_block", "is_representative", false, "boolean_value_list"],
         ["ptdf_connection__node", "ptdf", null, null],
         ["ptdf_unfiltered_connection__node", "ptdf_unfiltered", null, null],
         ["lodf_connection__connection", "lodf", null, null]
