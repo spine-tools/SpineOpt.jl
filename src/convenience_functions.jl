@@ -17,7 +17,6 @@ const stage = ObjectClass(:stage)
 const stochastic_scenario = ObjectClass(:stochastic_scenario)
 const stochastic_structure = ObjectClass(:stochastic_structure)
 const temporal_block = ObjectClass(:temporal_block)
-const starting_point = ObjectClass(:temporal_block)
 const unit = ObjectClass(:unit)
 const user_constraint = ObjectClass(:user_constraint)
 ## Relationship classes
@@ -399,7 +398,6 @@ export stage
 export stochastic_scenario
 export stochastic_structure
 export temporal_block
-export starting_point
 export unit
 export user_constraint
 ## Relationship classes
@@ -766,3 +764,7 @@ export write_ptdf_file
 const _spine_object_classes = Dict{Symbol,ObjectClass}()
 const _spine_relationship_classes = Dict{Symbol,RelationshipClass}()
 const _spine_parameters = Dict{Symbol,Parameter}()
+
+# NOTE: manually appended — see deps/build.jl for explanation.
+const starting_point = ObjectClass(:temporal_block)
+export starting_point
