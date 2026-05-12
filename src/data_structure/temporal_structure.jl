@@ -192,13 +192,13 @@ end
 
 function _coef_by_representative_by_start_by_represented()
     representative_blk_by_index = Dict()
-    for blk in indices(representative_period_index)
-        index = round(Int, representative_period_index(temporal_block=blk))
+    for blk in indices(representative_block_index)
+        index = round(Int, representative_block_index(temporal_block=blk))
         existing_blk = get(representative_blk_by_index, index, nothing)
         if existing_blk !== nothing
             error(
                 "representative blocks `$blk` and `$existing_blk` cannot have the same index `$index` \
-                - each representative block must have a unique `representative_period_index`"
+                - each representative block must have a unique `representative_block_index`"
             )
         end
         representative_blk_by_index[index] = blk
@@ -206,9 +206,9 @@ function _coef_by_representative_by_start_by_represented()
     Dict(
         represented_blk => Dict(
             t_start => _coefficient_by_representative_block(repr_comb, representative_blk_by_index)
-            for (t_start, repr_comb) in representative_periods_mapping(temporal_block=represented_blk)
+            for (t_start, repr_comb) in representative_blocks_by_period(temporal_block=represented_blk)
         )
-        for represented_blk in indices(representative_periods_mapping)
+        for represented_blk in indices(representative_blocks_by_period)
     )
 end
 
@@ -286,11 +286,10 @@ function _required_history_duration(m)
     lookback_params = (
         min_up_time,
         min_down_time,
-        scheduled_outage_duration,
+        outage_scheduled_duration,
         connection_flow_delay,
-        unit_investment_tech_lifetime,
-        connection_investment_tech_lifetime,
-        storage_investment_tech_lifetime,
+        lifetime_technical,
+        storage_lifetime_technical,
     )
     max_vals = (maximum_parameter_value(p) for p in lookback_params)
     init = _model_duration_unit(m)(1)  # Dynamics always require at least 1 duration unit of history
@@ -706,7 +705,7 @@ end
 
 function _to_time_slice_from_set(t_set; t::TimeSlice)
     in_blocks = (s for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
-    in_gaps = if isempty(indices(representative_periods_mapping))
+    in_gaps = if isempty(indices(representative_blocks_by_period))
         _to_time_slice(t_set.bridges, t_set.gaps, t)
     else
         ()

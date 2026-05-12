@@ -91,14 +91,12 @@ function add_variable!(
     )
     history_vars_by_ind = Dict(
         ind => [
-            history_var
-            for history_var in (get(vars, history_ind, nothing) for history_ind in indices(m; ind..., t=history_t))
-            if history_var !== nothing
-        ]
-        for (ind, history_t) in (
-            (ind, t_history_t(m; t=ind.t)) for ind in indices(m; t=time_slice(m)) if haskey(ind, :t)
-        )
-        if history_t !== nothing
+            history_var for
+            history_var in (get(vars, history_ind, nothing) for history_ind in indices(m; ind..., t=history_t)) if
+            history_var !== nothing
+        ] for (ind, history_t) in
+        ((ind, t_history_t(m; t=ind.t)) for ind in indices(m; t=time_slice(m)) if haskey(ind, :t)) if
+        history_t !== nothing
     )
     m.ext[:spineopt].variables_definition[name] = def = _variable_definition(
         indices=indices,
@@ -142,7 +140,7 @@ end
 _nothing_if_empty(p::Parameter) = isempty(indices(p)) ? nothing : p
 _nothing_if_empty(x) = x
 
-_add_variable!(m, name, ind) = @variable(m, base_name=_base_name(name, ind))
+_add_variable!(m, name, ind) = @variable(m, base_name = _base_name(name, ind))
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
@@ -192,9 +190,8 @@ end
 
 function _resolve_formula(m, formula)
     sum(
-        coeff * _get_var_with_replacement(m, ref_name, ref_ind)
-        for (ref_name, reference_index_to_coef) in formula
-        for (ref_ind, coeff) in reference_index_to_coef
+        coeff * _get_var_with_replacement(m, ref_name, ref_ind) for (ref_name, reference_index_to_coef) in formula for
+        (ref_ind, coeff) in reference_index_to_coef
     )
 end
 
@@ -278,17 +275,17 @@ function _fix(var::VariableRef, value::Number)
     end
 end
 
+
 function _is_longterm_index(ind)
     if haskey(ind, :node)
         _is_longterm_node(ind.node)
     elseif haskey(ind, :unit)
-        nodes = (n for unit__node in (unit__from_node, unit__to_node) for (n, _d) in unit__node(unit=ind.unit))
-        any(_is_longterm_node(n) for n in nodes)
+        any(_is_longterm_node(n) for (n, _d) in unit__node__direction(unit=ind.unit))
     else
         true
     end
 end
 
 function _is_longterm_node(n)
-    has_state(node=n) && is_longterm_storage(node=n)
+    storage_active(node=n) && storage_longterm_active(node=n)
 end

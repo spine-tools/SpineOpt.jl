@@ -31,6 +31,6 @@ function add_variable_units_taken_out_of_service!(m::Model)
         lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        required_history_period=maximum_parameter_value(scheduled_outage_duration),
+        required_history_period=maximum_parameter_value(outage_scheduled_duration),
     )
 end

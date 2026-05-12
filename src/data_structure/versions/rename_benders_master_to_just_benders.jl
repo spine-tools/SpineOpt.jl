@@ -18,11 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-	rename_benders_master_to_just_benders(db_url)
+	rename_benders_master_to_just_benders(db_url, log_level; kwargs...)
 
 Rename `spineopt_benders_master` to `spineopt_benders`.
 """
-function rename_benders_master_to_just_benders(db_url, log_level)
+function rename_benders_master_to_just_benders(db_url, log_level; kwargs...)
 	@log log_level 0 "Renaming `spineopt_benders_master` to `spineopt_benders`"
 	data = run_request(db_url, "query", ("list_value_sq", "parameter_value_list_sq"))
 	model_type_list_ids = [x["id"] for x in data["parameter_value_list_sq"] if x["name"] == "model_type_list"]

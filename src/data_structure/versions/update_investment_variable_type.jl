@@ -19,12 +19,12 @@
 #############################################################################
 
 """
-	update_investment_variable_type(db_url)
+	update_investment_variable_type(db_url, log_level; kwargs...)
 
 Update parameter value lists and default values for connection_investment_variable_type and
 storage_investment_variable_type.
 """
-function update_investment_variable_type(db_url, log_level)
+function update_investment_variable_type(db_url, log_level; kwargs...)
 	new_value_by_old_value_by_pname = Dict(
 		"connection_investment_variable_type" => Dict(
 			"variable_type_continuous" => "connection_investment_variable_type_continuous",

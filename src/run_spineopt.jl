@@ -207,7 +207,7 @@ function _run_spineopt(
                         :benders_iteration_count,
                     ],
                 )
-                benders_stat_values = if report_benders_iterations(model=m.ext[:spineopt].instance, _default=false)
+                benders_stat_values = if benders_iterations_reporting_active(model=m.ext[:spineopt].instance, _default=false)
                     lbs = m_mp.ext[:spineopt].objective_lower_bounds
                     ubs = m_mp.ext[:spineopt].objective_upper_bounds
                     [lbs, ubs, gaps, length(gaps)]
@@ -341,9 +341,9 @@ function _check_version(url_in::String; log_level, upgrade)
 end
 _check_version(data::Dict; kwargs...) = nothing
 
-function _do_upgrade_db(url_in, version; log_level)
+function _do_upgrade_db(url_in, version; log_level, force::Bool=false)
     @log log_level 0 "Upgrading data structure to the latest version... "
-    run_migrations(url_in, version, log_level)
+    run_migrations(url_in, version, log_level; force)
     @log log_level 0 "Done!"
 end
 
@@ -456,20 +456,20 @@ _solver(f::Function, ::Nothing) = f()
 
 function _db_mip_solver(instance)
     _db_solver(
-        db_mip_solver(model=instance, _strict=false),
-        db_mip_solver_options(model=instance, _strict=false)
+        solver_mip(model=instance, _strict=false),
+        solver_mip_options(model=instance, _strict=false)
     ) do
-        @warn "no `db_mip_solver` parameter was found for model `$instance` - using the default instead"
+        @warn "no `solver_mip` parameter was found for model `$instance` - using the default instead"
         optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "on", "output_flag" => false, "mip_rel_gap" => 0.01)
     end
 end
 
 function _db_lp_solver(instance)
     _db_solver(
-        db_lp_solver(model=instance, _strict=false),
-        db_lp_solver_options(model=instance, _strict=false)
+        solver_lp(model=instance, _strict=false),
+        solver_lp_options(model=instance, _strict=false)
     ) do
-        @warn "no `db_lp_solver` parameter was found for model `$instance` - using the default instead"
+        @warn "no `solver_lp` parameter was found for model `$instance` - using the default instead"
         optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "on", "output_flag" => false)
     end
 end
@@ -612,14 +612,19 @@ A stage model associated to given model.
 stage_model(m, stage_name::Symbol) = get(m.ext[:spineopt].model_by_stage, stage(stage_name), nothing)
 
 """
-    upgrade_db(url_in; log_level=3)
+    upgrade_db(url_in; log_level=3, version=nothing, force::Bool=false)
 
 Upgrade the data structure in `url_in` to latest.
+
+The `version` (Int) keyword forces the migration to start at a specific number if given,
+while `force=true` suppresses some errors and warnings in migration to try and force output.
 """
-function upgrade_db(url_in; log_level=3)
-    version = find_version(url_in)
-    if version < current_version()
-        _do_upgrade_db(url_in, version; log_level)
+function upgrade_db(url_in; log_level=3, version=nothing, force::Bool=false)
+    if isnothing(version)
+        version = find_version(url_in)
+    end
+    if version::Int < current_version()
+        _do_upgrade_db(url_in, version; log_level, force)
     end
 end
 

@@ -21,10 +21,10 @@ Once we have our setup, we can take a look at the economic representation in Spi
 - [multiyear\_economic\_discounting](@ref): activation value in a choice between `consecutive_years` and `milestone_years`, with the default value being `null` (`None` in a SpineDB and `nothing` in Julia). When a valid value is selected, the model will use its internally-calculated parameters for discounting investment and operation costs. Specifically, choosing `consecutive_years` requires the model to use continous operational temporal blocks, and thus the operation cost will be discounted every year. In constrast, choosing `milestone_years` means the model will discount the operation cost as per the investment temporal block.  
 - [discount\_rate](@ref): the rate you would like to discount your costs with.
 - [discount\_year](@ref): the year you would like to discount your costs to.
-- [unit\_investment\_tech\_lifetime](@ref): using units as an example, this is the technical lifetime of the unit.
-- [unit\_investment\_econ\_lifetime](@ref): using units as an example, this is the economic lifetime of the unit which is used to calculate the economic parameters.
-- [optional] [unit\_discount\_rate\_technology\_specific](@ref): using units as an example, this is used if you would like to have a specific discount rate different from [discount\_rate](@ref).
-- [optional] [unit\_lead\_time](@ref): if not specified, the default lead time is 0. 
+- [lifetime\_technical](@ref): using units as an example, this is the technical lifetime of the unit.
+- [lifetime\_economic](@ref): using units as an example, this is the economic lifetime of the unit which is used to calculate the economic parameters.
+- [optional] [discount\_rate\_technology\_specific](@ref): using units as an example, this is used if you would like to have a specific discount rate different from [discount\_rate](@ref).
+- [optional] [lead\_time](@ref): if not specified, the default lead time is 0. 
 - [unit\_investment\_cost](@ref): using unit as an example, this is the investment cost for the investment year. When [multiyear\_economic\_discounting](@ref) is not used (i.e. with the default value `null`), then this cost that you put will not be discounted at all. However, when you choose a valid value of [multiyear\_economic\_discounting](@ref), SpineOpt will discount this cost to the [discount\_year](@ref) using [discount\_rate](@ref).
 
 To be able to see the values of the economic parameters after a run, you have to add them to the report. 

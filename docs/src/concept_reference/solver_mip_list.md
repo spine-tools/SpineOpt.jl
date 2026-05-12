@@ -1,0 +1,2 @@
+Parameter value list `solver_mip_list` represents the list of supported MIP solvers which may be specified for the [solver\_mip\_options](@ref) parameter.
+The value must correspond exactly to the name of the Julia solver package (e.g. `Cbc.jl`) and is case sensitive.

@@ -109,15 +109,15 @@ Let's consider the input data where the *power\_plant\_a* has a ramping limit of
 - In *Relationship tree*, expand the *unit\_\_to_node* class and select *power\_plant\_a | electricity\_node*.
 
 - In the *Relationship parameter* table:
-  - Select the *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
+  - Select the *ramp\_limits\_up* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
 
-  - Select the *ramp\_down\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping down limit for *power\_plant\_a*.
+  - Select the *ramp\_limits\_down* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping down limit for *power\_plant\_a*.
 
   - Select the *minimum\_operating\_point* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the minimum operating point for *power\_plant\_a*.
 
-  - Select the *start\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the startup capacity limit for *power\_plant\_a*.
+  - Select the *ramp\_limits\_startup* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the startup capacity limit for *power\_plant\_a*.
 
-  - Select the *shut\_down\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the shutdown capacity limit for *power\_plant\_a*.
+  - Select the *ramp\_limits\_shutdown* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the shutdown capacity limit for *power\_plant\_a*.
 
 ![image](figs_ramping/ramping_plant_a_ramp_limits.png)
 
@@ -155,7 +155,7 @@ It is important to note that the optimal solution we have calculated assumes tha
 
 - In *Relationship tree*, expand the *unit\_\_to_node* class and select *power\_plant\_a | electricity\_node*.
 
-- In the *Relationship parameter* table, select the *initial\_unit\_flow* parameter and the *Base* alternative, and enter the value *0.0* as seen in the image below. This will set the initial flow for *power\_plant\_a*.
+- In the *Relationship parameter* table, select the *flow\_limits\_initial* parameter and the *Base* alternative, and enter the value *0.0* as seen in the image below. This will set the initial flow for *power\_plant\_a*.
 
 ![image](figs_ramping/ramping_plant_a_initial_flow.png)
 

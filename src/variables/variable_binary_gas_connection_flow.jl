@@ -39,8 +39,8 @@ function binary_gas_connection_flow_indices(
 )
     connection_flow_indices(
         m;
-        connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
-        node=intersect(members(node), SpineOpt.node(has_state=false)),
+        connection=intersect(connection, SpineOpt.connection(binary_gas_flow_active=true)),
+        node=intersect(members(node), SpineOpt.node(storage_active=false)),
         stochastic_scenario=stochastic_scenario,
         direction=direction,
         t=t,
@@ -59,7 +59,7 @@ function add_variable_binary_gas_connection_flow!(m::Model)
         :binary_gas_connection_flow,
         binary_gas_connection_flow_indices;
         bin=(x -> true),
-        fix_value=fix_binary_gas_connection_flow,
-        initial_value=initial_binary_gas_connection_flow,
+        fix_value=binary_gas_flow_limits_fix,
+        initial_value=binary_gas_flow_limits_initial,
     )
 end

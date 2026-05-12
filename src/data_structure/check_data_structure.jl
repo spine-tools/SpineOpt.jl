@@ -152,18 +152,18 @@ end
 """
     check_minimum_operating_point_unit_capacity()
 
-Check if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
+Check if every defined `minimum_operating_point` parameter has a corresponding `capacity_per_unit` parameter defined.
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
         (u, n, d)
         for (u, n, d) in indices(minimum_operating_point)
-        if unit_capacity(unit=u, node=n, direction=d) === nothing
+        if capacity_per_unit(unit=u, node=n, direction=d) === nothing
     ]
     _check(
         isempty(error_indices),
-        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) - ",
-        "`unit_capacity` must be specified where `minimum_operating_point` is",
+        "missing `capacity_per_unit` value for indices: $(join(error_indices, ", ", " and ")) - ",
+        "`capacity_per_unit` must be specified where `minimum_operating_point` is",
     )
 end
 
@@ -215,16 +215,16 @@ function check_operating_points()
 end
 
 function check_ramp_parameters()
-    for param in (ramp_up_limit, ramp_down_limit, start_up_limit, shut_down_limit)
+    for param in (ramp_limits_up, ramp_limits_down, ramp_limits_startup, ramp_limits_shutdown)
         # value between 0 and 1
         error_indices = [(u, n, d) for (u, n, d) in indices(param) if !(0 < param(unit=u, node=n, direction=d) <= 1)]
         _check(
             isempty(error_indices), "$param has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
         )
     end
-    # start_up_limit >= minimum_operating_point
-    # shut_down_limit >= minimum_operating_point
-    for param in (start_up_limit, shut_down_limit)
+    # ramp_limits_startup >= minimum_operating_point
+    # ramp_limits_shutdown >= minimum_operating_point
+    for param in (ramp_limits_startup, ramp_limits_shutdown)
         # value greater than minimum_operating_point
         error_indices = [
             (u, n, d)
@@ -236,34 +236,34 @@ function check_ramp_parameters()
             "$param must be greater or equal than minimum_operating_point for $(join(error_indices, ", ", " and ")) "
         )
     end
-    # start_up_limit <= minimum_operating_point + ramp_up_limit
+    # ramp_limits_startup <= minimum_operating_point + ramp_limits_up
     _check_startup_ramp_consistency()
-    # shut_down_limit <= minimum_operating_point + ramp_down_limit
+    # ramp_limits_shutdown <= minimum_operating_point + ramp_limits_down
     _check_shutdown_ramp_consistency()
 end
 
 function _check_startup_ramp_consistency()
-    relevant_indices = union(indices(start_up_limit), indices(ramp_up_limit), indices(minimum_operating_point))
+    relevant_indices = union(indices(ramp_limits_startup), indices(ramp_limits_up), indices(minimum_operating_point))
     error_indices = [
         (u, n, d) for (u, n, d) in relevant_indices 
-        if start_up_limit(unit=u, node=n, direction=d, _default=1) >
-        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_up_limit(unit=u, node=n, direction=d, _default=1)
+        if ramp_limits_startup(unit=u, node=n, direction=d, _default=1) >
+        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_limits_up(unit=u, node=n, direction=d, _default=1)
     ]
     _check(
         isempty(error_indices),
-        "start_up_limit must be smaller or equal to minimum_operating_point + ramp_up_limit for $(join(error_indices, ", ", " and "))"
+        "ramp_limits_startup must be smaller or equal to minimum_operating_point + ramp_limits_up for $(join(error_indices, ", ", " and "))"
     )
 end
 
 function _check_shutdown_ramp_consistency()
-    relevant_indices = union(indices(shut_down_limit), indices(ramp_down_limit), indices(minimum_operating_point))
+    relevant_indices = union(indices(ramp_limits_shutdown), indices(ramp_limits_down), indices(minimum_operating_point))
     error_indices = [
         (u, n, d) for (u, n, d) in relevant_indices 
-        if shut_down_limit(unit=u, node=n, direction=d, _default=1) >
-        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_down_limit(unit=u, node=n, direction=d, _default=1)
+        if ramp_limits_shutdown(unit=u, node=n, direction=d, _default=1) >
+        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_limits_down(unit=u, node=n, direction=d, _default=1)
     ]
     _check(
         isempty(error_indices),
-        "shut_down_limit must be smaller or equal to minimum_operating_point + ramp_down_limit for $(join(error_indices, ", ", " and "))"
+        "ramp_limits_shutdown must be smaller or equal to minimum_operating_point + ramp_limits_down for $(join(error_indices, ", ", " and "))"
     )
 end

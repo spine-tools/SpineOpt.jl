@@ -19,18 +19,18 @@
 #############################################################################
 
 @doc raw"""
-The aggregated available units are constrained by the parameter [number\_of\_units](@ref)
+The aggregated available units are constrained by the parameter [existing\_units](@ref)
 , the variable number of invested units [units\_invested\_available](@ref) less the number of units on outage [units\_out\_of\_service](@ref):
 
 ```math
 \begin{aligned}
-& v^{units\_available}_{(u,s,t)} \leq p^{number\_of\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} + v^{units\_out\_of\_service}_{(u,s,t)}\\
+& v^{units\_available}_{(u,s,t)} \leq p^{existing\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u,s,t)} + v^{units\_out\_of\_service}_{(u,s,t)}\\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}
 ```
 
-See also [number\_of\_units](@ref).
+See also [existing\_units](@ref).
 """
 function add_constraint_units_available!(m::Model)
     _add_constraint!(m, :units_available, constraint_units_available_indices, _build_constraint_units_available)
@@ -41,9 +41,12 @@ function _build_constraint_units_available(m, u, s, t)
     @build_constraint(
         + sum(
             + units_on[u, s, t]
-            + ifelse(units_unavailable(m; unit=u, stochastic_scenario=s, t=t) > 0, 0, 1)
-            * _get_units_out_of_service(m, u, s, t)
             for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+            init=0,
+        )
+        + sum(
+            + units_out_of_service[u, s, t]
+            for (u, s, t) in units_out_of_service_indices(m; unit=u, stochastic_scenario=s, t=t);
             init=0,
         )
         - sum(
@@ -54,10 +57,14 @@ function _build_constraint_units_available(m, u, s, t)
             init=0,
         )
         <=
-        # Change the default `number_of_units` so that it is zero when candidate units are present
+        # Change the default `existing_units` so that it is zero when candidate units are present
         # and otherwise 1.
-        + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
-        - units_unavailable(m; unit=u, stochastic_scenario=s, t=t)
+        + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+        - ifelse(
+            !has_out_of_service_variable(unit=u), 
+            out_of_service_count_fix(m; unit=u, stochastic_scenario=s, t=t, _default=0), 
+            0
+        )
     )
 end
 

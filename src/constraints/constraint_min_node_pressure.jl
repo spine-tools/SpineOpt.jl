@@ -19,18 +19,18 @@
 #############################################################################
 
 @doc raw"""
-In order to impose a lower limit on the pressure at a node the parameter [min\_node\_pressure](@ref)
+In order to impose a lower limit on the pressure at a node the parameter [pressure\_min](@ref)
 can be specified which triggers the following constraint:
 
 ```math
-\sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \geq p^{min\_node\_pressure}_{(ng,s,t)}
-\quad \forall (ng) \in indices(p^{min\_node\_pressure}), \, \forall (s,t)
+\sum_{n \in ng} v^{node\_pressure}_{(n,s,t)} \geq p^{pressure\_min}_{(ng,s,t)}
+\quad \forall (ng) \in indices(p^{pressure\_min}), \, \forall (s,t)
 ```
 
-As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group,
+As indicated in the equation, the parameter [pressure\_min](@ref) can also be defined on a node group,
 in order to impose a lower limit on the aggregated [node\_pressure](@ref) within one node group.
 
-See also [min\_node\_pressure](@ref).
+See also [pressure\_min](@ref).
 """
 function add_constraint_min_node_pressure!(m::Model)
     _add_constraint!(m, :min_node_pressure, constraint_min_node_pressure_indices, _build_constraint_min_node_pressure)
@@ -41,7 +41,7 @@ function _build_constraint_min_node_pressure(m::Model, ng, s_path, t)
     @build_constraint(
         sum(
             + node_pressure[ng, s, t]
-            - min_node_pressure(m; node=ng, stochastic_scenario=s, t=t)
+            - pressure_min(m; node=ng, stochastic_scenario=s, t=t)
             for (ng, s, t) in node_pressure_indices(m; node=ng, stochastic_scenario=s_path, t=t);
             init=0,
         )
@@ -51,7 +51,7 @@ function _build_constraint_min_node_pressure(m::Model, ng, s_path, t)
 end
 
 function constraint_min_node_pressure_indices(m::Model)
-    ((node=ng, stochastic_path=[s], t=t) for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure)))
+    ((node=ng, stochastic_path=[s], t=t) for (ng, s, t) in node_pressure_indices(m; node=indices(pressure_min)))
 end
 
 """
