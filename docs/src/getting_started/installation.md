@@ -10,7 +10,7 @@ The process consists of a few simple steps:
 * Install SpineOpt
 * Configure Spine Toolbox for SpineOpt
 
-The figures below are a summary of this process that will be further explained in the following sections. Take note of the path in which the terminal is openend, i.e. an environments folder in a spinetools folder, as well as the environments that are active, indicated by the brackets at the start of the line, e.g. (jenv). Also note that the code in the image is for Linux; for Windows the terminal will look a bit different and the line `source penv/bin/activate` needs to be replaced by `call penv\Scripts\activate`.
+The figures below are a summary of this process that will be further explained in the following sections. Take note of the path in which the terminal is opened, i.e. an environments folder in a spinetools folder, as well as the environments that are active, indicated by the brackets at the start of the line, e.g. (jenv). Also note that the code in the image is for Linux; for Windows the terminal will look a bit different and the line `source penv/bin/activate` needs to be replaced by `call penv\Scripts\activate`.
 
 ![Install spine tools](figs_installation/install_spinetools.png)
 
@@ -28,6 +28,8 @@ julia --version
 
 !!! warning
     We try to keep up with the latest versions of these programming languages. But sometimes we need a little time.
+
+    On Linux, Python often comes pre-installed. However, that Python version is sometimes modified for the operating system. These modifications may cause seemingly inexplicable behaviour in Spine Toolbox. Therefore, even though it is often fine to use a virtual environment in the system's Python, it may be better to install an additional pure Python version.
 
 !!! tip
     [Juliaup](https://github.com/JuliaLang/juliaup) is a cross platform julia installer and is the recommended way to install and manage your Julia installation.
