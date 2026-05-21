@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "stochastic structure" begin
+function _load_stochastic_structure_test_data()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -155,10 +155,13 @@
         ],
     )
     _load_test_data(url_in, test_data)
-    using_spinedb(url_in, SpineOpt)
-    
-    m = run_spineopt(url_in, log_level=0, optimize=false)
+    return url_in
+end
 
+function _test_stochastic_structure()
+    url_in = _load_stochastic_structure_test_data()
+    using_spinedb(url_in, SpineOpt)
+    m = run_spineopt(url_in, log_level=0, optimize=false)
     @testset "node_stochastic_time_indices" begin
         @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 1
         @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))) == 2
@@ -237,4 +240,8 @@
             ),
         ) == 0.0
     end
+end
+
+@testset "stochastic structure" begin
+    _test_stochastic_structure()
 end
