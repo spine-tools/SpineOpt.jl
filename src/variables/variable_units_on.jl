@@ -54,14 +54,8 @@ function units_switched_indices(
     temporal_block=temporal_block(is_representative=true),
 )
     unit = intersect(unit, _unit_with_switched_variable())
-    (
-        (unit=u, stochastic_scenario=s, t=t) for (u, s, t) in unit_stochastic_time_indices(
-            m;
-            unit=unit,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=temporal_block,
-            t=t,
-        )
+    unit_stochastic_time_indices(
+        m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
     )
 end
 

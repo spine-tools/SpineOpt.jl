@@ -35,7 +35,38 @@ It might just be a matter of time before the projects are updated. In the meanwh
 
 You can also try another version from the [installation](@ref installation) options.
 
-## Julia 1.5 UUID ERROR
+## Windows 11 access denied or restricted policy
+
+If you encounter issues with permissions of running files, be it the installation or running of a script, you may need to contact your IT department to ask for a safe folder to install and run spine tools in. On a personal computer, 'smart app control' may not always be that smart and unrightfully block parts of the application. Unfortunately the onlys solution in that case is to turn the smart app control off.
+
+## Windows 7
+
+On Windows 7, installation fails with the following message (or similar):
+
+```julia
+julia>  pkg"add SpineOpt"
+...
+Downloading artifact: OpenBLAS32
+Exception setting "SecurityProtocol": "Cannot convert null to type "System.Net.
+SecurityProtocolType" due to invalid enumeration values. Specify one of the fol
+lowing enumeration values and try again. The possible enumeration values are "S
+sl3, Tls"."
+At line:1 char:35
++ [System.Net.ServicePointManager]:: <<<< SecurityProtocol =
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : PropertyAssignmentException
+...
+```
+
+The solution:
+
+1. Install .NET 4.5 from here: https://www.microsoft.com/en-US/download/details.aspx?id=30653.
+
+2. Install Windows management framework 3 or later, from here https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf/overview?view=powershell-7.1.
+
+3. Try to install SpineOpt again.
+
+## Windows Julia 1.5 UUID ERROR
 
 Using Julia 1.5.3 on Windows, installation fails with one of the following messages (or similar):
 
@@ -75,30 +106,3 @@ The solution is to update the julia registry and install SpineOpt again.
 
 Note that `SpineJuliaRegistry` has been discontinued, and SpineOpt is available in the general julia registry.
 The above instructions make mention of it for backwards compatibility only.
-
-## Windows 7
-
-On Windows 7, installation fails with the following message (or similar):
-
-```julia
-julia>  pkg"add SpineOpt"
-...
-Downloading artifact: OpenBLAS32
-Exception setting "SecurityProtocol": "Cannot convert null to type "System.Net.
-SecurityProtocolType" due to invalid enumeration values. Specify one of the fol
-lowing enumeration values and try again. The possible enumeration values are "S
-sl3, Tls"."
-At line:1 char:35
-+ [System.Net.ServicePointManager]:: <<<< SecurityProtocol =
-    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
-    + FullyQualifiedErrorId : PropertyAssignmentException
-...
-```
-
-The solution:
-
-1. Install .NET 4.5 from here: https://www.microsoft.com/en-US/download/details.aspx?id=30653.
-
-2. Install Windows management framework 3 or later, from here https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf/overview?view=powershell-7.1.
-
-3. Try to install SpineOpt again.
