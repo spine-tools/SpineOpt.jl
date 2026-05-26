@@ -1744,7 +1744,7 @@
         [
             "connection",
             "investment_variable_type",
-            "integer",
+            "linear",
             "variable_type_list",
             "A selector for the type of the connection investment variable (`connections_invested`): whether it is continuous (usually representing invested capacity) or integer (representing discrete 'sub connection' investments)."
         ],
@@ -2736,7 +2736,7 @@
         [
             "node",
             "storage_investment_variable_type",
-            "integer",
+            "linear",
             "variable_type_list",
             "A selector for the type of the storage investment variable (`storages_invested`): whether it is continuous (usually representing invested capacity) or integer (representing discrete 'sub storage' investments)."
         ],
