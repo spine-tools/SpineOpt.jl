@@ -108,12 +108,18 @@ function add_variable_units_on!(m::Model)
     )
 end
 
+"""
+    _get_units_on(m, u, s, t)
+
+Safe get `units_on` variable for the given indices,
+replaced with `existing_units` plus [`_get_units_invested_available`](@ref)
+if `units_on` doesn't exist.
+"""
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        existing_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+        (
+            existing_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+            + _get_units_invested_available(m, u, s, t)
+        )
     end
-end
-
-function _get_units_started_up(m, u, s, t)
-    get(m.ext[:spineopt].variables[:units_started_up], (u, s, t), 0)
 end

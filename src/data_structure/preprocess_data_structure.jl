@@ -779,11 +779,11 @@ function generate_unit_commitment_parameters()
     starts = [model_start(model=m) for m in models]
     instance = models[argmin(starts)]
     dur_unit = _model_duration_unit(instance)
-    dur_value = parameter_value(dur_unit(1))
+    dur_value = parameter_value(dur_unit(1)) # Tasku: I'm guessing this is to avoid simulateous startups and shutdowns?
 
-    for u in indices(online_variable_type)
+    for u in unit() # Tasku: `indices(online_variable_type)` is pointless overhead when there's a default value.
         unit_var_type = online_variable_type(unit=u)
-        if unit_var_type in (:binary, :integer)
+        if unit_var_type in (:binary, :integer) # Tasku: `:linear` not included? Online variables seem to be omitted if possible?
             min_up = min_up_time(unit=u)
             min_down = min_down_time(unit=u)
             params_to_add = Dict()
@@ -798,6 +798,7 @@ function generate_unit_commitment_parameters()
             end
         end
     end
+    # Tasku: These seem to deduce when startup/shutdown/outage/online variables are needed in the formulation.
     unit_with_switched_variable_set = unique(
         Iterators.flatten((
             indices(min_up_time),
@@ -836,11 +837,11 @@ function generate_unit_commitment_parameters()
             (x.unit for x in indices(ramp_limits_down)),
             (u for (st, u) in stage__output__unit(output=output(:units_on))),
             !isempty(stage__output(output=output(:units_on))) ? unit() : (),
-            (u for u in unit() if online_variable_type(unit=u) in (:binary, :integer)), # TODO: Shouldn't this permit `linear` as well?
+            (u for u in unit() if online_variable_type(unit=u) in (:binary, :integer)), # Tasku: Again, `:linear` is omitted if possible?
         )),
     )
-    unit_without_online_variable_iter = (u for u in unit() if online_variable_type(unit=u) == :none)
-    unit_without_out_of_service_variable_iter = (u for u in unit() if outage_variable_type(unit=u) == :none)
+    unit_without_online_variable_iter = unit(online_variable_type=:none)
+    unit_without_out_of_service_variable_iter = unit(outage_variable_type=:none)
     setdiff!(unit_with_switched_variable_set, unit_without_online_variable_iter)
     setdiff!(unit_with_out_of_service_variable_set, unit_without_out_of_service_variable_iter)
     setdiff!(unit_with_online_variable_set, unit_without_online_variable_iter)
