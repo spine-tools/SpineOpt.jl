@@ -16,16 +16,75 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-# TODO: as proposed in the wiki on groups: We should be able to support
-# a) node_balance for node group and NO balance for underlying node
-# b) node_balance for node group AND balance for underlying node
 
 """
     add_constraint_nodal_balance!(m::Model)
 
-AC OPF reactive power balance equation for nodes.
+    AC OPF reactive power balance equation for nodes.
 """
+
 function add_constraint_nodal_reactive_balance!(m::Model)
+    _add_constraint!(m, :nodal_reactive_balance, constraint_nodal_reactive_balance_indices, 
+        _build_constraint_nodal_reactive_balance)
+end
+
+function _build_constraint_nodal_reactive_balance(m, n, s, t1)
+    @fetch unit_flow_reactive, connection_flow_reactive = m.ext[:spineopt].variables
+
+    @build_constraint(
+        # Reactive power flows from connections (can be negative)
+            + sum(
+                connection_flow_reactive[conn, n1, d, s, t]
+                for (conn, n1, d, s, t) in connection_reactive_flow_indices(
+                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t1
+                )
+                if !_issubset(
+                    connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
+                );
+                init=0,
+            )
+            # Reactive power to connections (can be negative)
+            - sum(
+                connection_flow_reactive[conn, n1, d, s, t]
+                for (conn, n1, d, s, t) in connection_reactive_flow_indices(
+                    m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t1
+                )
+                if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
+                init=0,
+            )
+
+            # Flows from units (i.e. reactive power production)
+            + sum(
+                unit_flow_reactive[u, n, d, s, t_short]
+                for (u, n, d, s, t_short) in unit_flow_reactive_indices(
+                    m;
+                    node=n,
+                    direction=direction(:to_node),
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t1),
+                    temporal_block=anything,
+                );
+                init=0,
+            )
+            # Flows to units  (i.e. reactive power absorption)
+            - sum(
+                unit_flow_reactive[u, n, d, s, t_short]
+                for (u, n, d, s, t_short) in unit_flow_reactive_indices(
+                    m;
+                    node=n,
+                    direction=direction(:from_node),
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t1),
+                    temporal_block=anything,
+                );
+                init=0,
+            )
+            == demand_reactive(m; node=n, stochastic_scenario=s, t=t1)
+    )
+end
+
+
+function add_constraint_nodal_reactive_balance_old!(m::Model)
     @fetch unit_flow_reactive, connection_flow_reactive = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
 
@@ -90,3 +149,11 @@ function add_constraint_nodal_reactive_balance!(m::Model)
     )
 end
 
+function constraint_nodal_reactive_balance_indices(m)
+    (
+        (node=n, stochastic_scenario=s, t=t)
+        for n in node()
+        if has_voltage(node=n) == true
+        for (n, s, t) in node_injection_indices(m; node=n)
+    )
+end

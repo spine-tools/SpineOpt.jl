@@ -24,6 +24,36 @@ Limit the maximum in/out `unit_flow_reactive` of a `unit` for all `unit_capacity
 
 """
 function add_constraint_unit_flow_capacity_reactive!(m::Model)
+    _add_constraint!(m, :unit_flow_capacity_reactive, constraint_unit_flow_capacity_reactive_indices, 
+        _build_constraint_unit_flow_capacity_reactive)
+end
+
+function _build_constraint_unit_flow_capacity_reactive(m, u, ng, d, s, t)
+    @fetch unit_flow_reactive, units_on = m.ext[:spineopt].variables
+    
+    @build_constraint(
+        sum(
+                unit_flow_reactive[u, n, d, s, t] * duration(t)
+                for (u, n, d, s, t) in unit_flow_reactive_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                )
+                if !is_non_spinning(node=n);
+                init=0,
+        )
+        <=
+        + sum(
+                units_on[u, s, t1]
+                * min(duration(t1), duration(t))
+                * unit_availability_factor(m, unit=u, stochastic_scenario=s, t=t)
+                * unit_capacity_reactive(m, unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+                * unit_conv_cap_to_flow(m, unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                init=0,
+        )      
+    )
+end
+
+function add_constraint_unit_flow_capacity_reactive_old!(m::Model)
     @fetch unit_flow_reactive, units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_capacity_reactive] = Dict(
