@@ -74,8 +74,6 @@ add_constraint_connection_flow_real!(m::Model)
 Limit the maximum in/out `connection_flow` of a `connection`, referring to the
 real power transfer, for all `connection_flow_voltage` indices based on the voltages 
 which are defined for pairs of nodes in the voltage variables.
-
-
 """
 function add_constraint_connection_flow_real!(m::Model)
     @fetch connection_flow, node_voltageproduct_cosine,
