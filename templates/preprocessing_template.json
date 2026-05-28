@@ -45,7 +45,8 @@
         ["unit", "unit_decommissioning_conversion_to_discounted_annuities", null, null],
         ["unit", "unit_discounted_duration", null, null],
         ["unit", "unit_salvage_fraction", null, null],
-        ["unit", "unit_tech_discount_factor", null, null]
+        ["unit", "unit_tech_discount_factor", null, null],
+        ["temporal_block", "is_representative", false, "boolean_value_list"]
     ],
     "relationship_parameters": [
         ["ptdf_connection__node", "ptdf", null, null],

@@ -5,6 +5,13 @@
 
 A Julia package containing a state-of-the-art energy system optimization model.
 
+## Why use SpineOpt?
+
+![Critical Review](.github/figs/1-s2.0-S2211467X2300086X-gr9.jpg)
+
+`Lorenzo Laveneziana, Matteo Prussi, David Chiaramonti, Critical review of energy planning models for the sustainable development at company level, Energy Strategy Reviews, Volume 49, 2023, 101136, ISSN 2211-467X,
+https://doi.org/10.1016/j.esr.2023.101136.(https://www.sciencedirect.com/science/article/pii/S2211467X2300086X)`
+
 ## :loudspeaker: Community and how to ask help :rocket:
 
 There are several ways to stay in touch with the community and to get help with SpineOpt.
