@@ -124,7 +124,7 @@ function constraint_minimum_operating_point_indices(m::Model)
         for (u, ng, d) in indices(minimum_operating_point)
         if minimum_operating_point(; unit=u, node=ng, direction=d) != 0
         for (t, path) in t_lowest_resolution_path(
-            m, unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u)
+            m, unit_flow_indices(m; unit=u, node=ng, direction=d), _get_units_on_indices(m, u)
         )
     )
 end

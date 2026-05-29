@@ -184,15 +184,47 @@ function test_unit_online_variable_type_none()
             ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=true)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         constraint_u_avail = m.ext[:spineopt].constraints[:units_available]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        u = unit(:unit_ab)
         @testset for (s, t) in zip(scenarios, time_slices)
-            key = (unit(:unit_ab), s, t)
+            key = (u, s, t)
             @test_throws KeyError var_units_on[key...]
             @test_throws KeyError constraint_u_avail[key...]
+            @test SpineOpt._get_units_on(m, key...) == existing_units(unit=u)
+            @test SpineOpt._get_units_invested_available(m, key...) == 0
+        end
+    end
+    @testset "unit_online_variable_type_none_with_investments" begin
+        url_in = _test_variable_unit_setup()
+        object_parameter_values = [
+            ["unit", "unit_ab", "online_variable_type", "none"],
+            ["unit", "unit_ab", "investment_count_max_cumulative", 1],
+            ["unit", "unit_ab", "existing_units", 1],
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        SpineInterface.import_data(
+            url_in; object_parameter_values=object_parameter_values, relationships=relationships
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+        constraint_u_avail = m.ext[:spineopt].constraints[:units_available]
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        u = unit(:unit_ab)
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (u, s, t)
+            @test_throws KeyError var_units_on[key...]
+            @test_throws KeyError constraint_u_avail[key...]
+            @test SpineOpt._get_units_on(m, u, s, t) == var_units_invested_available[key...] + existing_units(unit=u)
+            @test SpineOpt._get_units_invested_available(m, key...) == var_units_invested_available[key...]
         end
     end
 end

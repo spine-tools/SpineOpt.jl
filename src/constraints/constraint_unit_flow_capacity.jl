@@ -212,7 +212,7 @@ function constraint_unit_flow_capacity_tight_compact_indices(m::Model)
             m,
             Iterators.flatten(
                 (
-                    units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_next]),
+                    _get_units_on_indices(m, u; t=[t_overlaps_t(m; t=t); t_next]),
                     unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
                     _switch(
                         d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
@@ -279,7 +279,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(capacity_per_unit)
-        if has_online_variable(unit=u) || members(ng) != [ng]
+        if has_online_variable(unit=u) || is_candidate(unit=u) || members(ng) != [ng]
         for t in t_highest_resolution(
             m,
             Iterators.flatten(
@@ -290,7 +290,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
             m,
             Iterators.flatten(
                 (
-                    units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t)),
+                    _get_units_on_indices(m, u; t=t_overlaps_t(m; t=t)),
                     unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
                 )
             )

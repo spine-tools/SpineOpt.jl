@@ -208,7 +208,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio)
             unit_flow_indices(m; unit=u2, node=[n1, n2]), # What is this doing?
             unit_flow_indices(m; unit=u1, node=n1, direction=d1),
             unit_flow_indices(m; unit=u2, node=n2, direction=d2),
-            units_on_indices(m; unit=u2),
+            _get_units_on_indices(m, u2),
         )
     )
 end

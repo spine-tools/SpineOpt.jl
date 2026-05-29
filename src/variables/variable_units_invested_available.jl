@@ -73,3 +73,16 @@ function add_variable_units_invested_available!(m::Model)
         required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end
+
+"""
+    _get_units_invested_available(m, u, s, t)
+
+Safe get `units_invested_available` variable for the given indices,
+replaced with 0 in cases where the investment variable doesn't exist.
+
+Intended to be used in situations where `units_invested_available` is required
+but one cannot ensure its existance.
+"""
+function _get_units_invested_available(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_invested_available], (u, s, t), 0)
+end
