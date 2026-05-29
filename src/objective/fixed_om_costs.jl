@@ -27,12 +27,12 @@ function fixed_om_costs(m, t_range)
     @fetch units_invested_available = m.ext[:spineopt].variables
     @expression(
         m,
-        sum(
+        sum( # Fixed costs for units.
             + capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
             * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
             * (
                 + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
-                + (is_candidate(unit=u) ? units_invested_available[u, s, t] : 0)
+                + _get_units_invested_available(m, u, s, t)
                 # Default value of `existing_units` is 1 in the template: assumption for non-investable units.
                 # For investable unit, we assume the `existing_units`=0 (existing ones) unless explicitly specified.
             )
@@ -57,8 +57,38 @@ function fixed_om_costs(m, t_range)
                     ((u, s, t) for (u, _n, _d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)),
                 )
             );
-            init=0,
+            init=0, # No fixed costs if none defined.
+        )
+        + sum( # Fixed costs for storages. (Mimicks the above unit costs)
+            node_state_capacity(m; node=n, stochastic_scenario=s, t=t)
+            * _storage_fixed_costs_per_duration_unit(m, n, s, t)
+            * (
+                existing_storages(m; node=n, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
+                + _get_storages_invested_available(m, n, s, t)
+            )
+            * (
+                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
+                node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] * discounted_duration_base(t) : 
+                duration(t)
+            )
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+            for n in indices(storage_fixed_annual_cost)
+            for (n, s, t) in (
+                is_candidate(node=n) ?
+                storages_invested_available_indices(m; node=n, t=t_range) :
+                node_stochastic_time_indices(m; node=n, t=t_range)
+            );
+            init=0, # No fixed costs if none defined.
         )
     )
 end
 #TODO: scenario tree?
+
+function _storage_fixed_costs_per_duration_unit(m::Model, n, s, t)
+    dur_unit = _model_duration_unit(m)
+    return (
+        storage_fixed_annual_cost(node=n, stochastic_scenario=s, t=t)
+        / dur_unit(Hour(8760)).value # TODO: Is 8760 an acceptable assumption for the length of a year? Do we have a parameter for this?
+    )
+end

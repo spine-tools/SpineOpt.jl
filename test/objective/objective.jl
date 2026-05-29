@@ -214,6 +214,84 @@ function test_fom_cost_case_2b()
     end
 end
 
+function test_storage_fixed_annual_cost()
+    storage_state_max = 100
+    fom_per_dur_unit = 1
+    storage_fixed_annual_cost = fom_per_dur_unit * 8760
+    existing_storages = 1
+    storage_investment_count_max_cumulative = 2
+    weight_relative_to_parents = 0.6
+    @testset "storage_fixed_annual_cost" begin
+        url_in = _test_objective_setup()
+        object_parameter_values = [
+            ["node", "node_b", "storage_state_max", storage_state_max],
+            ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+            ["node", "node_b", "existing_storages", existing_storages],
+            ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+        ]
+        relationships = [
+            ["node__investment_temporal_block", ["node_b", "hourly"]],
+            ["node__investment_stochastic_structure", ["node_b", "stochastic"]],
+        ]
+        relationship_parameter_values = [
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents]
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            relationships=relationships, 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = sum(
+            storage_state_max
+            * fom_per_dur_unit
+            * (
+                existing_storages
+                + var_storages_invested_available[node(:node_b), s, t]
+            )
+            * duration(t)
+            * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+    @testset "storage_fixed_annual_cost_no_inv" begin
+        url_in = _test_objective_setup()
+        object_parameter_values = [
+            ["node", "node_b", "storage_state_max", storage_state_max],
+            ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+            ["node", "node_b", "existing_storages", existing_storages],
+        ]
+        relationship_parameter_values = [
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents]
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = sum(
+            storage_state_max
+            * fom_per_dur_unit
+            * existing_storages
+            * duration(t)
+            * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+end
+
 function test_fuel_cost()
     @testset "fuel_cost" begin
         url_in = _test_objective_setup()
@@ -426,6 +504,7 @@ end
     test_fom_cost_case_1b()
     test_fom_cost_case_2a()
     test_fom_cost_case_2b()
+    test_storage_fixed_annual_cost()
     test_fuel_cost()
     test_unit_investment_cost()
     test_balance_penalty()

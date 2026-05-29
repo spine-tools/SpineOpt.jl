@@ -77,3 +77,16 @@ function add_variable_storages_invested_available!(m::Model)
         required_history_period=maximum_parameter_value(storage_lifetime_technical),
     )
 end
+
+"""
+    _get_storages_invested_available(m::Model, n, s, t)
+
+Safe get `storages_invested_available` variable for the given indices,
+replaced with 0 in cases where the investment variable doesn't exist.
+
+Intended to be used in situations where `storages_invested_available` is required
+but one cannot ensure its existance.
+"""
+function _get_storages_invested_available(m::Model, n, s, t)
+    get(m.ext[:spineopt].variables[:storages_invested_available], (n, s, t), 0)
+end
