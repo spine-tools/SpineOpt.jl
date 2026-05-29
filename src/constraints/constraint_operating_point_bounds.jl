@@ -67,7 +67,7 @@ function constraint_operating_point_bounds_indices(m::Model)
         # NOTE: a stochastic_path is an array consisting of stochastic scenarios, e.g. [s1, s2]
         for (u, ng, d, i, _s, _t) in unit_flow_op_active_indices(m)
         for (t, path) in t_lowest_resolution_path(
-            m, unit_flow_op_indices(m; unit=u, node=ng, direction=d, i=i), units_on_indices(m; unit=u)
+            m, unit_flow_op_indices(m; unit=u, node=ng, direction=d, i=i), _get_units_on_indices(m, u)
         )
     )
 end

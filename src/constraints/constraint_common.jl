@@ -45,8 +45,8 @@ function t_lowest_resolution_path(m, indices, extra_indices...)
     scens_by_t = t_lowest_resolution_sets!(m, _scens_by_t(indices))
     extra_scens_by_t = _scens_by_t(Iterators.flatten(extra_indices))
     for (t, scens) in scens_by_t
-        for t_long in t_in_t(m; t_short=t)
-            union!(scens, get(extra_scens_by_t, t_long, ()))
+        for t1 in t_overlaps_t(m; t=t)
+            union!(scens, get(extra_scens_by_t, t1, ()))
         end
     end
     ((t, path) for (t, scens) in scens_by_t for path in active_stochastic_paths(m, scens))
