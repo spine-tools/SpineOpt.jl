@@ -248,7 +248,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_min_node_state!,
             add_constraint_node_voltage_angle!,
             #add_constraint_node_voltages_conic!,
-            add_constraint_node_voltages_polyhedron!,
+            add_constraint_node_voltages_conic!,
             add_constraint_non_spinning_reserves_lower_bound!,
             add_constraint_non_spinning_reserves_shut_down_upper_bound!,
             add_constraint_non_spinning_reserves_start_up_upper_bound!,
