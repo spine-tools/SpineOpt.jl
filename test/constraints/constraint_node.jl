@@ -1229,10 +1229,10 @@ function test_constraint_cyclic_node_state_free_start()
 end
 
 """
-    test_node_voltage1()
+    test_node_voltage_singleconn_socp()
     Testing the voltage of the demand node when there is a real power demand behind a single connection.
 """
-function test_node_voltage1()
+function test_node_voltage_singleconn_socp()
     @testset "constraint_node_voltage" begin
    
         nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
@@ -1289,10 +1289,135 @@ function test_node_voltage1()
 end
 
 """
-    test_constraint_unit_flow_reactive()
+    test_ac_opf_singleconn()
+    Testing the voltage of the demand node when there is a real power demand behind a single connection.
+"""
+function test_ac_opf_singleconn()
+    @testset "ac_opf_singleconn" begin
+   
+        url_in = _test_constraint_node_setup()
+        object_parameter_values = [      
+            ["node", "node_b", "has_voltage", true],
+            ["node", "node_b", "demand_reactive", 0.1],
+            ["node", "node_b", "min_voltage", 0.7],
+            ["node", "node_c", "has_voltage", true],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 0.2],
+            ["node", "node_c", "demand_reactive", 0.0],
+            ["connection","connection_bc","connection_resistance",0.2],
+            ["connection","connection_bc","connection_reactance",0.2],
+            ["connection","connection_bc","connection_current_max",1.0]
+        ]
+        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+        ]    
+
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        vsin  = m.ext[:spineopt].variables[:node_voltageproduct_sine]
+        vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
+        flowP = m.ext[:spineopt].variables[:connection_flow]
+        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+
+        # if isdefined(Main, :Infiltrator)
+        #     Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
+        # end
+
+        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.02
+        @test value(flowP[connection(:connection_bc), node(:node_b), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+            0.2087 atol=0.004
+            
+        @test value(flowQ[connection(:connection_bc), node(:node_b), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+            0.0087 atol=0.004
+
+        println(value(flowQ[connection(:connection_bc), node(:node_b), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]))
+
+    end
+end
+
+"""
+    test_ac_opf_singleconn()
+    Testing the voltage of the demand node when there is a real power demand behind a single connection.
+"""
+function test_ac_opf_singleconn_q()
+    @testset "ac_opf_singleconn_q" begin
+   
+        url_in = _test_constraint_node_setup()
+        object_parameter_values = [      
+            ["node", "node_b", "has_voltage", true],
+            ["node", "node_b", "demand_reactive", 0.1],
+            ["node", "node_b", "min_voltage", 0.7],
+            ["node", "node_c", "has_voltage", true],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 0.0],
+            ["node", "node_c", "demand_reactive", 0.2],
+            ["connection","connection_bc","connection_resistance",0.2],
+            ["connection","connection_bc","connection_reactance",0.2],
+            ["connection","connection_bc","connection_current_max",1.0]
+        ]
+        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+        ]    
+
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        flowP = m.ext[:spineopt].variables[:connection_flow]
+        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+
+        # if isdefined(Main, :Infiltrator)
+        #     Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
+        # end
+
+        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.02
+        @test value(flowP[connection(:connection_bc), node(:node_b), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+            0.0087 atol=0.004
+            
+        @test value(flowQ[connection(:connection_bc), node(:node_b), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+            0.2087 atol=0.004
+
+        println(value(flowQ[connection(:connection_bc), node(:node_b), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]))
+
+    end
+end
+"""
+    test_constraint_ac_opf_unit_flow_socp()
     Testing the reactive power flow when there is a reactive power demand behind a single connection.
 """
-function test_constraint_unit_flow_reactive()
+function test_constraint_ac_opf_unit_flow_socp()
     @testset "constraint_unit_flow_reactive" begin
    
         nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
@@ -1541,7 +1666,11 @@ end
     test_constraint_min_capacity_margin_penalty()
     test_constraint_node_injection_free_start()
     test_constraint_cyclic_node_state_free_start()
+    # for testing AC flow with linear formulation
+    test_ac_opf_singleconn()
+    test_ac_opf_singleconn_q()
     # for testing AC flow with nonlinear formulation
     #test_node_voltage2()
     #test_reverse_ac_flow()
+  
 end

@@ -82,10 +82,10 @@ end
 function constraint_node_voltages_conic_indices(m::Model)
     
     tangency_points = [(0, 0)] ∪
-        [(2.5, fii) for fii in 0:10:359] ∪ 
-        [(5, fii) for fii in 0:10:359] ∪ 
-        [(10, fii) for fii in 0:20:359] ∪ 
-        [(20, fii) for fii in 0:20:359] ∪ 
+        [(3.0, fii) for fii in 0:5:359] ∪ 
+        [(6.0, fii) for fii in 0:5:359] ∪ 
+        [(10, fii) for fii in 0:5:359] ∪ 
+        [(20, fii) for fii in 0:5:359] ∪ 
         [(45, fii) for fii in 0:30:359]
     (
         (n1, n2, s, t, theta, fii)
