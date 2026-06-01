@@ -59,6 +59,28 @@ function fixed_om_costs(m, t_range)
             );
             init=0, # No fixed costs if none defined.
         )
+        + sum( # Fixed costs for connections. (Mimicks the above unit costs)
+            connection_state_capacity(m; connection=conn, stochastic_scenario=s, t=t)
+            * _connection_fixed_costs_per_duration_unit(m, conn, s, t)
+            * (
+                existing_connections(m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_connections(conn))
+                + _get_connections_invested_available(m, conn, s, t)
+            )
+            * (
+                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
+                connection_discounted_duration[(connection=conn, stochastic_scenario=s, t=t)] * discounted_duration_base(t) : 
+                duration(t)
+            )
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+            * connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s)
+            for conn in indices(connection_fixed_annual_cost)
+            for (conn, s, t) in (
+                is_candidate(connection=conn) ?
+                connections_invested_available_indices(m; connection=conn, t=t_range) :
+                connection_stochastic_time_indices(m; connection=conn, t=t_range)
+            );
+            init=0, # No fixed costs if none defined.
+        )
         + sum( # Fixed costs for storages. (Mimicks the above unit costs)
             node_state_capacity(m; node=n, stochastic_scenario=s, t=t)
             * _storage_fixed_costs_per_duration_unit(m, n, s, t)
@@ -91,6 +113,13 @@ function _fixed_costs_annual_duration(m::Model, t::TimeSlice)::Union{Hour, Minut
     # Assumption: start(t) for the year base
     annual_duration = dt_fixed_duration(Year(1), start(t) |> Dates.year |> DateTime, Val(:forward))
     return dur_unit(annual_duration)
+end
+
+function _connection_fixed_costs_per_duration_unit(m::Model, conn, s, t)
+    return (
+        connection_fixed_annual_cost(connection=conn, stochastic_scenario=s, t=t)
+        / _fixed_costs_annual_duration(m, t).value
+    )
 end
 
 function _storage_fixed_costs_per_duration_unit(m::Model, n, s, t)

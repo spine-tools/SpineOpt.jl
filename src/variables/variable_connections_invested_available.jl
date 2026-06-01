@@ -77,3 +77,16 @@ function add_variable_connections_invested_available!(m::Model)
         required_history_period=maximum_parameter_value(lifetime_technical),
     )
 end
+
+"""
+    _get_connections_invested_available(m, conn, s, t)
+
+Safe get `connections_invested_available` variable for the given indices,
+replaced with 0 in cases where the investment variable doesn't exist.
+
+Intended to be used in situations where `connections_invested_available` is required
+but one cannot ensure its existance.
+"""
+function _get_connections_invested_available(m, conn, s, t)
+    get(m.ext[:spineopt].variables[:connections_invested_available], (conn, s, t), 0)
+end
