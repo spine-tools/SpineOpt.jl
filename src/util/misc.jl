@@ -222,50 +222,39 @@ function print_solution(m, variable_patterns...)
 end
 
 """
-    align_variable_duration_unit(_duration::Union{Period, Nothing}, dt::DateTime; ahead::Bool=true)
+    dt_fixed_duration(duration, dt::DateTime, direction::Union{Val{:forward}, Val{:backward}})
 
-Aligns a duration of the type `Month` or `Year` to `Day` counting from a `DateTime` input `dt`.
+Convert a `duration` to a fixed `Day` or `TimePeriod` by anchoring it to a reference `DateTime` `dt`.
+
+This is needed because `DatePeriod` types such as `Month` and `Year` have variable lengths depending
+on the calendar position of `dt`. `TimePeriod` types (e.g. `Hour`, `Minute`) are already fixed and
+returned unchanged. `Nothing` is passed through as `nothing`.
+cf. `Dates.CompoundPeriod` in the `periods.jl` of Julia standard library.
 
 # Arguments
-- _duration: an integeral duration of the abstract type `Period` defined in Dates.jl,
-             e.g. `Hour`, `Day`, `Month` that can be obtained by `Dates.Hour(2)` and so forth.
-             It can also catch any duration-like parameter of Spine, including `Nothing`. 
-- dt: a DateTime object as the reference.
-- ahead=true: a boolean value indicating whether the duration counts ahead of or behind the reference point.
+- `duration`: a `DatePeriod`, `TimePeriod`, or `Nothing`.
+- `dt`: the reference `DateTime` from which the duration is anchored.
+- `direction`: `Val{:forward}` counts the duration ahead of `dt`; `Val{:backward}` counts behind.
 
 # Returns
-- a new positive duration of the type `Day` that is comparable with constant duration types such as `Hour`.
+- `Day` for `DatePeriod` inputs, resolved at `dt`.
+- The original `TimePeriod` for fixed-length inputs.
+- `nothing` for `Nothing` input.
 
 # Examples
 ```julia
-    
-_duration1 = Month(1); _duration2 = Day(32)
-dt1 = DateTime(2024, 2, 1); dt2 = DateTime(2024, 4, 1)
-
-new_duration1 = align_variable_duration_unit(_duration1, dt1)
-new_duration2 = align_variable_duration_unit(_duration1, dt2)
-new_duration3 = align_variable_duration_unit(_duration1, dt1; ahead=false)
-new_duration4 = align_variable_duration_unit(_duration2, dt1)
-    
+dt_fixed_duration(Month(1), DateTime(2026, 2, 1), Val(:forward))  # Day(29)
+dt_fixed_duration(Month(1), DateTime(2026, 4, 1), Val(:forward))  # Day(30)
+dt_fixed_duration(Month(1), DateTime(2026, 2, 1), Val(:backward)) # Day(31)
+dt_fixed_duration(Hour(3),  DateTime(2026, 2, 1), Val(:forward))  # Hour(3)
+dt_fixed_duration(nothing,  DateTime(2026, 2, 1), Val(:forward))  # nothing
 ```
---> new_duration1: 29 days; new_duration1 == Day(29): true
---> new_duration2: 30 days
---> new_duration3: 31 days
---> new_duration4: 32 days
-
-This convertion is needed for comparing a duration of the type `Month` or `Year` with 
-one of `Day`, `Hour` or the finer units, which is not allowed because the former are variable duration types.
 """
-function align_variable_duration_unit(duration::Union{Period, Nothing}, dt::DateTime; ahead=true)
-    #TODO: the value of `duration` is assumed to be an integer. A warning should be given.
-    #TODO: new format to record durations would be benefitial, e.g. 3M2d1h,
-    #      cf. Dates.CompoundPeriod in the periods.jl of Julia standard library.
-    if duration isa Month || duration isa Year
-        ahead ? Day((dt + duration) - dt) : Day(dt - (dt - duration))
-    else
-        duration
-    end
-end
+dt_fixed_duration(duration::DatePeriod, dt::DateTime, ::Val{:forward})::Day = Day((dt + duration) - dt)
+dt_fixed_duration(duration::DatePeriod, dt::DateTime, ::Val{:backward})::Day = Day(dt - (dt - duration))
+
+dt_fixed_duration(duration::TimePeriod, ::DateTime, ::Union{Val{:forward}, Val{:backward}})::TimePeriod = duration
+dt_fixed_duration(::Nothing, ::DateTime, ::Union{Val{:forward}, Val{:backward}}) = nothing
 
 function _log_to_file(fn, log_file_path)
     log_file_path === nothing && return fn()
