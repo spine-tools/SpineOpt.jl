@@ -85,10 +85,17 @@ function fixed_om_costs(m, t_range)
 end
 #TODO: scenario tree?
 
+function _fixed_costs_annual_duration(m::Model, t::TimeSlice)::Union{Hour, Minute}
+    # Currently, SpineOpt only allows `hour` and `minute`, see `duration_unit` in the template (`spineopt_template.json`).
+    dur_unit = _model_duration_unit(m) 
+    # Assumption: start(t) for the year base
+    annual_duration = dt_fixed_duration(Year(1), start(t) |> Dates.year |> DateTime, Val(:forward))
+    return dur_unit(annual_duration)
+end
+
 function _storage_fixed_costs_per_duration_unit(m::Model, n, s, t)
-    dur_unit = _model_duration_unit(m)
     return (
         storage_fixed_annual_cost(node=n, stochastic_scenario=s, t=t)
-        / dur_unit(Hour(8760)).value # TODO: Is 8760 an acceptable assumption for the length of a year? Do we have a parameter for this?
+        / _fixed_costs_annual_duration(m, t).value
     )
 end
