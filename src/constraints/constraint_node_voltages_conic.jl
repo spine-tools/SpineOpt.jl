@@ -39,7 +39,7 @@ function _build_constraint_node_voltages_conic(m, n1, n2, s, t, theta, fii)
      @build_constraint(
             dot([node_voltageproduct_cosine[n1, n2, s, t], 
                 node_voltageproduct_sine[n1, n2, s, t],
-                0.5 * (node_voltage_squared[n1, s, t] - node_voltage_squared[n2, s, t])]
+                1.0 * (node_voltage_squared[n1, s, t] - node_voltage_squared[n2, s, t])]
                 - collect(surfacepoint((t=1, theta=theta, fii=fii))) * 
                 0.5 * (node_voltage_squared[n1, s, t] + node_voltage_squared[n2, s, t]),
                 collect(surfacenormal((t=1, theta=theta, fii=fii))) 
@@ -67,7 +67,7 @@ function add_constraint_node_voltages_conic_oldstyle!(m::Model)
             m, 
             dot([node_voltageproduct_cosine[n1, n2, s, t], 
                 node_voltageproduct_sine[n1, n2, s, t],
-                0.5 * (node_voltage_squared[n1, s, t] - node_voltage_squared[n2, s, t])]
+                1.0 * (node_voltage_squared[n1, s, t] - node_voltage_squared[n2, s, t])]
                 - collect(surfacepoint((t=1, theta=theta, fii=fii))) * 
                 0.5 * (node_voltage_squared[n1, s, t] + node_voltage_squared[n2, s, t]),
                 collect(surfacenormal((t=1, theta=theta, fii=fii))) 
@@ -82,10 +82,10 @@ end
 function constraint_node_voltages_conic_indices(m::Model)
     
     tangency_points = [(0, 0)] ∪
-        [(3.0, fii) for fii in 0:5:359] ∪ 
-        [(6.0, fii) for fii in 0:5:359] ∪ 
-        [(10, fii) for fii in 0:5:359] ∪ 
-        [(20, fii) for fii in 0:5:359] ∪ 
+        [(3.0, fii) for fii in 0:10:359] ∪ 
+        [(6.0, fii) for fii in 0:10:359] ∪ 
+        [(10, fii) for fii in 0:20:359] ∪ 
+        [(20, fii) for fii in 0:20:359] ∪ 
         [(45, fii) for fii in 0:30:359]
     (
         (n1, n2, s, t, theta, fii)
