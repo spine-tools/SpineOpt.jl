@@ -210,8 +210,8 @@ function constraint_connection_flow_voltage_indices(m::Model)
                       if connection_has_ac_flow(; x...) == true),
         node=SpineOpt.node(has_voltage=true)
     )
-       
 end
+
 
 
 
