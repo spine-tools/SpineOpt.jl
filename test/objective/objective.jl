@@ -28,6 +28,8 @@ function _test_objective_setup()
             ["stochastic_structure", "deterministic"],
             ["stochastic_structure", "stochastic"],
             ["unit", "unit_ab"],
+            # ["connection", "connection_ab"],  
+            # CRASHES with multithreading when test_connection_fixed_annual_cost() and test_storage_fixed_annual_cost() run together
             ["node", "node_a"],
             ["node", "node_b"],
             ["stochastic_scenario", "parent"],
@@ -36,6 +38,8 @@ function _test_objective_setup()
         :relationships => [
             ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
+            # ["connection__to_node", ["connection_ab", "node_b"]], 
+            # CRASHES with multithreading when test_connection_fixed_annual_cost() and test_storage_fixed_annual_cost() run together
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
@@ -76,28 +80,32 @@ function test_fom_cost()
     capacity_per_unit = 100
     fom_cost = 8
     weight_relative_to_parents = 0.6
+    existing_units_template_default = 1 # case 1a
+    existing_units = 2                  # case 1b, 2b
+    existing_units_fomulation_default = 0  # case 2a
+    investment_count_max_cumulative = 3    # case 2a, 2b
     
     # When given a non-investable unit without defining `existing_units`, 
     # the model uses the template default `existing_units`=1.
     @testset "fom_cost (unit) case 1a: non-investable, no existing_units defined" begin
         url_in = _test_objective_setup()
-        existing_units_template_default = 1
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
-            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
         ]
         SpineInterface.import_data(
-            url_in; 
-            relationships=relationships,             
+            url_in;           
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         
-        # duration = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         expected_obj = fom_cost * capacity_per_unit * sum(             
@@ -111,18 +119,19 @@ function test_fom_cost()
     # When a non-investable unit with `existing_units` explicitly defined ... 
     @testset "fom_cost (unit) case 1b: non-investable, existing_units defined" begin
         url_in = _test_objective_setup()
-        existing_units = 2
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
             ["unit", "unit_ab", "existing_units", existing_units],
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
-            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
         ]
         SpineInterface.import_data(
-            url_in; 
-            relationships=relationships,             
+            url_in;         
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
@@ -142,8 +151,6 @@ function test_fom_cost()
     # the model uses the new default `existing_units`=0. 
     @testset "fom_cost (unit) case 2a: investable, no existing_units defined" begin
         url_in = _test_objective_setup()
-        existing_units_fomulation_default = 0
-        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
             ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
@@ -154,7 +161,10 @@ function test_fom_cost()
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
-            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
         ]
         SpineInterface.import_data(
             url_in; 
@@ -182,8 +192,6 @@ function test_fom_cost()
     # When an investable unit with `existing_units` explicitly defined ... 
     @testset "fom_cost (unit) case 2b: investable, existing_units defined" begin
         url_in = _test_objective_setup()
-        existing_units = 2
-        investment_count_max_cumulative = 3
         object_parameter_values = [
             ["unit", "unit_ab", "fom_cost", fom_cost],
             ["unit", "unit_ab", "existing_units", existing_units],
@@ -195,7 +203,10 @@ function test_fom_cost()
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
-            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
         ]
         SpineInterface.import_data(
             url_in; 
@@ -221,14 +232,290 @@ function test_fom_cost()
     end
 end
 
+function test_connection_fixed_annual_cost()
+    capacity_per_connection = 100
+    fom_per_dur_unit = 1
+    connection_fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
+    weight_relative_to_parents = 0.6
+    existing_connections_template_default = 1 # case 1a
+    existing_connections = 2                  # case 1b, 2b
+    existing_connections_fomulation_default = 0  # case 2a
+    investment_count_max_cumulative = 3          # case 2a, 2b
+    
+    connection_objects = [["connection", "connection_ab"]]
+    connection_relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
+    @testset "connection_fixed_annual_cost case 1a: non-investable, no existing_connections defined" begin
+        url_in = _test_objective_setup()
+        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()
+        SpineInterface.import_data(
+            url_in;           
+            objects=connection_objects,
+            relationships=connection_relationships
+        )
+        object_parameter_values = [
+            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+        ]
+        relationship_parameter_values = [
+            ["connection__to_node", ["connection_ab", "node_b"], "capacity_per_connection", capacity_per_connection],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
+        ]
+        SpineInterface.import_data(
+            url_in;           
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = fom_per_dur_unit * capacity_per_connection * sum(             
+            existing_connections_template_default * duration(t) * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))            
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+    @testset "connection_fixed_annual_cost case 1b: non-investable, existing_connections defined" begin
+        url_in = _test_objective_setup()
+        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()        
+        SpineInterface.import_data(
+            url_in;           
+            objects=connection_objects,
+            relationships=connection_relationships
+        )        
+        object_parameter_values = [
+            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+            ["connection", "connection_ab", "existing_connections", existing_connections],
+        ]
+        relationship_parameter_values = [
+            ["connection__to_node", ["connection_ab", "node_b"], "capacity_per_connection", capacity_per_connection],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
+        ]
+        SpineInterface.import_data(
+            url_in;          
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = fom_per_dur_unit * capacity_per_connection * sum(             
+            existing_connections * duration(t) * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+    @testset "connection_fixed_annual_cost case 2a: investable, no existing_connections defined" begin
+        url_in = _test_objective_setup()
+        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()        
+        SpineInterface.import_data(
+            url_in;           
+            objects=connection_objects,
+            relationships=connection_relationships
+        )        
+        object_parameter_values = [
+            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+        ]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]
+        relationship_parameter_values = [
+            ["connection__to_node", ["connection_ab", "node_b"], "capacity_per_connection", capacity_per_connection],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            relationships=relationships, 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = fom_per_dur_unit * capacity_per_connection * sum(             
+            (
+                existing_connections_fomulation_default + var_connections_invested_available[connection(:connection_ab), s, t]
+            )
+            * duration(t)
+            * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+    @testset "connection_fixed_annual_cost case 2b: investable, existing_connections defined" begin
+        url_in = _test_objective_setup()
+        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()        
+        SpineInterface.import_data(
+            url_in;           
+            objects=connection_objects,
+            relationships=connection_relationships
+        )        
+        object_parameter_values = [
+            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+            ["connection", "connection_ab", "existing_connections", existing_connections],
+            ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+        ]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]
+        relationship_parameter_values = [
+            ["connection__to_node", ["connection_ab", "node_b"], "capacity_per_connection", capacity_per_connection],
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            relationships=relationships, 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = fom_per_dur_unit * capacity_per_connection * sum(             
+            (
+                existing_connections + var_connections_invested_available[connection(:connection_ab), s, t]
+            )
+            * duration(t)
+            * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+end
+
 function test_storage_fixed_annual_cost()
     storage_state_max = 100
     fom_per_dur_unit = 1
     storage_fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
-    existing_storages = 1
-    storage_investment_count_max_cumulative = 2
     weight_relative_to_parents = 0.6
-    @testset "storage_fixed_annual_cost" begin
+    existing_storages_template_default = 1 # case 1a
+    existing_storages = 2                  # case 1b, 2b
+    existing_storages_fomulation_default = 0    # case 2a
+    storage_investment_count_max_cumulative = 3 # case 2a, 2b
+    @testset "storage_fixed_annual_cost case 1a: non-investable, no existing_storages defined" begin
+        url_in = _test_objective_setup()
+        object_parameter_values = [
+            ["node", "node_b", "storage_state_max", storage_state_max],
+            ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+        ]
+        relationship_parameter_values = [
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents]
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = sum(
+            storage_state_max
+            * fom_per_dur_unit
+            * existing_storages_template_default
+            * duration(t)
+            * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+    @testset "storage_fixed_annual_cost case 1b: non-investable, existing_storages defined" begin
+        url_in = _test_objective_setup()
+        object_parameter_values = [
+            ["node", "node_b", "storage_state_max", storage_state_max],
+            ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+            ["node", "node_b", "existing_storages", existing_storages],
+        ]
+        relationship_parameter_values = [
+            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents]
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = sum(
+            storage_state_max
+            * fom_per_dur_unit
+            * existing_storages
+            * duration(t)
+            * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+    @testset "storage_fixed_annual_cost case 2a: investable, no existing_storages defined" begin
+        url_in = _test_objective_setup()
+        object_parameter_values = [
+            ["node", "node_b", "storage_state_max", storage_state_max],
+            ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+            ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+        ]
+        relationships = [
+            ["node__investment_temporal_block", ["node_b", "hourly"]],
+            ["node__investment_stochastic_structure", ["node_b", "stochastic"]],
+        ]
+        relationship_parameter_values = [
+            [
+                "stochastic_structure__stochastic_scenario", ["stochastic", "child"], 
+                "weight_relative_to_parents", weight_relative_to_parents
+            ]
+        ]
+        SpineInterface.import_data(
+            url_in; 
+            relationships=relationships, 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        expected_obj = sum(
+            storage_state_max
+            * fom_per_dur_unit
+            * (
+                existing_storages_fomulation_default
+                + var_storages_invested_available[node(:node_b), s, t]
+            )
+            * duration(t)
+            * s_weight
+            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
+        )
+        observed_obj = objective_function(m)
+        @test observed_obj == expected_obj
+    end
+    @testset "storage_fixed_annual_cost case 2b: investable, existing_storages defined" begin
         url_in = _test_objective_setup()
         object_parameter_values = [
             ["node", "node_b", "storage_state_max", storage_state_max],
@@ -263,36 +550,6 @@ function test_storage_fixed_annual_cost()
                 existing_storages
                 + var_storages_invested_available[node(:node_b), s, t]
             )
-            * duration(t)
-            * s_weight
-            for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
-        )
-        observed_obj = objective_function(m)
-        @test observed_obj == expected_obj
-    end
-    @testset "storage_fixed_annual_cost_no_inv" begin
-        url_in = _test_objective_setup()
-        object_parameter_values = [
-            ["node", "node_b", "storage_state_max", storage_state_max],
-            ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
-            ["node", "node_b", "existing_storages", existing_storages],
-        ]
-        relationship_parameter_values = [
-            ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents]
-        ]
-        SpineInterface.import_data(
-            url_in; 
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
-        )
-        m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        expected_obj = sum(
-            storage_state_max
-            * fom_per_dur_unit
-            * existing_storages
             * duration(t)
             * s_weight
             for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
@@ -467,16 +724,19 @@ end
 function test_connection_flow_cost()
     @testset "connection_flow_cost" begin
         url_in = _test_objective_setup()
+        connection_objects = [["connection", "connection_ab"]]
+        connection_relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
+        SpineInterface.import_data(
+            url_in;           
+            objects=connection_objects,
+            relationships=connection_relationships
+        )
         connection_flow_cost = 185
-        objects = [["connection", "connection_ab"]]
-        relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
         relationship_parameter_values = [
             ["connection__to_node", ["connection_ab", "node_b"], "connection_flow_cost", connection_flow_cost]
         ]
         SpineInterface.import_data(
             url_in;
-            objects=objects,
-            relationships=relationships,
             relationship_parameter_values=relationship_parameter_values,
         )
         
@@ -511,6 +771,7 @@ end
 
 @testset "objective" begin
     test_fom_cost()
+    test_connection_fixed_annual_cost()    
     test_storage_fixed_annual_cost()
     test_fuel_cost()
     test_unit_investment_cost()
