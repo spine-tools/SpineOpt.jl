@@ -20,7 +20,7 @@
 
 import DelimitedFiles: readdlm
 
-@testset "misc" begin
+function _test_misc_ptdf_lodf_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -70,13 +70,41 @@ import DelimitedFiles: readdlm
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function test_dt_fixed_duration()
+    @testset "dt_fixed_duration" begin
+        # DatePeriod forward: variable month/year lengths resolved at dt
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 2, 1), Val(:forward)) == Day(28)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2024, 2, 1), Val(:forward)) == Day(29)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 4, 1), Val(:forward)) == Day(30)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 1, 1), Val(:forward)) == Day(31)
+        @test SpineOpt.dt_fixed_duration(Year(1), DateTime(2026, 1, 1), Val(:forward)) == Day(365)
+        @test SpineOpt.dt_fixed_duration(Year(1), DateTime(2024, 1, 1), Val(:forward)) == Day(366)
+        # DatePeriod backward: anchored behind dt
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 3, 1), Val(:backward)) == Day(28)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2024, 3, 1), Val(:backward)) == Day(29)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 5, 1), Val(:backward)) == Day(30)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 2, 1), Val(:backward)) == Day(31)
+        # TimePeriod: returned unchanged regardless of direction
+        @test SpineOpt.dt_fixed_duration(Hour(3), DateTime(2026, 1, 1), Val(:forward)) == Hour(3)
+        @test SpineOpt.dt_fixed_duration(Minute(30), DateTime(2026, 1, 1), Val(:backward)) == Minute(30)
+        @test SpineOpt.dt_fixed_duration(Second(45), DateTime(2026, 1, 1), Val(:forward)) == Second(45)
+        # Nothing: passes through
+        @test isnothing(SpineOpt.dt_fixed_duration(nothing, DateTime(2026, 1, 1), Val(:forward)))
+    end
+end
+
+function test_write_ptdf_lodf()
     @testset "write_ptdf_lodf" begin
+        url_in = _test_misc_ptdf_lodf_setup()
         conn_r = 0.9
         conn_x = 0.1
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        _load_test_data(url_in, test_data)
         objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -167,4 +195,9 @@ import DelimitedFiles: readdlm
         @test convert(Array{String,1}, lodfs[:, 1]) == ["contingency line", "connection_ca"]
         @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [1, 1])
     end
+end
+
+@testset "misc" begin
+    test_dt_fixed_duration()
+    test_write_ptdf_lodf()
 end
