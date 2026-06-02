@@ -116,6 +116,7 @@ const connection_conversion_to_discounted_annuities = Parameter(:connection_conv
 const connection_decommissioning_conversion_to_discounted_annuities = Parameter(:connection_decommissioning_conversion_to_discounted_annuities)
 const connection_discounted_duration = Parameter(:connection_discounted_duration)
 const connection_emergency_capacity = Parameter(:connection_emergency_capacity)
+const connection_fixed_annual_cost = Parameter(:connection_fixed_annual_cost)
 const connection_flow_cost = Parameter(:connection_flow_cost)
 const connection_flow_delay = Parameter(:connection_flow_delay)
 const connection_flow_highest_resolution_active = Parameter(:connection_flow_highest_resolution_active)
@@ -461,6 +462,7 @@ export connection_conversion_to_discounted_annuities
 export connection_decommissioning_conversion_to_discounted_annuities
 export connection_discounted_duration
 export connection_emergency_capacity
+export connection_fixed_annual_cost
 export connection_flow_cost
 export connection_flow_delay
 export connection_flow_highest_resolution_active
