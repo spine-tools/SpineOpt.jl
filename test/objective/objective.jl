@@ -217,7 +217,7 @@ end
 function test_storage_fixed_annual_cost()
     storage_state_max = 100
     fom_per_dur_unit = 1
-    storage_fixed_annual_cost = fom_per_dur_unit * 8760
+    storage_fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
     existing_storages = 1
     storage_investment_count_max_cumulative = 2
     weight_relative_to_parents = 0.6
