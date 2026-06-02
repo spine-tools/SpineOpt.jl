@@ -150,7 +150,7 @@ end
 
 _default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(existing_storages, node)
 _default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(existing_units, unit)
-_default_nb_of_conns(conn::Object) = is_candidate(connection=conn) ? 
+_default_nb_of_connections(conn::Object) = is_candidate(connection=conn) ? 
     0 : _default_parameter_value(existing_connections, connection)
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
@@ -196,7 +196,7 @@ function _term_total_number_of_connections(m, conn, ng, d, s_path, t)
                 init=0,
             )
             + existing_connections(
-                m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
+                m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_connections(conn)
             )
         )
         for s in s_path, t in t_in_t(m; t_long=t)

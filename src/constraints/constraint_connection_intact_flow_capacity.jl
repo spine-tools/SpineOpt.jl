@@ -65,7 +65,7 @@ function _build_constraint_connection_intact_flow_capacity(m::Model, conn, ng, d
             * (
                 + investment_count_max_cumulative(m; connection=conn, stochastic_scenario=s, t=t, _default=0)
                 + existing_connections(
-                    m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_conns(conn)
+                    m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_connections(conn)
                 )
             )
             for (conn, n, d, s, t) in connection_intact_flow_indices(
