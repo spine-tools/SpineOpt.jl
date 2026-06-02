@@ -51,16 +51,15 @@ function fixed_om_costs(m, t_range)
                 node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             )
             for (u, ng, d) in indices(capacity_per_unit; unit=indices(fom_cost))
-            for (u, s, t) in Iterators.flatten(
-                is_candidate(unit=u) ? (units_invested_available_indices(m; unit=u, t=t_range),) :
-                (
-                    ((u, s, t) for (u, _n, _d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)),
-                )
+            for (u, s, t) in (
+                is_candidate(unit=u) ?
+                units_invested_available_indices(m; unit=u, t=t_range) :
+                unit_stochastic_time_indices(m; unit=u, t=t_range)
             );
             init=0, # No fixed costs if none defined.
         )
         + sum( # Fixed costs for connections. (Mimicks the above unit costs)
-            connection_state_capacity(m; connection=conn, stochastic_scenario=s, t=t)
+            capacity_per_connection(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
             * _connection_fixed_costs_per_duration_unit(m, conn, s, t)
             * (
                 existing_connections(m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_connections(conn))
@@ -73,7 +72,7 @@ function fixed_om_costs(m, t_range)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s)
-            for conn in indices(connection_fixed_annual_cost)
+            for (conn, ng, d) in indices(capacity_per_connection; connection=indices(connection_fixed_annual_cost))
             for (conn, s, t) in (
                 is_candidate(connection=conn) ?
                 connections_invested_available_indices(m; connection=conn, t=t_range) :
