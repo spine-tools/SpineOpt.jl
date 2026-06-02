@@ -1306,7 +1306,7 @@
             "unit_flow",
             [],
             "A superclass for unit__to_node and node__to_unit classes.",
-            281470681805659,
+            281470681805658,
             true
         ],
         [
@@ -1503,7 +1503,7 @@
                 "unit"
             ],
             "A flow on a `unit` from a `node`.",
-            281470681805657,
+            281470681805658,
             true
         ],
         [
@@ -1795,6 +1795,13 @@
         ],
         [
             "connection",
+            "connection_fixed_annual_cost",
+            null,
+            null,
+            "To be implemented. Fixed annual operation and maintenance costs of the connection. Essentially, a cost coefficient on the number of installed connections and `connection_state_max` parameters. E.g. EUR/MWh/a."
+        ],
+        [
+            "connection",
             "connection_investment_cost",
             null,
             null,
@@ -1890,7 +1897,7 @@
         [
             "connection",
             "investment_variable_type",
-            "integer",
+            "linear",
             "variable_type_list",
             "A selector for the type of the connection investment variable (`connections_invested`): whether it is continuous (usually representing invested capacity) or integer (representing discrete 'sub connection' investments)."
         ],
@@ -2882,7 +2889,7 @@
         [
             "node",
             "storage_investment_variable_type",
-            "integer",
+            "linear",
             "variable_type_list",
             "A selector for the type of the storage investment variable (`storages_invested`): whether it is continuous (usually representing invested capacity) or integer (representing discrete 'sub storage' investments)."
         ],
