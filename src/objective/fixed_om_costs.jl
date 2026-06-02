@@ -77,7 +77,11 @@ function fixed_om_costs(m, t_range)
                 duration(t)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s)
+            * (
+                is_candidate(connection=conn) ? 
+                connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s) : 
+                node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
+            )
             for (conn, ng, d) in indices(capacity_per_connection; connection=indices(connection_fixed_annual_cost))
             for (conn, s, t) in Iterators.flatten(
                 is_candidate(connection=conn) ? 
