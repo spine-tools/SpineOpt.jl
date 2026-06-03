@@ -63,29 +63,30 @@ The optional `translation` keyword can be used to aggregate and translate the ou
 function concept_dictionary(template::Dict; translation::Dict=Dict())
     # Define mapping of template entries, where each attribute of interest is.
     template_mapping = Dict(
-        "object_classes" => Dict(:name => 1, :description => 2),
-        "relationship_classes" => Dict(
+        "entity_classes" => Dict(
             :name => 1,
             :description => 3,
             :related_concept => 2,
-            :related_concept_type => "object_classes",
+            :related_concept_type => "entity_classes",
+        ),
+        "superclass_subclasses" => Dict(
+            :name => 1,
+            :subclass => 2,
         ),
         "parameter_value_lists" => Dict(:name => 1, :possible_values => 2),
-        "object_parameters" => Dict(
+        "parameter_definitions" => Dict(
             :name => 2,
             :parameter_description => 5,
             :related_concept => 1,
-            :related_concept_type => "object_classes",
+            :related_concept_type => "entity_classes",
             :default_value => 3,
             :parameter_value_list => 4,
         ),
-        "relationship_parameters" => Dict(
+        "parameter_types" => Dict(
             :name => 2,
-            :parameter_description => 5,
             :related_concept => 1,
-            :related_concept_type => "relationship_classes",
-            :default_value => 3,
-            :parameter_value_list => 4,
+            :related_concept_type => "entity_classes",
+            :supported_type => 3
         ),
     )
     # Initialize the concept dictionary based on the template (accumulates entries if overlaps)
