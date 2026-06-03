@@ -28,8 +28,7 @@ function _test_objective_setup()
             ["stochastic_structure", "deterministic"],
             ["stochastic_structure", "stochastic"],
             ["unit", "unit_ab"],
-            # ["connection", "connection_ab"],  
-            # CRASHES with multithreading when test_connection_fixed_annual_cost() and test_storage_fixed_annual_cost() run together
+            ["connection", "connection_ab"],  
             ["node", "node_a"],
             ["node", "node_b"],
             ["stochastic_scenario", "parent"],
@@ -38,8 +37,7 @@ function _test_objective_setup()
         :relationships => [
             ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
-            # ["connection__to_node", ["connection_ab", "node_b"]], 
-            # CRASHES with multithreading when test_connection_fixed_annual_cost() and test_storage_fixed_annual_cost() run together
+            ["connection__to_node", ["connection_ab", "node_b"]], 
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
@@ -232,28 +230,20 @@ function test_fom_cost()
     end
 end
 
-function test_connection_fixed_annual_cost()
+function test_fixed_annual_cost_of_connection()
     capacity_per_connection = 100
     fom_per_dur_unit = 1
-    connection_fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
+    fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
     weight_relative_to_parents = 0.6
     existing_connections_template_default = 1 # case 1a
     existing_connections = 2                  # case 1b, 2b
     existing_connections_fomulation_default = 0  # case 2a
     investment_count_max_cumulative = 3          # case 2a, 2b
     
-    connection_objects = [["connection", "connection_ab"]]
-    connection_relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
-    @testset "connection_fixed_annual_cost case 1a: non-investable, no existing_connections defined" begin
+    @testset "fixed_annual_cost (connection) case 1a: non-investable, no existing_connections defined" begin
         url_in = _test_objective_setup()
-        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()
-        SpineInterface.import_data(
-            url_in;           
-            objects=connection_objects,
-            relationships=connection_relationships
-        )
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+            ["connection", "connection_ab", "fixed_annual_cost", fixed_annual_cost],
         ]
         relationship_parameter_values = [
             ["connection__to_node", ["connection_ab", "node_b"], "capacity_per_connection", capacity_per_connection],
@@ -278,16 +268,10 @@ function test_connection_fixed_annual_cost()
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
     end
-    @testset "connection_fixed_annual_cost case 1b: non-investable, existing_connections defined" begin
-        url_in = _test_objective_setup()
-        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()        
-        SpineInterface.import_data(
-            url_in;           
-            objects=connection_objects,
-            relationships=connection_relationships
-        )        
+    @testset "fixed_annual_cost (connection) case 1b: non-investable, existing_connections defined" begin
+        url_in = _test_objective_setup()     
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+            ["connection", "connection_ab", "fixed_annual_cost", fixed_annual_cost],
             ["connection", "connection_ab", "existing_connections", existing_connections],
         ]
         relationship_parameter_values = [
@@ -313,16 +297,10 @@ function test_connection_fixed_annual_cost()
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
     end
-    @testset "connection_fixed_annual_cost case 2a: investable, no existing_connections defined" begin
-        url_in = _test_objective_setup()
-        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()        
-        SpineInterface.import_data(
-            url_in;           
-            objects=connection_objects,
-            relationships=connection_relationships
-        )        
+    @testset "fixed_annual_cost (connection) case 2a: investable, no existing_connections defined" begin
+        url_in = _test_objective_setup()     
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+            ["connection", "connection_ab", "fixed_annual_cost", fixed_annual_cost],
             ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
         relationships = [
@@ -358,16 +336,10 @@ function test_connection_fixed_annual_cost()
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
     end
-    @testset "connection_fixed_annual_cost case 2b: investable, existing_connections defined" begin
-        url_in = _test_objective_setup()
-        # to avoid CRASHES with multithreading when running alongwith test_storage_fixed_annual_cost()        
-        SpineInterface.import_data(
-            url_in;           
-            objects=connection_objects,
-            relationships=connection_relationships
-        )        
+    @testset "fixed_annual_cost (connection) case 2b: investable, existing_connections defined" begin
+        url_in = _test_objective_setup()   
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_fixed_annual_cost", connection_fixed_annual_cost],
+            ["connection", "connection_ab", "fixed_annual_cost", fixed_annual_cost],
             ["connection", "connection_ab", "existing_connections", existing_connections],
             ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
         ]
@@ -724,13 +696,6 @@ end
 function test_connection_flow_cost()
     @testset "connection_flow_cost" begin
         url_in = _test_objective_setup()
-        connection_objects = [["connection", "connection_ab"]]
-        connection_relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
-        SpineInterface.import_data(
-            url_in;           
-            objects=connection_objects,
-            relationships=connection_relationships
-        )
         connection_flow_cost = 185
         relationship_parameter_values = [
             ["connection__to_node", ["connection_ab", "node_b"], "connection_flow_cost", connection_flow_cost]
@@ -771,7 +736,7 @@ end
 
 @testset "objective" begin
     test_fom_cost()
-    test_connection_fixed_annual_cost()    
+    test_fixed_annual_cost_of_connection()  
     test_storage_fixed_annual_cost()
     test_fuel_cost()
     test_unit_investment_cost()
