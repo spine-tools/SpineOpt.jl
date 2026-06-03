@@ -50,7 +50,7 @@ function fixed_om_costs(m, t_range)
                 unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s) : 
                 node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             )
-            for (u, ng, d) in indices(capacity_per_unit; unit=indices(fom_cost))
+            for (u, ng, d) in indices(capacity_per_unit; unit=indices(fom_cost, unit))
             for (u, s, t) in Iterators.flatten(
                 is_candidate(unit=u) ? 
                 (units_invested_available_indices(m; unit=u, t=t_range),) :
@@ -82,7 +82,7 @@ function fixed_om_costs(m, t_range)
                 connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s) : 
                 node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             )
-            for (conn, ng, d) in indices(capacity_per_connection; connection=indices(connection_fixed_annual_cost))
+            for (conn, ng, d) in indices(capacity_per_connection; connection=indices(fixed_annual_cost, connection))
             for (conn, s, t) in Iterators.flatten(
                 is_candidate(connection=conn) ? 
                 (connections_invested_available_indices(m; connection=conn, t=t_range),) :
@@ -108,7 +108,7 @@ function fixed_om_costs(m, t_range)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for n in indices(storage_fixed_annual_cost)
+            for n in indices(storage_fixed_annual_cost, node)
             for (n, s, t) in (
                 is_candidate(node=n) ?
                 storages_invested_available_indices(m; node=n, t=t_range) :
@@ -131,7 +131,7 @@ end
 
 function _connection_fixed_costs_per_duration_unit(m::Model, conn, s, t)
     return (
-        connection_fixed_annual_cost(connection=conn, stochastic_scenario=s, t=t)
+        fixed_annual_cost(connection=conn, stochastic_scenario=s, t=t)
         / _fixed_costs_annual_duration(m, t).value
     )
 end
