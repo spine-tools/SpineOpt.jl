@@ -1,3 +1,5 @@
+#using Pkg # Tasku: Uncomment these and run this script to build Docs locally.
+#Pkg.activate(@__DIR__)
 using Documenter
 using SpineOpt
 
@@ -7,11 +9,9 @@ include("docs_utils.jl")
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
 default_translation = Dict(
-    "relationship_classes" => "Relationship Classes",
+    "entity_classes" => "Entity Classes",
     "parameter_value_lists" => "Parameter Value Lists",
-    "object_parameters" => "Parameters",
-    "relationship_parameters" => "Parameters",
-    "object_classes" => "Object Classes",
+    "parameter_definitions" => "Parameters",
 )
 concept_dict = concept_dictionary(SpineOpt.template(); translation = default_translation)
 write_concept_reference_files(concept_dict, path)
