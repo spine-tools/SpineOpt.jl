@@ -20,10 +20,45 @@
 
 function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
     inds = unique(indices(m))
-    cons = Any[nothing for i in eachindex(inds)]
+    isempty(inds) && return
+    cons = Vector{Any}(undef, length(inds))
+    # [claude-sonnet-4-6]
+    # PyCall objects loaded from the database have Julia finalizers that call Py_Dealloc.
+    # When Threads.@threads is active, Julia's JIT compiler can release internal locks
+    # (jl_mutex_unlock inside jl_type_infer), which allows the GC to run those finalizers
+    # on a worker thread. Python 3.12+ memory allocators are not safe to call without the
+    # GIL from a non-main thread, causing EXCEPTION_ACCESS_VIOLATION crashes. Running GC
+    # here on the main thread drains the finalizer queue before any worker threads start.
+    GC.gc()
+    # [claude-sonnet-4-6]    
+    # Julia compiles a new method specialization the first time a function is called with
+    # a given combination of argument types. If the first call happens inside a worker
+    # thread, JIT compilation runs there, triggering the GC/finalizer race above even
+    # after the GC.gc() call above (because new allocations during compilation can trigger
+    # further GC cycles). The warmup loop calls build_constraint on the main thread for one
+    # representative element of each unique runtime type found in inds, so that every
+    # dispatch variant is compiled before Threads.@threads starts.
+    # For example, _build_constraint_connection_flow_capacity dispatches differently for a
+    # single direction Object vs. a Vector of directions — both variants need warmup.
+    seen_types = Set{DataType}()
+    for (i, ind) in enumerate(inds)
+        T = typeof(ind)
+        if T ∉ seen_types
+            push!(seen_types, T)
+            cons[i] = build_constraint(m, ind...)
+        end
+    end
+    # [claude-sonnet-4-6]    
+    # Thread the remaining indices. isassigned skips slots already filled by the warmup,
+    # so each cons[i] is written exactly once — no data race on the output array.
+    # NOTE: this is safe only as long as build_constraint does not create new PyCall
+    # objects at call time (i.e. SpineInterface parameter lookups use pre-loaded Julia-
+    # native structures, not live Python calls). If that assumption breaks, the only
+    # correct fix is to acquire the Python GIL on each worker thread via
+    # PyCall.pygil_ensure(), which would serialize all Python calls and negate the
+    # threading benefit entirely.
     Threads.@threads for i in eachindex(inds)
-        ind = inds[i]
-        cons[i] = build_constraint(m, ind...)
+        isassigned(cons, i) || (cons[i] = build_constraint(m, inds[i]...))
     end
     m.ext[:spineopt].constraints[name] = Dict(zip(inds, add_constraint.(m, cons)))
 end
