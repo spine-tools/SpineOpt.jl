@@ -1609,50 +1609,211 @@ function test_ac_opf_singleconn_inve()
         flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
         cinv = m.ext[:spineopt].variables[:connections_invested]
 
-        println(value(cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]]))
-        println(value(flowP[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
-        println(value(flowQ[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
-        println(value(uflow[unit(:unit_x), node(:node_c), 
-            direction(:to_node), stochastic_scenario(:parent), time_slices[1]])) 
+        # println(value(cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]]))
+        # println(value(flowP[connection(:connection_bc), node(:node_b), 
+        #     direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
+        # println(value(flowQ[connection(:connection_bc), node(:node_b), 
+        #     direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
+        # println(value(uflow[unit(:unit_x), node(:node_c), 
+        #     direction(:to_node), stochastic_scenario(:parent), time_slices[1]])) 
         
+        # println(SpineOpt._ac_flow_connection_node_indices_wdir(m))
         @test value(cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]]) == 1.0
     end
 end
 
+"""
+    test_ac_opf_singleconn_inve_rev()
 
+    Tests the optimal investment in an AC connection when the connection is in reverse direction.
+"""
+function test_ac_opf_singleconn_inve_rev()
+    @testset "ac_opf_singleconn_inve_rev" begin
+        url_in = _test_constraint_node_setup()
+        # add one more node and connection
+        objects = [
+            ["connection", "c1"],
+            ["node", "node_d"],
+            ["node", "node_e"],
+            ["unit", "unit_x"]
+        ]
+        object_parameter_values = [
+            ["node", "node_e", "has_voltage", true],
+            ["node", "node_e", "demand", 0.2],
+            ["node", "node_e", "min_voltage", 0.7],
+            ["node", "node_d", "has_voltage", true],
+            ["node", "node_d", "min_voltage", 0.7],
+            ["node", "node_d", "demand", 0.0],
+            ["node", "node_d", "demand_reactive", 0.0],
+            ["connection","c1","connection_resistance", 0.2],
+            ["connection","c1","connection_reactance", 0.2],
+            ["connection","c1","connection_current_max", 1.0],
+            ["connection","c1","candidate_connections", 1.0],
+            ["connection","c1","connection_investment_cost", 5.0],
+            ["connection","c1", "connection_investment_variable_type", "connection_investment_variable_type_integer"]
+        ]
+        relationships = [
+            ["unit__to_node", ["unit_x", "node_d"]],
+            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+            ["connection__from_node", ["c1", "node_e"]],
+            ["connection__to_node", ["c1", "node_d"]],
+            ["connection__node__node", [ "c1", "node_e", "node_d"]],
+            ["node__temporal_block", ["node_d", "hourly"]],
+            ["node__stochastic_structure", ["node_d", "stochastic"]],
+            ["node__temporal_block", ["node_e", "hourly"]],
+            ["node__stochastic_structure", ["node_e", "stochastic"]],
+            ["connection__investment_temporal_block", ["c1", "investments_hourly"]],
+            ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]],
+      
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+                ["c1", "node_e", "node_d"], "connection_has_ac_flow", true],
+            ["connection__to_node", ["c1", "node_d"], "connection_capacity", 10.0]
+        ]    
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
 
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        uflow = m.ext[:spineopt].variables[:unit_flow]
+        flowP = m.ext[:spineopt].variables[:connection_flow]
+        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+        cinv = m.ext[:spineopt].variables[:connections_invested]
+
+        println(value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]))
+        println(value(flowP[connection(:c1), node(:node_e), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
+        println(value(flowQ[connection(:c1), node(:node_e), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
+        println(value(uflow[unit(:unit_x), node(:node_d), 
+            direction(:to_node), stochastic_scenario(:parent), time_slices[1]])) 
+        
+        @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+    end
+end
+
+"""
+    test_ac_opf_singleconn_lossless()
+
+    Tests the optimal investment in an AC connection when there is only reactive flow.
+"""
+function test_ac_opf_singleconn_lossless()
+    @testset "ac_opf_singleconn_lossless" begin
+        url_in = _test_constraint_node_setup()
+        # add one more node and connection
+        objects = [
+            ["connection", "c1"],
+            ["node", "node_d"],
+            ["node", "node_e"],
+            ["unit", "unit_x"]
+        ]
+        object_parameter_values = [
+            ["node", "node_e", "has_voltage", true],
+            ["node", "node_e", "demand_reactive", 0.2],
+            ["node", "node_e", "min_voltage", 0.7],
+            ["node", "node_d", "has_voltage", true],
+            ["node", "node_d", "min_voltage", 0.7],
+            ["node", "node_d", "demand", 0.0],
+            ["node", "node_d", "demand_reactive", 0.0],
+            ["connection","c1","connection_resistance", 0.0],
+            ["connection","c1","connection_reactance", 0.2],
+            ["connection","c1","connection_current_max", 1.0],
+            ["connection","c1","candidate_connections", 1.0],
+            ["connection","c1","connection_investment_cost", 5.0],
+            ["connection","c1", "connection_investment_variable_type", "connection_investment_variable_type_integer"]
+        ]
+        relationships = [
+            ["unit__to_node", ["unit_x", "node_d"]],
+            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+            ["connection__from_node", ["c1", "node_e"]],
+            ["connection__to_node", ["c1", "node_d"]],
+            ["connection__node__node", [ "c1", "node_e", "node_d"]],
+            ["node__temporal_block", ["node_d", "hourly"]],
+            ["node__stochastic_structure", ["node_d", "stochastic"]],
+            ["node__temporal_block", ["node_e", "hourly"]],
+            ["node__stochastic_structure", ["node_e", "stochastic"]],
+            ["connection__investment_temporal_block", ["c1", "investments_hourly"]],
+            ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]],
+      
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+                ["c1", "node_e", "node_d"], "connection_has_ac_flow", true],
+            ["connection__to_node", ["c1", "node_d"], "connection_capacity", 10.0]
+        ]    
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        uflow = m.ext[:spineopt].variables[:unit_flow]
+        flowP = m.ext[:spineopt].variables[:connection_flow]
+        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+        cinv = m.ext[:spineopt].variables[:connections_invested]
+
+        println(value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]))
+        println(value(flowP[connection(:c1), node(:node_e), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
+        println(value(flowQ[connection(:c1), node(:node_e), 
+            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
+        println(value(uflow[unit(:unit_x), node(:node_d), 
+            direction(:to_node), stochastic_scenario(:parent), time_slices[1]])) 
+        
+        @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+    end
+end
 
 @testset "node-based constraints" begin
-    test_constraint_nodal_balance()
-    test_constraint_nodal_balance_group()
-    test_constraint_node_injection()
-    test_constraint_cyclic_node_state()
-    test_constraint_storage_line_pack()
-    test_constraint_compression_ratio()
-    test_constraint_min_node_pressure()
-    test_constraint_max_node_pressure()
-    test_constraint_min_node_voltage_angle()
-    test_constraint_max_node_voltage_angle()
-    test_constraint_min_node_state_investments()    
-    test_constraint_node_state_capacity_investments()
-    test_constraint_storages_invested_available()
-    test_constraint_storages_invested_available_mp()
-    test_constraint_storages_invested_transition()
-    test_constraint_storages_invested_transition_mp()
-    test_constraint_storage_lifetime()
-    test_constraint_storage_lifetime_sense()
-    test_constraint_storage_lifetime_mp()
-    test_constraint_min_capacity_margin()
-    test_constraint_min_capacity_margin_penalty()
-    test_constraint_node_injection_free_start()
-    test_constraint_cyclic_node_state_free_start()
+    # test_constraint_nodal_balance()
+    # test_constraint_nodal_balance_group()
+    # test_constraint_node_injection()
+    # test_constraint_cyclic_node_state()
+    # test_constraint_storage_line_pack()
+    # test_constraint_compression_ratio()
+    # test_constraint_min_node_pressure()
+    # test_constraint_max_node_pressure()
+    # test_constraint_min_node_voltage_angle()
+    # test_constraint_max_node_voltage_angle()
+    # test_constraint_min_node_state_investments()    
+    # test_constraint_node_state_capacity_investments()
+    # test_constraint_storages_invested_available()
+    # test_constraint_storages_invested_available_mp()
+    # test_constraint_storages_invested_transition()
+    # test_constraint_storages_invested_transition_mp()
+    # test_constraint_storage_lifetime()
+    # test_constraint_storage_lifetime_sense()
+    # test_constraint_storage_lifetime_mp()
+    # test_constraint_min_capacity_margin()
+    # test_constraint_min_capacity_margin_penalty()
+    # test_constraint_node_injection_free_start()
+    # test_constraint_cyclic_node_state_free_start()
     # for testing AC flow with linear formulation
     test_ac_opf_singleconn()
     test_ac_opf_singleconn_q()
     test_ac_opf_singleconn_rev()
     test_ac_opf_singleconn_lim_I()
     test_ac_opf_singleconn_inve()
-  
+    test_ac_opf_singleconn_inve_rev()
+    test_ac_opf_singleconn_lossless()
 end

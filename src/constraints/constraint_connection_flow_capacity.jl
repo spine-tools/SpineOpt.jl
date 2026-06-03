@@ -65,6 +65,13 @@ function add_constraint_connection_flow_capacity!(m::Model)
         constraint_connection_flow_capacity_indices,
         _build_constraint_connection_flow_capacity,
     )
+    # for AC connections we add a constraint which limits the flow in reverse direction
+    _add_constraint!(
+        m,
+        :connection_reverse_flow_capacity,
+        constraint_connection_reverse_flow_capacity_indices,
+        _build_constraint_connection_reverse_flow_capacity,
+    )
 end
 
 function _build_constraint_connection_flow_capacity(m, conn, ng, d, s_path, t)
@@ -95,6 +102,21 @@ function _build_constraint_connection_flow_capacity_bidirectional(m, conn, ng, s
     )
 end
 
+"""
+    _build_constraint_connection_reverse_flow_capacity(m, conn, ng, d, s_path, t)
+
+    Creates a lower bound constraint for connection flow. Used for real power of AC 
+    connections. 
+"""
+function _build_constraint_connection_reverse_flow_capacity(m, conn, ng, d, s_path, t)
+    @build_constraint(
+        + _term_connection_flow(m, conn, ng, d, s_path, t)
+        >=
+        - _term_total_number_of_connections(m, conn, ng, d, s_path, t)
+        * _term_connection_flow_capacity(m, conn, ng, d, s_path, t)
+    )
+end
+
 function _term_connection_flow_capacity(m, conn, ng, d, s_path, t)
     @fetch connection_flow = m.ext[:spineopt].variables
     (
@@ -119,6 +141,21 @@ function constraint_connection_flow_capacity_indices(m::Model)
             connections_invested_available_indices(m; connection=conn),
         )
     )
+end
+
+"""
+    constraint_connection_reverse_flow_capacity_indices(m::Model)
+
+    Spits out the indices for connection capacity constraint in reverse direction.
+    This constraint is written for AC flow connections where either source or destination
+    node related connection_capacity is given.
+"""
+function constraint_connection_reverse_flow_capacity_indices(m::Model) 
+    # create the list of connection, node, direction indices pertaining to AC connections
+    a = Set(_ac_flow_connection_node_indices_wdir(m))
+    # filter the original list of indices
+    Iterators.filter(x -> NamedTuple{(:connection, :node, :direction)}(x) in a, 
+        constraint_connection_flow_capacity_indices(m))
 end
 
 """

@@ -90,6 +90,27 @@ function _ac_flow_connection_node_indices(
     )
 end
 
+function _ac_flow_connection_node_indices_wdir(
+    m::Model;
+    node = anything,
+    connection = anything,
+)
+    ind = unique(
+                vcat(
+                    [
+                        (connection=conn, node=n1, direction=direction(:from_node) )
+                        for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node1=node)
+                            if connection_has_ac_flow(node1=n1, node2=n2, connection=conn) == true
+                    ],
+                    [
+                        (connection=conn, node=n2, direction=direction(:to_node) )
+                        for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node2=node)
+                            if connection_has_ac_flow(node1=n1, node2=n2, connection=conn) == true
+                    ]
+        )
+    )
+end
+
 function _has_ac_flow_connection_node(m::Model;
     node = anything,
     connection = anything)
