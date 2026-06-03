@@ -1229,66 +1229,6 @@ function test_constraint_cyclic_node_state_free_start()
 end
 
 """
-    test_node_voltage_singleconn_socp()
-    Testing the voltage of the demand node when there is a real power demand behind a single connection.
-"""
-function test_node_voltage_singleconn_socp()
-    @testset "constraint_node_voltage" begin
-   
-        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
-        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
-
-        url_in = _test_constraint_node_setup()
-        object_parameter_values = [
-            ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_mip_solver_options", solver_options],
-            ["node", "node_b", "has_voltage", true],
-            ["node", "node_b", "demand_reactive", 0.1],
-            ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "has_voltage", true],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.2],
-            ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","connection_resistance",0.2],
-            ["connection","connection_bc","connection_reactance",0.2],
-            ["connection","connection_bc","connection_current_max",1.0]
-        ]
-        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
-        ]
-            
-        SpineInterface.import_data(
-            url_in;
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        vsin  = m.ext[:spineopt].variables[:node_voltageproduct_sine]
-        vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
-        connflow = m.ext[:spineopt].variables[:connection_flow]
-              
-        if isdefined(Main, :Infiltrator)
-            Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
-        end
-
-        println(value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) )
-        
-        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.001
-    end
-end
-
-"""
     test_ac_opf_singleconn()
     Testing the voltage of the demand node when there is a real power demand behind a single connection.
 """
@@ -1771,16 +1711,10 @@ function test_ac_opf_singleconn_lossless()
         flowP = m.ext[:spineopt].variables[:connection_flow]
         flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
         cinv = m.ext[:spineopt].variables[:connections_invested]
-
-        println(value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]))
-        println(value(flowP[connection(:c1), node(:node_e), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
-        println(value(flowQ[connection(:c1), node(:node_e), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
-        println(value(uflow[unit(:unit_x), node(:node_d), 
-            direction(:to_node), stochastic_scenario(:parent), time_slices[1]])) 
-        
+      
         @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+        @test value(uflow[unit(:unit_x), node(:node_d), 
+            direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) ≈ 0.0 atol=0.001
     end
 end
 
