@@ -10,7 +10,7 @@ SpineOpt offers flexibility to the users so that different things can be modeled
 
 ## Economic representation
 
-### Parameters
+### Economic parameters
 It can be tricky to put the correct cost parameters into the model since factors like discounting and end-of-lifetime effects have to be taken into account. For that purpose, SpineOpt has incorporated some dedicated parameters for economic representation. Set the parameter `multiyear_economic_discounting` with a corresponding valid value will activate these paramters.
 
 **Discounted annuities**
