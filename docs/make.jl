@@ -1,5 +1,7 @@
-#using Pkg # Tasku: Uncomment these and run this script to build Docs locally.
+# Tasku: Uncomment these and run this script to build Docs locally.
+#using Pkg
 #Pkg.activate(@__DIR__)
+
 using Documenter
 using SpineOpt
 
@@ -13,8 +15,8 @@ default_translation = Dict(
     "parameter_value_lists" => "Parameter Value Lists",
     "parameter_definitions" => "Parameters",
 )
-concept_dict = concept_dictionary(SpineOpt.template(); translation = default_translation)
-write_concept_reference_files(concept_dict, path)
+concept_dict = create_concept_dictionary(SpineOpt.template(); translation=default_translation)
+write_concept_reference_files(concept_dict, path, Set(values(default_translation)))
 
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
 # and content from docstrings
@@ -80,8 +82,7 @@ pages = [
         "Multi-stage optimisation" => joinpath("advanced_concepts", "multi_stage.md"),
     ],
     "SpineOpt Template" => Any[
-        "Object Classes" => joinpath("concept_reference", "Object Classes.md"),
-        "Relationship Classes" => joinpath("concept_reference", "Relationship Classes.md"),
+        "Entity Classes" => joinpath("concept_reference", "Entity Classes.md"),
         "Parameters" => joinpath("concept_reference", "Parameters.md"),
         "Parameter Value Lists" => joinpath("concept_reference", "Parameter Value Lists.md"),
     ],

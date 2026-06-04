@@ -49,9 +49,9 @@ function write_sets_and_variables(mathpath)
 end
 
 """
-    concept_dictionary(template::Dict; translation::Dict=Dict())
+    create_concept_dictionary(template::Dict; translation::Dict=Dict())
 
-A `Dict` mapping keys from the template ("object_classes", "relationship_classes", etc.)
+A `Dict` mapping keys from the template ("entity_classes", "parameter_definitions", etc.)
 to another `Dict` mapping 'concept' names ("unit", "node", "node__to_unit", "capacity_per_unit" etc.)
 to a third `Dict` containing information to document that concept.
 
@@ -60,7 +60,7 @@ concepts, or the description.
 Thus, we have to map things somewhat manually here.
 The optional `translation` keyword can be used to aggregate and translate the output.
 """
-function concept_dictionary(template::Dict; translation::Dict=Dict())
+function create_concept_dictionary(template::Dict; translation::Dict=Dict())
     # Define mapping of template entries, where each attribute of interest is.
     template_mapping = Dict(
         "entity_classes" => Dict(
@@ -73,7 +73,10 @@ function concept_dictionary(template::Dict; translation::Dict=Dict())
             :name => 1,
             :subclass => 2,
         ),
-        "parameter_value_lists" => Dict(:name => 1, :possible_values => 2),
+        "parameter_value_lists" => Dict(
+            :name => 1,
+            :possible_values => 2
+        ),
         "parameter_definitions" => Dict(
             :name => 2,
             :parameter_description => 5,
@@ -84,38 +87,45 @@ function concept_dictionary(template::Dict; translation::Dict=Dict())
         ),
         "parameter_types" => Dict(
             :name => 2,
-            :related_concept => 1,
-            :related_concept_type => "entity_classes",
             :supported_type => 3
         ),
     )
     # Initialize the concept dictionary based on the template (accumulates entries if overlaps)
-    concept_dictionary = Dict()
+    concept_dictionary = OrderedDict()
+    # Loop over the mapping and get already existing sections if overlaps.
     for (key, indices) in template_mapping
         translated_key = get(translation, key, key)
-        concept_dict_for_key = get!(concept_dictionary, translated_key, Dict())
+        concept_dict_for_key = get!(concept_dictionary, translated_key, OrderedDict())
+        # Loop over the template categories
         for entry in template[key]
             name = entry[indices[:name]]
-            concept_dict_for_name = get!(concept_dict_for_key, name, Dict())
-            for field in (:description, :parameter_description, :default_value, :parameter_value_list, :possible_values)
+            supported_types = String[]
+            concept_dict_for_name = get!(concept_dict_for_key, name, OrderedDict{Symbol,Any}(:supported_type => supported_types))
+            # Loop over the desired fields to search the template for the corresponding data.
+            for field in (:description, :parameter_description, :default_value, :parameter_value_list, :possible_values, :subclass, :supported_type)
                 index = get(indices, field, nothing)
                 index === nothing && continue
                 value = entry[index]
-                if field == :default_value
+                if field == :default_value # Underscores need to be escaped for markdown.
                     value = replace(string(value), "_" => "\\_")
                 end
                 value === nothing && continue
-                if field in (:parameter_description, :default_value, :parameter_value_list)
-                    class = "`$(entry[indices[:related_concept]])`"
+                if field in (:parameter_description, :default_value, :parameter_value_list) # Store classes for parameters.
+                    class = "$(entry[indices[:related_concept]])"
                     classes_by_value = get!(concept_dict_for_name, field, OrderedDict())
                     push!(get!(classes_by_value, value, []), class)
-                elseif field == :possible_values
+                elseif field == :possible_values # Store possible values.
+                    push!(get!(concept_dict_for_name, field, []), value)
+                elseif field == :subclass # Store subclasses.
+                    push!(get!(concept_dict_for_name, field, []), value)
+                elseif field == :supported_type # Store supported types.
                     push!(get!(concept_dict_for_name, field, []), value)
                 else  # :description
                     concept_dict_for_name[field] = value
                 end
             end
-            related_concepts = get!(concept_dict_for_name, :related_concepts, Dict())
+            # Process related concepts.
+            related_concepts = get!(concept_dict_for_name, :related_concepts, OrderedDict())
             related_concept_type = get(indices, :related_concept_type, nothing)
             if !isnothing(related_concept_type)
                 related_concept_type = get(translation, related_concept_type, related_concept_type)
@@ -131,11 +141,11 @@ function concept_dictionary(template::Dict; translation::Dict=Dict())
 end
 
 """
-    add_cross_references!(concept_dictionary::Dict)
+    add_cross_references!(concept_dictionary::AbstractDict)
 
 Loops over the `concept_dictionary` and cross-references all `:related_concepts`.
 """
-function add_cross_references!(concept_dictionary::Dict)
+function add_cross_references!(concept_dictionary::AbstractDict)
     # Loop over the concept dictionary and cross-reference all related concepts.
     for (key, concept_dict_for_key) in concept_dictionary
         for (name, concept_dict_for_name) in concept_dict_for_key
@@ -151,19 +161,31 @@ function add_cross_references!(concept_dictionary::Dict)
 end
 
 """
-    write_concept_reference_files(concept_dictionary::Dict, makedocs_path::String)
+    write_concept_reference_files(
+        concept_dictionary::AbstractDict,
+        makedocs_path::String,
+        sections::AbstractSet
+    )
 
 Write markdown files for the `Concept Reference` chapter based on the `concept_dictionary`.
 
 Each file is pieced together from two parts: the preamble automatically generated using the
 `concept_dictionary`, and a separate description assumed to be found under `docs/src/concept_reference/<name>.md`.
 """
-function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::String)
+function write_concept_reference_files(
+    concept_dictionary::AbstractDict,
+    makedocs_path::String,
+    sections::AbstractSet
+)
+    # Helper function for formatting Documenter.jl reference strings.
+    function _refstring(str::String)
+        return "[$(replace(str, "_" => "\\_"))](@ref)"
+    end
+    # Loop over the concept dictionary to construct the documentation.
     for (key, concept_dict_for_key) in concept_dictionary
-        system_string = ["# $(key)\n\n"]
+        !in(key, sections) ? continue : system_string = ["\n# $(key)\n\n"] # Skip writing the file if it's not included in `sections`.
         # Loop over the unique names and write their information into the filename under a dedicated section.
-        for name in unique!(sort!(collect(keys(concept_dict_for_key))))
-            concept_dict_for_name = concept_dict_for_key[name]
+        for (name, concept_dict_for_name) in sort!(concept_dict_for_key)
             section = "\n## `$name`\n\n"
             # If description is defined, include it into the preamble.
             description = get(concept_dict_for_name, :description, nothing)
@@ -171,7 +193,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
                 section *= "> $description\n\n"
             end
             # If parameter descriptions are defined, include those into the preamble
-            classes_by_description = get(concept_dict_for_name, :parameter_description, Dict())
+            classes_by_description = get(concept_dict_for_name, :parameter_description, OrderedDict())
             if length(classes_by_description) == 1
                 description = first(collect(keys(classes_by_description)))
                 section *= "> $description\n\n"
@@ -180,6 +202,12 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
                     ["> - For $(join(classes, ", ")): $desc" for (desc, classes) in classes_by_description], "\n"
                 )
                 section *= "$description\n\n"
+            end
+            # If subclasses are defined, include those into the preamble.
+            subclasses = get(concept_dictionary["superclass_subclasses"], name, nothing)
+            if subclasses !== nothing
+                subclasses = _refstring.(get(subclasses, :subclass, nothing))
+                section *= ">**Subclasses**: $(join(subclasses, ", "))\n\n"
             end
             # If default values are defined, include those into the preamble
             classes_by_default_value = get(concept_dict_for_name, :default_value, Dict())
@@ -211,10 +239,16 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
                 strings = ["`$(c)`" for c in possible_values]
                 section *= ">**Possible values:** $(join(sort!(strings), ", ", " and ")) \n\n"
             end
+            # If supported parameter value types are defined, include those in the preamble.
+            supported_types = get(concept_dictionary["parameter_types"], name, nothing)
+            if !isnothing(supported_types)
+                supported_types = get(supported_types, :supported_type, nothing)
+                section *= ">**Supported parameter value types**: $(join(supported_types, ", "))\n\n"
+            end
             # If related concepts are defined, include those into the preamble
             for (related_concept_type, related_concepts) in concept_dict_for_name[:related_concepts]
                 if !isempty(related_concepts)
-                    refstrings = ["[$(replace(c, "_" => "\\_"))](@ref)" for c in unique(related_concepts)]
+                    refstrings = _refstring.(unique(related_concepts))
                     section *= string(
                         ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** ",
                         "$(join(sort!(refstrings), ", ", " and "))\n\n"
@@ -224,7 +258,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             # Try to fetch the description from the corresponding .md filename.
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
             try
-                f = open( description_path, "r")
+                f = open(description_path, "r")
                 description = read(f, String)
             catch
                 @warn "extended description for `$name` not found! consider adding one to `$description_path`."
