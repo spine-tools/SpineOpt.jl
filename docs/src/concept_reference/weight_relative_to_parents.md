@@ -4,10 +4,10 @@ As a [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship paramete
 [stochastic\_structure](@ref)s can use different weights for the same [stochastic\_scenario](@ref).
 Note that every [stochastic\_scenario](@ref) that appears in the [model](@ref) must have a
 [weight\_relative\_to\_parents](@ref) defined for it related to the used [stochastic\_structure](@ref)!
-See the [Stochastic Framework](@ref) section for more information about how different [stochastic\_structure](@ref)s
+See the [Stochastic Framework](@ref stochastic_framework) section for more information about how different [stochastic\_structure](@ref)s
 interact in *SpineOpt.jl*.)
 
-Since the [Stochastic Framework](@ref) in *SpineOpt.jl* supports *stochastic directed acyclic graphs* instead of simple
+Since the [Stochastic Framework](@ref stochastic_framework) in *SpineOpt.jl* supports *stochastic directed acyclic graphs* instead of simple
 *stochastic trees*, it is possible to define [stochastic\_structure](@ref)s with converging
 [stochastic\_scenario](@ref)s.
 In these cases, the child [stochastic\_scenario](@ref)s inherint the weight of all of their parents, and the final
