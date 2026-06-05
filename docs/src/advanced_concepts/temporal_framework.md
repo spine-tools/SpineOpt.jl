@@ -14,53 +14,65 @@ We start by introducing the relevant objects with their parameters, and the rele
 
 ## Objects, relationships, and their parameters
 In this section, the objects and relationships will be discussed that form the temporal structure together.
+
 ### Objects relevant for the temporal framework
 For the objects, the relevant parameters will also be introduced, along with the type of values that are allowed, following the format below:  
 
 * 'parameter_name' : "Allowed value type"
 
-#### [model](@ref) object
-Each `model` object holds general information about the model at hand. Here we only discuss the time related parameters:
-* [model_start](@ref) and [model_end](@ref) : "Date time value"
+#### The `model` object
+Each [model](@ref) object holds general information about the model at hand. Here we only discuss the time related parameters:
+* [model\_start](@ref) and [model\_end](@ref) : "Date time value"
 These two parameters define the model horizon. A Datetime value is to be taken for both parameters, in which case they directly mark respectively the beginning and end of the modeled time horizon.
 
-* [duration_unit](@ref) (optional): "minute or hour"
+* [duration\_unit](@ref) (optional): "minute or hour"
  This parameters gives the unit of duration that is used in the model calculations. The default value for this parameter is 'minute'.
  E.g. if the [duration\_unit](@ref) is set to `hour`, a `Duration` of one `minute` gets converted into `1/60 hours` for the calculations.
 
-* [roll_forward](@ref) (optional): "duration value"
+* [roll\_forward](@ref) (optional): "duration value"
 This parameter defines how much the optimization window rolls forward in a rolling horizon optimization and should be expressed as a duration. In the practical approaches presented below, the rolling window optimization will be explained in more detail.
 
 
-#### [temporal_block](@ref)  object
-A temporal block defines the properties of the optimization that is to be solved in the current window. Most importantly, it holds the necessary information about the resolution and horizon of the optimization.
+#### The `temporal_block` object
+A [temporal\_block](@ref) defines the properties of the optimization that is to be solved in the current window. Most importantly, it holds the necessary information about the resolution and horizon of the optimization.
 
 * [resolution](@ref) (optional): "duration value" or "array of duration values"
 
 This parameter specifies the resolution of the temporal block, or in other words: the length of the timesteps used in the optimization run.
 
-* [block_start](@ref) (optional): "duration value" or "Date time value"
+* [block\_start](@ref) (optional): "duration value" or "Date time value"
 Indicates the start of this temporal block.
 
-* [block_end](@ref)(optional): "duration value" or "Date time value"
+* [block\_end](@ref)(optional): "duration value" or "Date time value"
 Indicates the end of this temporal block.
 
 
 ### Relationships relevant for the temporal framework
 
-#### [model\_\_temporal\_block](@ref) relationship
-In this relationship, a model instance is linked to a temporal block. If this relationship doesn't exist - the temporal block is disregarded from this optimization model.
-#### [model\_\_default\_temporal\_block](@ref) relationship
-Defines the default temporal block used for model objects, which will be replaced when a specific relationship is defined for a model in `model__temporal_block`.
-#### [node\_\_temporal\_block](@ref) relationship
-This relationship will link a node to a temporal block.
+#### The `model__default_temporal_block` relationship
+Defines the default temporal block used for model objects.
+Note that these will be superseded by the more detailed definitions below whenever present.
 
-#### [units\_on\_\_temporal_block](@ref) relationship
+#### The `node__temporal_block` relationship
+This relationship will link a [node](@ref) to a [temporal\_block](@ref).
+Effectively, this will define the resolution of the [nodal balance constraint](@ref constraint_nodal_balance),
+including its state as well as all flows associated with it.
+
+#### The `units_on__temporal_block` relationship
 This relationship links the `units_on` variable of a unit to a temporal block and will therefore govern the time-resolution of the unit's online/offline status.
-#### [unit\__investment\_temporal_block](@ref) relationship
-This relationship sets the temporal dimensions for investment decisions of a certain unit. The separation between this relationship and the `units_on__temporal_block`, allows the user for example to give a much finer resolution to a unit's on- or offline status than to it's investment decisions.
-#### [model\_\_default\_investment\_temporal\_block](@ref) relationship
-Defines the default temporal block used for investment decisions, which will be replaced when a specific relationship is defined for a unit in `unit__investment_temporal_block`.
+
+#### The `unit__investment_temporal_block` relationship
+This relationship sets the temporal dimensions for investment decisions of a certain unit.
+The separation between this relationship and the [units\_on\_\_temporal\_block](@ref),
+allows the user for example to give a much finer resolution to a unit's on- or offline status than to its investment decisions.
+
+Note that similar investment temporal block relations exist separately for [connection](@ref) and [node](@ref),
+namely the [connection\_\_investment\_temporal\_block](@ref) and [node\_\_investment\_temporal\_block](@ref), respectively.
+
+#### The `model__default_investment_temporal_block` relationship
+Defines the default temporal block used for investment decisions.
+Again, this will get superseded by the above specific relations whenever available.
+
 ## General principle of the temporal framework
 
 The general principle of the Spine modeling temporal structure is that different temporal blocks can be defined and linked to different objects in a model. This leads to great flexibility in the temporal structure of the model as a whole. To illustrate this, we will discuss some of the possibilities that arise in this framework.
