@@ -1,1 +1,0 @@
-`grid_physics_list` holds the possible values for the grid parameter [physics_type](@ref) parameter. See [physics_type](@ref) for more details

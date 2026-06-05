@@ -161,6 +161,30 @@ function add_cross_references!(concept_dictionary::AbstractDict)
 end
 
 """
+    purge_obsolete_concept_reference_files(
+        concept_dictionary::AbstractDict,
+        path::AbstractString;
+        spare=String[],
+    )
+
+Purge obsolete contents from the contept_reference `path`, with the exception of `spare`.
+"""
+function purge_obsolete_concept_reference_files(
+    concept_dictionary::AbstractDict,
+    path::AbstractString;
+    spare=String[],
+)
+    path = joinpath(path, "src", "concept_reference")
+    concepts = Iterators.flatten(keys(v) for (k,v) in concept_dictionary)
+    concepts = unique(concepts) .* ".md"
+    for file in readdir(path)
+        if !in(file, vcat(concepts, spare))
+            rm(joinpath(path, file))
+        end
+    end
+end
+
+"""
     write_concept_reference_files(
         concept_dictionary::AbstractDict,
         makedocs_path::String,

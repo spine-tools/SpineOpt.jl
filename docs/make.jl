@@ -8,7 +8,7 @@ using SpineOpt
 include("docs_utils.jl")
 
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
-# Actual descriptions are fetched separately from `src/concept_reference/concepts/`
+# Actual descriptions are fetched separately from `src/concept_reference/`
 path = @__DIR__
 default_translation = Dict(
     "entity_classes" => "Entity Classes",
@@ -16,6 +16,7 @@ default_translation = Dict(
     "parameter_definitions" => "Parameters",
 )
 concept_dict = create_concept_dictionary(SpineOpt.template(); translation=default_translation)
+purge_obsolete_concept_reference_files(concept_dict, path; spare=["_example.md", "archetypes.md", "the_basics.md"])
 write_concept_reference_files(concept_dict, path, Set(values(default_translation)))
 
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
