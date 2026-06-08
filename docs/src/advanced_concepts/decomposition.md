@@ -33,12 +33,12 @@ The marginal values above are computed as the reduced costs of relevant optimisa
 To report the dual of a constraint, one can add an output item with the corresponding constraint name (e.g. `constraint_nodal_balance`) and add that to a report. This will cause the corresponding constraint's relaxed problem marginal value will be reported in the output DB. When adding a constraint name as an output we need to preface the actual constraint name with `constraint_` to avoid ambiguity with variable names (e.g. `units_available`). So to report the marginal value of `units_available` we add an output object called `constraint_units_available`.
 
 To report the reduced cost for a variable which is the marginal value of the associated active bound or fix constraints
-on that variable, one can add an output object with the variable name prepended by `bound_`. So, to report the units_on reduced_cost value, one would create an output item called `bound_units_on`. If added to a report, this will cause the reduced cost of [units\_on](@ref var_units_on) in the final fixed LP to be written to the output db.
+on that variable, one can add an output object with the variable name prepended by `bound_`. So, to report the units_on reduced_cost value, one would create an output item called `bound_units_on`. If added to a report, this will cause the reduced cost of [units\_on](@ref var_units_on) in the final fixed LP to be written to the output DB.
 
 ## Using Decomposition
 Assuming one has set up a conventional investments problem as described in [Investment Optimization](@ref) the following additional steps are required to utilise the decomposition framework:
-  - Set the [model\_type](@ref) parameter for your `model` to `spineopt_benders`.
-  - Specify [decomposition\_max\_gap](@ref) parameter for your `model` - This determines the master problem convergence criterion for the relative benders gap. A value of 0.05 will represent a relative benders gap of 5%.
-  - Specify the [decomposition\_max\_iterations](@ref) parameter for your `model` - This determines the master problem convergence criterion for the number of iterations. A value of 10 could be appropriate but this is highly dependent on the size and nature of the problem.
+  - Set the [model\_type](@ref) parameter for your [model](@ref) to `spineopt_benders`.
+  - Specify [decomposition\_max\_gap](@ref) parameter for your [model](@ref) - This determines the master problem convergence criterion for the relative benders gap. A value of 0.05 will represent a relative benders gap of 5%.
+  - Specify the [decomposition\_max\_iterations](@ref) parameter for your [model](@ref) - This determines the master problem convergence criterion for the number of iterations. A value of 10 could be appropriate, but this is highly dependent on the size and nature of the problem.
 
 Once the above is set, all investment decisions in the model are automatically decomposed and optimised in a Benders master problem. This behaviour may change in the future to allow some investment decisions to be optimised in the operations problem and some optimised in the master problem as desired.

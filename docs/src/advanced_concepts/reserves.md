@@ -11,7 +11,7 @@ To define a reserve node, the following parameters have to be defined for the re
 * [reserve\_active](@ref): this boolean parameter indicates that this node is a reserve node.
 * [reserve\_upward](@ref): this boolean parameter indicates that the demand for reserve provision of this node concerns upward reserves.
 * [reserve\_downward](@ref): this boolean parameter indicates that the demand for reserve provision of this node concerns downward reserves.
-* [reserve\_procurement\_cost](@ref): (optional) this parameter indicates the procurement cost of a unit for a certain reserve product and can be define on a [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship.
+* [reserve\_procurement\_cost](@ref): (optional) this parameter indicates the procurement cost of a unit for a certain reserve product and can be defined on a [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship.
 
 ## Defining a reserve group
 
@@ -31,9 +31,9 @@ Let's take a look to the [unit flow capacity constraint](../mathematical_formula
 
 Assuming the following parameters, we are considering a fully flexible unit taking into account the definition of the [unit flow capacity constraint](../mathematical_formulation/constraints.md#constraint_unit_flow_capacity):
 
-* `capacity_per_unit`  : **100**
-* `ramp_limits_shutdown`: **1**
-* `ramp_limits_startup` : **1**
+* [capacity\_per\_unit](@ref)  : **100**
+* [ramp\_limits\_shutdown](@ref): **1**
+* [ramp\_limits\_startup](@ref) : **1**
 
 The parameters indicate that the unit capacity is 100 (e.g., 100 MW) and the shutdown and startup limits are 1 p.u. This means that the unit can start up or shut down to its maximum capacity, making it a fully flexible unit.
 
@@ -47,7 +47,7 @@ Here, we can see that the flow to the electricity node depends on the unit's cap
 
 We need to consider the following parameters for the [minimum operating point](../mathematical_formulation/constraints.md#constraint_minimum_operating_point) constraint:
 
-* `minimum_operating_point`  : **0.25**
+* [minimum\_operating\_point](@ref)  : **0.25**
 
 This value means that the unit has a *25%* of its capacity as a minimum operating point (i.e., 25 MW). Therefore, the simplified version of the resulting constraint is:
 
