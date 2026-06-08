@@ -23,7 +23,7 @@ write_concept_reference_files(concept_dict, path, Set(values(default_translation
 # and content from docstrings
 mathpath = joinpath(path, "src", "mathematical_formulation")
 docstrings = all_docstrings(SpineOpt)
-constraints_lines = readlines(joinpath(mathpath, "constraints.md"))
+constraints_lines = readlines(joinpath(mathpath, "constraints.txt"))
 expand_tags!(constraints_lines, docstrings)
 open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
     write(file, join(constraints_lines, "\n"))
@@ -56,7 +56,7 @@ pages = [
         "Rolling horizon" => joinpath("tutorial", "rolling_horizon.md"),
         "Multi-stage optimisation" => joinpath("tutorial", "multi-stage.md"),
     ],
-    "How to" => [],
+    "How to" => [], # This is expanded automatically by `populate_empty_chapters!`
     "Example gallery" => joinpath("gallery", "gallery.md"),    
     "Database structure" => Any[
         "Basics of the data structure" => joinpath("concept_reference", "the_basics.md"),
@@ -92,7 +92,7 @@ pages = [
         "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
         "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated.md"),
     ],
-    "Implementation details" => [],
+    "Implementation details" => [], # This is expanded automatically by `populate_empty_chapters!`
     "Library" => "library.md",
 ]
 populate_empty_chapters!(pages, joinpath(path, "src"))
