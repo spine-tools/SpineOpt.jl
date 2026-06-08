@@ -655,7 +655,7 @@ end
     expand_model__default_temporal_block()
 
 Expand the `model__default_temporal_block` relationship to all `nodes` without `node__temporal_block`
-and `units_on` without `units_on_temporal_block`.
+and `units_on` without `units_on__temporal_block`.
 """
 function expand_model__default_temporal_block()
     add_relationships!(
