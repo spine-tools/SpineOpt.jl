@@ -19,39 +19,23 @@
 #############################################################################
 
 @doc raw"""
-By specifying the parameters [fix\_ratio\_out\_in\_unit\_flow](@ref),
-[fix\_ratio\_in\_out\_unit\_flow](@ref), [fix\_ratio\_in\_in\_unit\_flow](@ref),
-and/or [fix\_ratio\_out\_out\_unit\_flow](@ref),
-a **fix** ratio can be set between, respectively,
-**out**going and **in**coming flows from and to a unit,
-**in**coming and **out**going flows to and from a unit,
-two **in**coming flows to a unit,
-and/or two **out**going flows from a unit.
-
-Similary, a **minimum** ratio between flows can be set by specifying [min\_ratio\_out\_in\_unit\_flow](@ref),
-[min\_ratio\_in\_out\_unit\_flow](@ref), [min\_ratio\_in\_in\_unit\_flow](@ref),
-and/or [min\_ratio\_out\_out\_unit\_flow](@ref).
-
-Finally, a **maximum** ratio can be set by specifying [max\_ratio\_out\_in\_unit\_flow](@ref),
-[max\_ratio\_in\_out\_unit\_flow](@ref), [max\_ratio\_in\_in\_unit\_flow](@ref),
-and/or [max\_ratio\_out\_out\_unit\_flow](@ref).
+By specifying the [flow\_ratio\_equality\_coefficient](@ref),
+a **fixed** ratio can be set between two [unit\_flow](@ref)s.
+Similary, a **minimum** ratio between flows is set via [flow\_ratio\_greater\_than\_coefficient](@ref),
+while, a **maximum** obeys [flow\_ratio\_less\_than\_coefficient](@ref).
 
 For example, whenever there is only a single input node and a single output node,
-[fix\_ratio\_out\_in\_unit\_flow](@ref) relates to the notion of efficiency.
-Also, [fix\_ratio\_in\_out\_unit\_flow](@ref) can for instance be used to relate emissions to input primary fuel flows.
-
-The constraint below is written for [fix\_ratio\_out\_in\_unit\_flow](@ref), but equivalent formulations
-exist for the other 11 cases described above.
-
+[flow\_ratio\_equality\_coefficient](@ref) relates to the notion of efficiency.
+Selecting different flows can also be used to e.g. relate emissions to input primary fuel flows.
 
 ```math
 \begin{aligned}
 & \sum_{n \in ng_{out}} v^{unit\_flow}_{(u,n,from\_node,s,t)} \\
 & = \\
-& p^{fix\_ratio\_out\_in\_unit\_flow}_{(u, ng_{out}, ng_{in},s,t)}
+& p^{flow\_ratio\_equality\_coefficient}_{(u, ng_{out}, ng_{in},s,t)}
 \cdot \sum_{n \in ng_{in}} v^{unit\_flow}_{(u,n,to\_node,s,t)} \\
-& + p^{fix\_units\_on\_coefficient\_out\_in}_{(u,ng_{out},ng_{in},s,t)} \cdot v^{units\_on}_{(u,s,t)}  \\
-& \forall (u, ng_{out}, ng_{in}) \in indices(p^{fix\_ratio\_out\_in\_unit\_flow}) \\
+& + p^{flow\_ratio\_equality\_online\_coefficient}_{(u,ng_{out},ng_{in},s,t)} \cdot v^{units\_on}_{(u,s,t)}  \\
+& \forall (u, ng_{out}, ng_{in}) \in indices(p^{flow\_ratio\_equality\_coefficient\_flow}) \\
 & \forall (s,t)
 \end{aligned}
 ```
@@ -61,24 +45,26 @@ exist for the other 11 cases described above.
     then the ratio is enforced over the *sum* of flows from or to that group.
     In this case, there remains a degree of freedom regarding the composition of flows within the group.
 
-See also [fix\_ratio\_out\_in\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_out\_in](@ref).
+See also [flow\_ratio\_equality\_coefficient](@ref),
+[flow\_ratio\_equality\_online\_coefficient](@ref).
 
 
-If an array type [fix\_ratio\_in\_out\_unit\_flow](@ref) is defined, the constraint implements a standard piecewise
-linear ratio (incremental heat rate):
+If an array type [flow\_ratio\_equality\_coefficient](@ref) is defined,
+the constraint implements a standard piecewise-linear ratio (incremental heat rate):
 
 ```math
 \begin{aligned}
 & v^{unit\_flow}_{(u, n_{in}, d, s, t)} \\
-& = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} p^{fix\_ratio\_in\_out\_unit\_flow}_{(u, n_{in}, n_{out}, op, s, t)}
+& = \sum_{op=1}^{\left\|p^{operating\_points}_{(u,n,d)}\right\|} p^{flow\_ratio\_equality\_coefficient\_flow}_{(u, n_{in}, n_{out}, op, s, t)}
 \cdot v^{unit\_flow\_op}_{(u, n_{out}, d, op, s, t)} \\
-& + p^{fix\_units\_on\_coefficient\_in\_out}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_on}_{(u, s, t)} \\
+& + p^{flow\_ratio\_equality\_online\_coefficient}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_on}_{(u, s, t)} \\
 & + p^{unit\_start\_flow}_{(u, n_{in}, n_{out}, s, t)} \cdot v^{units\_started\_up}_{(u, s, t)} \\
-& \forall (u,n_{in},n_{out}) \in indices(p^{fix\_ratio\_in\_out\_unit\_flow}) \\
+& \forall (u,n_{in},n_{out}) \in indices(p^{flow\_ratio\_equality\_coefficient\_flow}) \\
 & \forall (s,t)
 \end{aligned}
 ```
-See also [fix\_ratio\_in\_out\_unit\_flow](@ref), [fix\_units\_on\_coefficient\_in\_out](@ref).
+See also [flow\_ratio\_equality\_coefficient](@ref),
+[flow\_ratio\_equality\_online\_coefficient](@ref).
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio)
     _add_constraint!(
