@@ -140,15 +140,15 @@ While the [Key concepts](@ref) and [General idea in brief](@ref) sections go ove
 in *SpineOpt.jl* in a more general sense, here we'll go over how to set up stochastics using *SpineOpt.jl* data structure.
 Simple step-by-step examples are also provided in the [Example of deterministic stochastics](@ref),
 [Example of branching stochastics](@ref), and [Example of converging stochastics](@ref) sections further below.
-We won't go into too much detail about the related [Object Classes](@ref), [Relationship Classes](@ref), or
-[Parameters](@ref), since those can be found in their respective sections.
+We won't go into too much detail about the related [Entity Classes](@ref) or [Parameters](@ref),
+since those can be found in their respective sections.
 Introductions to these concepts can also be found in the [Structural object classes](@ref) and
 [Structural relationship classes](@ref) sections, if necessary.
 
 ### Setting up the stochastic framework
 
 As with all things in *SpineOpt.jl*, you'll want to start with adding the desired number of objects to the relevant
-[Object Classes](@ref), as one cannot define relationships over objects that don't exist.
+[Entity Classes](@ref), as one cannot define relationships over objects that don't exist.
 For the stochastic framework, this means creating at least one [stochastic\_scenario](@ref) and
 [stochastic\_structure](@ref) object each.
 This needs to be done even if your model is fully deterministic, as even the deterministic structure needs to be

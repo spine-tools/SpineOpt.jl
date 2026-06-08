@@ -6,8 +6,7 @@ than what is used for the production [unit\_flow](@ref var_unit_flow) variables.
 A common use-case is e.g. using only one [units\_on](@ref var_units_on) variable
 across multiple [stochastic\_scenario](@ref)s for the [unit\_flow](@ref var_unit_flow) variables.
 Note that only one [units\_on\_\_stochastic\_structure](@ref) relationship can be defined per [unit](@ref) per [model](@ref),
-as interpreted by the [units\_on\_\_stochastic\_structure](@ref) and [model\_\_stochastic\_structure](@ref)
-relationships.
+as interpreted by the [units\_on\_\_stochastic\_structure](@ref) relationship.
 
 The [units\_on\_\_stochastic\_structure](@ref) relationship uses the [model\_\_default\_stochastic\_structure](@ref)
 relationship if not specified.

@@ -75,7 +75,7 @@ This is a bit harder. Here you need to answer two questions:
 
 To answer the first question, the first step is to understand where the different variables involved
 in your constraint get their temporal resolution from. In our case, we have [unit\_flow](@ref var_unit_flow),
-[units\_on](@ref var_units_on) and [units\_shut\_down](@ref). The former gets its resolution from the associated [node](@ref),
+[units\_on](@ref var_units_on) and [units\_shut\_down](@ref var_units_shut_down). The former gets its resolution from the associated [node](@ref),
 via [node\_\_temporal\_block](@ref); whereas the two latter get it from the [unit](@ref),
 via [units\_on\_\_temporal\_block](@ref).
 
@@ -113,7 +113,7 @@ So in our case, the 'temporal' indices will be tuples of (current time-slice, ne
 
 #### Collect the 'stochastic' indices
 
-Primer on SpineOpt's stochastic framework (more details in the [Stochastic Framework](@ref) section).
+Primer on SpineOpt's stochastic framework (more details in the [Stochastic Framework](@ref stochastic_framework) section).
 In SpineOpt, each [unit](@ref) and [node](@ref) has one (and only one) [stochastic\_structure](@ref) associated via
 [units\_on\_\_stochastic\_structure](@ref) and [node\_\_stochastic\_structure](@ref), respectively -
 which represents their 'stochastic dimension'.
@@ -428,7 +428,7 @@ which (I hope you agree) means we're good.
 
 Let's add the 'temporal' indices. We know that we need two of such indices: the *current* time-slice,
 and the *next* time-slice. The *current* time-slice we will use to access both
-[unit\_flow](@ref var_unit_flow) and [units\_on](@ref var_units_on), and the *next* to access [units\_shut\_down](@ref).
+[unit\_flow](@ref var_unit_flow) and [units\_on](@ref var_units_on), and the *next* to access [units\_shut\_down](@ref var_units_shut_down).
 
 To collect time-slices, we will be using a special function from SpineOpt called `time_slice`.
 This function receives a model object `m` and returns an array with all the time-slices in that model -

@@ -74,7 +74,7 @@ The *electricity\_node* is a demand node with a time series of three days of 24-
 
 ### Battery storage node
 
-The configuration of the *battery\_storage* includes the [has\_state](@ref) parameter set to `true` to allow the battery to have a state variable, the [node\_state\_cap](@ref), and the [number\_of\_storages](@ref) as the basic information.
+The configuration of the *battery\_storage* includes the [storage\_active](@ref) parameter set to `true` to allow the battery to have a state variable, the [storage\_state\_max](@ref), and the [existing\_storages](@ref) as the basic information.
 
 ![image](figs_representative_periods/rp_battery_node.png)
 
@@ -84,7 +84,7 @@ The configuration of the *battery\_storage* includes the [has\_state](@ref) para
 
 ### Fuel node
 
-The configuration of the *fuel\_node* is similar to the *battery_storage* node. In addition, we can define an initial value for the fuel node at the beginning of the model's time horizon using the [initial\_node\_state](@ref) parameter.
+The configuration of the *fuel\_node* is similar to the *battery_storage* node. In addition, we can define an initial value for the fuel node at the beginning of the model's time horizon using the [storage\_state\_initial](@ref) parameter.
 
 The parameter *is\_longterm\_storage* is set to `true` for the fuel node, which means that the state of the fuel node can be carried over the whole time horizon, allowing to properly account for seasonal storage in the model by triggering the constraint [constraint\_node\_state\_longterm\_trajectory`](@ref constraint_node_state_longterm_trajectory), see the mathematical formulation of the model for more details on this constraint in the [Constraints](@ref) section. This is a key feature of SpineOpt that allows to capture the dynamics of seasonal storage in representative periods models.
 
@@ -95,7 +95,7 @@ The parameter *is\_longterm\_storage* is set to `true` for the fuel node, which 
 
 ## Units and other entity classes
 
-The definition of units and other entity classes is similar to the Simple System, you can check out the [Simple System tutorial](@ref Simple_System) to learn more.
+The definition of units and other entity classes is similar to the Simple System, you can check out the [Simple system tutorial](@ref) to learn more.
 
 ## Results
 

@@ -3,6 +3,6 @@ Currently three values are possible:
 
 `spineopt_standard` uses the standard algorithm.
 
-`spineopt_benders` uses the Benders decomposition algorithm (see [Decomposition](@ref decomposition).
+`spineopt_benders` uses the Benders decomposition algorithm, see the [Decomposition](@ref) section.
 
 `spineopt_mga` uses the Model to Generate Alternatives algorithm.

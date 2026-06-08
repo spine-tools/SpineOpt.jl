@@ -80,7 +80,7 @@ Note that the *Load template* tool makes use of SpineOpt. This is therefore the 
     WARNING: using JuMP.Parameter in module SpineInterface conflicts with an existing identifier.
     ```
 
-Now it is time to add information to import meaningful data to the input database. To that end we'll first need to get a file with the data. We can find that file on the SpineOpt repository on github. There is an examples folder with functioning examples. Let's take the [simple system tutorial](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json). It does not matter where you save this file on your system but it is possible to place it in the folder of your spine project.
+Now it is time to add information to import meaningful data to the input database. To that end we'll first need to get a file with the data. We can find that file on the SpineOpt repository on github. There is an examples folder with functioning examples. Let's take the [Simple system tutorial](@ref). It does not matter where you save this file on your system, but it is possible to place it in the folder of your spine project.
 
 !!! info
     These example files are part of our tests for the master branch so they should always work correctly.

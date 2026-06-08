@@ -1,4 +1,4 @@
-# Simple System tutorial
+# Simple system tutorial
 
 Welcome to Spine Toolbox's Simple System tutorial.
 

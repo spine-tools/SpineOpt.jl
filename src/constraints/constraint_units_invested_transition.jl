@@ -22,7 +22,7 @@
 [units\_invested](@ref var_units_invested) represents the point-in-time decision to invest in a unit or not,
 while [units\_invested\_available](@ref var_units_invested_available) represents the invested-in units that are available at a specific time.
 This constraint enforces the relationship between [units\_invested](@ref var_units_invested), [units\_invested\_available](@ref var_units_invested_available)
-and [units\_mothballed](@ref) in adjacent timeslices.
+and [units\_mothballed](@ref var_units_mothballed) in adjacent timeslices.
 
 ```math
 \begin{aligned}

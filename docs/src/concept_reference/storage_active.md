@@ -4,5 +4,5 @@ storage at the [node](@ref).
 
 The default value is `false`, meaning that the node cannot store the commodity. Define the value as `true` to allow for commodity storage.
 
-Note that you'll also have to specify a value for the [storage_state_coefficient](@ref) parameter,
+Note that you'll also have to specify a value for the [storage\_state\_coefficient](@ref) parameter,
 as otherwise the [node\_state](@ref var_node_state) variable has zero commodity capacity.

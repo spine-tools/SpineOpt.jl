@@ -25,7 +25,7 @@ The idea of this approach is to explore near-optimal solutions that maximize/min
 - As [output](@ref)s are used to intermediately store solutions from different MGA runs, it is important that `units_invested`, `connections_invested`, or `storages_invested`, respectively, are defined as [output](@ref) objects in your database.
 
 ## Hop-Skip-Jump MGA
-The idea is that an orginal problem is solved, and subsequently solved again under the condition that the realization of variables should be maximally different from the previous iteration(s), while keeping the objective function within a certain threshold (defined by [max\_mga\_slack](@ref)).
+The idea is that an orginal problem is solved, and subsequently solved again under the condition that the realization of variables should be maximally different from the previous iteration(s), while keeping the objective function within a certain threshold (defined by [mga\_max\_slack](@ref)).
 1. We solve the original problem 
 $$x^* \gets \argmin_{x \in X} f(x)$$
 where  
@@ -41,7 +41,7 @@ $$ f(x) \leq (1 + \varepsilon) f(x^*)$$
 
 ## How to set up a HSJ MGA problem
 - [model](@ref): In order to explore an MGA model, you will need an algorith of type [hsj_mga_algorithm](@ref model_type_list).
-- Everything else can be set up like in the original case. We don't have to specify [units\_invested\_mga\_weight](@ref) or [units\_invested\_big\_m\_mga](@ref).
+- Everything else can be set up like in the original case. We don't have to specify [mga\_investment\_weight](@ref) or [mga\_investment\_big\_m](@ref).
 
 ## RPM Fuzzy MGA
 In fuzzy MGA [Modeling to generate alternatives: a fuzzy approach](https://doi.org/10.1016/S0165-0114(83)80014-1) 
@@ -54,4 +54,4 @@ guarantees Pareto-optimality.
 
 ## How to set up a RPM Fuzzy MGA problem
 - [model](@ref): In order to explore an MGA model, you will need an algorith of type [fuzzy_mga_algorithm](@ref model_type_list).
-- Everything else can be set up like in the original case. We don't have to specify [units\_invested\_mga\_weight](@ref) or [units\_invested\_big\_m\_mga](@ref).
+- Everything else can be set up like in the original case. We don't have to specify [mga\_investment\_weight](@ref) or [mga\_investment\_big\_m](@ref).

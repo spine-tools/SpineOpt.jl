@@ -6,7 +6,7 @@ tying together the inputs and outputs from [unit](@ref)s and [connection](@ref)s
 as well as any external [demand](@ref).
 Furthermore, [node](@ref)s play a crucial role for defining the temporal and stochastic structures of the [model](@ref)
 via the [node\_\_temporal\_block](@ref) and [node\_\_stochastic\_structure](@ref) relationships.
-For more details about the [Temporal Framework](@ref) and the [Stochastic Framework](@ref), please refer to the
+For more details about the [Temporal Framework](@ref) and the [Stochastic Framework](@ref stochastic_framework), please refer to the
 dedicated sections.
 
 Since [node](@ref)s act as the points where commodity balance is enforced,

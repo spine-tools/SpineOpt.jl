@@ -1,6 +1,6 @@
 # Capacity Planning Tutorial
 
-This tutorial provides a step-by-step guide to include investment constraints for capacity planning in a simple energy system with Spine Toolbox for SpineOpt. There is more information to be found in the documentation on [investment optimization](https://spine-tools.github.io/SpineOpt.jl/latest/advanced_concepts/investment_optimization/). To get the most out of this tutorial, we suggest first completing the [Simple System tutorial](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/).
+This tutorial provides a step-by-step guide to include investment constraints for capacity planning in a simple energy system with Spine Toolbox for SpineOpt. There is more information to be found in the documentation on [investment optimization](https://spine-tools.github.io/SpineOpt.jl/latest/advanced_concepts/investment_optimization/). To get the most out of this tutorial, we suggest first completing the [Simple system tutorial](@ref).
 
 ## Overview
 

@@ -19,8 +19,8 @@
 #############################################################################
 
 @doc raw"""
-For storage nodes with [is\_longterm\_storage](@ref) set to `true`, the long-term state trajectory
-tracks the evolution of [node\_state\_longterm](@ref) across the model horizon when using 
+For storage nodes with [storage\_longterm\_active](@ref) set to `true`, the long-term state trajectory
+tracks the evolution of [node\_state\_longterm](@ref var_node_state_longterm) across the model horizon when using 
 representative periods. The constraint links consecutive long-term time steps by accumulating 
 the net change (delta) in the [node\_state](@ref var_node_state) over the representative blocks that map onto 
 the time step $t_{after}$:
@@ -54,10 +54,10 @@ periods (see [representative\_periods\_mapping](@ref)).
     inter-period storage.
 
 See also
-[has\_state](@ref),
-[is\_longterm\_storage](@ref),
+[storage\_active](@ref),
+[storage\_longterm\_active](@ref),
 [representative\_periods\_mapping](@ref),
-[node\_state\_longterm](@ref),
+[node\_state\_longterm](@ref var_node_state_longterm),
 [node\_state](@ref var_node_state).
 """
 function add_constraint_node_state_longterm_trajectory!(m::Model)

@@ -23,7 +23,7 @@
 while [storages\_invested\_available](@ref var_storages_invested_available) represents the invested-in storages that are available at a node at a
 specific time.
 This constraint enforces the relationship between [storages\_invested](@ref var_storages_invested), [storages\_invested\_available](@ref var_storages_invested_available)
-and [storages\_decommissioned](@ref) in adjacent timeslices.
+and [storages\_decommissioned](@ref var_storages_decommissioned) in adjacent timeslices.
 
 ```math
 \begin{aligned}

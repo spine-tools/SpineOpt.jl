@@ -34,7 +34,7 @@ A spine unit can represent multiple members. This can be incorporated in a model
 And we link the unit to a certain `node_1` with a [unit\_\_to\_node](@ref) relationship.
 * `unit_1_to__node_1`
 
-The single Spine unit defined here, now represents two members. This means that a single [unit_flow](@ref Variables) variable will be created for this unit, but the restrictions as imposed by the [Ramping](@ref) and [Reserves](@ref) framework will be adapted to reflect the fact that there are two members present, thus doubling the total capacity.
+The single Spine unit defined here, now represents two members. This means that a single [unit\_flow variable](@ref var_unit_flow) will be created for this unit, but the restrictions as imposed by the [Ramping](@ref) and [Reserves](@ref) framework will be adapted to reflect the fact that there are two members present, thus doubling the total capacity.
 
 ### Step 2: choosing the online\_variable\_type
 Next, we have to decide the [online\_variable\_type](@ref) for this unit, which will restrict the kind of values that the [units_on](@ref Variables) variable can take. This basically comes down to deciding if we are working in a classical UC framework (`binary`), a clustered UC framework (`integer`), or a relaxed clustered UC framework (`linear`), in which a non-integer number of units can be online.
@@ -42,7 +42,7 @@ Next, we have to decide the [online\_variable\_type](@ref) for this unit, which 
 The classical UC framework can only be applied when the `existing_units` equals 1.
 
 ### Step 3: imposing a minimum operating point
-The output of an online unit to a specific node can be restricted to be above a certain minimum by choosing a value for the [minimum\_operating\_point](@ref) parameter. This parameter is defined for the [unit\_\_to\_node](@ref) relationship, and is given as a fraction of the [capacity_per_unit](@ref). If we continue with the example above, and define the following objects, relationships, and parameters:
+The output of an online unit to a specific node can be restricted to be above a certain minimum by choosing a value for the [minimum\_operating\_point](@ref) parameter. This parameter is defined for the [unit\_\_to\_node](@ref) relationship, and is given as a fraction of the [capacity\_per\_unit](@ref). If we continue with the example above, and define the following objects, relationships, and parameters:
 
 * `unit_1`
   * `existing_units`: 2
@@ -50,7 +50,7 @@ The output of an online unit to a specific node can be restricted to be above a 
 * `unit_1_to__node_1`
   * `minimum_operating_point`: 0.2
   * `capacity_per_unit`: 200
-It can be seen that in this case the [unit_flow](@ref Variables) form `unit_1` to `node_1` must for any timestep ``t`` be larger than ``units\_on(t) * 0.2 * 200``
+It can be seen that in this case the [unit\_flow variable](@ref var_unit_flow) form `unit_1` to `node_1` must for any timestep ``t`` be larger than ``units\_on(t) * 0.2 * 200``
 
 ### Step 4: imposing a minimum up or down time
 Spine units can also be restricted in their commitment status with minimum up- or down times by choosing a value for the [min\_up\_time](@ref) or [min\_down\_time](@ref) respectively. These parameters are defined for the [unit](@ref) object, and should be duration values. We can continue the example and add a minimum up time for the unit:

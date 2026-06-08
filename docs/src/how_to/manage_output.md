@@ -3,7 +3,7 @@
 Once a model is created and successfully run, it will hopefully produce results and output data. This section covers how the writing of output data is controlled and managed.
 
 ## Specifying Your Output Data Store
-In your workflow (for more details see [Setting up a workflow for SpineOpt in Spine Toolbox](@ref)) you will normally have a output datastore connected to your RunSpineOpt workflow tool. This is where your output data will be written. If no output datastore is specified, the results will be written by default to the input datastore. However, it is generally preferable to define a separate output data store for results. See [Setting up a workflow for SpineOpt in Spine Toolbox](@ref) for the steps to add an output datastore to your workflow)
+In your workflow (for more details see [Create a workflow for SpineOpt in Spine Toolbox](@ref)) you will normally have a output datastore connected to your RunSpineOpt workflow tool. This is where your output data will be written. If no output datastore is specified, the results will be written by default to the input datastore. However, it is generally preferable to define a separate output data store for results. See [Create a workflow for SpineOpt in Spine Toolbox](@ref) for the steps to add an output datastore to your workflow.
 
 ## Specifying Outputs to Write
 Outputting of results to the output datastore is controlled using the [output](@ref) and [report](@ref) object classes. To output a specific variable to the output datastore, we need to create an [output](@ref) object of the same name. For example, to output the `unit_flow` variable, we must create an [output](@ref) object named `unit_flow`. The SpineOpt template contains output objects for most problem variables and importing or re-importing the SpineOpt template will add these to your input datastore. So it is probable these output objects will exist already in your input datastore. Once the output objects exist in your model, they must then be added to a report object by creating an [report\_\_output](@ref) relationship
@@ -31,14 +31,14 @@ The structure of the output data will follow the structure of the input data wit
  - For unit flows, the flow direction is added as a dimension to the output. 
 
 ### Example: `unit_flow`
- For example, consider the [unit\_flow](@ref var_unit_flow)) optimisation variable. This variable is dimensioned on the [unit\_\_to_node](@ref) and [unit\_\_from_node](@ref) relationships. In the output datastore, the [report](@ref), [stochastic\_scenario](@ref) and flow `direction` are added as additional dimensions. Therefore, [unit\_\_to_node](@ref) values will appear in the output datastore as timeseries parameters associated with the `report__unit__node__direction__stochastic_scenario` relationship as shown below.
+ For example, consider the [unit\_flow](@ref var_unit_flow) optimisation variable. This variable is dimensioned on the [unit\_\_to_node](@ref) and [node\_\_to\_unit](@ref) relationships. In the output datastore, the [report](@ref), [stochastic\_scenario](@ref) and flow `direction` are added as additional dimensions. Therefore, [unit\_\_to_node](@ref) values will appear in the output datastore as timeseries parameters associated with the `report__unit__node__direction__stochastic_scenario` relationship as shown below.
 
 ![image](https://github.com/Spine-project/SpineOpt.jl/blob/master/docs/src/figs/output_data_unit_flow.png?raw=true)
 
 To view the data, simply double-click on the timeseries value
 
 ### Example: `units_on`
- Consider the [units\_on](@ref var_units_on)) optimisation variable. This variable is dimensioned on the [unit](@ref) object class. In the output datastore, the [report](@ref) and [stochastic\_scenario](@ref) are added as additional dimensions. Therefore, [units\_on](@ref var_units_on) values will appear in the output datastore as timeseries parameters associated with the `report__unit__stochastic_scenario` relationship as shown below.
+ Consider the [units\_on](@ref var_units_on) optimisation variable. This variable is dimensioned on the [unit](@ref) object class. In the output datastore, the [report](@ref) and [stochastic\_scenario](@ref) are added as additional dimensions. Therefore, [units\_on](@ref var_units_on) values will appear in the output datastore as timeseries parameters associated with the `report__unit__stochastic_scenario` relationship as shown below.
 
 ![image](https://github.com/Spine-project/SpineOpt.jl/blob/1d158d7f76e0dc4d6952c6f6f95c21c4c0dc803d/docs/src/figs/output_data_units_on.png?raw=true)
 
