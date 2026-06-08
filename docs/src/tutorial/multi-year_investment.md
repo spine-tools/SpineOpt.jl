@@ -13,7 +13,7 @@ In this tutorial, we will
 - show you how to use milestone years. 
 
 ## Set-up
-To avoid repetition, we only consider one unit instead of the two units from the simple system tutorial. The easiest way to do this is to import the [simple system](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json) (file > import) and to remove one of the two power plants. To remove a power plant you can go to the graph view. Use ctrl+click on each of the relevant entities connect to power_plant_b (except for the nodes as we still need those for power_plant_a). Then right click and select 'remove'. There will be a confirmation box with an overview of all the entities that you will be removing.
+To avoid repetition, we only consider one unit instead of the two units from the simple system tutorial. The easiest way to do this is to import the [simple system](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json) (file > import) and to remove one of the two power plants. To remove a power plant you can go to the graph view. Use ctrl+click on each of the relevant entities connect to power_plant_b (except for the nodes as we still need those for power_plant_a). Then right-click and select 'remove'. There will be a confirmation box with an overview of all the entities that you will be removing.
 
 Since we are working with investments, we are going to make a distinction between investments and operation in the time blocks. We retain the original time block but adjust the resolution to 4 months ('4M'). Additionally we add an investment time block with a resolution of 5 years ('5Y') between 2000 and 2006. We have to adjust the time horizon of the model entity accordingly.
 

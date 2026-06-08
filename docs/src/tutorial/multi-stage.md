@@ -45,7 +45,7 @@ Looking at the `node_state` result for the `h2_node_candidate` `node` we immedia
 We can solve this problem using the stage functionality to create a long term model that sees the full year all at once and passes the node state as an input to the base rolling model.
 
 ### Step 1: Create `stage` entity
-Using Spine Toolbox DB Editor, we right click on the `stage` entity class and select: "add entities". We will call our new stage entity: `LT_Stage`
+Using Spine Toolbox DB Editor, we right-click on the `stage` entity class and select: "add entities". We will call our new stage entity: `LT_Stage`
  - Commit changes
 
 ### Step 2: Create `stage` alternative
@@ -54,7 +54,7 @@ Using DB Editor, we click into the alternatives pane and create a new alternativ
 ### Step 3a: Create `stage` scenario
   - Using DB Editor, we click into the scenarios pane and create a new scenario called `LT_Stage_Scenario`
   - Switch to the scenario pivot view by clicking on scenario in the tool ribbon
-  - Duplicate the base scenario by right clicking on "base" and selecting "duplicate scenario" from the context menu
+  - Duplicate the base scenario by right-clicking on "base" and selecting "duplicate scenario" from the context menu
   - Add the base alternative to `LT_Stage_Scenario` by checking the box. It should indicate "1" indicating that base data gets written first
   - Add the `LT_Stage_Alternative` alternative to `LT_Stage_Scenario` by checking the box. It should indicate "2" indicating that the `LT_Stage_Alternative` gets written second, overwriting base data
    - Commit changes
@@ -85,7 +85,7 @@ So what is different about our long term model compared to our operations `base 
   - Switch to parameter value view
   - Class and `entity_byname` should be prefilled. Select `roll_forward` in the parameter name field.
   - In the alternative field, select `LT_Stage_Alternative`
-  - In the value field, right click the cell and select `edit`. 
+  - In the value field, right-click the cell and select `edit`. 
   - Select plain value
   - Select `null`
   - Commit changes
@@ -102,7 +102,7 @@ So what is different about our long term model compared to our operations `base 
   - Select the operations entity in the `temporal_block` class
   - Class and `entity_byname` should be prefilled. 
   - Select `resolution` in the parameter name field.
-  - Right click value field and select edit
+  - Right-click value field and select edit
   - Select `duration value`
   - enter "6h"
   - Commit changes
@@ -111,7 +111,7 @@ So what is different about our long term model compared to our operations `base 
   - Select the operations entity in the `temporal_block` class
   - Class and `entity_byname` should be prefilled. 
   - Select `block_end` in the parameter name field.
-  - Right click value field and select edit
+  - Right-click value field and select edit
   - Select "plain value"
   - select null
   - Commit changes
@@ -127,24 +127,24 @@ We want to make sure that the following Long Term model outputs pass as inputs t
  
 To pass outputs for all entities for a certain output, we need to create 2-Dimensional entities of class `stage__output`
  - For unit investment decisionss
-   - Right click on `stage__output` class
+   - Right-click on `stage__output` class
    - Select: add entities
    - For `stage` select `LT_Stage`
    - For `output` select `units_invested_available`
  - For connection investment decisionss
-   - Right click on `stage__output` class
+   - Right-click on `stage__output` class
    - Select: add entities
    - For `stage` select `LT_Stage`
    - For `output` select `connections_invested_available`
  - For storage investment decisionss
-   - Right click on `stage__output` class
+   - Right-click on `stage__output` class
    - Select: add entities
    - For `stage` select `LT_Stage`
    - For `output` select `storages_invested_available`
  - Commit changes
 
 To pass node state for the `h2_node_candidate`, we need to create a 3-Dimensional entity of class `stage__output__node`
-- Right click on `stage__output__node` class
+- Right-click on `stage__output__node` class
 - Select: add entities
 - For `stage` select `LT_Stage`
 - For `output` select `node_state`

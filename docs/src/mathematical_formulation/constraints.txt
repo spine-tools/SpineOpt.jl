@@ -65,8 +65,8 @@ parameters):
 - constraint on `units_on`
 - constraint on `units_available`
 - constraint on the unit state transition
-- constraint on minimum down time
-- constraint on minimum up time
+- constraint on minimum downtime
+- constraint on minimum uptime
 - constraint on ramp rates
 - constraint on reserve provision
 
@@ -78,11 +78,11 @@ parameters):
 
 @@add_constraint_unit_state_transition!
 
-##### [Minimum down time](@id constraint_min_down_time)
+##### [Minimum downtime](@id constraint_min_down_time)
 
 @@add_constraint_min_down_time!
 
-##### [Minimum up time](@id constraint_min_up_time)
+##### [Minimum uptime](@id constraint_min_up_time)
 
 @@add_constraint_min_up_time!
 

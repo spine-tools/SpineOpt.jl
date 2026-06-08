@@ -16,9 +16,9 @@ Here, we briefly describe the key concepts involved in the representation of (cl
 
 - [availability\_factor](@ref): (number value or time series). Is the fraction of the time that this unit is considered to be available, by acting as a multiplier on the capacity. A time series can be used to indicate the intermittent character of renewable generation technologies.
 
-- [min\_up\_time](@ref): (duration value). Sets the minimum time that a unit has to stay online after a startup. Inclusion of this parameter will trigger the creation of the constraint on [Minimum up time (basic version)](@ref constraint_min_up_time)
+- [min\_up\_time](@ref): (duration value). Sets the minimum time that a unit has to stay online after a startup. Inclusion of this parameter will trigger the creation of the constraint on [Minimum uptime (basic version)](@ref constraint_min_up_time)
 
-- [min\_down\_time](@ref): (duration value). Sets the minimum time that a unit has to stay offline after a shutdown. Inclusion of this parameter will trigger the creation of the constraint on [Minimum down time (basic version)](@ref constraint_min_down_time)
+- [min\_down\_time](@ref): (duration value). Sets the minimum time that a unit has to stay offline after a shutdown. Inclusion of this parameter will trigger the creation of the constraint on [Minimum downtime (basic version)](@ref constraint_min_down_time)
 
 - [minimum\_operating\_point](@ref): (number value) limits the minimum value of the `unit_flow` variable for a unit which is currently online. Inclusion of this parameter will trigger the creation of the [Constraint on minimum operating point](@ref constraint_minimum_operating_point)
 
@@ -52,8 +52,8 @@ The output of an online unit to a specific node can be restricted to be above a 
   * `capacity_per_unit`: 200
 It can be seen that in this case the [unit\_flow variable](@ref var_unit_flow) form `unit_1` to `node_1` must for any timestep ``t`` be larger than ``units\_on(t) * 0.2 * 200``
 
-### Step 4: imposing a minimum up or down time
-Spine units can also be restricted in their commitment status with minimum up- or down times by choosing a value for the [min\_up\_time](@ref) or [min\_down\_time](@ref) respectively. These parameters are defined for the [unit](@ref) object, and should be duration values. We can continue the example and add a minimum up time for the unit:
+### Step 4: imposing a minimum up or downtime
+Spine units can also be restricted in their commitment status with minimum up- or downtimes by choosing a value for the [min\_up\_time](@ref) or [min\_down\_time](@ref) respectively. These parameters are defined for the [unit](@ref) object, and should be duration values. We can continue the example and add a minimum uptime for the unit:
 
 * `unit_1`
   * `existing_units`: 2
@@ -65,14 +65,14 @@ Spine units can also be restricted in their commitment status with minimum up- o
 
 Whereas the `units_on` variable was restricted (before inclusion of the `min_up_time` parameter) to be smaller than or equal to the `existing_units` for any timestep ``t``, it now has to be smaller than or equal to the `existing_units` decremented with the [units\_started\_up](@ref Variables) summed over the timesteps that include `t - min_up_time`. This implies that a unit which has started up, has to stay online for at least the `min_up_time`
 
-To consider a simple example let's assume that we have a model with a resolution of 1h. Suppose that before `t`, there is no member of the unit online and in timestep `t -> t + 1h`, one member starts up. Another member starts up in timestep `t + 1h \-> t + 2h`. The first startup, along with the minimum up time of 2 hours implies that the `units_on` variable of this unit has now changed to ``1`` in timestep `t -> t + 1h` and can not go back to ``0`` in timestep `t-> t + 1h -> t + 2h`. The second startup further restricts the number of units that are allowed to be online, it can be seen that the following restrictions apply when both startups are combined with the minimum up time of 2h:
+To consider a simple example let's assume that we have a model with a resolution of 1h. Suppose that before `t`, there is no member of the unit online and in timestep `t -> t + 1h`, one member starts up. Another member starts up in timestep `t + 1h \-> t + 2h`. The first startup, along with the minimum uptime of 2 hours implies that the `units_on` variable of this unit has now changed to ``1`` in timestep `t -> t + 1h` and can not go back to ``0`` in timestep `t-> t + 1h -> t + 2h`. The second startup further restricts the number of units that are allowed to be online, it can be seen that the following restrictions apply when both startups are combined with the minimum uptime of 2h:
 
 * `t-> t + 1h` : `` units\_on = 1 ``
 * `t + 1h -> t + 2h`: `` units\_on = 2``
 * `t + 2h-> t + 3h`: `` units\_on \in {1,2} ``
 * `t + 3h-> t + 4h`: `` units\_on \in {0,1,2} ``
 
-The minimum down time restrictions operate in very much the same way, they simply impose that units that have been shut down, have to stay offline for the chosen period of time.
+The minimum downtime restrictions operate in very much the same way, they simply impose that units that have been shut down, have to stay offline for the chosen period of time.
 
 ### Step 5: allocationg a cost to startups or shutdowns
 
