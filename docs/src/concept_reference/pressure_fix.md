@@ -1,1 +1,1 @@
-In a pressure driven gas model, gas network nodes are associated with the [node\_pressure](@ref) variable. In order to fix the pressure at a certain node or to give intial conditions the [pressure\_fix](@ref) parameter can be used.
+In a pressure driven gas model, gas network nodes are associated with the [node\_pressure](@ref var_node_pressure) variable. In order to fix the pressure at a certain node or to give intial conditions the [pressure\_fix](@ref) parameter can be used.

@@ -24,7 +24,7 @@ The power transfer distribution factors are a property of the network reactances
 on [connection](@ref) ``c``.
 The flow on [connection](@ref) ``c`` is then the sum over all nodes of ``p^{ptdf}_{(c, n)}`` multiplied by the
 net injection at that node.
-[connection\_intact\_flow](@ref) represents the flow on each line of the network with all candidate connections
+[connection\_intact\_flow](@ref var_connection_intact_flow) represents the flow on each line of the network with all candidate connections
 with PTDF-based flow present in the network.
 
 ```math

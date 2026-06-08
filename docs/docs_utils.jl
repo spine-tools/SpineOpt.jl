@@ -28,7 +28,7 @@ function write_sets_and_variables(mathpath)
     variables.indices .= replace.(variables.indices, r"_" => "\\_")
     variable_string = "# Variables \n"
     for i in 1:size(variables, 1)
-        variable_string = string(variable_string, "## `$(variables.variable_name[i])` \n\n")
+        variable_string = string(variable_string, "## [`$(variables.variable_name[i])`](@id var_$(variables.variable_name[i])) \n\n")
         variable_string = string(variable_string, " > **Math symbol:** $(variables.variable_name_latex[i]) \n\n")
         variable_string = string(variable_string, " > **Indices:** $(variables.index[i]) \n\n")
         variable_string = string(variable_string, " > **Indices function:** $(variables.indices[i]) \n\n")

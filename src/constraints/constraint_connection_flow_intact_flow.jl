@@ -19,9 +19,9 @@
 #############################################################################
 
 @doc raw"""
-Enforces the relationship between [connection\_intact\_flow](@ref) (flow with all investments assumed in force)
-and [connection\_flow](@ref). This constraint ensures that the
-[connection\_flow](@ref) is [connection\_intact\_flow](@ref) plus additional flow contributions
+Enforces the relationship between [connection\_intact\_flow](@ref var_connection_intact_flow) (flow with all investments assumed in force)
+and [connection\_flow](@ref var_connection_flow). This constraint ensures that the
+[connection\_flow](@ref var_connection_flow) is [connection\_intact\_flow](@ref var_connection_intact_flow) plus additional flow contributions
 from investment connections that are not invested in.
 
 ```math

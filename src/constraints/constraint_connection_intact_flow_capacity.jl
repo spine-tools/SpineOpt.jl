@@ -19,7 +19,7 @@
 #############################################################################
 
 @doc raw"""
-Similarly to [this](@ref constraint_connection_flow_capacity), limits [connection\_intact\_flow](@ref)
+Similarly to [this](@ref constraint_connection_flow_capacity), limits [connection\_intact\_flow](@ref var_connection_intact_flow)
 according to [capacity\_per\_connection](@ref)
 
 ```math

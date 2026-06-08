@@ -40,7 +40,7 @@ Specifying any of the above relationships will override the corresponding [model
 
 The [model](@ref) parameter [connection\_investment\_power\_flow\_impact\_active](@ref) is available to control whether or not the impact of connection investments on the network
 characteristics should be captured.
-If set to `true`, then the model will use line outage distribution factors (LODF) to compute the impact of each [connection](@ref) investment over the flow across the network. Note that this introduces another variable, [connection\_intact\_flow](@ref), representing the hypothetical flow on a [connection](@ref) in case all [connection](@ref) investments were in place. Also note that the impact of each connection is captured **individually**.
+If set to `true`, then the model will use line outage distribution factors (LODF) to compute the impact of each [connection](@ref) investment over the flow across the network. Note that this introduces another variable, [connection\_intact\_flow](@ref var_connection_intact_flow), representing the hypothetical flow on a [connection](@ref) in case all [connection](@ref) investments were in place. Also note that the impact of each connection is captured **individually**.
 
 ## Creating an Investment Candidate Unit Example  
 If we have model that is not currently set up for investments and we wish to create an investment candidate unit, we can take the following steps.

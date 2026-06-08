@@ -20,8 +20,8 @@
 
 @doc raw"""
 For candidate connections with PTDF-based poweflow, together with [this](@ref constraint_candidate_connection_flow_lb),
-this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in
-and equals [connection\_intact\_flow](@ref) otherwise.
+this constraint ensures that [connection\_flow](@ref var_connection_flow) is zero if the candidate connection is not invested-in
+and equals [connection\_intact\_flow](@ref var_connection_intact_flow) otherwise.
 
 ```math
 \begin{aligned}

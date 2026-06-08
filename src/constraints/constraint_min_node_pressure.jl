@@ -28,7 +28,7 @@ can be specified which triggers the following constraint:
 ```
 
 As indicated in the equation, the parameter [pressure\_min](@ref) can also be defined on a node group,
-in order to impose a lower limit on the aggregated [node\_pressure](@ref) within one node group.
+in order to impose a lower limit on the aggregated [node\_pressure](@ref var_node_pressure) within one node group.
 
 See also [pressure\_min](@ref).
 """

@@ -4,7 +4,7 @@ and map variables from normal periods to representative ones.
 The idea behind this is to reduce the size of the problem by using a reduced set of variables,
 when one knows that some reduced set of time periods can be representative for a larger one.
 
-**Note that only operational variables other than [node\_state](@ref) are sensitive to this parameter.**
+**Note that only operational variables other than [node\_state](@ref var_node_state) are sensitive to this parameter.**
 In other words, the model always create `node_state` variables and investment variables for all
 time periods, regardless of whether or not `representative_blocks_by_period` is specified for any
 `temporal_block`.

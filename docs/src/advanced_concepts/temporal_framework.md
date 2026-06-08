@@ -113,7 +113,7 @@ Multiple temporal blocks can be used to optimize disconnected periods. Let's tak
 
 This example will lead to an optimization of the first four hours of the model horizon, and also of hour 12 to 16. By defining exactly the same relationships for the two temporal blocks, an optimization of disconnected periods is achieved for exactly the same model components. This leads to the possibility of implementing the widely used representative days method. If desired, it is possible to choose a different temporal resolution for the different `temporal_blocks`.
 
-It is worth noting that dynamic [variables](@ref Variables) like [node\_state](@ref) and [units\_on](@ref)
+It is worth noting that dynamic [variables](@ref Variables) like [node\_state](@ref var_node_state) and [units\_on](@ref var_units_on)
 merit special attention when using disconnected time periods.
 By default, when trying to access [variables](@ref Variables) Variables outside the defined [temporal\_block](@ref)s,
 *SpineOpt.jl* assumes such variables exist but allows them to take any values within specified bounds.

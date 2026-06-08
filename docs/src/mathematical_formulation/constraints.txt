@@ -54,9 +54,9 @@ A [unit](@ref) can have different commodity flows associated with it. The most s
 
 #### Commitment constraints
 For modeling certain technologies/units, it is important to not only have
-[unit\_flow](@ref) variables of
+[unit\_flow](@ref var_unit_flow) variables of
 different commodities, but also model the online ("commitment") status of the unit/technology
-at every time step. Therefore, an additional variable [units\_on](@ref) is introduced. This variable
+at every time step. Therefore, an additional variable [units\_on](@ref var_units_on) is introduced. This variable
 represents the number of online units of that technology (for a normal unit commitment model,
 this variable might be a binary, for investment planning purposes, this might also be an integer
 or even a continuous variable). To define the type of a commitment variable, see [online\_variable\_type](@ref).
@@ -151,7 +151,7 @@ In the following, the different specific network representations are introduced.
 #### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
 For gas pipelines it can be relevant a pressure driven gas transfer can be modelled, i.e. to account for linepack flexibility. Generally speaking, the main challenges related to pressure driven gas transfers are the non-convexities associated with the Weymouth equation. In SpineOpt, a convexified MILP representation has been implemented, which as been presented in [Schwele - Coordination of Power and Natural Gas Systems: Convexification Approaches for Linepack Modeling](https://doi.org/10.1109/PTC.2019.8810632). The approximation approach is based on the Taylor series expansion around fixed pressure points.
 
-In addition to the already known variables, such as [connection\_flow](@ref) and [node\_state](@ref), the start and end points of a gas pipeline connection are associated with the variable [node\_pressure](@ref). The variable is triggered by setting the [physics\_type](@ref) parameter of the relevant [grid](@ref) entity to `pressure_physics`. For more details on how to set up a gas pipeline, see also the advanced concept section [on pressure driven gas transfer](@ref pressure-driven-gas-transfer).
+In addition to the already known variables, such as [connection\_flow](@ref var_connection_flow) and [node\_state](@ref var_node_state), the start and end points of a gas pipeline connection are associated with the variable [node\_pressure](@ref var_node_pressure). The variable is triggered by setting the [physics\_type](@ref) parameter of the relevant [grid](@ref) entity to `pressure_physics`. For more details on how to set up a gas pipeline, see also the advanced concept section [on pressure driven gas transfer](@ref pressure-driven-gas-transfer).
 
 ##### [Maximum node pressure](@id constraint_max_node_pressure)
 
@@ -183,7 +183,7 @@ In addition to the already known variables, such as [connection\_flow](@ref) and
 
 #### [Node-based lossless DC power flow](@id nodal-lossless-DC)
 
-For the implementation of the nodebased loss DC powerflow model, a new variable [node\_voltage\_angle](@ref) is introduced. See also [physics\_type](@ref).
+For the implementation of the nodebased loss DC powerflow model, a new variable [node\_voltage\_angle](@ref var_node_voltage_angle) is introduced. See also [physics\_type](@ref).
 For further explanation on setting up a database for nodal lossless DC power flow, see the advanced concept chapter on [Lossless nodal DC power flows](@ref).
 
 ##### [Maximum node voltage angle](@id constraint_max_node_voltage_angle)
@@ -305,8 +305,8 @@ s.t. &
 ```
 
 So this is a single problem that can't be decoupled over ``t`` because the investment variables
-[units\_invested\_available](@ref) couple the timesteps together.
-If [units\_invested\_available](@ref) were a constant in the problem, then all ``t``'s could be solved individually.
+[units\_invested\_available](@ref var_units_invested_available) couple the timesteps together.
+If [units\_invested\_available](@ref var_units_invested_available) were a constant in the problem, then all ``t``'s could be solved individually.
 This is the basic idea in Benders decomposition.
 We decompose the problem into a master problem and sub problems with the master problem
 optimising the coupling investment variables which are treated as constants in the sub problems.
@@ -428,19 +428,19 @@ where
 
 
 - ``p^{sp\_obj}_{(b)}`` is the sub problem objective function value in benders iteration ``b``,
-- ``p^{units\_invested\_available\_mv}`` is the reduced cost of the [units\_invested\_available](@ref) fixed
+- ``p^{units\_invested\_available\_mv}`` is the reduced cost of the [units\_invested\_available](@ref var_units_invested_available) fixed
   sub-problem variable, representing the reduction in operating costs possible from an investment in a [unit](@ref)
   of this type,  
-- ``p^{connections\_invested\_available\_mv}`` is the reduced cost of the [connections\_invested\_available](@ref)
+- ``p^{connections\_invested\_available\_mv}`` is the reduced cost of the [connections\_invested\_available](@ref var_connections_invested_available)
   fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a
   [connection](@ref) of this type,  
-- ``p^{storages\_invested\_available\_mv}`` is the reduced cost of the [storages\_invested\_available](@ref) fixed
+- ``p^{storages\_invested\_available\_mv}`` is the reduced cost of the [storages\_invested\_available](@ref var_storages_invested_available) fixed
   sub-problem variable, representing the reduction in operating costs possible from an investment in a storage
   [node](@ref) of this type,  
 - ``p^{units\_invested\_available}`` is the value of the fixed sub problem variable
-  [units\_invested\_available](@ref) in benders iteration ``b``,  
+  [units\_invested\_available](@ref var_units_invested_available) in benders iteration ``b``,  
 - ``p^{connections\_invested\_available}`` is the value of the fixed sub problem variable
-  [connections\_invested\_available](@ref) in benders iteration ``b`` and  
+  [connections\_invested\_available](@ref var_connections_invested_available) in benders iteration ``b`` and  
 - ``p^{storages\_invested\_available}`` is the value of the fixed sub problem variable
-  [storages\_invested\_available](@ref) in benders iteration ``b``
+  [storages\_invested\_available](@ref var_storages_invested_available) in benders iteration ``b``
 

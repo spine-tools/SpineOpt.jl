@@ -31,14 +31,14 @@ The structure of the output data will follow the structure of the input data wit
  - For unit flows, the flow direction is added as a dimension to the output. 
 
 ### Example: `unit_flow`
- For example, consider the [unit\_flow](@ref)) optimisation variable. This variable is dimensioned on the [unit\_\_to_node](@ref) and [unit\_\_from_node](@ref) relationships. In the output datastore, the [report](@ref), [stochastic\_scenario](@ref) and flow `direction` are added as additional dimensions. Therefore, [unit\_\_to_node](@ref) values will appear in the output datastore as timeseries parameters associated with the `report__unit__node__direction__stochastic_scenario` relationship as shown below.
+ For example, consider the [unit\_flow](@ref var_unit_flow)) optimisation variable. This variable is dimensioned on the [unit\_\_to_node](@ref) and [unit\_\_from_node](@ref) relationships. In the output datastore, the [report](@ref), [stochastic\_scenario](@ref) and flow `direction` are added as additional dimensions. Therefore, [unit\_\_to_node](@ref) values will appear in the output datastore as timeseries parameters associated with the `report__unit__node__direction__stochastic_scenario` relationship as shown below.
 
 ![image](https://github.com/Spine-project/SpineOpt.jl/blob/master/docs/src/figs/output_data_unit_flow.png?raw=true)
 
 To view the data, simply double-click on the timeseries value
 
 ### Example: `units_on`
- Consider the [units\_on](@ref)) optimisation variable. This variable is dimensioned on the [unit](@ref) object class. In the output datastore, the [report](@ref) and [stochastic\_scenario](@ref) are added as additional dimensions. Therefore, [units\_on](@ref) values will appear in the output datastore as timeseries parameters associated with the `report__unit__stochastic_scenario` relationship as shown below.
+ Consider the [units\_on](@ref var_units_on)) optimisation variable. This variable is dimensioned on the [unit](@ref) object class. In the output datastore, the [report](@ref) and [stochastic\_scenario](@ref) are added as additional dimensions. Therefore, [units\_on](@ref var_units_on) values will appear in the output datastore as timeseries parameters associated with the `report__unit__stochastic_scenario` relationship as shown below.
 
 ![image](https://github.com/Spine-project/SpineOpt.jl/blob/1d158d7f76e0dc4d6952c6f6f95c21c4c0dc803d/docs/src/figs/output_data_units_on.png?raw=true)
 

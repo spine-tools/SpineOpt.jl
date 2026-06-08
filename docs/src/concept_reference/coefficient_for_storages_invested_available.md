@@ -1,3 +1,3 @@
-The `coefficient_for_storages_invested_available` is an optional parameter that can be used to include the [storages\_invested\_available](@ref) variable in a [user\_constraint](@ref) via the [node\_\_user\_constraint](@ref) relationship.
+The `coefficient_for_storages_invested_available` is an optional parameter that can be used to include the [storages\_invested\_available](@ref var_storages_invested_available) variable in a [user\_constraint](@ref) via the [node\_\_user\_constraint](@ref) relationship.
 Essentially, `coefficient_for_storages_invested_available` appears as a coefficient for the
-[storages\_invested\_available](@ref) variable in the [user constraint](@ref constraint_user_constraint). For more information, see the [User Constraints Concept Reference][#User-Constraints]
+[storages\_invested\_available](@ref var_storages_invested_available) variable in the [user constraint](@ref constraint_user_constraint). For more information, see the [User Constraints Concept Reference][#User-Constraints]

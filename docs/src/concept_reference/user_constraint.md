@@ -5,8 +5,8 @@ while the [right\_hand\_side](@ref) parameter allows for defining the constant t
 
 Coefficients for the different [variables](@ref Variables) appearing in the [user\_constraint](@ref) are defined
 using relationships, like e.g. [unit\_flow\_\_user\_constraint](@ref) and
-[connection\_\_to\_node\_\_user\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
-or [unit\_\_user\_constraint](@ref) and [node\_\_user\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
-and [node_state](@ref) variables.
+[connection\_\_to\_node\_\_user\_constraint](@ref) for [unit\_flow](@ref var_unit_flow) and [connection\_flow](@ref var_connection_flow) variables,
+or [unit\_\_user\_constraint](@ref) and [node\_\_user\_constraint](@ref) for [units\_on](@ref var_units_on), [units\_started\_up](@ref var_units_started_up),
+and [node\_state](@ref var_node_state) variables.
 
 For more information, see the dedicated article on [User Constraints](@ref)

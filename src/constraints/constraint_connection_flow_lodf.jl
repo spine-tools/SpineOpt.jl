@@ -24,8 +24,8 @@ upon the outage of a contingency connection, ``c_{cont}``, is formed using line 
 ``p^{lodf}_{(c_{cont}, c_{mon})}`` represents the fraction of the pre-contingency flow on connection ``c_{cont}`` that will flow
 on ``c_{mon}`` if the former is disconnected.
 If [connection](@ref) ``c_{cont}`` is disconnected, the post-contingency flow on the monitored connection
-[connection](@ref) ``c_{mon}`` is the pre-contingency [connection\_flow](@ref) on ``c_{mon}`` plus the LODF
-times the pre-contingency [connection\_flow](@ref) on ``c_{cont}``.
+[connection](@ref) ``c_{mon}`` is the pre-contingency [connection\_flow](@ref var_connection_flow) on ``c_{mon}`` plus the LODF
+times the pre-contingency [connection\_flow](@ref var_connection_flow) on ``c_{cont}``.
 This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of ``c_{mon}``.
 
 ```math

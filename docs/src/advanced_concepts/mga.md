@@ -5,7 +5,7 @@ Through modelling to generate alternatives (short MGA), near-optimal solutions c
 ## Modelling to generate alternative: Maximally different portfolios
 The idea is that an orginal problem is solved, and subsequently solved again under the condition that the realization of variables should be maximally different from the previous iteration(s), while keeping the objective function within a certain threshold (defined by [mga\_max\_slack](@ref)).
 
-In SpineOpt, we choose [units\_invested\_available](@ref), [connections\_invested\_available](@ref), and [storages\_invested\_available](@ref) as variables that can be considered for the maximum-difference-problem. The implementation is based on [Modelling to generate alternatives: A technique to explore uncertainty in energy-environment-economy models](https://doi.org/10.1016/j.apenergy.2017.03.065).
+In SpineOpt, we choose [units\_invested\_available](@ref var_units_invested_available), [connections\_invested\_available](@ref var_connections_invested_available), and [storages\_invested\_available](@ref var_storages_invested_available) as variables that can be considered for the maximum-difference-problem. The implementation is based on [Modelling to generate alternatives: A technique to explore uncertainty in energy-environment-economy models](https://doi.org/10.1016/j.apenergy.2017.03.065).
 
 ## How to set up an MGA problem
 - [model](@ref): In order to explore an MGA model, you will need one model of type [spineopt\_mga](@ref model_type_list). You should also define the number of iterations ([mga\_max\_iterations](@ref), and the maximum allowed deviation from the original objective function ([mga\_max\_slack](@ref)).

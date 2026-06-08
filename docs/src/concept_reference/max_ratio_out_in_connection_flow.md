@@ -6,7 +6,7 @@ where the first node (or group of nodes) in this relationship represents the `to
 i.e. the outgoing flow from the connection, and the second node (or group of nodes),
 represents the `from_node`, i.e. the incoming flows to the connection.
 The ratio parameter is interpreted such that it constrains the ratio of `out` over `in`,
-where `out` is the [connection\_flow](@ref) variable from the first [node](@ref) in the [connection\_\_node\_\_node](@ref) relationship
+where `out` is the [connection\_flow](@ref var_connection_flow) variable from the first [node](@ref) in the [connection\_\_node\_\_node](@ref) relationship
 in a left-to-right reading order.
 
 To enforce e.g. a maximum ratio of `0.8` for a connection `conn` between its outgoing electricity flow to [node](@ref) `commodity1` and its incoming flows from the [node](@ref) `commodity2`, the [max\_ratio\_out\_in\_connection\_flow](@ref) parameter would be set to `0.8` for the relationship `conn__commodity1__commodity2`.

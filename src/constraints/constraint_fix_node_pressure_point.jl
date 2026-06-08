@@ -134,7 +134,7 @@ For each considered fixed pressure point, they can be calculated as follows:
 ```
 where ``p^{fixed\_pressure}_{(n,j)}`` is the fix pressure for node ``n`` and point ``j``.
 
-The [big\_m](@ref) parameter combined with the variable [binary\_gas\_connection\_flow](@ref)
+The [big\_m](@ref) parameter combined with the variable [binary\_gas\_connection\_flow](@ref var_binary_gas_connection_flow)
 together with the equations [on unitary gas flow](@ref constraint_connection_unitary_gas_flow)
 and on the [maximum gas flow](@ref constraint_connection_flow_gas_capacity) ensure that
 the bound on the average flow through the fixed pressure points becomes active,

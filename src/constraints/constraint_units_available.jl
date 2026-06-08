@@ -20,7 +20,7 @@
 
 @doc raw"""
 The aggregated available units are constrained by the parameter [existing\_units](@ref)
-, the variable number of invested units [units\_invested\_available](@ref) less the number of units on outage [units\_out\_of\_service](@ref):
+, the variable number of invested units [units\_invested\_available](@ref var_units_invested_available) less the number of units on outage [units\_out\_of\_service](@ref var_units_out_of_service):
 
 ```math
 \begin{aligned}

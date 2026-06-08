@@ -38,7 +38,7 @@ then it is assumed to have only one children: the [model](@ref) itself.
 The [output](@ref)s that a [stage](@ref) fixes for its children are defined via [stage\_\_output\_\_node](@ref),
 [stage\_\_output\_\_unit](@ref) and/or [stage\_\_output\_\_connection](@ref)
 relationships.
-For example, if you want to fix [node\_state](@ref) for a [node](@ref),
+For example, if you want to fix [node\_state](@ref var_node_state) for a [node](@ref),
 then you would create a [stage\_\_output\_\_node](@ref) between the [stage](@ref),
 the `node_state` [output](@ref) and the [node](@ref).
 
@@ -90,6 +90,6 @@ Next, the 'stage' stuff:
 Now, if you run the `Base_scenario` SpineOpt will run a two-stage model:
 - First, a daily-resolution year-long model that will capture the long-term value of your storage.
 - Next, an hourly-resolution year-long rolling horizon model solving one day at a time,
-  where the [node\_state](@ref) of your storage [node](@ref)
+  where the [node\_state](@ref var_node_state) of your storage [node](@ref)
   will be fixed at the end of each day to the optimal LT trajectory computed in the previous stage.
 

@@ -32,7 +32,7 @@ Let's begin! We will be trying to write a simplified version of the unit capacit
 \end{aligned}
 ```
 
-In other words, the [unit\_flow](@ref) between a [unit](@ref) and a [node](@ref) has to be lower than or equal to:
+In other words, the [unit\_flow](@ref var_unit_flow) between a [unit](@ref) and a [node](@ref) has to be lower than or equal to:
 - the specified [capacity\_per\_unit](@ref), if the [unit](@ref) is online and not shutting down in the next period;
 - the [capacity\_per\_unit](@ref) multiplied by the [ramp\_limits\_shutdown](@ref), if the [unit](@ref) is shutting down in the next period;
 - zero, if the [unit](@ref) is offline.
@@ -74,8 +74,8 @@ This is a bit harder. Here you need to answer two questions:
 2. for each of those moments, how far in time do we need to look in order to enforce the constraint.
 
 To answer the first question, the first step is to understand where the different variables involved
-in your constraint get their temporal resolution from. In our case, we have [unit\_flow](@ref),
-[units\_on](@ref) and [units\_shut\_down](@ref). The former gets its resolution from the associated [node](@ref),
+in your constraint get their temporal resolution from. In our case, we have [unit\_flow](@ref var_unit_flow),
+[units\_on](@ref var_units_on) and [units\_shut\_down](@ref). The former gets its resolution from the associated [node](@ref),
 via [node\_\_temporal\_block](@ref); whereas the two latter get it from the [unit](@ref),
 via [units\_on\_\_temporal\_block](@ref).
 
@@ -92,12 +92,12 @@ the individual resolutions of all our 'spatial' indices so we never miss a perio
 constraint.
 In our case, we need to guarantee that the flow between a [unit](@ref) and a [node](@ref)
 is *never* higher than the [capacity\_per\_unit](@ref). So it looks like we should be taking the *highest* resolution
-of the [unit\_flow](@ref) variable.
+of the [unit\_flow](@ref var_unit_flow) variable.
 
 But we also need to guarantee that the flow is lower than the [capacity\_per\_unit](@ref) times the
 [ramp\_limits\_shutdown](@ref) if the [unit](@ref) is shutting down in the next period. How does that affect the
-resolution of the constraint? Is it still Ok to use the resolution of [unit\_flow](@ref)?
-What happens if [units\_on](@ref) has higher resolution than [unit\_flow](@ref)?
+resolution of the constraint? Is it still Ok to use the resolution of [unit\_flow](@ref var_unit_flow)?
+What happens if [units\_on](@ref var_units_on) has higher resolution than [unit\_flow](@ref var_unit_flow)?
 Would we violate this last part of the constraint eventually?
 
 In doubt, something that could work is to take the highest resolution of all the individual resolutions
@@ -169,7 +169,7 @@ you will need to somehow translate your constraint indices into that variable.
 The good news is for each variable in SpineOpt, we have a corresponding function that returns all the
 indices of that variable. The even better news is the same function also allows you to do some filtering
 on each dimension, so you can easily obtain all the indices matching a condition.
-For example, you can tell to this function, 'give me all the [unit\_flow](@ref) indices
+For example, you can tell to this function, 'give me all the [unit\_flow](@ref var_unit_flow) indices
 where the [unit](@ref) is `u`, the [node](@ref) is a member of the node group `ng`,
 the time-slice is one of those *contained* in `t`, and
 the [stochastic\_scenario](@ref) is one of the stochastic path `s_path`'.
@@ -177,8 +177,8 @@ the [stochastic\_scenario](@ref) is one of the stochastic path `s_path`'.
 So basically you can use that function to obtain all the indices of
 the variable that match the indices of your constraint. Yes, it can be more than one!
 That's why most of the terms in SpineOpt constraints are summations. For example, the summation, over all
-the [unit\_flow](@ref) variable's indices, `i`, matching the constraint index; of the product between
-a certain parameter and the [unit\_flow](@ref) variable for that `i`.
+the [unit\_flow](@ref var_unit_flow) variable's indices, `i`, matching the constraint index; of the product between
+a certain parameter and the [unit\_flow](@ref var_unit_flow) variable for that `i`.
 
 Hopefully all the above will become clearer with an example - so let's dive into it!
 
@@ -428,7 +428,7 @@ which (I hope you agree) means we're good.
 
 Let's add the 'temporal' indices. We know that we need two of such indices: the *current* time-slice,
 and the *next* time-slice. The *current* time-slice we will use to access both
-[unit\_flow](@ref) and [units\_on](@ref), and the *next* to access [units\_shut\_down](@ref).
+[unit\_flow](@ref var_unit_flow) and [units\_on](@ref var_units_on), and the *next* to access [units\_shut\_down](@ref).
 
 To collect time-slices, we will be using a special function from SpineOpt called `time_slice`.
 This function receives a model object `m` and returns an array with all the time-slices in that model -
@@ -471,8 +471,8 @@ my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2
 So we are getting time-slices at two-hour resolution. This makes sense, because the `pwrplant` [unit](@ref) is
 (only) associated to the `2hourly` [temporal\_block](@ref), remember? However, does it work?
 Well, we know the `elec` [node](@ref) is associated to the `1hourly` [temporal\_block](@ref),
-and that means we have [unit\_flow](@ref) variables at one-hour resolution -
-because [unit\_flow](@ref) gets its resolution from the [node](@ref), right?
+and that means we have [unit\_flow](@ref var_unit_flow) variables at one-hour resolution -
+because [unit\_flow](@ref var_unit_flow) gets its resolution from the [node](@ref), right?
 We can't just enforce the constraint every two hours if the flows are tracked every *one* hour!
 
 So taking the time-slices of the [unit](@ref) is clearly insufficient, because we happen to have a [node](@ref)
@@ -506,9 +506,9 @@ my_unit_flow_capacity(unit = pwrplant, node = fuel, direction = from_node, t = 2
 ```
 
 So now we're getting time-slices at one-hour resolution on the `elec` side, and three-hour on the `fuel` side.
-This seems enough to enforce that the [unit\_flow](@ref) is never higher than the
+This seems enough to enforce that the [unit\_flow](@ref var_unit_flow) is never higher than the
 [capacity\_per\_unit](@ref).
-However, we also need to enforce that the [unit\_flow](@ref) is never higher than the [capacity\_per\_unit](@ref) times
+However, we also need to enforce that the [unit\_flow](@ref var_unit_flow) is never higher than the [capacity\_per\_unit](@ref) times
 the [ramp\_limits\_shutdown](@ref) if the unit is shutting down the next period.
 Since the unit is able to shut-down 'at two-hour resolution' so to say, clearly taking the
 three-hour resolution on the `fuel` side is not enough to check if the [unit](@ref) is shutting down in the next period.

@@ -19,7 +19,7 @@
 #############################################################################
 
 @doc raw"""
-Limit the decrease of [unit\_flow](@ref) over a time period of one [duration\_unit](@ref) according
+Limit the decrease of [unit\_flow](@ref var_unit_flow) over a time period of one [duration\_unit](@ref) according
 to the [ramp\_limits\_shutdown](@ref) and [ramp\_limits\_down](@ref) parameter values.
 
 ```math

@@ -2,7 +2,7 @@ Connection: The [investment\_count\_max\_cumulative](@ref) parameter denotes the
 [connection](@ref). The default value of `nothing` means that the [connection](@ref) can't be invested in, because it's 
 already in operation. An integer value represents the maximum investment possible at any point in time, as a factor of 
 the [capacity\_per\_connection](@ref). In other words, [investment\_count\_max\_cumulative](@ref) is the upper bound of the 
-[connections\_invested\_available](@ref) variable.
+[connections\_invested\_available](@ref var_connections_invested_available) variable.
 
 Unit: Within an investments problem `investment_count_max_cumulative` determines the upper bound on the [unit](@ref) 
 investment decision variable in constraint `units_invested_available`. In constraint `unit_flow_capacity` the maximum 

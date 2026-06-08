@@ -21,11 +21,11 @@ Assuming you already have an investment model with a certain temporal structure 
 
 In SpineOpt, this will be interpreted in the following way:
 - For each [node](@ref) and [unit](@ref) associated to any of your representative [temporal\_block](@ref)s,
-  the operational variables (with the exception of [node\_state](@ref)) will be created
+  the operational variables (with the exception of [node\_state](@ref var_node_state)) will be created
   **only** for the representative periods. For the non-representative periods, SpineOpt will use the variable of
   the corresponding representative period according to the value of the [representative\_blocks\_by\_period](@ref)
   parameter.
-- The [node\_state](@ref) variable and the investment [variables](@ref Variables) will be created for **all** periods,
+- The [node\_state](@ref var_node_state) variable and the investment [variables](@ref Variables) will be created for **all** periods,
   representative and non-representative.
 
 ## Tools to set up representative periods

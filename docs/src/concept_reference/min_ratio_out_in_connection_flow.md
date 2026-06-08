@@ -6,7 +6,7 @@ where the first node (or group of nodes) in this relationship represents the `to
 i.e. the outgoing flow from the connection, and the second node (or group of nodes),
 represents the `from_node`, i.e. the incoming flows to the connection.
 The ratio parameter is interpreted such that it constrains the ratio of `out` over `in`,
-where `out` is the [connection\_flow](@ref) variable from the first [node](@ref) in the [connection\_\_node\_\_node](@ref) relationship
+where `out` is the [connection\_flow](@ref var_connection_flow) variable from the first [node](@ref) in the [connection\_\_node\_\_node](@ref) relationship
 in a left-to-right reading order.
 
 Note that the ratio can also be defined for [connection\_\_node\_\_node](@ref) relationships,

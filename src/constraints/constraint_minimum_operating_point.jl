@@ -19,7 +19,7 @@
 #############################################################################
 
 @doc raw"""
-The minimum operating point of a unit is based on the [unit\_flow](@ref)s of
+The minimum operating point of a unit is based on the [unit\_flow](@ref var_unit_flow)s of
 input or output nodes/node groups.
 
 ```math

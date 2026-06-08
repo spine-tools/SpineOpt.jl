@@ -4,7 +4,7 @@ regardless of [investment\_count\_max\_cumulative](@ref).
 See the following for more details for connections and units, respectively.
 
 Connection: The [investment\_variable\_type](@ref) parameter represents the *type* of the 
-[connections\_invested\_available](@ref) decision variable.
+[connections\_invested\_available](@ref var_connections_invested_available) decision variable.
 The default value, `linear`, means that any arbitrary fraction of [capacity\_per\_connection](@ref) can be invested in.
 Meanwhile, `integer` and `binary` limit these according to their names, respectively.
 

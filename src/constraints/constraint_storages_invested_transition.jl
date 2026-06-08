@@ -19,10 +19,10 @@
 #############################################################################
 
 @doc raw"""
-[storages\_invested](@ref) represents the point-in-time decision to invest in storage at a node ``n`` or not,
-while [storages\_invested\_available](@ref) represents the invested-in storages that are available at a node at a
+[storages\_invested](@ref var_storages_invested) represents the point-in-time decision to invest in storage at a node ``n`` or not,
+while [storages\_invested\_available](@ref var_storages_invested_available) represents the invested-in storages that are available at a node at a
 specific time.
-This constraint enforces the relationship between [storages\_invested](@ref), [storages\_invested\_available](@ref)
+This constraint enforces the relationship between [storages\_invested](@ref var_storages_invested), [storages\_invested\_available](@ref var_storages_invested_available)
 and [storages\_decommissioned](@ref) in adjacent timeslices.
 
 ```math
