@@ -43,7 +43,7 @@ where $t^{first}_{blk}$ and $t^{last}_{blk}$ are respectively the starting-point
 and the last time slice of the representative block $blk$, and 
 $p^{representative\_block\_coefficient}_{(t_{after},\, blk)}$ is the weight assigned to 
 block $blk$ when constructing the represented time step $t_{after}$ from representative 
-periods (see [representative\_periods\_mapping](@ref)).
+periods (see [representative\_blocks\_by\_period](@ref)).
 
 !!! note
     This constraint is part of the **delta formulation** for long-term storage.
@@ -56,7 +56,7 @@ periods (see [representative\_periods\_mapping](@ref)).
 See also
 [storage\_active](@ref),
 [storage\_longterm\_active](@ref),
-[representative\_periods\_mapping](@ref),
+[representative\_blocks\_by\_period](@ref),
 [node\_state\_longterm](@ref var_node_state_longterm),
 [node\_state](@ref var_node_state).
 """

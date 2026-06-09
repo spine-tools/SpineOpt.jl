@@ -21,19 +21,19 @@ making it easier to define e.g. variables common between all stochastic scenario
 
 Here, we briefly describe the key concepts required to understand the stochastic framework:
 
-1. **[stochastic\_scenario](@ref)** is essentially just a label for an alternative period of time, describing one possiblity of what may come to pass. Even in deterministic modelling with *SpineOpt.jl*, a single [stochastic\_scenario](@ref) is required for labelling the deterministic timeline.
+1. **[stochastic\_scenario](@ref)** is essentially just a label for an alternative period of time, describing one possibility of what may come to pass. Even in deterministic modelling with *SpineOpt.jl*, a single [stochastic\_scenario](@ref) is required for labelling the deterministic timeline.
 
-2. **Stochastic DAG** is the directed acyclic graph describing the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships between the `stochastic scenarios`. The key difference between a *stochastic DAG* and a traditional *stochastic tree* is that the scenarios are allowed to have multiple parents, making it possible to converge scenarios into each other in addition to branching.
+2. **Stochastic DAG** is the directed acyclic graph describing the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships between the [stochastic\_scenario](@ref)s. The key difference between a *stochastic DAG* and a traditional *stochastic tree* is that the scenarios are allowed to have multiple parents, making it possible to converge scenarios into each other in addition to branching.
 
-3. **Stochastic path** is a unique sequence of `stochastic scenarios` for traversing the *stochastic DAG*. Every *(finite) stochastic DAG* has a limited number of *full stochastic paths* that traverse it from roots *(scenarios without parents)* to leaves *(scenarios without children)*. Here, we use the term *stochastic path* to refer to any subset of scenarios within a *full stochastic path*.
+3. **Stochastic path** is a unique sequence of [stochastic\_scenario](@ref)s for traversing the *stochastic DAG*. Every *(finite) stochastic DAG* has a limited number of *full stochastic paths* that traverse it from roots *(scenarios without parents)* to leaves *(scenarios without children)*. Here, we use the term *stochastic path* to refer to any subset of scenarios within a *full stochastic path*.
 
-4. **[stochastic\_structure](@ref)** is essentially a "realization" of the *stochastic DAG*, with additional information like the [stochastic\_scenario\_end](@ref) and [weight\_relative\_to\_parents](@ref) [Parameters](@ref). These become relevant when we start discussing interactions between different `stochastic structures`.
+4. **[stochastic\_structure](@ref)** is essentially a "realization" of the *stochastic DAG*, with additional information like the [stochastic\_scenario\_end](@ref) and [weight\_relative\_to\_parents](@ref) [Parameters](@ref). These become relevant when we start discussing interactions between different [stochastic\_structure](@ref)s.
 
 ```@raw html
 <img src="../../figs/dag_fullpath_path.svg" width="40%"/>
 ```
 
-The above figure presents an example *stochastic DAG* with the individual `stochastic scenarios` labelled from `s0-s8`.
+The above figure presents an example *stochastic DAG* with the individual [stochastic\_scenario](@ref)s labelled from `s0-s8`.
 An example *full stochastic path* `[s0, s1, s5, s8]` is highlighted in red,
 while an example *stochastic path* `[s2, s4, s7]` is highlighted in blue.
 
@@ -42,7 +42,7 @@ while an example *stochastic path* `[s2, s4, s7]` is highlighted in blue.
 The major issue with *stochastic DAGs* compared to *stochastic trees*, is that indexing constraints that
 include variables from multiple time steps *(henceforth referred to as "dynamic constraints")* needs rethinking.
 With *stochastic trees*, constraints can always be unambiguously indexed using `(stochastic_scenario, last_time_step)`,
-since all `stochastic scenarios` only have a single parent.
+since all [stochastic\_scenario](@ref)s only have a single parent.
 However, this is no longer the case for *stochastic DAGs*, as illustrated in the figures below:
 
 ```@raw html
@@ -60,13 +60,13 @@ different `(stochastic_scenario, time_step)` indices, and thus requires four con
 As discussed in the previous section, dynamic constraints in *stochastic DAGs* cannot be unambiguously indexed
 using a single `(stochastic_scenario, time_step)`.
 However, they *can* be unambiguously indexed using `(stochastic_path, time_step)`,
-where the *stochastic path* is the unique sequence of `stochastic scenarios` traversing the DAG.
+where the *stochastic path* is the unique sequence of [stochastic\_scenario](@ref)s traversing the DAG.
 Since there are only a limited number of ways to traverse the DAG, represented by the *full stochastic paths*,
 we can identify the number of unique paths necessary for constraint generation as follows:
 
 1. Identify all unique *full stochastic paths*, meaning all the possible ways of traversing the DAG from roots to leaves.
-2. Find all the `stochastic scenarios` that are active on all the `time steps` included in the constraint.
-3. Find all the unique *stochastic paths* by intersecting the set of active `stochastic scenarios` with the *full stochastic paths*.
+2. Find all the [stochastic\_scenario](@ref)s that are active on all the `time steps` included in the constraint.
+3. Find all the unique *stochastic paths* by intersecting the set of active [stochastic\_scenario](@ref)s with the *full stochastic paths*.
 4. Generate constraints over each unique *stochastic path* found in step 3.
 
 #### Example dynamic constraint generation
@@ -85,8 +85,8 @@ The *full stochastic paths* for traversing the above DAG are as follows:
 3. `[s0, s2, s4, s6, s8]`
 4. `[s0, s2, s4, s7, s8]`
 
-For the red constraint, the `stochastic scenarios` `s5-s8` are active on the `time steps` `t4-t5`.
-All the above *full stochastic paths* include at least two of the active `stochastic scenarios`,
+For the red constraint, the [stochastic\_scenario](@ref)s `s5-s8` are active on the `time steps` `t4-t5`.
+All the above *full stochastic paths* include at least two of the active [stochastic\_scenario](@ref)s,
 but full paths 1 and 2 both produce an identical path `[s5, s8]`,
 so the set of unique *stochastic paths* for the red constraint becomes:
 
@@ -95,10 +95,10 @@ so the set of unique *stochastic paths* for the red constraint becomes:
 3. `[s7, s8]`
 
 There are no paths `[s5, s6], [s5, s7], [s6, s7]` since following the DAG one cannot start from `s5` and end up in `s6`,
-even though these `stochastic scenarios` are active.
+even though these [stochastic\_scenario](@ref)s are active.
 
 The blue constraint illustrates a case where the time step range is non-continuous.
-The active `stochastic scenarios` on `t1, t3` are `s1, s2, s4, s5`,
+The active [stochastic\_scenario](@ref)s on `t1, t3` are `s1, s2, s4, s5`,
 so again by comparing these to the *full stochastic paths* we get:
 
 1. `[s1, s5]`
@@ -114,22 +114,22 @@ Again, the path `[s1, s4]` is invalid, since the DAG cannot be traversed from `s
 *Stochastic path* indexing in constraints also allows for "distorting" the *stochastic DAG* in different parts of the model.
 As long as the *stochastic DAG* itself isn't changed,
 meaning the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships and the resulting *full stochastic paths*,
-we can actually define different `stochastic structures` and still be able to handle constraint generation between them.
+we can actually define different [stochastic\_structure](@ref)s and still be able to handle constraint generation between them.
 This is due to the fact that when determining the *stochastic paths*,
 it makes no difference whether we're looking at the same [stochastic\_structure](@ref) at different `time steps`,
-or at two `stochastic structures`, one of which has been delayed, on the same `time step`.
+or at two [stochastic\_structure](@ref)s, one of which has been delayed, on the same `time step`.
 This is illustrated by the figure below:
 
 ```@raw html
 <img src="../../figs/delayed_stochastic_paths.svg" width="50%"/>
 ```
 
-The above represents constraint generation over two `stochastic structures`,
+The above represents constraint generation over two [stochastic\_structure](@ref)s,
 where the lower [stochastic\_structure](@ref) has been delayed in respect to the one above.
 Nevertheless, the procedure for finding the *stochastic paths* for the constraints remains identical to the previous example:
 
-1. Identify all unique *full stochastic paths*, meaning all the possible ways of traversing the DAG. As long as the DAG remains the same between all the involved `stochastic structures`, the pathing remains the same.
-2. Find all the `stochastic scenarios` that are active on all the `stochastic structures` and `time steps` included in the constraint.
+1. Identify all unique *full stochastic paths*, meaning all the possible ways of traversing the DAG. As long as the DAG remains the same between all the involved [stochastic\_structure](@ref)s, the pathing remains the same.
+2. Find all the [stochastic\_scenario](@ref)s that are active on all the [stochastic\_structure](@ref)s and `time steps` included in the constraint.
 3. Find all the unique stochastic paths by intersecting the set of active scenarios with the *full stochastic paths*.
 4. Generate constraints over each unique stochastic path found in step 3.
 
@@ -172,7 +172,7 @@ as the [stochastic\_structure](@ref) object is what connects the [Systemic objec
 to the stochastic framework.
 [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship holds two key [Parameters](@ref):
 
-- **[weight\_relative\_to\_parents](@ref)** defines the coefficient the corresponding [stochastic\_scenario](@ref) has in the [Objective function](@ref), and needs to be defined for each [stochastic\_scenario](@ref) included in the [stochastic\_structure](@ref). The weight is relative to the parents of the [stochastic\_scenario], and is calculated as presented below.
+- **[weight\_relative\_to\_parents](@ref)** defines the coefficient the corresponding [stochastic\_scenario](@ref) has in the [Objective function](@ref), and needs to be defined for each [stochastic\_scenario](@ref) included in the [stochastic\_structure](@ref). The weight is relative to the parents of the [stochastic\_scenario](@ref), and is calculated as presented below.
 
 ```
 # For root `stochastic_scenarios` (meaning no parents)
@@ -184,7 +184,7 @@ weight(scenario) = weight_relative_to_parents(scenario)
 weight(scenario) = sum([weight(parent) * weight_relative_to_parents(scenario)] for parent in parents)
 ```
 
-- **[stochastic\_scenario\_end](@ref)** is a `Duration` type parameter that tells when the [stochastic_scenario](@ref) ends in relation to the start of the current optimization. When defined, the [stochastic\_scenario](@ref) ends at the defined point in time, and spawns its children according to [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref), if any. **Note that this means the children are included in the [stochastic\_structure](@ref), even without an explicit relationship!** If [stochastic\_scenario\_end](@ref) isn't defined, the [stochastic_scenario](@ref) is assumed to go on indefinetely.
+- **[stochastic\_scenario\_end](@ref)** is a `Duration` type parameter that tells when the [stochastic_scenario](@ref) ends in relation to the start of the current optimization. When defined, the [stochastic\_scenario](@ref) ends at the defined point in time, and spawns its children according to [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref), if any. **Note that this means the children are included in the [stochastic\_structure](@ref), even without an explicit relationship!** If [stochastic\_scenario\_end](@ref) isn't defined, the [stochastic_scenario](@ref) is assumed to go on indefinitely.
 
 Finally, with all the pieces in place, we'll need to connect the defined [stochastic\_structure](@ref) objects to the
 desired objects in the [Systemic object classes](@ref) using the [Structural relationship classes](@ref) like 
@@ -198,7 +198,7 @@ that can be used to set [model](@ref)-wide defaults that are used if specific re
 
 Here, we'll demonstrate step-by-step how to create the simplest possible stochastic frame: the fully deterministic one.
 See the [Deterministic Stochastic Structure](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
-as well as how to connect this `stochastic_structure` to the rest of your model. 
+as well as how to connect this [stochastic\_structure](@ref) to the rest of your model. 
 
 1. Create a [stochastic\_scenario](@ref) called e.g. `realization` and a [stochastic\_structure](@ref) called e.g. `deterministic`.
 2. We can skip the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship, since there isn't a *stochastic DAG* in this example, and the default behaviour of each [stochastic\_scenario](@ref) being independent works for our purposes *(only one [stochastic\_scenario](@ref) anyhow)*.
@@ -210,7 +210,7 @@ as well as how to connect this `stochastic_structure` to the rest of your model.
 Here, we'll demonstrate step-by-step how to create a simple branching stochastic tree, where one scenario branches into
 three at a specific point in time.
 See the [Branching Stochastic Tree](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
-as well as how to connect this `stochastic_structure` to the rest of your model.
+as well as how to connect this [stochastic\_structure](@ref) to the rest of your model.
 
 1. Create four [stochastic\_scenario](@ref) objects called e.g. `realization`, `forecast1`, `forecast2`, and `forecast3`, and a [stochastic\_structure](@ref) called e.g. `branching`.
 2. Define the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships for `(realization, forecast1)`, `(realization, forecast2)`, and `(realization, forecast3)`.
@@ -225,7 +225,7 @@ Here, we'll demonstrate step-by-step how to create a simple *stochastic DAG*, wh
 This example relies on the previous [Example of branching stochastics](@ref), but adds another [stochastic\_scenario](@ref)
 at the end, which is a child of the `forecast1`, `forecast2`, and `forecast3` scenarios.
 See the [Converging Stochastic Tree](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
-as well as how to connect this `stochastic_structure` to the rest of your model.
+as well as how to connect this [stochastic\_structure](@ref) to the rest of your model.
 
 1. Follow the steps 1-5 in the previous [Example of branching stochastics](@ref), except call the [stochastic\_structure](@ref) something different, e.g. `converging`.
 2. Create a new [stochastic\_scenario](@ref) called e.g. `converged_forecast`.
@@ -313,18 +313,18 @@ the parameter will take `value2` in `scenario1`, and `value4` in `scenario2`.
 
 ## Constraint generation with stochastic path indexing
 
-Every time a constraint might refer to variables either on different time steps or on different `stochastic scenarios`
-(meaning different `nodes` or `units`), the constraint needs to use stochastic path indexing in order to be correctly
+Every time a constraint might refer to variables either on different time steps or on different [stochastic\_scenario](@ref)s
+(meaning different [node](@ref)s or [unit](@ref)s), the constraint needs to use stochastic path indexing in order to be correctly
 generated for arbitrary stochastic DAGs.
 In practise, this means following the procedure outlined below:
 
 1. Identify all unique *full stochastic paths*, meaning all the possible ways of traversing the DAG. This is done along with generating the stochastic structure, so no real impact on constraint generation.
-2. **Find all the `stochastic scenarios` that are active on all the `stochastic structures` and `time slices` included in the constraint.**
+2. **Find all the [stochastic\_scenario](@ref)s that are active on all the [stochastic\_structure](@ref)s and `time slices` included in the constraint.**
 3. **Find all the unique stochastic paths by intersecting the set of active scenarios with the *full stochastic paths*.**
 4. Generate constraints over each unique stochastic path found in step 3.
 
 Steps 2 and 3 are the crucial ones, and are currently handled by separate `constraint_<constraint_name>_indices` functions.
 Essentially, these functions go through all the variables on all the time steps included in the constraint,
-collect the set of active `stochastic_scenarios` on each time step,
+collect the set of active [stochastic\_scenario](@ref)s on each time step,
 and then determine the unique active stochastic paths on each time step.
 The functions pre-form the index set over which the constraint is then generated in the `add_constraint_<constraint_name>` functions.

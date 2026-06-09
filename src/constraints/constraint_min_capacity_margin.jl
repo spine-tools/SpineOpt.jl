@@ -20,7 +20,7 @@
 
 @doc raw"""
 The capacity margin must be greater than or equal to [capacity\_margin\_min](@ref).
-If [capacity\_margin\_penalty](@ref) is specified, the [min\_capacity\_margin\_slack](@ref)
+If [capacity\_margin\_penalty](@ref) is specified, the [min\_capacity\_margin\_slack](@ref var_min_capacity_margin_slack)
 variable is added which is penalised with the corresponding coefficient in the objective function.
 This encourages maintenance outages to be scheduled at times of higher capacity margin and can 
 allow low capacity margin to influence investment decisions.
@@ -36,7 +36,6 @@ allow low capacity margin to influence investment decisions.
 ```
 
 See also
-[capacity\_margin](@ref),
 [capacity\_margin\_min](@ref),
 [capacity\_margin\_penalty](@ref)
 """

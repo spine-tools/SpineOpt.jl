@@ -5,6 +5,7 @@ connection_intact_flow,"(connection=conn, node=n, direction=d, stochastic_scenar
 connections_decommissioned,"(connection=conn, stochastic_scenario=s, t=t)",connections_invested_available_indices,Number of decomissioned connections ``conn`` for the stochastic scenario ``s`` at timestep ``t``,
 connections_invested,"(connection=conn, stochastic_scenario=s, t=t)",connections_invested_available_indices,Number of connections ``conn`` invested at timestep ``t`` in for the stochastic scenario ``s``,
 connections_invested_available,"(connection=conn, stochastic_scenario=s, t=t)",connections_invested_available_indices,Number of invested connections ``conn``  that are available still the stochastic scenario ``s`` at timestep ``t``,
+min_capacity_margin_slack,"node=n, stochastic_scenario=s, t=t",min_capacity_margin_slack_indices,Tracks the capacity margin of node ``n`` for the stochastic scenario ``s`` at timestep ``t``. TODO: CHECK THIS!
 mp_objective_lowerbound_indices,(t=t),mp_objective_lowerbound_indices,Updating lowerbound for master problem of Benders decomposition,
 node_injection,"(node=n, stochastic_scenario=s, t=t)",node_injection_indices,Commodity injections at node ``n`` for the stochastic scenario ``s`` at timestep ``t``,
 node_pressure,"(node=n, stochastic_scenario=s, t=t)",node_pressure_indices,Pressue at a node ``n`` for a specific stochastic scenario ``s``  and timestep ``t``. See: [physics\_type](@ref),

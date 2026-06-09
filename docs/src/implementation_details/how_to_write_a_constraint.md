@@ -14,7 +14,7 @@ for the temporal and stochastic structures,
 which might lead to situations some consider to be... unnatural.
 
 This guide will demonstrate an almost systematic way to do it, but it's not a silver-bullet kind of recipe.
-Most probably you will need to adapt it to your particular needs the day you dare writing your first constraint.
+Most probably you will need to adapt it to your particular needs the day you dare write your first constraint.
 
 What has proven useful to me is to combine a little bit of a theoretical approach with a more of a practical approach.
 In other words, I begin by following certain predetermined steps, see what comes out of it for a meaningful example system,
@@ -42,7 +42,7 @@ Note that we ignore the [ramp\_limits\_startup](@ref) in this formulation, just 
 
 ## First steps
 
-So how do we proceed? Well, we said above that there were some kind of steps that one could follow.
+So how do we proceed? Well, we said above that there were some steps that one could follow.
 They actually look like this:
 
 1. Collect the constraint indices.
@@ -276,7 +276,7 @@ and the `pwrplant` [unit](@ref) is modelled at two-hour resolution and one-stage
 Finally, the [capacity\_per\_unit](@ref) is 200 for flows coming to the `pwrplant` from the `fuel` [node](@ref),
 and 300 for flows going from the `pwrplant` to the `elec` [node](@ref);
 the [ramp\_limits\_shutdown](@ref) is 0.2 for the `elec` [node](@ref) flows
-(and none, thus irrestricted, for the `fuel` [node](@ref) flows).
+(and none, thus unrestricted, for the `fuel` [node](@ref) flows).
 
 !!! note
     If you have trouble understanding the above, maybe (unfortunately) it means you're not quite ready yet
@@ -318,8 +318,8 @@ and adding it to the model. So yeah, not very useful, but probably good enough t
     `@constraint(m, ...)` bit. The rest of the machinery is mainly for inspection purposes.
     We build a dictionary that maps each constraint index to
     the corresponding constraint, and store that dictionary in a specific location within the `m.ext` dictionary.
-    Whit this we can easily access the generated constraints via the model object `m` that gets returned
-    by `run_spineopt`.
+    With this we can easily access the generated constraints via the model object `m` that gets returned
+    by [`run_spineopt`](@ref).
 
 #### The function that yields the constraint indices
 
@@ -334,7 +334,7 @@ associated via [node\_\_to\_unit](@ref) and/or [unit\_\_to\_node](@ref)
 for which [capacity\_per\_unit](@ref) is specified.
 
 Note that the `direction` dimension is added to the [node\_\_to\_unit](@ref) and [unit\_\_to\_node](@ref) classes by the 
-`generate_direction_and_reorganise_classes()` function, which also reorganises the dimensions of the classes.
+[`SpineOpt.generate_direction_and_reorganise_classes`](@ref) function, which also reorganises the dimensions of the classes.
 
 So we could try something like this:
 
@@ -351,13 +351,12 @@ We also need the flows in the opposite direction. Let's try again:
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in unit__node__direction()
+        for (u, n, d) in unit__flow()
     ]
 end
 ```
 
-That seems better. We are using the `unit__node__direction` superclass that is created by the 
-`generate_variable_indexing_support()` function.
+That seems better. We are using the [unit\_flow](@ref) superclass, which contains both [node\_\_to\_unit](@ref) and [unit\_\_to\_node](@ref).
 But we also need to make sure that the [capacity\_per\_unit](@ref) is specified for our
 [unit](@ref)/[node](@ref)(/`direction`) combination. So we need to add a condition to our array comprehension:
 
@@ -365,8 +364,8 @@ But we also need to make sure that the [capacity\_per\_unit](@ref) is specified 
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in unit__node__direction()
-        if capacity_per_unit(unit=u, node=n, direction=d) != nothing
+        for (u, n, d) in unit__flow()
+        if capacity_per_unit(unit=u, node=n, direction=d) !== nothing
     ]
 end
 ```
@@ -374,7 +373,7 @@ That should work.
 
 So we have a function that returns the 'spatial' indices! We can still do a little better than that though.
 Turns out this kind of computation is so common, that we have a SpineInterface function that can be used as a shortcut,
-called `indices`. The above can be rewritten simply as:
+called [`SpineOpt.indices`](@ref). The above can be rewritten simply as:
 
 ```julia
 using SpineInterface
@@ -388,7 +387,7 @@ So let's see what's happening!
 
 ###### [The code that shows the constraints being generated](@id the_code_that_shows)
 
-The `run_spineopt` function
+The [`run_spineopt`](@ref) function
 has an optional keyword argument called `add_constraints` that we can use to try out our constraint code.
 Basically, if we give this argument a function, the function will be called with the model object
 at the moment of adding constraints. So we can try giving it the `add_my_unit_flow_capacity_constraint!` function:
@@ -432,11 +431,11 @@ and the *next* time-slice. The *current* time-slice we will use to access both
 
 To collect time-slices, we will be using a special function from SpineOpt called `time_slice`.
 This function receives a model object `m` and returns an array with all the time-slices in that model -
-but it also has two optional keyword arguments, `temporal_block` and `t`, to filter the result.
-- If you specify `temporal_block` as a [temporal\_block](@ref) or array of [temporal\_block](@ref)s,
+but it also has two optional keyword arguments, [temporal\_block](@ref) and `t`, to filter the result.
+- If you specify a [temporal\_block](@ref) or an array of [temporal\_block](@ref)s,
   you get only time-slices in those blocks.
 - If you specify `t` as a time-slice or array of time-slices, you get only those time-slices (if they also pass
-  the `temporal_block` filter above.)
+  the [temporal\_block](@ref) filter above.)
 
 So let's try and find our *current* time-slice.
 Let's start simple. Let's begin by taking only the time-slices associated to the [unit](@ref).
@@ -452,9 +451,9 @@ end
 ```
 
 Let's see.
-We first call `units_on__temporal_block` while passing our [unit](@ref) 'spatial' index `u`, via the `unit` argument.
+We first call [units\_on\_\_temporal\_block](@ref) while passing our [unit](@ref) 'spatial' index `u`, via the [unit](@ref) argument.
 This returns an `Array` with the [temporal\_block](@ref)s associated to that [unit](@ref), that
-we then pass to the `time_slice` function via the `temporal_block` argument.
+we then pass to the `time_slice` function via the [temporal\_block](@ref) argument.
 So we end up obtaining all the time-slices in [temporal\_block](@ref)s associated to `u`.
 
 If we rerun [the code that shows the constraints](@ref the_code_that_shows), we see the following:
@@ -529,7 +528,7 @@ function my_unit_flow_capacity_constraint_indices(m)
     ]
 end
 ```
-Here, we are concatenating the result of `node__temporal_block(...)` and `units_on__temporal_block(...)` using `vcat`,
+Here, we are concatenating the result of [node\_\_temporal\_block](@ref)`(...)` and [units\_on\_\_temporal\_block](@ref)`(...)` using `vcat`,
 and passing the result to `time_slice`. The final result, then, is the time-slices associated with either
 the [unit](@ref) 'spatial' index `u`, the [node](@ref) 'spatial' index `n`, or both.
 
@@ -600,7 +599,7 @@ I'm pretty sure that's exactly what we want!
 
 So we have found the *current* time-slice - now let's find the *next* one.
 
-For this we will use a special function from SpineOpt called `t_before_t`.
+For this we will use a special function from SpineOpt called [`t_before_t`](@ref).
 This function is mainly intended to be called while specifying one of its two keyword arguments,
 `t_before` or `t_after`, with some time-slice.
 - If you specify `t_before`, you get all the time-slices that *start* when the given time-slice *ends*.
@@ -614,7 +613,7 @@ This function is mainly intended to be called while specifying one of its two ke
     Therefore, there might be multiple time-slices starting at the same time, and also multiple ones ending at
     the same time.
 
-So let's use `t_before_t` to try and compute the *next* time-slices for our constraint.
+So let's use [`t_before_t`](@ref) to try and compute the *next* time-slices for our constraint.
 We know that the *next* time-slice should come from the same set as the *current*, that is,
 the highest-resolution time-slices associated to the [unit](@ref) and/or the [node](@ref).
 But the *next* should also come *after* the *current*. So basically we can try something like this:
@@ -642,10 +641,10 @@ end
 
 Let's unpack the last call to `time_slice` above (the one that we iterate to obtain `t_next`).
 Basically, we're doing almost exactly the same as we do to obtain the current time-slice, `t` 
-(that is, calling `time_slice` by specifying the `temporal_block` argument so we only get
+(that is, calling `time_slice` by specifying the [temporal\_block](@ref) argument so we only get
 time-slices associated to our [unit](@ref) `u` and/or our [node](@ref) `n`).
 Except that on top of that, we are also specifying the `t` argument so we only get time-slices that start
-when our current 'temporal' index `t` ends - as obtained with `t_before_t`.
+when our current 'temporal' index `t` ends - as obtained with [`t_before_t`](@ref).
 
 This should work, right? Well, let's run [the code that shows the constraints](@ref the_code_that_shows) again to see
 what happens:
@@ -670,7 +669,7 @@ Beautiful. It looks like we have found our 'temporal' indices.
     `2023-01-01T08:00~>2023-01-01T09:00` and `2023-01-01T04:00~>2023-01-01T06:00`. Why is that?
     Well, simply because at `2023-01-01T09:00` the `1hourly` block ends, and at `2023-01-01T06:00` the model ends -
     so there are no time-slices after that.
-    In this case, `t_before_t` just returns an empty array and `my_unit_flow_capacity_constraint_indices` 
+    In this case, [`t_before_t`](@ref) just returns an empty array and `my_unit_flow_capacity_constraint_indices` 
     doesn't find any `t_next` to iterate over.
     We should remediate this, but we won't do it immediately. We will save it for the very last,
     because it really doesn't stop us from progressing and might be a little bit distracting to do right now.
@@ -684,15 +683,15 @@ We said above that each of these indices will be a path in the stochastic scenar
 to our 'spatial' indices, that covers the time-slices from our 'temporal' indices.
 
 Ok, so how do we find the paths? We will be using a convenience function from SpineOpt called
-`active_stochastic_paths`.
-The method we will use receives a model object `m` and two mandatory keyword arguments, `stochastic_structure` and `t`,
+[`active_stochastic_paths`](@ref).
+The method we will use receives a model object `m` and two mandatory keyword arguments, [stochastic\_structure](@ref) and `t`,
 the former expecting a [stochastic\_structure](@ref) or `Array` of [stochastic\_structure](@ref)s,
 and the latter a time-slice or `Array` of time-slices.
 The method returns all the stochastic paths in the [stochastic\_scenario](@ref) DAG subsets corresponding to the given
 [stochastic\_structure](@ref)s, where the given time slices exist.
 We can use it as follows:
 
-```
+```julia
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d, t=t, t_next=t_next, s_path=s_path)

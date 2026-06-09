@@ -15,9 +15,9 @@ To define a reserve node, the following parameters have to be defined for the re
 
 ## Defining a reserve group
 
-The reserve group definition allows the creation of a [unit flow capacity constraint](../mathematical_formulation/constraints.md#constraint_unit_flow_capacity) where all the unit flows to different commodities, including the reserve provision, are considered to limit the maximum unit capacity.
+The reserve group definition allows the creation of a [unit flow capacity constraint](@ref constraint_unit_flow_capacity) where all the unit flows to different commodities, including the reserve provision, are considered to limit the maximum unit capacity.
 
-The definition of the reserve group also allows the creation of [minimum operating point](../mathematical_formulation/constraints.md#constraint_minimum_operating_point), [ramp up](../mathematical_formulation/constraints.md#constraint_ramp_up), and [ramp down](../mathematical_formulation/constraints.md#constraint_ramp_down) constraints, considering flows and reserve provisions.
+The definition of the reserve group also allows the creation of [minimum operating point](@ref constraint_minimum_operating_point), [ramp up](@ref constraint_ramp_up), and [ramp down](@ref constraint_ramp_down) constraints, considering flows and reserve provisions.
 
 The relationship between the unit and the node group (i.e., [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref)) is essential to define the parameters needed for the constraints (e.g., [capacity\_per\_unit](@ref), [minimum\_operating\_point](@ref), [ramp\_limits\_up](@ref), or [ramp\_limits\_down](@ref)).
 
@@ -25,11 +25,11 @@ The relationship between the unit and the node group (i.e., [unit\_\_to\_node](@
 
 In this example, we will consider a unit that can provide upward and downward reserves, along with producing electricity. Therefore, the model needs to consider both characteristics of electricity production and reserve provision in the constraints.
 
-Let's take a look to the [unit flow capacity constraint](../mathematical_formulation/constraints.md#constraint_unit_flow_capacity) and the [minimum operating point](../mathematical_formulation/constraints.md#constraint_minimum_operating_point). For the illustrative example of ramping constraints and reserves, please visit the [illustrative example of the reserve section](@ref ramping-reserves-illustrative-example).
+Let's take a look to the [unit flow capacity constraint](@ref constraint_unit_flow_capacity) and the [minimum operating point](@ref constraint_minimum_operating_point). For the illustrative example of ramping constraints and reserves, please visit the [illustrative example of the reserve section](@ref ramping-reserves-illustrative-example).
 
 ### Unit flow capacity constraint with reserve
 
-Assuming the following parameters, we are considering a fully flexible unit taking into account the definition of the [unit flow capacity constraint](../mathematical_formulation/constraints.md#constraint_unit_flow_capacity):
+Assuming the following parameters, we are considering a fully flexible unit taking into account the definition of the [unit flow capacity constraint](@ref constraint_unit_flow_capacity):
 
 * [capacity\_per\_unit](@ref)  : **100**
 * [ramp\_limits\_shutdown](@ref): **1**
@@ -45,7 +45,7 @@ Here, we can see that the flow to the electricity node depends on the unit's cap
 
 ### Minimum operating point constraint with reserve
 
-We need to consider the following parameters for the [minimum operating point](../mathematical_formulation/constraints.md#constraint_minimum_operating_point) constraint:
+We need to consider the following parameters for the [minimum operating point](@ref constraint_minimum_operating_point) constraint:
 
 * [minimum\_operating\_point](@ref)  : **0.25**
 

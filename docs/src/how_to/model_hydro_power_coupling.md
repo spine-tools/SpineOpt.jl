@@ -180,7 +180,7 @@ modifications to the initial model.
     -   Extend the planning horizon of the model by one time step
     -   Remove the [storage\_state\_fix](@ref)
         parameter values for the end of the optimization horizon as
-        you seen in the following figure: double click on the *value* cell of the *Språnget\_upper* and *Fallet\_upper* nodes, select the third
+        you seen in the following figure: double-click on the *value* cell of the *Språnget\_upper* and *Fallet\_upper* nodes, select the third
         data row, right-click, select *Remove
         rows*, and click OK.
     -   Add an electricity price for the extra time step. Enter the

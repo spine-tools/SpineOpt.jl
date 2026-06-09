@@ -18,6 +18,10 @@
 
 @@add_constraint_min_node_state!
 
+### [Minimum capacity margin](@id constraint_min_capacity_margin)
+
+@@add_constraint_min_capacity_margin!
+
 ### [Cyclic condition on node state variable](@id constraint_cyclic_node_state)
 
 @@add_constraint_cyclic_node_state!
@@ -62,7 +66,7 @@ this variable might be a binary, for investment planning purposes, this might al
 or even a continuous variable). To define the type of a commitment variable, see [online\_variable\_type](@ref).
 Commitment variables will be introduced by the following constraints (with corresponding
 parameters):
-- constraint on `units_on`
+- constraint on [units\_on](@ref var_units_on)
 - constraint on `units_available`
 - constraint on the unit state transition
 - constraint on minimum downtime
@@ -85,6 +89,10 @@ parameters):
 ##### [Minimum uptime](@id constraint_min_up_time)
 
 @@add_constraint_min_up_time!
+
+##### [Minimum scheduled outage duration](@id constraint_min_scheduled_outage_duration)
+
+@@add_constraint_min_scheduled_outage_duration!
 
 #### Ramping constraints
 

@@ -1,4 +1,4 @@
-# [How to set up representative days for investment problems](@id Usage_rep_period_seasonal_Storage)
+# [How to set up representative days for investment problems](@id usage_rep_period_seasonal_storage)
 
 Assuming you already have an investment model with a certain temporal structure that works, you can turn it into a representative periods model with the following steps.
 
@@ -6,7 +6,7 @@ Assuming you already have an investment model with a certain temporal structure 
     Note that representative days often limit the ability to properly account for seasonal storages. However, SpineOpt takes this into account and allows for seasonal storage.
 
 1. Select the representative periods. For example if you are modelling a year, you can select a few weeks
-   (one in summer, one in winder, and one in mid season).
+   (one in summer, one in winder, and one in mid-season).
 1. For each representative period, create a [temporal\_block](@ref) specifying [block\_start](@ref),
    [block\_end](@ref) and [resolution](@ref).
 1. Associate these [temporal\_block](@ref)s to some [node](@ref)s and [unit](@ref)s in your system,
@@ -21,7 +21,7 @@ Assuming you already have an investment model with a certain temporal structure 
 
 In SpineOpt, this will be interpreted in the following way:
 - For each [node](@ref) and [unit](@ref) associated to any of your representative [temporal\_block](@ref)s,
-  the operational variables (with the exception of [node\_state](@ref var_node_state)) will be created
+  the operational variables (except for [node\_state](@ref var_node_state)) will be created
   **only** for the representative periods. For the non-representative periods, SpineOpt will use the variable of
   the corresponding representative period according to the value of the [representative\_blocks\_by\_period](@ref)
   parameter.
@@ -30,8 +30,8 @@ In SpineOpt, this will be interpreted in the following way:
 
 ## Tools to set up representative periods
 
-Defining this parameters can be tedious, especially for large models. However, there are some tools that can help you with this process:
+Defining these parameters can be tedious, especially for large models. However, there are some tools that can help you with this process:
 
-1. The [**SpinePeriods.jl**](https://github.com/Spine-project/SpinePeriods.jl) package provides an alternative to setup a representative periods model based on the automatic selection and ordering of periods.
+1. The [**SpinePeriods.jl**](https://github.com/Spine-project/SpinePeriods.jl) package provides an alternative to set up a representative periods model based on the automatic selection and ordering of periods.
 
 2. The [**TulipaClustering.jl**](https://github.com/TulipaEnergy/TulipaClustering.jl) package provides a method to select representative periods based on clustering techniques, which includes an approach known as hull clustering with blended representative periods, i.e., non-represented periods are a linear combination of the representative periods.

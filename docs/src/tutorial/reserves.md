@@ -29,7 +29,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 #### Creating objects
 
 - Always in the Spine DB editor, locate the *Object tree* (typically at the top-left). Expand the [root] element if not expanded.
-- Right-click on the [node] class, and select *Add objects* from the context menu. The *Add objects* dialog will pop up.
+- Right-click on the [node](@ref) class, and select *Add objects* from the context menu. The *Add objects* dialog will pop up.
 - Enter the names for the new reserve node as seen in the image below, then press *Ok*. This will create a new object of class [node](@ref), called *reserve\_upward\_node*.
 
 ![image](figs_reserves/reserves_tutorial_reserve_node.png)
@@ -51,7 +51,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 - Right-click on the [report\_\_output](@ref) class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
 
-- Enter *report1* under [report](@ref), and [variable\_om\_costs](@ref) under [output](@ref). Repeat the same procedure in the second line to add the [res\_proc\_costs](@ref) under [output](@ref) as seen in the image below; then press *Ok*. This will write the total [vom\_cost](@ref) and *procurement reserve cost* values in the objective function to the output database as a part of *report1*.
+- Enter *report1* under [report](@ref), and `variable_om_costs` under [output](@ref). Repeat the same procedure in the second line to add the `res_proc_costs` under [output](@ref) as seen in the image below; then press *Ok*. This will write the total [vom\_cost](@ref) and *procurement reserve cost* values in the objective function to the output database as a part of *report1*.
 
 ![image](figs_reserves/reserves_tutorial_report__output_relationships.png)
 
@@ -108,7 +108,7 @@ When you're ready, save/commit all changes to the database.
 
 ### Executing the workflow
 
-- Go back to Spine Toolbox's main window, and hit the **Execute project** button ![image](figs_simple_system/play-circle.png) from the toolbar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
+- Go back to Spine Toolbox's main window, and hit the **Execute project** button from the toolbar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
 
 - Select the 'Run SpineOpt' Tool. You should see the output from SpineOpt in the *Julia Console* after clicking the *object activity control*.
 
@@ -118,7 +118,7 @@ When you're ready, save/commit all changes to the database.
 
 - For the pivot table, press **Alt + F** for the shortcut to the hamburger menu, and select **Pivot -> Index**.
 
-- Select [report\_\_unit\_\_node\_\_direction\_\_stochastic\_scenario](@ref) under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
+- Select `report__unit__node__direction__stochastic_scenario` under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
 
 - Under alternative in the Frozen table, you can choose results from different runs. Pick the run you want to view. If the workflow has been run several times, the most recent run will usually be found at the bottom.
 

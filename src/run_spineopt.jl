@@ -507,6 +507,16 @@ function _do_create_model(mip_solver, use_direct_model, add_bridges)
     use_direct_model ? direct_model(mip_solver) : Model(mip_solver; add_bridges=add_bridges)
 end
 
+"""
+    SpineOptExt
+
+The `struct` storing SpineOpt data inside `<JuMP.Model>.ext[:spineopt]`.
+
+You can inspect the fields via the following promt:
+```julia
+julia> fieldnames(SpineOptExt)
+```
+"""
 struct SpineOptExt
     instance::Object
     lp_solver

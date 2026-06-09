@@ -35,7 +35,7 @@ In this tutorial, you will learn how to add ramping constraints to the Simple Sy
 ### Editing demand value
 
 - Always in the Spine DB editor, locate the *Object tree* (typically at the top-left). Expand the [root] element if not expanded.
-- Expand the [node] class, and select the *electricity\_node* from the expanded tree.
+- Expand the [node](@ref) class, and select the *electricity\_node* from the expanded tree.
 - Locate the *Object parameter* table (typically at the top-center).
 - In the *Object parameter* table, identify the [demand](@ref) parameter which should have a 150 value from the Simple System first run.
 - Right-click on the value cell and then select *edit* from the context menu. The *Edit value* dialog will pop up.
@@ -64,7 +64,7 @@ You might or might not notice that the Simple System has, by default, a temporal
 Since the default resolution of the Simple System was *1D*, the start and end date of the model needs also to be changed.
 
 - Locate again the *Object tree* (typically at the top-left). Expand the [root] element if not expanded.
-- Expand the [temporal\_block](@ref)class, and select the *flat* from the expanded tree.
+- Expand the [temporal\_block](@ref) class, and select the *flat* from the expanded tree.
 - Locate the *Object parameter* table (typically at the top-center).
 - In the *Object parameter* table, select the [model\_start](@ref) parameter, the *Base* alternative, and then right-click on the value and select the *Edit* option in the context menu, as shown in the image below.
 
@@ -80,7 +80,7 @@ When you're ready, save/commit all changes to the database.
 
 ### Executing the workflow
 
-- Go back to Spine Toolbox's main window, and hit the **Execute project** button ![image](figs_simple_system/play-circle.png) from the toolbar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
+- Go back to Spine Toolbox's main window, and hit the **Execute project** button from the toolbar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
 
 - Select the 'Run SpineOpt' Tool. You should see the output from SpineOpt in the *Julia Console* after clicking the *object activity control*.
 
@@ -90,7 +90,7 @@ When you're ready, save/commit all changes to the database.
 
 - For the pivot table, press **Alt + F** for the shortcut to the hamburger menu, and select **Pivot -> Index**.
 
-- Select [report\_\_unit\_\_node\_\_direction\_\_stochastic\_scenario](@ref) under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
+- Select `report__unit__node__direction__stochastic_scenario` under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
 
 - Under alternative in the Frozen table, you can choose results from different runs. Pick the run you want to view. If the workflow has been run several times, the most recent run will usually be found at the bottom.
 
@@ -125,7 +125,7 @@ When you're ready, save/commit all changes to the database.
 
 ### Executing the workflow with ramp limits
 
-- Go back to Spine Toolbox's main window, and hit the **Execute project** button ![image](figs_simple_system/play-circle.png) from the toolbar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
+- Go back to Spine Toolbox's main window, and hit the **Execute project** button from the toolbar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
 
 - Select the 'Run SpineOpt' Tool. You should see the output from SpineOpt in the *Julia Console* after clicking the *object activity control*.
 
@@ -135,7 +135,7 @@ When you're ready, save/commit all changes to the database.
 
 - For the pivot table, press **Alt + F** for the shortcut to the hamburger menu, and select **Pivot -> Index**.
 
-- Select [report\_\_unit\_\_node\_\_direction\_\_stochastic\_scenario](@ref) under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
+- Select `report__unit__node__direction__stochastic_scenario` under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
 
 - Under alternative in the Frozen table, you can choose results from different runs. Pick the run you want to view. If the workflow has been run several times, the most recent run will usually be found at the bottom.
 
@@ -167,7 +167,7 @@ You know the drill! ;)
 
 ### Examining the results with ramp limits with initial conditions
 
-Create a the *Pivot table* with the latest results. It will look something like the image below.
+Create a *Pivot table* with the latest results. It will look something like the image below.
 
 ![image](figs_ramping/ramping_results_ramping_constraint_ini_cond.png)
 

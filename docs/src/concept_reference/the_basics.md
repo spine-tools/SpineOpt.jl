@@ -27,7 +27,7 @@ As the name implies, *systemic `object classes`* are used to describe the system
 Essentially, they define *what* you want to model.
 These include:
 
-- [connection](@ref) handles the transfer of commodities between `nodes`.
+- [connection](@ref) handles the transfer of commodities between [node](@ref)s.
 - [grid](@ref) represents different networks where different commodities can be generated, consumed, transported, etc.
 - [node](@ref) ensures the balance of the commodity flows, and can be used to store commodities as well.
 - [unit](@ref) handles the generation and consumption of commodities.
@@ -41,14 +41,14 @@ want to model, instead of strictly *what* you want to model.
 These include:
 
 - [stochastic\_scenario](@ref) represents a different *forecast* or another type of an *alternative time period*.
-- [stochastic\_structure](@ref) acts as a handle for a group of `stochastic_scenarios` with set properties.
+- [stochastic\_structure](@ref) acts as a handle for a group of [stochastic\_scenario](@ref)s with set properties.
 - [temporal\_block](@ref) defines a period of *time* with the desired temporal [resolution](@ref).
 - [user\_constraint](@ref) is an optional custom constraint generated based on the input data.
 
 ### Meta `object classes`
 
-*Meta `object classes`* are used for defining things on the level of `models` or above, like [model](@ref)
-[output](@ref) and even multiple `models` for problem decompositions.
+*Meta `object classes`* are used for defining things on the level of [model](@ref)s or above, like
+[output](@ref) and even other [model](@ref)s for problem decompositions.
 These include:
 
 - [model](@ref) represents an individual *model*, grouping together all the things relevant for itself.
@@ -71,14 +71,14 @@ The `relationship classes` can be roughly divided into [Systemic `relationship c
 
 *Systemic `relationship classes`* define how [Systemic `object classes`](@ref) are related to each other,
 thus helping define the system to be modelled.
-Most of these relationships deal with *which* `units` and `connections` interact with *which* `nodes`, and *how* those
+Most of these relationships deal with *which* [unit](@ref)s and [connection](@ref)s interact with *which* [node](@ref)s, and *how* those
 interactions work.
 This essentially defines the possible commodity flows to be modelled.
 *Systemic `relationship classes`* include:
 
 - [connection\_\_from\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a commodity from.
 - [connection\_\_to\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a commodity to.
-- [connection\_\_node\_\_node](@ref) holds [Parameters](@ref) for `connections` between two `nodes`.
+- [connection\_\_node\_\_node](@ref) holds [Parameters](@ref) for [connection](@ref)s between two [node](@ref)s.
 - [node\_\_grid](@ref) defines which [node](@ref) is part of which [grid](@ref).
 - [node\_\_node](@ref) holds parameters for direct [node](@ref)-[node](@ref) interactions, like diffusion of commodities.
 - [node\_\_to\_unit](@ref) defines which [node](@ref) the [unit](@ref) can take an input commodity from.
@@ -98,11 +98,11 @@ Unfortunately, this flexibility requires quite a few different *structural `rela
 the most important of which are the following:
 
 - [node\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the [node](@ref) balance.
-- [node\_\_temporal\_block](@ref) defines the `temporal blocks` used for the [node](@ref) balance.
+- [node\_\_temporal\_block](@ref) defines the [temporal\_block](@ref)s used for the [node](@ref) balance.
 - [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) defines the *stochastic directed acyclic graph (DAG)* of the [Stochastic Framework](@ref stochastic_framework).
-- [stochastic\_structure\_\_stochastic\_scenario](@ref) holds parameters for `stochastic scenarios` in the [stochastic\_structure](@ref).
+- [stochastic\_structure\_\_stochastic\_scenario](@ref) holds parameters for [stochastic\_scenario](@ref)s in the [stochastic\_structure](@ref).
 - [units\_on\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the online variable of the [unit](@ref).
-- [units\_on\_\_temporal\_block](@ref) defines the `temporal blocks` used for the online variable of the [unit](@ref).
+- [units\_on\_\_temporal\_block](@ref) defines the [temporal\_block](@ref)s used for the online variable of the [unit](@ref).
 
 Furthermore, there are also a number of *advanced structural `relationship classes`*, which are only necessary when
 using some of the optional features of *SpineOpt.jl*.
@@ -110,11 +110,11 @@ For [Investment Optimization](@ref), the following relationships control the sto
 of the investment [variables](@ref Variables):
 
 - [connection\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
-- [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).[user\_constraint](@ref).
+- [connection\_\_investment\_temporal\_block](@ref) defines the [temporal\_block](@ref)s used for the investment [Variables](@ref) for the [connection](@ref).[user\_constraint](@ref).
 - [node\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
 - [node\_\_investment\_temporal\_block](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
 - [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
-- [unit\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).(@ref).
+- [unit\_\_investment\_temporal\_block](@ref) defines the [temporal\_block](@ref)s used for the investment [Variables](@ref) for the [unit](@ref).
 
 For [User Constraints](@ref), which are essentially generic data-driven custom constraints,
 the following relationships are used to control which [variables](@ref Variables) are included and with what coefficients:  
@@ -132,8 +132,8 @@ These include:
 
 - [model\_\_default\_investment\_stochastic\_structure](@ref) defines a default [stochastic\_structure](@ref) to be used for investment [Variables](@ref) when no other definitions exist.
 - [model\_\_default\_investment\_temporal\_block](@ref) defines a default [temporal\_block](@ref) to be used for investment [Variables](@ref) when no other definitions exist.
-- [model\_\_default\_stochastic\_structure](@ref) defines a default [stochastic\_structure](@ref) to be used for `nodes` and `units` when no other definitions exist.
-- [model\_\_default\_temporal\_block](@ref) defines a default [temporal\_block](@ref) to be used for `nodes` and `units` when no other definitions exist.
+- [model\_\_default\_stochastic\_structure](@ref) defines a default [stochastic\_structure](@ref) to be used for [node](@ref)s and [unit](@ref)s when no other definitions exist.
+- [model\_\_default\_temporal\_block](@ref) defines a default [temporal\_block](@ref) to be used for [node](@ref)s and [unit](@ref)s when no other definitions exist.
 - [model\_\_report](@ref) connects each [report](@ref) to the desired [model](@ref).
 - [report\_\_output](@ref) defines which `outputs` are part of which [report](@ref).
 

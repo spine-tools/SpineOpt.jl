@@ -20,7 +20,7 @@
 
 @doc raw"""
 Constrain [units\_invested\_available](@ref var_units_invested_available) by the investment lifetime of a unit.
-The parameter [lifetime\_technical\_sense](@ref) defaults to minimum investment
+The parameter [lifetime\_technical](@ref) defaults to minimum investment
 lifetime ([lifetime\_constraint\_sense](@ref) [`>=`](@ref constraint_sense_list)),
 but can be changed to allow strict investment lifetime ([lifetime\_constraint\_sense](@ref) [`==`](@ref constraint_sense_list))
 or maximum investment lifetime ([lifetime\_constraint\_sense](@ref) [`<=`](@ref constraint_sense_list)).

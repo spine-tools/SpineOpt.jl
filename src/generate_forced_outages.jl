@@ -40,6 +40,11 @@ _forced_outages(t_start, t_end, ::Nothing, mttr; resolution) = []  # never fails
 _forced_outages(t_start, t_end, ::Nothing, ::Nothing; resolution) = []  # never fails
 _forced_outages(t_start, t_end, mttf, ::Nothing; resolution) = [(t_start + _rand_time(mttf; resolution), t_end)]
 
+"""
+    forced_outage_time_series(t_start, t_end, mttf, mttr, nb_of_units; seed=nothing, resolution=Hour)
+
+Generates a forced outage time series as a part of [`generate_forced_outages`](@ref).
+"""
 function forced_outage_time_series(t_start, t_end, mttf, mttr, nb_of_units; seed=nothing, resolution=Hour)
     indices = [t_start]
     values = [0.0]
