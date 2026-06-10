@@ -818,12 +818,8 @@ function generate_unit_commitment_parameters()
             )
         )
     )
-    unit_without_online_variable_iter = (
-        u for u in unit() if online_variable_type(unit=u) == :unit_online_variable_type_none
-    )
-    unit_without_out_of_service_variable_iter = (
-        u for u in unit() if outage_variable_type(unit=u) == :unit_online_variable_type_none
-    )
+    unit_without_online_variable_iter = unit(online_variable_type=:unit_online_variable_type_none)
+    unit_without_out_of_service_variable_iter = unit(outage_variable_type=:unit_online_variable_type_none)
     setdiff!(unit_with_switched_variable_set, unit_without_online_variable_iter)
     setdiff!(unit_with_out_of_service_variable_set, unit_without_out_of_service_variable_iter)
     setdiff!(unit_with_online_variable_set, unit_without_online_variable_iter)

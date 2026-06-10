@@ -270,7 +270,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio)
             unit_flow_indices(m; unit=u, node=[n1, n2]),
             unit_flow_indices(m; unit=u, node=n1, direction=d1),
             unit_flow_indices(m; unit=u, node=n2, direction=d2),
-            units_on_indices(m; unit=u),
+            _get_units_on_indices(m, u),
         )
     )
 end

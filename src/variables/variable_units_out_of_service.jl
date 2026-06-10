@@ -71,6 +71,21 @@ function add_variable_units_out_of_service!(m::Model)
     )
 end
 
+"""
+    _get_units_out_of_service(m, u, s, t)
+
+Safe get `units_out_of_service` for the given indices,
+replaced by `out_of_service_count_fix` (default 0) when out-of-service
+variables don't exist.
+
+Intended to be used in situations where `units_out_of_service` is required,
+but one cannot ensure its existence.
+"""
 function _get_units_out_of_service(m, u, s, t)
-    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t), 0)
+    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do 
+        (
+            fix_units_out_of_service(unit=u, stochastic_scenario=s, t=t, _default=0)
+            + units_unavailable(unit=u, stochastic_scenario=s, t=t, _default=0)
+        )
+    end
 end
