@@ -102,6 +102,6 @@ makedocs(
     sitename = "SpineOpt.jl",
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true", size_threshold = 409600, assets = ["assets/style.css"]),  # uncomment to deploy locally
     pages = pages,
-    warnonly = true,
+    warnonly = false,
 )
 deploydocs(repo = "github.com/spine-tools/SpineOpt.jl.git", versions = ["stable" => "v^", "v#.#"])
