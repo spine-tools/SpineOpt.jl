@@ -803,7 +803,7 @@ function _repr_t_coefs(m, t)
 end
 
 function _is_representative(t)
-    any(is_representative(temporal_block=blk) for blk in blocks(t))
+    any(is_representative(temporal_block=blk, _default=false) for blk in blocks(t))
 end
 
 function represented_time_slices(m)
