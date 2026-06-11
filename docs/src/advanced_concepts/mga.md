@@ -27,15 +27,15 @@ The idea of this approach is to explore near-optimal solutions that maximize/min
 ## Hop-Skip-Jump MGA
 The idea is that an original problem is solved, and subsequently solved again under the condition that the realization of variables should be maximally different from the previous iteration(s), while keeping the objective function within a certain threshold (defined by [mga\_max\_slack](@ref)).
 1. We solve the original problem 
-$$x^* \gets \argmin_{x \in X} f(x)$$
+``x^* \gets \argmin_{x \in X} f(x)``
 where  
 - X - set of feasible solutions
 - f - goal function 
 2. We are interested in finding diverse solutions with respect to variables from the set B. We achieve it by finding which variables were active in the original solution (with values greater than 0) and then activating their corresponding weights:
-$$\forall k \in B: x^*_k > 0 \implies w_k = 1$$
+``\forall k \in B: x^*_k > 0 \implies w_k = 1``
 3. We then optimize a new problem with a weighted sum objective and constraint guaranteeing that we are close (epsilon-close) to the optimal value:
-$$\min_{x \in X} \quad \sum_{k \in B} w_k x_k$$
-$$ f(x) \leq (1 + \varepsilon) f(x^*)$$
+``\min_{x \in X} \quad \sum_{k \in B} w_k x_k``
+`` f(x) \leq (1 + \varepsilon) f(x^*)``
 4. Update the weights to be also set to 1 when a variable was greater than 0 in the MGA problem solution
 5. GOTO 3
 
