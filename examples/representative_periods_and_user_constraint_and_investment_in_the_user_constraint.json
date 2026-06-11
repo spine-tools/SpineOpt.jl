@@ -6853,7 +6853,7 @@
             "user_constraint",
             "co2",
             "include_in_non_representative_periods",
-            false,
+            true,
             "Base"
         ],
         [
