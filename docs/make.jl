@@ -18,7 +18,7 @@ default_translation = Dict(
 )
 concept_dict = create_concept_dictionary(SpineOpt.template(); translation=default_translation)
 purge_obsolete_concept_reference_files(concept_dict, path; spare=["_example.md", "archetypes.md", "the_basics.md"])
-write_concept_reference_files(concept_dict, path, Set(values(default_translation)))
+write_concept_reference_files(concept_dict, path, Set(values(default_translation)); warnonly=warn_only)
 
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
 # and content from docstrings
