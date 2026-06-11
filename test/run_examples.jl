@@ -25,7 +25,7 @@ objective_function_reference_values = Dict(
     import_data(db_url, input_data, "No comment")
     m = run_spineopt(db_url, nothing; log_level=0, upgrade=true)
     @test termination_status(m) == MOI.OPTIMAL
-    print(m)
+    @show m.ext[:spineopt].constraints[:user_constraint]
     mip_cases = ("6_unit_system.json", "unit_commitment.json", "multi_stage_model_tutorial.json")
     if file in mip_cases
         @test abs(objective_value(m) - obj_fn_val) / obj_fn_val ≤ 0.01 
