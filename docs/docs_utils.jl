@@ -269,7 +269,7 @@ function write_concept_reference_files(
             # If supported parameter value types are defined, include those in the preamble.
             supported_types = get(concept_dictionary["parameter_types"], name, nothing)
             if !isnothing(supported_types)
-                supported_types = get(supported_types, :supported_type, nothing)
+                supported_types = unique!(get(supported_types, :supported_type, nothing))
                 section *= ">**Supported parameter value types**: $(join(supported_types, ", "))\n\n"
             end
             # If related concepts are defined, include those into the preamble
@@ -304,7 +304,15 @@ function write_concept_reference_files(
         end
     end
     if error_count != 0
-        error("Missing extended descriptions! See the `Error`s above!")
+        error(
+            """
+            Missing extended descriptions! See the `Error`s above!
+            Note that since this error is due to changes to the `spineopt_template.json`,
+            it might be necessary to update the template version,
+            provide migration scripts, as well as migration unit tests
+            to auto-transition between older and the current data.
+            """
+        )
     end
 end
 

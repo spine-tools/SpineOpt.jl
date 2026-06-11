@@ -148,6 +148,10 @@ For dispatchable units, additional ramping constraints can be introduced. For se
 
 @@add_constraint_connection_flow_capacity!
 
+#### [Minimum connection flow constraint](@id constraint_connection_min_flow)
+
+@@add_constraint_connection_min_flow!
+
 #### [Fixed ratio between outgoing and incoming flows of a connection](@id constraint_ratio_out_in_connection_flow)
 
 @@add_constraint_ratio_out_in_connection_flow!
@@ -278,6 +282,16 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 #### [Technical lifetime of a storage](@id constraint_storage_lifetime)
 
 @@add_constraint_storage_lifetime!
+
+### [Group investments](@id constraint_group_investments)
+
+#### [Minimum group investment capacity](@id constraint_investment_group_minimum_capacity_invested_available)
+
+@@add_constraint_investment_group_minimum_capacity_invested_available!
+
+#### [Maximum group investment capacity](@id constraint_investment_group_maximum_capacity_invested_available)
+
+@@add_constraint_investment_group_maximum_capacity_invested_available!
 
 ### Capacity transfer
 (Comment 2021-04-29: Currently under development)

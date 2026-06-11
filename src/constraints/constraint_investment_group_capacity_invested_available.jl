@@ -18,10 +18,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
+@doc raw"""
     add_constraint_investment_group_minimum_capacity_invested_available!(m::Model)
 
 Force capacity invested available in a group to be greater than the minimum.
+
+TODO: Write a proper formulation.
+```math
+\begin{aligned}
+\sum[\text{invested unit and connection capacities}]
+\geq
+p^{investment\_capacity\_total\_min\_cumulative}_{(ig, s, t)}
+\end{aligned}
+```
 """
 function add_constraint_investment_group_minimum_capacity_invested_available!(m::Model)
     _add_constraint!(
@@ -48,10 +57,19 @@ function constraint_investment_group_minimum_capacity_invested_available_indices
     )
 end
 
-"""
+@doc raw"""
     add_constraint_investment_group_maximum_capacity_invested_available!(m::Model)
 
 Force capacity invested available in a group to be lower than the maximum.
+
+TODO: Write a proper formulation.
+```math
+\begin{aligned}
+\sum[\text{invested unit and connection capacities}]
+\leq
+p^{investment\_capacity\_total\_max\_cumulative}_{(ig, s, t)}
+\end{aligned}
+```
 """
 function add_constraint_investment_group_maximum_capacity_invested_available!(m::Model)
     _add_constraint!(

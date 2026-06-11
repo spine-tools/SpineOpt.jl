@@ -11,7 +11,7 @@ SpineOpt offers flexibility to the users so that different things can be modeled
 ## Economic representation
 
 ### Economic parameters
-It can be tricky to put the correct cost parameters into the model since factors like discounting and end-of-lifetime effects have to be taken into account. For that purpose, SpineOpt has incorporated some dedicated parameters for economic representation. Set the parameter `multiyear_economic_discounting` with a corresponding valid value will activate these paramters.
+It can be tricky to put the correct cost parameters into the model since factors like discounting and end-of-lifetime effects have to be taken into account. For that purpose, SpineOpt has incorporated some dedicated parameters for economic representation. Set the parameter [multiyear\_economic\_discounting](@ref) with a corresponding valid value will activate these parameters.
 
 **Discounted annuities**
 
@@ -38,9 +38,9 @@ The technology specific discount factor can be used, if e.g. investments in a ce
 
 ### Adaptions objective terms
 
-When `multiyear_economic_discounting` is set to a valid value:
+When [multiyear\_economic\_discounting](@ref) is set to a valid value:
 
-- Investment costs are multiplied with discounted annuties conversion factor and the technological discount factor and (1 - salvage fraction).
+- Investment costs are multiplied with discounted annuities conversion factor and the technological discount factor and (1 - salvage fraction).
 
 - Operational cost terms are multiplied with the discounted duration factor.
 

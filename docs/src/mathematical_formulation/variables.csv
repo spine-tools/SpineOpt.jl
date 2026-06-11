@@ -29,3 +29,5 @@ units_on,"(unit=u, stochastic_scenario=s, t=t)",units_on_indices,Number of onlin
 units_out_of_service,"(unit=u, stochastic_scenario=s, t=t)",units_out_of_service_indices,Number of units ``u`` out of service for the stochastic scenario ``s`` at timestep ``t``,
 units_shut_down,"(unit=u, stochastic_scenario=s, t=t)",units_on_indices,Number of units ``u`` for the stochastic scenario ``s`` that switched to offline status at timestep ``t``,
 units_started_up,"(unit=u, stochastic_scenario=s, t=t)",units_on_indices,Number of units ``u`` for the stochastic scenario ``s`` that switched to online status at timestep ``t``,
+user_constraint_slack_pos,"(user_constraint=uc, stochastic_scenario=s, t=t)",user_constraint_slack_indices,Slack variable penalizing positive deviations from the desired user constraint ``uc`` for stocahstic scenario ``s`` and timestep ``t``.
+user_constraint_slack_neg,"(user_constraint=uc, stochastic_scenario=s, t=t)",user_constraint_slack_indices,Slack variable penalizing negative deviations from the desired user constraint ``uc`` for stocahstic scenario ``s`` and timestep ``t``.

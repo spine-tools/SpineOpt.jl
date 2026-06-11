@@ -52,7 +52,7 @@ With the infrastructure for investments in place, we can now ready units for the
 
 To be able to see the investments in the results, we'll have to add some more output entities to the report entity, i.e. [units\_invested](@ref var_units_invested) and [units\_on](@ref var_units_on). Commit the changes to the input database and run the SpineOpt tool. In the output you should now also find the investments. The value should be equal to 1.0 unit.
 
-## Multi-year investments
+## Multi-year investments tutorial
 
 Multi-year investments refer to making investment decisions at different points in time, such that a pathway of investments can be modeled. This is particularly useful when long-term scenarios are modeled, but modeling each year is not practical. Or in a business case, investment decisions are supposed to be made in different years which has an impact on the cash flow.
 

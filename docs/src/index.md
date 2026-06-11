@@ -72,7 +72,7 @@ Part 2 explains the core principles, features and design decisions of SpineOpt w
   are alternative options to the standard model.
   The [Decomposition](@ref) section explains the Benders decomposition implementation included in *SpineOpt.jl*,
   as well as how to use it.
-  There is also Modelling to generate alternatives and multi stage optimisation.
+  There is also [Modelling to generate alternatives](@ref mga-advanced) and [Multi-stage optimisation](@ref).
 
 Part 3 contains all the detailed information you need when you are looking for something specific (e.g. a parameter name or the formulation of a constraint).
 
