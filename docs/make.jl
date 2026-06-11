@@ -6,6 +6,7 @@ using Documenter
 using SpineOpt
 
 include("docs_utils.jl")
+warn_only = false # Set this to `true` to bypass errors as warnings, useful for forcing a build.
 
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/`
@@ -102,6 +103,6 @@ makedocs(
     sitename = "SpineOpt.jl",
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true", size_threshold = 409600, assets = ["assets/style.css"]),  # uncomment to deploy locally
     pages = pages,
-    warnonly = false,
+    warnonly = warn_only,
 )
 deploydocs(repo = "github.com/spine-tools/SpineOpt.jl.git", versions = ["stable" => "v^", "v#.#"])

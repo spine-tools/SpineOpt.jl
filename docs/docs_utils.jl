@@ -188,7 +188,8 @@ end
     write_concept_reference_files(
         concept_dictionary::AbstractDict,
         makedocs_path::String,
-        sections::AbstractSet
+        sections::AbstractSet;
+        warnonly::Bool=false,
     )
 
 Write markdown files for the `Concept Reference` chapter based on the `concept_dictionary`.
@@ -199,12 +200,14 @@ Each file is pieced together from two parts: the preamble automatically generate
 function write_concept_reference_files(
     concept_dictionary::AbstractDict,
     makedocs_path::String,
-    sections::AbstractSet
+    sections::AbstractSet;
+    warnonly::Bool=false,
 )
     # Helper function for formatting Documenter.jl reference strings.
     function _refstring(str::String)
         return "[$(replace(str, "_" => "\\_"))](@ref)"
     end
+    error_count = 0
     # Loop over the concept dictionary to construct the documentation.
     for (key, concept_dict_for_key) in concept_dictionary
         !in(key, sections) ? continue : system_string = ["\n# $(key)\n\n"] # Skip writing the file if it's not included in `sections`.
@@ -285,8 +288,13 @@ function write_concept_reference_files(
                 f = open(description_path, "r")
                 description = read(f, String)
             catch
-                @warn "extended description for `$name` not found! consider adding one to `$description_path`."
-                ""
+                warning_str = "Extended description for `$name` not found! Add one to `$description_path`!"
+                if warnonly
+                    @warn warning_str
+                else
+                    @error(warning_str)
+                    error_count += 1
+                end
                 description = ""
             end
             push!(system_string, section * description)
@@ -294,6 +302,9 @@ function write_concept_reference_files(
         open(joinpath(makedocs_path, "src", "concept_reference", "$(key).md"), "w") do file
             write(file, join(system_string))
         end
+    end
+    if error_count != 0
+        error("Missing extended descriptions! See the `Error`s above!")
     end
 end
 
