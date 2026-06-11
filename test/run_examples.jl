@@ -13,6 +13,7 @@ objective_function_reference_values = Dict(
     "representative_periods.json" => 279438.4922720359,
     "representative_periods_and_user_constraint.json" => 279438.4922720359,
     "representative_periods_and_user_constraint_and_investment.json" => 279438.4922720359,
+    "representative_periods_and_user_constraint_and_investment_in_the_user_constraint.json" => 279438.4922720359,
     "multi_stage_model_tutorial.json" => 1.91746092844232e9,
 )
 
