@@ -21,7 +21,7 @@ default_translation = Dict(
 )
 concept_dict = create_concept_dictionary(SpineOpt.template(); translation=default_translation)
 if purge_obsolete # Purge obsolete concept reference files if this is set to `true`.
-purge_obsolete_concept_reference_files(concept_dict, path; spare=["_example.md", "archetypes.md", "the_basics.md"])
+    purge_obsolete_concept_reference_files(concept_dict, path; spare=["_example.md", "archetypes.md", "the_basics.md"])
 end
 write_concept_reference_files(concept_dict, path, Set(values(default_translation)); warnonly=warn_only)
 
