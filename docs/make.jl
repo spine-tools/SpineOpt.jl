@@ -6,7 +6,10 @@ using Documenter
 using SpineOpt
 
 include("docs_utils.jl")
+
+# Some intial config.
 warn_only = false # Set this to `true` to bypass errors as warnings, useful for forcing a build.
+purge_obsolete = false # Set this to `true` to remove obsolete 
 
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/`
@@ -17,11 +20,13 @@ default_translation = Dict(
     "parameter_definitions" => "Parameters",
 )
 concept_dict = create_concept_dictionary(SpineOpt.template(); translation=default_translation)
+if purge_obsolete # Purge obsolete concept reference files if this is set to `true`.
 purge_obsolete_concept_reference_files(concept_dict, path; spare=["_example.md", "archetypes.md", "the_basics.md"])
+end
 write_concept_reference_files(concept_dict, path, Set(values(default_translation)); warnonly=warn_only)
 
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
-# and content from docstrings
+# and content from docstrings, as well as variables and sets from the `.csv`s.
 mathpath = joinpath(path, "src", "mathematical_formulation")
 docstrings = all_docstrings(SpineOpt)
 constraints_lines = readlines(joinpath(mathpath, "constraints.txt"))
@@ -29,7 +34,6 @@ expand_tags!(constraints_lines, docstrings)
 open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
     write(file, join(constraints_lines, "\n"))
 end
-
 write_sets_and_variables(mathpath)
 
 # Generate the documentation pages

@@ -1,0 +1,3 @@
+Essentially, a cost coefficient on the number of installed connections
+and [capacity\_per\_connection](@ref) parameters.
+E.g. in `EUR/MWh/a`.

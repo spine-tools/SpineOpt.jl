@@ -15,7 +15,7 @@ It can be tricky to put the correct cost parameters into the model since factors
 
 **Discounted annuities**
 
-This factor translates the overnight costs of investment into discounted (to the discount_year) annual payments, distributed over the total lifetime of the investment. For a merely demonstrative example, we assume a case where investment payments increase linearly over the lead-time, and decrease linearly towards the end of the economic lifetime. This is illustrated in the figure below:
+This factor translates the overnight costs of investment into discounted (to the [discount\_year](@ref)) annual payments, distributed over the total lifetime of the investment. For a merely demonstrative example, we assume a case where investment payments increase linearly over the lead-time, and decrease linearly towards the end of the economic lifetime. This is illustrated in the figure below:
 
 ![image](figs_multi-year/discounted_annuities.png)
 

@@ -285,6 +285,10 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 
 ### [Group investments](@id constraint_group_investments)
 
+## [Equal group investments](@id constraint_investment_group_equal_investments)
+
+@@add_constraint_investment_group_equal_investments!
+
 #### [Minimum group investment capacity](@id constraint_investment_group_minimum_capacity_invested_available)
 
 @@add_constraint_investment_group_minimum_capacity_invested_available!
