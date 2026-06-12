@@ -20,7 +20,7 @@
 
 function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
     inds = unique(indices(m))
-    isempty(inds) && return
+    isempty(inds) && return m.ext[:spineopt].constraints[name] = Dict() # Needs to return an empty Dict: Type similar to output?
     cons = Vector{Any}(undef, length(inds))
     # [claude-sonnet-4-6]
     # PyCall objects loaded from the database have Julia finalizers that call Py_Dealloc.
@@ -43,7 +43,7 @@ function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
     seen_types = Set{DataType}()
     for (i, ind) in enumerate(inds)
         T = typeof(ind)
-        if T ∉ seen_types
+        if !in(T, seen_types)
             push!(seen_types, T)
             cons[i] = build_constraint(m, ind...)
         end
