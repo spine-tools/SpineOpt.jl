@@ -116,7 +116,6 @@ const connection_conversion_to_discounted_annuities = Parameter(:connection_conv
 const connection_decommissioning_conversion_to_discounted_annuities = Parameter(:connection_decommissioning_conversion_to_discounted_annuities)
 const connection_discounted_duration = Parameter(:connection_discounted_duration)
 const connection_emergency_capacity = Parameter(:connection_emergency_capacity)
-const connection_fixed_annual_cost = Parameter(:connection_fixed_annual_cost)
 const connection_flow_cost = Parameter(:connection_flow_cost)
 const connection_flow_delay = Parameter(:connection_flow_delay)
 const connection_flow_highest_resolution_active = Parameter(:connection_flow_highest_resolution_active)
@@ -156,6 +155,7 @@ const existing_units = Parameter(:existing_units)
 const fix_nonspin_units_shut_down = Parameter(:fix_nonspin_units_shut_down)
 const fix_nonspin_units_started_up = Parameter(:fix_nonspin_units_started_up)
 const fix_ratio_out_in_connection_flow = Parameter(:fix_ratio_out_in_connection_flow)
+const fixed_annual_cost = Parameter(:fixed_annual_cost)
 const fixed_pressure_constant_0 = Parameter(:fixed_pressure_constant_0)
 const fixed_pressure_constant_1 = Parameter(:fixed_pressure_constant_1)
 const flow_limits_fix = Parameter(:flow_limits_fix)
@@ -462,7 +462,7 @@ export connection_conversion_to_discounted_annuities
 export connection_decommissioning_conversion_to_discounted_annuities
 export connection_discounted_duration
 export connection_emergency_capacity
-export connection_fixed_annual_cost
+export fixed_annual_cost
 export connection_flow_cost
 export connection_flow_delay
 export connection_flow_highest_resolution_active

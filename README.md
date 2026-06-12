@@ -5,6 +5,11 @@
 
 A Julia package containing a state-of-the-art energy system optimization model.
 
+>[!IMPORTANT]
+>INES-compatible SpineOpt version and ongoing development is currently available through the `datastructure_update` branch.
+>You can install this SpineOpt v1.0.0 from Julia package manager via `pkg> add SpineOpt#datastructure_update`.
+>The v1.0.0 version will be officially released ASAP, latest by the end of June 2026.
+
 ## Why use SpineOpt?
 
 ![Critical Review](.github/figs/1-s2.0-S2211467X2300086X-gr9.jpg)
