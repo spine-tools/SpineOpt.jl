@@ -64,6 +64,8 @@
         ["units_on__temporal_block", ["unit", "temporal_block"], "The `temporal_block` of a `unit` commitment."]
     ],
     "parameter_value_lists": [
+        ["ac_opf_model_formulation_list", "ac_opf_linear"],
+        ["ac_opf_model_formulation_list", "ac_opf_conic"],
         ["balance_type_list", "balance_type_group"],
         ["balance_type_list", "balance_type_node"],
         ["balance_type_list", "balance_type_none"],
@@ -212,6 +214,7 @@
         ["model", "report_benders_iterations", false, "boolean_value_list", "Whether to save results from Benders iterations before convergence."],
         ["model", "shared_values", null, null, "A map from symbol to shared value."],
         ["model", "solution_stats", null, null, "Solution statistics."],
+        ["model", "ac_opf_model_formulation", "ac_opf_linear", "ac_opf_model_formulation_list", "Formulation used for AC flow."],
         ["model", "use_connection_intact_flow", true, "boolean_value_list", "Whether to use `connection_intact_flow` variables, to capture the impact of connection investments on network characteristics via line outage distribution factors (LODF)."],
         ["model", "use_tight_compact_formulations", false, "boolean_value_list", "Whether to use tight and compact constraint formulations."],
         ["model", "use_highest_resolution_constraint_ratio_out_in_connection_flow", true, "boolean_value_list", "Whether to use highest resolution for constraint ratio out in connection flow."],
