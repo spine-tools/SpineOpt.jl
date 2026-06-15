@@ -39,21 +39,21 @@ at each [resolution](@ref).
 
 To facilitate querying the temporal structure, we have developed the following convenience functions (which are also depicted above in the figure from Maren Ihlemann's dissertation):
 
-- [time\_slice](@ref)
-- [t\_before\_t](@ref)
-- [t\_overlaps\_t](@ref)
-- [t\_in\_t](@ref)
-- [t\_in\_t\_excl](@ref)
+- [`time_slice`](@ref)
+- [`t_before_t`](@ref)
+- [`t_overlaps_t`](@ref)
+- [`t_in_t`](@ref)
+- [`t_in_t_excl`](@ref)
 
 !!! note
     To further figure out what the time slice convenience functions do,
     you can play around with them.
     To do so, you first need to make a database (e.g. in Spine Toolbox).
-    Then you can call `run_spineopt` with that database and collect the model `m`.
+    Then you can call [`run_spineopt`](@ref) with that database and collect the model `m`.
     If you are impatient you do not even need to solve the model, you can pass `optimize=false`
-    as keyword argument to `run_spineopt`.
+    as keyword argument to [`run_spineopt`](@ref).
     And then you can start calling the time slice convenience functions with `m`
-    (e.g. `t_in_t`).
+    (e.g. [`t_in_t`](@ref)).
 
 ## How can the time slice convenience functions be used?
 
@@ -65,11 +65,11 @@ For example, say you're generating a constraint at a 3-hour resolution.
 This means you have a `TimeSlice` in your constraint index, and that `TimeSlice` covers 3 hours.
 Now, say you want to sum a certain variable over those 3 hours in your constraint expression.
 You need to know all the `TimeSlice`s contained in the one from your constraint index. You can find this out
-by calling [t\_in\_t](@ref) with it.
+by calling [`t_in_t`](@ref) with it.
 
 More information can be found in the [Write a constraint for SpineOpt](@ref) section.
 
 !!! note
     A fool proof way of writing a constraint - that may not be the most efficient -
     is to always take the highest resolution among the overlapping `TimeSlice`s to generate the constraint indices.
-    The other `TimeSlice`s can then be obtained from [t\_overlaps\_t](@ref).
+    The other `TimeSlice`s can then be obtained from [`t_overlaps_t`](@ref).

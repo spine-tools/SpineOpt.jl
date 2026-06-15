@@ -19,10 +19,10 @@
 #############################################################################
 
 @doc raw"""
-For storage nodes with [is\_longterm\_storage](@ref) set to `true`, the long-term state trajectory
-tracks the evolution of [node\_state\_longterm](@ref) across the model horizon when using 
+For storage nodes with [storage\_longterm\_active](@ref) set to `true`, the long-term state trajectory
+tracks the evolution of [node\_state\_longterm](@ref var_node_state_longterm) across the model horizon when using 
 representative periods. The constraint links consecutive long-term time steps by accumulating 
-the net change (delta) in the [node\_state](@ref) over the representative blocks that map onto 
+the net change (delta) in the [node\_state](@ref var_node_state) over the representative blocks that map onto 
 the time step $t_{after}$:
 
 ```math
@@ -43,22 +43,22 @@ where $t^{first}_{blk}$ and $t^{last}_{blk}$ are respectively the starting-point
 and the last time slice of the representative block $blk$, and 
 $p^{representative\_block\_coefficient}_{(t_{after},\, blk)}$ is the weight assigned to 
 block $blk$ when constructing the represented time step $t_{after}$ from representative 
-periods (see [representative\_periods\_mapping](@ref)).
+periods (see [representative\_blocks\_by\_period](@ref)).
 
 !!! note
     This constraint is part of the **delta formulation** for long-term storage.
-    Instead of carrying the absolute [node\_state](@ref) across the full planning horizon
+    Instead of carrying the absolute [node\_state](@ref var_node_state) across the full planning horizon
     at fine time resolution, it propagates the long-term storage level by adding the net
     change accumulated over each representative block. This allows to partially recover
     the chronology in models that use representative periods to track seasonal or 
     inter-period storage.
 
 See also
-[has\_state](@ref),
-[is\_longterm\_storage](@ref),
-[representative\_periods\_mapping](@ref),
-[node\_state\_longterm](@ref),
-[node\_state](@ref).
+[storage\_active](@ref),
+[storage\_longterm\_active](@ref),
+[representative\_blocks\_by\_period](@ref),
+[node\_state\_longterm](@ref var_node_state_longterm),
+[node\_state](@ref var_node_state).
 """
 function add_constraint_node_state_longterm_trajectory!(m::Model)
     _add_constraint!(

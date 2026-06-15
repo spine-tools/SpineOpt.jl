@@ -1,4 +1,4 @@
-The `storage_investment_count_fix_new` parameter is used primarily to fix the value of the `storages_invested`
+The [storage\_investment\_count\_fix\_new](@ref) parameter is used primarily to fix the value of the [storages\_invested](@ref var_storages_invested)
 variable which represents the point-in-time storage investment decision variable at a [node](@ref) and how many
 candidate storages are invested-in in a particular timeslice at the corresponding [node](@ref).
 

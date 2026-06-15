@@ -28,7 +28,7 @@ the parameter [pressure\_max](@ref) can be specified which triggers the followin
 ```
 
 As indicated in the equation, the parameter [pressure\_max](@ref) can also be defined on a node group,
-in order to impose an upper limit on the aggregated [node\_pressure](@ref) within one node group.
+in order to impose an upper limit on the aggregated [node\_pressure](@ref var_node_pressure) within one node group.
 
 See also [pressure\_max](@ref).
 """

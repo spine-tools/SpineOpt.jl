@@ -19,10 +19,10 @@
 #############################################################################
 
 @doc raw"""
-[connections\_invested](@ref) represents the point-in-time decision to invest in a connection or not while
-[connections\_invested\_available](@ref) represents the invested-in connections that are available at a specific time.
-This constraint enforces the relationship between [connections\_invested](@ref), [connections\_invested\_available](@ref) and
-[connections\_decommissioned](@ref) in adjacent timeslices.
+[connections\_invested](@ref var_connections_invested) represents the point-in-time decision to invest in a connection or not while
+[connections\_invested\_available](@ref var_connections_invested_available) represents the invested-in connections that are available at a specific time.
+This constraint enforces the relationship between [connections\_invested](@ref var_connections_invested), [connections\_invested\_available](@ref var_connections_invested_available) and
+[connections\_decommissioned](@ref var_connections_decommissioned) in adjacent timeslices.
 
 ```math
 \begin{aligned}

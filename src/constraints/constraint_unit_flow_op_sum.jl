@@ -19,7 +19,7 @@
 #############################################################################
 
 @doc raw"""
-[unit\_flow](@ref) is constrained to be the sum of all operating segment variables, [unit\_flow\_op](@ref)
+[unit\_flow](@ref var_unit_flow) is constrained to be the sum of all operating segment variables, [unit\_flow\_op](@ref var_unit_flow_op)
 
 ```math
 \begin{aligned}

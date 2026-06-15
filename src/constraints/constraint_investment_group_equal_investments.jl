@@ -18,10 +18,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
+@doc raw"""
     add_constraint_investment_group_equal_investments!(m::Model)
 
 Force investment variables for first entity in the group and all other entities in the group to be equal.
+
+TODO: Proper formulation.
+```math
+\begin{align}
+first_entity_investments
+==
+other_entity_investments,
+\qquad
+\forall \{first_entity, other_entity)\} \in investment_group
+\end{align}
+```
 """
 function add_constraint_investment_group_equal_investments!(m::Model)
     _add_constraint!(

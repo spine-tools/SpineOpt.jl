@@ -22,8 +22,8 @@
     add_expression_capacity_margin!(m::Model)
 
 Create an expression for `capacity_margin`. This represents the available production capacity (considering variations
-    in variable renewables) after demand has been fulfilled and after the contribution of actual storage operation has
-    been taken into account. It is used in the `min_capacity_margin` constraint
+in variable renewables) after demand has been fulfilled and after the contribution of actual storage operation has
+been taken into account. It is used in the [minimum capacity margin](@ref constraint_min_capacity_margin) constraint
 
 ```math 
 \begin{aligned}
@@ -47,9 +47,7 @@ See also
 [demand](@ref),
 [demand\_fraction](@ref),
 [storage\_active](@ref)
-
 """
-
 function add_expression_capacity_margin!(m::Model)
     @fetch unit_flow, units_on = m.ext[:spineopt].variables
     m.ext[:spineopt].expressions[:capacity_margin] = Dict(

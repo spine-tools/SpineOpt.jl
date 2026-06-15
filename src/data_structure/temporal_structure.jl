@@ -400,7 +400,7 @@ end
 """
     _generate_time_slice_relationships()
 
-E.g. `t_in_t`, `t_before_t`, `t_overlaps_t`...
+E.g. [`t_in_t`](@ref), [`t_before_t`](@ref), [`t_overlaps_t`](@ref)...
 """
 function _generate_time_slice_relationships!(m::Model)
     annotated_time_slices = _annotated_time_slice(m)
@@ -584,10 +584,10 @@ end
 Create the temporal structure for the given SpineOpt model.
 After this, you can call the following functions to query the generated structure:
 - `time_slice`
-- `t_before_t`
-- `t_in_t`
-- `t_in_t_excl`
-- `t_overlaps_t`
+- [`t_before_t`](@ref)
+- [`t_in_t`](@ref)
+- [`t_in_t_excl`](@ref)
+- [`t_overlaps_t`](@ref)
 - `to_time_slice`
 - `current_window`
 """
@@ -772,7 +772,7 @@ end
 """
     t_in_t_excl(m; t_short=anything, t_long=anything)
 
-Same as [t_in_t](@ref) but exclude tuples of the same `TimeSlice`.
+Same as [`t_in_t`](@ref) but exclude tuples of the same `TimeSlice`.
 
  # Keyword arguments
   - `t_short`: if given, return an `Array` of `TimeSlice`s that contain `t_short` (other than `t_short` itself).

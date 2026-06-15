@@ -30,7 +30,7 @@ the parameter [voltage\_angle\_max](@ref) can be specified which triggers the fo
 \end{aligned}
 ```
 As indicated in the equation, the parameter [voltage\_angle\_max](@ref) can also be defined on a node group,
-in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
+in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref var_node_voltage_angle) within one node group.
 
 See also [voltage\_angle\_max](@ref).
 

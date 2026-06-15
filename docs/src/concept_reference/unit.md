@@ -4,17 +4,17 @@ can be modelled using a [unit](@ref).
 
 A [unit](@ref) always takes energy from one or more [node](@ref)s, and releases energy to
 one or more (possibly the same) [node](@ref)s.
-The former are specificed through the [node\_\_to\_unit](@ref) relationship,
+The former are specified through the [node\_\_to\_unit](@ref) relationship,
 and the latter through [unit\_\_to\_node](@ref).
 Every [unit](@ref) has a temporal and stochastic structures given by the
 [units\_on\_\_temporal\_block](@ref) and [units\_on\_\_stochastic\_structure] relationships.
-The model will generate `unit_flow` variables for every combination of
-[unit](@ref), [node](@ref), *direction* (from node or to node), *time slice*, and *stochastic scenario*,
+The model will generate [unit\_flow variable](@ref var_unit_flow)s for every combination of
+[unit](@ref), [node](@ref), `direction` (from node or to node), `time slice`, and [stochastic\_scenario](@ref),
 according to the above relationships.
 
 The operation of the [unit](@ref) is specified through a number of parameter values.
 For example, the capacity of the unit, as the maximum amount of energy that can enter or leave it,
 is given by [capacity\_per\_unit](@ref).
-The conversion ratio of input to output can be specified using any of [fix\_ratio\_out\_in\_unit\_flow](@ref),
-[max\_ratio\_out\_in\_unit\_flow](@ref), and [min\_ratio\_out\_in\_unit\_flow](@ref).
+The conversion ratio of input to output can be specified using any of [flow\_ratio\_equality\_coefficient](@ref),
+[flow\_ratio\_less\_than\_coefficient](@ref), and [flow\_ratio\_greater\_than\_coefficient](@ref).
 The variable operating cost is given by [vom\_cost](@ref).

@@ -1,6 +1,6 @@
 The [diffusion\_coefficient](@ref) parameter represents diffusion of a commodity between the two [node](@ref)s
 in the [node\_\_node](@ref) relationship.
-It appears as a coefficient on the `node_state` variable in the [node injection](@ref constraint_node_injection) constraint,
+It appears as a coefficient on the [node\_state](@ref var_node_state) variable in the [node injection](@ref constraint_node_injection) constraint,
 essentially representing *diffusion power per unit of state*.
 Note that the [diffusion\_coefficient](@ref) is interpreted as *one-directional*, meaning that if one defines
 ```julia

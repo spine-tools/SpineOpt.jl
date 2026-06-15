@@ -1,6 +1,6 @@
 # Capacity Planning Tutorial
 
-This tutorial provides a step-by-step guide to include investment constraints for capacity planning in a simple energy system with Spine Toolbox for SpineOpt. There is more information to be found in the documentation on [investment optimization](https://spine-tools.github.io/SpineOpt.jl/latest/advanced_concepts/investment_optimization/). To get the most out of this tutorial, we suggest first completing the [Simple System tutorial](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/).
+This tutorial provides a step-by-step guide to include investment constraints for capacity planning in a simple energy system with Spine Toolbox for SpineOpt. There is more information to be found in the documentation on [investment optimization](https://spine-tools.github.io/SpineOpt.jl/latest/advanced_concepts/investment_optimization/). To get the most out of this tutorial, we suggest first completing the [Simple system tutorial](@ref).
 
 ## Overview
 
@@ -18,16 +18,16 @@ Create a new workflow in Spine Toolbox, as you did for the simple system tutoria
 
 ## Temporal structure
 
-For the investment optimization, let us consider a more appropriate time horizon, e.g. 2030-2035. We set the `model_start` and `model_end` parameters accordingly to 2030-01-01 and 2036-01-01.
+For the investment optimization, let us consider a more appropriate time horizon, e.g. 2030-2035. We set the [model\_start](@ref) and [model\_end](@ref) parameters accordingly to 2030-01-01 and 2036-01-01.
 
-We'll consider a seasonal operation (to reduce the number of entries later on) so we'll set the resolution of the exiting temporal block to `4M`. For clarity we also change the name from `flat` to `operation`.
+We'll consider a seasonal operation (to reduce the number of entries later on) so we'll set the resolution of the exiting temporal block to `4M`. For clarity, we also change the name from `flat` to `operation`.
 
-For the investment period we'll have to add another temporal block called `investment`. We connect it to the model entity with the `model__temporal_block` and `model__default_investment_temporal_block`. The resolution is to be set to `5Y`.
+For the investment period we'll have to add another temporal block called `investment`. We connect it to the model entity with the [model\_\_default\_investment\_temporal\_block](@ref). The resolution is to be set to `5Y`.
 
 !!! info
 	Instead of a default connection to the model entity, we can also make the investment temporal block specific to a part of the energy system, e.g. with the [unit\_\_investment\_temporal\_block](@ref) entity.
 
-In principle we also need to define the default investment stochastic structure. To that end, we can simply connect the existing stochastic structure to the model entity using the `model__default_investment_stochastic_structure` entity.
+In principle we also need to define the default investment stochastic structure. To that end, we can simply connect the existing stochastic structure to the model entity using the [model\_\_default\_investment\_stochastic\_structure](@ref) entity.
 
 ![image](figs_capacity_planning/capacity_temporal.png)
 
@@ -40,8 +40,8 @@ With the infrastructure for investments in place, we can now ready units for the
 - Set the unit's investment cost by setting the [unit\_investment\_cost](@ref) parameter to 1000.0. It is important to mention that, normally, you should use the discounted cost. In this example, the costs in 2030 and in 2035 should be discounted to the discount year, i.e., you would define a time-varying cost to reflect the economic representation.
 - Specify the [lifetime\_technical](@ref) of the unit to, say, 10 years (duration `10Y`) to specify that this is the minimum amount of time this new unit must be in existence after being invested in.
 - Specify the [lifetime\_economic](@ref) to automatically adjust the investment costs. Let's set it equal to the technical lifetime here.
-- Specify the [investment\_variable\_type](@ref) to `integer` to specify that this is a discrete [unit](@ref) investment decision. By default this is set to `linear` and we would see an investment of 0.25 units for power plant b in the solution. That also shows that unit size is set by the `capacity_per_unit` parameter of the `unit__to_node` entity (for power plant b the unit capacity is 200 and multiplied with the investment of 0.25 units we obtain 50 which equals the flow from power plant b).
-- Specify the [units\_on\_cost](@ref) to apply a cost to units that are on. Sometimes this is necessary to ensure that the [units\_on](@ref) variables are created which are needed for the proper functioning of the constraints. Even a value of 0.0 is sufficient to trigger these variables. And that is also what we do here.
+- Specify the [investment\_variable\_type](@ref) to `integer` to specify that this is a discrete [unit](@ref) investment decision. By default this is set to `linear` and we would see an investment of 0.25 units for power plant b in the solution. That also shows that unit size is set by the [capacity\_per\_unit](@ref) parameter of the [unit\_\_to\_node](@ref) entity (for power plant b the unit capacity is 200 and multiplied with the investment of 0.25 units we obtain 50 which equals the flow from power plant b).
+- Specify the [units\_on\_cost](@ref) to apply a cost to units that are on. Sometimes this is necessary to ensure that the [units\_on](@ref var_units_on) variables are created which are needed for the proper functioning of the constraints. Even a value of 0.0 is sufficient to trigger these variables. And that is also what we do here.
 
 ![image](figs_capacity_planning/capacity_unit.png)
 
@@ -50,9 +50,9 @@ With the infrastructure for investments in place, we can now ready units for the
 
 ## Examine output
 
-To be able to see the investments in the results, we'll have to add some more output entities to the report entity, i.e. `units_invested` and `units_on`. Commit the changes to the input data base and run the SpineOpt tool. In the output you should now also find the investments. The value should be equal to 1.0 unit.
+To be able to see the investments in the results, we'll have to add some more output entities to the report entity, i.e. [units\_invested](@ref var_units_invested) and [units\_on](@ref var_units_on). Commit the changes to the input database and run the SpineOpt tool. In the output you should now also find the investments. The value should be equal to 1.0 unit.
 
-## Multi-year investments
+## Multi-year investments tutorial
 
 Multi-year investments refer to making investment decisions at different points in time, such that a pathway of investments can be modeled. This is particularly useful when long-term scenarios are modeled, but modeling each year is not practical. Or in a business case, investment decisions are supposed to be made in different years which has an impact on the cash flow.
 
@@ -63,11 +63,11 @@ To make this work, some adjustments are needed to:
 + the demand,
 + and the units.
 
-For the temporal structure, we need a separate operation temporal block for 2030 and 2035 (each with a resolution of `4M`). To obtain a discontinuous gap between the years in the model we set the `block_start` and `block_end` to the start and end of the respective years. Note that for the temporal block of 2035 we already start in the last season of the previous year. That is to be able to set the boundary conditions for that block.
+For the temporal structure, we need a separate operation temporal block for 2030 and 2035 (each with a resolution of `4M`). To obtain a discontinuous gap between the years in the model we set the [block\_start](@ref) and [block\_end](@ref) to the start and end of the respective years. Note that for the temporal block of 2035 we already start in the last season of the previous year. That is to be able to set the boundary conditions for that block.
 
-Note that we use the temporal block `operation2030` to represent the operations during 2030 - 2034, so a `weight` of 5 is assigned to the block such that the operational costs cover the entire period. The `weight` of the temporal block `operation2035` is set to 1, as it only covers the last year 2035 of the model horizon.
+Note that we use the temporal block `operation2030` to represent the operations during 2030 - 2034, so a [`weight`](@ref) of 5 is assigned to the block such that the operational costs cover the entire period. The [`weight`](@ref) of the temporal block `operation2035` is set to 1, as it only covers the last year 2035 of the model horizon.
 
-You can also choose to not use `weight`, but then you need to make sure your input operational costs cover the operations during 2030 - 2034.
+You can also choose to not use [`weight`](@ref), but then you need to make sure your input operational costs cover the operations during 2030 - 2034.
 
 ![image](figs_capacity_planning/multi-year_temporal.png)
 
@@ -85,7 +85,7 @@ The demand data is seasonal (4M). We assume that the demand increases over the y
 
 We will allow investments for `power_plant_a` in both 2030 and 2035, and for `power_plant_b` only in 2035. This is realised through the definition of [investment\_count\_max\_cumulative](@ref) as a time series with variable resolution.
 
-- power_plant_a: [2030-01-01: 1, 2035-01-01: 2]. Note this means in 2030, 1 unit can be invested, and in 2035, another 1 **(instead of 2)** can invested. In other words, this parameter includes the previously available units.
+- power_plant_a: [2030-01-01: 1, 2035-01-01: 2]. Note this means in 2030, 1 unit can be invested, and in 2035, another 1 **(instead of 2)** can be invested. In other words, this parameter includes the previously available units.
 - power_plant_b: [2030-01-01: 0, 2035-01-01: 1].
 
 ![image](figs_capacity_planning/multi-year_unit_a.png)
@@ -93,7 +93,7 @@ We will allow investments for `power_plant_a` in both 2030 and 2035, and for `po
 
 We can check the results for `power_plant_a` first. The below pictures show that in 2030, there is 1 investment, and in 2035, there is another investment. In 2035, there are 2 units on.
 
-Note we notice a drop between the two periods for operation variables, `units_on` in this case, because it is a redundant result.
+Note we notice a drop between the two periods for operation variables, [units\_on](@ref var_units_on) in this case, because it is a redundant result.
 
 ![image](figs_capacity_planning/result-ppa-invested.png)
 ![image](figs_capacity_planning/result-ppa-on.png)

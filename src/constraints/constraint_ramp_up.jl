@@ -19,7 +19,7 @@
 #############################################################################
 
 @doc raw"""
-Limit the increase of [unit\_flow](@ref) over a time period of one [duration\_unit](@ref) according
+Limit the increase of [unit\_flow](@ref var_unit_flow) over a time period of one [duration\_unit](@ref) according
 to the [ramp\_limits\_startup](@ref) and [ramp\_limits\_up](@ref) parameter values.
 
 ```math

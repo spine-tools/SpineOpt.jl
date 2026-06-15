@@ -49,7 +49,7 @@ See also
     with different temporal resolutions, the constraint is only generated for the lowest resolution,
     and only the average of the higher resolution flow is constrained.
     In other words, what gets constrained is the "average power" (e.g. MWh/h) rather than the "instantaneous power"
-    (e.g. MW). If instantaneous power needs to be constrained as well, then [capacity_per_connection](@ref) needs to be
+    (e.g. MW). If instantaneous power needs to be constrained as well, then [capacity\_per\_connection](@ref) needs to be
     specified separately for each [node](@ref) served by the [connection](@ref).
 
 !!! note

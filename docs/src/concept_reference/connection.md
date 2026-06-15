@@ -4,11 +4,11 @@ can be modelled using a [connection](@ref).
 
 A [connection](@ref) always takes commodities from one or more [node](@ref)s, and releases them to
 one or more (possibly the same) [node](@ref)s.
-The former are specificed through the [connection\_\_from\_node](@ref) relationship,
+The former are specified through the [connection\_\_from\_node](@ref) relationship,
 and the latter through [connection\_\_to\_node](@ref).
 Every [connection](@ref) inherits the temporal and stochastic structures from the associated nodes.
-The model will generate `connection_flow` variables for every combination of
-[connection](@ref), [node](@ref), *direction* (from node or to node), *time slice*, and *stochastic scenario*,
+The model will generate [connection\_flow](@ref var_connection_flow) variables for every combination of
+[connection](@ref), [node](@ref), `direction` (from node or to node), `time slice`, and [stochastic\_scenario](@ref),
 according to the above relationships.
 
 The operation of the [connection](@ref) is specified through a number of parameter values.

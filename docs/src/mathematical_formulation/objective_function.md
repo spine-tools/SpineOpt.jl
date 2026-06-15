@@ -53,7 +53,7 @@ To take into account storage investments in the objective function, the paramete
 
 # Fixed O&M costs
 
-Fixed operation and maintenance costs associated with a specific unit can be accounted for by defining the parameters [fom\_cost](@ref) and [capacity\_per\_unit](@ref). For all tuples of (unit, {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep) exist in the set `units_on_indices`, a fixed O&M cost term is added to the objective function. Note that, as the `units_on_indices` are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should be given per resolution of the [units\_on](@ref).
+Fixed operation and maintenance costs associated with a specific unit can be accounted for by defining the parameters [fom\_cost](@ref) and [capacity\_per\_unit](@ref). For all tuples of (unit, {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep) exist in the set `units_on_indices`, a fixed O&M cost term is added to the objective function. Note that, as the `units_on_indices` are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should be given per resolution of the [units\_on](@ref var_units_on).
 The total fixed O&M costs can be expressed as:
 
 ```math

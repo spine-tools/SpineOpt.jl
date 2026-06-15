@@ -41,7 +41,7 @@ branching scenario tree.
 The [stochastic\_structure](@ref) starts out as a single [stochastic\_scenario](@ref) called `realistic`,
 which then branches out into three roughly equiprobable [stochastic\_scenario](@ref)s called `forecast1`, `forecast2`, and `forecast3` after 6 hours.
 This archetype is the final product of following the steps in the [Example of branching stochastics](@ref) part
-of the [Stochastic Framework](@ref) section.
+of the [Stochastic Framework](@ref stochastic_framework) section.
 
 Importing this archetype into an input datastore only creates the [stochastic\_structure](@ref),
 which needs to be connected to the rest of your model using either the [model\_\_default\_stochastic\_structure](@ref) relationship
@@ -58,7 +58,7 @@ The [stochastic\_structure](@ref) starts out as a single [stochastic\_scenario](
 which then branches out into three roughly equiprobable [stochastic\_scenario](@ref)s called `forecast1`, `forecast2`, and `forecast3` after 6 hours.
 Then, after 24 hours *(1 day)*, these three forecasts converge into a single [stochastic\_scenario](@ref) called `converged_forecast`.
 This archetype is the final product of following the steps in the [Example of converging stochastics](@ref) part
-of the [Stochastic Framework](@ref) section.
+of the [Stochastic Framework](@ref stochastic_framework) section.
 
 Importing this archetype into an input datastore only creates the [stochastic\_structure](@ref),
 which needs to be connected to the rest of your model using either the [model\_\_default\_stochastic\_structure](@ref) relationship
@@ -72,7 +72,7 @@ Note that the model-wide default gets superceded by any conflicting definitions 
 This archetype contains the definitions required for an example [stochastic\_structure](@ref) called `deterministic`, representing a simple deterministic modelling case.
 The [stochastic\_structure](@ref) contains only a single [stochastic\_scenario](@ref) called `realization`, which continues indefinitely.
 This archetype is the final product of following the steps in the [Example of deterministic stochastics](@ref) part
-of the [Stochastic Framework](@ref) section.
+of the [Stochastic Framework](@ref stochastic_framework) section.
 
 Importing this archetype into an input datastore only creates the [stochastic\_structure](@ref),
 which needs to be connected to the rest of your model using either the [model\_\_default\_stochastic\_structure](@ref) relationship

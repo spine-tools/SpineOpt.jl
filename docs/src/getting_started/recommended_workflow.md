@@ -19,7 +19,7 @@ In short, we'll create a new project in Spine Toolbox where we'll set up a simpl
 6. Select the Load Template tool and press the 'Run Selection' button in the ribbon (and wait until the process is done).
     ![image](figs_recommended_workflow/Execute_Load_Template.png)
 7. Download the [data of an existing example](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json) (click on the link, and in the GitHub page that opens, press the icon in the upper right corner that shows a downward arrow).
-8. Double click the input database to open the *spine db editor*.
+8. Double-click the input database to open the *spine db editor*.
     1. File > Import
     2. Navigate to the downloaded file and wait until Spine Toolbox indicates that it has imported the data
     3. Save the imported data by pressing the 'commit' button.
@@ -80,13 +80,13 @@ Note that the *Load template* tool makes use of SpineOpt. This is therefore the 
     WARNING: using JuMP.Parameter in module SpineInterface conflicts with an existing identifier.
     ```
 
-Now it is time to add information to import meaningful data to the input database. To that end we'll first need to get a file with the data. We can find that file on the SpineOpt repository on github. There is an examples folder with functioning examples. Let's take the [simple system tutorial](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json). It does not matter where you save this file on your system but it is possible to place it in the folder of your spine project.
+Now it is time to add information to import meaningful data to the input database. To that end we'll first need to get a file with the data. We can find that file on the SpineOpt repository on github. There is an examples folder with functioning examples. Let's take the [Simple system tutorial](@ref). It does not matter where you save this file on your system, but it is possible to place it in the folder of your spine project.
 
 !!! info
     These example files are part of our tests for the master branch so they should always work correctly.
 
 To import a '.json' file to a spine database, take the following steps:
-1. Double click on the input database to open the *spine db editor*.
+1. Double-click on the input database to open the *spine db editor*.
 2. In the spine db editor go to: File > Import
 3. Navigate to your file and wait until Spine Toolbox indicates that it has imported the data
 4. Save the imported data by pressing the 'commit' button.
@@ -130,8 +130,8 @@ While the tool runs, you can keep an eye on the console (typically lower right p
 
 ## Examine the output of SpineOpt
 
-Finally, we can also take a look at the output of SpineOpt. You can view the data the same way as you do for the input data. By double clicking the output database you open the spine db editor. There is not much to see in the graph view, so we'll look at the table of parameters. This time we can select the root (on the left) and we'll see all the output of the database in the table (on the middle).
+Finally, we can also take a look at the output of SpineOpt. You can view the data the same way as you do for the input data. By double-clicking the output database you open the spine db editor. There is not much to see in the graph view, so we'll look at the table of parameters. This time we can select the root (on the left) and we'll see all the output of the database in the table (in the middle).
 
-For this example, we see the flows throughout the system. We can look at the production of each powerplant. We may need to scroll but eventually we see that the values are 'time series'. By double clicking on these values we get the values of this time series as well as a plot of the values.
+For this example, we see the flows throughout the system. We can look at the production of each powerplant. We may need to scroll, but eventually we see that the values are 'time series'. By double-clicking on these values we get the values of this time series as well as a plot of the values.
 
-Indeed, the power plant with lower vom cost is used at its maximum and the other plant is used whenever necessary.
+Indeed, the power plant with lower [vom\_cost](@ref) is used at its maximum and the other plant is used whenever necessary.

@@ -24,7 +24,7 @@ the `unit_flow`'s [operating\_points](@ref) (parameter [ordered\_unit\_flow\_op]
 the operating segment variable `unit_flow_op` is only bounded by the difference
 between successive [operating\_points](@ref) adjusted for available capacity.
 If the order is enforced on the segments (parameter [ordered\_unit\_flow\_op](@ref) is `true`),
-`unit_flow_op` can only be active if the segment is active (variable [unit\_flow\_op\_active](@ref) is `true`)
+`unit_flow_op` can only be active if the segment is active (variable [unit\_flow\_op\_active](@ref var_unit_flow_op_active) is `true`)
 besides being bounded by the segment capacity.
 
 ```math

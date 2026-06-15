@@ -19,7 +19,7 @@
 #############################################################################
 
 @doc raw"""
-Constrain [connections\_invested\_available](@ref) by the investment lifetime of a connection.
+Constrain [connections\_invested\_available](@ref var_connections_invested_available) by the investment lifetime of a connection.
 The parameter [lifetime\_constraint\_sense](@ref) defaults to minimum investment 
 lifetime ([lifetime\_constraint\_sense](@ref) [`>=`](@ref constraint_sense_list)),
 but can be changed to strict lifetime ([lifetime\_constraint\_sense](@ref) [`==`](@ref constraint_sense_list))
