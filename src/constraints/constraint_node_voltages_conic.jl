@@ -29,8 +29,14 @@
     normal of the ellipsoid at the tangency point.
 """
 function add_constraint_node_voltages_conic!(m::Model)
-     _add_constraint!(m, :node_voltages_conic, constraint_node_voltages_conic_indices, 
-        _build_constraint_node_voltages_conic)
+    instance = m.ext[:spineopt].instance
+    if ac_opf_model_formulation(model=instance) == :ac_opf_conic
+        _add_constraint!(m, :node_voltages_conic, node_voltageproduct_indices, 
+            _build_constraint_node_voltages_conic_socp)
+    else
+        _add_constraint!(m, :node_voltages_conic, constraint_node_voltages_conic_indices, 
+            _build_constraint_node_voltages_conic)
+    end
 end
 
 function _build_constraint_node_voltages_conic(m, n1, n2, s, t, theta, fii)
@@ -95,28 +101,23 @@ function constraint_node_voltages_conic_indices(m::Model)
 end
 
 """
-add_constraint_node_voltages_conic_socp!(m::Model)
+build_constraint_node_voltages_conic_socp!(m::Model)
 
     Binds the different voltage products together with a second order conic constraint. This is a
     relaxation of the original constraint which is an equality constraint.
-    N.B. This is a second order conic constraint (=nonlinear) and thus requires compatible solver.
+    N.B. This is a second order conic constraint and thus requires compatible solver.
 """
-function add_constraint_node_voltages_conic_socp!(m::Model)
+function _build_constraint_node_voltages_conic_socp(m::Model, n1, n2, s, t)
     @fetch node_voltage_squared, node_voltageproduct_cosine, 
         node_voltageproduct_sine = m.ext[:spineopt].variables
     
-    m.ext[:spineopt].constraints[:node_voltages_conic] = Dict(
-        (node1=n1, node2=n2, stochastic_path=s, t=t) => @constraint(
-            m,
+    @build_constraint(
             [0.5 * (node_voltage_squared[n1, s, t] + node_voltage_squared[n2, s, t]),
              node_voltageproduct_cosine[n1, n2, s, t],
              node_voltageproduct_sine[n1, n2, s, t],
              0.5 * (node_voltage_squared[n1, s, t] - node_voltage_squared[n2, s, t])
             ] in SecondOrderCone()
-            )
-
-        for (n1, n2, s, t) in node_voltageproduct_indices(m)
-    )
+        )
 end
 
 function surfacepoint(u::NamedTuple)

@@ -168,7 +168,8 @@ end
     # include("expressions/expression.jl")
     # include("constraints/constraint_unit.jl") # CRASHES with multithreading?
     # include("constraints/constraint_node.jl") # CRASHES with multithreading?
-     include("constraints/review_conic_constraint.jl")
+    include("constraints/constraint_socp.jl") 
+    #include("constraints/review_conic_constraint.jl")
     # include("constraints/constraint_connection.jl") # CRASHES with multithreading?
     # include("constraints/constraint_user_constraint.jl")
     # include("constraints/constraint_investment_group.jl") # CRASHES with multithreading?
