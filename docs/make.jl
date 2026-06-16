@@ -9,7 +9,7 @@ include("docs_utils.jl")
 
 # Some intial config.
 warn_only = false # Set this to `true` to bypass errors as warnings, useful for forcing a build.
-purge_obsolete = false # Set this to `true` to remove obsolete 
+purge_obsolete = false # Set this to `true` to remove obsolete `concept_reference` files.
 
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/`
