@@ -326,8 +326,7 @@
         ["unit", "units_unavailable", 0, null, "Represents the number of units out of service"],
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
         ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."],
-        ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."],
-        ["user_constraint", "include_in_non_representative_periods", false, "boolean_value_list", "If using representative periods, this boolean parameter determines whether or not the constraint is enforced in non-representative periods."]
+        ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."]
     ],
     "relationship_parameters": [
         ["connection__from_node", "connection_capacity", null, null, "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."],

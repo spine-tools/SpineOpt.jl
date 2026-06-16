@@ -187,7 +187,6 @@ const has_ptdf = Parameter(:has_ptdf)
 const has_state = Parameter(:has_state)
 const has_switched_variable = Parameter(:has_switched_variable)
 const has_voltage_angle = Parameter(:has_voltage_angle)
-const include_in_non_representative_periods = Parameter(:include_in_non_representative_periods)
 const initial_binary_gas_connection_flow = Parameter(:initial_binary_gas_connection_flow)
 const initial_connection_flow = Parameter(:initial_connection_flow)
 const initial_connection_intact_flow = Parameter(:initial_connection_intact_flow)
@@ -568,7 +567,6 @@ export has_ptdf
 export has_state
 export has_switched_variable
 export has_voltage_angle
-export include_in_non_representative_periods
 export initial_binary_gas_connection_flow
 export initial_connection_flow
 export initial_connection_intact_flow
