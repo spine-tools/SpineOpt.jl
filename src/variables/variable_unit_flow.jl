@@ -42,7 +42,7 @@ function unit_flow_indices(
     node = members(node)
     (
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d) in unit__node__direction(unit=unit, node=node, direction=direction, _compact=false)
+        for (u, n, d) in unit_flow(unit=unit, node=node, direction=direction, _compact=false)
         for (n, s, t) in node_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )

@@ -139,7 +139,10 @@ end
     is_storage_unit(u)
 
 Whether the unit u is attached to a node with storage or not.
+
+Deduced based whether the unit `u` takes input from any node `n`
+where `storage_active(node=n) = true`.
 """
 function is_storage_unit(u)
-    any(storage_active(node=n) for n in unit__node__direction(unit=u, direction=direction(:from_node)))
+    any(storage_active(node=n) for (n, d) in node__to_unit(unit=u))
 end

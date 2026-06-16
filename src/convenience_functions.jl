@@ -65,7 +65,6 @@ const stochastic_structure__stochastic_scenario = RelationshipClass(:stochastic_
 const unit__investment_group = RelationshipClass(:unit__investment_group)
 const unit__investment_stochastic_structure = RelationshipClass(:unit__investment_stochastic_structure)
 const unit__investment_temporal_block = RelationshipClass(:unit__investment_temporal_block)
-const unit__node__direction = RelationshipClass(:unit__node__direction)
 const unit__to_node = RelationshipClass(:unit__to_node)
 const unit__user_constraint = RelationshipClass(:unit__user_constraint)
 const unit_flow__investment_group__node__unit__investment_group = RelationshipClass(:unit_flow__investment_group__node__unit__investment_group)
@@ -411,7 +410,6 @@ export stochastic_structure__stochastic_scenario
 export unit__investment_group
 export unit__investment_stochastic_structure
 export unit__investment_temporal_block
-export unit__node__direction
 export unit__to_node
 export unit__user_constraint
 export unit_flow__investment_group__node__unit__investment_group

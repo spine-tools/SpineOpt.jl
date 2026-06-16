@@ -17,8 +17,7 @@
         ["unit_flow__unit_flow__node__unit__node__unit", ["node", "unit", "node", "unit"]],
         ["unit_flow__unit_flow__node__unit__unit__node", ["node", "unit", "unit", "node"]],
         ["unit_flow__unit_flow__unit__node__node__unit", ["unit", "node", "node", "unit"]],
-        ["unit_flow__unit_flow__unit__node__unit__node", ["unit", "node", "unit", "node"]],
-        ["unit__node__direction", ["unit", "node", "direction"]]
+        ["unit_flow__unit_flow__unit__node__unit__node", ["unit", "node", "unit", "node"]]
     ],
     "parameter_definitions": [
         ["connection", "connection_capacity_transfer_factor", null, null],

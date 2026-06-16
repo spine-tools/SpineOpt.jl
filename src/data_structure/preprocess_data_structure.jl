@@ -536,7 +536,6 @@ as the filtering can be easily done when needed without these superfluous classe
 function generate_variable_indexing_support()
     add_objects!(node_with_slack_penalty, collect(indices(balance_penalty)))
     add_objects!(node_with_capacity_margin_penalty, collect(indices(capacity_margin_penalty)))
-    add_relationships!(unit__node__direction, [node__to_unit(); unit__to_node()])
     add_relationships!(connection__node__direction, [connection__from_node(); connection__to_node()])
 end
 

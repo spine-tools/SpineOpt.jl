@@ -280,7 +280,7 @@ function _is_longterm_index(ind)
     if haskey(ind, :node)
         _is_longterm_node(ind.node)
     elseif haskey(ind, :unit)
-        any(_is_longterm_node(n) for (n, _d) in unit__node__direction(unit=ind.unit))
+        any(_is_longterm_node(n) for (n, _d) in unit_flow(unit=ind.unit))
     else
         true
     end
