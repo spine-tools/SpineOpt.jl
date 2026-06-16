@@ -279,6 +279,113 @@
     end
 end
 
+function _representative_period_user_constraint_test_data(; with_investment=false)
+    repr_periods_mapping = Map([DateTime(2000, 1, 1), DateTime(2000, 1, 2)], [[1], [1]])
+    objects = [
+        ["model", "instance"],
+        ["temporal_block", "operations"],
+        ["temporal_block", "rp1"],
+        ["stochastic_structure", "deterministic"],
+        ["stochastic_scenario", "realisation"],
+        ["node", "power_node"],
+        ["unit", "power_plant_a"],
+        ["unit", "power_plant_b"],
+        ["user_constraint", "emission_limit"],
+    ]
+    relationships = [
+        ["model__default_temporal_block", ["instance", "operations"]],
+        ["model__default_temporal_block", ["instance", "rp1"]],
+        ["model__default_stochastic_structure", ["instance", "deterministic"]],
+        ["stochastic_structure__stochastic_scenario", ["deterministic", "realisation"]],
+        ["unit__to_node", ["power_plant_a", "power_node"]],
+        ["unit__to_node", ["power_plant_b", "power_node"]],
+        ["unit__to_node__user_constraint", ["power_plant_a", "power_node", "emission_limit"]],
+        ["unit__to_node__user_constraint", ["power_plant_b", "power_node", "emission_limit"]],
+    ]
+    object_parameter_values = [
+        ["model", "instance", "model_start", unparse_db_value(DateTime(2000, 1, 1))],
+        ["model", "instance", "model_end", unparse_db_value(DateTime(2000, 1, 3))],
+        ["model", "instance", "duration_unit", "hour"],
+        ["model", "instance", "model_type", "spineopt_standard"],
+        ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+        ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+        ["temporal_block", "operations", "resolution", unparse_db_value(Day(1))],
+        ["temporal_block", "operations", "representative_periods_mapping", unparse_db_value(repr_periods_mapping)],
+        ["temporal_block", "rp1", "resolution", unparse_db_value(Hour(1))],
+        ["temporal_block", "rp1", "block_start", unparse_db_value(DateTime(2000, 1, 1))],
+        ["temporal_block", "rp1", "block_end", unparse_db_value(DateTime(2000, 1, 2))],
+        ["temporal_block", "rp1", "representative_period_index", 1],
+        ["user_constraint", "emission_limit", "constraint_sense", :>=],
+    ]
+    relationship_parameter_values = [
+        [
+            "unit__to_node__user_constraint",
+            ["power_plant_a", "power_node", "emission_limit"],
+            "unit_flow_coefficient",
+            1,
+        ],
+        [
+            "unit__to_node__user_constraint",
+            ["power_plant_b", "power_node", "emission_limit"],
+            "unit_flow_coefficient",
+            2,
+        ],
+    ]
+    if with_investment
+        push!(objects, ["temporal_block", "investments"])
+        append!(
+            relationships,
+            [
+                ["model__default_investment_temporal_block", ["instance", "investments"]],
+                ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
+            ],
+        )
+        append!(
+            object_parameter_values,
+            [
+                ["temporal_block", "investments", "resolution", unparse_db_value(Day(2))],
+                ["unit", "power_plant_a", "candidate_units", 1],
+            ],
+        )
+    end
+    Dict(
+        :objects => objects,
+        :relationships => relationships,
+        :object_parameter_values => object_parameter_values,
+        :relationship_parameter_values => relationship_parameter_values,
+    )
+end
+
+function _test_representative_period_user_constraint_indices(; with_investment=false)
+    url_in = "sqlite://"
+    _load_test_data(url_in, _representative_period_user_constraint_test_data(; with_investment=with_investment))
+    m = run_spineopt(url_in; log_level=0, optimize=false)
+    constraint = m.ext[:spineopt].constraints[:user_constraint]
+    representative_t = time_slice(m; temporal_block=temporal_block(:rp1))
+    represented_t = Set(time_slice(m; temporal_block=temporal_block(:operations)))
+    observed_t = Set(ind.t for ind in keys(constraint))
+    @test length(constraint) == length(representative_t)
+    @test observed_t == Set(representative_t)
+    @test isempty(intersect(observed_t, represented_t))
+    @fetch unit_flow = m.ext[:spineopt].variables
+    uc = user_constraint(:emission_limit)
+    s = stochastic_scenario(:realisation)
+    n = node(:power_node)
+    d = direction(:to_node)
+    for t in representative_t
+        observed_con = constraint_object(constraint[(user_constraint=uc, stochastic_path=[s], t=t)])
+        expected_con = @build_constraint(
+            unit_flow[unit(:power_plant_a), n, d, s, t] + 2 * unit_flow[unit(:power_plant_b), n, d, s, t] >= 0
+        )
+        @test _is_constraint_equal(observed_con, expected_con)
+    end
+end
+
+@testset "representative period user constraints" begin
+    _test_representative_period_user_constraint_indices()
+    _test_representative_period_user_constraint_indices(; with_investment=true)
+end
+
 @testset "more user constraints" begin
     url_in = "sqlite://"
     test_data = Dict(
