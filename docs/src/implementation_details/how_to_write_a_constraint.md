@@ -351,7 +351,7 @@ We also need the flows in the opposite direction. Let's try again:
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in unit__flow()
+        for (u, n, d) in unit_flow()
     ]
 end
 ```
@@ -364,7 +364,7 @@ But we also need to make sure that the [capacity\_per\_unit](@ref) is specified 
 function my_unit_flow_capacity_constraint_indices(m)
     [
         (unit=u, node=n, direction=d)
-        for (u, n, d) in unit__flow()
+        for (u, n, d) in unit_flow()
         if capacity_per_unit(unit=u, node=n, direction=d) !== nothing
     ]
 end
