@@ -3790,13 +3790,6 @@
         ],
         [
             "user_constraint",
-            "include_in_non_representative_periods",
-            false,
-            "boolean_value_list",
-            "If using representative periods, this boolean parameter determines whether or not the constraint is enforced in non-representative periods."
-        ],
-        [
-            "user_constraint",
             "right_hand_side",
             0.0,
             null,
@@ -4391,12 +4384,6 @@
             "user_constraint",
             "constraint_sense",
             "str",
-            0
-        ],
-        [
-            "user_constraint",
-            "include_in_non_representative_periods",
-            "bool",
             0
         ]
     ],

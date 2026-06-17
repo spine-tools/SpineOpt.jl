@@ -183,7 +183,6 @@ const has_pressure = Parameter(:has_pressure)
 const has_ptdf = Parameter(:has_ptdf)
 const has_switched_variable = Parameter(:has_switched_variable)
 const has_voltage_angle = Parameter(:has_voltage_angle)
-const include_in_non_representative_periods = Parameter(:include_in_non_representative_periods)
 const initial_nonspin_units_shut_down = Parameter(:initial_nonspin_units_shut_down)
 const initial_nonspin_units_started_up = Parameter(:initial_nonspin_units_started_up)
 const investment_capacity_total_max_cumulative = Parameter(:investment_capacity_total_max_cumulative)
@@ -528,7 +527,6 @@ export has_pressure
 export has_ptdf
 export has_switched_variable
 export has_voltage_angle
-export include_in_non_representative_periods
 export initial_nonspin_units_shut_down
 export initial_nonspin_units_started_up
 export investment_capacity_total_max_cumulative

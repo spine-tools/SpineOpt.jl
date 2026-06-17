@@ -264,9 +264,14 @@ function constraint_user_constraint_indices(m::Model)
         (user_constraint=uc, stochastic_path=path, t=t)
         for uc in user_constraint()
         for (t, path) in t_lowest_resolution_path(
-            m, Iterators.flatten(user_constraint_all_indices(m; user_constraint=uc))
+            m,
+            Iterators.flatten(
+                user_constraint_all_indices(
+                    m; user_constraint=uc, temporal_block=temporal_block(is_representative=true)
+                )
+            ),
         )
-        if _is_representative(t) || include_in_non_representative_periods(user_constraint=uc)
+        if _is_representative(t)
     )
 end
 
