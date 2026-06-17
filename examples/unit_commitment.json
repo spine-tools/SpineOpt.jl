@@ -95,7 +95,7 @@
         [
             "unit_flow",
             [],
-            "A superclass for unit__to_node and node__to_unit classes.",
+            "A superclass for `unit__to_node` and `node__to_unit` classes.",
             281470681805658,
             true
         ],
@@ -588,7 +588,7 @@
             "fixed_annual_cost",
             null,
             null,
-            "To be implemented. Fixed annual operation and maintenance costs of the connection. Essentially, a cost coefficient on the number of installed connections and `connection_state_max` parameters. E.g. EUR/MWh/a."
+            "Fixed annual operation and maintenance costs of the connection."
         ],
         [
             "connection",
@@ -602,7 +602,7 @@
             "connection_min_factor",
             0.0,
             null,
-            "Minimum availability of the `connection`, acting as a multiplier on its `capacity_per_connection`. Typically between 0-1."
+            "Minimum availability of the `connection`"
         ],
         [
             "connection",
@@ -640,7 +640,7 @@
             "discount_rate_technology_specific",
             0.0,
             null,
-            "Connection-specific discount rate for calculating the investment costs of the connection. If not specified, the model discount rate is used."
+            "Connection-specific discount rate for calculating the investment costs of the connection."
         ],
         [
             "connection",
@@ -706,14 +706,14 @@
             "lifetime_constraint_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `connection_lifetime` constraint sense. The default '>=' represents minimum technical lifetime."
+            "A selector for `connection_lifetime` constraint sense."
         ],
         [
             "connection",
             "lifetime_economic",
             null,
             null,
-            "Economic lifetime for connection investments: the duration for investment cost payment."
+            "Economic lifetime of investments, i.e. the duration for investment cost payment."
         ],
         [
             "connection",
@@ -741,7 +741,7 @@
             "mga_investment_weight",
             1,
             null,
-            "Weight for scaling the MGA variables. For weighted-sum MGA method, the length of this weight given as an Array will determine the number of iterations."
+            "Weight for scaling the MGA variables."
         ],
         [
             "connection",
@@ -1087,7 +1087,7 @@
             "physics_type",
             "none",
             "grid_physics_list",
-            "Defines if the `grid` follows lodf or ptdf physics."
+            "Defines if the `grid` follows lodf, ptdf, or other types of special physics."
         ],
         [
             "grid",
@@ -1178,7 +1178,7 @@
             "decomposition_min_iterations",
             1.0,
             null,
-            "Specifies the minimum number of iterations for the model. Currently only used for the master problem within a decomposed structure"
+            "Specifies the minimum number of iterations for the model"
         ],
         [
             "model",
@@ -1192,7 +1192,7 @@
             "discount_year",
             null,
             null,
-            "The year to which all cashflows are discounted. Can be given either as a `DateTime` for a static point, or as a `Duration` for an point relative to the `model_start`."
+            "The year to which all cashflows are discounted."
         ],
         [
             "model",
@@ -1412,7 +1412,7 @@
             "window_duration",
             null,
             null,
-            "The duration of the window in case it differs from roll_forward"
+            "The duration of the window in case it differs from [roll_forward](@ref)."
         ],
         [
             "model",
@@ -1503,7 +1503,7 @@
             "existing_storages",
             1.0,
             null,
-            "The number of 'sub storages' aggregated to form the modelled `node`. The default value becomes zero if `storage_investment_count_max_cumulative` has been defined."
+            "The number of 'sub storages' aggregated to form the modelled `node`."
         ],
         [
             "node",
@@ -1531,7 +1531,7 @@
             "mga_storage_investment_weight",
             1,
             null,
-            "Weight for scaling the MGA variables. For weighted-sum MGA method, the length of this weight given as an Array will determine the number of iterations."
+            "Weight for scaling the Modelling to Generate Alternatives (MGA) variables."
         ],
         [
             "node",
@@ -1625,14 +1625,14 @@
             "storage_discount_rate_technology_specific",
             0.0,
             null,
-            "Storage-specific discount rate for calculating the investment costs of the storage. If not specified, the model discount rate is used."
+            "Storage-specific discount rate for calculating the investment costs."
         ],
         [
             "node",
             "storage_fixed_annual_cost",
             null,
             null,
-            "To be implemented. Fixed annual operation and maintenance costs of the storage. Essentially, a cost coefficient on the number of installed storages and `storage_state_max` parameters. E.g. EUR/MWh/a."
+            "Fixed annual operation and maintenance costs of the storage."
         ],
         [
             "node",
@@ -1698,7 +1698,7 @@
             "storage_lifetime_constraint_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `storage_lifetime` constraint sense. The default '>=' represents minimum technical lifetime."
+            "A selector for `storage_lifetime` constraint sense."
         ],
         [
             "node",
@@ -2309,14 +2309,14 @@
             "lifetime_constraint_sense",
             ">=",
             "constraint_sense_list",
-            "A selector for `unit_lifetime` constraint sense. The default '>=' represents minimum technical lifetime."
+            "A selector for `unit_lifetime` constraint sense."
         ],
         [
             "unit",
             "lifetime_economic",
             null,
             null,
-            "Economic lifetime for unit investments."
+            "Economic lifetime of investments, i.e. the duration for investment cost payment."
         ],
         [
             "unit",
@@ -2344,7 +2344,7 @@
             "mga_investment_weight",
             1,
             null,
-            "Weight for scaling the MGA variables. For weighted-sum MGA method, the length of this weight given as an Array will determine the number of iterations."
+            "Weight for scaling the MGA variables."
         ],
         [
             "unit",
@@ -2694,7 +2694,7 @@
             "flow_ratio_less_than_coefficient",
             null,
             null,
-            "Coefficient defining the ratio between two `unit_flow`s for an inequality like `uf1/uf2<=X`. Triggers flow ratio inequality constraint generation."
+            "Coefficient defining the ratio between two `unit_flow`s for an inequality like `uf1/uf2<=X`."
         ],
         [
             "unit_flow__unit_flow",
@@ -4592,12 +4592,6 @@
             "user_constraint",
             "constraint_sense",
             "str",
-            0
-        ],
-        [
-            "user_constraint",
-            "include_in_non_representative_periods",
-            "bool",
             0
         ]
     ],

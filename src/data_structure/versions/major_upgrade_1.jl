@@ -326,6 +326,10 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
         "unit__commodity",
         "unit__node__node"
     ]
+    # Remove obsolete parameters, (<class>, <parameter_name>)
+    parameters_to_be_removed = [
+        ("user_constraint", "include_in_non_representative_periods"),
+    ]
     # (original parameter value list, new parameter value list)
     lists_to_be_renamed = [
         ("commodity_physics_list", "grid_physics_list"),
@@ -367,6 +371,8 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     move_parameters_to_multidimensional_classes(db_url, parameters_to_multidimensional_classes, log_level)
     @log log_level 0 string("Removing classes...")
     remove_classes(db_url, classes_to_be_removed, log_level)
+    @log log_level 0 string("Removing parameters...")
+    remove_parameters(db_url, parameters_to_be_removed, log_level)
     @log log_level 0 string("Renaming parameter value lists...")
     rename_parameter_value_lists(db_url, lists_to_be_renamed, log_level)
     @log log_level 0 string("Renaming list values...")
@@ -782,6 +788,22 @@ function remove_classes(db_url, classes_to_be_removed, log_level)
             )
         catch
             @log log_level 0 string("Could not remove class $class_name.")
+        end
+    end
+end
+
+# Remove parameters and commit session
+function remove_parameters(db_url, parameters_to_be_removed, log_level)
+    for (class_name, parameter_name) in parameters_to_be_removed
+        try
+            pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+                "entity_class_name" => class_name, "name" => parameter_name)
+            )
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
+            )
+        catch
+            @log log_level 0 string("Could not remove parameter $parameter_name from $class_name.")
         end
     end
 end

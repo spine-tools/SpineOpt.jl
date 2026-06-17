@@ -489,11 +489,13 @@ function _test_major_upgrade_1()
 				("commodity", "commodity_lodf_tolerance"),
 				("unit", "fix_units_out_of_service"),
 				("unit", "units_unavailable"),
+				("user_constraint", "include_in_non_representative_periods")
 			],
 			:object_parameter_values => [
 				("commodity", "com", "commodity_lodf_tolerance", 1),
 				("unit", "u", "fix_units_out_of_service", 1),
 				("unit", "u", "units_unavailable", 2),
+				("user_constraint", "uc", "include_in_non_representative_periods", true),
 			],
 			:relationship_parameters => [
 				("unit__from_node", "fix_unit_flow"),
@@ -580,6 +582,8 @@ function _test_major_upgrade_1()
 		# Check classes to be removed.
 		@test !in(:unit__commodity, rel_class_names)
 		@test !in(:unit__node__node, rel_class_names) # Old class deleted.
+		# Check that parameters are removed.
+		@test !in(:include_in_non_representative_periods, param_names)
 		# Check parameter value lists, which we first need to parse.
 		parameter_value_lists = Dict()
 		for (list_name, list_value) in migrated_data["parameter_value_lists"]
