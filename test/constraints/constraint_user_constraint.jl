@@ -229,7 +229,7 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_user_constraint_slack_penalty" begin
+    @testset "constraint_user_constraint_slack_penalty_original_coarse_resolution" begin
         rhs = 10
         coefficient_for_node_state = 10
         penalty = 1000
@@ -244,6 +244,7 @@
             ]
             relationship_parameter_values = [
                 [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
+                [relationships[1]..., "coefficient_for_storages_invested_available", 0.0] # Required for the coarser original resolution caused by the default zeroes.
             ]
             SpineInterface.import_data(
                 url_in;
@@ -272,6 +273,52 @@
                     ,
                     Symbol(sense),
                     2 * rhs,
+                )
+                @test _is_constraint_equal(obs_con, exp_con)
+            end
+        end
+    end
+    @testset "constraint_user_constraint_slack_penalty_new_higher_resolution" begin
+        rhs = 10
+        coefficient_for_node_state = 10
+        penalty = 1000
+        @testset for sense in ("==", ">=", "<=")
+            _load_test_data(url_in, test_data)
+            objects = [["user_constraint", "constraint_x"]]
+            relationships = [["node__user_constraint", ["node_c", "constraint_x"]]]
+            object_parameter_values = [
+                ["user_constraint", "constraint_x", "user_constraint_slack_penalty", penalty],
+                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["user_constraint", "constraint_x", "right_hand_side", rhs],
+            ]
+            relationship_parameter_values = [
+                [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            constraint = m.ext[:spineopt].constraints[:user_constraint]
+            @test length(constraint) == 4
+            t1h_arr = time_slice(m; temporal_block=temporal_block(:hourly))
+            ucx = user_constraint(:constraint_x)
+            parent = stochastic_scenario(:parent)
+            var_n_state = m.ext[:spineopt].variables[:node_state]
+            var_uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
+            var_uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
+            node_c = node(:node_c)
+            for t1h in t1h_arr
+                obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t1h)])
+                exp_con = SpineOpt.build_sense_constraint(
+                    coefficient_for_node_state * var_n_state[node_c, parent, t1h]
+                    + var_uc_slack_pos[ucx, parent, t1h] - var_uc_slack_neg[ucx, parent, t1h]
+                    ,
+                    Symbol(sense),
+                    rhs,
                 )
                 @test _is_constraint_equal(obs_con, exp_con)
             end

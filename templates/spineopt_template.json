@@ -1936,7 +1936,7 @@
         [
             "connection__from_node__user_constraint",
             "coefficient_for_connection_flow",
-            0.0,
+            null,
             null,
             "Defines the user constraint coefficient on the connection flow variable in the from direction."
         ],
@@ -2100,21 +2100,21 @@
         [
             "connection__to_node__user_constraint",
             "coefficient_for_connection_flow",
-            0.0,
+            null,
             null,
             "Defines the user constraint coefficient on the connection flow variable in the to direction."
         ],
         [
             "connection__user_constraint",
             "coefficient_for_connections_invested",
-            0.0,
+            null,
             null,
             "Coefficient of `connections_invested` in the specific `user_constraint`"
         ],
         [
             "connection__user_constraint",
             "coefficient_for_connections_invested_available",
-            0.0,
+            null,
             null,
             "Coefficient of `connections_invested_available` in the specific `user_constraint`"
         ],
@@ -3075,28 +3075,28 @@
         [
             "node__user_constraint",
             "coefficient_for_demand",
-            0.0,
+            null,
             null,
             "Coefficient of the specified node's demand in the specified user constraint."
         ],
         [
             "node__user_constraint",
             "coefficient_for_node_state",
-            0.0,
+            null,
             null,
             "Coefficient of the specified node's state variable in the specified user constraint."
         ],
         [
             "node__user_constraint",
             "coefficient_for_storages_invested",
-            0.0,
+            null,
             null,
             "Coefficient of the specified node's storage investment variable in the specified user constraint."
         ],
         [
             "node__user_constraint",
             "coefficient_for_storages_invested_available",
-            0.0,
+            null,
             null,
             "Coefficient of the specified node's storages invested available variable in the specified user constraint."
         ],
@@ -3700,28 +3700,28 @@
         [
             "unit__user_constraint",
             "coefficient_for_units_invested",
-            0.0,
+            null,
             null,
             "Coefficient of the `units_invested` variable in the specified `user_constraint`."
         ],
         [
             "unit__user_constraint",
             "coefficient_for_units_invested_available",
-            0.0,
+            null,
             null,
             "Coefficient of the `units_invested_available` variable in the specified `user_constraint`."
         ],
         [
             "unit__user_constraint",
             "coefficient_for_units_on",
-            0.0,
+            null,
             null,
             "Coefficient of a `units_on` variable for a custom `user_constraint`."
         ],
         [
             "unit__user_constraint",
             "coefficient_for_units_started_up",
-            0.0,
+            null,
             null,
             "Coefficient of a `units_started_up` variable for a custom `user_constraint`."
         ],
@@ -3777,7 +3777,7 @@
         [
             "unit_flow__user_constraint",
             "coefficient_for_unit_flow",
-            0.0,
+            null,
             null,
             "Coefficient of a `unit_flow` variable for a custom `user_constraint`."
         ],

@@ -222,6 +222,7 @@ function generate_direction_and_reorganise_classes()
     # Reorganise the dimensions of some affected classes
     und_uc = [:unit, :node, :direction, :user_constraint]
     und_und = [:unit1, :node1, :direction1, :unit2, :node2, :direction2]
+    cnd_uc = [:connection, :node, :direction, :user_constraint]
     dimensions_by_class = [
         node__to_unit => [:unit, :node, :direction],
         unit_flow__user_constraint__node__unit__user_constraint => und_uc,
@@ -230,6 +231,8 @@ function generate_direction_and_reorganise_classes()
         unit_flow__unit_flow__node__unit__unit__node => und_und,
         unit_flow__unit_flow__unit__node__node__unit => und_und,
         unit_flow__unit_flow__unit__node__unit__node => und_und,
+        connection__to_node__user_constraint => cnd_uc,
+        connection__from_node__user_constraint => cnd_uc,
     ]
     for (cls, dims) in dimensions_by_class
         reorder_dimensions!(cls, dims)
@@ -809,7 +812,7 @@ function generate_unit_commitment_parameters()
             (x.unit for x in indices(ramp_limits_up)),
             (x.unit for x in indices(ramp_limits_down)),
             (x.unit2 for x in indices(flow_ratio_start_flow) if flow_ratio_start_flow(; x...) != 0),
-            (x.unit for x in indices(coefficient_for_units_started_up) if coefficient_for_units_started_up(; x...) != 0),
+            (x.unit for x in indices(coefficient_for_units_started_up)),
             (u for (st, u) in stage__output__unit(output=output.((:units_started_up, :units_shut_down)))),
             !isempty(stage__output(output=output.((:units_started_up, :units_shut_down)))) ? unit() : (),
         )),
@@ -830,7 +833,7 @@ function generate_unit_commitment_parameters()
             indices(units_on_non_anticipativity_time, unit),
             indices(online_count_fix, unit),
             unit(is_candidate=true),
-            (x.unit for x in indices(coefficient_for_units_on) if coefficient_for_units_on(; x...) != 0),
+            (x.unit for x in indices(coefficient_for_units_on)),
             (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
             (x.unit for x in indices(ramp_limits_up)),
             (x.unit for x in indices(ramp_limits_down)),

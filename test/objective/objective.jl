@@ -609,7 +609,38 @@ function test_balance_penalty()
 end
 
 function test_user_constraint_slack_penalty()
-    @testset "user_constraint_slack_penalty" begin
+    @testset "user_constraint_slack_penalty_original" begin
+        url_in = _test_objective_setup()
+        uc_slack_penalty = 0.6
+        objects = [["user_constraint", "ucx"]]
+        relationships = [["node__user_constraint", ["node_a", "ucx"]]]
+        object_parameter_values = [
+            [objects[1]..., "user_constraint_slack_penalty", uc_slack_penalty],
+        ]
+        relationship_parameter_values = [
+            [relationships[1]..., "coefficient_for_demand", 0] # Now needs some coefficient (even zero) to triggen constraint at all.
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values = relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
+        uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
+        ucx = user_constraint(:ucx)
+        s_parent = stochastic_scenario(:parent)
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        observed_obj = objective_function(m)
+        expected_obj = (
+            + 2 * uc_slack_penalty * uc_slack_neg[ucx, s_parent, t2h]
+            + 2 * uc_slack_penalty * uc_slack_pos[ucx, s_parent, t2h]
+        )
+        @test observed_obj == expected_obj
+    end
+    @testset "user_constraint_slack_penalty_no_constraint_generated" begin
         url_in = _test_objective_setup()
         uc_slack_penalty = 0.6
         objects = [["user_constraint", "ucx"]]
@@ -623,19 +654,13 @@ function test_user_constraint_slack_penalty()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
-        
         m = run_spineopt(url_in; log_level=0, optimize=false)
         uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
         uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
-        ucx = user_constraint(:ucx)
-        s_parent = stochastic_scenario(:parent)
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-        observed_obj = objective_function(m)
-        expected_obj = (
-            + 2 * uc_slack_penalty * uc_slack_neg[ucx, s_parent, t2h]
-            + 2 * uc_slack_penalty * uc_slack_pos[ucx, s_parent, t2h]
-        )
-        @test observed_obj == expected_obj
+        constraint = m.ext[:spineopt].constraints[:user_constraint]
+        @test isempty(uc_slack_neg)
+        @test isempty(uc_slack_pos)
+        @test isempty(constraint)
     end
 end
 
