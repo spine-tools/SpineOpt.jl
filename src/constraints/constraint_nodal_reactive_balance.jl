@@ -22,14 +22,13 @@
 
     AC OPF reactive power balance equation for nodes.
 """
-
 function add_constraint_nodal_reactive_balance!(m::Model)
     _add_constraint!(m, :nodal_reactive_balance, constraint_nodal_reactive_balance_indices, 
         _build_constraint_nodal_reactive_balance)
 end
 
 function _build_constraint_nodal_reactive_balance(m, n, s, t1)
-    @fetch unit_flow_reactive, connection_flow_reactive = m.ext[:spineopt].variables
+    @fetch unit_flow_reactive, connection_flow_reactive, node_voltage_squared = m.ext[:spineopt].variables
 
     @build_constraint(
         # Reactive power flows from connections (can be negative)
@@ -79,7 +78,11 @@ function _build_constraint_nodal_reactive_balance(m, n, s, t1)
                 );
                 init=0,
             )
-            == demand_reactive(m; node=n, stochastic_scenario=s, t=t1)
+            == 
+            # reactive power consumption of the shunt susceptance
+            - node_voltage_squared[n, s, t1] * 
+                shunt_susceptance(m; node=n, stochastic_scenario=s, t=t1)
+            + demand_reactive(m; node=n, stochastic_scenario=s, t=t1)
     )
 end
 

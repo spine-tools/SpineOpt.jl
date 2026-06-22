@@ -132,7 +132,16 @@ function add_variable_node_voltage_squared!(m::Model)
         m,
         :node_voltage_squared,
         node_voltage_squared_indices;
-        lb=min_voltage,
-        ub=constant(1.0)
+        lb=node_voltage_sq_lb,
+        ub=node_voltage_sq_ub
+        #ub=constant(1.0)
     )
+end
+
+function node_voltage_sq_ub(m; node, kwargs...)
+    (max_voltage(m; node=node, kwargs...) )^2
+end
+
+function node_voltage_sq_lb(m; node, kwargs...)
+    (min_voltage(m; node=node, kwargs...) )^2
 end

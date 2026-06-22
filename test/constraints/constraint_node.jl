@@ -1646,7 +1646,7 @@ end
 """
     test_ac_opf_singleconn_lossless()
 
-    Tests the optimal investment in an AC connection when there is only reactive flow.
+    Tests the investment in an AC connection when there is only reactive flow.
 """
 function test_ac_opf_singleconn_lossless()
     @testset "ac_opf_singleconn_lossless" begin
