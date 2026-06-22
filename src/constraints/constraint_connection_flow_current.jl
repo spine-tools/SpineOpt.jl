@@ -23,7 +23,7 @@
 add_constraint_connection_flow_current!(m::Model)
 
 Limit the maximum squared current of a `connection` which has AC flow, for all 
-    `node_voltageproduct_indices` indices. 
+    `acflow_nodepair_indices` indices. 
 
 
 """
@@ -53,7 +53,7 @@ function constraint_connection_flow_current_indices(m)
     (
         (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t)
         for conn in indices(connection_current_max)
-        for (n1, n2, s, t) in node_voltageproduct_indices(m; connection=conn)
+        for (n1, n2, s, t) in acflow_nodepair_indices(m; connection=conn)
     )
 end
 
@@ -75,7 +75,7 @@ function add_constraint_connection_flow_current_old!(m::Model)
                 * connection_current_max[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
         )   
         for conn in indices(connection_current_max)
-        for (n1, n2, s, t) in node_voltageproduct_indices(m; connection=conn)
+        for (n1, n2, s, t) in acflow_nodepair_indices(m; connection=conn)
     )
 end
 

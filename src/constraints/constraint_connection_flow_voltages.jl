@@ -25,7 +25,6 @@ for all `connection_flow_voltage` indices based on the voltages which are define
 for pairs of nodes in the voltage variables. Notice that the voltage variables 
 in most cases have been defined for a pair of adjacent nodes (buses), either
 representing the magnitude of their dot product or cross product.
-
 """
 function add_constraint_connection_flow_reactive!(m::Model)
     _add_constraint!(m, :connection_flow_reactive, constraint_connection_flow_voltage_indices, 
@@ -47,7 +46,7 @@ function  _build_constraint_connection_flow_reactive(m, conn, ng, d, s, t)
                 (node_voltage_squared[n1, s, t] - node_voltageproduct_cosine[n1, n2, s, t] )
                 - connection_conductance(m, connection=conn, stochastic_scenario=s, t=t)
                 * node_voltageproduct_sine[n1, n2, s, t]
-                for (n1, n2, s, t) in node_voltageproduct_indices(
+                for (n1, n2, s, t) in acflow_nodepair_indices(
                     m; node1=ng, connection=conn, stochastic_scenario=s, t=t)
                 ;
                 init=0,
@@ -59,7 +58,7 @@ function  _build_constraint_connection_flow_reactive(m, conn, ng, d, s, t)
                 * (node_voltage_squared[n2, s, t] - node_voltageproduct_cosine[n1, n2, s, t])
                 + connection_conductance(m, connection=conn, stochastic_scenario=s, t=t)
                 * node_voltageproduct_sine[n1, n2, s, t]
-                for (n1, n2, s, t) in node_voltageproduct_indices(
+                for (n1, n2, s, t) in acflow_nodepair_indices(
                     m; node2=ng, connection=conn, stochastic_scenario=s, t=t)
                 ;
                 init=0,
@@ -94,7 +93,7 @@ function _build_constraint_connection_flow_real(m, conn, ng, d, s, t)
                 (node_voltageproduct_cosine[n1, n2, s, t] - node_voltage_squared[n1, s, t]) 
             - connection_susceptance(m, connection=conn, stochastic_scenario=s, t=t) 
             * node_voltageproduct_sine[n1, n2, s, t]
-            for (n1, n2, s, t) in node_voltageproduct_indices(
+            for (n1, n2, s, t) in acflow_nodepair_indices(
                 m; node1=ng, connection=conn, stochastic_scenario=s, t=t)
             ;
             init=0,
@@ -106,7 +105,7 @@ function _build_constraint_connection_flow_real(m, conn, ng, d, s, t)
                 (node_voltageproduct_cosine[n1, n2, s, t] - node_voltage_squared[n2, s, t]) 
             + connection_susceptance(m, connection=conn, stochastic_scenario=s, t=t) 
             * node_voltageproduct_sine[n1, n2, s, t]
-            for (n1, n2, s, t) in node_voltageproduct_indices(
+            for (n1, n2, s, t) in acflow_nodepair_indices(
                 m; node2=ng, connection=conn, stochastic_scenario=s, t=t)
             ;
             init=0,

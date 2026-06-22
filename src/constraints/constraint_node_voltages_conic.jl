@@ -31,7 +31,7 @@
 function add_constraint_node_voltages_conic!(m::Model)
     instance = m.ext[:spineopt].instance
     if ac_opf_model_formulation(model=instance) == :ac_opf_conic
-        _add_constraint!(m, :node_voltages_conic, node_voltageproduct_indices, 
+        _add_constraint!(m, :node_voltages_conic, acflow_nodepair_indices, 
             _build_constraint_node_voltages_conic_socp)
     else
         _add_constraint!(m, :node_voltages_conic, constraint_node_voltages_conic_indices, 
@@ -80,7 +80,7 @@ function add_constraint_node_voltages_conic_oldstyle!(m::Model)
             )
              <= 0
         )
-        for (n1, n2, s, t) in node_voltageproduct_indices(m)
+        for (n1, n2, s, t) in acflow_nodepair_indices(m)
             for (theta, fii) in tangency_points
     )
 end
@@ -95,7 +95,7 @@ function constraint_node_voltages_conic_indices(m::Model)
         [(20, fii) for fii in 0:20:359] 
     (
         (n1, n2, s, t, theta, fii)
-        for (n1, n2, s, t) in node_voltageproduct_indices(m)
+        for (n1, n2, s, t) in acflow_nodepair_indices(m)
                 for (theta, fii) in tangency_points
     )
 end

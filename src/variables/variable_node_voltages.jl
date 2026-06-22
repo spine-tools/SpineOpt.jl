@@ -18,15 +18,17 @@
 #############################################################################
 
 """
-    node_voltageproduct_indices(    )
+    function acflow_nodepair_indices()
 
-A list of `NamedTuple`s corresponding to indices for the `node_voltageproduct_cosine` and 
-`node_voltageproduct_sine` variables. These are defined for all pairs of nodes (node1, node2) 
-where the relationship parameter connection_has_ac_flow(node1, node2, connection) has been
-set as true.
+Produces a list of `NamedTuple`s corresponding to indices for the `node_voltageproduct_cosine` and 
+`node_voltageproduct_sine` variables. These are defined for all pairs of nodes 
+(node1=source node, node2=destination node) where the relationship parameter 
+connection_has_ac_flow(node1, node2, connection) has been set as true, 
+as well as all time slices and stochastic scenarios relevant for the connection
+flows to the destination node.
 
 """
-function node_voltageproduct_indices(
+function acflow_nodepair_indices(
     m::Model;
     node1 = anything,
     node2 = anything,
@@ -35,7 +37,6 @@ function node_voltageproduct_indices(
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing)
 )
-
     ind = unique(
         (node1=n1, node2=n2, stochastic_scenario=s, t=t)
         for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection)
@@ -43,7 +44,6 @@ function node_voltageproduct_indices(
             for (conn_, n_, d, s, t) in connection_flow_indices(m; connection=conn, node=n2, direction=direction(:to_node))
            
     )
-    
     # filter the index set with respect to other indices
     f(ind) = _index_in(ind; node1=node1, node2=node2, stochastic_scenario=stochastic_scenario, t=t)
     filter(f, ind)            
@@ -92,7 +92,7 @@ function add_variable_node_voltageproduct_cosine!(m::Model)
     add_variable!(
         m,
         :node_voltageproduct_cosine,
-        node_voltageproduct_indices
+        acflow_nodepair_indices
     )
 end
 
@@ -115,7 +115,7 @@ function add_variable_node_voltageproduct_sine!(m::Model)
     add_variable!(
         m,
         :node_voltageproduct_sine,
-        node_voltageproduct_indices
+        acflow_nodepair_indices
     )
 end
 

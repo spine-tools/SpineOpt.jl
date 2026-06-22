@@ -1557,7 +1557,6 @@ function test_ac_opf_singleconn_inve()
         # println(value(uflow[unit(:unit_x), node(:node_c), 
         #     direction(:to_node), stochastic_scenario(:parent), time_slices[1]])) 
         
-        # println(SpineOpt._ac_flow_connection_node_indices_wdir(m))
         @test value(cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]]) == 1.0
     end
 end
