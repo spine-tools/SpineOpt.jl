@@ -1272,7 +1272,7 @@ function _collect_output_values(m)
                 if v1 !== nothing
                     v1
                 else
-                    output_resolution(output=out, stage=nothing, _strict=false)
+                    output_resolution(output=out, report=nothing, stage=nothing, _strict=false)
                 end
             end
             values[key] = _output_value_by_entity(by_suffix, model_end(model=m.ext[:spineopt].instance), overwrite, out_res)
