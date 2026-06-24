@@ -66,6 +66,7 @@
     "parameter_value_lists": [
         ["ac_opf_model_formulation_list", "ac_opf_linear"],
         ["ac_opf_model_formulation_list", "ac_opf_conic"],
+        ["ac_opf_model_formulation_list", "ac_opf_lindistflow"],
         ["balance_type_list", "balance_type_group"],
         ["balance_type_list", "balance_type_node"],
         ["balance_type_list", "balance_type_none"],
