@@ -88,12 +88,14 @@ the voltage phasors and V is the voltage magnitude. node1 corresponds to the "fr
 node2 the "to node".
 """
 function add_variable_node_voltageproduct_cosine!(m::Model)
-    t0 = _analysis_time(m)
-    add_variable!(
-        m,
-        :node_voltageproduct_cosine,
-        acflow_nodepair_indices
-    )
+    instance = m.ext[:spineopt].instance
+    if ac_opf_model_formulation(model=instance) ∈ [:ac_opf_conic, :ac_opf_linear]
+        add_variable!(
+            m,
+            :node_voltageproduct_cosine,
+            acflow_nodepair_indices
+        )
+    end
 end
 
 """
@@ -111,12 +113,14 @@ node1.
 
 """
 function add_variable_node_voltageproduct_sine!(m::Model)
-    t0 = _analysis_time(m)
-    add_variable!(
-        m,
-        :node_voltageproduct_sine,
-        acflow_nodepair_indices
-    )
+    instance = m.ext[:spineopt].instance
+    if ac_opf_model_formulation(model=instance) ∈ [:ac_opf_conic, :ac_opf_linear]
+        add_variable!(
+            m,
+            :node_voltageproduct_sine,
+            acflow_nodepair_indices
+        )
+    end
 end
 
 """

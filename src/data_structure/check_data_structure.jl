@@ -194,6 +194,7 @@ function check_parameter_values()
     check_model_start_smaller_than_end()
     check_operating_points()
     check_ramp_parameters()
+    check_node_voltages_consistency()
 end
 
 function check_model_start_smaller_than_end()
@@ -265,5 +266,29 @@ function _check_shutdown_ramp_consistency()
     _check(
         isempty(error_indices),
         "shut_down_limit must be smaller or equal to minimum_operating_point + ramp_down_limit for $(join(error_indices, ", ", " and "))"
+    )
+end
+
+"""
+    check_node_voltages_consistency()
+
+Check that each `node` in AC flow connections has `has_voltage` set.
+"""
+function check_node_voltages_consistency()
+    
+    n0 = unique(
+            vcat(
+                [n1 for (c, n1, n2) in indices(connection_has_ac_flow)
+                    if connection_has_ac_flow(node1=n1, node2=n2, connection=c) == true],
+                [n2 for (c, n1, n2) in indices(connection_has_ac_flow)
+                    if connection_has_ac_flow(node1=n1, node2=n2, connection=c) == true]
+        )
+    )
+    warnings = nw = [n for n in n0 if has_voltage(node=n) == false]
+    _check_warn(
+        isempty(warnings),
+        "Missing `node_voltage` definition ",
+        "for some `node` group(s): $(join(warnings, ", ", " and ")) - ",
+        "these `nodes` have been used as end points in AC flow connections.",
     )
 end

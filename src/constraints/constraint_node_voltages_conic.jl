@@ -33,7 +33,7 @@ function add_constraint_node_voltages_conic!(m::Model)
     if ac_opf_model_formulation(model=instance) == :ac_opf_conic
         _add_constraint!(m, :node_voltages_conic, acflow_nodepair_indices, 
             _build_constraint_node_voltages_conic_socp)
-    else
+    elseif ac_opf_model_formulation(model=instance) == :ac_opf_linear
         _add_constraint!(m, :node_voltages_conic, constraint_node_voltages_conic_indices, 
             _build_constraint_node_voltages_conic)
     end

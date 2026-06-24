@@ -1,5 +1,6 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021 Spine project consortium
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -20,15 +21,18 @@
 """
 add_constraint_connection_flow_reactive!(m::Model)
 
-Limit the maximum in/out `connection_flow_reactive` of a `connection` 
+Calculate the in/out `connection_flow_reactive` of a `connection` 
 for all `connection_flow_voltage` indices based on the voltages which are defined 
 for pairs of nodes in the voltage variables. Notice that the voltage variables 
 in most cases have been defined for a pair of adjacent nodes (buses), either
 representing the magnitude of their dot product or cross product.
 """
 function add_constraint_connection_flow_reactive!(m::Model)
-    _add_constraint!(m, :connection_flow_reactive, constraint_connection_flow_voltage_indices, 
-        _build_constraint_connection_flow_reactive)
+    instance = m.ext[:spineopt].instance
+    if ac_opf_model_formulation(model=instance) ∈ [:ac_opf_conic, :ac_opf_linear]
+        _add_constraint!(m, :connection_flow_reactive, constraint_connection_flow_voltage_indices, 
+            _build_constraint_connection_flow_reactive)
+    end
 end
 
 function  _build_constraint_connection_flow_reactive(m, conn, ng, d, s, t) 
@@ -70,13 +74,16 @@ end
 """
 add_constraint_connection_flow_real!(m::Model)
 
-Limit the maximum in/out `connection_flow` of a `connection`, referring to the
+Calculate the in/out `connection_flow` of a `connection`, referring to the
 real power transfer, for all `connection_flow_voltage` indices based on the voltages 
 which are defined for pairs of nodes in the voltage variables.
 """
 function add_constraint_connection_flow_real!(m::Model)
-    _add_constraint!(m, :connection_flow_real, constraint_connection_flow_voltage_indices, 
-        _build_constraint_connection_flow_real)
+    instance = m.ext[:spineopt].instance
+    if ac_opf_model_formulation(model=instance) ∈ [:ac_opf_conic, :ac_opf_linear]
+        _add_constraint!(m, :connection_flow_real, constraint_connection_flow_voltage_indices, 
+            _build_constraint_connection_flow_real)
+    end
 end
 
 function _build_constraint_connection_flow_real(m, conn, ng, d, s, t)

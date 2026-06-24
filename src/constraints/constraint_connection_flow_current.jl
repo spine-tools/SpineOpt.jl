@@ -28,8 +28,11 @@ Limit the maximum squared current of a `connection` which has AC flow, for all
 
 """
 function add_constraint_connection_flow_current!(m::Model)
-    _add_constraint!(m, :connection_flow_current, constraint_connection_flow_current_indices, 
-        _build_constraint_connection_flow_current)
+    instance = m.ext[:spineopt].instance
+    if ac_opf_model_formulation(model=instance) ∈ [:ac_opf_conic, :ac_opf_linear]
+        _add_constraint!(m, :connection_flow_current, constraint_connection_flow_current_indices, 
+            _build_constraint_connection_flow_current)
+    end
 end
 
 function _build_constraint_connection_flow_current(m, conn, n1, n2, s, t)
