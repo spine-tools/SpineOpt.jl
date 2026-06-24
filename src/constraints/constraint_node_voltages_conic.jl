@@ -86,13 +86,15 @@ function add_constraint_node_voltages_conic_oldstyle!(m::Model)
 end
 
 function constraint_node_voltages_conic_indices(m::Model)
-    
-    tangency_points = [(0, 0)] ∪
-        [(2.0, fii) for fii in 0:20:359] ∪ 
-        [(4.0, fii) for fii in 0:10:359] ∪ 
-        [(6.0, fii) for fii in 0:10:359] ∪ 
-        [(10, fii) for fii in 0:20:359] ∪ 
-        [(20, fii) for fii in 0:20:359] 
+    instance = m.ext[:spineopt].instance
+    # tangency_points = [(0, 0)] ∪
+    #     [(2.0, fii) for fii in 0:20:359] ∪ 
+    #     [(4.0, fii) for fii in 0:10:359] ∪ 
+    #     [(6.0, fii) for fii in 0:10:359] ∪ 
+    #     [(10, fii) for fii in 0:20:359] ∪ 
+    #     [(20, fii) for fii in 0:20:359] 
+    tangency_points = collect(zip(ac_flow_tangency_point_theta(model=instance),
+        ac_flow_tangency_point_phi(model=instance)))
     (
         (n1, n2, s, t, theta, fii)
         for (n1, n2, s, t) in acflow_nodepair_indices(m)

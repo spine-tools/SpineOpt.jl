@@ -45,6 +45,7 @@ function preprocess_data_structure()
     generate_benders_iteration()
     generate_is_boundary()
     generate_connection_admittance()
+    generate_default_ac_flow_tangency_points()
     generate_unit_commitment_parameters()
     generate_starting_point()
     generate_is_representative()
@@ -785,6 +786,33 @@ function generate_connection_admittance()
         connection_conductance = $connection_conductance
         connection_susceptance = $connection_susceptance
     end
+end
+
+function generate_default_ac_flow_tangency_points()
+    instance = first(model())
+    default_tangency_points = [(0, 0)] ∪
+        [(2.0, fii) for fii in 0:20:359] ∪ 
+        [(4.0, fii) for fii in 0:10:359] ∪ 
+        [(6.0, fii) for fii in 0:10:359] ∪ 
+        [(10, fii) for fii in 0:20:359] ∪ 
+        [(20, fii) for fii in 0:20:359] 
+
+    if isnothing(ac_flow_tangency_point_theta(model=instance))
+        theta = [x[1] for x in default_tangency_points]
+        new_pvals = Dict(:ac_flow_tangency_point_theta => parameter_value(theta) )
+        add_object_parameter_values!(model, Dict(instance => new_pvals))
+    end
+    if isnothing(ac_flow_tangency_point_phi(model=instance))
+        phi = [x[2] for x in default_tangency_points]
+        new_pvals = Dict(:ac_flow_tangency_point_phi => parameter_value(phi) )
+        add_object_parameter_values!(model, Dict(instance => new_pvals))
+    end
+    _check(
+        length(ac_flow_tangency_point_theta(model=instance)) == 
+        length(ac_flow_tangency_point_phi(model=instance)), 
+        "Length of `ac_flow_tangency_point_theta` must equal length of",
+        "`ac_flow_tangency_point_phi`."
+    )
 end
 
 function generate_unit_commitment_parameters()
