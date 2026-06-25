@@ -83,6 +83,9 @@ function _build_constraint_nodal_reactive_balance(m, n, s, t1)
             - node_voltage_squared[n, s, t1] * 
                 shunt_susceptance(m; node=n, stochastic_scenario=s, t=t1)
             + demand_reactive(m; node=n, stochastic_scenario=s, t=t1)
+            /
+            (has_voltage(node=n) ? power_base(node=n) : 1 )
+
     )
 end
 

@@ -40,7 +40,7 @@ function  _build_constraint_connection_flow_reactive(m, conn, ng, d, s, t)
         node_voltageproduct_sine, node_voltage_squared = m.ext[:spineopt].variables
 
         @build_constraint(
-             + connection_flow_reactive[conn, ng, d, s, t] * 1.0 / connection_power_base(connection=conn)
+             + connection_flow_reactive[conn, ng, d, s, t] 
                 
            ==
            # if the node is an "in" node for the connection the summed value is multiplied by -1
@@ -91,7 +91,7 @@ function _build_constraint_connection_flow_real(m, conn, ng, d, s, t)
         node_voltageproduct_sine, node_voltage_squared = m.ext[:spineopt].variables
 
     @build_constraint(
-        connection_flow[conn, ng, d, s, t] * 1.0 / connection_power_base(connection=conn)
+        connection_flow[conn, ng, d, s, t] 
         ==
         # if the node is an "in" node for the connection, the value is multiplied by -1
         # because the direction is taken account in node balance equations
