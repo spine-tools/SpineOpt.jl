@@ -416,7 +416,6 @@ function test_node_voltage_singleconn_lindistflow()
         # aliases for the model OPF variables
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
         connflow = m.ext[:spineopt].variables[:connection_flow]
-             
         @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.92 atol=0.0001
     end
 end

@@ -30,7 +30,7 @@ representing the magnitude of their dot product or cross product.
 function add_constraint_connection_flow_reactive!(m::Model)
     instance = m.ext[:spineopt].instance
     if ac_opf_model_formulation(model=instance) ∈ [:ac_opf_conic, :ac_opf_linear]
-        _add_constraint!(m, :connection_flow_reactive, constraint_connection_flow_voltage_indices, 
+        _add_constraint!(m, :connection_flow_reactive, constraint_connection_flow_acflow_indices, 
             _build_constraint_connection_flow_reactive)
     end
 end
@@ -81,7 +81,7 @@ which are defined for pairs of nodes in the voltage variables.
 function add_constraint_connection_flow_real!(m::Model)
     instance = m.ext[:spineopt].instance
     if ac_opf_model_formulation(model=instance) ∈ [:ac_opf_conic, :ac_opf_linear]
-        _add_constraint!(m, :connection_flow_real, constraint_connection_flow_voltage_indices, 
+        _add_constraint!(m, :connection_flow_real, constraint_connection_flow_acflow_indices, 
             _build_constraint_connection_flow_real)
     end
 end
@@ -122,18 +122,26 @@ end
 
 
 """
-    constraint_connection_flow_voltage_indices(m::Model)
+    constraint_connection_flow_acflow_indices(m::Model)
 
     The connection flow indices for which AC flow constraint for connection flows 
     are set. The connection must have AC flow set, and the node in question must 
     have voltage. This assumes that the connection only has two end nodes.
 """
-function constraint_connection_flow_voltage_indices(m::Model)
+function constraint_connection_flow_acflow_indices(m::Model;
+    connection=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything)
     connection_flow_indices(m,
-        connection = unique(x.connection 
+        connection = intersect(connection, x.connection 
                 for x in indices(connection_has_ac_flow) 
                       if connection_has_ac_flow(; x...) == true),
-        node=SpineOpt.node(has_voltage=true)
+        node=SpineOpt.node(has_voltage=true),
+        direction=direction,
+        stochastic_scenario=stochastic_scenario,
+        t=t
     )
 end
 

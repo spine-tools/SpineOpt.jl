@@ -202,6 +202,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_connection_intact_flow_ptdf!,
             add_constraint_connection_lifetime!,
+            add_constraint_connection_maxpower_lindistflow!,
             add_constraint_connection_min_flow!,
             add_constraint_connection_reactive_flow_capacity!,
             add_constraint_connection_unitary_gas_flow!,
