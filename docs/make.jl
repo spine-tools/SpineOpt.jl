@@ -71,6 +71,7 @@ pages = [
         "Ramping" => joinpath("advanced_concepts", "ramping.md"),
         "Lossless nodal DC power flows" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
         "PTDF-Based Powerflow" => joinpath("advanced_concepts", "powerflow.md"),
+        "AC power flow" => joinpath("advanced_concepts", "AC_power_flow.md"),
         "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
         "User Constraints" => joinpath("advanced_concepts", "user_constraints.md"),
     ],
@@ -98,7 +99,7 @@ populate_empty_chapters!(pages, joinpath(path, "src"))
 # Create and deploy the documentation
 makedocs(
     sitename = "SpineOpt.jl",
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true", size_threshold = 409600, assets = ["assets/style.css"]),  # uncomment to deploy locally
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true", size_threshold = 480000, assets = ["assets/style.css"]),  # uncomment to deploy locally
     pages = pages,
     warnonly = true,
 )
