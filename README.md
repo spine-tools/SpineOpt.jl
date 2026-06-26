@@ -5,6 +5,12 @@
 
 A Julia package containing a state-of-the-art energy system optimization model.
 
+>[!IMPORTANT]
+>SpineOpt v1.0.0 employs an updated input data structure, renaming most parameters and restructuring some classes!
+>While automatic input database migration is implemented, please remain vigilant for potential errors.
+>It is recommended to back up databases migrating from v0.x to v1.x.
+>Any developments or fixes on the older versions should go to the [`v0.x` branch](https://github.com/spine-tools/SpineOpt.jl/tree/v0.x).
+
 ## Why use SpineOpt?
 
 ![Critical Review](.github/figs/1-s2.0-S2211467X2300086X-gr9.jpg)
