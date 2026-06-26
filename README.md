@@ -5,11 +5,6 @@
 
 A Julia package containing a state-of-the-art energy system optimization model.
 
->[!IMPORTANT]
->INES-compatible SpineOpt version and ongoing development is currently available through the `datastructure_update` branch.
->You can install this SpineOpt v1.0.0 from Julia package manager via `pkg> add SpineOpt#datastructure_update`.
->The v1.0.0 version will be officially released ASAP, latest by the end of June 2026.
-
 ## Why use SpineOpt?
 
 ![Critical Review](.github/figs/1-s2.0-S2211467X2300086X-gr9.jpg)
@@ -23,10 +18,10 @@ There are several ways to stay in touch with the community and to get help with 
 
 1. To keep up to date with official announcements, [subscribe to our mail list](https://www.tools-for-energy-system-modelling.org/subscribe/).
 2. To keep up to date with informal announcements, check out [this discussion](https://github.com/spine-tools/SpineOpt.jl/discussions/849)
-3. Typically, we organize a monthly meeting to connect with users, identify problems and exchange experiences. However, this year we present you a yearlong series of events and webinars to show of the fruits of our labour during the mopo project. The program of which can be found on the [spine tools project page](https://github.com/spine-tools).
-4. [Gitter](https://app.gitter.im/#/room/#spine-tools_community:gitter.im) (i.e. Matrix) chat service. You need to register but allows to ask quick questions and hopefullly get quick answers.
-5. [Discussion forum](https://github.com/spine-tools/SpineOpt.jl/discussions/categories/support) (support section) can be used when you don't know how to get something done or you don't quite know why something isn't working. It's highly appreciated if other users can contribute by helping each other (developers are short on time).
-6. [Issue tracker](https://github.com/spine-tools/SpineOpt.jl/issues) should be used only when there is a missing feature or something should work but it's not working. Update your tools and test with latest software before submitting an issue. In case of new feature, make sure there is no existing issue. Issues reporting bugs should provide sufficient information to enable locating and fixing the bug.
+3. Typically, we organize a monthly meeting to connect with users, identify problems and exchange experiences. However, this year we present you a yearlong series of events and webinars to show of the fruits of our labour during the Mopo project. The program of which can be found on the [spine tools project page](https://github.com/spine-tools).
+4. [Gitter](https://app.gitter.im/#/room/#spine-tools_community:gitter.im) (i.e. Matrix) chat service. You need to register, but allows asking quick questions and hopefully getting quick answers.
+5. [Discussion forum](https://github.com/spine-tools/SpineOpt.jl/discussions/categories/support) (support section) can be used when you don't know how to get something done, or you don't quite know why something isn't working. It's highly appreciated if other users can contribute by helping each other (developers are short on time).
+6. [Issue tracker](https://github.com/spine-tools/SpineOpt.jl/issues) should be used only when there is a missing feature or something should work but isn't. Update your tools and test with latest software before submitting an issue. In case of new feature, make sure there is no existing issue. Issues reporting bugs should provide sufficient information to enable locating and fixing the bug.
 
 ### Getting started
 
@@ -38,7 +33,7 @@ The chapter also explains how to set up a minimal [workflow](https://spine-tools
 
 If any issues arise during the first two steps, you can consult the [trouble shooting](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/troubleshooting/) section.
 
-Once you have succesfully installed and verified the correct functioning of SpineOpt, you can start learning how to use SpineOpt. To that end you can visit the tutorials chapter of the documentation. The tutorials cover the different features of SpineOpt (the underlying files of the tutorials are part of our tests so these should always be up to date, though the text/images may lag behind some times).
+Once you have successfully installed and verified the correct functioning of SpineOpt, you can start learning how to use SpineOpt. To that end you can visit the tutorials chapter of the documentation. The tutorials cover the different features of SpineOpt (the underlying files of the tutorials are part of our tests, so these should always be up-to-date, though the text/images may lag behind some times).
 
 ### Reporting Issues and Contributing
 
