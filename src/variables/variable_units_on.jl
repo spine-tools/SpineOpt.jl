@@ -104,12 +104,40 @@ function add_variable_units_on!(m::Model)
     )
 end
 
+"""
+    _get_units_on(m, u, s, t)
+
+Safe get `units_on` variable for the given indices,
+replaced with `existing_units` plus [`_get_units_invested_available`](@ref)
+if `units_on` doesn't exist.
+
+Intended to be used in situations where either `units_on` or its proxy is required,
+e.g. minimum load and ramping constraints.
+Currently, this doesn't handle complex time and stochastic structures.
+Defining identical structures for `units_on` and investments
+should hopefully bypass most issues.
+"""
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+        (
+            number_of_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+            + _get_units_invested_available(m, u, s, t)
+            - _get_units_out_of_service(m, u, s, t)
+        )
     end
 end
 
-function _get_units_started_up(m, u, s, t)
-    get(m.ext[:spineopt].variables[:units_started_up], (u, s, t), 0)
+"""
+    _get_units_on_indices(m::Model, unit::Object; kwargs...)
+
+Indexing selector for investments without online variables.
+See [`_get_units_on`](@ref).
+"""
+function _get_units_on_indices(m::Model, unit::Object; kwargs...)
+    inds = (unit=unit, kwargs...)
+    return (
+        online_variable_type(unit=unit) == :unit_online_variable_type_none && is_candidate(unit=unit) ?
+        units_invested_available_indices(m; inds...) :
+        units_on_indices(m; inds...)
+    )
 end

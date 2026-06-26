@@ -153,6 +153,7 @@ function test_constraint_units_available()
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
+            @test SpineOpt._get_units_out_of_service(m, key...) == 0
         end
     end
 end
@@ -191,6 +192,7 @@ function test_constraint_units_available_units_unavailable()
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
+            @test SpineOpt._get_units_out_of_service(m, key...) == units_unavailable
         end
     end
     @testset "constraint_units_available_units_unavailable_default" begin
@@ -225,6 +227,7 @@ function test_constraint_units_available_units_unavailable()
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
+            @test SpineOpt._get_units_out_of_service(m, key...) == units_unavailable
         end
     end
 end
@@ -525,6 +528,81 @@ function test_constraint_minimum_operating_point()
                 observed_con = constraint_object(constraint[con_key])
                 @test _is_constraint_equal(observed_con, expected_con) 
             end
+        end
+    end
+    @testset "constraint_minimum_operating_point_online_variable_type_none" begin
+        uc = 100
+        mop = 0.25
+        ooscf = 1
+        eu = 2
+        icmc = 3 
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", uc],
+            ["unit__from_node", ["unit_ab", "node_a"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", uc],
+            ["unit__to_node", ["unit_ab", "node_b"], "minimum_operating_point", mop],
+        ]
+        relationships = [
+            # Investment structure needs to match online structure in this case.
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        object_parameter_values = [
+            ["unit", "unit_ab", "number_of_units", eu],
+            ["unit", "unit_ab", "candidate_units", icmc],
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_none"],
+            ["unit", "unit_ab", "units_unavailable", ooscf],
+        ]
+        url_in = _test_constraint_unit_setup()
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+        active_vars = (:unit_flow, :units_mothballed, :node_injection, :units_invested, :units_invested_available)
+        for (k,v) in m.ext[:spineopt].variables
+            @test in(k, active_vars) ? !isempty(v) : isempty(v)
+        end
+        active_cons = (:minimum_operating_point, :unit_flow_capacity, :nodal_balance, :node_injection, :units_invested_transition, :units_invested_available)
+        for (k,v) in m.ext[:spineopt].constraints
+            @test in(k, active_cons) ? !isempty(v) : isempty(v)
+        end
+        constraint = m.ext[:spineopt].constraints[:minimum_operating_point]
+        s_child = stochastic_scenario(:child)
+        s_parent = stochastic_scenario(:parent)
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = only(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        for (key, con) in constraint
+            (u, n, d, s_path, t) = key
+            @test u.name == :unit_ab
+            @test (n.name, d.name) in ((:node_a, :from_node), (:node_b, :to_node))
+            @test (n.name, s_path, t) in (
+                (:node_a, [s_parent], t1h1),
+                (:node_a, [s_child], t1h2),
+                (:node_b, [s_parent, s_child], t2h)
+            )
+            rhs = mop * uc * (eu - ooscf) * duration(t)
+            lhs = if duration(t) == 1
+               (
+                    + var_unit_flow[u, n, d, only(s_path), t]
+                    - mop * uc * var_units_invested_available[u, only(s_path), t]
+                )
+            else
+                (
+                    + duration(t) * var_unit_flow[u, n, d, s_parent, t]
+                    - mop * uc * (
+                        var_units_invested_available[u, s_parent, t1h1]
+                        + var_units_invested_available[u, s_child, t1h2]
+                    )
+                )
+            end
+            expected_con = @build_constraint(lhs >= rhs)
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
         end
     end
 end
