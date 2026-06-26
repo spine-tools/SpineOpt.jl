@@ -911,7 +911,7 @@ function _calculate_duals_cplex(m; log_level=3)
     CPLEX === nothing && return false
     cplex_model = _get_cplex_model(m)
     cplex_model isa CPLEX.Optimizer || return false
-    prob_type = CPLEX.CPXgetprobtype(cplex_model.env, cplex_modeil.lp)
+    prob_type = CPLEX.CPXgetprobtype(cplex_model.env, cplex_model.lp)
     @assert prob_type == CPLEX.CPXPROB_MILP
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
     @timelog log_level 1 "Optimizing LP..." ret = CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
