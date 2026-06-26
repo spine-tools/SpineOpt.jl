@@ -29,6 +29,7 @@ function add_variable_units_invested!(m::Model)
         :units_invested,
         units_invested_available_indices;
         lb=constant(0),
+        bin=units_invested_available_bin,
         int=units_invested_available_int,
         fix_value=investment_count_fix_new,
         initial_value=investment_count_initial_new,

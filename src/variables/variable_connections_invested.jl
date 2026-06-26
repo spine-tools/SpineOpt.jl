@@ -31,6 +31,7 @@ function add_variable_connections_invested!(m::Model)
         lb=constant(0),
         fix_value=investment_count_fix_new,
         initial_value=investment_count_initial_new,
+        bin=connections_invested_available_bin,
         int=connections_invested_available_int,
         required_history_period=maximum_parameter_value(lifetime_technical),
     )
