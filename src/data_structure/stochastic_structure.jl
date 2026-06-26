@@ -76,13 +76,13 @@ function _stochastic_dag(stochastic_structure::Object, window_start::DateTime, w
         invalid_children = setdiff(children, valid_children)
         if !isempty(invalid_children)
             @warn """
-            prunning scenarios: $(join(invalid_children, ", ", " and ")), from $(stochastic_structure)'s dag, 
+            pruning scenarios: $(join(invalid_children, ", ", " and ")), from $(stochastic_structure)'s dag, 
             since their value of `weight_relative_to_parents` is not specified
             """
         end
-        for (child, child_relative_weight) in children_relative_weight
+        for child in valid_children
             scen_start[child] = haskey(scen_start, child) ? min(scen_start[child], scenario_end) : scenario_end
-            scen_weight[child] = get(scen_weight, child, 0) + scen_weight[scen] * child_relative_weight
+            scen_weight[child] = get(scen_weight, child, 0) + scen_weight[scen] * children_relative_weight[child]
         end
         append!(scenarios, valid_children)
     end

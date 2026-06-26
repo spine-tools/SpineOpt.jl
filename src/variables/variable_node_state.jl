@@ -31,7 +31,7 @@ function node_state_indices(
     t=anything,
     temporal_block=temporal_block(is_representative=true),
 )
-    node = intersect(node, SpineOpt.node(has_state=true))
+    node = intersect(node, SpineOpt.node(storage_active=true))
     temporal_block = _vcat(temporal_block, block__starting_point(temporal_block1=temporal_block))
     (
         (node=n, stochastic_scenario=s, t=t)
@@ -48,7 +48,7 @@ function node_state_longterm_indices(
     t=anything,
     temporal_block=temporal_block(is_representative=false),
 )
-    node = intersect(node, SpineOpt.node(has_state=true, is_longterm_storage=true))
+    node = intersect(node, SpineOpt.node(storage_active=true, storage_longterm_active=true))
     (
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(
@@ -58,15 +58,15 @@ function node_state_longterm_indices(
 end
 
 function node_state_lb(m; node, kwargs...)
-    node_state_lower_limit(m; node=node, kwargs...) * (
-        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+    node_state_lower_limit(m; node=node, kwargs..., _default=NaN) * (
+        + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
     )
 end
 
 function node_state_ub(m; node, kwargs...)
     node_state_capacity(m; node=node, kwargs..., _default=NaN) * (
-        + number_of_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
-        + something(candidate_storages(m; node=node, kwargs...), 0)
+        + existing_storages(m; node=node, kwargs..., _default=_default_nb_of_storages(node))
+        + something(storage_investment_count_max_cumulative(m; node=node, kwargs...), 0)
     )
 end
 
@@ -82,8 +82,8 @@ function add_variable_node_state!(m::Model)
         node_state_indices;
         lb=node_state_lb,
         ub=node_state_ub,
-        fix_value=fix_node_state,
-        initial_value=initial_node_state,
+        fix_value=storage_state_fix,
+        initial_value=storage_state_initial,
     )
 end
 
@@ -94,7 +94,7 @@ function add_variable_node_state_longterm!(m::Model)
         node_state_longterm_indices;
         lb=node_state_lb,
         ub=node_state_ub,
-        fix_value=fix_node_state,
-        initial_value=initial_node_state,
+        fix_value=storage_state_fix,
+        initial_value=storage_state_initial,
     )
 end

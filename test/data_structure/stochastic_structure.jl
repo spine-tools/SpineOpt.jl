@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "stochastic structure" begin
+function _load_stochastic_structure_test_data()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -64,8 +64,8 @@
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-04T00:00:00")],
             ["temporal_block", "only_block", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             [
@@ -155,10 +155,13 @@
         ],
     )
     _load_test_data(url_in, test_data)
-    using_spinedb(url_in, SpineOpt)
-    
-    m = run_spineopt(url_in, log_level=0, optimize=false)
+    return url_in
+end
 
+function _test_stochastic_structure()
+    url_in = _load_stochastic_structure_test_data()
+    using_spinedb(url_in, SpineOpt)
+    m = run_spineopt(url_in, log_level=0, optimize=false)
     @testset "node_stochastic_time_indices" begin
         @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 1
         @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))) == 2
@@ -237,4 +240,72 @@
             ),
         ) == 0.0
     end
+end
+
+function _test_reduced_stochastic_structure()
+    url_in = _load_stochastic_structure_test_data()
+    new_data = Dict( # Add data for a reduced structure c, with only a->a1, but no a2
+        :objects => [["stochastic_structure", "structure_c"]],
+        :relationships => [
+            ["stochastic_structure__stochastic_scenario", ["structure_c", "scenario_a"]],
+            ["stochastic_structure__stochastic_scenario", ["structure_c", "scenario_a1"]],
+        ],
+        :relationship_parameter_values =>[
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["structure_c", "scenario_a"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "1D"),
+            ],
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["structure_c", "scenario_a"],
+                "weight_relative_to_parents",
+                1.0,
+            ],
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["structure_c", "scenario_a1"],
+                "weight_relative_to_parents",
+                1.0,
+            ],
+        ],
+    )
+    SpineInterface.import_data(url_in, new_data, "add data")
+    using_spinedb(url_in, SpineOpt)
+    mm = model(:instance)
+    mwin = (model_start(model=mm), model_end(model=mm))
+    sstruct_a = SpineOpt._stochastic_dag(stochastic_structure(:structure_a), mwin...)
+    sstruct_b = SpineOpt._stochastic_dag(stochastic_structure(:structure_b), mwin...)
+    sstruct_c = SpineOpt._stochastic_dag(stochastic_structure(:structure_c), mwin...)
+    @testset "reduced_stochastic_structures" begin
+        # Test stochastic structure a
+        @test length(sstruct_a) == 4
+        for sname in (:scenario_a, :scenario_a1, :scenario_a2, :scenario_b)
+            @test in(stochastic_scenario(sname), keys(sstruct_a))
+        end
+        for sname in (:scenario_b1, :scenario_b2)
+            @test !in(stochastic_scenario(sname), keys(sstruct_a))
+        end
+        # Test stochastic structure b
+        @test length(sstruct_b) == 4
+        for sname in (:scenario_a, :scenario_b, :scenario_b1, :scenario_b2)
+            @test in(stochastic_scenario(sname), keys(sstruct_b))
+        end
+        for sname in (:scenario_a1, :scenario_a2)
+            @test !in(stochastic_scenario(sname), keys(sstruct_b))
+        end
+        # Test stochastic struct c
+        for sname in (:scenario_a, :scenario_a1)
+            @test in(stochastic_scenario(sname), keys(sstruct_c))
+        end
+        for sname in (:scenario_a2, :scenario_b, :scenario_b1, :scenario_b2)
+            @test !in(stochastic_scenario(sname), keys(sstruct_c))
+        end
+    end
+end
+
+@testset "stochastic structure" begin
+    _test_stochastic_structure()
+    _test_reduced_stochastic_structure()
 end

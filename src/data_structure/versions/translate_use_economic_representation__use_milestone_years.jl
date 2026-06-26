@@ -18,11 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-	translate_use_economic_representation__use_milestone_years(db_url, log_level)
+	translate_use_economic_representation__use_milestone_years(db_url, log_level; kwargs...)
 
 Shift the `use_economic_representation` and `use_milestone_years` parameters into `multiyear_economic_discounting`.
 """
-function translate_use_economic_representation__use_milestone_years(db_url, log_level)
+function translate_use_economic_representation__use_milestone_years(db_url, log_level; kwargs...)
 	@log log_level 0 "Replacing `use_economic_representation` and `use_milestone_years` 
 	by `multiyear_economic_discounting`..."
 	

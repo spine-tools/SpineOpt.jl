@@ -35,7 +35,7 @@ function add_constraint_cyclic_node_state!(m::Model)
 end
 
 function _build_constraint_cyclic_node_state(m::Model, n, s_path, t_start, t_end, blk)
-    node_state = if is_longterm_storage(node=n) && !is_representative(temporal_block=blk)
+    node_state = if storage_longterm_active(node=n) && !is_representative(temporal_block=blk)
         m.ext[:spineopt].variables[:node_state_longterm]
     else
         m.ext[:spineopt].variables[:node_state]

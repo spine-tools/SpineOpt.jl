@@ -21,8 +21,8 @@
 @doc raw"""
 In a multi-commodity setting, there can be different commodities entering/leaving a certain
 technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
-emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) must be specified
-for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship,
+emissions, or other commodities (e.g., water, steel). The [capacity\_per\_unit](@ref) must be specified
+for at least one [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship,
 in order to trigger a constraint on the maximum commodity flows to this location in each time step.
 When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
 
@@ -31,25 +31,25 @@ When desirable, the capacity can be specified for a group of nodes (e.g. combine
 & \sum_{
         n \in ng
 }
-    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{is\_reserve\_node}_{(n)} \right]\\
+    v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[ \neg p^{reserve\_active}_{(n)} \right]\\
 & + \sum_{
         n \in ng
 }
     v^{unit\_flow}_{(u,n,d,s,t)} \cdot \left[
-        p^{is\_reserve\_node}_{(n)} \land p^{upward\_reserve}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
+        p^{reserve\_active}_{(n)} \land p^{reserve\_upward}_{(n)} \land \neg p^{is\_non\_spinning}_{(n)} 
     \right]\\
 & \le \\
-& p^{unit\_capacity}_{(u,ng,d,s,t)} \cdot p^{unit\_availability\_factor}_{(u,s,t)} \cdot p^{unit\_conv\_cap\_to\_flow}_{(u,ng,d,s,t)} \\
+& p^{capacity\_per\_unit}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u,ng,d,s,t)} \\
 & \cdot ( \\
 & \qquad v^{units\_on}_{(u,s,t)} \\
-& \qquad - \left(1 - p^{shut\_down\_limit}_{(u,ng,d,s,t)}\right)
+& \qquad - \left(1 - p^{ramp\_limits\_shutdown}_{(u,ng,d,s,t)}\right)
 \cdot \left( v^{units\_shut\_down}_{(u,s,t+1)}
 + \sum_{
     n \in ng
 } v^{nonspin\_units\_shut\_down}_{(u,n,s,t)} \right) \\
-& \qquad - \left(1 - p^{start\_up\_limit}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
+& \qquad - \left(1 - p^{ramp\_limits\_startup}_{(u,ng,d,s,t)}\right) \cdot v^{units\_started\_up}_{(u,s,t)} \\
 & ) \\
-& \forall (u,ng,d) \in indices(p^{unit\_capacity}) \\
+& \forall (u,ng,d) \in indices(p^{capacity\_per\_unit}) \\
 & \forall (s,t)
 \end{aligned}
 ```
@@ -62,7 +62,7 @@ where
 ```
 
 !!! note
-    The conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted
+    The conversion factor [capacity\_to\_flow\_conversion\_factor](@ref) has a default value of `1`, but can be adjusted
     in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
 
 !!! note
@@ -79,17 +79,17 @@ where
     The details are omitted for brevity.
 
 See also
-[is\_reserve\_node](@ref),
-[upward\_reserve](@ref),
+[reserve\_active](@ref),
+[reserve\_upward](@ref),
 [is\_non\_spinning](@ref),
-[unit\_capacity](@ref),
-[unit\_availability\_factor](@ref),
-[unit\_conv\_cap\_to\_flow](@ref),
-[start\_up\_limit](@ref),
-[shut\_down\_limit](@ref).
+[capacity\_per\_unit](@ref),
+[availability\_factor](@ref),
+[capacity\_to\_flow\_conversion\_factor](@ref),
+[ramp\_limits\_startup](@ref),
+[ramp\_limits\_shutdown](@ref).
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    if use_tight_compact_formulations(model=m.ext[:spineopt].instance, _default=false)
+    if tight_compact_formulations_active(model=m.ext[:spineopt].instance, _default=false)
         _add_constraint_unit_flow_capacity_tight_compact!(m)
     else
         _add_constraint_unit_flow_capacity_simple!(m)
@@ -180,27 +180,27 @@ end
 function _shutdown_margin(m, u, ng, d, s, t, case, part)
     if part.name == :one
         # (F - SD)
-        1 - _shut_down_limit(m, u, ng, d, s, t)
+        1 - _ramp_limits_shutdown(m, u, ng, d, s, t)
     else
         # max(SU - SD, 0)
-        max(_start_up_limit(m, u, ng, d, s, t) - _shut_down_limit(m, u, ng, d, s, t), 0)
+        max(_ramp_limits_startup(m, u, ng, d, s, t) - _ramp_limits_shutdown(m, u, ng, d, s, t), 0)
     end
 end
 
 function _startup_margin(m, u, ng, d, s, t, case, part)
     if case.name == :min_up_time_le_time_step && part.name == :one
         # max(SD - SU, 0)
-        max(_shut_down_limit(m, u, ng, d, s, t) - _start_up_limit(m, u, ng, d, s, t), 0)
+        max(_ramp_limits_shutdown(m, u, ng, d, s, t) - _ramp_limits_startup(m, u, ng, d, s, t), 0)
     else
         # (F - SU)
-        1 - _start_up_limit(m, u, ng, d, s, t)
+        1 - _ramp_limits_startup(m, u, ng, d, s, t)
     end
 end
 
 function constraint_unit_flow_capacity_tight_compact_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
-        for (u, ng, d) in indices(unit_capacity)
+        for (u, ng, d) in indices(capacity_per_unit)
         for t in t_highest_resolution(
             m,
             Iterators.flatten(
@@ -212,7 +212,7 @@ function constraint_unit_flow_capacity_tight_compact_indices(m::Model)
             m,
             Iterators.flatten(
                 (
-                    units_on_indices(m; unit=u, t=[t_overlaps_t(m; t=t); t_next]),
+                    _get_units_on_indices(m, u; t=[t_overlaps_t(m; t=t); t_next]),
                     unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
                     _switch(
                         d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
@@ -251,7 +251,7 @@ function _unit_capacity_constraint_subpaths(path, u, t)
     t_flow_duration = end_(t) - start(t)
     for s in path
         mut = min_up_time(unit=u, stochastic_scenario=s, t=t, _default=nothing)
-        mut = align_variable_duration_unit(mut, start(t))
+        mut = dt_fixed_duration(mut, start(t), Val(:forward))
         mut_gt_dur = mut === nothing || mut > t_flow_duration
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
             # Outcome change, store current subpath and start a new one
@@ -278,8 +278,8 @@ end
 function constraint_unit_flow_capacity_indices(m::Model)
     (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(unit_capacity)
-        if has_online_variable(unit=u) || members(ng) != [ng]
+        for (u, ng, d) in indices(capacity_per_unit)
+        if has_online_variable(unit=u) || is_candidate(unit=u) || members(ng) != [ng]
         for t in t_highest_resolution(
             m,
             Iterators.flatten(
@@ -290,7 +290,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
             m,
             Iterators.flatten(
                 (
-                    units_on_indices(m; unit=u, t=t_overlaps_t(m; t=t)),
+                    _get_units_on_indices(m, u; t=t_overlaps_t(m; t=t)),
                     unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
                 )
             )
@@ -299,9 +299,9 @@ function constraint_unit_flow_capacity_indices(m::Model)
 end
 
 function _is_regular_node(n, d)
-    !is_reserve_node(node=n) || (
-        is_reserve_node(node=n)
-        && _switch(d; to_node=upward_reserve, from_node=downward_reserve)(node=n)
+    !reserve_active(node=n) || (
+        reserve_active(node=n)
+        && _switch(d; to_node=reserve_upward, from_node=reserve_downward)(node=n)
         && !is_non_spinning(node=n)
     )
 end

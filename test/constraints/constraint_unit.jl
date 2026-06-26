@@ -46,7 +46,7 @@ function _test_constraint_unit_setup()
             ["model__stochastic_structure", ["instance", "stochastic"]],
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
-            ["unit__from_node", ["unit_ab", "node_a"]],
+            ["node__to_unit", ["node_a", "unit_ab"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_ab", "node_c"]],
             ["node__temporal_block", ["node_a", "hourly"]],
@@ -67,13 +67,13 @@ function _test_constraint_unit_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "instance", "max_gap", "0.05"],
-            ["model", "instance", "max_iterations", "2"],
+            ["model", "instance", "decomposition_max_gap", "0.05"],
+            ["model", "instance", "decomposition_max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
             ["unit", "unit_ab", "units_on_cost", 1],  # Just to have units_on variables
         ],
         :relationship_parameter_values => [
@@ -97,8 +97,8 @@ function _test_constraint_unit_reserves_setup()
         ["node", "node_group_bc", "reserves_bc"],
     ]
     relationships = [
-        ["unit__from_node", ["unit_ab", "node_group_a"]],
-        ["unit__from_node", ["unit_ab", "reserves_a"]],
+        ["node__to_unit", ["node_group_a", "unit_ab"]],
+        ["node__to_unit", ["reserves_a", "unit_ab"]],
         ["unit__to_node", ["unit_ab", "node_group_bc"]],
         ["unit__to_node", ["unit_ab", "reserves_bc"]],
         ["node__temporal_block", ["reserves_a", "hourly"]],
@@ -107,8 +107,8 @@ function _test_constraint_unit_reserves_setup()
         ["node__stochastic_structure", ["reserves_bc", "deterministic"]],
     ]
     object_parameter_values = [
-        ["node", "reserves_a", "is_reserve_node", true],
-        ["node", "reserves_bc", "is_reserve_node", true],
+        ["node", "reserves_a", "reserve_active", true],
+        ["node", "reserves_bc", "reserve_active", true],
     ]
     url_in = _test_constraint_unit_setup()
     SpineInterface.import_data(
@@ -124,13 +124,13 @@ end
 function test_constraint_units_available()
     @testset "constraint_units_available" begin
         url_in = _test_constraint_unit_setup()
-        number_of_units = 4
-        candidate_units = 3
-        unit_availability_factor = 0.5
+        existing_units = 4
+        investment_count_max_cumulative = 3
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "existing_units", existing_units],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -144,15 +144,16 @@ function test_constraint_units_available()
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        u = unit(:unit_ab)
         @testset for (s, t) in zip(scenarios, time_slices)
-            key = (unit(:unit_ab), s, t)
+            key = (u, s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= number_of_units + var_u_inv_av)
-            con_key = (unit(:unit_ab), s, t)
-            con = constraint[con_key...]
+            expected_con = @build_constraint(var_u_on <= existing_units + var_u_inv_av)
+            con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
+            @test SpineOpt._get_units_out_of_service(m, key...) == 0
         end
     end
 end
@@ -160,15 +161,15 @@ end
 function test_constraint_units_available_units_unavailable()
     @testset "constraint_units_available_units_unavailable" begin
         url_in = _test_constraint_unit_setup()
-        number_of_units = 4
-        candidate_units = 3 
-        units_unavailable = 1
-        unit_availability_factor = 0.5
+        existing_units = 4
+        investment_count_max_cumulative = 3 
+        out_of_service_count_fix = 1
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "units_unavailable", units_unavailable],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "existing_units", existing_units],
+            ["unit", "unit_ab", "out_of_service_count_fix", out_of_service_count_fix],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -182,27 +183,29 @@ function test_constraint_units_available_units_unavailable()
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        u = unit(:unit_ab)
         @testset for (s, t) in zip(scenarios, time_slices)
-            key = (unit(:unit_ab), s, t)
+            key = (u, s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= number_of_units + var_u_inv_av - units_unavailable)
-            con_key = (unit(:unit_ab), s, t)
+            expected_con = @build_constraint(var_u_on <= existing_units + var_u_inv_av - out_of_service_count_fix)
+            con_key = (u, s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
+            @test SpineOpt._get_units_out_of_service(m, key...) == out_of_service_count_fix
         end
     end
     @testset "constraint_units_available_units_unavailable_default" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 3
-        number_of_units_when_candidates_units = 0 
-        units_unavailable = 1
-        unit_availability_factor = 0.5
+        investment_count_max_cumulative = 3
+        existing_units_when_candidates_units = 0 
+        out_of_service_count_fix = 1
+        availability_factor = 0.5
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["unit", "unit_ab", "units_unavailable", units_unavailable],
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+            ["unit", "unit_ab", "out_of_service_count_fix", out_of_service_count_fix],
+            ["unit", "unit_ab", "availability_factor", availability_factor],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -220,20 +223,24 @@ function test_constraint_units_available_units_unavailable()
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_on <= number_of_units_when_candidates_units + var_u_inv_av - units_unavailable)
+            expected_con = @build_constraint(
+                var_u_on <= existing_units_when_candidates_units + var_u_inv_av - out_of_service_count_fix
+            )
             con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
+            @test SpineOpt._get_units_out_of_service(m, key...) == out_of_service_count_fix
         end
     end
+    # Add a test for a unit with units_out_of_service variable
 end
 
 function test_constraint_unit_state_transition()
     @testset "constraint_unit_state_transition" begin
         url_in = _test_constraint_unit_setup()
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "online_variable_type", "integer"],
             ["unit", "unit_ab", "start_up_cost", 1],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -268,8 +275,8 @@ function test_units_out_of_service_transition()
     @testset "constraint_units_out_of_service_transition" begin
         url_in = _test_constraint_unit_setup()
         object_parameter_values = [
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"],
-            ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+            ["unit", "unit_ab", "online_variable_type", "integer"],
+            ["unit", "unit_ab", "outage_variable_type", "integer"],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -305,11 +312,11 @@ function test_constraint_unit_flow_capacity_simple()
         ucap = 100
         uaf = 0.5
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", ucap],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", ucap],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", ucap],
         ]
         object_parameter_values = [
-            ["unit", "unit_ab", "unit_availability_factor", uaf],
+            ["unit", "unit_ab", "availability_factor", uaf],
             ["model", "instance", "use_tight_compact_formulations", false],
         ]
         SpineInterface.import_data(
@@ -362,12 +369,12 @@ function test_constraint_unit_flow_capacity_tight_and_compact()
         sul = 0.4
         sdl = 0.3
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", ucap],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "start_up_limit", sul],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "shut_down_limit", sdl],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", ucap],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "start_up_limit", sul],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "shut_down_limit", sdl],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", ucap],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_startup", sul],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_shutdown", sdl],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", ucap],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_startup", sul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_shutdown", sdl],
         ]
         @testset for (case_name, part_names) in (
             :min_up_time_gt_time_step => (:one,), :min_up_time_le_time_step => (:one, :two), 
@@ -376,11 +383,11 @@ function test_constraint_unit_flow_capacity_tight_and_compact()
                 url_in = _test_constraint_unit_reserves_setup()
                 mup = unparse_db_value(case_name == :min_up_time_gt_time_step ? Minute(61) : Hour(1))
                 object_parameter_values = [
-                    ["unit", "unit_ab", "unit_availability_factor", uaf],
+                    ["unit", "unit_ab", "availability_factor", uaf],
                     ["unit", "unit_ab", "min_up_time", mup],
-                    ["node", "reserves_a", "downward_reserve", dr],
-                    ["node", "reserves_bc", "upward_reserve", ur],
-                    ["model", "instance", "use_tight_compact_formulations", true],
+                    ["node", "reserves_a", "reserve_downward", dr],
+                    ["node", "reserves_bc", "reserve_upward", ur],
+                    ["model", "instance", "tight_compact_formulations_active", true],
                 ]
                 SpineInterface.import_data(
                     url_in;
@@ -455,16 +462,16 @@ function test_constraint_minimum_operating_point()
         uc = 100
         mop = 0.25
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
             url_in = _test_constraint_unit_reserves_setup()
             object_parameter_values = [
-                ["node", "reserves_a", "upward_reserve", ur],
-                ["node", "reserves_bc", "downward_reserve", dr],
+                ["node", "reserves_a", "reserve_upward", ur],
+                ["node", "reserves_bc", "reserve_downward", dr],
                 ["node", "reserves_a", "is_non_spinning", ur],
                 ["node", "reserves_bc", "is_non_spinning", dr],
             ]        
@@ -527,6 +534,81 @@ function test_constraint_minimum_operating_point()
             end
         end
     end
+    @testset "constraint_minimum_operating_point_online_variable_type_none" begin
+        uc = 100
+        mop = 0.25
+        ooscf = 1
+        eu = 2
+        icmc = 3 
+        relationship_parameter_values = [
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", uc],
+            ["node__to_unit", ["node_a", "unit_ab"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", uc],
+            ["unit__to_node", ["unit_ab", "node_b"], "minimum_operating_point", mop],
+        ]
+        relationships = [
+            # Investment structure needs to match online structure in this case.
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+        ]
+        object_parameter_values = [
+            ["unit", "unit_ab", "existing_units", eu],
+            ["unit", "unit_ab", "investment_count_max_cumulative", icmc],
+            ["unit", "unit_ab", "online_variable_type", "none"],
+            ["unit", "unit_ab", "out_of_service_count_fix", ooscf],
+        ]
+        url_in = _test_constraint_unit_setup()
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+        active_vars = (:unit_flow, :units_mothballed, :node_injection, :units_invested, :units_invested_available)
+        for (k,v) in m.ext[:spineopt].variables
+            @test in(k, active_vars) ? !isempty(v) : isempty(v)
+        end
+        active_cons = (:minimum_operating_point, :unit_flow_capacity, :nodal_balance, :node_injection, :units_invested_transition, :units_invested_available)
+        for (k,v) in m.ext[:spineopt].constraints
+            @test in(k, active_cons) ? !isempty(v) : isempty(v)
+        end
+        constraint = m.ext[:spineopt].constraints[:minimum_operating_point]
+        s_child = stochastic_scenario(:child)
+        s_parent = stochastic_scenario(:parent)
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = only(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        for (key, con) in constraint
+            (u, n, d, s_path, t) = key
+            @test u.name == :unit_ab
+            @test (n.name, d.name) in ((:node_a, :from_node), (:node_b, :to_node))
+            @test (n.name, s_path, t) in (
+                (:node_a, [s_parent], t1h1),
+                (:node_a, [s_child], t1h2),
+                (:node_b, [s_parent, s_child], t2h)
+            )
+            rhs = mop * uc * (eu - ooscf) * duration(t)
+            lhs = if duration(t) == 1
+               (
+                    + var_unit_flow[u, n, d, only(s_path), t]
+                    - mop * uc * var_units_invested_available[u, only(s_path), t]
+                )
+            else
+                (
+                    + duration(t) * var_unit_flow[u, n, d, s_parent, t]
+                    - mop * uc * (
+                        var_units_invested_available[u, s_parent, t1h1]
+                        + var_units_invested_available[u, s_child, t1h2]
+                    )
+                )
+            end
+            expected_con = @build_constraint(lhs >= rhs)
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
 end
 
 function test_constraint_non_spinning_reserves_lower_bound()
@@ -538,9 +620,9 @@ function test_constraint_non_spinning_reserves_lower_bound()
             ["node", "reserves_a", "is_non_spinning", true], ["node", "reserves_bc", "is_non_spinning", true]
         ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         SpineInterface.import_data(
@@ -587,10 +669,10 @@ end
 
 function test_constraint_non_spinning_reserves_upper_bounds()
     @testset "constraint_non_spinning_reserves_upper_bounds" begin
-        @testset for limit_name in ("start_up_limit", "shut_down_limit")
+        @testset for limit_name in ("ramp_limits_startup", "ramp_limits_shutdown")
             constraint_name = Dict(
-                "start_up_limit" => :non_spinning_reserves_start_up_upper_bound,
-                "shut_down_limit" => :non_spinning_reserves_shut_down_upper_bound,
+                "ramp_limits_startup" => :non_spinning_reserves_start_up_upper_bound,
+                "ramp_limits_shutdown" => :non_spinning_reserves_shut_down_upper_bound,
             )[limit_name]
             url_in = _test_constraint_unit_reserves_setup()
             uc = 100
@@ -599,9 +681,9 @@ function test_constraint_non_spinning_reserves_upper_bounds()
                 ["node", "reserves_a", "is_non_spinning", true], ["node", "reserves_bc", "is_non_spinning", true]
             ]
             relationship_parameter_values = [
-                ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
-                ["unit__from_node", ["unit_ab", "node_group_a"], limit_name, l],
-                ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+                ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
+                ["node__to_unit", ["node_group_a", "unit_ab"], limit_name, l],
+                ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
                 ["unit__to_node", ["unit_ab", "node_group_bc"], limit_name, l],
             ]
             SpineInterface.import_data(
@@ -650,14 +732,14 @@ end
 function test_constraint_operating_point_bounds()
     @testset "constraint_operating_point_bounds" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [["unit__to_node", ["unit_ab", "node_a"]]]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
+            ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points],
         ]
         SpineInterface.import_data(
             url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values 
@@ -667,7 +749,7 @@ function test_constraint_operating_point_bounds()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:operating_point_bounds]
         @test isempty(constraint)
-        relationship_parameter_values = [["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", true]]
+        relationship_parameter_values = [["node__to_unit", ["node_a", "unit_ab"], "ordered_unit_flow_op", true]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -695,14 +777,14 @@ end
 function test_constraint_operating_point_rank()
     @testset "constraint_operating_point_rank" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [["unit__to_node", ["unit_ab", "node_a"]]]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
+            ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
             url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values 
@@ -712,7 +794,7 @@ function test_constraint_operating_point_rank()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:operating_point_rank]
         @test isempty(constraint)
-        relationship_parameter_values = [["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", true]]
+        relationship_parameter_values = [["node__to_unit", ["node_a", "unit_ab"], "ordered_unit_flow_op", true]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow_op_active = m.ext[:spineopt].variables[:unit_flow_op_active]
@@ -743,7 +825,7 @@ end
 function test_constraint_unit_flow_op_bounds()
     @testset "constraint_unit_flow_op_bounds" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
@@ -751,8 +833,8 @@ function test_constraint_unit_flow_op_bounds()
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
+            ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
             url_in; relationship_parameter_values=relationship_parameter_values, relationships=relationships
@@ -772,7 +854,7 @@ function test_constraint_unit_flow_op_bounds()
                 var_u_flow_op = var_unit_flow_op[var_u_flow_op_key...]
                 var_units_on_key = (unit(:unit_ab), s, t)
                 var_us_on = var_units_on[var_units_on_key...]
-                expected_con = @build_constraint(var_u_flow_op - delta * var_us_on * unit_capacity <= 0)
+                expected_con = @build_constraint(var_u_flow_op - delta * var_us_on * capacity_per_unit <= 0)
                 observed_con = constraint_object(constraint[var_u_flow_op_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -782,7 +864,7 @@ function test_constraint_unit_flow_op_bounds()
         # the constraint should use the variable unit_flow_op_active for flow limit.
         ordered_unit_flow_op = true
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op],
+            ["node__to_unit", ["node_a", "unit_ab"], "ordered_unit_flow_op", ordered_unit_flow_op],
         ]
         SpineInterface.import_data(
             url_in;  
@@ -801,7 +883,7 @@ function test_constraint_unit_flow_op_bounds()
                 var_u_flow_op = var_unit_flow_op[var_u_flow_op_key...]
                 var_u_flow_op_active_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
                 var_u_flow_op_active = var_unit_flow_op_active[var_u_flow_op_active_key...]
-                expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * unit_capacity <= 0)
+                expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * capacity_per_unit <= 0)
                 observed_con = constraint_object(constraint[var_u_flow_op_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -812,7 +894,7 @@ end
 function test_constraint_unit_flow_op_rank()
     @testset "constraint_unit_flow_op_rank" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
@@ -820,8 +902,8 @@ function test_constraint_unit_flow_op_rank()
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
+            ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", capacity_per_unit],
+            ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
             url_in; 
@@ -837,7 +919,7 @@ function test_constraint_unit_flow_op_rank()
 
         ordered_unit_flow_op = true
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op],
+            ["node__to_unit", ["node_a", "unit_ab"], "ordered_unit_flow_op", ordered_unit_flow_op],
         ]
         SpineInterface.import_data(
             url_in;  
@@ -858,7 +940,7 @@ function test_constraint_unit_flow_op_rank()
                 if i < lastindex(deltas)
                     var_u_flow_op_active_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i+1, s, t)
                     var_u_flow_op_active = var_unit_flow_op_active[var_u_flow_op_active_key...]
-                    expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * unit_capacity >= 0)
+                    expected_con = @build_constraint(var_u_flow_op - delta * var_u_flow_op_active * capacity_per_unit >= 0)
                     observed_con = constraint_object(constraint[var_u_flow_op_key...])
                     @test _is_constraint_equal(observed_con, expected_con)
                 else
@@ -873,11 +955,11 @@ end
 function test_constraint_unit_flow_op_sum()
     @testset "constraint_unit_flow_op_sum" begin
         url_in = _test_constraint_unit_setup()
-        unit_capacity = 100
+        capacity_per_unit = 100
         points = [0.1, 0.5, 1.0]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
+            ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -904,10 +986,26 @@ function test_constraint_ratio_unit_flow()
         flow_ratio = 0.8
         units_on_coeff = 0.2
         start_flow = 1.3
-        class = "unit__node__node"
-        relationship = ["unit_ab", "node_a", "node_b"]
+        class = "unit_flow__unit_flow"
+        relationships_by_prefix = Dict(
+            ("in", "in") => ["node_a", "unit_ab", "node_b", "unit_ab"],
+            ("in", "out") => ["node_a", "unit_ab", "unit_ab", "node_b"],
+            ("out", "in") => ["unit_ab", "node_a", "node_b", "unit_ab"],
+            ("out", "out") => ["unit_ab", "node_a", "unit_ab", "node_b"]
+        )
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
-        classes_by_prefix = Dict("in" => "unit__from_node", "out" => "unit__to_node")
+        classes_by_prefix = Dict("in" => "node__to_unit", "out" => "unit__to_node")
+        ratios_by_prefix = Dict(
+            "min" => "flow_ratio_greater_than_coefficient",
+            "fix" => "flow_ratio_equality_coefficient",
+            "max" => "flow_ratio_less_than_coefficient"
+        )
+        coeffs_by_prefix = Dict(
+            "min" => "flow_ratio_greater_than_online_coefficient",
+            "fix" => "flow_ratio_equality_online_coefficient",
+            "max" => "flow_ratio_less_than_online_coefficient"
+        )
+        entity_inds_by_class = Dict("node__to_unit" => [2,1], "unit__to_node" => [1,2])
         @testset for (p, a, b) in (
             ("min", "in", "in"),
             ("fix", "in", "in"),
@@ -923,17 +1021,18 @@ function test_constraint_ratio_unit_flow()
             ("max", "out", "out"),
         )
             url_in = _test_constraint_unit_setup()
-            ratio = join([p, "ratio", a, b, "unit_flow"], "_")
-            coeff = join([p, "units_on_coefficient", a, b], "_")
+            ratio = ratios_by_prefix[p]
+            coeff = coeffs_by_prefix[p]
+            relationship = relationships_by_prefix[(a,b)]
             relationships = [
-                [classes_by_prefix[a], ["unit_ab", "node_a"]],
-                [classes_by_prefix[b], ["unit_ab", "node_b"]],
+                [classes_by_prefix[a], ["unit_ab", "node_a"][entity_inds_by_class[classes_by_prefix[a]]]],
+                [classes_by_prefix[b], ["unit_ab", "node_b"][entity_inds_by_class[classes_by_prefix[b]]]],
                 [class, relationship],
             ]
             relationship_parameter_values =[
                 [class, relationship, ratio, flow_ratio],
                 [class, relationship, coeff, units_on_coeff],
-                [class, relationship, "unit_start_flow", start_flow],
+                [class, relationship, "flow_ratio_start_flow", start_flow],
             ]
             sense = senses_by_prefix[p]
             SpineInterface.import_data(
@@ -948,12 +1047,12 @@ function test_constraint_ratio_unit_flow()
             path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
             t_long = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
             t_short1, t_short2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            directions_by_prefix = Dict("in" => direction(:from_node), "out" => direction(:to_node))
+            directions_by_prefix = Dict("in" => :from_node, "out" => :to_node)
             d_a = directions_by_prefix[a]
             d_b = directions_by_prefix[b]
-            var_u_flow_b_key = (unit(:unit_ab), node(:node_b), d_b, stochastic_scenario(:parent), t_long)
-            var_u_flow_a1_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:parent), t_short1)
-            var_u_flow_a2_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:child), t_short2)
+            var_u_flow_b_key = (unit(:unit_ab), node(:node_b), direction(d_b), stochastic_scenario(:parent), t_long)
+            var_u_flow_a1_key = (unit(:unit_ab), node(:node_a), direction(d_a), stochastic_scenario(:parent), t_short1)
+            var_u_flow_a2_key = (unit(:unit_ab), node(:node_a), direction(d_a), stochastic_scenario(:child), t_short2)
             var_u_on_a1_key = (unit(:unit_ab), stochastic_scenario(:parent), t_short1)
             var_u_on_a2_key = (unit(:unit_ab), stochastic_scenario(:child), t_short2)
             var_u_flow_b = var_unit_flow[var_u_flow_b_key...]
@@ -963,7 +1062,11 @@ function test_constraint_ratio_unit_flow()
             var_u_on_a2 = var_units_on[var_u_on_a2_key...]
             var_u_su_a1 = var_units_started_up[var_u_on_a1_key...]
             var_u_su_a2 = var_units_started_up[var_u_on_a2_key...]
-            con_key = (unit(:unit_ab), node(:node_a), node(:node_b), path, t_long)
+            con_key = (
+                unit(:unit_ab), node(:node_a), direction(d_a), 
+                unit(:unit_ab), node(:node_b), direction(d_b), 
+                path, t_long
+            )
             sf_sign = if p == "fix"
                 if a == "in" && b == "out"
                     1
@@ -992,7 +1095,7 @@ function test_constraint_total_cumulated_unit_flow()
     @testset "constraint_total_cumulated_unit_flow" begin
         total_cumulated_flow_bound = 100
         senses_by_prefix = Dict("min" => >=, "max" => <=)
-        classes_by_prefix = Dict("from_node" => "unit__from_node", "to_node" => "unit__to_node")
+        classes_by_prefix = Dict("from_node" => "node__to_unit", "to_node" => "unit__to_node")
         @testset for (p, a) in (
             ("min", "from_node"),
             ("min", "to_node"),
@@ -1000,12 +1103,18 @@ function test_constraint_total_cumulated_unit_flow()
             ("max", "to_node"),
         )
             url_in = _test_constraint_unit_setup()
-            cumulated = join([p,"total" , "cumulated", "unit_flow", a], "_")
-            relationships = [
-                [classes_by_prefix[a], ["unit_ab", "node_a"]],
-            ]
-            relationship_parameter_values =
-                [[classes_by_prefix[a], ["unit_ab", "node_a"], cumulated, total_cumulated_flow_bound]]
+            cumulated = join(["flow", "limits", p, "cumulative"], '_')
+            if a == "from_node"
+                relationships = 
+                    [[classes_by_prefix[a], ["node_a", "unit_ab"]]]
+                relationship_parameter_values =
+                    [[classes_by_prefix[a], ["node_a", "unit_ab"], cumulated, total_cumulated_flow_bound]]
+            else
+                relationships = 
+                    [[classes_by_prefix[a], ["unit_ab", "node_a"]]]
+                relationship_parameter_values =
+                    [[classes_by_prefix[a], ["unit_ab", "node_a"], cumulated, total_cumulated_flow_bound]]
+            end
             sense = senses_by_prefix[p]
             SpineInterface.import_data(
                 url_in;
@@ -1086,14 +1195,14 @@ end
 function test_constraint_units_out_of_service_contiguity()
     @testset "constraint_units_out_of_service_contiguity" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-        @testset for scheduled_outage_duration_minutes in (60, 120, 210)
+        @testset for outage_scheduled_duration_minutes in (60, 120, 210)
             url_in = _test_constraint_unit_setup()
-            scheduled_outage_duration = Dict(
-                "type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m")
+            outage_scheduled_duration = Dict(
+                "type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m")
             )
             object_parameter_values = [
-                ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
-                ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
+                ["unit", "unit_ab", "outage_variable_type", "integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -1109,7 +1218,7 @@ function test_constraint_units_out_of_service_contiguity()
             head_hours = -(
                 length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
             )
-            tail_hours = round(Minute(scheduled_outage_duration_minutes), Hour(1)).value
+            tail_hours = round(Minute(outage_scheduled_duration_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
                 repeat([stochastic_scenario(:parent)], tail_hours)
@@ -1137,14 +1246,14 @@ end
 function test_constraint_min_scheduled_outage_duration()
     @testset "constraint_min_scheduled_outage_duration" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-        @testset for scheduled_outage_duration_minutes in (60, 120, 210)
+        @testset for outage_scheduled_duration_minutes in (60, 120, 210)
             url_in = _test_constraint_unit_setup()
-            scheduled_outage_duration = Dict(
-                "type" => "duration", "data" => string(scheduled_outage_duration_minutes, "m")
+            outage_scheduled_duration = Dict(
+                "type" => "duration", "data" => string(outage_scheduled_duration_minutes, "m")
             )
             object_parameter_values = [
-                ["unit", "unit_ab", "scheduled_outage_duration", scheduled_outage_duration],
-                ["unit", "unit_ab", "outage_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "unit_ab", "outage_scheduled_duration", outage_scheduled_duration],
+                ["unit", "unit_ab", "outage_variable_type", "integer"],
                 ["model", "instance", "model_end", model_end],                
             ]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -1159,9 +1268,9 @@ function test_constraint_min_scheduled_outage_duration()
             vars_u_oos = [var_units_out_of_service[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)]
             @testset for bound in (Object(:lb, :bound), Object(:ub, :bound))
                 expected_con = if bound.name == :lb
-                    @build_constraint(scheduled_outage_duration_minutes / 60 <= sum(vars_u_oos))
+                    @build_constraint(outage_scheduled_duration_minutes / 60 <= sum(vars_u_oos))
                 else
-                    @build_constraint(sum(vars_u_oos) <= scheduled_outage_duration_minutes / 60 + 1)
+                    @build_constraint(sum(vars_u_oos) <= outage_scheduled_duration_minutes / 60 + 1)
                 end
                 con_key = (unit(:unit_ab), s_path, constraint_t, bound)
                 observed_con = constraint_object(constraint[con_key...])
@@ -1180,11 +1289,11 @@ function test_constraint_min_up_time_with_non_spinning_reserves()
             object_parameter_values = [
                 ["unit", "unit_ab", "min_up_time", min_up_time],
                 ["model", "instance", "model_end", model_end],
-                ["node", "node_a", "is_reserve_node", true],
+                ["node", "node_a", "reserve_active", true],
                 ["node", "node_a", "is_non_spinning", true],
             ]
             relationship_parameter_values = [
-                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
+                ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", 0],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1236,12 +1345,12 @@ function test_constraint_min_down_time()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (45, 150, 300)
             url_in = _test_constraint_unit_setup()
-            number_of_units = 4
-            candidate_units = 3
+            existing_units = 4
+            investment_count_max_cumulative = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "number_of_units", number_of_units],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "existing_units", existing_units],
                 ["unit", "unit_ab", "min_down_time", min_down_time],
                 ["model", "instance", "model_end", model_end]
             ]
@@ -1282,7 +1391,7 @@ function test_constraint_min_down_time()
                 var_u_inv_av = var_units_invested_available[var_u_inv_av_on_key...]
                 var_u_on = var_units_on[var_u_inv_av_on_key...]
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd))
+                expected_con = @build_constraint(existing_units + var_u_inv_av - var_u_on >= sum(vars_u_sd))
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -1296,15 +1405,15 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
             url_in = _test_constraint_unit_setup()
-            number_of_units = 4
-            candidate_units = 3
+            existing_units = 4
+            investment_count_max_cumulative = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "number_of_units", number_of_units],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "existing_units", existing_units],
                 ["unit", "unit_ab", "min_down_time", min_down_time],
                 ["model", "instance", "model_end", model_end],
-                ["node", "node_a", "is_reserve_node", true],
+                ["node", "node_a", "reserve_active", true],
                 ["node", "node_a", "is_non_spinning", true],
             ]
             relationships = [
@@ -1312,7 +1421,7 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
                 ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
             ]
             relationship_parameter_values = [
-                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
+                ["node__to_unit", ["node_a", "unit_ab"], "capacity_per_unit", 0],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1354,7 +1463,7 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
                 var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
                 var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
                 expected_con = @build_constraint(
-                    number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd) + var_ns_su
+                    existing_units + var_u_inv_av - var_u_on >= sum(vars_u_sd) + var_ns_su
                 )
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
@@ -1367,8 +1476,8 @@ end
 function test_constraint_units_invested_available()
     @testset "constraint_units_invested_available" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 7
-        object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
+        investment_count_max_cumulative = 7
+        object_parameter_values = [["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative]]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
@@ -1383,7 +1492,7 @@ function test_constraint_units_invested_available()
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var = var_units_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_units)
+            expected_con = @build_constraint(var <= investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1394,9 +1503,9 @@ end
 function test_constraint_units_invested_available_mp()
     @testset "constraint_units_invested_available_mp" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 7
+        investment_count_max_cumulative = 7
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -1413,7 +1522,7 @@ function test_constraint_units_invested_available_mp()
         @testset for t in time_slices
             key = (unit(:unit_ab), stochastic_scenario(:parent), t)
             var = var_units_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_units)
+            expected_con = @build_constraint(var <= investment_count_max_cumulative)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1424,8 +1533,8 @@ end
 function test_constraint_units_invested_transition()
     @testset "constraint_units_invested_transition" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 4
-        object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
+        investment_count_max_cumulative = 4
+        object_parameter_values = [["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative]]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
@@ -1461,9 +1570,9 @@ end
 function test_constraint_units_invested_transition_mp()
     @testset "constraint_units_invested_transition_mp" begin
         url_in = _test_constraint_unit_setup()
-        candidate_units = 4
+        investment_count_max_cumulative = 4
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
@@ -1500,14 +1609,14 @@ end
 
 function test_constraint_unit_lifetime()
     @testset "constraint_unit_lifetime" begin
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -1556,21 +1665,21 @@ end
 
 function test_constraint_unit_lifetime_sense()
     @testset "constraint_unit_lifetime_sense" begin
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         lifetime_minutes = 240
         senses = Dict(">=" => >=, "==" => ==, "<=" => <=)
         url_in = _test_constraint_unit_setup()
-        unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+        lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         @testset for (sense_key, sense_value) in senses
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
-                ["unit", "unit_ab", "unit_investment_lifetime_sense", sense_key],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
+                ["unit", "unit_ab", "lifetime_constraint_sense", sense_key],
                 ["model", "instance", "model_end", model_end],
             ]
             SpineInterface.import_data(
@@ -1613,14 +1722,14 @@ end
 
 function test_constraint_unit_lifetime_mp()
     @testset "constraint_unit_lifetime_mp" begin
-        candidate_units = 3
+        investment_count_max_cumulative = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             url_in = _test_constraint_unit_setup()
-            unit_investment_tech_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            lifetime_technical = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["unit", "unit_ab", "candidate_units", candidate_units],
-                ["unit", "unit_ab", "unit_investment_tech_lifetime", unit_investment_tech_lifetime],
+                ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
+                ["unit", "unit_ab", "lifetime_technical", lifetime_technical],
                 ["model", "instance", "model_end", model_end],
                 ["model", "instance", "model_type", "spineopt_benders"],
             ]
@@ -1674,13 +1783,13 @@ function test_constraint_ramp_up()
         uc = 200
         mop = 0.2
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_group_a"], "ramp_up_limit", rul],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "start_up_limit", sul],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_up_limit", rul],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "start_up_limit", sul],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_up", rul],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_startup", sul],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_up", rul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_startup", sul],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
@@ -1688,8 +1797,8 @@ function test_constraint_ramp_up()
             object_parameter_values = [
                 ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "3h")],
                 ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
-                ["node", "reserves_a", "downward_reserve", dr],
-                ["node", "reserves_bc", "upward_reserve", ur],
+                ["node", "reserves_a", "reserve_downward", dr],
+                ["node", "reserves_bc", "reserve_upward", ur],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1782,13 +1891,13 @@ function test_constraint_ramp_down()
         uc = 200
         mop = 0.2
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_group_a"], "ramp_down_limit", rdl],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "shut_down_limit", sdl],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "unit_capacity", uc],
-            ["unit__from_node", ["unit_ab", "node_group_a"], "minimum_operating_point", mop],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_down_limit", rdl],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "shut_down_limit", sdl],
-            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_down", rdl],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "ramp_limits_shutdown", sdl],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "capacity_per_unit", uc],
+            ["node__to_unit", ["node_group_a", "unit_ab"], "minimum_operating_point", mop],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_down", rdl],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "ramp_limits_shutdown", sdl],
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "capacity_per_unit", uc],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", mop],
         ]
         @testset for (ur, dr) in ((false, false), (false, true), (true, false), (true, true))
@@ -1796,8 +1905,8 @@ function test_constraint_ramp_down()
             object_parameter_values = [
                 ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "3h")],
                 ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
-                ["node", "reserves_a", "upward_reserve", ur],
-                ["node", "reserves_bc", "downward_reserve", dr],
+                ["node", "reserves_a", "reserve_upward", ur],
+                ["node", "reserves_bc", "reserve_downward", dr],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1888,14 +1997,14 @@ function test_constraint_user_constraint()
         @testset for sense in ("==", ">=", "<=")
             url_in = _test_constraint_unit_setup()
             rhs = 40
-            unit_flow_coefficient_a = 25
-            unit_flow_coefficient_b = 30
-            units_on_coefficient = 20
-            units_started_up_coefficient = 35
+            coefficient_for_unit_flow_a = 25
+            coefficient_for_unit_flow_b = 30
+            coefficient_for_units_on = 20
+            coefficient_for_units_started_up = 35
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
-                ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
-                ["unit__to_node__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit_flow__user_constraint", ["node_a", "unit_ab", "constraint_x"]],
+                ["unit_flow__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
                 ["unit__user_constraint", ["unit_ab", "constraint_x"]],
             ]
             object_parameter_values = [
@@ -1903,10 +2012,10 @@ function test_constraint_user_constraint()
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
-                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
-                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
+                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
+                [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
+                [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
+                [relationships[3]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1927,12 +2036,12 @@ function test_constraint_user_constraint()
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con = SpineOpt.build_sense_constraint(
-                + unit_flow_coefficient_a
+                + coefficient_for_unit_flow_a
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
-                2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h] +
-                units_on_coefficient
+                2 * coefficient_for_unit_flow_b * var_unit_flow[key_b..., s_parent, t2h] +
+                coefficient_for_units_on
                 * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
-                units_started_up_coefficient * (
+                coefficient_for_units_started_up * (
                     var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t1h2]
                 ),
@@ -1951,16 +2060,16 @@ function test_constraint_user_constraint_with_unit_operating_segments()
         @testset for sense in ("==", ">=", "<=")
             url_in = _test_constraint_unit_setup()
             rhs = 40
-            unit_flow_coefficient_a = 25
-            unit_flow_coefficient_b = 30
-            units_on_coefficient = 20
-            units_started_up_coefficient = 35
+            coefficient_for_unit_flow_a = 25
+            coefficient_for_unit_flow_b = 30
+            coefficient_for_units_on = 20
+            coefficient_for_units_started_up = 35
             points = [0.1, 0.5, 1.0]
             operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
-                ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
-                ["unit__to_node__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit_flow__user_constraint", ["node_a", "unit_ab", "constraint_x"]],
+                ["unit_flow__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
                 ["unit__user_constraint", ["unit_ab", "constraint_x"]],
             ]
             object_parameter_values = [
@@ -1968,12 +2077,12 @@ function test_constraint_user_constraint_with_unit_operating_segments()
                 ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
-                ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
+                ["node__to_unit", ["node_a", "unit_ab"], "operating_points", operating_points],
                 ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
-                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
-                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
+                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
+                [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
+                [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
+                [relationships[3]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
             ]
             SpineInterface.import_data(
                 url_in;
@@ -1994,14 +2103,14 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con = SpineOpt.build_sense_constraint(
-                + unit_flow_coefficient_a * sum(
+                + coefficient_for_unit_flow_a * sum(
                     var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
                     for i in 1:3
                 )
-                + 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-                + units_on_coefficient
+                + 2 * sum(coefficient_for_unit_flow_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
+                + coefficient_for_units_on
                 * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
-                + units_started_up_coefficient * (
+                + coefficient_for_units_started_up * (
                     + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t1h2]
                 ),
@@ -2018,18 +2127,18 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw" begin
         url_in = _test_constraint_unit_setup()
-        fix_units_on_coefficient_in_out = 200
-        unit_start_flow = 100
+        flow_ratio_equality_online_coefficient = 200
+        flow_ratio_start_flow = 100
         points = [0.1, 0.5, 1.0]
         inc_hrs = [10, 20, 30]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
-        fix_ratio_in_out_unit_flow = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
-        relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
+        flow_ratio_equality_coefficient = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
+        relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "fix_ratio_in_out_unit_flow", fix_ratio_in_out_unit_flow],
-            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
-            [relationships[1]..., "unit_start_flow", unit_start_flow],
+            [relationships[1]..., "flow_ratio_equality_coefficient", flow_ratio_equality_coefficient],
+            [relationships[1]..., "flow_ratio_equality_online_coefficient", flow_ratio_equality_online_coefficient],
+            [relationships[1]..., "flow_ratio_start_flow", flow_ratio_start_flow],
         ]
         SpineInterface.import_data(
             url_in;
@@ -2041,11 +2150,10 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
+        constraint = m.ext[:spineopt].constraints[:flow_ratio_equality_coefficient]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
-        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
@@ -2053,14 +2161,14 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + fix_units_on_coefficient_in_out
+            + flow_ratio_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
-            + unit_start_flow * (
+            + flow_ratio_start_flow * (
                 + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                 + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )
-        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        con_key = (key_a..., key_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end
@@ -2069,17 +2177,17 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple" begin
         url_in = _test_constraint_unit_setup()
-        fix_units_on_coefficient_in_out = 200
-        unit_start_flow = 0
+        flow_ratio_equality_online_coefficient = 200
+        flow_ratio_start_flow = 0
         points = [0.1, 0.5, 1.0]
         inc_hrs = 10
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
-        relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
+        relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
-            [relationships[1]..., "fix_ratio_in_out_unit_flow", inc_hrs],
-            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
-            [relationships[1]..., "unit_start_flow", unit_start_flow],
+            [relationships[1]..., "flow_ratio_equality_coefficient", inc_hrs],
+            [relationships[1]..., "flow_ratio_equality_online_coefficient", flow_ratio_equality_online_coefficient],
+            [relationships[1]..., "flow_ratio_start_flow", flow_ratio_start_flow],
         ]
         SpineInterface.import_data(
             url_in;
@@ -2091,11 +2199,10 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
+        constraint = m.ext[:spineopt].constraints[:flow_ratio_equality_coefficient]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
-        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
@@ -2103,10 +2210,10 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple()
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             ==
             + 2 * sum(inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-            + fix_units_on_coefficient_in_out
+            + flow_ratio_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
         )
-        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        con_key = (key_a..., key_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end
@@ -2115,14 +2222,14 @@ end
 function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
     @testset "constraint_ratio_unit_flow_fix_ratio_pw_simple2" begin
         url_in = _test_constraint_unit_setup()
-        fix_units_on_coefficient_in_out = 200
-        unit_start_flow = 0
+        flow_ratio_equality_online_coefficient = 200
+        flow_ratio_start_flow = 0
         inc_hrs = 10
-        relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
+        relationships = [["unit_flow__unit_flow", ["node_a", "unit_ab", "unit_ab", "node_b"]]]
         relationship_parameter_values = [
-            [relationships[1]..., "fix_ratio_in_out_unit_flow", inc_hrs],
-            [relationships[1]..., "fix_units_on_coefficient_in_out", fix_units_on_coefficient_in_out],
-            [relationships[1]..., "unit_start_flow", unit_start_flow],
+            [relationships[1]..., "flow_ratio_equality_coefficient", inc_hrs],
+            [relationships[1]..., "flow_ratio_equality_online_coefficient", flow_ratio_equality_online_coefficient],
+            [relationships[1]..., "flow_ratio_start_flow", flow_ratio_start_flow],
         ]
         SpineInterface.import_data(
             url_in;
@@ -2134,21 +2241,20 @@ function test_constraint_ratio_unit_flow_fix_ratio_pw_simple2()
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-        constraint = m.ext[:spineopt].constraints[:fix_ratio_in_out_unit_flow]
+        constraint = m.ext[:spineopt].constraints[:flow_ratio_equality_coefficient]
         @test length(constraint) == 1
         key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
         key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
-        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
             + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
             == 2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h]
-            + fix_units_on_coefficient_in_out
+            + flow_ratio_equality_online_coefficient
             * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
         )
-        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        con_key = (key_a..., key_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end

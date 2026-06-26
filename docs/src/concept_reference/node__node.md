@@ -1,5 +1,5 @@
 The [node\_\_node](@ref) relationship is used for defining direct interactions between two [node](@ref)s,
-like diffusion of [commodity](@ref) content.
+like diffusion of commodity content.
 Note that the [node\_\_node](@ref) relationship is assumed to be one-directional,
 meaning that
 ```julia

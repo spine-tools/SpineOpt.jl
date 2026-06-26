@@ -8,7 +8,7 @@ represents the `from_node`, i.e. the incoming flows to the [connection](@ref).
 In most cases the [fix\_ratio\_out\_in\_connection\_flow](@ref) parameter is set to equal or lower than `1`,
 linking the flows entering to the flows leaving the connection.
 The ratio parameter is interpreted such that it constrains the ratio of `out` over `in`,
-where `out` is the [connection\_flow](@ref) variable from the first [node](@ref) in the [connection\_\_node\_\_node](@ref) relationship
+where `out` is the [connection\_flow](@ref var_connection_flow) variable from the first [node](@ref) in the [connection\_\_node\_\_node](@ref) relationship
 in a left-to-right order.
 The parameter can be used to e.g. account for losses over a connection in a certain direction.
 

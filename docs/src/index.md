@@ -50,7 +50,7 @@ Part 2 explains the core principles, features and design decisions of SpineOpt w
   lists and explains all the important data and model structure related concepts to understand in *SpineOpt.jl*.
   For a mathematical modelling point of view, see the **Mathematical Formulation**
   chapter instead. The [Basics of the model structure](@ref) section briefly explains the general purpose of the most
-  important concepts, like [Object Classes](@ref) and [Relationship Classes](@ref).
+  important concepts, like [Entity Classes](@ref).
 
 - **Standard model framework**
   covers the temporal and stochastic framework present in very SpineOpt model.
@@ -72,21 +72,21 @@ Part 2 explains the core principles, features and design decisions of SpineOpt w
   are alternative options to the standard model.
   The [Decomposition](@ref) section explains the Benders decomposition implementation included in *SpineOpt.jl*,
   as well as how to use it.
-  There is also Modelling to generate alternatives and multi stage optimisation.
+  There is also [Modelling to generate alternatives](@ref mga-advanced) and [Multi-stage optimisation](@ref).
 
 Part 3 contains all the detailed information you need when you are looking for something specific (e.g. a parameter name or the formulation of a constraint).
 
 - **SpineOpt Template**
   contains a list of all the entities and parameters as you see them in the Spine Toolbox db editor.
-  The [Object Classes](@ref), [Relationship Classes](@ref), [Parameters](@ref),
-  and [Parameter Value Lists](@ref) sections contain detailed explanations of each and every aspect of *SpineOpt.jl*, organized into the respective sections for clarity.
+  The [Entity Classes](@ref), [Parameters](@ref), and [Parameter Value Lists](@ref) sections
+  contain detailed explanations of each and every aspect of *SpineOpt.jl*, organized into the respective sections for clarity.
 
 - **Mathematical Formulation**
   provides the mathematical view of *SpineOpt.jl*, as some of the
   methodology-related aspects of the model are more easily understood as math than Julia code. The [Variables](@ref)
-  section explains the purpose of each variable in the model, as well as how the variables are related to the different
-  [Object Classes](@ref) and [Relationship Classes](@ref).
-  the [Objective](@ref) section explains the default objective function used in *SpineOpt.jl*.
+  section explains the purpose of each variable in the model,
+  as well as how the variables are related to the different [Entity Classes](@ref).
+  The [Objective function](@ref) section explains the default objective in *SpineOpt.jl*.
   The [Constraints](@ref) section contains the mathematical
   formulation of each constraint, as well as explanations to their purpose and how they are controlled via different [Parameters](@ref).
 

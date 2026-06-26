@@ -78,6 +78,7 @@ export unit_flow_indices
 export unit_flow_op_indices
 export units_invested_available_indices
 export units_on_indices
+export upgrade_db
 export write_model_file
 export write_report
 export write_report_from_intermediate_results

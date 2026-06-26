@@ -32,7 +32,7 @@ function mp_objective_penalties(m::Model, t_range)
     @expression(
         m,
         sum(
-            mp_min_res_gen_to_demand_ratio_slack_penalty(commodity=comm) * mp_min_res_gen_to_demand_ratio_slack[comm]
+            mp_min_res_gen_to_demand_ratio_slack_penalty(grid=comm) * mp_min_res_gen_to_demand_ratio_slack[comm]
             for (comm,) in mp_min_res_gen_to_demand_ratio_slack_indices(m);
             init=0,
         )

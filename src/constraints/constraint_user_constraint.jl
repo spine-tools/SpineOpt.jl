@@ -25,10 +25,10 @@ The [constraint\_sense](@ref) parameter changes the sense of the [user\_constrai
 while the [right\_hand\_side](@ref) parameter allows for defining the constant term of the constraint.
 
 Coefficients for the different [variables](@ref Variables) appearing in the [user\_constraint](@ref) are defined
-using relationships, like e.g. [unit\_\_from\_node\_\_user\_constraint](@ref) and
-[connection\_\_to\_node\_\_user\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
-or [unit\_\_user\_constraint](@ref) and [node\_\_user\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
-and [node_state](@ref) variables.
+using relationships, like e.g. [unit\_flow\_\_user\_constraint](@ref) and
+[connection\_\_to\_node\_\_user\_constraint](@ref) for [unit\_flow](@ref var_unit_flow) and [connection\_flow](@ref var_connection_flow) variables,
+or [unit\_\_user\_constraint](@ref) and [node\_\_user\_constraint](@ref) for [units\_on](@ref var_units_on), [units\_started\_up](@ref var_units_started_up),
+and [node\_state](@ref var_node_state) variables.
 
 For more information, see the dedicated article on [User Constraints](@ref)
 
@@ -36,17 +36,17 @@ For more information, see the dedicated article on [User Constraints](@ref)
 \begin{aligned}
 & \sum_{u, n} \left\{
   \begin{aligned}     
-       & \sum_{op=1}^{\left\| p^{operating\_points}_{(u)} \right\|} p^{unit\_flow\_coefficient}_{(u,n,op,uc,s,t)}
+       & \sum_{op=1}^{\left\| p^{operating\_points}_{(u)} \right\|} p^{coefficient\_for\_unit\_flow}_{(u,n,op,uc,s,t)}
        \cdot v^{unit\_flow\_op}_{(u,n,d,op,s,t)} &\text{if } \left\| p^{operating\_points}_{(u)} \right\| > 1 & \\
-       & p^{unit\_flow\_coefficient}_{(u,n,uc,s,t)} \cdot v^{unit\_flow}_{(u,n,d,s,t)} &\text{otherwise} & \\       
+       & p^{coefficient\_for\_unit\_flow}_{(u,n,uc,s,t)} \cdot v^{unit\_flow}_{(u,n,d,s,t)} &\text{otherwise} & \\       
   \end{aligned}
   \right.
 \\
-&+\sum_{u} p^{units\_started\_up\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_started\_up}_{(u,s,t)} \\
-&+\sum_{u} p^{units\_on\_coefficient}_{(u,uc,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
-&+\sum_{c} p^{connection\_flow\_coefficient}_{(c,n,uc,s,t)} \cdot v^{connection\_flow}_{(c,n,d,s,t)} \\
-&+\sum_{n} p^{node\_state\_coefficient}_{(n,uc,s,t)} \cdot v^{node\_state}_{(n,s,t)} \\
-&+\sum_{n} p^{demand\_coefficient}_{(n,uc,s,t)} \cdot p^{demand}_{(n,s,t)} \\
+&+\sum_{u} p^{coefficient\_for\_units\_started\_up}_{(u,uc,s,t)} \cdot v^{units\_started\_up}_{(u,s,t)} \\
+&+\sum_{u} p^{coefficient\_for\_units\_on}_{(u,uc,s,t)} \cdot v^{units\_on}_{(u,s,t)} \\
+&+\sum_{c} p^{coefficient\_for\_connection\_flow}_{(c,n,uc,s,t)} \cdot v^{connection\_flow}_{(c,n,d,s,t)} \\
+&+\sum_{n} p^{coefficient\_for\_node\_state}_{(n,uc,s,t)} \cdot v^{node\_state}_{(n,s,t)} \\
+&+\sum_{n} p^{coefficient\_for\_demand}_{(n,uc,s,t)} \cdot p^{demand}_{(n,s,t)} \\
 & \begin{cases}  
        = &\text{if } p^{constraint\_sense}_{(uc)} \text{= "=="}\\
        \geq &\text{if } p^{constraint\_sense}_{(uc)} \text{= ">="}\\
@@ -89,109 +89,70 @@ function _operations_term(m, uc, path, t)
     (
         + sum(
             + unit_flow_op[u, n, d, op, s, t_short]
-            * unit_flow_coefficient(
-                m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
+            * coefficient_for_unit_flow(
+                m; unit=u, node=n, direction=d, user_constraint=uc, i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
+            for (u, n, d, uc) in indices(coefficient_for_unit_flow; user_constraint=uc)
             for (u, n, d, op, s, t_short) in unit_flow_op_indices(
-                m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=in_t
+                m; unit=u, node=n, direction=d, stochastic_scenario=path, t=in_t
             );
             init=0,
         )
         + sum(
             + unit_flow[u, n, d, s, t_short]
-            * unit_flow_coefficient(
-                m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
+            * coefficient_for_unit_flow(
+                m; unit=u, node=n, direction=d, user_constraint=uc, i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
+            for (u, n, d, uc) in indices(coefficient_for_unit_flow; user_constraint=uc)
             for (u, n, d, s, t_short) in unit_flow_indices(
-                m; unit=u, node=n, direction=direction(:from_node), stochastic_scenario=path, t=in_t
+                m; unit=u, node=n, direction=d, stochastic_scenario=path, t=in_t
             )
-            if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
-            init=0,
-        )
-        + sum(
-            + unit_flow_op[u, n, d, op, s, t_short]
-            * unit_flow_coefficient(
-                m; unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, t=t_short
-            )
-            * duration(t_short)
-            for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
-            for (u, n, d, op, s, t_short) in unit_flow_op_indices(
-                m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=in_t
-            );
-            init=0,
-        )
-        + sum(
-            + unit_flow[u, n, d, s, t_short]
-            * unit_flow_coefficient(
-                m; unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, t=t_short
-            )
-            * duration(t_short)
-            for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
-            for (u, n, d, s, t_short) in unit_flow_indices(
-                m; unit=u, node=n, direction=direction(:to_node), stochastic_scenario=path, t=in_t
-            )
-            if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
+            if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short)); # TODO: Is this check necessary HERE? Do we ever have both simultaneously?
             init=0,
         )
         + sum(
             + units_on[u, s, t1]
-            * units_on_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
+            * coefficient_for_units_on(m; unit=u, user_constraint=uc, stochastic_scenario=s, t=t1)
             * min(duration(t1), duration(t))
-            for u in unit__user_constraint(user_constraint=uc)
+            for (u, uc) in indices(coefficient_for_units_on; user_constraint=uc)
             for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=path, t=overlaps_t);
             init=0,
         )
         + sum(
             + units_started_up[u, s, t1]
-            * units_started_up_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
+            * coefficient_for_units_started_up(m; unit=u, user_constraint=uc, stochastic_scenario=s, t=t1)
             * min(duration(t1), duration(t))
-            for u in unit__user_constraint(user_constraint=uc)
+            for (u, uc) in indices(coefficient_for_units_started_up; user_constraint=uc)
             for (u, s, t1) in units_switched_indices(m; unit=u, stochastic_scenario=path, t=overlaps_t);
             init=0,
         )
         + sum(
             + connection_flow[c, n, d, s, t_short]
-            * connection_flow_coefficient(
-                m; connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, t=t_short
+            * coefficient_for_connection_flow(
+                m; connection=c, node=n, direction=d, user_constraint=uc, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (c, n) in connection__from_node__user_constraint(
-                user_constraint=uc, direction=direction(:from_node)
-            )
+            for (c, n, d, uc) in indices(coefficient_for_connection_flow; user_constraint=uc)
             for (c, n, d, s, t_short) in connection_flow_indices(
-                m; connection=c, node=n, direction=direction(:from_node), stochastic_scenario=path, t=in_t
-            );
-            init=0,
-        )
-        + sum(
-            + connection_flow[c, n, d, s, t_short]
-            * connection_flow_coefficient(
-                m; connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, t=t_short
-            )
-            * duration(t_short)
-            for (c, n) in connection__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
-            for (c, n, d, s, t_short) in connection_flow_indices(
-                m; connection=c, node=n, direction=direction(:to_node), stochastic_scenario=path, t=in_t
+                m; connection=c, node=n, direction=d, stochastic_scenario=path, t=in_t
             );
             init=0,
         )
         + sum(
             + node_state[n, s, t_short]
-            * node_state_coefficient(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t_short)
+            * coefficient_for_node_state(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t_short)
             * duration(t_short)
-            for n in indices(node_state_coefficient; user_constraint=uc)
-            for (n, s, t_short) in node_state_indices(m; node=n, stochastic_scenario=path, t=in_t);
+            for (n, uc) in indices(coefficient_for_node_state; user_constraint=uc)
+            for (n, s, t_short) in node_state_indices(m; node=n, stochastic_scenario=path, t=t_in_t(m; t_long=t));
             init=0,
         )
         + sum(
             + demand(m; node=n, stochastic_scenario=s, t=t)
-            * demand_coefficient(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t)
+            * coefficient_for_demand(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t)
             * duration(t_short)
-            for n in node__user_constraint(user_constraint=uc)
+            for (n, uc) in indices(coefficient_for_demand; user_constraint=uc)
             for (ns, s, t_short) in node_stochastic_time_indices(m; node=n, stochastic_scenario=path, t=in_t);
             init=0,
         )
@@ -217,42 +178,56 @@ function _investment_term(m, uc, path, t)
     overlaps_t = setdiff(t_overlaps_t(m; t=t), history_time_slice(m))
     (
         + sum(
-            (
-                + units_invested_available[u, s, t1]
-                * units_invested_available_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
-                + units_invested[u, s, t1]
-                * units_invested_coefficient(m; user_constraint=uc, unit=u, stochastic_scenario=s, t=t1)
-            )
+            units_invested_available[u, s, t1]
+            * coefficient_for_units_invested_available(m; unit=u, user_constraint=uc, stochastic_scenario=s, t=t1)
             * min(duration(t1), duration(t))
-            for u in unit__user_constraint(user_constraint=uc)
+            for (u, uc) in indices(coefficient_for_units_invested_available; user_constraint=uc)
             for (u, s, t1) in units_invested_available_indices(m; unit=u, stochastic_scenario=path, t=overlaps_t);
             init=0,
         )
         + sum(
-            (
-                + connections_invested_available[c, s, t1]
-                * connections_invested_available_coefficient(
-                    m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1
-                )
-                + connections_invested[c, s, t1]
-                * connections_invested_coefficient(m; user_constraint=uc, connection=c, stochastic_scenario=s, t=t1)
+            units_invested[u, s, t1]
+            * coefficient_for_units_invested(m; unit=u, user_constraint=uc, stochastic_scenario=s, t=t1)
+            * min(duration(t1), duration(t))
+            for (u, uc) in indices(coefficient_for_units_invested; user_constraint=uc)
+            for (u, s, t1) in units_invested_available_indices(m; unit=u, stochastic_scenario=path, t=overlaps_t);
+            init=0,
+        )
+        + sum(
+            connections_invested_available[c, s, t1]
+            * coefficient_for_connections_invested_available(
+                m; connection=c, user_constraint=uc, stochastic_scenario=s, t=t1
             )
             * min(duration(t1), duration(t))
-            for c in connection__user_constraint(user_constraint=uc)
+            for (c, uc) in indices(coefficient_for_connections_invested_available; user_constraint=uc)
             for (c, s, t1) in connections_invested_available_indices(
                 m; connection=c, stochastic_scenario=path, t=overlaps_t
             );
             init=0,
         )
         + sum(
-            (
-                + storages_invested_available[n, s, t1]
-                * storages_invested_available_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
-                + storages_invested[n, s, t1]
-                * storages_invested_coefficient(m; user_constraint=uc, node=n, stochastic_scenario=s, t=t1)
-            )
+            connections_invested[c, s, t1]
+            * coefficient_for_connections_invested(m; connection=c, user_constraint=uc, stochastic_scenario=s, t=t1)
             * min(duration(t1), duration(t))
-            for n in node__user_constraint(user_constraint=uc)
+            for (c, uc) in indices(coefficient_for_connections_invested; user_constraint=uc)
+            for (c, s, t1) in connections_invested_available_indices(
+                m; connection=c, stochastic_scenario=path, t=overlaps_t
+            );
+            init=0,
+        )
+        + sum(
+            storages_invested_available[n, s, t1]
+            * coefficient_for_storages_invested_available(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t1)
+            * min(duration(t1), duration(t))
+            for (n, uc) in indices(coefficient_for_storages_invested_available; user_constraint=uc)
+            for (n, s, t1) in storages_invested_available_indices(m; node=n, stochastic_scenario=path, t=overlaps_t);
+            init=0,
+        )
+        + sum(
+            storages_invested[n, s, t1]
+            * coefficient_for_storages_invested(m; node=n, user_constraint=uc, stochastic_scenario=s, t=t1)
+            * min(duration(t1), duration(t))
+            for (n, uc) in indices(coefficient_for_storages_invested; user_constraint=uc)
             for (n, s, t1) in storages_invested_available_indices(m; node=n, stochastic_scenario=path, t=overlaps_t);
             init=0,
         )
@@ -311,12 +286,9 @@ end
 function _user_constraint_unit_flow_indices(m, uc, s, t, tb)
     (
         ind
-        for (unit__node__user_constraint, d) in (
-            (unit__from_node__user_constraint, :from_node), (unit__to_node__user_constraint, :to_node)
-        )
-        for (u, n) in unit__node__user_constraint(user_constraint=uc)
+        for (u, n, d, uc) in indices(coefficient_for_unit_flow; user_constraint=uc)
         for ind in unit_flow_indices(
-            m; unit=u, node=n, direction=direction(d), stochastic_scenario=s, t=t, temporal_block=tb
+            m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t, temporal_block=tb
         )
     )
 end
@@ -324,7 +296,7 @@ end
 function _user_constraint_units_on_indices(m, uc, s, t, tb)
     (
         ind
-        for u in unit__user_constraint(user_constraint=uc)
+        for (u, uc) in indices(coefficient_for_units_on; user_constraint=uc)
         for ind in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end
@@ -332,12 +304,9 @@ end
 function _user_constraint_connection_flow_indices(m, uc, s, t, tb)
     (
         ind
-        for (connection__node__user_constraint, d) in (
-            (connection__from_node__user_constraint, :from_node), (connection__to_node__user_constraint, :to_node)
-        )
-        for (c, n) in connection__node__user_constraint(user_constraint=uc)
+        for (c, n, d, uc) in indices(coefficient_for_connection_flow; user_constraint=uc)
         for ind in connection_flow_indices(
-            m; connection=c, node=n, direction=direction(d), stochastic_scenario=s, t=t, temporal_block=tb
+            m; connection=c, node=n, direction=d, stochastic_scenario=s, t=t, temporal_block=tb
         )
     )
 end
@@ -345,7 +314,7 @@ end
 function _user_constraint_node_state_indices(m, uc, s, t, tb)
     (
         ind
-        for n in node__user_constraint(user_constraint=uc)
+        for (n, uc) in indices(coefficient_for_node_state; user_constraint=uc)
         for ind in node_state_indices(m; node=n, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end
@@ -353,7 +322,7 @@ end
 function _user_constraint_units_invested_indices(m, uc, s, t, tb)
     (
         ind
-        for u in unit__user_constraint(user_constraint=uc)
+        for (u, uc) in indices(coefficient_for_units_invested_available; user_constraint=uc)
         for ind in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end
@@ -361,7 +330,7 @@ end
 function _user_constraint_connections_invested_indices(m, uc, s, t, tb)
     (
         ind
-        for c in connection__user_constraint(user_constraint=uc)
+        for (c, uc) in indices(coefficient_for_connections_invested_available; user_constraint=uc)
         for ind in connections_invested_available_indices(
             m; connection=c, stochastic_scenario=s, t=t, temporal_block=tb
         )
@@ -371,7 +340,7 @@ end
 function _user_constraint_storages_invested_indices(m, uc, s, t, tb)
     (
         ind
-        for n in node__user_constraint(user_constraint=uc)
+        for (n, uc) in indices(coefficient_for_storages_invested_available; user_constraint=uc)
         for ind in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end
@@ -379,7 +348,7 @@ end
 function _user_constraint_node_stochastic_time_indices(m, uc, s, t, tb)
     (
         ind
-        for n in node__user_constraint(user_constraint=uc)
+        for (n, uc) in indices(coefficient_for_demand; user_constraint=uc)
         for ind in node_stochastic_time_indices(m; node=n, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end

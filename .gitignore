@@ -29,8 +29,7 @@ model\.so_model
 
 SpineOptApp
 
-docs/src/concept_reference/Object Classes.md
-docs/src/concept_reference/Relationship Classes.md
+docs/src/concept_reference/Entity Classes.md
 docs/src/concept_reference/Parameters.md
 docs/src/concept_reference/Parameter Value Lists.md
 docs/src/mathematical_formulation/constraints_automatically_generated.md

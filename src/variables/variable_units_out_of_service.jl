@@ -43,14 +43,14 @@ _unit_with_out_of_service_variable() = unit(has_out_of_service_variable=true)
 
 Check if unit online variable type is defined as a binary.
 """
-units_out_of_service_bin(x) = outage_variable_type(unit=x.unit) == :unit_online_variable_type_binary
+units_out_of_service_bin(x) = outage_variable_type(unit=x.unit) == :binary
 
 """
     units_out_of_service_int(x)
 
 Check if unit online variable type is defined as an integer.
 """
-units_out_of_service_int(x) = outage_variable_type(unit=x.unit) == :unit_online_variable_type_integer
+units_out_of_service_int(x) = outage_variable_type(unit=x.unit) == :integer
 
 """
     add_variable_units_out_of_service!(m::Model)
@@ -65,12 +65,24 @@ function add_variable_units_out_of_service!(m::Model)
         lb=constant(0),
         bin=units_out_of_service_bin,
         int=units_out_of_service_int,
-        fix_value=fix_units_out_of_service,
-        initial_value=initial_units_out_of_service,
-        required_history_period=maximum_parameter_value(scheduled_outage_duration),        
+        fix_value=out_of_service_count_fix,
+        initial_value=out_of_service_count_initial,
+        required_history_period=maximum_parameter_value(outage_scheduled_duration),        
     )
 end
 
+"""
+    _get_units_out_of_service(m, u, s, t)
+
+Safe get `units_out_of_service` for the given indices,
+replaced by `out_of_service_count_fix` (default 0) when out-of-service
+variables don't exist.
+
+Intended to be used in situations where `units_out_of_service` is required,
+but one cannot ensure its existence.
+"""
 function _get_units_out_of_service(m, u, s, t)
-    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t), 0)
+    get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do 
+        out_of_service_count_fix(unit=u, stochastic_scenario=s, t=t, _default=0)
+    end
 end

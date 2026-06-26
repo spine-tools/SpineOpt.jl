@@ -1,31 +1,39 @@
+# Tasku: Uncomment these and run this script to build Docs locally.
+#using Pkg
+#Pkg.activate(@__DIR__)
+
 using Documenter
 using SpineOpt
 
 include("docs_utils.jl")
 
+# Some intial config.
+warn_only = false # Set this to `true` to bypass errors as warnings, useful for forcing a build.
+purge_obsolete = false # Set this to `true` to remove obsolete `concept_reference` files.
+
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
-# Actual descriptions are fetched separately from `src/concept_reference/concepts/`
+# Actual descriptions are fetched separately from `src/concept_reference/`
 path = @__DIR__
 default_translation = Dict(
-    "relationship_classes" => "Relationship Classes",
+    "entity_classes" => "Entity Classes",
     "parameter_value_lists" => "Parameter Value Lists",
-    "object_parameters" => "Parameters",
-    "relationship_parameters" => "Parameters",
-    "object_classes" => "Object Classes",
+    "parameter_definitions" => "Parameters",
 )
-concept_dict = concept_dictionary(SpineOpt.template(); translation = default_translation)
-write_concept_reference_files(concept_dict, path)
+concept_dict = create_concept_dictionary(SpineOpt.template(); translation=default_translation)
+if purge_obsolete # Purge obsolete concept reference files if this is set to `true`.
+    purge_obsolete_concept_reference_files(concept_dict, path; spare=["_example.md", "archetypes.md", "the_basics.md"])
+end
+write_concept_reference_files(concept_dict, path, Set(values(default_translation)); warnonly=warn_only)
 
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
-# and content from docstrings
+# and content from docstrings, as well as variables and sets from the `.csv`s.
 mathpath = joinpath(path, "src", "mathematical_formulation")
 docstrings = all_docstrings(SpineOpt)
-constraints_lines = readlines(joinpath(mathpath, "constraints.md"))
+constraints_lines = readlines(joinpath(mathpath, "constraints.txt"))
 expand_tags!(constraints_lines, docstrings)
 open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
     write(file, join(constraints_lines, "\n"))
 end
-
 write_sets_and_variables(mathpath)
 
 # Generate the documentation pages
@@ -53,7 +61,7 @@ pages = [
         "Rolling horizon" => joinpath("tutorial", "rolling_horizon.md"),
         "Multi-stage optimisation" => joinpath("tutorial", "multi-stage.md"),
     ],
-    "How to" => [],
+    "How to" => [], # This is expanded automatically by `populate_empty_chapters!`
     "Example gallery" => joinpath("gallery", "gallery.md"),    
     "Database structure" => Any[
         "Basics of the data structure" => joinpath("concept_reference", "the_basics.md"),
@@ -80,8 +88,7 @@ pages = [
         "Multi-stage optimisation" => joinpath("advanced_concepts", "multi_stage.md"),
     ],
     "SpineOpt Template" => Any[
-        "Object Classes" => joinpath("concept_reference", "Object Classes.md"),
-        "Relationship Classes" => joinpath("concept_reference", "Relationship Classes.md"),
+        "Entity Classes" => joinpath("concept_reference", "Entity Classes.md"),
         "Parameters" => joinpath("concept_reference", "Parameters.md"),
         "Parameter Value Lists" => joinpath("concept_reference", "Parameter Value Lists.md"),
     ],
@@ -90,7 +97,7 @@ pages = [
         "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
         "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated.md"),
     ],
-    "Implementation details" => [],
+    "Implementation details" => [], # This is expanded automatically by `populate_empty_chapters!`
     "Library" => "library.md",
 ]
 populate_empty_chapters!(pages, joinpath(path, "src"))
@@ -100,6 +107,6 @@ makedocs(
     sitename = "SpineOpt.jl",
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true", size_threshold = 409600, assets = ["assets/style.css"]),  # uncomment to deploy locally
     pages = pages,
-    warnonly = true,
+    warnonly = warn_only,
 )
 deploydocs(repo = "github.com/spine-tools/SpineOpt.jl.git", versions = ["stable" => "v^", "v#.#"])

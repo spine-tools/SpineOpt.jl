@@ -85,7 +85,7 @@ end
 function _test_representative_time_slice()
     @testset "representative_time_slice" begin
         url_in = _test_temporal_structure_setup()
-        representative_periods_mapping = Dict(
+        representative_blocks_by_period = Dict(
             "type" => "map",
             "index_type" => "date_time",
             "data" => Dict(
@@ -101,8 +101,8 @@ function _test_representative_time_slice()
             ["model__temporal_block", ["instance", "rep_blk2"]],
         ]
         object_parameter_values = [
-            ["temporal_block", "block_a", "representative_periods_mapping", representative_periods_mapping],
-            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["temporal_block", "block_a", "representative_blocks_by_period", representative_blocks_by_period],
+            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["temporal_block", "rep_blk1", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
             ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "6h")],
             ["temporal_block", "rep_blk2", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T12:00:00")],

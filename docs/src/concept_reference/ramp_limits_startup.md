@@ -1,0 +1,3 @@
+The definition of the [ramp\_limits\_startup](@ref) parameter sets an upper bound on the [unit\_flow](@ref var_unit_flow) variable for the timestep right after a startup.
+
+It can be defined for [unit__to_node](@ref) or [node__to_unit](@ref) relationships, as well as their counterparts for node groups. It will then impose restrictions on the [unit\_flow variable](@ref var_unit_flow)s that indicate flows between the two members of the relationship for which the parameter is defined. The parameter is given as a fraction of the [capacity\_per\_unit](@ref) parameter. When the parameter is not specified the limit will not be imposed, which is equivalent to choosing a value of 1.

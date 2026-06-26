@@ -18,11 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-	rename_model_types(db_url)
+	rename_model_types(db_url, log_level; kwargs...)
 
 Rename `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`
 """
-function rename_model_types(db_url, log_level)
+function rename_model_types(db_url, log_level; kwargs...)
 	@log log_level 0 string(
 		"Renaming `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`"
 	)

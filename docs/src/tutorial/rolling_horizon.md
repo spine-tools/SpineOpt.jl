@@ -1,6 +1,6 @@
 # Rolling horizon tutorial
 
-This tutorial provides a step-by-step guide to show the main parameter seeting up to use the rolling horizon feature in SpineOpt.
+This tutorial provides a step-by-step guide to show the main parameter setting up to use the rolling horizon feature in SpineOpt.
 
 ## Introduction
 
@@ -8,7 +8,7 @@ Welcome to our tutorial the tutorial for rolling horizon in SpineOpt. To get the
 
 But first, **What is rolling horizon?**
 
-The rolling horizon technique manages large problems by prioritizing efficiency over accuracy. Instead of solving the entire time horizon, it tackles smaller problems within "rolling windows" that represent shorter time periods that share results from one window to the next. This approach allows for quicker solutions, but may lead to sub-optimal results (from the entire time horizon perspective), particularly affecting inter-temporal constraints (e.g., storage levels, unit-commitment, ramping) due since avoids the perfect foresight. More information about the rolling horizon technique can be found in [here](https://jump.dev/JuMP.jl/stable/tutorials/algorithms/rolling_horizon/).
+The rolling horizon technique manages large problems by prioritizing efficiency over accuracy. Instead of solving the entire time horizon, it tackles smaller problems within "rolling windows" that represent shorter time periods that share results from one window to the next. This approach allows for quicker solutions, but may lead to suboptimal results (from the entire time horizon perspective), particularly affecting intertemporal constraints (e.g., storage levels, unit-commitment, ramping) due since avoids the perfect foresight. More information about the rolling horizon technique can be found in [here](https://jump.dev/JuMP.jl/stable/tutorials/algorithms/rolling_horizon/).
 
 ### Model assumptions
 
@@ -20,28 +20,28 @@ Good! So, let's now have a look to the system we are working with. The image bel
 
 The main changes to the Unit Commitment case study are:
 
-- The demand at *electricity\_node* is a time series of a week (168 hours) instead of a single day
+- The [demand](@ref) at *electricity\_node* is a time series of a week (168 hours) instead of a single day
 - The *electricity\_node* has storage state with capacity 100 MWh and efficiency of 0.95.
 
 !!! tip "Remember!"
-    This example is an extension of the Unit Commitment tutorial, so the inter-temporal constraints included are: unit-commitment, minimum operating point, minimum down time, and minimum up time.
+    This example is an extension of the Unit Commitment tutorial, so the intertemporal constraints included are: unit-commitment, minimum operating point, minimum downtime, and minimum uptime.
 
-All right! with this information in hand, let's explore the data and see how all this information is setup in SpineOpt.
+All right! With this information in hand, let's explore the data and see how all this information is set up in SpineOpt.
 
 ## Model setup
 
-In the figure below, you can see the model parameters. Notice that in addition, to the `model_start` and `model_end` parameters, there is a new parameter [roll_forward](@ref) that defines how much the model moves ahead in time between solves in a rolling optimization. In this case, we can see that the model moves forward by 24 hours (1 day) in each step, which means that the optimization will be performed in 7 steps to cover the whole week.
+In the figure below, you can see the model parameters. Notice that in addition, to the [model\_start](@ref) and [model\_end](@ref) parameters, there is a new parameter [roll\_forward](@ref) that defines how much the model moves ahead in time between solves in a rolling optimization. In this case, we can see that the model moves forward by 24 hours (1 day) in each step, which means that the optimization will be performed in 7 steps to cover the whole week.
 
 ![image](figs_rolling_horizon/rh_model.png)
 
 ## Temporal block setup
 
-The `temporal_block` parameters `block_start` and `block_end` are set to 0h and 1D respectively, which means that the optimization will be performed in rolling windows of 24 hours,  the results at the end of each window are used to initialize the next window.
+The [temporal\_block](@ref) parameters [block\_start](@ref) and [block\_end](@ref) are set to 0h and 1D respectively, which means that the optimization will be performed in rolling windows of 24 hours, the results at the end of each window are used to initialize the next window.
 
 ![image](figs_rolling_horizon/rh_temporal_block.png)
 
 !!! tip "Pro tip!"
-    The `temporal_block` parameters `block_start` and `block_end` can be larger range than the `roll_forward` parameter. For example, if `block_start` is set to 0h and `block_end` is set to 48h (i.e., look ahead), the optimization will be performed in rolling windows of 48 hours, but only the results for the first 24 hours will be kept at each step. But! be careful, it means that there is enough input data at the end of the last window to perform the optimization in the last one. You can extend the time series data accordingly and optimize for 8 days in this example.
+    The [temporal\_block](@ref) parameters [block\_start](@ref) and [block\_end](@ref) can be larger range than the [roll\_forward](@ref) parameter. For example, if [block\_start](@ref) is set to 0h and [block\_end](@ref) is set to 48h (i.e., look ahead), the optimization will be performed in rolling windows of 48 hours, but only the results for the first 24 hours will be kept at each step. But! Be careful, it means that there is enough input data at the end of the last window to perform the optimization in the last one. You can extend the time series data accordingly and optimize for 8 days in this example.
 
 Please have a look to the sections [Rolling window optimization with single block](@ref rolling_horizon_single_block) and [Rolling horizon with multiple blocks](@ref rolling_horizon_multiple_blocks) in the documentation for more information about how to use the rolling horizon feature with different temporal block setups.
 
@@ -51,7 +51,7 @@ Let's check the electricity demand time series for the *electricity\_node* in th
 
 ![image](figs_rolling_horizon/rh_electricity_node.png)
 
-In addition, you can see that the parameters `has_state` and `state_coeff` for the storage representation in the *electricity\_node*.
+In addition, you can see that the parameters [storage\_active](@ref) and [storage\_state\_coefficient](@ref) for the storage representation in the *electricity\_node*.
 
 ## Results analysis
 
