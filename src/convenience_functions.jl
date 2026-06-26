@@ -459,7 +459,6 @@ export connection_conversion_to_discounted_annuities
 export connection_decommissioning_conversion_to_discounted_annuities
 export connection_discounted_duration
 export connection_emergency_capacity
-export fixed_annual_cost
 export connection_flow_cost
 export connection_flow_delay
 export connection_flow_highest_resolution_active
@@ -499,6 +498,7 @@ export existing_units
 export fix_nonspin_units_shut_down
 export fix_nonspin_units_started_up
 export fix_ratio_out_in_connection_flow
+export fixed_annual_cost
 export fixed_pressure_constant_0
 export fixed_pressure_constant_1
 export flow_limits_fix

@@ -186,7 +186,7 @@ function _run_spineopt(
             end
         end
         model_status = Dict(
-            string(_model_name(model)) => string(termination_status(model))
+            string(_model_name(model)) => string(get(model.ext[:spineopt].extras, :termination_status, ""))
             for model in models
         )
         if !isempty(model_status)
