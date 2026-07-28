@@ -179,7 +179,15 @@ _d_reverse(d::Object) = d.name == :to_node ? direction(:from_node) : direction(:
 
 The default value of parameter `p` defined in `entity_class` as specified in the input DB.
 """
+function _default_parameter_value(::Type{T}, p::Parameter, entity_class::ObjectClass)::T where {T}
+    pv = entity_class.parameter_defaults[p.name]
+    convert(T, pv.value)::T
+end
+
 function _default_parameter_value(p::Parameter, entity_class::ObjectClass)
+    if p.name === :existing_storages || p.name === :existing_units || p.name === :existing_connections
+        return _default_parameter_value(Int, p, entity_class)
+    end
     entity_class.parameter_defaults[p.name].value
 end
 
