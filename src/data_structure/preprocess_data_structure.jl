@@ -284,7 +284,7 @@ function generate_connection_has_ptdf()
             fix_ratio_out_in_connection_flow(; connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false) ==
             1
         has_ptdf_ = is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes)
-        ptdf_durations = [ptdf_duration(node=n, _default=nothing) for n in from_nodes]
+        ptdf_durations = [ptdf_duration(node=n, _default=nothing, _strict=false) for n in from_nodes]
         filter!(!isnothing, ptdf_durations)
         ptdf_duration_ = isempty(ptdf_durations) ? nothing : minimum(ptdf_durations)
         Dict(:has_ptdf => parameter_value(has_ptdf_), :ptdf_duration => parameter_value(ptdf_duration_))
@@ -786,8 +786,8 @@ function generate_unit_commitment_parameters()
     for u in unit() # Tasku: `indices(online_variable_type)` is pointless overhead when there's a default value.
         unit_var_type = online_variable_type(unit=u)
         if unit_var_type in (:binary, :integer) # Tasku: `:linear` not included? Online variables seem to be omitted if possible?
-            min_up = min_up_time(unit=u)
-            min_down = min_down_time(unit=u)
+            min_up = min_up_time(unit=u, _strict=false)
+            min_down = min_down_time(unit=u, _strict=false)
             params_to_add = Dict()
             if isnothing(min_up)
                 params_to_add[:min_up_time] = dur_value
@@ -916,7 +916,9 @@ function generate_is_representative()
         temporal_block,
         Dict(
             blk => Dict(
-                :is_representative => parameter_value(representative_blocks_by_period(temporal_block=blk) === nothing)
+                :is_representative => parameter_value(
+                    representative_blocks_by_period(temporal_block=blk, _strict=false) === nothing
+                )
             )
             for blk in temporal_block()
         )
