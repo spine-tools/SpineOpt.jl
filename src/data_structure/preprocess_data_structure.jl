@@ -134,7 +134,7 @@ and this function creates the additional relationships on the fly.
 """
 function process_lossless_bidirectional_connections()
     function _connection_pvals(conn, conn_cap_pvals, conn_emergency_cap_values)
-        pvals = Dict{Symbol,Any}(:capacity_to_flow_conversion_factor => parameter_value(1.0))
+        pvals = Dict{Symbol,ParameterValue}(:capacity_to_flow_conversion_factor => parameter_value(1.0))
         conn_cap = get(conn_cap_pvals, conn, nothing)
         conn_emergency_cap = get(conn_emergency_cap_values, conn, nothing)
         conn_cap !== nothing && (pvals[:capacity_per_connection] = parameter_value(conn_cap))
@@ -762,7 +762,7 @@ function generate_unit_commitment_parameters()
         if unit_var_type in (:binary, :integer) # Tasku: `:linear` not included? Online variables seem to be omitted if possible?
             min_up = min_up_time(unit=u, _strict=false)
             min_down = min_down_time(unit=u, _strict=false)
-            params_to_add = Dict()
+            params_to_add = sizehint!(Dict{Symbol, ParameterValue}(), 2)
             if isnothing(min_up)
                 params_to_add[:min_up_time] = dur_value
             end
