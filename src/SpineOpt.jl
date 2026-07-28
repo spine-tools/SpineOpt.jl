@@ -88,7 +88,6 @@ include("util/misc.jl")
 include("util/write_information_files.jl")
 include("util/promise.jl")
 # Main stage
-include("convenience_functions.jl")
 include("parameter_functions.jl")
 include("run_spineopt.jl")
 include("generate_forced_outages.jl")

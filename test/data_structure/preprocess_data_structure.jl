@@ -166,7 +166,7 @@ end
         ],
         :relationship_parameter_values => [
             ["connection__from_node", ["connection_ab", "node_a"], "capacity_per_connection", conn_cap_ab],
-            ["connection__from_node", ["connection_ab", "node_b"], "capacity_per_connection", conn_cap_ab],
+            ["connection__to_node", ["connection_ab", "node_b"], "capacity_per_connection", conn_cap_ab], # How did this work before?!?
             ["connection__from_node", ["connection_bc", "node_b"], "capacity_per_connection", conn_cap_bc],
             ["connection__from_node", ["connection_ca", "node_c"], "capacity_per_connection", conn_cap_ca],
             [
@@ -177,7 +177,7 @@ end
             ],
         ],
     )
-    _load_test_data(url_in, test_data)    
+    _load_test_data(url_in, test_data)
     m = run_spineopt(url_in; log_level=0, optimize=false)
     capacities_dict = Dict(
         connection(:connection_ab) => conn_cap_ab,

@@ -126,7 +126,7 @@ function constraint_connection_flow_lodf_indices(m::Model)
             m, 
             x
             for conn in (conn_cont, conn_mon)
-            for x in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))...)
+            for x in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))...) # TODO: HOW IS THIS WORKING?!?! Relies on a specific order of relationships...
             if _check_ptdf_duration(m, x.t, conn_cont, conn_mon)
         )
     )

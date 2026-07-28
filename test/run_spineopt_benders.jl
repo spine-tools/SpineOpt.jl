@@ -135,6 +135,7 @@ function _test_benders_unit()
             )
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
+            key = only(Y.report__model())
             @testset "total_cost" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
                     exp_total_costs = if should_invest
@@ -142,29 +143,30 @@ function _test_benders_unit()
                     else
                         120
                     end
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
+                    @test Y.total_costs(; key..., t=t) == exp_total_costs
                 end
             end
             @testset "unit_investment_costs" begin
-                @test Y.objective_unit_investment_costs(model=Y.model(:instance), t=DateTime(2000, 1, 1)) == (
+                @test Y.objective_unit_investment_costs(; key..., t=DateTime(2000, 1, 1)) == (
                     should_invest ? u_inv_cost : 0
                 )
             end
+            key = only(Y.report__unit__stochastic_scenario())
             @testset "invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                    @test Y.units_invested(;key..., t=t) == (
                         should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
                     )
                 end
             end
             @testset "mothballed" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                    @test Y.units_mothballed(;key..., t=t) == 0
                 end
             end
             @testset "available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                    @test Y.units_invested_available(;key..., t=t) == (should_invest ? 1 : 0)
                 end
             end
         end
@@ -250,6 +252,7 @@ function _test_benders_storage()
             )
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
+            key = only(Y.report__model())
             @testset "total_cost" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
                     exp_total_costs = if should_invest
@@ -257,34 +260,35 @@ function _test_benders_storage()
                     else
                         6000
                     end
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
+                    @test Y.total_costs(; key..., t=t) == exp_total_costs
                 end
             end
+            key = only(Y.report__node__stochastic_scenario())
             @testset "invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.storages_invested(node=Y.node(:node_a), t=t) == (
+                    @test Y.storages_invested(; key..., t=t) == (
                         should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
                     )
                 end
             end
             @testset "decommissioned" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.storages_decommissioned(node=Y.node(:node_a), t=t) == 0
+                    @test Y.storages_decommissioned(; key..., t=t) == 0
                 end
             end
             @testset "available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.storages_invested_available(node=Y.node(:node_a), t=t) == (should_invest ? 1 : 0)
+                    @test Y.storages_invested_available(; key..., t=t) == (should_invest ? 1 : 0)
                 end
             end
             @testset "node_slack_neg" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.node_slack_neg(node=Y.node(:node_a), t=t) == (should_invest ? 0 : 10)
+                    @test Y.node_slack_neg(; key..., t=t) == (should_invest ? 0 : 10)
                 end
             end
             @testset "node_state" begin
                 @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23))
-                    @test Y.node_state(node=Y.node(:node_a), t=t) == (should_invest ? 60 * k : 0)
+                    @test Y.node_state(; key..., t=t) == (should_invest ? 60 * k : 0)
                 end
             end
         end
@@ -384,6 +388,7 @@ function _test_benders_unit_storage()
             )
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
+            key = only(Y.report__model())
             @testset "total_cost" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
                     exp_total_costs = if should_invest
@@ -391,44 +396,46 @@ function _test_benders_unit_storage()
                     else
                         4800
                     end
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
+                    @test Y.total_costs(; key..., t=t) == exp_total_costs
                 end
             end
+            key = only(Y.report__unit__stochastic_scenario())
             @testset "units_invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested(unit=Y.unit(:unit_a), t=t) == (t == DateTime(2000, 1, 1) ? 1 : 0)
+                    @test Y.units_invested(; key..., t=t) == (t == DateTime(2000, 1, 1) ? 1 : 0)
                 end
             end
             @testset "units_mothballed" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_mothballed(unit=Y.unit(:unit_a), t=t) == 0
+                    @test Y.units_mothballed(; key..., t=t) == 0
                 end
             end
             @testset "units_invested_available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested_available(unit=Y.unit(:unit_a), t=t) == 1
+                    @test Y.units_invested_available(; key..., t=t) == 1
                 end
             end
+            key = only(Y.report__node__stochastic_scenario())
             @testset "storages_invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.storages_invested(node=Y.node(:node_a), t=t) == (
+                    @test Y.storages_invested(; key..., t=t) == (
                         should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
                     )
                 end
             end
             @testset "storages_decommissioned" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.storages_decommissioned(node=Y.node(:node_a), t=t) == 0
+                    @test Y.storages_decommissioned(; key..., t=t) == 0
                 end
             end
             @testset "storages_invested_available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.storages_invested_available(node=Y.node(:node_a), t=t) == (should_invest ? 1 : 0)
+                    @test Y.storages_invested_available(; key..., t=t) == (should_invest ? 1 : 0)
                 end
             end
             @testset "node_slack_neg" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.node_slack_neg(node=Y.node(:node_a), t=t) == (should_invest ? 0 : 8)
+                    @test Y.node_slack_neg(; key..., t=t) == (should_invest ? 0 : 8)
                 end
             end
             @testset "node_state" begin
@@ -443,7 +450,7 @@ function _test_benders_unit_storage()
                         # release
                         state -= dem * hour_count
                     end
-                    @test Y.node_state(node=Y.node(:node_a), t=t) == (should_invest ? state : 0)
+                    @test Y.node_state(; key..., t=t) == (should_invest ? state : 0)
                 end
             end
         end
@@ -523,6 +530,7 @@ function _test_benders_rolling_representative_periods()
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
             using_spinedb(url_out, Y)
+            key = only(Y.report__model())
             @testset "total_cost" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 12)
                     exp_total_costs = if should_invest
@@ -530,24 +538,25 @@ function _test_benders_rolling_representative_periods()
                     else
                         180
                     end
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
+                    @test Y.total_costs(; key..., t=t) == exp_total_costs
                 end
             end
+            key = only(Y.report__unit__stochastic_scenario())
             @testset "invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)
-                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                    @test Y.units_invested(; key..., t=t) == (
                         should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
                     )
                 end
             end
             @testset "mothballed" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)
-                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                    @test Y.units_mothballed(; key..., t=t) == 0
                 end
             end
             @testset "available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)
-                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                    @test Y.units_invested_available(; key..., t=t) == (should_invest ? 1 : 0)
                 end
             end
         end
@@ -630,7 +639,8 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
         m_mp = master_model(m)
         using_spinedb(url_out, Y)
         @testset for (k, c) in enumerate(candidates)
-            @test first(values(Y.units_invested(unit=Y.unit(c)))) == (k <= dem ? 1 : 0)
+            key = only(Y.report__unit__stochastic_scenario(unit=Y.unit(c), _compact=false))
+            @test first(values(Y.units_invested(; key...))) == (k <= dem ? 1 : 0)
         end
     end
 end
@@ -728,6 +738,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
             )
             @test _is_constraint_equal(observed_con, expected_con)
             using_spinedb(url_out, Y)
+            key = only(Y.report__model())
             @testset "total_cost" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
                     exp_total_costs = if should_invest
@@ -735,29 +746,32 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                     else
                         120
                     end
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == exp_total_costs
+                    @test Y.total_costs(; key..., t=t) == exp_total_costs
                 end
             end
+            key = only(Y.report__unit__stochastic_scenario())
             @testset "invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                    @test Y.units_invested(; key..., t=t) == (
                         should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
                     )
                 end
             end
             @testset "mothballed" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                    @test Y.units_mothballed(; key..., t=t) == 0
                 end
             end
             @testset "available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                    @test Y.units_invested_available(; key..., t=t) == (should_invest ? 1 : 0)
                 end
             end
             t0 = DateTime(2000, 1, 1)
-            @test Y.mp_min_res_gen_to_demand_ratio_slack(grid=Y.grid(:electricity), t=t0) == 0
-            val_con = Y.value_constraint_mp_min_res_gen_to_demand_ratio_cuts(grid=Y.grid(:electricity), t=t0)
+            key = only(Y.report__grid())
+            @test Y.mp_min_res_gen_to_demand_ratio_slack(; key..., t=t0) == 0
+            key = only(Y.report__benders_iteration__grid())
+            val_con = Y.value_constraint_mp_min_res_gen_to_demand_ratio_cuts(; key..., t=t0)
             @test val_con == (should_invest ? 240 : 0)
         end
     end
@@ -834,6 +848,7 @@ function _test_benders_starting_units_invested()
             )
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
+            key = only(Y.report__model())
             @testset "total_cost" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
                     exp_total_costs = if should_invest
@@ -844,25 +859,26 @@ function _test_benders_starting_units_invested()
                 end
             end
             @testset "unit_investment_costs" begin
-                @test Y.objective_unit_investment_costs(model=Y.model(:instance), t=DateTime(2000, 1, 1)) == (
+                @test Y.objective_unit_investment_costs(; key..., t=DateTime(2000, 1, 1)) == (
                     should_invest ? u_inv_cost : 0
                 )
             end
+            key = only(Y.report__unit__stochastic_scenario())
             @testset "invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                    @test Y.units_invested(; key..., t=t) == (
                         should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
                     )
                 end
             end
             @testset "mothballed" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                    @test Y.units_mothballed(; key..., t=t) == 0
                 end
             end
             @testset "available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                    @test Y.units_invested_available(; key..., t=t) == (should_invest ? 1 : 0)
                 end
             end
         end

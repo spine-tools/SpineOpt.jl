@@ -129,9 +129,12 @@ function _test_capacity_investments()
         m = run_spineopt(url_in, url_out; log_level=3)
         Y = Bind()
         using_spinedb(url_out, Y)
-        @test Y.units_invested(unit=Y.unit(:unit_a), t=DateTime(2000)) == 40
-        @test Y.connections_invested(connection=Y.connection(:connection_ab), t=DateTime(2000)) == 20
-        @test Y.storages_invested(node=Y.node(:node_a), t=DateTime(2000)) == 20
+        key = only(Y.report__unit__stochastic_scenario())
+        @test Y.units_invested(; key..., t=DateTime(2000)) == 40
+        key = only(Y.report__connection__stochastic_scenario())
+        @test Y.connections_invested(; key..., t=DateTime(2000)) == 20
+        key = only(Y.report__node__stochastic_scenario())
+        @test Y.storages_invested(; key..., t=DateTime(2000)) == 20
     end
 end
 

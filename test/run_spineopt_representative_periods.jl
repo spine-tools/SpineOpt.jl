@@ -209,7 +209,10 @@ function _test_representative_periods()
         @test isempty(errors)
         merge!(vals, _vals_from_data(test_data))
         rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
+        m = prepare_spineopt(url_in)
+        run_spineopt!(m, url_out; optimize=true, log_level=3)
+        # Scoping...
+        temporal_block=SpineOpt.temporal_block
         rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 3, 12), temporal_block(:rp1))
         rt2 = TimeSlice(DateTime(2000, 1, 3, 12), DateTime(2000, 1, 4), temporal_block(:rp1))
         rt3 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 7, 12), temporal_block(:rp2))
@@ -232,7 +235,7 @@ function _test_representative_periods()
 end
 
 function _get_t0(m, rt)
-    only(time_slice(m; temporal_block=block__starting_point(temporal_block1=blocks(rt))))
+    only(time_slice(m; temporal_block=SpineOpt.block__starting_point(temporal_block1=blocks(rt))))
 end
 
 function _delta_expr_from_index(m, ind, coefs, all_rt)
@@ -247,11 +250,11 @@ end
 
 function _test_representative_periods_variables(m, ::Val{:node_state_longterm}, vars, vals, all_rt, t_invest)
     observed_inds = collect(keys(vars))
-    s = stochastic_scenario(:realisation)
-    tb = temporal_block(:operations)
+    s = SpineOpt.stochastic_scenario(:realisation)
+    tb = SpineOpt.temporal_block(:operations)
     history_ts = Set(history_time_slice(m; temporal_block=tb))
     expected_inds = [
-        (node=node(:h2_node), stochastic_scenario=s, t=t)
+        (node=SpineOpt.node(:h2_node), stochastic_scenario=s, t=t)
         for t in [time_slice(m; temporal_block=tb); history_time_slice(m; temporal_block=tb)]
     ]
     for (ind, var) in vars
@@ -279,7 +282,8 @@ end
 
 function _test_representative_periods_constraints(m, ::Val{:node_injection}, cons, vals, all_rt, t_invest)
     observed_inds = collect(keys(cons))
-    path = [stochastic_scenario(:realisation)]
+    path = [SpineOpt.stochastic_scenario(:realisation)]
+    node = SpineOpt.node
     rt1, rt2, rt3, rt4 = all_rt
     expected_inds = [
         (node=node(:h2_node), stochastic_path=path, t_before=_get_t0(m, rt1), t_after=rt1),
@@ -304,8 +308,8 @@ end
 function _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
     con === nothing && return
     observed_con = constraint_object(con)
-    d_from = direction(:from_node)
-    d_to = direction(:to_node)
+    d_from = SpineOpt.direction(:from_node)
+    d_to = SpineOpt.direction(:to_node)
     expected_con = _expected_representative_periods_constraint(
         m, Val(con_name), ind, observed_con, vals, all_rt, t_invest, d_from, d_to
     )
@@ -319,11 +323,11 @@ function _expected_representative_periods_constraint(
     m, ::Val{:cyclic_node_state}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t_start, t_end, tb = ind
-    @test n == node(:h2_node)
-    @test s_path == [stochastic_scenario(:realisation)]
-    @test t_start == TimeSlice(DateTime(1999, 12, 31), DateTime(2000, 1, 1), temporal_block(:operations))
-    @test t_end == TimeSlice(DateTime(2000, 1, 10), DateTime(2000, 1, 11), temporal_block(:operations))
-    @test tb == temporal_block(:operations)
+    @test n == SpineOpt.node(:h2_node)
+    @test s_path == [SpineOpt.stochastic_scenario(:realisation)]
+    @test t_start == TimeSlice(DateTime(1999, 12, 31), DateTime(2000, 1, 1), SpineOpt.temporal_block(:operations))
+    @test t_end == TimeSlice(DateTime(2000, 1, 10), DateTime(2000, 1, 11), SpineOpt.temporal_block(:operations))
+    @test tb == SpineOpt.temporal_block(:operations)
     @fetch node_state_longterm = m.ext[:spineopt].variables
     @build_constraint(node_state_longterm[n, only(s_path), t_end] == node_state_longterm[n, only(s_path), t_start])
 end
@@ -331,8 +335,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:min_node_state}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t = ind
-    @test n == node(:batt_node)
-    @test s_path == [stochastic_scenario(:realisation)]
+    @test n == SpineOpt.node(:batt_node)
+    @test s_path == [SpineOpt.stochastic_scenario(:realisation)]
     @test t in all_rt
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
     s = only(s_path)
@@ -345,8 +349,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:nodal_balance}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t = ind
-    @test n in node()
-    @test s == stochastic_scenario(:realisation)
+    @test n in SpineOpt.node()
+    @test s == SpineOpt.stochastic_scenario(:realisation)
     @test t in all_rt
     @fetch node_injection = m.ext[:spineopt].variables
     @build_constraint(node_injection[n, s, t] == 0)
@@ -355,6 +359,9 @@ function _expected_representative_periods_constraint(
     m, ::Val{:node_injection}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t_before, t_after = ind
+    node = SpineOpt.node
+    stochastic_scenario=SpineOpt.stochastic_scenario
+    unit = SpineOpt.unit
     @test n in node()
     @test s_path == [stochastic_scenario(:realisation)]
     s = only(s_path)
@@ -411,8 +418,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:node_state_capacity}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t = ind
-    @test n in (node(:batt_node), node(:h2_node))
-    @test s_path == [stochastic_scenario(:realisation)]
+    @test n in (SpineOpt.node(:batt_node), SpineOpt.node(:h2_node))
+    @test s_path == [SpineOpt.stochastic_scenario(:realisation)]
     @test t in all_rt
     @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
     s = only(s_path)
@@ -424,8 +431,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:storages_invested_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t_before, t_after = ind
-    @test n in (node(:batt_node), node(:h2_node))
-    @test s_path == [stochastic_scenario(:realisation)]
+    @test n in (SpineOpt.node(:batt_node), SpineOpt.node(:h2_node))
+    @test s_path == [SpineOpt.stochastic_scenario(:realisation)]
     @test t_after == t_invest
     @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt].variables
     s = only(s_path)
@@ -441,8 +448,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:storages_invested_available}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t = ind
-    @test n in (node(:batt_node), node(:h2_node))
-    @test s == stochastic_scenario(:realisation)
+    @test n in (SpineOpt.node(:batt_node), SpineOpt.node(:h2_node))
+    @test s == SpineOpt.stochastic_scenario(:realisation)
     @test t == t_invest
     @fetch storages_invested_available = m.ext[:spineopt].variables
     cs = vals["node", string(n), "storage_investment_count_max_cumulative"]
@@ -452,6 +459,9 @@ function _expected_representative_periods_constraint(
     m, ::Val{:unit_flow_lb}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, n, d, s, t = ind
+    unit = SpineOpt.unit
+    stochastic_scenario = SpineOpt.stochastic_scenario
+    node = SpineOpt.node
     @test u in (unit(:batt_unit), unit(:electrolizer), unit(:h2_gen))
     @test s == stochastic_scenario(:realisation)
     @test t in all_rt
@@ -479,6 +489,9 @@ function _expected_representative_periods_constraint(
     m, ::Val{:unit_flow_capacity}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, n, d, s_path, t = ind
+    unit = SpineOpt.unit
+    stochastic_scenario = SpineOpt.stochastic_scenario
+    direction = SpineOpt.direction
     @test u in unit()
     @test s_path == [stochastic_scenario(:realisation)]
     @test t in all_rt
@@ -509,8 +522,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:unit_state_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s_path, t_before, t_after = ind
-    @test u == unit(:h2_gen)
-    @test s_path == [stochastic_scenario(:realisation)]
+    @test u == SpineOpt.unit(:h2_gen)
+    @test s_path == [SpineOpt.stochastic_scenario(:realisation)]
     @test t_after in all_rt
     @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
     s = only(s_path)
@@ -526,8 +539,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:units_available}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s, t = ind
-    @test u in unit()
-    @test s == stochastic_scenario(:realisation)
+    @test u in SpineOpt.unit()
+    @test s == SpineOpt.stochastic_scenario(:realisation)
     @test t in all_rt
     @fetch units_on, units_invested_available = m.ext[:spineopt].variables
     @build_constraint(units_on[u, s, t] <= units_invested_available[u, s, t_invest])
@@ -536,8 +549,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:units_invested_transition}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s_path, t_before, t_after = ind
-    @test u in unit()
-    @test s_path == [stochastic_scenario(:realisation)]
+    @test u in SpineOpt.unit()
+    @test s_path == [SpineOpt.stochastic_scenario(:realisation)]
     @test t_after == t_invest
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:spineopt].variables
     s = only(s_path)
@@ -553,8 +566,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:units_invested_available}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     u, s, t = ind
-    @test u in unit()
-    @test s == stochastic_scenario(:realisation)
+    @test u in SpineOpt.unit()
+    @test s == SpineOpt.stochastic_scenario(:realisation)
     @test t == t_invest
     @fetch units_invested_available = m.ext[:spineopt].variables
     cu = vals["unit", string(u), "investment_count_max_cumulative"]
@@ -566,7 +579,12 @@ function _expected_representative_periods_constraint(
     # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
     # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
-    
+    unit = SpineOpt.unit
+    stochastic_scenario = SpineOpt.stochastic_scenario
+    min_up_time = SpineOpt.min_up_time
+    model = SpineOpt.model
+    temporal_block = SpineOpt.temporal_block
+
     @test u == unit(:h2_gen)
     @test s_path == [stochastic_scenario(:realisation)]
     @test t_con in all_rt
@@ -578,7 +596,7 @@ function _expected_representative_periods_constraint(
     
     # The min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit.
     @test min_up_time(unit=u) == Hour(1)
-    @test duration_unit(model=model(:instance)) == :hour
+    @test SpineOpt.duration_unit(model=model(:instance)) == :hour
     
     past_units_on_indices = units_on_indices(
         m;
@@ -612,7 +630,12 @@ function _expected_representative_periods_constraint(
     # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
     # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
-    
+    unit = SpineOpt.unit
+    stochastic_scenario = SpineOpt.stochastic_scenario
+    min_down_time = SpineOpt.min_down_time
+    model = SpineOpt.model
+    temporal_block = SpineOpt.temporal_block
+
     @test u == unit(:h2_gen)
     @test s_path == [stochastic_scenario(:realisation)]
     @test t_con in all_rt
@@ -624,7 +647,7 @@ function _expected_representative_periods_constraint(
     
     # The min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit.
     @test min_down_time(unit=u) == Hour(1)
-    @test duration_unit(model=model(:instance)) == :hour
+    @test SpineOpt.duration_unit(model=model(:instance)) == :hour
     
     past_units_on_indices = units_on_indices(
         m;
@@ -657,8 +680,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:node_state_longterm_capacity}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s_path, t = ind
-    @test n == node(:h2_node)
-    @test s_path == [stochastic_scenario(:realisation)]
+    @test n == SpineOpt.node(:h2_node)
+    @test s_path == [SpineOpt.stochastic_scenario(:realisation)]
     @test !(t in all_rt)
     @fetch node_state_longterm, storages_invested_available = m.ext[:spineopt].variables
     s = only(s_path)
@@ -670,8 +693,8 @@ function _expected_representative_periods_constraint(
     m, ::Val{:node_state_longterm_trajectory}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
     n, s, t_before, t_after = ind
-    @test n == node(:h2_node)
-    @test s == stochastic_scenario(:realisation)
+    @test n == SpineOpt.node(:h2_node)
+    @test s == SpineOpt.stochastic_scenario(:realisation)
     @test !(t_before in all_rt)
     @test !(t_after in all_rt)
     rt1, rt2, rt3, rt4 = all_rt

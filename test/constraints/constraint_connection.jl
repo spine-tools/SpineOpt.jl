@@ -113,10 +113,15 @@ function test_constraint_connection_flow_capacity()
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
+        stochastic_scenario = SpineOpt.stochastic_scenario
+        temporal_block = SpineOpt.temporal_block
+        connection = SpineOpt.connection
+        node = SpineOpt.node
+        direction = SpineOpt.direction
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        scenarios = (SpineOpt.stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key_a = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
@@ -153,6 +158,11 @@ function test_constraint_connection_flow_capacity()
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
+        stochastic_scenario = SpineOpt.stochastic_scenario
+        temporal_block = SpineOpt.temporal_block
+        connection = SpineOpt.connection
+        node = SpineOpt.node
+        direction = SpineOpt.direction
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
         constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
@@ -601,7 +611,8 @@ function test_constraint_connection_intact_flow_ptdf()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        m = run_spineopt(url_in; log_level=0, optimize=false)
+        m = prepare_spineopt(url_in)
+        run_spineopt!(m, url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
         constraint = m.ext[:spineopt].constraints[:connection_intact_flow_ptdf]
@@ -2027,8 +2038,8 @@ end
     test_constraint_fix_node_pressure_point()
     test_constraint_connection_unitary_gas_flow()
     test_constraint_node_voltage_angle()
-    test_constraint_connection_intact_flow_ptdf()
-    test_constraint_connection_flow_lodf()
+    test_constraint_connection_intact_flow_ptdf() # TODO: This relies on a specific leationship order!
+    test_constraint_connection_flow_lodf() # TODO: This relies on a specific leationship order!
     test_contraints_ptdf_lodf_duration()
     test_constraint_ratio_out_in_connection_flow()
     test_constraint_connections_invested_transition()
@@ -2039,7 +2050,7 @@ end
     test_constraint_connections_invested_available()
     test_constraint_connections_invested_available_mp()
     test_constraint_user_constraint_node_connection()
-    test_constraint_connection_flow_intact_flow()
+    test_constraint_connection_flow_intact_flow() # TODO: This relies on a specific relationship order!
     test_constraint_candidate_connection_lb()
     test_constraint_ratio_out_in_connection_intact_flow()
     test_constraint_candidate_connection_ub()

@@ -123,18 +123,20 @@ function test_expression_capacity_margin()
         ]        
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
+        node = SpineOpt.node
+        stochastic_scenario = SpineOpt.stochastic_scenario
+        temporal_block = SpineOpt.temporal_block
+        unit = SpineOpt.unit
+        direction = SpineOpt.direction
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
-        
         expression = m.ext[:spineopt].expressions[:capacity_margin]
         @test length(expression) == 2
-
         # node_b
         n = node(:node_b)
         s_p = stochastic_scenario(:parent)
         s_c = stochastic_scenario(:child)
         scenarios = (s_p, s_c)
-        
         time_slices_1h = time_slice(m; temporal_block=temporal_block(:hourly))
         t2 = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         @testset for (s, t) in zip(s_p, time_slices_1h)
@@ -147,7 +149,6 @@ function test_expression_capacity_margin()
             var_uon_ab = get(var_units_on, (unit_ab, s, t2), 1)
             var_uff_cb = var_unit_flow[unit_cb, n, d_f, s, t]
             var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]
-     
             expected_expr = @expression(m,
                 + var_uft_cb
                 - var_uff_cb
@@ -155,12 +156,10 @@ function test_expression_capacity_margin()
                 + 75 * var_uon_ab
                 - demand_b
                 - demand_fraction_b * group_demand_a
-            )            
-
+            )
             observed_expr = expression[n, [s], t]
-            
             @test _is_expression_equal(observed_expr, expected_expr)
-        end                
+        end
     end
 end
 

@@ -165,7 +165,7 @@ function test_online_count_initial()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         for key in keys(var_units_on)
-            is_history_t = start(key.t) < model_start(model=m.ext[:spineopt].instance)
+            is_history_t = start(key.t) < SpineOpt.model_start(model=m.ext[:spineopt].instance)
             @test is_fixed(var_units_on[key]) == is_history_t
             if is_history_t
                 @test fix_value(var_units_on[key]) == init_units_on
@@ -212,7 +212,8 @@ function test_unit_online_variable_type_none()
         SpineInterface.import_data(
             url_in; object_parameter_values=object_parameter_values, relationships=relationships
         )
-        m = run_spineopt(url_in; log_level=0, optimize=false)
+        m = prepare_spineopt(url_in)
+        run_spineopt!(m, url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         constraint_u_avail = m.ext[:spineopt].constraints[:units_available]
@@ -311,7 +312,8 @@ function test_connection_history_parameters()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        m = run_spineopt(url_in; log_level=0, optimize=false)
+        m = prepare_spineopt(url_in)
+        run_spineopt!(m, url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
         var_connections_invested = m.ext[:spineopt].variables[:connections_invested]

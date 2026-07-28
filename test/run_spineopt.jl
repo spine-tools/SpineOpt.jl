@@ -817,7 +817,8 @@ function _test_storage_state_fix_using_map_with_rolling()
         )
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
-        n_state = Y.node_state(; node=Y.node(:node_b))
+        key = only(Y.report__node__stochastic_scenario())
+        n_state = Y.node_state(; key...)
         @test length(n_state) == 27
         @testset for (t, v) in n_state
             exp_v = Hour(t - indexes[1]).value * ucap

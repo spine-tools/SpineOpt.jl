@@ -347,7 +347,8 @@ function _test_investment_costs__salvage_fraction__capacity_transfer_factor__dec
             ["unit", "unit_ab", "decommissioning_time", Dict("type" => "duration", "data" => "2Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; optimize=false, log_level=3)
+        m = prepare_spineopt(url_in) # Facilitates debugging when m persists in case of errors
+        m = run_spineopt!(m, url_in; optimize=false, log_level=3)
         u_ts = [ind.t for ind in units_invested_available_indices(m; unit=unit(:unit_ab))]
         units_invested = m.ext[:spineopt].variables[:units_invested]
         observed_coe_obj = coefficient(objective_function(m), units_invested[unit(:unit_ab), stochastic_scenario(:parent), u_ts[1]])
@@ -535,7 +536,8 @@ function _test_saving_outputs()
             relationship_parameter_values=relationship_parameter_values, 
             object_parameter_values=object_parameter_values)
         # Here we need to run the optimization to be able to save the economic parameters
-        m = run_spineopt(url_in; optimize=true, log_level=0)
+        m = prepare_spineopt(url_in) # Facilitates debugging when m persists in case of errors
+        m = run_spineopt!(m, url_in; optimize=false, log_level=0)
         unit_salvage_fraction = []
         unit_discounted_duration = []
         unit_conversion_to_discounted_annuities = []

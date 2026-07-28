@@ -184,7 +184,8 @@ function _test_run_spineopt_mga()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=1)
+        m = prepare_spineopt(url_in)
+        run_spineopt!(m, url_in; log_level=1)
         var_units_invested = m.ext[:spineopt].variables[:units_invested]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
@@ -192,6 +193,14 @@ function _test_run_spineopt_mga()
         var_mga_aux_diff = m.ext[:spineopt].variables[:mga_aux_diff]
         var_mga_aux_binary = m.ext[:spineopt].variables[:mga_aux_binary]
         var_mga_aux_objective = m.ext[:spineopt].variables[:mga_objective]
+        # Scoping calls...
+        model = SpineOpt.model
+        stochastic_scenario = SpineOpt.stochastic_scenario
+        temporal_block = SpineOpt.temporal_block
+        unit = SpineOpt.unit
+        connection = SpineOpt.connection
+        node = SpineOpt.node
+        direction = SpineOpt.direction
         @testset "mga_diff_ub1" begin
             constraint = m.ext[:spineopt].constraints[:mga_diff_ub1]
             @test length(constraint) == 6
@@ -472,7 +481,7 @@ function _test_run_spineopt_mga()
             scenarios = (stochastic_scenario(:parent),)
             t = SpineOpt.current_window(m)
             var_mga_objective = m.ext[:spineopt].variables[:mga_objective]
-            mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end-1]
+            mga_current_iteration = SpineOpt.mga_iteration(:mga_it_1) # CAN'T RELY ON ENTITY ORDER!
             key1 = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
             key2 = (connection=connection(:connection_group_abbc), mga_iteration=mga_current_iteration)
             key3 = (node=node(:node_group_bc), mga_iteration=mga_current_iteration)
@@ -565,7 +574,7 @@ function _test_run_spineopt_mga_2()
             scenarios = (stochastic_scenario(:parent),)
             t = SpineOpt.current_window(m)
             var_mga_objective = m.ext[:spineopt].variables[:mga_objective]
-            mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
+            mga_current_iteration = SpineOpt.mga_iteration(:mga_it_5) # CAN'T RELY ON ENTITY ORDER!
             key1 = (unit=unit(:unit_group_abbc),mga_iteration=mga_current_iteration)
             key2 = (connection=connection(:connection_group_abbc), mga_iteration=mga_current_iteration)
             key3 = (node=node(:node_group_bc), mga_iteration=mga_current_iteration)
@@ -585,7 +594,7 @@ function _test_run_spineopt_mga_2()
             @test length(constraint) == 18  # TODO: should actually delete constraint...
             scenarios = (stochastic_scenario(:parent),)
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end - 1]
+            mga_current_iteration = mga_it = SpineOpt.mga_iteration(:mga_it_5) # CAN'T RELY ON ENTITY ORDER!
             @testset for (s, t) in zip(scenarios, time_slices)
                 key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
                 key1 = (unit(:unit_ab), s, t)

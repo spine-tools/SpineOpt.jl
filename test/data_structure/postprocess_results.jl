@@ -317,14 +317,24 @@ function test_save_contingency_is_binding()
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
         conn_cont = connection(:connection_ca)
-        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_ab))
+        val = O.contingency_is_binding( #TODO: ASK MANUEL OR JODY ABOUT WHAT THESE ARE ABOUT
+            report=only(O.report()),
+            connection1=conn_cont,
+            connection2=connection(:connection_ab),
+            stochastic_scenario=only(O.stochastic_scenario())
+        )
         demand_pv = parameter_value(demand_)
         @testset for (t, obs) in val
             exp = demand_pv(t=t) >= 200 ? 1.0 : 0.0
             @test obs == exp
         end
-        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_bc))
-        @testset for (t, obs) in val
+        val = O.contingency_is_binding( #TODO: See above
+            report=only(O.report()),
+            connection1=conn_cont,
+            connection2=connection(:connection_bc),
+            stochastic_scenario=only(O.stochastic_scenario())
+        )
+        @testset for (t, obs) in val #TODO: The last 3 timesteps fail?
             exp = demand_pv(t=t) >= 100 ? 1.0 : 0.0
             @test obs == exp
         end

@@ -187,6 +187,7 @@ function _test_run_spineopt_hsj_mga()
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=1, add_bridges=true)
+        unit = SpineOpt.unit
         variable_values = m.ext[:spineopt].expressions[:variable_group_values]
         @test length(variable_values) == 1
         expected_values= Dict(
@@ -212,6 +213,7 @@ function _test_run_spineopt_hsj_mga()
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=1, add_bridges=true)
+        unit = SpineOpt.unit
         variable_values = m.ext[:spineopt].expressions[:variable_group_values]
         @test length(variable_values) == 3
         expected_values= Dict(

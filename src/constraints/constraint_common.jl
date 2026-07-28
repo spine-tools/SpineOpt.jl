@@ -209,7 +209,7 @@ end
 
 function _node_state_time_slices(m, node, ::Val{true})
     node = intersect(node, SpineOpt.node(storage_longterm_active=true))
-    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false)))
+    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false, is_starting_point=false)))
 end
 
 function _term_connection_flow(m, conn, ng, d, s_path, t)

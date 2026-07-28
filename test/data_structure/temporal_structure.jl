@@ -24,11 +24,11 @@ function _is_time_slice_set_equal(ts_a, ts_b)
     length(ts_a) == length(ts_b) && all(_is_time_slice_equal(a, b) for (a, b) in zip(sort(ts_a), sort(ts_b)))
 end
 
-function _model()
-    SpineOpt.preprocess_data_structure()
+function _model(M=@__MODULE__)
+    SpineOpt.preprocess_data_structure(M)
     m = Model(; add_bridges = false)
     JuMP.set_string_names_on_creation(m, false)
-    m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model()), nothing)
+    m.ext[:spineopt] = SpineOpt.SpineOptExt(first(M.model()), nothing)
     m
 end
 
@@ -71,12 +71,13 @@ function _test_discontinuity_at_the_first_time_step()
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         t = first(time_slice(m))
         ts = collect(
-            x.t_after for x in SpineOpt.node_dynamic_time_indices(m) if x.node.name == :another_node
+            x.t_after for x in M.node_dynamic_time_indices(m) if x.node.name == :another_node
         )
         @test !(t in ts)
     end
@@ -112,13 +113,14 @@ function _test_representative_time_slice()
         SpineInterface.import_data(
             url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
-        rep_blk1_t = only(SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1)))
-        rep_blk2_t = only(SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2)))
-        m_start = model_start(model=first(model(model_type=:spineopt_standard)))
-        for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
+        rep_blk1_t = only(M.time_slice(m, temporal_block=M.temporal_block(:rep_blk1)))
+        rep_blk2_t = only(M.time_slice(m, temporal_block=M.temporal_block(:rep_blk2)))
+        m_start = M.model_start(model=first(M.model(model_type=:spineopt_standard)))
+        for t in M.time_slice(m, temporal_block=M.temporal_block(:block_a))
             t_end = end_(t)
             if t_end <= m_start + Hour(6)
                 @test _representative_time_slice(m, t) == rep_blk1_t
@@ -151,9 +153,10 @@ function _test_zero_resolution()
             ["temporal_block", "block_a", "resolution", 0],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         err_msg = "`resolution` of temporal block `block_a` cannot be zero!"
-        m = _model()
         @test_throws ErrorException(err_msg) generate_temporal_structure!(m)
     end
 end
@@ -179,8 +182,9 @@ function _test_block_start()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         @test start(first(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
         @test start(first(time_slice(m; temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
@@ -209,8 +213,9 @@ function _test_block_end()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
@@ -236,8 +241,9 @@ function _test_one_two_four_even()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
         observed_ts_b = time_slice(m; temporal_block=temporal_block(:block_b))
@@ -305,8 +311,9 @@ function _test_two_three_uneven()
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "3Y")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
         observed_ts_b = time_slice(m; temporal_block=temporal_block(:block_b))
@@ -372,8 +379,9 @@ function _test_gaps()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
         observed_ts_b = time_slice(m; temporal_block=temporal_block(:block_b))
@@ -427,8 +435,9 @@ function _test_to_time_slice_with_rolling()
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "6M")],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         a1, a2 = time_slice(m; temporal_block=temporal_block(:block_a))
         t1 = TimeSlice(DateTime(2001, 1), DateTime(2001, 6))
@@ -455,8 +464,9 @@ function _test_history()
             ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")],
         ]
         SpineInterface.import_data(url_in; objects=objects, object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         generate_temporal_structure!(m)
         block_a = temporal_block(:block_a)
         block_b = temporal_block(:block_b)
@@ -494,8 +504,9 @@ function _test_master_temporal_structure()
             ["temporal_block", "block_b", "block_end", unparse_db_value(rf + b_look_ahead)],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
-        m_mp = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m_mp = _model(M)
         SpineOpt.generate_master_temporal_structure!(m_mp)
         obs_time_slices = time_slice(m_mp)
         block_a, block_b = temporal_block(:block_a), temporal_block(:block_b)
@@ -529,8 +540,9 @@ function _test_subwindows()
             ["temporal_block", "long_block", "resolution", unparse_db_value(Week(1))],
         ]
         SpineInterface.import_data(url_in; objects=objects, object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
+        M = SpineOpt
+        using_spinedb(url_in, M)
+        m = _model(M)
         SpineOpt.generate_temporal_structure!(m)
         obs_time_slices = time_slice(m)
         exp_time_slices = [

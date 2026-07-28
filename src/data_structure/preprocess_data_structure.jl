@@ -19,13 +19,13 @@
 #############################################################################
 
 """
-    preprocess_data_structure()
+    preprocess_data_structure(m=@__MODULE__)
 
 Preprocess input data structure for SpineOpt.
 
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
-function preprocess_data_structure()
+function preprocess_data_structure(M=@__MODULE__)
     check_model_object()
     generate_is_candidate()
     update_connection_investment_power_flow_impact_active()
@@ -37,18 +37,15 @@ function preprocess_data_structure()
     generate_model__report()
     add_required_outputs()
     process_lossless_bidirectional_connections()
-    # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
-    # so we don't corrupt the lookup cache
-    generate_direction_and_reorganise_classes()
+    generate_direction_and_reorganise_classes(M)
     generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
     generate_node_has_physics(:has_pressure, :pressure_physics)
     generate_ptdf_lodf()
-    generate_variable_indexing_support()
     generate_benders_iteration()
     generate_is_boundary()
     generate_unit_commitment_parameters()
+    generate_is_representative() # Generate this before `starting_point`s
     generate_starting_point()
-    generate_is_representative()
 end
 
 """
@@ -83,10 +80,6 @@ function generate_is_candidate()
             storage_investment_variable_type(node=n) != :none
         ),
     )
-    # TODO: Tasku: Are parameter defaults like these actually needed, or do we get them from `preprocessing_template.json`?
-    add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
-    add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
-    add_object_parameter_defaults!(node, Dict(:is_candidate => parameter_value(false)))
 end
 
 # Keeping an option without class in case it is needed later
@@ -148,7 +141,6 @@ function process_lossless_bidirectional_connections()
         conn_emergency_cap !== nothing && (pvals[:connection_emergency_capacity] = parameter_value(conn_emergency_cap))
         pvals
     end
-
     conn_from = (
         (conn, first(connection__from_node(connection=conn))) for
         conn in connection(connection_type=:connection_type_lossless_bidirectional)
@@ -191,46 +183,46 @@ function process_lossless_bidirectional_connections()
 end
 
 """
-    generate_direction_and_reorganise_classes()
+    generate_direction_and_reorganise_classes(M=@__MODULE__)
 
 Generate `direction` `Object`s and reorganise affected relationships.
 """
-function generate_direction_and_reorganise_classes()
-    # Create the new `direction` `Object`s.
-    from_node = Object(:from_node, :direction)
-    to_node = Object(:to_node, :direction)
-    add_objects!(direction, [from_node, to_node])
+function generate_direction_and_reorganise_classes(M=@__MODULE__)
+    from_node = M.direction(:from_node)
+    to_node = M.direction(:to_node)
     # Add `direction` to the mapped classes.
     directions_by_class = [
         node__to_unit => from_node,
         unit__to_node => to_node,
         connection__from_node => from_node,
         connection__to_node => to_node,
-        unit_flow__user_constraint__node__unit__user_constraint => from_node,
-        unit_flow__user_constraint__unit__node__user_constraint => to_node,
         connection__from_node__user_constraint => from_node,
         connection__to_node__user_constraint => to_node,
-        # Some automatically generated subclasses need two directions.
-        unit_flow__unit_flow__node__unit__node__unit => [from_node, from_node],
-        unit_flow__unit_flow__node__unit__unit__node => [from_node, to_node],
-        unit_flow__unit_flow__unit__node__node__unit => [to_node, from_node],
-        unit_flow__unit_flow__unit__node__unit__node => [to_node, to_node],
+        unit_flow__investment_group => Dict(
+            [:unit, :node, :investment_group] => to_node,
+            [:node, :unit, :investment_group] => from_node
+        ),
+        unit_flow__unit_flow => Dict(
+            [:node, :unit, :node, :unit] => [from_node, from_node],
+            [:node, :unit, :unit, :node] => [from_node, to_node],
+            [:unit, :node, :node, :unit] => [to_node, from_node],
+            [:unit, :node, :unit, :node] => [to_node, to_node]
+        ),
+        unit_flow__user_constraint => Dict(
+            [:unit, :node, :user_constraint] => to_node,
+            [:node, :unit, :user_constraint] => from_node
+        ),
     ]
     for (cls, d) in directions_by_class
-        add_dimension!(cls, d)
+        add_dimension!(cls, d; m=M)
     end
     # Reorganise the dimensions of some affected classes
-    und_uc = [:unit, :node, :direction, :user_constraint]
-    und_und = [:unit1, :node1, :direction1, :unit2, :node2, :direction2]
     cnd_uc = [:connection, :node, :direction, :user_constraint]
     dimensions_by_class = [
         node__to_unit => [:unit, :node, :direction],
-        unit_flow__user_constraint__node__unit__user_constraint => und_uc,
-        unit_flow__user_constraint__unit__node__user_constraint => und_uc,
-        unit_flow__unit_flow__node__unit__node__unit => und_und,
-        unit_flow__unit_flow__node__unit__unit__node => und_und,
-        unit_flow__unit_flow__unit__node__node__unit => und_und,
-        unit_flow__unit_flow__unit__node__unit__node => und_und,
+        unit_flow__investment_group => [:unit, :node, :direction, :investment_group],
+        unit_flow__unit_flow => [:unit1, :node1, :direction1, :unit2, :node2, :direction2],
+        unit_flow__user_constraint => [:unit, :node, :direction, :user_constraint],
         connection__to_node__user_constraint => cnd_uc,
         connection__from_node__user_constraint => cnd_uc,
     ]
@@ -499,7 +491,6 @@ function generate_lodf()
                 denom
         end
     end
-
     lodf_values = Dict(
         (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial)) for (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, _lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for
@@ -523,23 +514,6 @@ function generate_ptdf_lodf()
     generate_lodf()
     write_ptdf_file(model=first(model())) && write_ptdfs()
     write_lodf_file(model=first(model())) && write_lodfs()
-end
-
-"""
-    generate_variable_indexing_support()
-
-TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
-
-Tasku: this function seems to generate Object and RelationshipClasses to make
-some looping and filtering slightly more convenient later on.
-However, each of these are only used once from what I can tell.
-PENDING REMOVAL? We don't really need these,
-as the filtering can be easily done when needed without these superfluous classes.
-"""
-function generate_variable_indexing_support()
-    add_objects!(node_with_slack_penalty, collect(indices(balance_penalty)))
-    add_objects!(node_with_capacity_margin_penalty, collect(indices(capacity_margin_penalty)))
-    add_relationships!(connection__node__direction, [connection__from_node(); connection__to_node()])
 end
 
 """
@@ -863,22 +837,10 @@ end
 For representative temporal blocks that are also associated to a node with state,
 create an equivalent block to represent the starting point.
 This is needed for constraint_node_injection and constraint_cyclic_node state.
-
-Note that this starting point temporal blocks are not added to the original `temporal_block` class,
-but instead are kept in another class called `starting_point`,
-that nonetheless also uses the `temporal_block` dimension.
-This is possible in SpineInterface and helps with isolation
-(we don't want this starting point blocks to be treated entirely as normal `temporal_block`s)
+These are separated from "regular temporal blocks" using the `is_starting_point` variable.
 """
 function generate_starting_point()
-    # TODO: Tasku : This needs to change,
-    # `starting_point` as a weird extension to `temporal_block` doesn't work
-    # with the static interface as it currently is implemented.
-    # While it might be possible to hard-code it into `convenience_functions.jl` the way it is now,
-    # That file is automatically regenerated from the `preprocessing_template.json` whenever SpineOpt builds.
-    # I'd rather avoid implementing a custom workaraound for that specific class in SpineInterface.
-    # Maybe use a `is_starting_point` parameter to distinguish starting `temporal_blocks` instead?
-    representative_blocks = unique(
+    representative_blocks = Set(
         blk
         for coef_by_blk_by_start in values(_coef_by_representative_by_start_by_represented())
         for coef_by_blk in values(coef_by_blk_by_start)
@@ -896,10 +858,15 @@ function generate_starting_point()
         push!(obj.members, obj)
     end
     starting_point_values = Dict(
-        obj => Dict(:has_free_start => parameter_value(false)) for obj in starting_point_objects
+        obj => Dict(
+            :has_free_start => parameter_value(false),
+            :is_starting_point => parameter_value(true),
+            :is_representative => parameter_value(false)
+        ) for obj in starting_point_objects
     )
-    merge!(starting_point.env_dict, ObjectClass(:temporal_block, starting_point_objects, starting_point_values).env_dict) # TODO: Tasku: Not ideal trickery with direct env_dict merging, but `add_object_parameter_values!` doesn't work likely due to the weird nature of `starting_point`.
-    add_relationships!( # TODO: Tasku: I think this might add `starting_point` objects into the `temporal_block` class, thus nullifying their "separation".
+    #add_objects!(temporal_block, starting_point_objects) # These now need to be explicitly included in `temporal_block`.
+    add_object_parameter_values!(temporal_block, starting_point_values) # 1D relationship for starting point?
+    add_relationships!(
         node__temporal_block,
         [
             (n, starting_point)
@@ -907,7 +874,6 @@ function generate_starting_point()
             for n in node__temporal_block(temporal_block=[blk; groups(blk)])
         ]
     )
-    push_class!(has_free_start, starting_point)
     add_relationships!(block__starting_point, block_starting_point_relationships)
 end
 
@@ -922,8 +888,5 @@ function generate_is_representative()
             )
             for blk in temporal_block()
         )
-    )
-    add_object_parameter_defaults!( # TODO: Tasku: Not 100% sure this is needed or if we get these from `preprocessing_template.json`
-        temporal_block, Dict(:is_representative => parameter_value(false))
     )
 end
