@@ -79,12 +79,17 @@ function t_lowest_resolution_path(m, indices, extra_indices...)
     end
     scens_by_t = t_lowest_resolution_sets!(m, _scens_by_t(indices))
     extra_scens_by_t = _scens_by_t(Iterators.flatten(extra_indices))
+    _merge_extra_scens!(m, scens_by_t, extra_scens_by_t)
+    ((t, path) for (t, scens) in scens_by_t for path in active_stochastic_paths(m, scens))
+end
+
+function _merge_extra_scens!(m, scens_by_t::Dict{TimeSlice,Set{Object}}, extra_scens_by_t::Dict{TimeSlice,Set{Object}})
     for (t, scens) in scens_by_t
         for t1 in t_overlaps_t(m; t=t)
-            union!(scens, get(extra_scens_by_t, t1, ()))
+            union!(scens, get(extra_scens_by_t, t1, Set{Object}()))
         end
     end
-    ((t, path) for (t, scens) in scens_by_t for path in active_stochastic_paths(m, scens))
+    scens_by_t
 end
 
 function _popfirst!(arr, default)
@@ -92,7 +97,7 @@ function _popfirst!(arr, default)
 end
 
 function _scens_by_t(indices)
-    scens_by_t = Dict{TimeSlice,Set}()
+    scens_by_t = Dict{TimeSlice,Set{Object}}()
     for x in indices
         scens = get!(scens_by_t, x.t) do
             Set{Object}()
