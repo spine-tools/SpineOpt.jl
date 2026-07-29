@@ -864,7 +864,7 @@ function node_dynamic_time_indices(
     temporal_block_before = _vcat(temporal_block, block__starting_point(temporal_block1=temporal_block))
     (
         (node=n, t_before=tb, t_after=ta)
-        for n in intersect(node, SpineOpt.node())
+        for n in intersect(node, SpineOpt.node()) # This `intersect` is a pointless safeguard?
         for (tb, ta) in dynamic_time_indices(
             m,
             (blk for (_n, blk) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)),
