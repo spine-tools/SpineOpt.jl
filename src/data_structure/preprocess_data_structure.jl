@@ -777,7 +777,7 @@ function generate_unit_commitment_parameters()
                 (x.unit for x in indices(ramp_up_limit)),
                 (x.unit for x in indices(ramp_down_limit)),
                 (x.unit for x in indices(unit_start_flow) if unit_start_flow(; x...) != 0),
-                (x.unit for x in indices(units_started_up_coefficient) if units_started_up_coefficient(; x...) != 0),
+                (x.unit for x in indices(units_started_up_coefficient)),
                 (u for (st, u) in stage__output__unit(output=output.((:units_started_up, :units_shut_down)))),
                 !isempty(stage__output(output=output.((:units_started_up, :units_shut_down)))) ? unit() : (),
             )
@@ -802,7 +802,7 @@ function generate_unit_commitment_parameters()
                 indices(units_on_non_anticipativity_time),
                 indices(fix_units_on),
                 (u for u in indices(candidate_units) if is_candidate(unit=u)),
-                (x.unit for x in indices(units_on_coefficient) if units_on_coefficient(; x...) != 0),
+                (x.unit for x in indices(units_on_coefficient)),
                 (x.unit for x in indices(minimum_operating_point) if minimum_operating_point(; x...) != 0),
                 (x.unit for x in indices(ramp_up_limit)),
                 (x.unit for x in indices(ramp_down_limit)),
