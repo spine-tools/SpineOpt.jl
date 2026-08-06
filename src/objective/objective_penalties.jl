@@ -32,7 +32,7 @@ function objective_penalties(m::Model, t_range)
         m,
         + sum(
             (node_slack_neg[n, s, t] + node_slack_pos[n, s, t])
-            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
+            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
                node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
             ) 
             * duration(t)

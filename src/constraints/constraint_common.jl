@@ -191,7 +191,7 @@ _default_nb_of_connections(conn::Object) = is_candidate(connection=conn) ?
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
 
 function _check_ptdf_duration(m, t, conns...)
-    durations = [ptdf_duration(connection=conn, _default=nothing) for conn in conns]
+    durations = [ptdf_duration(connection=conn, _default=nothing, _strict=false) for conn in conns]
     filter!(!isnothing, durations)
     isempty(durations) && return true
     duration = minimum(durations)
@@ -209,7 +209,7 @@ end
 
 function _node_state_time_slices(m, node, ::Val{true})
     node = intersect(node, SpineOpt.node(storage_longterm_active=true))
-    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false)))
+    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false, is_starting_point=false)))
 end
 
 function _term_connection_flow(m, conn, ng, d, s_path, t)

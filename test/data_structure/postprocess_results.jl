@@ -327,7 +327,7 @@ function test_save_contingency_is_binding()
         @testset for (t, obs) in val
             exp = demand_pv(t=t) >= 100 ? 1.0 : 0.0
             @test obs == exp
-        end
+        end #TODO: The last 3 timesteps fail?
     end
 end
 

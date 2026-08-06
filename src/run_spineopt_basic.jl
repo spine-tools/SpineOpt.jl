@@ -78,7 +78,7 @@ function build_model!(m; log_level)
     model_name = _model_name(m)
     @timelog log_level 2 "Creating $model_name temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $model_name stochastic structure..." generate_stochastic_structure!(m)
-    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) &&
+    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) &&
         @timelog log_level 2 "Creating $model_name economic structure..." generate_economic_structure!(m)
     roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)

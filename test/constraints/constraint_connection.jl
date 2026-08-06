@@ -2027,8 +2027,8 @@ end
     test_constraint_fix_node_pressure_point()
     test_constraint_connection_unitary_gas_flow()
     test_constraint_node_voltage_angle()
-    test_constraint_connection_intact_flow_ptdf()
-    test_constraint_connection_flow_lodf()
+    test_constraint_connection_intact_flow_ptdf() # TODO: This relies on a specific leationship order!
+    test_constraint_connection_flow_lodf() # TODO: This relies on a specific leationship order!
     test_contraints_ptdf_lodf_duration()
     test_constraint_ratio_out_in_connection_flow()
     test_constraint_connections_invested_transition()
@@ -2039,7 +2039,7 @@ end
     test_constraint_connections_invested_available()
     test_constraint_connections_invested_available_mp()
     test_constraint_user_constraint_node_connection()
-    test_constraint_connection_flow_intact_flow()
+    test_constraint_connection_flow_intact_flow() # TODO: This relies on a specific relationship order!
     test_constraint_candidate_connection_lb()
     test_constraint_ratio_out_in_connection_intact_flow()
     test_constraint_candidate_connection_ub()
