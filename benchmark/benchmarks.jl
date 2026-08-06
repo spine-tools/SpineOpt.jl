@@ -1,5 +1,6 @@
 using BenchmarkTools
 using Dates
+using JSON
 using SpineInterface
 using SpineOpt
 using Graphs
@@ -175,16 +176,33 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     return url_in, url_out
 end
 
-SUITE["main"] = BenchmarkGroup()
+const configured_example = get(ENV, "SPINEOPT_BENCHMARK_EXAMPLE", "synthetic")
 
-url_in_basic, url_out_basic =
-    setup(number_of_weeks=1, n_count=2, add_meshed_network=true, add_investment=false, add_rolling=false)
-# url_in_invest, url_out_invest = setup(number_of_weeks=1, n_count=2, add_investment=true, add_rolling=false)
-# url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
+function add_example_benchmark(path::AbstractString)
+    example_path = isabspath(path) ? path : normpath(joinpath(@__DIR__, "..", path))
+    isfile(example_path) || error("Benchmark example not found: $example_path")
+    example = JSON.parsefile(example_path)
+    label = splitext(basename(example_path))[1]
+    SUITE["examples"] = BenchmarkGroup()
+    SUITE["examples", label] =
+        @benchmarkable run_spineopt($example, nothing; log_level=0, optimize=false) samples = 1 evals = 1 seconds = Inf
+end
 
-SUITE["main", "run_spineopt", "basic"] =
-    @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 1 evals = 1 seconds =
-        Inf
+if configured_example == "synthetic"
+    SUITE["main"] = BenchmarkGroup()
+
+    url_in_basic, url_out_basic =
+        setup(number_of_weeks=1, n_count=2, add_meshed_network=true, add_investment=false, add_rolling=false)
+    # url_in_invest, url_out_invest = setup(number_of_weeks=1, n_count=2, add_investment=true, add_rolling=false)
+    # url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
+
+    SUITE["main", "run_spineopt", "basic"] =
+        @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 1 evals = 1 seconds =
+            Inf
+else
+    add_example_benchmark(configured_example)
+end
+
 # SUITE["main", "run_spineopt", "investment"] =
 #     @benchmarkable run_spineopt($url_in_invest, $url_out_invest; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
 #         Inf

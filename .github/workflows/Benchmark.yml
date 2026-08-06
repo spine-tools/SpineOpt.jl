@@ -1,0 +1,69 @@
+name: Benchmarks
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+    inputs:
+      example:
+        description: Example data set to benchmark
+        required: true
+        default: synthetic
+        type: choice
+        options:
+          - synthetic
+          - examples/simple_system.json
+          - examples/6_unit_system.json
+          - examples/capacity_planning.json
+          - examples/multi-year_investment_with_econ_discounting_consecutives.json
+          - examples/multi-year_investment_with_econ_discounting_milestones.json
+          - examples/multi-year_investment_without_econ_discounting.json
+          - examples/multi_stage_model_tutorial.json
+          - examples/representative_periods.json
+          - examples/reserves.json
+          - examples/rolling_horizon.json
+          - examples/stochastic.json
+          - examples/unit_commitment.json
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'benchmark')
+    runs-on: ubuntu-latest
+    env:
+      SPINEOPT_BENCHMARK_EXAMPLE: ${{ inputs.example || 'synthetic' }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+      - uses: julia-actions/cache@v2
+      - name: Install spinedb_api
+        run: julia ./.install_spinedb_api.jl
+        env:
+          PYTHON: python
+      - name: Instantiate benchmark environment
+        run: julia --project=benchmark -e 'using Pkg; Pkg.instantiate()'
+      - name: Validate benchmark selection
+        run: |
+          if [ "$SPINEOPT_BENCHMARK_EXAMPLE" != "synthetic" ]; then
+            test -f "$SPINEOPT_BENCHMARK_EXAMPLE"
+          fi
+      - name: Run benchmark suite
+        run: |
+          julia --project=benchmark -e 'using BenchmarkTools; include("benchmark/benchmarks.jl"); run(SUITE; verbose=true)' \
+            | tee benchmark-results.txt
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: spineopt-benchmark-results
+          path: benchmark-results.txt
