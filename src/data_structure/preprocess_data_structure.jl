@@ -37,9 +37,6 @@ function preprocess_data_structure()
     generate_model__report()
     add_required_outputs()
     process_lossless_bidirectional_connections()
-    # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
-    # so we don't corrupt the lookup cache
-    generate_direction_and_reorganise_classes()
     generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
     generate_node_has_physics(:has_pressure, :pressure_physics)
     generate_ptdf_lodf()
@@ -182,55 +179,6 @@ function process_lossless_bidirectional_connections()
     add_relationship_parameter_values!(connection__from_node, new_connection__from_node_parameter_values)
     add_relationship_parameter_values!(connection__to_node, new_connection__to_node_parameter_values)
     add_relationship_parameter_values!(connection__node__node, new_connection__node__node_parameter_values)
-end
-
-"""
-    generate_direction_and_reorganise_classes()
-
-Generate `direction` `Object`s and reorganise affected relationships.
-"""
-function generate_direction_and_reorganise_classes()
-    # Create the new `direction` `Object`s.
-    from_node = Object(:from_node, :direction)
-    to_node = Object(:to_node, :direction)
-    add_objects!(direction, [from_node, to_node])
-    # Add `direction` to the mapped classes.
-    directions_by_class = [
-        node__to_unit => from_node,
-        unit__to_node => to_node,
-        connection__from_node => from_node,
-        connection__to_node => to_node,
-        unit_flow__user_constraint__node__unit__user_constraint => from_node,
-        unit_flow__user_constraint__unit__node__user_constraint => to_node,
-        connection__from_node__user_constraint => from_node,
-        connection__to_node__user_constraint => to_node,
-        # Some automatically generated subclasses need two directions.
-        unit_flow__unit_flow__node__unit__node__unit => [from_node, from_node],
-        unit_flow__unit_flow__node__unit__unit__node => [from_node, to_node],
-        unit_flow__unit_flow__unit__node__node__unit => [to_node, from_node],
-        unit_flow__unit_flow__unit__node__unit__node => [to_node, to_node],
-    ]
-    for (cls, d) in directions_by_class
-        add_dimension!(cls, d)
-    end
-    # Reorganise the dimensions of some affected classes
-    und_uc = [:unit, :node, :direction, :user_constraint]
-    und_und = [:unit1, :node1, :direction1, :unit2, :node2, :direction2]
-    cnd_uc = [:connection, :node, :direction, :user_constraint]
-    dimensions_by_class = [
-        node__to_unit => [:unit, :node, :direction],
-        unit_flow__user_constraint__node__unit__user_constraint => und_uc,
-        unit_flow__user_constraint__unit__node__user_constraint => und_uc,
-        unit_flow__unit_flow__node__unit__node__unit => und_und,
-        unit_flow__unit_flow__node__unit__unit__node => und_und,
-        unit_flow__unit_flow__unit__node__node__unit => und_und,
-        unit_flow__unit_flow__unit__node__unit__node => und_und,
-        connection__to_node__user_constraint => cnd_uc,
-        connection__from_node__user_constraint => cnd_uc,
-    ]
-    for (cls, dims) in dimensions_by_class
-        reorder_dimensions!(cls, dims)
-    end
 end
 
 """
@@ -732,9 +680,9 @@ function generate_is_boundary()
     for (n, g) in node__grid()
         physics_type(grid=g) in (:lodf_physics, :ptdf_physics) || continue
         has_boundary_conn = false
-        for (conn, _d) in connection__from_node(node=n)
+        for conn in connection__from_node(node=n)
             remote_commodities = unique(
-                g for (remote_n, _d) in connection__to_node(connection=conn) if remote_n != n for
+                g for remote_n in connection__to_node(connection=conn) if remote_n != n for
                 g in node__grid(node=remote_n)
             )
             if !(g in remote_commodities)

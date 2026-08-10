@@ -317,13 +317,13 @@ function test_save_contingency_is_binding()
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
         conn_cont = connection(:connection_ca)
-        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_ab))
+        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_ab)) # FIXME: Pending incomplete call syntax
         demand_pv = parameter_value(demand_)
         @testset for (t, obs) in val
             exp = demand_pv(t=t) >= 200 ? 1.0 : 0.0
             @test obs == exp
         end
-        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_bc))
+        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_bc)) # FIXME: Pending incomplete call syntax
         @testset for (t, obs) in val
             exp = demand_pv(t=t) >= 100 ? 1.0 : 0.0
             @test obs == exp

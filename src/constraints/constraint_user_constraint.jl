@@ -90,26 +90,26 @@ function _operations_term(m, uc, path, t)
         + sum(
             + unit_flow_op[u, n, d, op, s, t_short]
             * coefficient_for_unit_flow(
-                m; unit=u, node=n, direction=d, user_constraint=uc, i=op, stochastic_scenario=s, t=t_short
+                m; flow..., i=op, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n, d, uc) in indices(coefficient_for_unit_flow; user_constraint=uc)
+            for flow in indices(coefficient_for_unit_flow; user_constraint=uc)
             for (u, n, d, op, s, t_short) in unit_flow_op_indices(
-                m; unit=u, node=n, direction=d, stochastic_scenario=path, t=in_t
+                m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), stochastic_scenario=path, t=in_t
             );
             init=0,
         )
         + sum(
             + unit_flow[u, n, d, s, t_short]
             * coefficient_for_unit_flow(
-                m; unit=u, node=n, direction=d, user_constraint=uc, i=1, stochastic_scenario=s, t=t_short
+                m; flow..., i=1, stochastic_scenario=s, t=t_short
             )
             * duration(t_short)
-            for (u, n, d, uc) in indices(coefficient_for_unit_flow; user_constraint=uc)
+            for flow in indices(coefficient_for_unit_flow; user_constraint=uc)
             for (u, n, d, s, t_short) in unit_flow_indices(
-                m; unit=u, node=n, direction=d, stochastic_scenario=path, t=in_t
+                m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), stochastic_scenario=path, t=in_t
             )
-            if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short)); # TODO: Is this check necessary HERE? Do we ever have both simultaneously?
+            if isempty(unit_flow_op_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), t=t_short)); # TODO: Is this check necessary HERE? Do we ever have both simultaneously?
             init=0,
         )
         + sum(
@@ -286,9 +286,9 @@ end
 function _user_constraint_unit_flow_indices(m, uc, s, t, tb)
     (
         ind
-        for (u, n, d, uc) in indices(coefficient_for_unit_flow; user_constraint=uc)
+        for flow in indices(coefficient_for_unit_flow; user_constraint=uc)
         for ind in unit_flow_indices(
-            m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t, temporal_block=tb
+            m; unit=flow.u, node=flow.n, direction=_flow_direction(flow), stochastic_scenario=s, t=t, temporal_block=tb
         )
     )
 end

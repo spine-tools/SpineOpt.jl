@@ -36,7 +36,10 @@ function connection_flow_costs(m::Model, t_range)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_flow_cost(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (conn, n, d) in indices(connection_flow_cost)
+            for (conn, n, d) in Iterators.flatten((
+                ((conn, n, direction(:to_node)) for (conn, n) in indices(connection_flow_cost, connection__to_node)),
+                ((conn, n, direction(:from_node)) for (conn, n) in indices(connection_flow_cost, connection__from_node))
+            ))
             for (conn, n, d, s, t) in connection_flow_indices(m; connection=conn, node=n, direction=d, t=t_range);
             init=0,
         )

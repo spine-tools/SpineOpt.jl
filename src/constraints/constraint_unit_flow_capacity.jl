@@ -199,28 +199,28 @@ end
 
 function constraint_unit_flow_capacity_tight_compact_indices(m::Model)
     (
-        (unit=u, node=ng, direction=d, stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
-        for (u, ng, d) in indices(capacity_per_unit)
+        (unit=flow.unit, node=flow.node, direction=_flow_direction(flow), stochastic_path=subpath, t=t, t_next=t_next, case=case, part=part)
+        for flow in indices(capacity_per_unit)
         for t in t_highest_resolution(
             m,
             Iterators.flatten(
-                ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
+                ((t for (u, t) in unit_time_indices(m; unit=flow.unit)), (t for (ng, t) in node_time_indices(m; node=flow.node)))
             )
         )
-        for t_next in _t_next(m, u, t)
+        for t_next in _t_next(m, flow.unit, t)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
                 (
-                    _get_units_on_indices(m, u; t=[t_overlaps_t(m; t=t); t_next]),
-                    unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
+                    _get_units_on_indices(m, flow.unit; t=[t_overlaps_t(m; t=t); t_next]),
+                    unit_flow_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), t=t_overlaps_t(m; t=t)),
                     _switch(
-                        d; from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
-                    )(m; unit=u, t=t_overlaps_t(m; t=t)),
+                        _flow_direction(flow); from_node=nonspin_units_started_up_indices, to_node=nonspin_units_shut_down_indices
+                    )(m; unit=flow.unit, t=t_overlaps_t(m; t=t)),
                 )
             )
         )
-        for (subpath, parts_by_case) in _unit_capacity_constraint_subpaths(path, u, t)
+        for (subpath, parts_by_case) in _unit_capacity_constraint_subpaths(path, flow.unit, t)
         for (case, parts) in parts_by_case
         for part in parts
     )
@@ -277,21 +277,21 @@ end
 
 function constraint_unit_flow_capacity_indices(m::Model)
     (
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(capacity_per_unit)
-        if has_online_variable(unit=u) || is_candidate(unit=u) || members(ng) != [ng]
+        (unit=flow.unit, node=flow.node, direction=_flow_direction(flow), stochastic_path=path, t=t)
+        for flow in indices(capacity_per_unit)
+        if has_online_variable(unit=flow.unit) || is_candidate(unit=flow.unit) || members(flow.node) != [flow.node]
         for t in t_highest_resolution(
             m,
             Iterators.flatten(
-                ((t for (u, t) in unit_time_indices(m; unit=u)), (t for (ng, t) in node_time_indices(m; node=ng)))
+                ((t for (u, t) in unit_time_indices(m; unit=flow.unit)), (t for (ng, t) in node_time_indices(m; node=flow.node)))
             )
         )
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
                 (
-                    _get_units_on_indices(m, u; t=t_overlaps_t(m; t=t)),
-                    unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_overlaps_t(m; t=t)),
+                    _get_units_on_indices(m, flow.unit; t=t_overlaps_t(m; t=t)),
+                    unit_flow_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), t=t_overlaps_t(m; t=t)),
                 )
             )
         )

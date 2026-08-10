@@ -80,7 +80,10 @@ end
 function constraint_connection_intact_flow_capacity_indices(m::Model)
     (
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
-        for (c, ng, d) in indices(capacity_per_connection; connection=connection(has_ptdf=true))
+        for (c, ng, d) in Iterators.flatten((
+            ((c, ng, direction(:to_node)) for (c, ng) in indices(capacity_per_connection, connection__to_node; connection=connection(has_ptdf=true))),
+            ((c, ng, direction(:from_node)) for (c, ng) in indices(capacity_per_connection, connection__from_node; connection=connection(has_ptdf=true))),
+        ))
         for (t, path) in t_lowest_resolution_path(
             m, connection_intact_flow_indices(m; connection=c, node=ng, direction=d)
         )

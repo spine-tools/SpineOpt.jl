@@ -19,12 +19,14 @@
 #############################################################################
 """
     unit_flow_op_indices(
+        m::Model;
         unit=anything,
         node=anything,
         direction=anything,
-        operating_point=anything,
-        s=anything
-        t=anything
+        i=anything,
+        stochastic_scenario=anything,
+        t=anything,
+        temporal_block=temporal_block(is_representative=true),
     )
 
 A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
@@ -42,9 +44,21 @@ function unit_flow_op_indices(
 )
     unit = members(unit)
     node = members(node)
+    to_node = SpineOpt.direction(:to_node)
+    from_node = SpineOpt.direction(:from_node)
+    unit__node__to_node = if to_node in direction
+        ((u, n, to_node) for (u, n) in indices(operating_points, unit__to_node; unit=unit, node=node))
+    else
+        ()
+    end
+    unit__node__from_node = if from_node in direction
+        ((u, n, from_node) for (n, u) in indices(operating_points, node__to_unit; node=node, unit=unit))
+    else
+        ()
+    end
     (
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
-        for (u, n, d) in indices(operating_points; unit=unit, node=node, direction=direction)
+        for (u, n, d) in Iterators.flatten((unit__node__to_node, unit__node__from_node))
         for i in intersect(i, 1:length(operating_points(unit=u, node=n, direction=d)))
         for (n, s, t) in node_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t

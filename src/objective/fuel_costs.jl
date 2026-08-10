@@ -34,10 +34,10 @@ function fuel_costs(m::Model, t_range)
                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
             ) 
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * fuel_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
-            * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
-            for (u, ng, d) in indices(fuel_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range);
+            * fuel_cost(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+            for flow in indices(fuel_cost)
+            for (u, n, d, s, t) in unit_flow_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), t=t_range);
             init=0,
         )
     )

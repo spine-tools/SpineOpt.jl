@@ -97,7 +97,7 @@ function add_expression_capacity_margin!(m::Model)
                         init=0,
                     )
                 )
-                for (u, n, d) in indices(capacity_per_unit; node=n, direction=direction(:to_node))
+                for (u, n) in indices(capacity_per_unit, unit__to_node; node=n)
                 if !is_storage_unit(u)
             )
         )
@@ -125,7 +125,7 @@ function expression_capacity_margin_indices(m::Model)
                         m;
                         unit=Iterators.filter(
                             !is_storage_unit,
-                            (u for (u, n, d) in indices(capacity_per_unit; node=n, direction=direction(:to_node))),
+                            (u for (u, n) in indices(capacity_per_unit, unit__to_node; node=n)),
                         ),
                         t=t_overlaps_t(m; t=t),
                     ),
@@ -144,5 +144,5 @@ Deduced based whether the unit `u` takes input from any node `n`
 where `storage_active(node=n) = true`.
 """
 function is_storage_unit(u)
-    any(storage_active(node=n) for (n, d) in node__to_unit(unit=u))
+    any(storage_active(node=n) for n in node__to_unit(unit=u))
 end

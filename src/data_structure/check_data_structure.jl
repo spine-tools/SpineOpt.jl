@@ -156,9 +156,9 @@ Check if every defined `minimum_operating_point` parameter has a corresponding `
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
-        (u, n, d)
-        for (u, n, d) in indices(minimum_operating_point)
-        if capacity_per_unit(unit=u, node=n, direction=d) === nothing
+        flow
+        for flow in indices(minimum_operating_point)
+        if capacity_per_unit(flow...) === nothing
     ]
     _check(
         isempty(error_indices),
@@ -204,9 +204,9 @@ end
 
 function check_operating_points()
     error_indices = [
-        (u, n, d)
-        for (u, n, d) in indices(minimum_operating_point)
-        if !(0 <= minimum_operating_point(unit=u, node=n, direction=d) <= 1)
+        flow
+        for flow in indices(minimum_operating_point)
+        if !(0 <= minimum_operating_point(; flow...) <= 1)
     ]
     _check(
         isempty(error_indices),
@@ -217,7 +217,7 @@ end
 function check_ramp_parameters()
     for param in (ramp_limits_up, ramp_limits_down, ramp_limits_startup, ramp_limits_shutdown)
         # value between 0 and 1
-        error_indices = [(u, n, d) for (u, n, d) in indices(param) if !(0 < param(unit=u, node=n, direction=d) <= 1)]
+        error_indices = [flow for flow in indices(param) if !(0 < param(; flow...) <= 1)]
         _check(
             isempty(error_indices), "$param has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
         )
@@ -227,9 +227,9 @@ function check_ramp_parameters()
     for param in (ramp_limits_startup, ramp_limits_shutdown)
         # value greater than minimum_operating_point
         error_indices = [
-            (u, n, d)
-            for (u, n, d) in intersect(indices(minimum_operating_point), indices(param))
-            if minimum_operating_point(unit=u, node=n, direction=d) > param(unit=u, node=n, direction=d)
+            flow
+            for flow in intersect(indices(minimum_operating_point), indices(param))
+            if minimum_operating_point(; flow...) > param(; flow...)
         ]
         _check(
             isempty(error_indices),
@@ -245,9 +245,9 @@ end
 function _check_startup_ramp_consistency()
     relevant_indices = union(indices(ramp_limits_startup), indices(ramp_limits_up), indices(minimum_operating_point))
     error_indices = [
-        (u, n, d) for (u, n, d) in relevant_indices 
-        if ramp_limits_startup(unit=u, node=n, direction=d, _default=1) >
-        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_limits_up(unit=u, node=n, direction=d, _default=1)
+        flow for flow in relevant_indices 
+        if ramp_limits_startup(; flow..., _default=1) >
+        minimum_operating_point(; flow..., _default=0) + ramp_limits_up(; flow..., _default=1)
     ]
     _check(
         isempty(error_indices),
@@ -258,9 +258,9 @@ end
 function _check_shutdown_ramp_consistency()
     relevant_indices = union(indices(ramp_limits_shutdown), indices(ramp_limits_down), indices(minimum_operating_point))
     error_indices = [
-        (u, n, d) for (u, n, d) in relevant_indices 
-        if ramp_limits_shutdown(unit=u, node=n, direction=d, _default=1) >
-        minimum_operating_point(unit=u, node=n, direction=d, _default=0) + ramp_limits_down(unit=u, node=n, direction=d, _default=1)
+        flow for flow in relevant_indices 
+        if ramp_limits_shutdown(; flow..., _default=1) >
+        minimum_operating_point(; flow..., _default=0) + ramp_limits_down(; flow..., _default=1)
     ]
     _check(
         isempty(error_indices),

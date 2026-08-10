@@ -29,6 +29,8 @@ sum (
 """
 function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
     @fetch units_invested_available, mp_min_res_gen_to_demand_ratio_slack = m_mp.ext[:spineopt].variables
+    to_node = direction(:to_node)
+    from_node = direction(:from_node)
     benders_units_invested_available = m_mp.ext[:spineopt].downstream_outputs[:units_invested_available]
     sp_unit_flow = _val_by_ent(m, :unit_flow)
     merge!(
@@ -38,11 +40,11 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
                 m_mp,
                 + sum(
                     window_sum_duration(
-                        m_mp, sp_unit_flow[(unit=u, node=n, direction=d, stochastic_scenario=s)], window
+                        m_mp, sp_unit_flow[(unit=u, node=n, direction=to_node, stochastic_scenario=s)], window
                     )
                     for window in m_mp.ext[:spineopt].temporal_structure[:sp_windows]
                     for (u, s) in _unit_scenario(unit(is_renewable=true))
-                    for (u, n, d) in unit__to_node(unit=u, node=node__grid(grid=comm), _compact=false);
+                    for (u, n) in unit__to_node(unit=u, node=node__grid(grid=comm), _compact=false);
                     init=0
                 )
                 + sum(
@@ -57,13 +59,13 @@ function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
                     * window_sum_duration(
                         m_mp,
                         + availability_factor(unit=u, stochastic_scenario=s)
-                        * capacity_per_unit(unit=u, node=n, direction=d, stochastic_scenario=s)
-                        * capacity_to_flow_conversion_factor(unit=u, node=n, direction=d, stochastic_scenario=s),
+                        * capacity_per_unit(unit=u, node=n, direction=to_node, stochastic_scenario=s)
+                        * capacity_to_flow_conversion_factor(unit=u, node=n, direction=to_node, stochastic_scenario=s),
                         window
                     )
                     for window in m_mp.ext[:spineopt].temporal_structure[:sp_windows]
                     for (u, s) in _unit_scenario(unit(is_renewable=true)) 
-                    for (u, n, d) in unit__to_node(unit=u, node=node__grid(grid=comm), _compact=false);
+                    for (u, n) in unit__to_node(unit=u, node=node__grid(grid=comm), _compact=false);
                     init=0,
                 )
                 + get(mp_min_res_gen_to_demand_ratio_slack, (comm,), 0)

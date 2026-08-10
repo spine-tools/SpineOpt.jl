@@ -65,8 +65,8 @@ end
 function constraint_unit_flow_op_rank_indices(m::Model)
     (
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t)
-        for (u, n, d) in indices(capacity_per_unit)
-        for (u, n, d, op, s, t) in unit_flow_op_active_indices(m; unit=u, node=n, direction=d)
+        for flow in indices(capacity_per_unit)
+        for (u, n, d, op, s, t) in unit_flow_op_active_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow))
         if op < lastindex(operating_points(unit=u, node=n, direction=d))
         # the partial unit flow at the last operating point does not need this constraint.
     )

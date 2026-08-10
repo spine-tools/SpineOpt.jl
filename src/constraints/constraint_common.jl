@@ -163,8 +163,8 @@ end
     _d_reverse(d)
 
 Obtain the reverse direction Object of a given direction Object `d`.
-The `direction` ObjectClass is already defined by `generate_direction()`
-in "src\\data_structure\\preprocess_data_structure.jl".
+The `direction` ObjectClass is already defined by the preprocessing template
+in "templates\\preprocessing_template.jl".
 
 # Example
 

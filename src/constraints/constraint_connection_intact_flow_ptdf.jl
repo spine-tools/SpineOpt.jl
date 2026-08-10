@@ -110,17 +110,18 @@ end
 # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
 
 function constraint_connection_intact_flow_ptdf_indices(m::Model)
+    from_node = direction(:from_node)
     (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(monitoring_active=true, has_ptdf=true)
-        for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
+        for (conn, n_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (n_to, t) in node_time_indices(m; node=n_to)
         if _check_ptdf_duration(m, t, conn)
         for path in active_stochastic_paths(
             m,
             Iterators.flatten(
                 (
-                    connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
+                    connection_intact_flow_indices(m; connection=conn, node=n_to, direction=from_node, t=t),
                     node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t),
                 )
             )

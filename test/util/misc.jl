@@ -173,7 +173,6 @@ function test_write_ptdf_lodf()
             relationship_parameter_values=relationship_parameter_values,
         )
         using_spinedb(url_in, SpineOpt)
-        SpineOpt.generate_direction_and_reorganise_classes()
         SpineOpt.generate_ptdf_lodf()
         SpineOpt.write_ptdfs()
         ptdfs = readdlm("ptdfs.csv", ',', Any, '\n')

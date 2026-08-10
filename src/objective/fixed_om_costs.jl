@@ -28,7 +28,7 @@ function fixed_om_costs(m, t_range)
     @expression(
         m,
         sum( # Fixed costs for units.
-            + capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            + capacity_per_unit(m; unit=u, node=flow.node, direction=_flow_direction(flow), stochastic_scenario=s, t=t)
             * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
             * (
                 + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
@@ -48,14 +48,14 @@ function fixed_om_costs(m, t_range)
             * (
                 is_candidate(unit=u) ? 
                 unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s) : 
-                node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
+                node_stochastic_scenario_weight(m; node=flow.node, stochastic_scenario=s)
             )
-            for (u, ng, d) in indices(capacity_per_unit; unit=indices(fom_cost, unit))
+            for flow in indices(capacity_per_unit; unit=indices(fom_cost, unit))
             for (u, s, t) in Iterators.flatten(
-                is_candidate(unit=u) ? 
-                (units_invested_available_indices(m; unit=u, t=t_range),) :
+                is_candidate(unit=flow.unit) ? 
+                (units_invested_available_indices(m; unit=flow.unit, t=t_range),) :
                 (
-                    ((u, s, t) for (u, _n, _d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)),
+                    ((u, s, t) for (u, _n, _d, s, t) in unit_flow_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), t=t_range)),
                 )
             );
             init=0, # No fixed costs if none defined.
@@ -82,7 +82,10 @@ function fixed_om_costs(m, t_range)
                 connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s) : 
                 node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             )
-            for (conn, ng, d) in indices(capacity_per_connection; connection=indices(fixed_annual_cost, connection))
+            for (conn, ng, d) in Iterators.flatten((
+                ((conn, ng, direction(:to_node)) for (conn, ng) in indices(capacity_per_connection, connection__to_node)),
+                ((conn, ng, direction(:from_node)) for (conn, ng) in indices(capacity_per_connection, connection__from_node))
+            ))
             for (conn, s, t) in Iterators.flatten(
                 is_candidate(connection=conn) ? 
                 (connections_invested_available_indices(m; connection=conn, t=t_range),) :

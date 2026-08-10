@@ -111,14 +111,10 @@ function _group_capacity_invested_available(m, ig, s, t)
     (
         + sum(
             + units_invested_available[u, s, t]
-            * capacity_per_unit(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+            * capacity_per_unit(m; flow..., stochastic_scenario=s, t=t)
+            for flow in indices(capacity_per_unit; unit_flow__investment_group(investment_group=ig)...)
             for (u, s, t) in units_invested_available_indices(
-                m; unit=unit__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
-            )
-            for (u, n, d) in indices(
-                capacity_per_unit;
-                unit=u,
-                node=unit_flow__investment_group(unit=u, direction=anything, investment_group=ig)
+                m; unit=flow.unit, stochastic_scenario=s, t=t_in_t(m; t_long=t)
             );
             init=0,
         )

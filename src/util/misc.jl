@@ -431,3 +431,27 @@ end
 function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
     Base.getindex(d, NamedTuple{J}(key))
 end
+
+"""
+    _flow_direction(
+        flow::RelationshipLike,
+        i::Int=1
+    )
+
+Deduce the [`direction`](@ref) of a flow.
+
+Checks the `flow` index at `i`, and if it is a `:node`, sets the direction to `from_node`.
+Otherwise, returns `to_node`.
+"""
+function _flow_direction(
+    flow::RelationshipLike,
+    i::Int=1,
+)
+    name = flow[i].class_name
+    if name == :node
+        return direction(:from_node)
+    elseif name == :unit
+        return direction(:to_node)
+    end
+    error("$name is not recognized as a dimension of a `flow`!")
+end

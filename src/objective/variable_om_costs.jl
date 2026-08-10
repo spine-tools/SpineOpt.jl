@@ -34,10 +34,10 @@ function variable_om_costs(m::Model, t_range)
             )
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * vom_cost(m; unit=ug, node=ng, direction=d, stochastic_scenario=s, t=t)
-            * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
-            for (ug, ng, d) in indices(vom_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=ug, node=ng, direction=d, t=t_range);
+            * vom_cost(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+            for flow in indices(vom_cost)
+            for (u, n, d, s, t) in unit_flow_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), t=t_range);
             init=0,
         )
     )

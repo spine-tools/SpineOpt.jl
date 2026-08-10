@@ -68,6 +68,8 @@ end
 
 function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after)
     @fetch node_injection, node_state, unit_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
+    to_node = direction(:to_node)
+    from_node = direction(:from_node)
     @build_constraint(
         + sum(
             + node_injection[n, s, t_after]
@@ -110,16 +112,16 @@ function _build_constraint_node_injection(m::Model, n, s_path, t_before, t_after
         )
         # Commodity flows from units
         + sum(
-            get(unit_flow, (u, n1, d, s, t_short), 0)
-            for (u, n1, d) in unit__to_node(node=members(n); _compact=false)
+            get(unit_flow, (u, n1, to_node, s, t_short), 0)
+            for (u, n1) in unit__to_node(node=members(n); _compact=false)
             for s in s_path
             for t_short in t_in_t(m; t_long=t_after);
             init=0,
         )
         # Commodity flows to units
         - sum(
-            get(unit_flow, (u, n1, d, s, t_short), 0)
-            for (u, n1, d) in node__to_unit(node=members(n); _compact=false)
+            get(unit_flow, (u, n1, from_node, s, t_short), 0)
+            for (n1, u) in node__to_unit(node=members(n); _compact=false)
             for s in s_path
             for t_short in t_in_t(m; t_long=t_after);
             init=0,

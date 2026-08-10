@@ -131,8 +131,8 @@ of the two directions.
 In this case we can write a tight compact formulation.
 """
 function _connection_node_direction_for_flow_capacity(m)
-    froms = indices(capacity_per_connection, connection__from_node)
-    tos = indices(capacity_per_connection, connection__to_node)
+    froms = ((conn, n, direction(:from_node)) for (conn, n) in indices(capacity_per_connection, connection__from_node))
+    tos = ((conn, n, direction(:to_node)) for (conn, n) in indices(capacity_per_connection, connection__to_node))
     iter = Iterators.flatten((froms, tos))
     if tight_compact_formulations_active(model=m.ext[:spineopt].instance)
         bidirectional = intersect(((x.connection, x.node) for x in froms), ((x.connection, x.node) for x in tos))
@@ -148,6 +148,5 @@ function _connection_node_direction_for_flow_capacity(m)
     end
 end
 
-_from_cap(x) = connection_flow_capacity(; zip((:connection, :node), x)..., direction=direction(:from_node))
-
-_to_cap(x) = connection_flow_capacity(; zip((:connection, :node), x)..., direction=direction(:to_node))
+_from_cap(x) = connection_flow_capacity(connection__from_node; zip((:connection, :node), x)...)
+_to_cap(x) = connection_flow_capacity(connection__to_node; zip((:connection, :node), x)...)

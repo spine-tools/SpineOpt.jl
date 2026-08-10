@@ -38,15 +38,33 @@ function unit_flow_indices(
     t=anything,
     temporal_block=temporal_block(is_representative=true),
 )
+    to_node = SpineOpt.direction(:to_node)
+    from_node = SpineOpt.direction(:from_node)
     unit = members(unit)
     node = members(node)
-    (
-        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d) in unit_flow(unit=unit, node=node, direction=direction, _compact=false)
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+    unit__node__to_node = if in(to_node, direction)
+        (
+            (unit=u, node=n, direction=to_node, stochastic_scenario=s, t=t)
+            for (u, n) in unit__to_node(unit=unit, node=node, _compact=false)
+            for (n, s, t) in node_stochastic_time_indices(
+                m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+            )
         )
-    )
+    else
+        ()
+    end
+    unit__node__from_node = if in(from_node, direction)
+        (
+            (unit=u, node=n, direction=from_node, stochastic_scenario=s, t=t)
+            for (n, u) in node__to_unit(node=node, unit=unit, _compact=false)
+            for (n, s, t) in node_stochastic_time_indices(
+                m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+            )
+        )
+    else
+        ()
+    end
+    return Iterators.flatten((unit__node__to_node, unit__node__from_node))
 end
 
 function unit_flow_ub(m; unit, node, direction, kwargs...)
@@ -59,6 +77,25 @@ function unit_flow_ub(m; unit, node, direction, kwargs...)
         + existing_units(m; unit=unit, kwargs..., _default=_default_nb_of_units(unit))
         + something(investment_count_max_cumulative(m; unit=unit, kwargs...), 0)
     )
+end
+
+function _split_flows(u1, n1, d1, u2, n2, d2)
+    flow1 = (d1 == direction(:to_node)) ? (unit1=u1, node1=n1) : (node1=n1, unit1=u1)
+    flow2 = (d2 == direction(:to_node)) ? (unit2=u2, node2=n2) : (node2=n2, unit2=u2)
+    return flow1, flow2
+end
+
+function _inverse_flow(flow)
+    key = first(keys(flow))
+    if key == :unit1
+        return (unit2=flow.unit1, node2=flow.node1)
+    elseif key == :node1
+        return (node2=flow.node1, unit2=flow.unit1)
+    elseif key == :unit2
+        return (unit1=flow.unit2, node1=flow.node2)
+    else
+        return (node1=flow.node2, unit1=flow.unit2)
+    end
 end
 
 #=
@@ -78,11 +115,12 @@ Inverse:
     - (startflow_sign(fix_ratio) * flow_ratio_start_flow(u, n2, n1) / fix_ratio(u, n2, n1)) * units_started_up[u]
 =#
 function _fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
+    flow1, flow2 = _split_flows(u1, n1, d1, u2, n2, d2)
     if direct
         fix_ratio(
             m; 
-            unit1=u1, node1=n1, direction1=d1, 
-            unit2=u2, node2=n2, direction2=d2, 
+            flow1...,
+            flow2...,
             stochastic_scenario=s, t=t
         )
     else
@@ -90,8 +128,8 @@ function _fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct
             1, 
             fix_ratio(
                 m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                _inverse_flow(flow2)..., 
+                _inverse_flow(flow1)..., 
                 stochastic_scenario=s, t=t
             )
         )
@@ -99,12 +137,13 @@ function _fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct
 end
 
 function _fix_units_on_coeff(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
+    flow1, flow2 = _split_flows(u1, n1, d1, u2, n2, d2)
     fix_units_on_coeff = _ratio_to_units_on_coeff(fix_ratio)
     if direct
         fix_units_on_coeff(
             m; 
-            unit1=u1, node1=n1, direction1=d1, 
-            unit2=u2, node2=n2, direction2=d2, 
+            flow1..., 
+            flow2..., 
             stochastic_scenario=s, t=t,
             _default=0
         )
@@ -112,15 +151,15 @@ function _fix_units_on_coeff(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
         - _div_or_zero(
             fix_units_on_coeff(
                 m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                _inverse_flow(flow2)...,
+                _inverse_flow(flow1)...,
                 stochastic_scenario=s, t=t,
                 _default=0
             ),
             fix_ratio(
                 m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                _inverse_flow(flow2)...,
+                _inverse_flow(flow1)...,
                 stochastic_scenario=s, t=t
             ),
         )
@@ -128,13 +167,14 @@ function _fix_units_on_coeff(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
 end
 
 function _signed_flow_ratio_start_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
+    flow1, flow2 = _split_flows(u1, n1, d1, u2, n2, d2)
     sign = _ratio_and_directions_to_start_flow_sign(fix_ratio, d1, d2)
     iszero(sign) && return 0
     if direct
         sign * flow_ratio_start_flow(
             m; 
-            unit1=u1, node1=n1, direction1=d1, 
-            unit2=u2, node2=n2, direction2=d2, 
+            flow1..., 
+            flow2..., 
             stochastic_scenario=s, t=t,
             _default=0
         )
@@ -142,15 +182,15 @@ function _signed_flow_ratio_start_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_rati
         - sign * _div_or_zero(
             flow_ratio_start_flow(
                 m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                _inverse_flow(flow2)..., 
+                _inverse_flow(flow1)..., 
                 stochastic_scenario=s, t=t,
                 _default=0
             ),
             fix_ratio(
                 m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                _inverse_flow(flow2)..., 
+                _inverse_flow(flow1)..., 
                 stochastic_scenario=s, t=t
             ),
         )
@@ -166,16 +206,18 @@ end
 function _related_unit_flows(fix_ratio)
     flows_by_ref_flow = OrderedDict()
     fix_ratio_direct = Dict()
-    for (u1, n1, d1, u2, n2, d2) in indices(fix_ratio)
+    for flows in indices(fix_ratio)
+        d1 = _flow_direction(flows)
+        d2 = _flow_direction(flows, 3)
         # Only keep flows where the unit is the same, add a test if they are not the same
-        u1 == u2 || continue
-        _similar(n1, n2) || continue
-        f1 = (u1, n1, d1)
-        f2 = (u2, n2, d2)
+        flows.unit1 == flows.unit2 || continue
+        _similar(flows.node1, flows.node2) || continue
+        f1 = (flows.unit1, flows.node1, d1)
+        f2 = (flows.unit2, flows.node2, d2)
         push!(get!(flows_by_ref_flow, f2, Set()), f1)
         push!(get!(flows_by_ref_flow, f1, Set()), f2)
-        fix_ratio_direct[u1, n2, d2, n1, d1] = (fix_ratio, true)
-        fix_ratio_direct[u1, n1, d1, n2, d2] = (fix_ratio, false)
+        fix_ratio_direct[flows.unit1, flows.node2, d2, flows.node1, d1] = (fix_ratio, true)
+        fix_ratio_direct[flows.unit1, flows.node1, d1, flows.node2, d2] = (fix_ratio, false)
     end
     sort!(flows_by_ref_flow; by=(k -> length(flows_by_ref_flow[k])), rev=true)
     seen_flows = Set()

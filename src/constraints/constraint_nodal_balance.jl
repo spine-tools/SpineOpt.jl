@@ -69,20 +69,18 @@ function _build_constraint_nodal_balance(m, n, s, t)
         + node_injection[n, s, t]
         # Commodity flows from connections
         + sum(
-            get(connection_flow, (conn, n1, d, s, t), 0)
+            get(connection_flow, (conn, n1, direction(:to_node), s, t), 0)
             for n1 in members(n)
-            for (conn, d) in connection__to_node(node=n1)
-            if !_issubset(
-                connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
-            );
+            for conn in connection__to_node(node=n1)
+            if !_issubset(connection__from_node(connection=conn), _internal_nodes(n));
             init=0,
         )
         # Commodity flows to connections
         - sum(
-            get(connection_flow, (conn, n1, d, s, t), 0)
+            get(connection_flow, (conn, n1, direction(:from_node), s, t), 0)
             for n1 in members(n)
-            for (conn, d) in connection__from_node(node=n1)
-            if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
+            for conn in connection__from_node(node=n1)
+            if !_issubset(connection__to_node(connection=conn), _internal_nodes(n));
             init=0,
         ),
         eval(balance_sense(node=n)),

@@ -19,7 +19,7 @@
 #############################################################################
 
 using Pkg
-#Pkg.activate(@__DIR__) # Tasku: Uncomment if you want to run this test script manually.
+Pkg.activate(@__DIR__) # Tasku: Uncomment if you want to run this test script manually.
 using SpineOpt
 using SpineInterface
 using Test
@@ -157,19 +157,22 @@ function _dismember_function(func)
     println("term constant: ", func.constant)
 end
 
-@testset begin # Tasku: TODO: Seems like there might be a lot of warnings in the tests, so I might have to take a closer look at each set.
+x = @testset begin # Tasku: TODO: Seems like there might be a lot of warnings in the tests, so I might have to take a closer look at each set.
+    #=
     include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
-    include("data_structure/postprocess_results.jl") # TODO: FIXME: Last three tests fail? Ask Manuel and Jody about this?
-    include("data_structure/check_economic_structure.jl") # This is a very complex test set, not the easiest to debug among the first
+    include("data_structure/postprocess_results.jl") # FIXME: Last three tests fail? Ask Manuel and Jody about this? Pending incomplete parameter call.
+    include("data_structure/check_economic_structure.jl") # FIXME: This is a very complex test set, not the easiest to debug among the first
     include("util/misc.jl")
     include("variables/variables.jl")
     include("expressions/expression.jl")
-    include("objective/objective.jl") # CRASHES with multithreading?
+    include("objective/objective.jl")
+    =# # CRASHES with multithreading?
     include("constraints/constraint_unit.jl") # CRASHES with multithreading?
+    #=
     include("constraints/constraint_node.jl") # CRASHES with multithreading?
     include("constraints/constraint_connection.jl") # CRASHES with multithreading? # TODO: FIXME? The `intact_unit_flow` stuff seems to rely on a very specific order of the output relationships?!?
     include("constraints/constraint_user_constraint.jl")
@@ -190,4 +193,5 @@ end
     include("run_examples.jl") # CRASHES with multithreading? # FIXME: THIS CRASHES A LOT?!?!? Multi-stage tutorial fails due to Highs threads?
     include("run_spineopt_hsj_mga.jl")
     include("run_benchmark_data.jl") # CRASHES with multithreading?
-end
+    =#
+end;

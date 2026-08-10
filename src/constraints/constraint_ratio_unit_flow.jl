@@ -185,16 +185,22 @@ end
 
 function constraint_ratio_unit_flow_indices(m::Model, ratio)
     (
-        (unit1=u1, node1=n1, direction1=d1, unit2=u2, node2=n2, direction2=d2, stochastic_path=path, t=t)
-        for (u1, n1, d1, u2, n2, d2) in indices(ratio)
-        if !_has_simple_fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, ratio)
+        (
+            unit1=flows.unit1, node1=flows.node1, direction1=_flow_direction(flows),
+            unit2=flows.unit2, node2=flows.node2, direction2=_flow_direction(flows, 3),
+            stochastic_path=path, t=t
+        )
+        for flows in indices(ratio)
+        if !_has_simple_fix_ratio_unit_flow(
+            m, flows.unit1, flows.node1, _flow_direction(flows), flows.unit2, flows.node2, _flow_direction(flows, 3), ratio
+        )
         for (t, path) in t_lowest_resolution_path(
             m,
-            unit_flow_indices(m; unit=u1, node=[n1, n2]), # What is this doing?
-            unit_flow_indices(m; unit=u2, node=[n1, n2]), # What is this doing?
-            unit_flow_indices(m; unit=u1, node=n1, direction=d1),
-            unit_flow_indices(m; unit=u2, node=n2, direction=d2),
-            _get_units_on_indices(m, u2),
+            unit_flow_indices(m; unit=flows.unit1, node=[flows.node1, flows.node2]), # What is this doing?
+            unit_flow_indices(m; unit=flows.unit2, node=[flows.node1, flows.node2]), # What is this doing?
+            unit_flow_indices(m; unit=flows.unit1, node=flows.node1, direction=_flow_direction(flows)),
+            unit_flow_indices(m; unit=flows.unit2, node=flows.node2, direction=_flow_direction(flows)),
+            _get_units_on_indices(m, flows.unit2),
         )
     )
 end

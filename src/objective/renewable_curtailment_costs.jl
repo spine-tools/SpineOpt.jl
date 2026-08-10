@@ -39,9 +39,10 @@ function renewable_curtailment_costs(m::Model, t_range)
             * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
             ) 
-            * duration(t_short) for u in indices(curtailment_cost) for (u, n, d) in indices(capacity_per_unit; unit=u)
-            for (u, s, t_long) in units_on_indices(m; unit=u, t=t_range)
-            for (u, n, d, s, t_short) in unit_flow_indices(m; unit=u, node=n, direction=d, t=t_in_t(m; t_long=t_long));
+            * duration(t_short)
+            for flow in indices(capacity_per_unit; unit=indices(curtailment_cost))
+            for (u, s, t_long) in units_on_indices(m; unit=flow.unit, t=t_range)
+            for (u, n, d, s, t_short) in unit_flow_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow), t=t_in_t(m; t_long=t_long));
             init=0,
         )
     )

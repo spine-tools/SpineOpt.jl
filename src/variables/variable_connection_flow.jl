@@ -38,16 +38,32 @@ function connection_flow_indices(
     t=anything,
     temporal_block=temporal_block(is_representative=true),
 )
+    to_node = SpineOpt.direction(:to_node)
+    from_node = SpineOpt.direction(:from_node)
     node = members(node)
-    (
-        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d) in connection__node__direction(
-            connection=connection, node=node, direction=direction, _compact=false
+    if in(to_node, direction)
+        conn__node__to_node = (
+            (connection=conn, node=n, direction=to_node, stochastic_scenario=s, t=t)
+            for (conn, n) in connection__to_node(connection=connection, node=node, _compact=false)
+            for (n, s, t) in node_stochastic_time_indices(
+                m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+            )
         )
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+    else
+        conn__node__to_node = ()
+    end
+    if in(from_node, direction)
+        conn__node__from_node = (
+            (connection=conn, node=n, direction=from_node, stochastic_scenario=s, t=t)
+            for (conn, n) in connection__from_node(connection=connection, node=node, _compact=false)
+            for (n, s, t) in node_stochastic_time_indices(
+                m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+            )
         )
-    )
+    else
+        conn__node__from_node = ()
+    end
+    return Iterators.flatten((conn__node__to_node, conn__node__from_node))
 end
 
 function connection_flow_lb(m; connection, node, direction, kwargs...)

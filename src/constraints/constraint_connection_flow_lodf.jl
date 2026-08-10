@@ -78,7 +78,8 @@ function connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mo
             for (conn_mon, n_mon_to, d, s, t_short) in connection_flow_indices(
                 m;
                 connection=conn_mon,
-                last(connection__from_node(connection=conn_mon))...,
+                node=last(connection__from_node(connection=conn_mon)),
+                direction=direction(:from_node),
                 stochastic_scenario=s_path,
                 t=t_in_t(m; t_long=t),
             ); # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
@@ -92,7 +93,8 @@ function connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mo
             for (conn_cont, n_cont_to, d, s, t_short) in connection_flow_indices(
                 m;
                 connection=conn_cont,
-                last(connection__from_node(connection=conn_cont))...,
+                node=last(connection__from_node(connection=conn_cont)),
+                direction=direction(:from_node),
                 stochastic_scenario=s_path,
                 t=t_in_t(m; t_long=t),
             );  # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
@@ -106,7 +108,10 @@ function connection_minimum_emergency_capacity(m, conn_mon, s_path, t)
         + connection_emergency_capacity(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
         * availability_factor(m; connection=conn_mon, stochastic_scenario=s, t=t)
         * capacity_to_flow_conversion_factor(m; connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, t=t)
-        for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
+        for (conn_mon, n_mon, d) in Iterators.flatten((
+            ((conn_mon, n_mon, direction(:from_node)) for (conn_mon, n_mon) in indices(connection_emergency_capacity, connection__from_node; connection=conn_mon)),
+            ((conn_mon, n_mon, direction(:to_node)) for (conn_mon, n_mon)  in indices(connection_emergency_capacity, connection__to_node; connection=conn_mon)),
+        ))
         for s in s_path
     )
 end
@@ -126,7 +131,7 @@ function constraint_connection_flow_lodf_indices(m::Model)
             m, 
             x
             for conn in (conn_cont, conn_mon)
-            for x in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))...)
+            for x in connection_flow_indices(m; connection=conn, node=last(connection__from_node(connection=conn)), direction=direction(:from_node)) # TODO: HOW IS THIS WORKING?!?! Relies on a specific order of relationships...
             if _check_ptdf_duration(m, x.t, conn_cont, conn_mon)
         )
     )

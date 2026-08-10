@@ -178,6 +178,7 @@ end
         ],
     )
     _load_test_data(url_in, test_data)
+    m = prepare_spineopt(url_in)
     m = run_spineopt(url_in; log_level=0, optimize=false)
     capacities_dict = Dict(
         connection(:connection_ab) => conn_cap_ab,

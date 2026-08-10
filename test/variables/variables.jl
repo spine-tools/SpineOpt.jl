@@ -371,7 +371,8 @@ function test_unit_flow_simple_bounds()
             ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", cap_to_node],
         ]
         import_data(url_in; relationship_parameter_values=rel_pvals, object_parameter_values=obj_pvals)
-        m = run_spineopt(url_in, nothing; log_level=0, optimize=false)
+        m = prepare_spineopt(url_in)
+        run_spineopt!(m, nothing; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         ind_unit_flow_head = (unit(:unit_ab), node(:node_a), direction(:from_node), stochastic_scenario(:parent))
         @testset for con_key in (:unit_flow_lb, :unit_flow_ub)

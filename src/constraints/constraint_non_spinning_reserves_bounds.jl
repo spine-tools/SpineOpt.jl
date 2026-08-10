@@ -104,13 +104,13 @@ end
 
 function constraint_non_spinning_reserves_bounds_indices(m::Model)
     (
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(capacity_per_unit)
-        if any(reserve_active(node=n) && is_non_spinning(node=n) for n in members(ng))
+        (unit=flow.unit, node=flow.node, direction=_flow_direction(flow), stochastic_path=path, t=t)
+        for flow in indices(capacity_per_unit)
+        if any(reserve_active(node=n) && is_non_spinning(node=n) for n in members(flow.node))
         for (t, path) in t_lowest_resolution_path(
             m,
-            unit_flow_indices(m; unit=u, node=ng, direction=d),
-            _switch(d; from_node=nonspin_units_shut_down_indices, to_node=nonspin_units_started_up_indices)(m; unit=u)
+            unit_flow_indices(m; unit=flow.unit, node=flow.node, direction=_flow_direction(flow)),
+            _switch(d; from_node=nonspin_units_shut_down_indices, to_node=nonspin_units_started_up_indices)(m; unit=flow.unit)
         )
     )
 end

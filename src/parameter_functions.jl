@@ -19,30 +19,33 @@
 #############################################################################
 
 function _unit_flow_capacity(f; unit=unit, node=node, direction=direction, _default=nothing, kwargs...)
+    flow = (direction == SpineOpt.direction(:to_node)) ? (unit=unit, node=node) : (node=node, unit=unit)
     _prod_or_nothing(
-        f(capacity_per_unit; unit=unit, node=node, direction=direction, _default=_default, kwargs...),
+        f(capacity_per_unit; flow..., _default=_default, kwargs...),
         f(availability_factor; unit=unit, kwargs...),
-        f(capacity_to_flow_conversion_factor; unit=unit, node=node, direction=direction, kwargs...),
+        f(capacity_to_flow_conversion_factor; flow..., kwargs...),
     )
 end
 
 function _connection_flow_capacity(
     f; connection=connection, node=node, direction=direction, _default=nothing, kwargs...
 )
+    rel = (direction == SpineOpt.direction(:to_node)) ? connection__to_node : connection__from_node
     _prod_or_nothing(
-        f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+        f(capacity_per_connection, rel; connection=connection, node=node, _default=_default, kwargs...),
         f(availability_factor; connection=connection, kwargs...),
-        f(capacity_to_flow_conversion_factor; connection=connection, node=node, direction=direction, kwargs...),
+        f(capacity_to_flow_conversion_factor, rel; connection=connection, node=node, kwargs...),
     )
 end
 
 function _connection_flow_lower_limit(
     f; connection=connection, node=node, direction=direction, _default=0, kwargs...
 )
+    rel = (direction == SpineOpt.direction(:to_node)) ? connection__to_node : connection__from_node
     _prod_or_nothing(
-        f(capacity_per_connection; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
+        f(capacity_per_connection, rel; connection=connection, node=node, direction=direction, _default=_default, kwargs...),
         f(connection_min_factor; connection=connection, kwargs...),
-        f(capacity_to_flow_conversion_factor; connection=connection, node=node, direction=direction, kwargs...),
+        f(capacity_to_flow_conversion_factor, rel; connection=connection, node=node, direction=direction, kwargs...),
     )
 end
 
