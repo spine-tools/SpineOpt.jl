@@ -190,47 +190,191 @@ end
 Generate `direction` `Object`s and reorganise affected relationships.
 """
 function generate_direction_and_reorganise_classes()
-    # Create the new `direction` `Object`s.
-    from_node = Object(:from_node, :direction)
-    to_node = Object(:to_node, :direction)
-    add_objects!(direction, [from_node, to_node])
+    from_node = direction(:from_node)
+    to_node = direction(:to_node)
     # Add `direction` to the mapped classes.
     directions_by_class = [
         node__to_unit => from_node,
         unit__to_node => to_node,
         connection__from_node => from_node,
         connection__to_node => to_node,
-        unit_flow__user_constraint__node__unit__user_constraint => from_node,
-        unit_flow__user_constraint__unit__node__user_constraint => to_node,
         connection__from_node__user_constraint => from_node,
         connection__to_node__user_constraint => to_node,
-        # Some automatically generated subclasses need two directions.
-        unit_flow__unit_flow__node__unit__node__unit => [from_node, from_node],
-        unit_flow__unit_flow__node__unit__unit__node => [from_node, to_node],
-        unit_flow__unit_flow__unit__node__node__unit => [to_node, from_node],
-        unit_flow__unit_flow__unit__node__unit__node => [to_node, to_node],
+        unit_flow__investment_group => Dict(
+            [:unit, :node, :investment_group] => to_node,
+            [:node, :unit, :investment_group] => from_node
+        ),
+        unit_flow__unit_flow => Dict(
+            [:node, :unit, :node, :unit] => [from_node, from_node],
+            [:node, :unit, :unit, :node] => [from_node, to_node],
+            [:unit, :node, :node, :unit] => [to_node, from_node],
+            [:unit, :node, :unit, :node] => [to_node, to_node]
+        ),
+        unit_flow__user_constraint => Dict(
+            [:unit, :node, :user_constraint] => to_node,
+            [:node, :unit, :user_constraint] => from_node
+        ),
     ]
     for (cls, d) in directions_by_class
-        add_dimension!(cls, d)
+        _add_dimension!(cls, d)
     end
     # Reorganise the dimensions of some affected classes
-    und_uc = [:unit, :node, :direction, :user_constraint]
-    und_und = [:unit1, :node1, :direction1, :unit2, :node2, :direction2]
     cnd_uc = [:connection, :node, :direction, :user_constraint]
     dimensions_by_class = [
         node__to_unit => [:unit, :node, :direction],
-        unit_flow__user_constraint__node__unit__user_constraint => und_uc,
-        unit_flow__user_constraint__unit__node__user_constraint => und_uc,
-        unit_flow__unit_flow__node__unit__node__unit => und_und,
-        unit_flow__unit_flow__node__unit__unit__node => und_und,
-        unit_flow__unit_flow__unit__node__node__unit => und_und,
-        unit_flow__unit_flow__unit__node__unit__node => und_und,
+        unit_flow__investment_group => [:unit, :node, :direction, :investment_group],
+        unit_flow__unit_flow => [:unit1, :node1, :direction1, :unit2, :node2, :direction2],
+        unit_flow__user_constraint => [:unit, :node, :direction, :user_constraint],
         connection__to_node__user_constraint => cnd_uc,
         connection__from_node__user_constraint => cnd_uc,
     ]
     for (cls, dims) in dimensions_by_class
-        reorder_dimensions!(cls, dims)
+        _reorder_dimensions!(cls, dims)
     end
+end
+
+#=
+NOTE!
+The following `_add_dimension!` and `_reorder_dimensions!` exist solely for preprocessing
+new SpineInterface v1 data structures, and use `MetaGraphsNext.jl` under the hood.
+Thus, the syntax might not make sense in a purely SpineOpt.jl context.
+These functions are necessary for SpineOpt.jl preprocessing and
+allow for breaking the consistency of the underlying data structure.
+They were not included in SpineInterface.jl as a result.
+=#
+"""
+    _add_dimension!(rc::RelationshipClass, name, obj)
+
+Add `obj` as a new dimension at the end of `rc` relationships and parameter values.
+
+`name` and `obj` can also be `Vector`s for adding multiple objects and dimensions at once.
+`name` can be omitted if desired, in which case it will be deduced from `obj.class_name`.
+"""
+function _add_dimension!(rc::RelationshipClass, name::Symbol, obj::Object)
+    _add_dimension!(rc, [name], [obj])
+end
+function _add_dimension!(rc::RelationshipClass, obj::Object)
+    _add_dimension!(rc, [obj.class_name], [obj])
+end
+function _add_dimension!(rc::RelationshipClass, objs::Vector{Object})
+    _add_dimension!(rc, getproperty.(objs, :class_name), objs)
+end
+function _add_dimension!(rc::RelationshipClass, names::Vector{Symbol}, objs::Vector{Object})
+    if length(names) != length(objs)
+        throw(ArgumentError("Length of `names` and `objs` must match!"))
+    end
+    if length(rc.dimension_combinations) > 1
+        throw(ArgumentError("$rc has ambiguous dimensions, Dict required for mapping!"))
+    else
+        _add_dimension!(rc, names, Dict(only(rc.intact_dimension_combinations) => objs))
+    end
+end
+function _add_dimension!(rc::RelationshipClass, dim_perm_map::Dict{Vector{Symbol}, Object})
+    _add_dimension!(rc, Dict(vs => [obj] for (vs, obj) in dim_perm_map))
+end
+function _add_dimension!(rc::RelationshipClass, dim_perm_map::Dict{Vector{Symbol}, Vector{Object}})
+    _add_dimension!(
+        rc,
+        only(unique(getproperty.(vo, :class_name) for vo in values(dim_perm_map))),
+        dim_perm_map
+    )
+end
+function _add_dimension!(
+    rc::RelationshipClass,
+    names::Vector{Symbol},
+    dim_perm_map::Dict{Vector{Symbol}, Vector{Object}}
+)
+    SI = SpineInterface
+    initial_d = SI.atomic_dimensionality(rc.entity_class_graph, rc.name) # Existing dimension count
+    for ent in rc.vertex.entities # Add dimensions to entities
+        ent_intact_dims = first.(SI.RelationshipAtoms(rc.vertex.relationship_graph, ent)) # Current entity dimensions.
+        objs = get(dim_perm_map, ent_intact_dims, nothing)
+        isnothing(objs) && throw(ArgumentError("Missing dimension permutation! $ent_intact_dims"))
+        atoms = Tuple(n => o for (n, o) in zip(names, getproperty.(objs, :name)))
+        for (i, atom_label) in enumerate(atoms)
+            rc.vertex.relationship_graph[atom_label] = nothing
+            if !SI.MetaGraphsNext.haskey(rc.vertex.relationship_graph, atom_label, ent)
+                rc.vertex.relationship_graph[atom_label, ent] = [initial_d + i]
+            else
+                push!(rc.vertex.relationship_graph[atom_label, ent], initial_d + i)
+            end
+        end
+    end
+    for (i, dimension) in enumerate(names)
+        if initial_d > 0 # Need to increment atomic dimensionality when manipulating an existing class
+            push!(rc.entity_class_graph[rc.name].atomic_dimension_choices, [dimension])
+            rc.entity_class_graph[rc.name].relationship_graph[].atomic_dimensionality += 1
+        end
+        if !SI.MetaGraphsNext.haskey(rc.entity_class_graph, dimension, rc.name)
+            rc.entity_class_graph[dimension, rc.name] = [initial_d + i]
+        else
+            push!(rc.entity_class_graph[dimension, rc.name], initial_d + i)
+        end
+    end
+    for (intact_dims, dims) in zip(rc.intact_dimension_combinations, rc.dimension_combinations)
+        append!(intact_dims, names) # Add new dimension names to the intact dims.
+        SI._uniquefy!(append!(dims, names), intact_dims) # Update unique dimension names
+    end
+    nothing # No need to tweak parameter values, as these are mapped to the entity "index"?
+end
+
+"""
+    _reorder_dimensions!(rc::RelationshipClass, dims::Vector)
+
+Reordering the dimensions of `rc` in-place according to `dims`.
+
+Note that `dims` needs to correspond to the `dimension_combinations`
+field, not the `intact_dimension_combinations` field!
+
+Returns the `rc` [`RelationshipClass`](@ref) with the reordered dimensions.
+"""
+function _reorder_dimensions!(rc::RelationshipClass, dims::Vector{Symbol})
+    perm_map = Dict(
+        intacts => SpineInterface._find_permutation(combs, dims)
+        for (intacts, combs) in zip(
+            rc.intact_dimension_combinations, rc.dimension_combinations
+        )
+    )
+    return _reorder_dimensions!(rc, perm_map)
+end
+function _reorder_dimensions!(rc::RelationshipClass, perm_map::Dict{Vector{Symbol}, <:Vector{<:Integer}})
+    for ent in rc.vertex.entities
+        ent_intact_dims = first.(SpineInterface.RelationshipAtoms(rc.vertex.relationship_graph, ent)) # Fetch edge dimensions
+        permutation = get(perm_map, ent_intact_dims, nothing) # Get permutation for this edge
+        isnothing(permutation) && throw(ArgumentError("Missing dimension permutation! $ent_intact_dims"))
+        for ((atom, ent2), vi) in rc.vertex.relationship_graph.edge_data # Loop over edges
+            ent !== ent2 && continue
+            for (i, i_dim) in enumerate(vi)
+                vi[i] = permutation[i_dim] # Permute edge index order
+            end
+        end
+    end
+    for (intacts, dims) in zip( # Permute dimension name lists
+        rc.intact_dimension_combinations,
+        rc.dimension_combinations,
+    )
+        perm = invperm(perm_map[intacts])
+        permute!(dims, perm)
+        permute!(intacts, perm)
+    end
+    # Ensure uniqueness of dimension combinations.
+    unique!(rc.intact_dimension_combinations)
+    unique!(rc.dimension_combinations)
+    # Revise `atomic_dimension_choices`
+    atoms = rc.vertex.atomic_dimension_choices 
+    empty!(atoms)
+    for intacts in rc.intact_dimension_combinations
+        for (i, intact) in enumerate(intacts)
+            if length(atoms) < i
+                push!(atoms, [intact])
+            else
+                if !in(intact, atoms[i])
+                    push!(atoms[i], intact)
+                end 
+            end
+        end
+    end
+    return rc::RelationshipClass
 end
 
 """
