@@ -17,11 +17,19 @@ objective_function_reference_values = Dict(
 @testset for (file, obj_fn_val) in objective_function_reference_values
     path = joinpath(dirname(@__DIR__), "examples", file)
     input_data = JSON.parsefile(path, use_mmap=false)
-    db_url = "sqlite://"
-    SpineInterface.close_connection(db_url)
-    SpineInterface.open_connection(db_url)
-    import_data(db_url, input_data, "No comment")
-    m = run_spineopt(db_url, nothing; log_level=0, upgrade=true)
+    # The multi-stage model needs to be run from a Spine DB!
+    # This works for the other test systems as well, but is only necessary for this one.
+    # Doing this separately minimizes Julia-PyCall garbage collection crashes.
+    if file == "multi_stage_model_tutorial.json"
+        url = "sqlite://"
+        SpineInterface.open_connection(url)
+        import_data(url, input_data, "No comment")
+        m = prepare_spineopt(url; upgrade=false)
+        SpineInterface.close_connection(url) # Close DB-connection as early as possible to avoid PyCall crashes.
+        run_spineopt!(m, nothing; log_level=0)
+    else # The rest of the testsets can be run directly from JSON.
+        m = run_spineopt(input_data, nothing; log_level=0, upgrade=false)
+    end
     @test termination_status(m) == MOI.OPTIMAL
     mip_cases = ("6_unit_system.json", "unit_commitment.json", "multi_stage_model_tutorial.json")
     if file in mip_cases
