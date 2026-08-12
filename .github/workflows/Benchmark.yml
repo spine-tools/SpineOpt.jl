@@ -29,12 +29,17 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   benchmark:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'benchmark')
+      (
+        contains(github.event.pull_request.labels.*.name, 'benchmark') &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      )
     runs-on: ubuntu-latest
     env:
       SPINEOPT_BENCHMARK_EXAMPLE: ${{ inputs.example || 'synthetic' }}
@@ -58,12 +63,61 @@ jobs:
           if [ "$SPINEOPT_BENCHMARK_EXAMPLE" != "synthetic" ]; then
             test -f "$SPINEOPT_BENCHMARK_EXAMPLE"
           fi
+      - name: Find benchmark comment
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/find-comment@v4
+        id: find-benchmark-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: github-actions[bot]
+          body-includes: Benchmark Results
+      - name: Mark benchmark in progress
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          comment-id: ${{ steps.find-benchmark-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### Benchmark Results
+
+            Benchmark in progress...
+          edit-mode: replace
       - name: Run benchmark suite
         run: |
           julia --project=benchmark -e 'using BenchmarkTools; include("benchmark/benchmarks.jl"); run(SUITE; verbose=true)' \
             | tee benchmark-results.txt
+      - name: Prepare benchmark comment
+        if: always() && github.event_name == 'pull_request'
+        env:
+          BENCHMARK_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo '### Benchmark Results'
+            echo
+            if [ "$BENCHMARK_STATUS" = "success" ]; then
+              echo 'Benchmark completed successfully. Raw output:'
+            else
+              echo 'Benchmark did not complete successfully. See the workflow logs for details.'
+            fi
+            if [ -f benchmark-results.txt ]; then
+              echo
+              echo '```text'
+              head -c 60000 benchmark-results.txt
+              echo
+              echo '```'
+            fi
+          } > benchmark-comment.md
       - name: Upload benchmark results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: spineopt-benchmark-results
           path: benchmark-results.txt
+      - name: Publish benchmark comment
+        if: always() && github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          comment-id: ${{ steps.find-benchmark-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: benchmark-comment.md
+          edit-mode: replace
