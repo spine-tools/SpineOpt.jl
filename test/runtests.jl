@@ -157,13 +157,13 @@ function _dismember_function(func)
     println("term constant: ", func.constant)
 end
 
-@testset begin # Tasku: TODO: Seems like there might be a lot of warnings in the tests, so I might have to take a closer look at each set.
+@testset begin
     include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
-    include("data_structure/postprocess_results.jl") # FIXME: Last three tests fail? Ask Manuel and Jody about this?
+    include("data_structure/postprocess_results.jl")
     include("data_structure/check_economic_structure.jl") # This is a very complex test set, not the easiest to debug among the first
     include("util/misc.jl")
     include("variables/variables.jl")
@@ -171,17 +171,17 @@ end
     include("objective/objective.jl") # CRASHES with multithreading?
     include("constraints/constraint_unit.jl") # CRASHES with multithreading?
     include("constraints/constraint_node.jl") # CRASHES with multithreading?
-    include("constraints/constraint_connection.jl") # CRASHES with multithreading? # FIXME? The `intact_unit_flow` stuff seems to rely on a very specific order of the output relationships?!?
+    include("constraints/constraint_connection.jl") # CRASHES with multithreading?
     include("constraints/constraint_user_constraint.jl")
     include("constraints/constraint_investment_group.jl") # CRASHES with multithreading?
     include("run_spineopt.jl") # CRASHES with multithreading?
     include("run_spineopt_benders.jl")
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
-    include("run_spineopt_mga.jl") # CRASHES with multithreading? # NOTE:`mga_iteration()` relies on a specific entity ordering.
+    include("run_spineopt_mga.jl") # CRASHES with multithreading?
     include("run_spineopt_representative_periods.jl") # FREEZES with multithreading?
     include("run_spineopt_monte_carlo.jl")
-    include("run_examples.jl") # CRASHES with multithreading? # FIXME: THIS CRASHES A LOT?!?!?
+    include("run_examples.jl") # CRASHES with multithreading?
     include("run_spineopt_hsj_mga.jl")
     include("run_benchmark_data.jl") # CRASHES with multithreading?
 end
