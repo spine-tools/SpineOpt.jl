@@ -20,7 +20,7 @@
 
 import DelimitedFiles: readdlm
 
-@testset "misc" begin
+function _test_misc_ptdf_lodf_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -70,14 +70,42 @@ import DelimitedFiles: readdlm
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function test_dt_fixed_duration()
+    @testset "dt_fixed_duration" begin
+        # DatePeriod forward: variable month/year lengths resolved at dt
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 2, 1), Val(:forward)) == Day(28)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2024, 2, 1), Val(:forward)) == Day(29)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 4, 1), Val(:forward)) == Day(30)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 1, 1), Val(:forward)) == Day(31)
+        @test SpineOpt.dt_fixed_duration(Year(1), DateTime(2026, 1, 1), Val(:forward)) == Day(365)
+        @test SpineOpt.dt_fixed_duration(Year(1), DateTime(2024, 1, 1), Val(:forward)) == Day(366)
+        # DatePeriod backward: anchored behind dt
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 3, 1), Val(:backward)) == Day(28)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2024, 3, 1), Val(:backward)) == Day(29)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 5, 1), Val(:backward)) == Day(30)
+        @test SpineOpt.dt_fixed_duration(Month(1), DateTime(2026, 2, 1), Val(:backward)) == Day(31)
+        # TimePeriod: returned unchanged regardless of direction
+        @test SpineOpt.dt_fixed_duration(Hour(3), DateTime(2026, 1, 1), Val(:forward)) == Hour(3)
+        @test SpineOpt.dt_fixed_duration(Minute(30), DateTime(2026, 1, 1), Val(:backward)) == Minute(30)
+        @test SpineOpt.dt_fixed_duration(Second(45), DateTime(2026, 1, 1), Val(:forward)) == Second(45)
+        # Nothing: passes through
+        @test isnothing(SpineOpt.dt_fixed_duration(nothing, DateTime(2026, 1, 1), Val(:forward)))
+    end
+end
+
+function test_write_ptdf_lodf()
     @testset "write_ptdf_lodf" begin
+        url_in = _test_misc_ptdf_lodf_setup()
         conn_r = 0.9
         conn_x = 0.1
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        _load_test_data(url_in, test_data)
-        objects = [["commodity", "electricity"]]
+        objects = [["grid", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
             ["connection__to_node", ["connection_ab", "node_a"]],
@@ -85,9 +113,9 @@ import DelimitedFiles: readdlm
             ["connection__to_node", ["connection_bc", "node_b"]],
             ["connection__from_node", ["connection_ca", "node_a"]],
             ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__commodity", ["node_a", "electricity"]],
-            ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
+            ["node__grid", ["node_a", "electricity"]],
+            ["node__grid", ["node_b", "electricity"]],
+            ["node__grid", ["node_c", "electricity"]],
             ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
             ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
             ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
@@ -96,20 +124,20 @@ import DelimitedFiles: readdlm
             ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_monitored", true],
-            ["connection", "connection_ab", "connection_reactance", conn_x],
-            ["connection", "connection_ab", "connection_resistance", conn_r],
-            ["connection", "connection_bc", "connection_monitored", true],
-            ["connection", "connection_bc", "connection_reactance", conn_x],
-            ["connection", "connection_bc", "connection_resistance", conn_r],
-            ["connection", "connection_ca", "connection_monitored", true],
-            ["connection", "connection_ca", "connection_reactance", conn_x],
-            ["connection", "connection_ca", "connection_resistance", conn_r],
-            ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
+            ["connection", "connection_ab", "monitoring_active", true],
+            ["connection", "connection_ab", "reactance", conn_x],
+            ["connection", "connection_ab", "resistance", conn_r],
+            ["connection", "connection_bc", "monitoring_active", true],
+            ["connection", "connection_bc", "reactance", conn_x],
+            ["connection", "connection_bc", "resistance", conn_r],
+            ["connection", "connection_ca", "monitoring_active", true],
+            ["connection", "connection_ca", "reactance", conn_x],
+            ["connection", "connection_ca", "resistance", conn_r],
+            ["grid", "electricity", "physics_type", "lodf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "connection_contingency", true],
-            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
+            ["connection", "connection_ca", "contingency_active", true],
+            ["model", "instance", "solver_mip", "HiGHS.jl"],
+            ["model", "instance", "solver_lp", "HiGHS.jl"],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -145,7 +173,7 @@ import DelimitedFiles: readdlm
             relationship_parameter_values=relationship_parameter_values,
         )
         using_spinedb(url_in, SpineOpt)
-        SpineOpt.generate_direction()
+        SpineOpt.generate_direction_and_reorganise_classes()
         SpineOpt.generate_ptdf_lodf()
         SpineOpt.write_ptdfs()
         ptdfs = readdlm("ptdfs.csv", ',', Any, '\n')
@@ -167,4 +195,9 @@ import DelimitedFiles: readdlm
         @test convert(Array{String,1}, lodfs[:, 1]) == ["contingency line", "connection_ca"]
         @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [1, 1])
     end
+end
+
+@testset "misc" begin
+    test_dt_fixed_duration()
+    test_write_ptdf_lodf()
 end

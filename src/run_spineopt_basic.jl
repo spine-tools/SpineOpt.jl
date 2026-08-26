@@ -139,7 +139,7 @@ function _add_variables!(m; log_level=3)
             add_variable_node_slack_neg!,
             add_variable_node_slack_pos!,
             add_variable_node_state!,
-            add_variable_node_state_longterm!,            
+            add_variable_node_state_longterm!,
             add_variable_node_voltage_angle!,
             add_variable_node_voltageproduct_cosine!,
             add_variable_node_voltageproduct_sine!,
@@ -175,11 +175,11 @@ Add SpineOpt expressions to the given model.
 """
 function _add_expressions!(m; log_level=3)
     for add_expression! in (
-            add_expression_capacity_margin!,            
+            add_expression_capacity_margin!,
         )
         name = name_from_fn(add_expression!)
         @timelog log_level 3 "- [$name]" add_expression!(m)
-    end        
+    end
 end
 
 
@@ -210,44 +210,33 @@ function _add_constraints!(m; log_level=3)
             add_constraint_connections_invested_transition!,
             add_constraint_cyclic_node_state!,
             add_constraint_fix_node_pressure_point!,
-            add_constraint_fix_ratio_in_in_unit_flow!,
-            add_constraint_fix_ratio_in_out_unit_flow!,
             add_constraint_fix_ratio_out_in_connection_flow!,
-            add_constraint_fix_ratio_out_in_unit_flow!,
-            add_constraint_fix_ratio_out_out_unit_flow!,
+            add_constraint_fix_ratio_unit_flow!,
             add_constraint_investment_group_equal_investments!,
-            add_constraint_investment_group_maximum_capacity_invested_available!,            
+            add_constraint_investment_group_maximum_capacity_invested_available!,
             add_constraint_investment_group_maximum_entities_invested_available!,
             add_constraint_investment_group_minimum_capacity_invested_available!,
             add_constraint_investment_group_minimum_entities_invested_available!,
             add_constraint_max_node_pressure!,
             add_constraint_max_node_voltage_angle!,
-            add_constraint_max_ratio_in_in_unit_flow!,
-            add_constraint_max_ratio_in_out_unit_flow!,
             add_constraint_max_ratio_out_in_connection_flow!,
-            add_constraint_max_ratio_out_in_unit_flow!,
-            add_constraint_max_ratio_out_out_unit_flow!,
-            add_constraint_max_total_cumulated_unit_flow_from_node!,
-            add_constraint_max_total_cumulated_unit_flow_to_node!,
+            add_constraint_max_ratio_unit_flow!,
+            add_constraint_flow_limits_max_cumulative!,
             add_constraint_min_capacity_margin!,
             add_constraint_min_down_time!,
             add_constraint_min_node_pressure!,
             add_constraint_min_node_voltage_angle!,
-            add_constraint_min_ratio_in_in_unit_flow!,
-            add_constraint_min_ratio_in_out_unit_flow!,
             add_constraint_min_ratio_out_in_connection_flow!,
-            add_constraint_min_ratio_out_in_unit_flow!,
-            add_constraint_min_ratio_out_out_unit_flow!,
+            add_constraint_min_ratio_unit_flow!,
             add_constraint_min_scheduled_outage_duration!,
-            add_constraint_min_total_cumulated_unit_flow_from_node!,
-            add_constraint_min_total_cumulated_unit_flow_to_node!,
+            add_constraint_flow_limits_min_cumulative!,
             add_constraint_min_up_time!,
             add_constraint_minimum_operating_point!,
             add_constraint_nodal_balance!,
             add_constraint_nodal_reactive_balance!,
             add_constraint_node_injection!,
             add_constraint_node_state_capacity!,
-            add_constraint_node_state_longterm_trajectory!,            
+            add_constraint_node_state_longterm_trajectory!,
             add_constraint_min_node_state!,
             add_constraint_node_voltage_angle!,
             add_constraint_node_voltages_conic!,
@@ -259,7 +248,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_operating_point_rank!,
             add_constraint_ramp_down!,
             add_constraint_ramp_up!,
-            add_constraint_ratio_out_in_connection_intact_flow!,            
+            add_constraint_ratio_out_in_connection_intact_flow!,
             add_constraint_storage_lifetime!,
             add_constraint_storage_line_pack!,
             add_constraint_storages_invested_available!,
@@ -498,12 +487,12 @@ function solve_model!(
         end
         m_mp.ext[:spineopt].temporal_structure[:sp_windows] = m.ext[:spineopt].temporal_structure[:windows]
         undo_force_starting_investments! = _force_starting_investments!(m_mp)
-        min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
-        max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
+        min_benders_iterations = decomposition_min_iterations(model=m_mp.ext[:spineopt].instance)
+        max_benders_iterations = decomposition_max_iterations(model=m_mp.ext[:spineopt].instance)
         for j in Iterators.countfrom(1)
             @log log_level 0 "\nStarting Benders iteration $j"
             j == 2 && undo_force_starting_investments!()
-            extra_kwargs = if report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+            extra_kwargs = if benders_iterations_reporting_active(model=m_mp.ext[:spineopt].instance)
                 (save_outputs=true, output_suffix=(output_suffix..., benders_iteration=current_bi,))
             else
                 (save_outputs=false, output_suffix=output_suffix)
@@ -524,14 +513,14 @@ function solve_model!(
             @log log_level 1 "Objective upper bound: $(_ub_str(m_mp))"
             @log log_level 1 "Gap: $(_gap_str(m_mp))"
             gap = last(m_mp.ext[:spineopt].benders_gaps)
-            termination_msg = if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
+            termination_msg = if gap <= decomposition_max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
                 "Benders tolerance satisfied at iter $j"
             elseif j >= max_benders_iterations
                 "Maximum number of Benders iterations reached ($j)"
             end
             if termination_msg !== nothing
                 @log log_level 1 termination_msg
-                if !report_benders_iterations(model=m_mp.ext[:spineopt].instance)
+                if !benders_iterations_reporting_active(model=m_mp.ext[:spineopt].instance)
                     final_log_prefix = string(
                         log_prefix, "$termination_msg $(_current_solution_string(m_mp)) - collecting outputs - "
                     )
@@ -758,6 +747,7 @@ function optimize_model!(
     model_name = _model_name(m)
     @timelog log_level 0 "Optimizing $model_name..." stats optimize!(m)
     termination_st = termination_status(m)
+    m.ext[:spineopt].extras[:termination_status] = termination_st
     if is_solved_and_feasible(m; allow_almost = true) || (termination_st == MOI.TIME_LIMIT)
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
@@ -981,7 +971,7 @@ function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     # `Threads.@spawn` only since Julia v1.3. Only attempt parallelization if multiple threads are in use to avoid issues.
         #TODO: This command would suspend the running of `m = run_spineopt(...; optimize=true, ...)`
         # in the unit test `run_spineopt_representative_periods.jl`. Suspension comes at launching the `optimize!()`.
-        # Add an arbitraty command, either before or after this command, could shift the suspension 
+        # Add an arbitraty command, either before or after this command, could shift the suspension
         # to the completion of the `optimize!()`.
         task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
         lock(m.ext[:spineopt].dual_solves_lock)
@@ -1075,10 +1065,10 @@ function _output_value_by_ind(m, parameter::Parameter)
 end
 
 function _compute_and_print_conflict!(m)
-    compute_conflict!(m)    
+    compute_conflict!(m)
     for (f, s) in list_of_constraint_types(m)
         for con in all_constraints(m, f, s)
-            if MOI.get(m, MOI.ConstraintConflictStatus(), con) == MOI.IN_CONFLICT                
+            if MOI.get(m, MOI.ConstraintConflictStatus(), con) == MOI.IN_CONFLICT
                 println(con)
             end
         end
@@ -1254,32 +1244,43 @@ function _collect_all_output_values(m)
     end
 end
 
+# Change for issue 1281
 function _vals_by_report(reports_by_output, values)
     vals_by_report = Dict()
     for ((output_name, overwrite), reports) in reports_by_output
-        value = get(values, (output_name, overwrite), nothing)
-        value === nothing && continue
-        if output_name in all_objective_terms
-            output_name = Symbol(:objective_, output_name)
-        end
         for report_name in reports
+            value = get(values, (output_name, overwrite, report_name), nothing)
+            value === nothing && continue
+            out_name = output_name in all_objective_terms ? Symbol(:objective_, output_name) : output_name
             vals = get!(vals_by_report, report_name, Dict())
-            vals[output_name] = value
+            vals[out_name] = value
         end
     end
     vals_by_report
 end
 
+
+# Change for issue 1281
 function _collect_output_values(m)
     #_wait_for_dual_solves(m)
     values = Dict()
-    for (output_name, overwrite) in keys(m.ext[:spineopt].reports_by_output)
+    for ((output_name, overwrite), report_names) in m.ext[:spineopt].reports_by_output
         by_suffix = get(m.ext[:spineopt].outputs, output_name, nothing)
         by_suffix === nothing && continue
-        key = (output_name, overwrite)
-        haskey(values, key) && continue
-        out_res = output_resolution(output=output(output_name), stage=nothing)
-        values[key] = _output_value_by_entity(by_suffix, model_end(model=m.ext[:spineopt].instance), overwrite, out_res)
+        out = output(output_name)
+        for report_name in report_names
+            key = (output_name, overwrite, report_name)
+            haskey(values, key) && continue
+            r = report(report_name)
+            out_res = let v1 = output_resolution(report=r, output=out, _strict=false)
+                if v1 !== nothing
+                    v1
+                else
+                    output_resolution(output=out, report=nothing, stage=nothing, _strict=false)
+                end
+            end
+            values[key] = _output_value_by_entity(by_suffix, model_end(model=m.ext[:spineopt].instance), overwrite, out_res)
+        end
     end
     values
 end
@@ -1414,7 +1415,7 @@ function update_model!(m; log_level=3, update_names=false, stats=nothing)
 end
 
 function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
-    for name in names   
+    for name in names
         var = m.ext[:spineopt].variables[name]
         history_time_slices = m.ext[:spineopt].variables_definition[name][:history_time_slices]
         # NOTE: only update names for the representative variables
@@ -1426,9 +1427,9 @@ function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
 end
 
 function _update_constraint_names!(m, names=keys(m.ext[:spineopt].constraints))
-    for name in names   
-        for (ind, con) in m.ext[:spineopt].constraints[name]        
-            constraint_name = _sanitize_constraint_name(string(name, ind))                            
+    for name in names
+        for (ind, con) in m.ext[:spineopt].constraints[name]
+            constraint_name = _sanitize_constraint_name(string(name, ind))
             _set_name(con, constraint_name)
         end
     end
@@ -1490,7 +1491,7 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
                         set_lower_bound(var[ind], lb)
                         ub = val[next_ind] + non_ant_margin
                         set_upper_bound(var[ind], ub)
-                    else                    
+                    else
                         fix(var[ind], val[next_ind]; force=true)
                     end
                 end

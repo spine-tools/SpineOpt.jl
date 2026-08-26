@@ -24,5 +24,12 @@
 Add `units_mothballed` variables to model `m`.
 """
 function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=constant(0), int=units_invested_available_int)
+    add_variable!(
+        m,
+        :units_mothballed,
+        units_invested_available_indices;
+        lb=constant(0),
+        bin=units_invested_available_bin,
+        int=units_invested_available_int
+    )
 end

@@ -19,17 +19,17 @@
 #############################################################################
 
 @doc raw"""
-[connections\_invested](@ref) represents the point-in-time decision to invest in a connection or not while
-[connections\_invested\_available](@ref) represents the invested-in connections that are available at a specific time.
-This constraint enforces the relationship between [connections\_invested](@ref), [connections\_invested\_available](@ref) and
-[connections\_decommissioned](@ref) in adjacent timeslices.
+[connections\_invested](@ref var_connections_invested) represents the point-in-time decision to invest in a connection or not while
+[connections\_invested\_available](@ref var_connections_invested_available) represents the invested-in connections that are available at a specific time.
+This constraint enforces the relationship between [connections\_invested](@ref var_connections_invested), [connections\_invested\_available](@ref var_connections_invested_available) and
+[connections\_decommissioned](@ref var_connections_decommissioned) in adjacent timeslices.
 
 ```math
 \begin{aligned}
 & v^{connections\_invested\_available}_{(c,s,t)} - v^{connections\_invested}_{(c,s,t)}
 + v^{connections\_decommissioned}_{(c,s,t)} \\
 & = v^{connections\_invested\_available}_{(c,s,t-1)} \\
-& \forall c \in connection: p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall c \in connection: p^{investment\_count\_max\_cumulative}_{(c)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

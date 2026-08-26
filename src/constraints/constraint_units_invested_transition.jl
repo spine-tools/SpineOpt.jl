@@ -19,17 +19,17 @@
 #############################################################################
 
 @doc raw"""
-[units\_invested](@ref) represents the point-in-time decision to invest in a unit or not,
-while [units\_invested\_available](@ref) represents the invested-in units that are available at a specific time.
-This constraint enforces the relationship between [units\_invested](@ref), [units\_invested\_available](@ref)
-and [units\_mothballed](@ref) in adjacent timeslices.
+[units\_invested](@ref var_units_invested) represents the point-in-time decision to invest in a unit or not,
+while [units\_invested\_available](@ref var_units_invested_available) represents the invested-in units that are available at a specific time.
+This constraint enforces the relationship between [units\_invested](@ref var_units_invested), [units\_invested\_available](@ref var_units_invested_available)
+and [units\_mothballed](@ref var_units_mothballed) in adjacent timeslices.
 
 ```math
 \begin{aligned}
 & v^{units\_invested\_available}_{(u,s,t)} - v^{units\_invested}_{(u,s,t)}
 + v^{units\_monthballed}_{(u,s,t)}
 = v^{units\_invested\_available}_{(u,s,t-1)} \\
-& \forall u \in unit: p^{candidate\_units}_{(u)} \neq 0 \\
+& \forall u \in unit: p^{investment\_count\_max\_cumulative}_{(u)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

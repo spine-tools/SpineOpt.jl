@@ -20,21 +20,21 @@
 
 @doc raw"""
 For candidate connections with PTDF-based poweflow, together with [this](@ref constraint_candidate_connection_flow_lb),
-this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in
-and equals [connection\_intact\_flow](@ref) otherwise.
+this constraint ensures that [connection\_flow](@ref var_connection_flow) is zero if the candidate connection is not invested-in
+and equals [connection\_intact\_flow](@ref var_connection_intact_flow) otherwise.
 
 ```math
 \begin{aligned}
 & v^{connection\_flow}_{(c, n, d, s, t)} 
 \leq
 v^{connection\_intact\_flow}_{(c, n, d, s, t)} \\
-& \forall c \in connection : p^{candidate\_connections}_{(c)} \neq 0 \\
+& \forall c \in connection : p^{investment\_count\_max\_cumulative}_{(c)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```
 """
 function add_constraint_candidate_connection_flow_ub!(m::Model)
-    use_connection_intact_flow(model=m.ext[:spineopt].instance) || return
+    connection_investment_power_flow_impact_active(model=m.ext[:spineopt].instance) || return
     _add_constraint!(
         m,
         :candidate_connection_flow_ub,

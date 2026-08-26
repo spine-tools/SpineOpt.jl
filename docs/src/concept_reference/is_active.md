@@ -1,1 +1,0 @@
-`is_acive` is a universal, utility parameter that is defined for every object class. When used in conjunction with the `activity_control` feature, the `is_active` parameter allows one to control whether or not a specific object is active within a model or not. 

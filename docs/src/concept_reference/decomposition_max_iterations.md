@@ -1,0 +1,1 @@
+The parameter `decomposition_max_iterations` determines the maximum number of Benders iterations for a [model](@ref) of type `:spineopt_benders_master`.

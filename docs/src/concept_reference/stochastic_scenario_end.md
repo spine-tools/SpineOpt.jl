@@ -3,7 +3,7 @@ defining when a [stochastic\_scenario](@ref) ends relative to the start of the c
 As it is a parameter for the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship, different
 [stochastic\_structure](@ref)s can have different values for the same [stochastic\_scenario](@ref), making it
 possible to define slightly different [stochastic\_structure](@ref)s using the same [stochastic\_scenario](@ref)s.
-See the [Stochastic Framework](@ref) section for more information about how different [stochastic\_structure](@ref)s
+See the [Stochastic Framework](@ref stochastic_framework) section for more information about how different [stochastic\_structure](@ref)s
 interact in *SpineOpt.jl*.
 
 When a [stochastic\_scenario](@ref) ends at the point in time defined by the [stochastic\_scenario\_end](@ref)

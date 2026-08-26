@@ -35,12 +35,12 @@ function acflow_nodepair_indices(
     connection = anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing)
+    temporal_block=temporal_block(representative_blocks_by_period=nothing)
 )
     ind = unique(
         (node1=n1, node2=n2, stochastic_scenario=s, t=t)
         for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection)
-            if connection_has_ac_flow(node1=n1, node2=n2, connection=conn) == true
+            if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
             for (conn_, n_, d, s, t) in connection_flow_indices(m; connection=conn, node=n2, direction=direction(:to_node))
            
     )
@@ -61,8 +61,9 @@ function node_voltage_squared_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing),
+    temporal_block=temporal_block(representative_blocks_by_period=nothing),
 )
+
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
             m;

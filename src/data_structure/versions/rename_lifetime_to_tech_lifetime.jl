@@ -18,11 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    rename_lifetime_to_tech_lifetime(db_url, log_level)
+    rename_lifetime_to_tech_lifetime(db_url, log_level; kwargs...)
 
 Replace [xxx]_investment_lifetime by [xxx]_investment_tech_lifetime in all object and relationship class names.
 """
-function rename_lifetime_to_tech_lifetime(db_url, log_level)
+function rename_lifetime_to_tech_lifetime(db_url, log_level; kwargs...)
     @log log_level 0 "Renaming `[xxx]_investment_lifetime` to `[xxx]_investment_tech_lifetime`... "
     pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
         "entity_class_name" => "connection", "name" => "connection_investment_lifetime")

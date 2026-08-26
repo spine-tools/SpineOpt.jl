@@ -32,7 +32,7 @@ function nonspin_units_shut_down_indices(
     t=anything,
     temporal_block=temporal_block(is_representative=true),
 )
-    node = intersect(SpineOpt.node(is_reserve_node=true, is_non_spinning=true), members(node))
+    node = intersect(SpineOpt.node(reserve_active=true, is_non_spinning=true), members(node))
     (
         (unit=u, node=n, stochastic_scenario=s, t=t)
         for (u, n, d, s, t) in unit_flow_indices(

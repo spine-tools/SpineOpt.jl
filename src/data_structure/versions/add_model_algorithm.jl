@@ -18,11 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-	add_model_algorithm(db_url)
+	add_model_algorithm(db_url, log_level; kwargs...)
 
 Add `model_algorithm`.
 """
-function add_model_algorithm(db_url, log_level)
+function add_model_algorithm(db_url, log_level; kwargs...)
 	@log log_level 0 "Converting `model_type.spineopt_mga` to `model_algorithm.mga_algorithm`"
 	data = run_request(
 		db_url,

@@ -20,9 +20,9 @@
 #############################################################################
 @doc raw"""
 The flow through a connection can only be in one direction at at time.
-Whether a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref) variable,
+Whether a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref var_binary_gas_connection_flow) variable,
 which takes a value of `1` if the direction of flow is positive.
-To ensure that the [binary\_gas\_connection\_flow](@ref) in the opposite direction then takes the value `0`,
+To ensure that the [binary\_gas\_connection\_flow](@ref var_binary_gas_connection_flow) in the opposite direction then takes the value `0`,
 the following constraint is enforced:
 
 ```math

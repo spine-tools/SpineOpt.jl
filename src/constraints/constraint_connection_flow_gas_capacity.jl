@@ -39,7 +39,7 @@ not to become binding.
 ```
 
 See also
-[p^{fixed\_pressure\_constant\_1}](@ref),
+[fixed\_pressure\_constant\_1](@ref),
 [big\_m](@ref).
 """
 function add_constraint_connection_flow_gas_capacity!(m::Model)

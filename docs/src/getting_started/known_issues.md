@@ -20,10 +20,10 @@ SpineOpt.jl requires Julia versions between 1.10.10 - 1.11. If you encounter com
 
 ### Description
 
-When configuring a model with the same block appearing twice in temporal blocks—once with `has_free_start = true` and another with `has_free_start = false`—in combination with the `unit_lifetime` constraint, investment-related variables are reported incorrectly.  Specifically:
+When configuring a model with the same block appearing twice in temporal blocks—once with [has\_free\_start](@ref) = `true` and another with [has\_free\_start](@ref) = `false`—in combination with the [unit lifetime](@ref constraint_unit_lifetime) constraints, investment-related variables are reported incorrectly.  Specifically:
 
-- The `units_invested` variable consistently reports as 0, regardless of actual investments made
-- The `units_mothballed` and `units_decommissioned` variables fail to account for initial unit counts (`number_of_units`)
+- The [units\_invested](@ref var_units_invested) variable consistently reports as 0, regardless of actual investments made
+- The [units\_mothballed](@ref var_units_mothballed) variables fail to account for initial unit counts ([existing\_units](@ref))
 - Investment variables are aggregated and reported at annual resolution even when the investment block uses a different temporal resolution
 
 **Operational Impact:** While the model's operational variables (dispatch, flows, etc.) calculate correctly, investment planning results are unreliable, making it unsuitable for multiyear capacity expansion studies with flexible temporal resolution.
@@ -32,15 +32,15 @@ When configuring a model with the same block appearing twice in temporal blocks�
 
 - Multi-year investment planning without representative periods
 - Models using flexible temporal resolution across different nodes
-- Configurations mixing temporal blocks with different `has_free_start` parameters for the same block
+- Configurations mixing temporal blocks with different [has\_free\_start](@ref) parameters for the same block
 
 ### Workaround
 
 Currently under investigation.  Until resolved, consider:
 
-1. Avoiding mixed temporal block configurations when `unit_lifetime` constraints are active. For example, ensure that the same block is not included in both a block with `has_free_start = true` (e.g., for operation) and another with `has_free_start = false` (e.g., for investment).
+1. Avoiding mixed temporal block configurations when [unit lifetime](@ref constraint_unit_lifetime) constraints are active. For example, ensure that the same block is not included in both a block with [has\_free\_start](@ref) = `true` (e.g., for operation) and another with [has\_free\_start](@ref) = `false` (e.g., for investment).
 1. Using uniform temporal resolution for investment blocks (e.g., 10Y) to prevent using the same temporal block as the operational blocks (e.g., 1Y).
-1. Using consistent `has_free_start` settings across all temporal blocks containing the same block
+1. Using consistent [has\_free\_start](@ref) settings across all temporal blocks containing the same block
 
 ### Reproducibility
 

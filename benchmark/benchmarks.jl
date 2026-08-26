@@ -1,5 +1,6 @@
 using BenchmarkTools
 using Dates
+using JSON
 using SpineInterface
 using SpineOpt
 using Graphs
@@ -69,7 +70,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         # ["temporal_block", "two_year"], # to create economic parameters
         ["stochastic_structure", "deterministic"],
         ["stochastic_scenario", "parent"],
-        ["commodity", "electricity"],
+        ["grid", "electricity"],
         ["node", "reserve"],
         ["node", "node_group_reserve"],
     ]
@@ -84,10 +85,10 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
     ]
     append!(rels, (["unit__to_node", (u, n)] for (u, n) in zip(units, nodes_to)))
-    append!(rels, (["unit__from_node", (u, n)] for (u, n) in zip(units, nodes_from)))
-    append!(rels, (["unit__node__node", (u, n1, n2)] for (u, n1, n2) in zip(units, nodes_to, nodes_from)))
-    append!(rels, (["unit__from_node", (u, "reserve")] for u in units))
-    append!(rels, (["node__commodity", (n, "electricity")] for n in nodes_to))
+    append!(rels, (["node__to_unit", (n, u)] for (n, u) in zip(nodes_from, units)))
+    append!(rels, (["unit_flow__unit_flow", (u, n1, n2, u)] for (u, n1, n2, u) in zip(units, nodes_to, nodes_from, units)))
+    append!(rels, (["node__to_unit", ("reserve", u)] for u in units))
+    append!(rels, (["node__grid", (n, "electricity")] for n in nodes_to))
     append!(rels, (["connection__from_node", (c, n)] for (c, n) in zip(conns, conns_from)))
     append!(rels, (["connection__to_node", (c, n)] for (c, n) in zip(conns, conns_to)))
     append!(rels, (["connection__node__node", (c, n1, n2)] for (c, n1, n2) in zip(conns, conns_to, conns_from)))
@@ -98,16 +99,16 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         ["model", "instance", "duration_unit", "hour"],
         ["model", "instance", "model_type", "spineopt_standard"],
         ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(1))],
-        ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
+        ["grid", "electricity", "physics_type", "lodf_physics"],
         ["node", nodes_to[1], "node_opf_type", "node_opf_type_reference"],
-        ["node", "reserve", "is_reserve_node", true],
-        ["node", "reserve", "upward_reserve", true],
+        ["node", "reserve", "reserve_active", true],
+        ["node", "reserve", "reserve_upward", true],
     ]
     append!(obj_pvs, (["node", n, "demand", 1] for n in nodes_to))
-    append!(obj_pvs, (["node", n, "node_state_cap", 10] for n in nodes_to))
-    append!(obj_pvs, (["node", n, "has_state", true] for n in nodes_to))
+    append!(obj_pvs, (["node", n, "storage_state_max", 10] for n in nodes_to))
+    append!(obj_pvs, (["node", n, "storage_active", true] for n in nodes_to))
     append!(obj_pvs, (["connection", c, "connection_type", "connection_type_lossless_bidirectional"] for c in conns))
-    append!(obj_pvs, (["connection", c, "connection_reactance", 0.1] for c in conns))
+    append!(obj_pvs, (["connection", c, "reactance", 0.1] for c in conns))
     append!(obj_pvs, (["unit", u, "min_up_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     append!(obj_pvs, (["unit", u, "min_down_time", Dict("type" => "duration", "data" => "8h")] for u in units))
     if add_investment
@@ -118,9 +119,9 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         append!(obj_pvs, [["temporal_block", "two_year", "resolution", unparse_db_value(Year(2))]])
         append!(rels, [["model__default_investment_temporal_block", ["instance", "two_year"]]])
         # add investment candidates
-        append!(obj_pvs, (["unit", u, "candidate_units", 1] for u in units))
-        append!(obj_pvs, (["connection", c, "candidate_connections", 1] for c in conns))
-        append!(obj_pvs, (["node", n, "candidate_storages", 1] for n in nodes_to))
+        append!(obj_pvs, (["unit", u, "investment_count_max_cumulative", 1] for u in units))
+        append!(obj_pvs, (["connection", c, "investment_count_max_cumulative", 1] for c in conns))
+        append!(obj_pvs, (["node", n, "storage_investment_count_max_cumulative", 1] for n in nodes_to))
         # add investment stochastic structure
         append!(rels, [["model__default_investment_stochastic_structure", ["instance", "deterministic"]]])
     end
@@ -130,16 +131,16 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
         append!(obj_pvs, [["temporal_block", "hourly", "block_end", unparse_db_value(Hour(168))]])
     end
     rel_pvs = []
-    append!(rel_pvs, (["unit__to_node", (u, n), "unit_capacity", 1] for (u, n) in zip(units, nodes_to)))
-    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_up_limit", 0.9] for (u, n) in zip(units, nodes_to)))
-    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_down_limit", 0.9] for (u, n) in zip(units, nodes_to)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "capacity_per_unit", 1] for (u, n) in zip(units, nodes_to)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_limits_up", 0.9] for (u, n) in zip(units, nodes_to)))
+    append!(rel_pvs, (["unit__to_node", (u, n), "ramp_limits_down", 0.9] for (u, n) in zip(units, nodes_to)))
     append!(rel_pvs, (["unit__to_node", (u, n), "minimum_operating_point", 0.2] for (u, n) in zip(units, nodes_to)))
-    append!(rel_pvs, (["unit__to_node", [u, "node_group_reserve"], "unit_capacity", 0.1] for u in units))
+    append!(rel_pvs, (["unit__to_node", [u, "node_group_reserve"], "capacity_per_unit", 0.1] for u in units))
     append!(
         rel_pvs,
         (
-            ["unit__node__node", (u, n1, n2), "fix_ratio_out_in_unit_flow", 2] for
-            (u, n1, n2) in zip(units, nodes_to, nodes_from)
+            ["unit_flow__unit_flow", (u, n1, n2, u), "flow_ratio_equality_coefficient", 2] for
+            (u, n1, n2, u) in zip(units, nodes_to, nodes_from, units)
         ),
     )
     append!(
@@ -160,7 +161,7 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
             ] for (c, n1, n2) in zip(conns, conns_to, conns_from)
         ),
     )
-    append!(rel_pvs, (["connection__from_node", (c, n), "connection_capacity", 1] for (c, n) in zip(conns, conns_from)))
+    append!(rel_pvs, (["connection__from_node", (c, n), "capacity_per_connection", 1] for (c, n) in zip(conns, conns_from)))
     obj_grp = [["node", "node_group_reserve", "reserve"]]
     test_data = Dict(
         :objects => objs,
@@ -175,16 +176,33 @@ function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_inv
     return url_in, url_out
 end
 
-SUITE["main"] = BenchmarkGroup()
+const configured_example = get(ENV, "SPINEOPT_BENCHMARK_EXAMPLE", "synthetic")
 
-url_in_basic, url_out_basic =
-    setup(number_of_weeks=1, n_count=2, add_meshed_network=true, add_investment=false, add_rolling=false)
-# url_in_invest, url_out_invest = setup(number_of_weeks=1, n_count=2, add_investment=true, add_rolling=false)
-# url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
+function add_example_benchmark(path::AbstractString)
+    example_path = isabspath(path) ? path : normpath(joinpath(@__DIR__, "..", path))
+    isfile(example_path) || error("Benchmark example not found: $example_path")
+    example = JSON.parsefile(example_path)
+    label = splitext(basename(example_path))[1]
+    SUITE["examples"] = BenchmarkGroup()
+    SUITE["examples", label] =
+        @benchmarkable run_spineopt($example, nothing; log_level=0, optimize=false) samples = 1 evals = 1 seconds = Inf
+end
 
-SUITE["main", "run_spineopt", "basic"] =
-    @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 1 evals = 1 seconds =
-        Inf
+if configured_example == "synthetic"
+    SUITE["main"] = BenchmarkGroup()
+
+    url_in_basic, url_out_basic =
+        setup(number_of_weeks=1, n_count=2, add_meshed_network=true, add_investment=false, add_rolling=false)
+    # url_in_invest, url_out_invest = setup(number_of_weeks=1, n_count=2, add_investment=true, add_rolling=false)
+    # url_in_roll, url_out_roll = setup(number_of_weeks=3, n_count=50, add_investment=false, add_rolling=true)
+
+    SUITE["main", "run_spineopt", "basic"] =
+        @benchmarkable run_spineopt($url_in_basic, $url_out_basic; log_level=3, optimize=false) samples = 1 evals = 1 seconds =
+            Inf
+else
+    add_example_benchmark(configured_example)
+end
+
 # SUITE["main", "run_spineopt", "investment"] =
 #     @benchmarkable run_spineopt($url_in_invest, $url_out_invest; log_level=3, optimize=false) samples = 3 evals = 1 seconds =
 #         Inf

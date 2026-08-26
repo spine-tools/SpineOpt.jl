@@ -61,7 +61,7 @@ function connection_flow_lb(m; connection, node, direction, kwargs...)
         if isempty(connection_reactive_flow_indices(m, connection=connection, 
                 node=node, direction=direction) )
             return connection_flow_lower_limit(m; connection=connection, node=node, direction=direction, kwargs...) * (
-        	+ number_of_connections(m; connection=connection, kwargs..., _default=1)
+        	+ existing_connections(m; connection=connection, kwargs..., _default=1)
     		)
         else
             return NaN
@@ -77,8 +77,8 @@ function connection_flow_ub(m; connection, node, direction, kwargs...)
         || members(node) != [node]
     ) && return NaN
     connection_flow_capacity(m; connection=connection, node=node, direction=direction, kwargs..., _default=NaN) * (
-        + number_of_connections(m; connection=connection, kwargs..., _default=1)
-        + something(candidate_connections(m; connection=connection, kwargs...), 0)
+        + existing_connections(m; connection=connection, kwargs..., _default=1)
+        + something(investment_count_max_cumulative(m; connection=connection, kwargs...), 0)
     )
 end
 
@@ -127,8 +127,8 @@ function add_variable_connection_flow!(m::Model)
         connection_flow_indices;
         lb=connection_flow_lb,
         ub=connection_flow_ub,
-        fix_value=fix_connection_flow,
-        initial_value=initial_connection_flow,
+        fix_value=flow_limits_fix,
+        initial_value=flow_limits_initial,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
         required_history_period=maximum_parameter_value(connection_flow_delay),

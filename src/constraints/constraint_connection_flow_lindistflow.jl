@@ -40,9 +40,9 @@ function _build_constraint_node_voltage_lindistflow(m, conn, n1, n2, s, t)
         ==
         node_voltage_squared[n1, s, t]
         - 2 * connection_flow_reactive[conn, n1, direction(:from_node), s, t] 
-        * connection_reactance(m, connection=conn, stochastic_scenario=s, t=t)
+        * reactance(m, connection=conn, stochastic_scenario=s, t=t)
         - 2 * connection_flow[conn, n1, direction(:from_node), s, t]
-        * connection_resistance(m, connection=conn, stochastic_scenario=s, t=t)
+        * resistance(m, connection=conn, stochastic_scenario=s, t=t)
     )
 end
 
@@ -124,12 +124,12 @@ function acflow_connection_nodepair_indices(
     connection = anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing)
+    temporal_block=temporal_block(representative_blocks_by_period=nothing)
 )
     ind = (
         (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t)
         for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection)
-            if connection_has_ac_flow(node1=n1, node2=n2, connection=conn) == true
+            if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
             for (conn_, n_, d, s, t) in 
                 connection_flow_indices(m; connection=conn, node=n2, 
                     direction=direction(:to_node),

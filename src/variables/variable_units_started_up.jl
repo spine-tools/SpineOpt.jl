@@ -34,3 +34,13 @@ function add_variable_units_started_up!(m::Model)
         required_history_period=maximum_parameter_value(min_up_time),
     )
 end
+
+"""
+    _get_units_started_up(m, u, s, t)
+
+Safe get `units_started_up` variable for the given indices,
+replaced with 0 in case the variable doesn't exist.
+"""
+function _get_units_started_up(m, u, s, t)
+    get(m.ext[:spineopt].variables[:units_started_up], (u, s, t), 0)
+end

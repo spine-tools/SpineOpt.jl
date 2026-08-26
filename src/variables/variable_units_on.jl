@@ -33,7 +33,11 @@ function units_on_indices(
 )
     unit = intersect(unit, _unit_with_online_variable())
     unit_stochastic_time_indices(
-        m; unit=unit, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+        m;
+        unit=unit,
+        stochastic_scenario=stochastic_scenario,
+        temporal_block=temporal_block,
+        t=t,
     )
 end
 
@@ -74,14 +78,14 @@ _unit_with_switched_variable() = unit(has_switched_variable=true)
 
 Check if unit online variable type is defined as a binary.
 """
-units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
+units_on_bin(x) = online_variable_type(unit=x.unit) == :binary
 
 """
     units_on_int(x)
 
 Check if unit online variable type is defined as an integer.
 """
-units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
+units_on_int(x) = online_variable_type(unit=x.unit) == :integer
 
 """
     add_variable_units_on!(m::Model)
@@ -96,20 +100,48 @@ function add_variable_units_on!(m::Model)
         lb=constant(0),
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=fix_units_on,
-        initial_value=initial_units_on,
+        fix_value=online_count_fix,
+        initial_value=online_count_initial,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,
         required_history_period=_get_max_duration(m, [min_up_time, min_down_time]),
     )
 end
 
+"""
+    _get_units_on(m, u, s, t)
+
+Safe get `units_on` variable for the given indices,
+replaced with `existing_units` plus [`_get_units_invested_available`](@ref)
+if `units_on` doesn't exist.
+
+Intended to be used in situations where either `units_on` or its proxy is required,
+e.g. minimum load and ramping constraints.
+Currently, this doesn't handle complex time and stochastic structures.
+Defining identical structures for `units_on` and investments
+should hopefully bypass most issues.
+"""
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
-        number_of_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+        (
+            existing_units(unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+            + _get_units_invested_available(m, u, s, t)
+            - _get_units_out_of_service(m, u, s, t)
+        )
     end
 end
 
-function _get_units_started_up(m, u, s, t)
-    get(m.ext[:spineopt].variables[:units_started_up], (u, s, t), 0)
+"""
+    _get_units_on_indices(m::Model, unit::Object; kwargs...)
+
+Indexing selector for investments without online variables.
+See [`_get_units_on`](@ref).
+"""
+function _get_units_on_indices(m::Model, unit::Object; kwargs...)
+    inds = (unit=unit, kwargs...)
+    return (
+        online_variable_type(unit=unit) == :none && is_candidate(unit=unit) ?
+        units_invested_available_indices(m; inds...) :
+        units_on_indices(m; inds...)
+    )
 end

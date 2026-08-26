@@ -19,18 +19,18 @@
 #############################################################################
 
 @doc raw"""
-[storages\_invested](@ref) represents the point-in-time decision to invest in storage at a node ``n`` or not,
-while [storages\_invested\_available](@ref) represents the invested-in storages that are available at a node at a
+[storages\_invested](@ref var_storages_invested) represents the point-in-time decision to invest in storage at a node ``n`` or not,
+while [storages\_invested\_available](@ref var_storages_invested_available) represents the invested-in storages that are available at a node at a
 specific time.
-This constraint enforces the relationship between [storages\_invested](@ref), [storages\_invested\_available](@ref)
-and [storages\_decommissioned](@ref) in adjacent timeslices.
+This constraint enforces the relationship between [storages\_invested](@ref var_storages_invested), [storages\_invested\_available](@ref var_storages_invested_available)
+and [storages\_decommissioned](@ref var_storages_decommissioned) in adjacent timeslices.
 
 ```math
 \begin{aligned}
 & v^{storages\_invested\_available}_{(n,s,t)} - v^{storages\_invested}_{(n,s,t)}
 + v^{storages\_decommissioned}_{(n,s,t)}
 = v^{storages\_invested\_available}_{(n,s,t-1)} \\
-& \forall n \in node: p^{candidate\_storages}_{(n)} \neq 0 \\
+& \forall n \in node: p^{storage\_investment\_count\_max\_cumulative}_{(n)} \neq 0 \\
 & \forall (s,t)
 \end{aligned}
 ```

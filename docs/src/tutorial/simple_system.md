@@ -1,4 +1,4 @@
-# Simple System tutorial
+# Simple system tutorial
 
 Welcome to Spine Toolbox's Simple System tutorial.
 
@@ -86,7 +86,7 @@ The entity graph only shows what you select in the entity tree
 and what your selected entities are connected to.
 
 To open the editor:
--   Double click the input Data Store item 
+-   Double-click the input Data Store item 
     (or select the 'input' Data Store item in the *Design View*, 
     go to *Data Store Properties* and hit **Open editor**).
 
@@ -96,16 +96,16 @@ In the following we enter the input data for the simple system.
 
 ### Importing the SpineOpt database template
 
-A SpineOpt database is a spine database but a spine database is not necessarily a SpineOpt database. Therefore we first need to format the database to a SpineOpt database with the SpineOpt template. The SpineOpt template contains the fundamental entity classes and parameter definitions that SpineOpt recognizes and expects. One option to load the template is to use the 'Load template' tool as mentioned before. Another option is to import the template with the Spine DB editor. To that end:
+A SpineOpt database is a spine database, but a spine database is not necessarily a SpineOpt database. Therefore, we first need to format the database to a SpineOpt database with the SpineOpt template. The SpineOpt template contains the fundamental entity classes and parameter definitions that SpineOpt recognizes and expects. One option to load the template is to use the 'Load template' tool as mentioned before. Another option is to import the template with the Spine DB editor. To that end:
 
 -   Download [the SpineOpt database
-    template](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/spineopt_template.json) (right click on the link, then select *Save link as...*)
+    template](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/spineopt_template.json) (right-click on the link, then select *Save link as...*)
 
 -   To import the template to the database,
     click on **File -> Import...**, and then select the template file you previously
     downloaded (*spineopt\_template.json*). The contents of that file will be 
     imported into the current database, and you should then see classes like 
-    'commodity', 'connection' and 'model' in the entity tree.
+    'connection', 'grid' and 'model' in the entity tree.
 
 -   To save our changes, press the **Commit** button in the toolbar.
     Enter a commit message, e.g. 'Import SpineOpt template', in the popup dialog
@@ -121,7 +121,7 @@ The model settings that we need for this tutorial are also available as a templa
 
 -   Download [the basic SpineOpt
     model](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/models/basic_model_template.json)
-    (right click on the link, then select *Save link as...*)
+    (right-click on the link, then select *Save link as...*)
 
 -   Import the template to the database through **File -> Import...**,
     and then select the template file you previously downloaded (*basic\_model\_template.json*).
@@ -135,15 +135,15 @@ Currently, there is no output connected to the report. We'll have to do that man
 -   Locate the *Entity tree* in the Spine DB editor (typically
     at the top-left).
 
--   Press the '+' next to the *report\_\_output* class.
+-   Press the '+' next to the [report\_\_output](@ref) class.
     The *Add entities* dialog will pop up.
 
 -   We'll have to fill in the field for the report and the output.
-    Double click the field to see the options.
+    Double-click the field to see the options.
     For the 'report' field we need 'report1'
-    and for the 'output' field we only need 'unit\_flow', as seen in the image below.
+    and for the 'output' field we only need '[unit\_flow](@ref var_unit_flow)', as seen in the image below.
     This will tell SpineOpt to write the value of the
-    *unit\_flow* optimization variable to the output
+    [unit\_flow](@ref var_unit_flow) optimization variable to the output
     database, as part of *report1*.
 
 -   Press *Ok*.
@@ -171,25 +171,25 @@ To create the nodes:
 -   Locate the *Entity tree* in the Spine DB editor (typically
     at the top-left).
 
--   Right click on the [node] class, and select *Add entities* 
+-   Right-click on the [node](@ref) class, and select *Add entities* 
     from the context menu (or press the '+' icon next to it).
     The *Add entities* dialog will pop up.
 
 -   Enter the names for the system nodes as seen in the image below,
     then press *Ok*. This will create two entities of class
-    *node*, called *fuel* and *electricity*.
+    [node](@ref), called *fuel* and *electricity*.
 
 ![image](figs_simple_system/simple_system_add_nodes.png)
 
 To create the units we do the same thing:
 
--   Press '+' next to the *unit* class, and add two units called
+-   Press '+' next to the [unit](@ref) class, and add two units called
     *power\_plant\_a* and *power\_plant\_b*.
 
 ![image](figs_simple_system/simple_system_add_units.png)
 
 !!! info
-    To modify an entity after you enter it, right click on it and select
+    To modify an entity after you enter it, right-click on it and select
     **Edit...** from the context menu.
 
 ### Creating relationships between the nodes and units
@@ -197,23 +197,23 @@ To create the units we do the same thing:
 For the simple system we need to link the nodes and the units.
 Intuitively, we know that we need to make flows from the
 'fuel' node to the units and to the 'electricity' node.
-Additionally we'll have to add a 'unit\_\_node\_node' entity
-to be able to add data on properties to the relation between
+Additionally, we'll have to add a [unit\_flow\_\_unit\_flow](@ref) relation
+to be able to add data on the properties between
 the input and the output of the units.
 
 For the flow from the 'fuel' node to the units:
 
--   Press '+' next to the *unit\_\_from\_node* class,
-    you'll see a 'unit' field and a 'node' field.
+-   Press '+' next to the [node\_\_to\_unit](@ref) class,
+    you'll see a 'node' field and a 'unit' field.
 
--   Double click the unit or node field to see the options.
+-   Double-click the unit or node field to see the options.
 
 -   Select each unit once and the 'fuel' node twice,
     resulting in the combinations
-    'power\_plant\_a'-'fuel' and 'power\_plant\_b'-'fuel'.
+    'fuel'-'power\_plant\_a' and 'fuel'-'power\_plant\_b'.
 
 !!! info
-    Alternatively right click the entities in the *entity graph* and 
+    Alternatively right-click the entities in the *entity graph* and 
     *connect entities* will show the available entity classes.
     You can then make the desired relations visually.
     Note that this only works when the involved units/nodes/... are visible
@@ -225,7 +225,7 @@ For the flow from the 'fuel' node to the units:
 
 For the flow from the units to the 'electricity' node, we do the same:
 
--   Press '+' next to the *unit\_\_to\_node* class and choose
+-   Press '+' next to the [unit\_\_to\_node](@ref) class and choose
     each unit once and the 'electricity' node twice,
     resulting in the combinations
     'power\_plant\_a'-'electricity' and 'power\_plant\_b'-'electricity'
@@ -235,20 +235,20 @@ For the flow from the units to the 'electricity' node, we do the same:
 These flows so far only determine what happens between the node and the unit.
 However, we also need to determine what happens between the input and output of the unit.
 As there can be multiple inputs and outputs, we'll have to define which flows exactly
-contribute to the input/output behaviour. To that end we use a *unit\_\_node\_\_node* class.
+contribute to the input/output behaviour. To that end we use a [unit\_flow\_\_unit\_flow](@ref) class.
 
--   Press '+' next to the *unit\_\_node\_\_node* class and choose the unit, 
-    its output node and its input node,
+-   Press '+' next to the [unit\_flow\_\_unit\_flow](@ref) class and choose the unit, 
+    its output flow and its input flow,
     resulting in the combinations
-    'power\_plant\_a'-'electricity'-'fuel' and 'power\_plant\_b'-'electricity'-'fuel'
+    'power\_plant\_a'-'electricity'-'fuel'-'power\_plant\_a' and 'power\_plant\_b'-'electricity'-'fuel'-'power\_plant\_b'
 
 ![image](figs_simple_system/simple_system_add_unit__node__node.png)
 
 !!! info
-    The *unit\_\_node\_\_node* relationship is necessary to limit the flow 
+    The [unit\_flow\_\_unit\_flow](@ref) relationship is necessary to limit the flow 
     (flows are unbound by default) and to define an efficiency.
     The order of the nodes is important for that definition (see later on).
-    It may seem unintuitive to define an efficiency through a three-way 
+    It may seem unintuitive to define an efficiency through a
     relationship instead of a property of a unit, but this approach allows you
     to define efficiencies between any flow(s) coming in and out of the unit (e.g. CHP).
 
@@ -275,11 +275,11 @@ Select the 'electricity' node in the entity tree, in the entity graph, or in the
 after clicking *entity\_byname* in the header row of the parameter value table. Then, in the 
 parameter value table:
 
--   Double click the *parameter\_name* field and select *demand*.
+-   Double-click the *parameter\_name* field and select [demand](@ref).
 
--   Double click the *alternativet\_name* field and select *Base*.
+-   Double-click the *alternativet\_name* field and select *Base*.
 
--   Double click the *value* field and enter 150.
+-   Double-click the *value* field and enter 150.
 
 ![image](figs_simple_system/simple_system_electricity_demand.png)
 
@@ -304,11 +304,11 @@ value table, select
 
 -   *entity\_by\_name*: 'fuel' node
 
--   *parameter\_name*: *balance\_type*
+-   *parameter\_name*: [balance\_type](@ref)
 
 -   *alternative\_name*: *Base*
 
--   *value*: *balance\_type\_none*
+-   *value*: *none*
 
 ![image](figs_simple_system/simple_system_fuel_balance_type.png)
 
@@ -318,21 +318,21 @@ Each of these parameters are defined in different parts of the system.
 That is, again, because it is possible to define multiple inputs and outputs.
 To pinpoint the correct flows, the parameters are therefore related to the flows rather than the unit.
 In particular, the VOM cost is related to the input flow
-and as such to *unit\_\_from\_node* between the unit and the 'fuel' node.
+and as such to [node\_\_to\_unit](@ref) between the unit and the 'fuel' node.
 The capacity is related to the output flow
-and as such to *unit\_\_to\_node* between the unit and the 'electricity' node.
+and as such to [unit\_\_to\_node](@ref) between the unit and the 'electricity' node.
 The efficiency is related to the relation between the input and the output
-and as such to *unit\_\_node\_node* between the unit, the 'electricity' node and the 'fuel' node.
+and as such to [unit\_flow\_\_unit\_flow](@ref) between the unit, the 'electricity' node and the 'fuel' node.
 
 We enter these values again in the parameter value table.
 
 For the VOM cost of the power plants:
 
--   select the *unit\_\_from\_node* entity class
+-   select the [node\_\_to\_unit](@ref) entity class
 
--   *entity\_by\_name*: 'power\_plant\_a|fuel'
+-   *entity\_by\_name*: 'fuel|power\_plant\_a'
 
--   *parameter\_name*: *vom\_cost*
+-   *parameter\_name*: [vom\_cost](@ref)
 
 -   *alternative\_name*: *Base*
 
@@ -344,11 +344,11 @@ For the VOM cost of the power plants:
 
 For the capacity of the power plants:
 
--   select the *unit\_\_to\_node* entity class
+-   select the [unit\_\_to\_node](@ref) entity class
 
 -   *entity\_by\_name*: 'power\_plant\_a|electricity'
 
--   *parameter\_name*: *unit\_capacity*
+-   *parameter\_name*: [capacity\_per\_unit](@ref)
 
 -   *alternative\_name*: *Base*
 
@@ -360,11 +360,11 @@ For the capacity of the power plants:
 
 For the efficiency of the power plants:
 
--   select the *unit\_\_node\_node* entity class
+-   select the [unit\_flow\_\_unit\_flow](@ref) entity class
 
 -   *entity\_by\_name*: 'power\_plant\_a|electricity|fuel'
 
--   *parameter\_name*: *fix\_ratio\_out\_in\_unit\_flow*
+-   *parameter\_name*: [flow\_ratio\_equality\_coefficient](@ref)
 
 -   *alternative\_name*: *Base*
 
@@ -375,7 +375,7 @@ For the efficiency of the power plants:
 ![image](figs_simple_system/simple_system_fix_ratio_out_in_unit_flow.png)
 
 !!! info
-    The order of the nodes is important for the *fix\_ratio\_out\_in\_unit\_flow* 
+    The order of the nodes is important for the [flow\_ratio\_equality\_coefficient](@ref) 
     parameter. If you have swapped the nodes or inverted the efficiency values, 
     the Run SpineOpt tool will run into errors.
 
@@ -390,7 +390,7 @@ Select the root in the entity tree to see an overview of all parameters in the t
 With the input database ready, we are ready to run SpineOpt.
 
 -   Go back to Spine Toolbox's main window, and hit the **Execute
-    project** button from the tool bar. 
+    project** button from the toolbar. 
     You should see 'Executing All Directed Acyclic Graphs' printed in
     the *Event log* (at the bottom left by default).
 
@@ -404,11 +404,11 @@ Opening the output database in the Spine DB editor, we can inspect its values.
 Note that the entity tree looks different as there is no SpineOpt template loaded here.
 Regardless, the output is available in the displayed tables.
 
-By default all runs are shown in the tables.
-By selecting a specific run in the the *alternatives* (typically on the right),
+By default, all runs are shown in the tables.
+By selecting a specific run in the *alternatives* (typically on the right),
 you can instead view the results of a single run.
 
-Typically there will be *Time Series* in the values.
-Double click these to view the values.
+Typically, there will be *Time Series* in the values.
+Double-click these to view the values.
 
 For 'power\_plant\_a' you should see a value of 100 and for 'power\_plant\_b' a value of 50.

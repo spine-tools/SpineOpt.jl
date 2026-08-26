@@ -84,7 +84,7 @@ function _test_socp_formulation_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["node", "node_group_bc", "balance_type", "balance_type_none"],
+            ["node", "node_group_bc", "balance_type", "none"],
         ],
         :relationship_parameter_values => [
             [
@@ -110,8 +110,8 @@ function test_node_voltage_singleconn_socp()
 
         url_in = _test_socp_formulation_setup()
         object_parameter_values = [
-            ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_mip_solver_options", solver_options],
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
             ["node", "node_b", "min_voltage", 0.7],
@@ -119,8 +119,8 @@ function test_node_voltage_singleconn_socp()
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 0.2],
             ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","connection_resistance",0.2],
-            ["connection","connection_bc","connection_reactance",0.2],
+            ["connection","connection_bc","resistance",0.2],
+            ["connection","connection_bc","reactance",0.2],
             ["connection","connection_bc","connection_current_max",1.0]
         ]
         relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
@@ -182,8 +182,8 @@ function test_reverse_ac_flow_socp()
             ["node", "node_d"],
         ]
         object_parameter_values = [
-            ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_mip_solver_options", solver_options],
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
             ["node", "node_b", "min_voltage", 0.7],
@@ -191,8 +191,8 @@ function test_reverse_ac_flow_socp()
             ["node", "node_d", "min_voltage", 0.7],
             ["node", "node_d", "demand", 0.2],
             ["node", "node_d", "demand_reactive", 0.0],
-            ["connection","connection_bd","connection_resistance",0.2],
-            ["connection","connection_bd","connection_reactance",0.2],
+            ["connection","connection_bd","resistance",0.2],
+            ["connection","connection_bd","reactance",0.2],
             ["connection","connection_bd","connection_current_max",1.0]
         ]
         relationships = [["connection__from_node", ["connection_bd", "node_b"]],
@@ -242,8 +242,8 @@ function test_constraint_ac_opf_capacitance_socp()
 
         url_in = _test_socp_formulation_setup()
         object_parameter_values = [
-            ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_mip_solver_options", solver_options],
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 1.0],
@@ -253,18 +253,18 @@ function test_constraint_ac_opf_capacitance_socp()
             ["node", "node_c", "demand", 0.0],
             ["node", "node_c", "demand_reactive", 0.0],
             ["node", "node_c", "shunt_susceptance", 0.1],
-            ["connection","connection_bc","connection_resistance",0.0],
-            ["connection","connection_bc","connection_reactance",0.1],
+            ["connection","connection_bc","resistance",0.0],
+            ["connection","connection_bc","reactance",0.1],
             ["connection","connection_bc","connection_current_max",1.0]
         ]
         relationships = [
-            ["unit__from_node", ["unit_ab", "node_b"]],
+            ["node__to_unit", ["node_b", "unit_ab"]],
             ["connection__node__node", [ "connection_bc", "node_b", "node_c"]]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["unit__from_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["node__to_unit", ["node_b", "unit_ab"], "vom_cost_reactive", 2.0],
             ["connection__node__node",
             ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
         ]
@@ -275,7 +275,7 @@ function test_constraint_ac_opf_capacitance_socp()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        m = run_spineopt(url_in; log_level=0, optimize=true)
+        m = run_spineopt(url_in; log_level=1, optimize=true)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
         # aliases for the model OPF variables
@@ -307,8 +307,8 @@ function test_node_voltage2()
         ]
 
         object_parameter_values = [
-            ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_mip_solver_options", solver_options],
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 0.7],
@@ -320,11 +320,11 @@ function test_node_voltage2()
             ["node", "node_d", "min_voltage", 0.7],
             ["node", "node_d", "demand", 0.0],
             ["node", "node_d", "demand_reactive", 0.2],
-            ["connection","connection_bc","connection_resistance",0.2],
-            ["connection","connection_bc","connection_reactance",0.2],
+            ["connection","connection_bc","resistance",0.2],
+            ["connection","connection_bc","reactance",0.2],
             ["connection","connection_bc","connection_current_max",1.0],
-            ["connection","connection_cd","connection_resistance",0.2],
-            ["connection","connection_cd","connection_reactance",0.2],
+            ["connection","connection_cd","resistance",0.2],
+            ["connection","connection_cd","reactance",0.2],
             ["connection","connection_cd","connection_current_max",1.0]
         ]
         relationships = [
@@ -383,8 +383,8 @@ function test_node_voltage_singleconn_lindistflow()
         url_in = _test_socp_formulation_setup()
         object_parameter_values = [
             ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
-            ["model", "instance", "db_mip_solver", "Juniper.jl"],
-            ["model", "instance", "db_mip_solver_options", solver_options],
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
             ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
             ["node", "node_b", "min_voltage", 1.0],
@@ -393,8 +393,8 @@ function test_node_voltage_singleconn_lindistflow()
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 200],
             ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","connection_resistance",0.2],
-            ["connection","connection_bc","connection_reactance",0.2],
+            ["connection","connection_bc","resistance",0.2],
+            ["connection","connection_bc","reactance",0.2],
             ["connection","connection_bc","connection_current_max",1.0]
         ]
         relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]

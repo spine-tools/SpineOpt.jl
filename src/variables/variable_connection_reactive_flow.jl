@@ -36,7 +36,7 @@ function connection_reactive_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods_mapping=nothing))
+    temporal_block=temporal_block(representative_blocks_by_period=nothing))
 
     connection_flow_indices(m, 
         connection = unique(x.connection 
@@ -100,12 +100,12 @@ function _ac_flow_connection_node_indices_wdir(
                     [
                         (connection=conn, node=n1, direction=direction(:from_node) )
                         for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node1=node)
-                            if connection_has_ac_flow(node1=n1, node2=n2, connection=conn) == true
+                            if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
                     ],
                     [
                         (connection=conn, node=n2, direction=direction(:to_node) )
                         for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node2=node)
-                            if connection_has_ac_flow(node1=n1, node2=n2, connection=conn) == true
+                            if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
                     ]
         )
     )

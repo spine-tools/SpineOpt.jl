@@ -1,0 +1,3 @@
+When using ptdf-based load flow by setting [physics\_type](@ref) to either [ptdf\_physics](@ref grid_physics_list) or [ptdf\_physics](@ref grid_physics_list), a constraint is created for each connection for which `monitoring_active` = `true`. Thus, to monitor the ptdf-based flow on a particular connection `monitoring_active` must be set to `true`.
+
+See also [powerflow](@ref ptdf-based-powerflow)
