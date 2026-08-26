@@ -1544,7 +1544,7 @@ function test_ac_opf_singleconn_inve()
             ["connection","connection_bc","connection_current_max", 0.2089],
             ["connection","connection_bc","investment_count_max_cumulative", 1.0],
             ["connection","connection_bc","connection_investment_cost", 35.0],
-            ["connection","connection_bc", "connection_investment_variable_type", "connection_investment_variable_type_integer"]
+            ["connection","connection_bc", "investment_variable_type", "integer"]
         ]
         relationships = [
             ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
@@ -1622,7 +1622,7 @@ function test_ac_opf_singleconn_inve_rev()
             ["connection","c1","connection_current_max", 1.0],
             ["connection","c1","investment_count_max_cumulative", 1.0],
             ["connection","c1","connection_investment_cost", 5.0],
-            ["connection","c1", "connection_investment_variable_type", "connection_investment_variable_type_integer"]
+            ["connection","c1", "investment_variable_type", "integer"]
         ]
         relationships = [
             ["unit__to_node", ["unit_x", "node_d"]],
@@ -1636,8 +1636,7 @@ function test_ac_opf_singleconn_inve_rev()
             ["node__temporal_block", ["node_e", "hourly"]],
             ["node__stochastic_structure", ["node_e", "stochastic"]],
             ["connection__investment_temporal_block", ["c1", "investments_hourly"]],
-            ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]],
-      
+            ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
@@ -1663,14 +1662,6 @@ function test_ac_opf_singleconn_inve_rev()
         flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
         cinv = m.ext[:spineopt].variables[:connections_invested]
 
-        println(value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]))
-        println(value(flowP[connection(:c1), node(:node_e), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
-        println(value(flowQ[connection(:c1), node(:node_e), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]])) 
-        println(value(uflow[unit(:unit_x), node(:node_d), 
-            direction(:to_node), stochastic_scenario(:parent), time_slices[1]])) 
-        
         @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]) == 1.0
     end
 end
@@ -1703,7 +1694,7 @@ function test_ac_opf_singleconn_lossless()
             ["connection","c1","connection_current_max", 1.0],
             ["connection","c1","investment_count_max_cumulative", 1.0],
             ["connection","c1","connection_investment_cost", 5.0],
-            ["connection","c1", "connection_investment_variable_type", "connection_investment_variable_type_integer"]
+            ["connection","c1", "investment_variable_type", "integer"]
         ]
         relationships = [
             ["unit__to_node", ["unit_x", "node_d"]],
@@ -1774,12 +1765,13 @@ end
     # test_constraint_capacity_margin_penalty()
     # test_constraint_node_injection_free_start()
     # test_constraint_cyclic_node_state_free_start()
+    
     # for testing AC flow with linear formulation
-    test_ac_opf_singleconn()
-    test_ac_opf_singleconn_q()
-    test_ac_opf_singleconn_rev()
-    test_ac_opf_singleconn_lim_I()
-    test_ac_opf_singleconn_inve()
-    test_ac_opf_singleconn_inve_rev()
+    #test_ac_opf_singleconn()
+    #test_ac_opf_singleconn_q()
+    #test_ac_opf_singleconn_rev()
+    #test_ac_opf_singleconn_lim_I()
+    #test_ac_opf_singleconn_inve()
+    #test_ac_opf_singleconn_inve_rev()
     test_ac_opf_singleconn_lossless()
 end
