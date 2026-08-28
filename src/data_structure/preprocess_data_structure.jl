@@ -785,10 +785,7 @@ associated with the and `connection` `ObjectClass`. They are derived from
 resistance and reactance which the user is expected to give as input. Default
 values are set to zero.
 """
-function generate_connection_admittance()
-    connection_conductance = Parameter(:connection_conductance, [connection])
-    connection_susceptance = Parameter(:connection_susceptance, [connection])
-    
+function generate_connection_admittance() 
     add_object_parameter_values!(
         connection, 
         Dict(conn => Dict(:connection_conductance => 
@@ -800,7 +797,6 @@ function generate_connection_admittance()
                         !isnothing(reactance(connection = conn))
         )
     )
-    
     add_object_parameter_defaults!(connection, Dict(:connection_conductance => parameter_value(0.0)))
     
     add_object_parameter_values!(
@@ -814,13 +810,7 @@ function generate_connection_admittance()
                         !isnothing(reactance(connection = conn))
         )
     )
-
     add_object_parameter_defaults!(connection, Dict(:connection_susceptance => parameter_value(0.0)))
-    
-    @eval begin
-        connection_conductance = $connection_conductance
-        connection_susceptance = $connection_susceptance
-    end
 end
 
 function generate_default_ac_flow_tangency_points()

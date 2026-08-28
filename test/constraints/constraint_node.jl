@@ -1767,11 +1767,11 @@ end
     # test_constraint_cyclic_node_state_free_start()
     
     # for testing AC flow with linear formulation
-    #test_ac_opf_singleconn()
+    test_ac_opf_singleconn()
     #test_ac_opf_singleconn_q()
     #test_ac_opf_singleconn_rev()
     #test_ac_opf_singleconn_lim_I()
     #test_ac_opf_singleconn_inve()
     #test_ac_opf_singleconn_inve_rev()
-    test_ac_opf_singleconn_lossless()
+    #test_ac_opf_singleconn_lossless()
 end

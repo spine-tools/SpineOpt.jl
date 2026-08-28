@@ -114,6 +114,7 @@ const coefficient_for_units_on = Parameter(:coefficient_for_units_on)
 const coefficient_for_units_started_up = Parameter(:coefficient_for_units_started_up)
 const compression_factor = Parameter(:compression_factor)
 const connection_capacity_transfer_factor = Parameter(:connection_capacity_transfer_factor)
+const connection_conductance = Parameter(:connection_conductance)
 const connection_conversion_to_discounted_annuities = Parameter(:connection_conversion_to_discounted_annuities)
 const connection_current_max = Parameter(:connection_current_max)
 const connection_decommissioning_conversion_to_discounted_annuities = Parameter(:connection_decommissioning_conversion_to_discounted_annuities)
@@ -132,6 +133,7 @@ const connection_investment_power_flow_impact_active = Parameter(:connection_inv
 const connection_linepack_constant = Parameter(:connection_linepack_constant)
 const connection_min_factor = Parameter(:connection_min_factor)
 const connection_salvage_fraction = Parameter(:connection_salvage_fraction)
+const connection_susceptance = Parameter(:connection_susceptance)
 const connection_tech_discount_factor = Parameter(:connection_tech_discount_factor)
 const connection_type = Parameter(:connection_type)
 const connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance)
@@ -472,6 +474,7 @@ export coefficient_for_units_on
 export coefficient_for_units_started_up
 export compression_factor
 export connection_capacity_transfer_factor
+export connection_conductance
 export connection_conversion_to_discounted_annuities
 export connection_current_max
 export connection_decommissioning_conversion_to_discounted_annuities
@@ -490,6 +493,7 @@ export connection_investment_power_flow_impact_active
 export connection_linepack_constant
 export connection_min_factor
 export connection_salvage_fraction
+export connection_susceptance
 export connection_tech_discount_factor
 export connection_type
 export connnection_lodf_tolerance

@@ -31,6 +31,8 @@
         ["connection", "has_lodf", false, "boolean_value_list"],
         ["connection", "is_boundary_connection", false, "boolean_value_list"],
         ["connection", "is_candidate", false, "boolean_value_list"],
+        ["connection", "connection_conductance", null, null],
+        ["connection", "connection_susceptance", null, null],
         ["node", "has_ptdf", false, "boolean_value_list"],
         ["node", "has_voltage_angle", false, "boolean_value_list"],
         ["node", "has_pressure", false, "boolean_value_list"],
