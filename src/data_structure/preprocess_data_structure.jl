@@ -39,9 +39,11 @@ function preprocess_data_structure()
     process_lossless_bidirectional_connections()
     # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
     # so we don't corrupt the lookup cache
+    # Remember to add the created entities into preprocessing_template!
     generate_direction_and_reorganise_classes()
     generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
     generate_node_has_physics(:has_pressure, :pressure_physics)
+    generate_node_has_physics(:has_acflow, :acflow_physics)
     generate_ptdf_lodf()
     generate_variable_indexing_support()
     generate_benders_iteration()
@@ -989,4 +991,35 @@ function generate_is_representative()
     add_object_parameter_defaults!( # TODO: Tasku: Not 100% sure this is needed or if we get these from `preprocessing_template.json`
         temporal_block, Dict(:is_representative => parameter_value(false))
     )
+end
+
+"""
+    _node_has_physics(node1, phys_type)
+
+    returns true if node1 belongs to at least one grid whose
+`physics_type` equals `phys_type`.
+"""
+function _node_has_physics(node1, phys_type)
+    any(
+       physics_type(grid=grid) == phys_type
+       for grid in node__grid(node=node1)
+    )
+end
+
+"""
+    nodes_with_physics_type(physics)
+
+Return all nodes that belong to at least one grid whose
+`physics_type` equals `physics`.
+"""
+function nodes_with_physics_type(phys_type)
+    nodes = Set()
+
+    for (; node, grid) in indices(node__grid)
+        if physics_type(grid=grid) == phys_type
+             push!(nodes, node)
+        end
+    end
+
+    collect(nodes)
 end

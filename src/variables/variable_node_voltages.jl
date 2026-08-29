@@ -67,7 +67,7 @@ function node_voltage_squared_indices(
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
             m;
-            node=intersect(node, SpineOpt.node(has_voltage=true)),
+            node=intersect(node, SpineOpt.node(has_acflow=true)),
             stochastic_scenario=stochastic_scenario,
             t=t,
             temporal_block=temporal_block,

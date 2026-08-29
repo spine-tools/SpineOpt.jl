@@ -43,7 +43,7 @@ function connection_reactive_flow_indices(
             for x in indices(connection_has_ac_flow; connection=connection)
                     #if connection_has_ac_flow(node1=x.node1, node2=x.node2, connection=x.connection) == true),
                     if connection_has_ac_flow(; x...) == true),
-                    node=intersect(node, SpineOpt.node(has_voltage=true)),
+                    node=intersect(node, SpineOpt.node(has_acflow=true)),
         direction=direction,
         stochastic_scenario=stochastic_scenario,
         t=t,

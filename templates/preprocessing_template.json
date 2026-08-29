@@ -36,6 +36,7 @@
         ["node", "has_ptdf", false, "boolean_value_list"],
         ["node", "has_voltage_angle", false, "boolean_value_list"],
         ["node", "has_pressure", false, "boolean_value_list"],
+        ["node", "has_acflow", false, "boolean_value_list"],
         ["node", "is_boundary_node", false, "boolean_value_list"],
         ["node", "is_candidate", false, "boolean_value_list"],
         ["node", "ptdf_duration", null, null],

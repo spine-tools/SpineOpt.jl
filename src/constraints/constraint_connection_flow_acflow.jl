@@ -138,7 +138,7 @@ function constraint_connection_flow_acflow_indices(m::Model;
         connection = intersect(connection, x.connection 
                 for x in indices(connection_has_ac_flow) 
                       if connection_has_ac_flow(; x...) == true),
-        node=SpineOpt.node(has_voltage=true),
+        node=SpineOpt.node(has_acflow=true),
         direction=direction,
         stochastic_scenario=stochastic_scenario,
         t=t

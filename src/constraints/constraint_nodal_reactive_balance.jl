@@ -84,7 +84,7 @@ function _build_constraint_nodal_reactive_balance(m, n, s, t1)
                 shunt_susceptance(m; node=n, stochastic_scenario=s, t=t1)
             + demand_reactive(m; node=n, stochastic_scenario=s, t=t1)
             /
-            (has_voltage(node=n) ? power_base(node=n) : 1 )
+            (has_acflow(node=n) ? power_base(node=n) : 1 )
 
     )
 end
@@ -150,7 +150,7 @@ function add_constraint_nodal_reactive_balance_old!(m::Model)
             
         )
         for n in node()
-        if has_voltage(node=n) == true
+        if has_acflow(node=n) == true
         for (n, s, t1) in node_injection_indices(m; node=n)
     )
 end
@@ -159,7 +159,7 @@ function constraint_nodal_reactive_balance_indices(m)
     (
         (node=n, stochastic_scenario=s, t=t)
         for n in node()
-        if has_voltage(node=n) == true
+        if has_acflow(node=n) == true
         for (n, s, t) in node_injection_indices(m; node=n)
     )
 end

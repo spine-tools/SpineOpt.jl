@@ -183,6 +183,7 @@ const flow_ratio_less_than_online_coefficient = Parameter(:flow_ratio_less_than_
 const flow_ratio_start_flow = Parameter(:flow_ratio_start_flow)
 const fom_cost = Parameter(:fom_cost)
 const fuel_cost = Parameter(:fuel_cost)
+const has_acflow = Parameter(:has_acflow)
 const has_free_start = Parameter(:has_free_start)
 const has_lodf = Parameter(:has_lodf)
 const has_online_variable = Parameter(:has_online_variable)
@@ -543,6 +544,7 @@ export flow_ratio_less_than_online_coefficient
 export flow_ratio_start_flow
 export fom_cost
 export fuel_cost
+export has_acflow
 export has_free_start
 export has_lodf
 export has_online_variable

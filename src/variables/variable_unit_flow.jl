@@ -73,7 +73,7 @@ function unit_flow_reactive_indices(
 )
     ((unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d, s, t) in unit_flow_indices(m; unit = unit, 
-                                    node = intersect(members(node), SpineOpt.node(has_voltage=true)), 
+                                    node = intersect(members(node), SpineOpt.node(has_acflow=true)), 
                                     direction=direction, 
                                     stochastic_scenario = stochastic_scenario, 
                                     t=t, temporal_block = temporal_block)

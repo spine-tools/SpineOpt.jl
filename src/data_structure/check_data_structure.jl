@@ -194,7 +194,8 @@ function check_parameter_values()
     check_model_start_smaller_than_end()
     check_operating_points()
     check_ramp_parameters()
-    check_node_voltages_consistency()
+    check_node_connection_acflow_consistency()
+    check_node_grids_consistency()
 end
 
 function check_model_start_smaller_than_end()
@@ -270,11 +271,11 @@ function _check_shutdown_ramp_consistency()
 end
 
 """
-    check_node_voltages_consistency()
+    check_node_connection_acflow_consistency()
 
-Check that each `node` in AC flow connections has `has_voltage` set.
+Check that each `node` in AC flow connections has `has_acflow` set.
 """
-function check_node_voltages_consistency()
+function check_node_connection_acflow_consistency()
     
     n0 = unique(
             vcat(
@@ -284,11 +285,38 @@ function check_node_voltages_consistency()
                     if connection_has_ac_flow( connection=c, node1=n1, node2=n2) == true]
         )
     )
-    warnings = nw = [n for n in n0 if has_voltage(node=n) == false]
+    warnings = nw = [n for n in n0 if has_acflow(node=n) == false]
     _check_warn(
         isempty(warnings),
         "Missing `node_voltage` definition ",
         "for some `node` group(s): $(join(warnings, ", ", " and ")) - ",
         "these `nodes` have been used as end points in AC flow connections.",
+    )
+end
+
+"""
+    check_grid_node_relationships()
+
+Check that the possible `grids` related to `nodes` have a unique physics_type.
+"""
+function check_node_grids_consistency()
+    physics_types_by_node = Dict()
+    error_indices = []
+
+    for rel in node__grid()
+        n = rel.node
+        g = rel.grid
+        push!(get!(physics_types_by_node, n, Set()),  physics_type(grid=g))
+    end
+
+    for (n, phys_types) in physics_types_by_node
+        if length(phys_types) > 1 
+            push!(error_indices, n)
+        end
+    end
+
+    _check(
+        isempty(error_indices),
+        "found inconsistent grid physics for $(join(error_indices, ", ", " and "))"
     )
 end
