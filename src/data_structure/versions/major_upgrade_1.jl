@@ -487,6 +487,16 @@ end
 
 # Create specific new classes as superclasses and subclasses
 function create_superclasses_and_subclasses(db_url, log_level)
+    # Ensure existence of `investment_group` and `user_constraint`
+    for required_class in ("user_constraint", "investment_group")
+        class_item = run_request(db_url, "call_method", ("get_entity_class_item",), Dict("name" => required_class))
+        if length(class_item) == 0
+            @log log_level 0 string("`$required_class` not found! -> Creating it as an empty class.")
+            check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
+                "name" => required_class, "dimension_name_list" => [])), log_level
+            )
+        end
+    end
     # Add new classes
     try
         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
