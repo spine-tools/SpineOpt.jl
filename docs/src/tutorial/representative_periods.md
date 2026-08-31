@@ -4,7 +4,7 @@ This tutorial provides a step-by-step guide to show how to include representativ
 
 ## Introduction
 
-Welcome to our tutorial, where we will walk you through the process of adding representative periods in SpineOpt using Spine Toolbox. To get the most out of this tutorial, we suggest first completing the Simple System tutorial, which can be found [here](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/).
+Welcome to our tutorial, where we will walk you through the process of adding representative periods in SpineOpt using Spine Toolbox. To get the most out of this tutorial, we suggest first completing the [Simple system tutorial](@ref).
 
 ### Model assumptions
 

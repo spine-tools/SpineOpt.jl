@@ -4,7 +4,7 @@ This tutorial provides a step-by-step guide to include ramping constraints in a 
 
 ## Introduction
 
-Welcome to our tutorial, where we will walk you through the process of adding ramping constraints in SpineOpt using Spine Toolbox. To get the most out of this tutorial, we suggest first completing the Simple System tutorial, which can be found [here](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/).
+Welcome to our tutorial, where we will walk you through the process of adding ramping constraints in SpineOpt using Spine Toolbox. To get the most out of this tutorial, we suggest first completing the [Simple system tutorial](@ref).
 
 The ramping constraint limit refers to the maximum rate at which a power unit can increase or decrease its output flow over time. These limits are typically put in place to prevent sudden and destabilizing shifts in power units. However, they may also represent any other physical limitations that a unit may have that is related to changes over time in its output flow.
 
@@ -102,7 +102,7 @@ The image above shows the electricity flow results for both power plants. As exp
 
 ## Step 2 - Include the ramping limit
 
-Let's consider the input data where the *power\_plant\_a* has a ramping limit of *10%* in both directions (i.e., up and down), meaning that the change between two time steps can't be greater than *10MW* (since the plant 'a' has a unit capacity of *100MW*). The ramping constraints need the following parameters for their definition: minimum operating point, startup limit, and shutdown limit. For more details, please visit the mathematical formulation in the following [link](https://spine-tools.github.io/SpineOpt.jl/latest/mathematical_formulation/constraints_automatically_generated/#Ramping-constraints)
+Let's consider the input data where the *power\_plant\_a* has a ramping limit of *10%* in both directions (i.e., up and down), meaning that the change between two time steps can't be greater than *10MW* (since the plant 'a' has a unit capacity of *100MW*). The [Ramping constraints](@ref) need the following parameters for their definition: minimum operating point, startup limit, and shutdown limit.
 
 ### Adding the new parameters
 

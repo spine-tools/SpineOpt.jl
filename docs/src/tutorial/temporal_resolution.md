@@ -4,13 +4,13 @@ Welcome to Spine Toolbox's Temporal Resolution tutorial.
 
 This tutorial provides a step-by-step guide to include uniform and/or variable temporal resolution in your model.
 
-For more information on how time works in SpineOpt, see the [Temporal Framework](https://spine-tools.github.io/SpineOpt.jl/latest/advanced_concepts/temporal_framework/) documentation.
+For more information on how time works in SpineOpt, see the [Temporal Framework](@ref) documentation.
 
 ## Introduction
 
 ### Model assumptions 
 
-- This tutorial builds upon the Simple System tutorial. Please follow [that tutorial](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/) first, or download the [finished model](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json).
+- This tutorial builds upon the Simple System tutorial. Please follow the [Simple system tutorial](@ref) first, or download the [finished model](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json).
 - The scenario runs for 5 hours and the default temporal resolution is 1 hour.
 - The fuel_node has a temporal resolution of [1, 1, 1, 2] hours.
 
