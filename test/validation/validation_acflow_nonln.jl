@@ -34,6 +34,7 @@ function _test_socp_formulation_setup()
             ["stochastic_structure", "investments_deterministic"],
             ["stochastic_scenario", "parent"],
             ["stochastic_scenario", "child"],
+            ["grid", "grid1"],
             ["unit", "unit_ab"],
             ["connection", "connection_bc"],
             ["connection", "connection_ca"],
@@ -58,6 +59,8 @@ function _test_socp_formulation_setup()
             ["connection__to_node", ["connection_bc", "node_c"]],
             ["connection__from_node", ["connection_ca", "node_c"]],
             ["connection__to_node", ["connection_ca", "node_a"]],
+            ["node__grid", ["node_b", "grid1"]],
+            ["node__grid", ["node_c", "grid1"]],
             ["node__temporal_block", ["node_a", "two_hourly"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__temporal_block", ["node_c", "hourly"]],
@@ -84,6 +87,7 @@ function _test_socp_formulation_setup()
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["grid", "grid1", "physics_type", "acflow_physics"],
             ["node", "node_group_bc", "balance_type", "none"],
         ],
         :relationship_parameter_values => [
@@ -100,10 +104,10 @@ function _test_socp_formulation_setup()
 end
 
 """
-    test_node_voltage_singleconn_socp()
+    test_ac_opf_singleconn_socp()
     Testing the voltage of the demand node when there is a real power demand behind a single connection.
 """
-function test_node_voltage_singleconn_socp()
+function test_ac_opf_singleconn_socp()
     @testset "constraint_node_voltage" begin
         nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
         solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
@@ -112,10 +116,8 @@ function test_node_voltage_singleconn_socp()
         object_parameter_values = [
             ["model", "instance", "solver_mip", "Juniper.jl"],
             ["model", "instance", "solver_mip_options", solver_options],
-            ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
             ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "has_voltage", true],
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 0.2],
             ["node", "node_c", "demand_reactive", 0.0],
@@ -169,7 +171,7 @@ end
 """
 Testing the reverse real AC flow over a connection..
 """
-function test_reverse_ac_flow_socp()
+function test_ac_opf_reverse_socp()
     @testset "reverse_acflow" begin
         nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
         solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
@@ -184,10 +186,8 @@ function test_reverse_ac_flow_socp()
         object_parameter_values = [
             ["model", "instance", "solver_mip", "Juniper.jl"],
             ["model", "instance", "solver_mip_options", solver_options],
-            ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
             ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_d", "has_voltage", true],
             ["node", "node_d", "min_voltage", 0.7],
             ["node", "node_d", "demand", 0.2],
             ["node", "node_d", "demand_reactive", 0.0],
@@ -195,7 +195,9 @@ function test_reverse_ac_flow_socp()
             ["connection","connection_bd","reactance",0.2],
             ["connection","connection_bd","connection_current_max",1.0]
         ]
-        relationships = [["connection__from_node", ["connection_bd", "node_b"]],
+        relationships = [
+            ["node__grid", ["node_d", "grid1"]],
+            ["connection__from_node", ["connection_bd", "node_b"]],
             ["connection__to_node", ["connection_bd", "node_d"]],
             ["connection__node__node", [ "connection_bd", "node_b", "node_d"]],
             ["node__temporal_block", ["node_d", "hourly"]],
@@ -207,7 +209,6 @@ function test_reverse_ac_flow_socp()
             ["connection__node__node",
                 ["connection_bd", "node_b", "node_d"], "connection_has_ac_flow", true]
         ]
-            
         SpineInterface.import_data(
             url_in;
             objects = objects,
@@ -215,9 +216,7 @@ function test_reverse_ac_flow_socp()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=1, optimize=true)
-
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
         # aliases for the model OPF variables
@@ -230,11 +229,12 @@ function test_reverse_ac_flow_socp()
     end
 end
 
+
 """
-    test_constraint_ac_opf_capacitance_socp()
+    test_ac_opf_capacitance_socp()
     Testing the voltage rise on an unloaded capacitive line.
 """
-function test_constraint_ac_opf_capacitance_socp()
+function test_ac_opf_capacitance_socp()
     @testset "constraint_ac_opf_capacitance" begin
    
         nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
@@ -268,7 +268,6 @@ function test_constraint_ac_opf_capacitance_socp()
             ["connection__node__node",
             ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
         ]
-            
         SpineInterface.import_data(
             url_in;
             relationships=relationships,
@@ -290,11 +289,10 @@ end
 """
 Testing the node voltage in AC flow over two connections
 """
-function test_node_voltage2()
+function test_ac_opf_two_conn_socp()
 
-    @testset "acflow1" begin
+    @testset "test_ac_opf_two_conn_socp" begin
         nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
-        
         #solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], ["solver:SCS.jl"])]))
         solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
 
@@ -305,18 +303,14 @@ function test_node_voltage2()
             ["connection", "connection_cd"],
             ["node", "node_d"],
         ]
-
         object_parameter_values = [
             ["model", "instance", "solver_mip", "Juniper.jl"],
             ["model", "instance", "solver_mip_options", solver_options],
-            ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "has_voltage", true],
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 0.0],
             ["node", "node_c", "demand_reactive", 0.2],
-            ["node", "node_d", "has_voltage", true],
             ["node", "node_d", "min_voltage", 0.7],
             ["node", "node_d", "demand", 0.0],
             ["node", "node_d", "demand_reactive", 0.2],
@@ -328,13 +322,13 @@ function test_node_voltage2()
             ["connection","connection_cd","connection_current_max",1.0]
         ]
         relationships = [
+            ["node__grid", ["node_d", "grid1"]],
             ["connection__from_node", ["connection_cd", "node_c"]],
             ["connection__to_node", ["connection_cd", "node_d"]],
             ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
             ["connection__node__node", [ "connection_cd", "node_c", "node_d"]],
             ["node__temporal_block", ["node_d", "hourly"]],
             ["node__stochastic_structure", ["node_d", "stochastic"]],
-        
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
@@ -352,9 +346,7 @@ function test_node_voltage2()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=1, optimize=true)
-
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
         # aliases for the model OPF variables
@@ -371,27 +363,24 @@ function test_node_voltage2()
 end
 
 """
-    test_node_voltage_singleconn_lindistflow()
-    Using the the lindistflow formulation to test the voltage of the demand node when 
-    there is a power demand behind a single connection.
+    test_ac_opf_singleconn_socp()
+    Testing the voltage of the demand node when there is a real power demand behind a single connection.
 """
-function test_node_voltage_singleconn_lindistflow()
-    @testset "constraint_node_voltage_lindistflow" begin
-        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
-        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
+function test_ac_opf_singleconn_pajarito()
+    @testset "constraint_node_voltage" begin
+        oa_solver_options = Map(["solver", "options"], ["HiGHS.jl", Map(["mip_feasibility_tolerance"],[1e-8])] )
+        conic_solver_options = Map(["solver", "options"], ["Hypatia.jl", Map(["tol_rel_opt"],[1e-6])] )
+        solver_options = unparse_db_value(Map(["Pajarito.jl"], 
+            [Map(["oa_solver", "conic_solver"], [oa_solver_options, conic_solver_options])]))
 
         url_in = _test_socp_formulation_setup()
         object_parameter_values = [
-            ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
-            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip", "Pajarito.jl"],
             ["model", "instance", "solver_mip_options", solver_options],
-            ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
-            ["node", "node_b", "min_voltage", 1.0],
-            ["node", "node_c", "has_voltage", true],
-            ["node", "node_c", "power_base", 1000],
+            ["node", "node_b", "min_voltage", 0.7],
             ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 200],
+            ["node", "node_c", "demand", 0.2],
             ["node", "node_c", "demand_reactive", 0.0],
             ["connection","connection_bc","resistance",0.2],
             ["connection","connection_bc","reactance",0.2],
@@ -402,9 +391,9 @@ function test_node_voltage_singleconn_lindistflow()
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
             ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
-
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
         ]
+            
         SpineInterface.import_data(
             url_in;
             relationships=relationships,
@@ -416,15 +405,106 @@ function test_node_voltage_singleconn_lindistflow()
         
         # aliases for the model OPF variables
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        vsin  = m.ext[:spineopt].variables[:node_voltageproduct_sine]
+        vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
         connflow = m.ext[:spineopt].variables[:connection_flow]
-        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.92 atol=0.0001
+
+        b = Base.invokelatest(value, vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] )
+        @test b ≈ 0.9165 atol=0.001
+        
+        # testing reactive power demand
+        object_parameter_values = [
+            ["node", "node_c", "demand", 0.0],
+            ["node", "node_c", "demand_reactive", 0.2],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
+          
+        b = Base.invokelatest(value, var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
+         direction(:to_node), stochastic_scenario(:parent), time_slices[1]] )
+
+        
+        @test b ≈ 0.3087 atol=0.0001
     end
 end
 
+function test_ac_opf_singleconn_inve_socp()
+    @testset "ac_opf_singleconn_inve_socp" begin
+   
+        oa_solver_options = Map(["solver", "options"], ["HiGHS.jl", Map(["mip_feasibility_tolerance"],[1e-8])] )
+        conic_solver_options = Map(["solver", "options"], ["Hypatia.jl", Map(["tol_rel_opt"],[1e-6])] )
+        solver_options = unparse_db_value(Map(["Pajarito.jl"], 
+            [Map(["oa_solver", "conic_solver"], [oa_solver_options, conic_solver_options])]))
 
-@testset "socp formulation" begin
-    test_node_voltage_singleconn_socp()
-    test_reverse_ac_flow_socp()
-    test_constraint_ac_opf_capacitance_socp()
-    test_node_voltage_singleconn_lindistflow()
+        url_in = _test_socp_formulation_setup()
+        objects = [
+            ["unit", "unit_x"]
+        ]
+        object_parameter_values = [      
+            ["model", "instance", "solver_mip", "Pajarito.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
+            ["node", "node_b", "demand_reactive", 0.0],
+            ["node", "node_b", "min_voltage", 0.7],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 0.3],
+            ["node", "node_c", "demand_reactive", 0.0],
+            ["connection","connection_bc","resistance",0.2],
+            ["connection","connection_bc","reactance",0.2],
+            ["connection","connection_bc","connection_current_max", 0.2089],
+            ["connection","connection_bc","investment_count_max_cumulative", 1.0],
+            ["connection","connection_bc","connection_investment_cost", 35.0],
+            ["connection","connection_bc", "investment_variable_type", "integer"]
+        ]
+        relationships = [
+            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
+            ["unit__to_node", ["unit_x", "node_c"]],
+            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+            ["connection__investment_temporal_block", ["connection_bc", "investments_hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_bc", "investments_deterministic"]],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["unit__to_node", ["unit_x", "node_c"], "vom_cost", 100.0],
+            ["unit__to_node", ["unit_x", "node_c"], "vom_cost_reactive", 20.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+            ["connection__to_node", ["connection_bc", "node_c"], "capacity_per_connection", 10.0]
+        ]    
+
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        uflow = m.ext[:spineopt].variables[:unit_flow]
+        flowP = m.ext[:spineopt].variables[:connection_flow]
+        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+        cinv = m.ext[:spineopt].variables[:connections_invested]
+
+        @test value(cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+    end
+end
+
+@testset "nonlinear socp formulation" begin
+    # test_ac_opf_singleconn_socp()
+    # test_ac_opf_reverse_socp()
+    # test_ac_opf_capacitance_socp()
+    # test_ac_opf_two_conn_socp()
+    #test_ac_opf_singleconn_pajarito()
+    test_ac_opf_singleconn_inve_socp()
 end

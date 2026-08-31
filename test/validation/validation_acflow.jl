@@ -29,6 +29,8 @@ function _test_acflow_setup()
             ["stochastic_structure", "deterministic"],
             ["stochastic_structure", "stochastic"],
             ["stochastic_structure", "investments_deterministic"],
+            ["stochastic_scenario", "parent"],
+            ["stochastic_scenario", "child"],
             ["grid", "grid1"],
             ["unit", "unit_ab"],
             ["connection", "connection_bc"],
@@ -37,8 +39,7 @@ function _test_acflow_setup()
             ["node", "node_b"],
             ["node", "node_c"],
             ["node", "node_group_bc"],
-            ["stochastic_scenario", "parent"],
-            ["stochastic_scenario", "child"],
+
         ],
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
@@ -169,10 +170,8 @@ function test_ac_opf_singleconn_q()
    
         url_in = _test_acflow_setup()
         object_parameter_values = [      
-            ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.1],
-            ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "has_voltage", true],
+            #["node", "node_b", "min_voltage", 0.7],
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 0.0],
             ["node", "node_c", "demand_reactive", 0.2],
@@ -231,10 +230,8 @@ function test_ac_opf_singleconn_rev()
             ["unit", "unit_x"]
         ]
         object_parameter_values = [
-            ["node", "node_e", "has_voltage", true],
             ["node", "node_e", "demand", 0.2],
             ["node", "node_e", "min_voltage", 0.7],
-            ["node", "node_d", "has_voltage", true],
             ["node", "node_d", "min_voltage", 0.7],
             ["node", "node_d", "demand", 0.0],
             ["node", "node_d", "demand_reactive", 0.0],
@@ -303,10 +300,8 @@ function test_ac_opf_singleconn_lim_I()
             ["unit", "unit_x"]
         ]
         object_parameter_values = [      
-            ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "has_voltage", true],
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 0.3],
             ["node", "node_c", "demand_reactive", 0.0],
@@ -372,10 +367,8 @@ function test_ac_opf_singleconn_inve()
             ["unit", "unit_x"]
         ]
         object_parameter_values = [      
-            ["node", "node_b", "has_voltage", true],
             ["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "has_voltage", true],
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 0.3],
             ["node", "node_c", "demand_reactive", 0.0],
@@ -443,10 +436,8 @@ function test_ac_opf_singleconn_inve_rev()
             ["unit", "unit_x"]
         ]
         object_parameter_values = [
-            ["node", "node_e", "has_voltage", true],
             ["node", "node_e", "demand", 0.2],
             ["node", "node_e", "min_voltage", 0.7],
-            ["node", "node_d", "has_voltage", true],
             ["node", "node_d", "min_voltage", 0.7],
             ["node", "node_d", "demand", 0.0],
             ["node", "node_d", "demand_reactive", 0.0],
@@ -516,11 +507,9 @@ function test_ac_opf_singleconn_lossless()
             ["node", "node_e"],
             ["unit", "unit_x"]
         ]
-        object_parameter_values = [
-            ["node", "node_e", "has_voltage", true],
+        object_parameter_values = [ 
             ["node", "node_e", "demand_reactive", 0.2],
             ["node", "node_e", "min_voltage", 0.7],
-            ["node", "node_d", "has_voltage", true],
             ["node", "node_d", "min_voltage", 0.7],
             ["node", "node_d", "demand", 0.0],
             ["node", "node_d", "demand_reactive", 0.0],
@@ -578,6 +567,51 @@ function test_ac_opf_singleconn_lossless()
     end
 end
 
+"""
+    test_node_voltage_singleconn_lindistflow()
+    Using the the lindistflow formulation to test the voltage of the demand node when 
+    there is a power demand behind a single connection.
+"""
+function test_node_voltage_singleconn_lindistflow()
+    @testset "constraint_node_voltage_lindistflow" begin
+       
+        url_in = _test_socp_formulation_setup()
+        object_parameter_values = [
+            ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
+            ["node", "node_b", "demand_reactive", 0.1],
+            ["node", "node_b", "min_voltage", 1.0],
+            ["node", "node_c", "power_base", 1000],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 200],
+            ["node", "node_c", "demand_reactive", 0.0],
+            ["connection","connection_bc","resistance",0.2],
+            ["connection","connection_bc","reactance",0.2],
+            ["connection","connection_bc","connection_current_max",1.0]
+        ]
+        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+
+        ]
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        connflow = m.ext[:spineopt].variables[:connection_flow]
+        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.92 atol=0.0001
+    end
+end
+
 @testset "validation of linear AC flow calculation" begin
 
     # test_ac_opf_singleconn()
@@ -588,4 +622,5 @@ end
     test_ac_opf_singleconn_inve_rev()
     
     #test_ac_opf_singleconn_lossless()
+    test_node_voltage_singleconn_lindistflow()
 end

@@ -1635,6 +1635,10 @@
         ],
         [
             "solver_mip_list",
+            "Pajarito.jl"
+        ],
+        [
+            "solver_mip_list",
             "SCIP.jl"
         ],
         [
