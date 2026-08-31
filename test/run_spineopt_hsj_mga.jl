@@ -1,4 +1,4 @@
-import DataStructures: DefaultDict
+import DataStructures: DefaultDict, OrderedDict
 using SpineOpt:
     init_hsj_weights,
     do_update_hsj_weights!,
@@ -190,7 +190,7 @@ function _test_run_spineopt_hsj_mga()
         variable_values = m.ext[:spineopt].expressions[:variable_group_values]
         @test length(variable_values) == 1
         expected_values= Dict(
-            0 => Dict(
+            0 => OrderedDict( # Needs to be OrderedDict for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 1.0,
             )
@@ -215,15 +215,15 @@ function _test_run_spineopt_hsj_mga()
         variable_values = m.ext[:spineopt].expressions[:variable_group_values]
         @test length(variable_values) == 3
         expected_values= Dict(
-            0 => Dict(
+            0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 1.0,
             ),
-            1 => Dict(
+            1 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 0.0,
             ),
-            2 => Dict(
+            2 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 0.0,
             ),
@@ -251,7 +251,7 @@ function _test_run_spineopt_fuzzy_mga()
         variable_values = m.ext[:spineopt].expressions[:variable_group_values]
         @test length(variable_values) == 1
         expected_values= Dict(
-            0 => Dict(
+            0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 1.0,
             ),
@@ -276,15 +276,15 @@ function _test_run_spineopt_fuzzy_mga()
         variable_values = m.ext[:spineopt].expressions[:variable_group_values]
         @test length(variable_values) == 3
         expected_values= Dict(
-            0 => Dict(
+            0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 1.0,
             ),
-            1 => Dict(
+            1 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 0.0,
             ),
-            2 => Dict(
+            2 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
                 unit(:unit_ab) => 0.0,
                 unit(:unit_bc) => 0.0,
             ),
