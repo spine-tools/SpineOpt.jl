@@ -4,7 +4,7 @@ This tutorial provides a step-by-step guide to include unit commitment constrain
 
 ## Introduction
 
-Welcome to our tutorial, where we will walk you through the process of adding unit commitment constraints in SpineOpt using Spine Toolbox. To get the most out of this tutorial, we suggest first completing the Simple System tutorial, which can be found [here](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/).
+Welcome to our tutorial, where we will walk you through the process of adding unit commitment constraints in SpineOpt using Spine Toolbox. To get the most out of this tutorial, we suggest first completing the [Simple system tutorial](@ref).
 
 ### Model assumptions
 
@@ -81,7 +81,7 @@ When you're ready, commit all changes to the database.
 
 ![image](figs_unit_commitment/uc_flow_results_no_uc.png)
 
-To explore the cost results, the pivot table view shows a more user-friendly option to analyze the results. Remember that you can find a description of how to create the pivot table view in the Simple System tutorial [here](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/simple_system/). The cost components in the objective function are shown in the image below. As expected, all the costs are associated with the `variable_om_costs` since we haven't included the unit-commitment constraints yet.
+To explore the cost results, the pivot table view shows a more user-friendly option to analyze the results. Remember that you can find a description of how to create the pivot table view in the [Simple system tutorial](@ref). The cost components in the objective function are shown in the image below. As expected, all the costs are associated with the `variable_om_costs` since we haven't included the unit-commitment constraints yet.
 
 ![image](figs_unit_commitment/uc_costs_results_no_uc.png)
 

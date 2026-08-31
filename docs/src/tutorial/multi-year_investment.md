@@ -1,6 +1,6 @@
 # Multi-year Investments Using Pre-defined Internal Parameters Tutorial
 
-The basics of how to set up a capacity planning model are covered in [Capacity planning Tutorial](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/capacity_planning/) and multi-year investments in [Multi-year investments](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/capacity_planning/#Multi-year-investments). With that information, You should be able to do multi-year investments already with your own parameters. However, the correct representation for costs across years can be tricky. To make it more user-friendly, SpineOpt has incorporated some pre-defined economic parameters internally, and the goal of this tutorial is to walk you through the set-up for using these parameters.
+The basics of how to set up a capacity planning model are covered in [Capacity Planning Tutorial](@ref) and multi-year investments in [Multi-year investments](@ref). With that information, You should be able to do multi-year investments already with your own parameters. However, the correct representation for costs across years can be tricky. To make it more user-friendly, SpineOpt has incorporated some pre-defined economic parameters internally, and the goal of this tutorial is to walk you through the set-up for using these parameters.
 
 !!! info
     The details of the formulation and economic parameters are given in the concept references.
@@ -59,7 +59,7 @@ where the demand `TimeSeries` is defined as follows:
 ![image](figs_multi-year/demand_ts_milestone.png)
 
 !!! info
-    If you get confused why the temporal blocks are defined this way, I recommend going back to [Multi-year investments](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/capacity_planning/#Multi-year-investments) for details.
+    If you get confused why the temporal blocks are defined this way, I recommend going back to [Multi-year investments](@ref) for details.
 
 The values for the output parameter `unit_discounted_duration` are shown below. Note now in 2000, the value becomes 2.79. This parameter value acts as a weight taking into account the discount per year and the resolution of the milestone years. In order words, now the operation costs for the in-between years have also been included.
 

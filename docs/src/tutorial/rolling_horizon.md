@@ -4,7 +4,7 @@ This tutorial provides a step-by-step guide to show the main parameter setting u
 
 ## Introduction
 
-Welcome to our tutorial the tutorial for rolling horizon in SpineOpt. To get the most out of this tutorial, we suggest first completing the Unit Commitment tutorial, which can be found [here](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/unit_commitment/).
+Welcome to our tutorial the tutorial for rolling horizon in SpineOpt. To get the most out of this tutorial, we suggest first completing the [Unit commitment constraints tutorial](@ref).
 
 But first, **What is rolling horizon?**
 
