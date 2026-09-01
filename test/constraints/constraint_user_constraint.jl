@@ -121,7 +121,6 @@
                 ["node__user_constraint", ["node_c", "constraint_x"]],
                 ["connection__from_node__user_constraint", ["connection_bc", "node_b", "constraint_x"]],
                 ["connection__to_node__user_constraint", ["connection_bc", "node_c", "constraint_x"]],
-
             ]
             object_parameter_values = [
                 ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
@@ -220,6 +219,68 @@
                     + var_node_state[node(:node_c), s_parent, t1h2]
                     + var_node_state[node(:node_c), s_parent, t1h3]
                     + var_node_state[node(:node_c), s_parent, t1h4]
+                ),
+                Symbol(sense),
+                4 * rhs,
+            )
+            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_user_constraint_investments_missing_subcases" begin
+        @testset for sense in ("==", ">=", "<=")
+            _load_test_data(url_in, test_data)
+            rhs = 1
+            coefficient_for_units_started_up = 5
+            coefficient_for_units_invested = 6
+            coefficient_for_connections_invested = 8
+            coefficient_for_storages_invested = 11
+            objects = [["user_constraint", "constraint_x"]]
+            relationships = [
+                ["unit__user_constraint", ["unit_ab", "constraint_x"]],
+                ["connection__user_constraint", ["connection_bc", "constraint_x"]],
+                ["node__user_constraint", ["node_c", "constraint_x"]]
+            ]
+            object_parameter_values = [
+                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["user_constraint", "constraint_x", "right_hand_side", rhs],
+            ]
+            relationship_parameter_values = [
+                [relationships[1]..., "units_started_up_coefficient", coefficient_for_units_started_up],
+                [relationships[1]..., "units_invested_coefficient", coefficient_for_units_invested],
+                [relationships[2]..., "connections_invested_coefficient", coefficient_for_connections_invested],
+                [relationships[3]..., "storages_invested_coefficient", coefficient_for_storages_invested],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+            var_units_invested = m.ext[:spineopt].variables[:units_invested]
+            var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+            var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
+            constraint = m.ext[:spineopt].constraints[:user_constraint]
+            @test length(constraint) == 1
+            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+            t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
+            expected_con = SpineOpt.build_sense_constraint(
+                + 4 * coefficient_for_units_invested * var_units_invested[unit(:unit_ab), s_parent, t4h1]
+                + 4 * coefficient_for_connections_invested
+                    * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
+                + 2 * coefficient_for_storages_invested * (
+                    + var_storages_invested[node(:node_c), s_parent, t2h1]
+                    + var_storages_invested[node(:node_c), s_parent, t2h2]
+                )
+                + 2 * coefficient_for_units_started_up * (
+                    + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
+                    + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
                 ),
                 Symbol(sense),
                 4 * rhs,

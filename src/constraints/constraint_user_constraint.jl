@@ -296,7 +296,10 @@ end
 function _user_constraint_units_on_indices(m, uc, s, t, tb)
     (
         ind
-        for (u, uc) in indices(units_on_coefficient; user_constraint=uc)
+        for (u, uc) in union(
+            indices(units_on_coefficient; user_constraint=uc),
+            indices(units_started_up_coefficient; user_constraint=uc),
+        )
         for ind in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end
@@ -322,7 +325,10 @@ end
 function _user_constraint_units_invested_indices(m, uc, s, t, tb)
     (
         ind
-        for (u, uc) in indices(units_invested_available_coefficient; user_constraint=uc)
+        for (u, uc) in union(
+            indices(units_invested_available_coefficient; user_constraint=uc),
+            indices(units_invested_coefficient; user_constraint=uc)
+        )
         for ind in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end
@@ -330,7 +336,10 @@ end
 function _user_constraint_connections_invested_indices(m, uc, s, t, tb)
     (
         ind
-        for (c, uc) in indices(connections_invested_available_coefficient; user_constraint=uc)
+        for (c, uc) in union(
+            indices(connections_invested_available_coefficient; user_constraint=uc),
+            indices(connections_invested_coefficient; user_constraint=uc),
+        )
         for ind in connections_invested_available_indices(
             m; connection=c, stochastic_scenario=s, t=t, temporal_block=tb
         )
@@ -340,7 +349,10 @@ end
 function _user_constraint_storages_invested_indices(m, uc, s, t, tb)
     (
         ind
-        for (n, uc) in indices(storages_invested_available_coefficient; user_constraint=uc)
+        for (n, uc) in union(
+            indices(storages_invested_available_coefficient; user_constraint=uc),
+            indices(storages_invested_coefficient; user_constraint=uc),
+        )
         for ind in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t, temporal_block=tb)
     )
 end
