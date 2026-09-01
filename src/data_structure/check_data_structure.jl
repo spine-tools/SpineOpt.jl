@@ -274,9 +274,10 @@ end
     check_node_connection_acflow_consistency()
 
 Check that each `node` in AC flow connections has `has_acflow` set.
+`has_acflow` parameter is set in preprocess_data_structure.jl based on 
+grid configuration.
 """
 function check_node_connection_acflow_consistency()
-    
     n0 = unique(
             vcat(
                 [n1 for (c, n1, n2) in indices(connection_has_ac_flow)
@@ -285,11 +286,11 @@ function check_node_connection_acflow_consistency()
                     if connection_has_ac_flow( connection=c, node1=n1, node2=n2) == true]
         )
     )
-    warnings = nw = [n for n in n0 if has_acflow(node=n) == false]
-    _check_warn(
-        isempty(warnings),
+    error_indices = [n for n in n0 if has_acflow(node=n) == false]
+    _check(
+        isempty(error_indices),
         "Missing `node_voltage` definition ",
-        "for some `node` group(s): $(join(warnings, ", ", " and ")) - ",
+        "for some `node` group(s): $(join(error_indices, ", ", " and ")) - ",
         "these `nodes` have been used as end points in AC flow connections.",
     )
 end
