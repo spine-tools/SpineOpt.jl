@@ -81,13 +81,13 @@ past_units_on_indices(m, param, u, s_path, t) = _past_indices(m, units_on_indice
 
 function _past_indices(m, indices, param, s_path, t; kwargs...)
     look_behind = maximum(maximum_parameter_value(param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
-    
+
     (
         (;
             ind...,
             weight=ifelse(
                 end_(t) - end_(ind.t) < dt_fixed_duration(
-                    param(; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), 
+                    param(; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t),
                     start(t), Val(:forward)
                 ), 1, 0
             ),
@@ -98,7 +98,7 @@ function _past_indices(m, indices, param, s_path, t; kwargs...)
             stochastic_scenario=s_path,
             t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
             temporal_block=temporal_block(is_representative=true),
-        )    
+        )
     )
 end
 
@@ -168,7 +168,7 @@ end
 
 _default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(existing_storages, node)
 _default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(existing_units, unit)
-_default_nb_of_connections(conn::Object) = is_candidate(connection=conn) ? 
+_default_nb_of_connections(conn::Object) = is_candidate(connection=conn) ?
     0 : _default_parameter_value(existing_connections, connection)
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
