@@ -80,6 +80,7 @@ function _build_constraint_nodal_reactive_balance(m, n, s, t1)
             )
             == 
             # reactive power consumption of the shunt susceptance
+            # TBA: make dependent on connections
             - node_voltage_squared[n, s, t1] * 
                 shunt_susceptance(m; node=n, stochastic_scenario=s, t=t1)
             + demand_reactive(m; node=n, stochastic_scenario=s, t=t1)

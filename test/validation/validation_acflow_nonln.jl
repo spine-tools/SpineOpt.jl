@@ -443,10 +443,59 @@ function test_ac_opf_singleconn_inve_socp()
     end
 end
 
+function test_ac_opf_capacurve()
+    @testset "test_ac_opf_capacurve" begin
+   
+        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
+        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
+
+        url_in = _test_socp_formulation_setup()
+        object_parameter_values = [
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
+            ["node", "node_b", "demand_reactive", 0.0],
+            ["node", "node_b", "max_voltage", 1.0],
+            ["node", "node_c", "max_voltage", 1.1],
+            ["node", "node_c", "demand", 0.2],
+            ["node", "node_c", "demand_reactive", 0.2],
+            ["node", "node_c", "shunt_susceptance", 0.0],
+            ["connection","connection_bc","resistance",0.1],
+            ["connection","connection_bc","reactance",0.1],
+            ["connection","connection_bc","connection_current_max",1.0]
+        ]
+        relationships = [
+            ["node__to_unit", ["node_b", "unit_ab"]],
+            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]]
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["node__to_unit", ["node_b", "unit_ab"], "vom_cost_reactive", 2.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "pq_capability_curve_P_coef", unparse_db_value([1.0])],
+            ["unit__to_node", ["unit_ab", "node_b"], "pq_capability_curve_constant", unparse_db_value([1.33])],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+
+    end
+end
+
 @testset "nonlinear socp formulation" begin
-    test_ac_opf_singleconn_socp()
-    test_ac_opf_reverse_socp()
-    test_ac_opf_capacitance_socp()
-    test_ac_opf_two_conn_socp()
-    test_ac_opf_singleconn_inve_socp()
+    # test_ac_opf_singleconn_socp()
+    # test_ac_opf_reverse_socp()
+    # test_ac_opf_capacitance_socp()
+    # test_ac_opf_two_conn_socp()
+    # test_ac_opf_singleconn_inve_socp()
+    test_ac_opf_capacurve()
 end

@@ -575,7 +575,7 @@ end
 function test_node_voltage_singleconn_lindistflow()
     @testset "constraint_node_voltage_lindistflow" begin
        
-        url_in = _test_socp_formulation_setup()
+        url_in = _test_acflow_setup()
         object_parameter_values = [
             ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
             ["node", "node_b", "demand_reactive", 0.1],
@@ -613,14 +613,12 @@ function test_node_voltage_singleconn_lindistflow()
 end
 
 @testset "validation of linear AC flow calculation" begin
-
     # test_ac_opf_singleconn()
     # test_ac_opf_singleconn_q()
     # test_ac_opf_singleconn_rev()
     # test_ac_opf_singleconn_lim_I()
     #test_ac_opf_singleconn_inve()
     test_ac_opf_singleconn_inve_rev()
-    
     #test_ac_opf_singleconn_lossless()
     test_node_voltage_singleconn_lindistflow()
 end

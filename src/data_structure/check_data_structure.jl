@@ -196,6 +196,7 @@ function check_parameter_values()
     check_ramp_parameters()
     check_node_connection_acflow_consistency()
     check_node_grids_consistency()
+    check_capability_curve_consistency()
 end
 
 function check_model_start_smaller_than_end()
@@ -320,4 +321,23 @@ function check_node_grids_consistency()
         isempty(error_indices),
         "found inconsistent grid physics for $(join(error_indices, ", ", " and "))"
     )
+end
+
+function check_capability_curve_consistency()
+
+    error_indices = []
+
+    for ind in indices(pq_capability_curve_constant)
+        _check(pq_capability_curve_P_coef(;ind...) isa Vector, 
+            "Type of `pq_capability_curve_P_coef` should be an array.")
+        _check(pq_capability_curve_constant(;ind...) isa Vector, 
+            "Type of `pq_capability_curve_constant` should be an array.")
+        _check(
+            length(pq_capability_curve_P_coef(;ind...)) == 
+            length(pq_capability_curve_constant(;ind...)), 
+            "Length of `pq_capability_curve_P_coef` must equal length of",
+            "`pq_capability_curve_constant`."
+        )
+        
+    end 
 end

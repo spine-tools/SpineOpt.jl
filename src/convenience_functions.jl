@@ -259,6 +259,8 @@ const overwrite_results_on_rolling = Parameter(:overwrite_results_on_rolling)
 const physics_duration = Parameter(:physics_duration)
 const physics_type = Parameter(:physics_type)
 const power_base = Parameter(:power_base)
+const pq_capability_curve_P_coef = Parameter(:pq_capability_curve_P_coef)
+const pq_capability_curve_constant = Parameter(:pq_capability_curve_constant)
 const pressure_fix = Parameter(:pressure_fix)
 const pressure_initial = Parameter(:pressure_initial)
 const pressure_max = Parameter(:pressure_max)
@@ -620,6 +622,8 @@ export overwrite_results_on_rolling
 export physics_duration
 export physics_type
 export power_base
+export pq_capability_curve_P_coef
+export pq_capability_curve_constant
 export pressure_fix
 export pressure_initial
 export pressure_max
