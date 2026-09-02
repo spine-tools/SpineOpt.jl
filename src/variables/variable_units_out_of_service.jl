@@ -83,6 +83,6 @@ but one cannot ensure its existence.
 """
 function _get_units_out_of_service(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do 
-        out_of_service_count_fix(unit=u, stochastic_scenario=s, t=t, _default=0)
+        out_of_service_count_fix(m; unit=u, stochastic_scenario=s, t=t, _default=0)
     end
 end

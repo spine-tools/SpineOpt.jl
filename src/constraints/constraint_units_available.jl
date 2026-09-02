@@ -62,7 +62,7 @@ function _build_constraint_units_available(m, u, s, t)
         + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
         - ifelse( # Uses `out_of_service_count_fix` when there's no variable for it to fix?
             !has_out_of_service_variable(unit=u), 
-            out_of_service_count_fix(m; unit=u, stochastic_scenario=s, t=t, _default=0), # Why is the m here in `(m;...)` ?
+            out_of_service_count_fix(m; unit=u, stochastic_scenario=s, t=t, _default=0),
             0
         )
     )
