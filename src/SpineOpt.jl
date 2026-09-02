@@ -36,6 +36,8 @@ import Dates: CompoundPeriod
 import LibGit2
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
+import PrecompileTools: @setup_workload, @compile_workload
+
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
 import SpineInterface: Parameter, parameter_value
 
@@ -234,6 +236,25 @@ end
 
 function preproc_template()
     deepcopy(_preproc_template)
+end
+
+@setup_workload begin
+    # Putting some things in `@setup_workload` instead of `@compile_workload` can reduce the size of the precompile file and potentially make loading faster.
+
+    # disable console output
+    oldstd = stdout
+    redirect_stdout(devnull)
+
+    path = joinpath(dirname(@__DIR__), "examples", "simple_system.json")
+    input_data = JSON.parsefile(path, use_mmap=false)
+
+    @compile_workload begin
+        # all calls in this block will be precompiled, regardless of whether they belong to your package or not
+        m = run_spineopt(input_data, nothing; log_level=0, upgrade=false)
+    end
+
+    # enable console output
+    redirect_stdout(oldstd)
 end
 
 end
