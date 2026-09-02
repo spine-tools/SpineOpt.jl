@@ -2,7 +2,7 @@
 
 ## How to run the examples
 
-To run the examples, we recommend to follow the instructions [here](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/recommended_workflow/) to set up the basic SpineToolbox workflow, loading the JSON example file in your input data store depending on the example you want to run. We recommend creating a new SpineToolbox project for each example.
+To run the examples, we recommend to follow the instructions [here](@ref recommended_workflow) to set up the basic SpineToolbox workflow, loading the JSON example file in your input data store depending on the example you want to run. We recommend creating a new SpineToolbox project for each example.
 
 ## Examples
 

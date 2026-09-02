@@ -152,7 +152,7 @@ Currently, there is no output connected to the report. We'll have to do that man
 
 ![image](figs_simple_system/simple_system_add_report__output_relationships.png)
 
-The resulting model structure can then be seen in the picture below (by selecting the model, the stochastic structure and the report in the entity tree). The *realization* entity is a scenario, which is required in SpineOpt even for a deterministic model (details will be explained in the later [Stochastic structure](https://spine-tools.github.io/SpineOpt.jl/latest/tutorial/stochastic_system/) tutorial).
+The resulting model structure can then be seen in the picture below (by selecting the model, the stochastic structure and the report in the entity tree). The *realization* entity is a scenario, which is required in SpineOpt even for a deterministic model (details will be explained in the later [Stochastic structure tutorial](@ref)).
 
 ![image](figs_simple_system/simple_system_basic_model.png)
 

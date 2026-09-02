@@ -243,7 +243,7 @@ _ub_str(m_mp) = _number_str(last(m_mp.ext[:spineopt].objective_upper_bounds))
 """
     prepare_spineopt(url_in; <keyword arguments>)
 
-A SpineOpt model from the contents of `url_in` - ready to be passed to [run_spineopt!](@ref).
+A SpineOpt model from the contents of `url_in` - ready to be passed to [`run_spineopt!`](@ref).
 The argument `url_in` must be either a `String` pointing to a valid Spine database,
 or a `Dict` (e.g. manually created or parsed from a json file).
 
@@ -259,7 +259,7 @@ or a `Dict` (e.g. manually created or parsed from a json file).
 - `use_model_names`
 - `add_bridges`
 
-See [run_spineopt](@ref) for the description of the keyword arguments.
+See [`run_spineopt`](@ref) for the description of the keyword arguments.
 """
 function prepare_spineopt(
     url_in;
@@ -366,7 +366,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 - `log_file_path`
 - `resume_file_path`
 
-See [run_spineopt](@ref) for the description of the keyword arguments.
+See [`run_spineopt`](@ref) for the description of the keyword arguments.
 """
 function run_spineopt!(
     m::Model,

@@ -11,7 +11,7 @@ A `TimeSlice` is simply a *slice* of time with a start and an end.
 We use them in SpineOpt to represent the temporal dimension.
 
 More specifically, we build the model using `TimeSlice`s for the temporal indices.
-This happens in the [run\_spineopt](@ref) function and it's done in two steps:
+This happens in the [`run_spineopt`](@ref) function and it's done in two steps:
 1. Generate the temporal structure for the model:
    1. Translate the [temporal\_block](@ref)s in the input DB to a set of `TimeSlice` objects.
    1. Create relationships between these `TimeSlice` objects:
