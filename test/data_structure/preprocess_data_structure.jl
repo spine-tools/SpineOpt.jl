@@ -203,7 +203,7 @@ end
     place where they are necessary.
     =#
     @testset "_reorder_dimensions!" begin
-        url_in = "sqlite:///"
+        url_in = "sqlite://"
         institutions = ["KTH", "VTT"]
         countries = ["Sweden", "France", "Finland"]
         data = Dict(
@@ -284,7 +284,7 @@ end
         @test !(Y.mobility(institution=Y.institution(:KTH), country1=Y.country(:France), country2=Y.country(:Sweden)))
     end
     @testset "_add_dimension!" begin
-        url_in = "sqlite:///"
+        url_in = "sqlite://"
         institutions = ["KTH", "VTT"]
         countries = ["Sweden", "France"]
         cities = ["Stockholm", "Paris"]
