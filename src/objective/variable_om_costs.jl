@@ -29,7 +29,7 @@ function variable_om_costs(m::Model, t_range)
         m,
         sum(
             + unit_flow[u, n, d, s, t]
-            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
+            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
                unit_discounted_duration(m; unit=u, stochastic_scenario=s, t=t) : 1
             )
             * duration(t)

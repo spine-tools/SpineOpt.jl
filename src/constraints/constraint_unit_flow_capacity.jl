@@ -250,7 +250,7 @@ function _unit_capacity_constraint_subpaths(path, u, t)
     last_mut_gt_dur = nothing
     t_flow_duration = end_(t) - start(t)
     for s in path
-        mut = min_up_time(unit=u, stochastic_scenario=s, t=t, _default=nothing)
+        mut = min_up_time(unit=u, stochastic_scenario=s, t=t, _strict=false, _default=nothing)
         mut = dt_fixed_duration(mut, start(t), Val(:forward))
         mut_gt_dur = mut === nothing || mut > t_flow_duration
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur

@@ -1297,6 +1297,11 @@
         ],
         [
             "output",
+            "units_out_of_service",
+            null
+        ],
+        [
+            "output",
             "units_shut_down",
             null
         ],
@@ -2495,7 +2500,7 @@
         [
             "model",
             "write_mps_file",
-            null,
+            "write_mps_never",
             "write_mps_file_list",
             "A selector for writing an .mps file of the model."
         ],
@@ -5196,6 +5201,13 @@
         [
             "output",
             "node_state",
+            "output_type",
+            "variable",
+            "Base"
+        ],
+        [
+            "output",
+            "node_state_longterm",
             "output_type",
             "variable",
             "Base"

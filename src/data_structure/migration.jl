@@ -211,11 +211,11 @@ function upgrade_json(
 	data = JSON.parsefile(path, use_mmap=false) 
 	# memory mapped files causing issues on windows https://discourse.julialang.org/t/error-when-trying-to-open-a-file/78782
 	db_url = "sqlite://" # In-memory db
-	SpineInterface.close_connection(db_url) # Close and reopen DB to clear its contents.
-	SpineInterface.open_connection(db_url)
+	SpineInterface.open_connection(db_url) # Open in-memory DB connection.
 	import_data(db_url, data, "Import $path") # Import data.
 	SpineOpt.upgrade_db(db_url; log_level, version, force) # Run migration.
 	new_data = SpineInterface.parse_db_dict!(export_data(db_url)) # Export and parse migrated data.
+	SpineInterface.close_connection(db_url) # Close in-memory DB connection.
 	template = SpineOpt.template() # Load template
 	# Sub-function for cleaning out content not compatible with the latest version.
 	function _clean_to_latest!(data, template)

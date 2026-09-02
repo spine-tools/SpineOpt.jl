@@ -472,7 +472,7 @@ function _test_run_spineopt_mga()
             scenarios = (stochastic_scenario(:parent),)
             t = SpineOpt.current_window(m)
             var_mga_objective = m.ext[:spineopt].variables[:mga_objective]
-            mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end-1]
+            mga_current_iteration = SpineOpt.mga_iteration(:mga_it_1) # CAN'T RELY ON ENTITY ORDER!
             key1 = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
             key2 = (connection=connection(:connection_group_abbc), mga_iteration=mga_current_iteration)
             key3 = (node=node(:node_group_bc), mga_iteration=mga_current_iteration)
@@ -565,7 +565,7 @@ function _test_run_spineopt_mga_2()
             scenarios = (stochastic_scenario(:parent),)
             t = SpineOpt.current_window(m)
             var_mga_objective = m.ext[:spineopt].variables[:mga_objective]
-            mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
+            mga_current_iteration = SpineOpt.mga_iteration(:mga_it_5) # CAN'T RELY ON ENTITY ORDER!
             key1 = (unit=unit(:unit_group_abbc),mga_iteration=mga_current_iteration)
             key2 = (connection=connection(:connection_group_abbc), mga_iteration=mga_current_iteration)
             key3 = (node=node(:node_group_bc), mga_iteration=mga_current_iteration)
@@ -585,7 +585,7 @@ function _test_run_spineopt_mga_2()
             @test length(constraint) == 18  # TODO: should actually delete constraint...
             scenarios = (stochastic_scenario(:parent),)
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end - 1]
+            mga_current_iteration = mga_it = SpineOpt.mga_iteration(:mga_it_5) # CAN'T RELY ON ENTITY ORDER!
             @testset for (s, t) in zip(scenarios, time_slices)
                 key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
                 key1 = (unit(:unit_ab), s, t)

@@ -41,9 +41,10 @@ function connection_flow_indices(
     node = members(node)
     (
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d) in connection__node__direction(
-            connection=connection, node=node, direction=direction, _compact=false
-        )
+        for (conn, n, d) in Iterators.flatten((
+            connection__to_node(connection=connection, node=node, direction=direction, _compact=false),
+            connection__from_node(connection=connection, node=node, direction=direction, _compact=false),
+        ))
         for (n, s, t) in node_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
