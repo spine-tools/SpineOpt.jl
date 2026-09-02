@@ -13,9 +13,8 @@ In the following, it is described how to set up a connection in order to represe
 
 **[connection\_\_node\_\_node](@ref)**: This relationship should be defined so that the first node is the source bus and second node the destination bus. N.B. Do not manually fix an efficiency for the line (such as via a [fix\_ratio\_out\_in\_connection\_flow](@ref) parameter).
    
-A Π model with shunt susceptance is used for lines. The physical properties include the series reactance, represented by the parameter [connection\_reactance](@ref), series resistance represented by the parameter [connection\_resistance](@ref). It is recommended that these parameters are given in a p.u.
+A Π model with shunt susceptance is used for lines. The physical properties include the series reactance, represented by the parameter [reactance](@ref), series resistance represented by the parameter [resistance](@ref). It is recommended that these parameters are given in a p.u.
 
-Furthermore, a capacity limit on the connection line can be introduced on these relationships through the parameter [connection\_capacity](@ref).
 
 ### Buses
 
@@ -30,11 +29,11 @@ It is recommended that the parameter [vom\_cost\_reactive](@ref) be set to a pos
 
 ### Investments
 
-Power flow is governed by the impedance parameters given for a specific line. The model formulation does not allow adjusting the line sizing within the model. However, the model can include binary investment decisions (go/no-go). Thus [connection\_investment\_variable\_type](@ref) needs to be set to `variable_type_integer`. [connection\_capacity](@ref) should be set to a value which is at least as large as the estimated power carrying capacity of the candidate line. See [the chapter about investment optimization](@ref Investment-Optimization) for the other parameters and relationships you need to set to activate investments.
+Power flow is governed by the impedance parameters given for a specific line. The model formulation does not allow adjusting the line sizing within the model. However, the model can include binary investment decisions (go/no-go). Thus [investment\_variable\_type](@ref) needs to be set to `integer`. [capacity\_per\_connection](@ref) should be set to a value which is at least as large as the estimated power carrying capacity of the candidate line. See [the chapter about investment optimization](@ref Investment-Optimization) for the other parameters and relationships you need to set to activate investments.
 
 ## Results
 
-the [node\_voltage\_squared](@ref) variable
+the [node\_voltage\_squared](@ref var_node_voltage_squared) variable
 
 ## Formulations
 
