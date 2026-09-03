@@ -120,6 +120,10 @@ e.g. minimum load and ramping constraints.
 Currently, this doesn't handle complex time and stochastic structures.
 Defining identical structures for `units_on` and investments
 should hopefully bypass most issues.
+
+Note that this function returns a `Call`,
+as [existing_units](@ref) might need to update as the model rolls.
+See `SpineInterface.realize()` for resolving such calls.
 """
 function _get_units_on(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_on], (u, s, t)) do
