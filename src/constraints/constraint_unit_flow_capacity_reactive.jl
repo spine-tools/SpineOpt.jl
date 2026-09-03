@@ -1,5 +1,6 @@
 #############################################################################
 # Copyright (C) 2017 - 2023  Spine Project
+# Copyright SpineOpt contributors
 #
 # This file is part of SpineOpt.
 #
@@ -21,7 +22,8 @@
     add_constraint_unit_flow_capacity_reactive!(m::Model)
 
 Limit the maximum in/out `unit_flow_reactive` of a `unit` for all `unit_capacity_reactive` indices.
-
+This takes place based on the number of units online (units_on). The constraint is enforced only if
+such variable is present. Setting online_variable_type to linear is not enough for this.
 """
 function add_constraint_unit_flow_capacity_reactive!(m::Model)
     _add_constraint!(m, :unit_flow_capacity_reactive, constraint_unit_flow_capacity_reactive_indices, 
@@ -33,29 +35,28 @@ function _build_constraint_unit_flow_capacity_reactive(m, u, ng, d, s, t)
     
     @build_constraint(
         sum(
-                unit_flow_reactive[u, n, d, s, t] * duration(t)
-                for (u, n, d, s, t) in unit_flow_reactive_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                )
-                if !is_non_spinning(node=n);
-                init=0,
+            unit_flow_reactive[u, n, d, s, t_over] * overlap_duration(t_over, t)
+            for (u, n, d, s, t_over) in unit_flow_reactive_indices(
+                m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+            )
+            if _is_regular_node(n, d);
+            init=0,
         )
         <=
         + sum(
-                units_on[u, s, t1]
-                * min(duration(t1), duration(t))
-                * unit_availability_factor(m, unit=u, stochastic_scenario=s, t=t)
-                * unit_capacity_reactive(m, unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
-                * unit_conv_cap_to_flow(m, unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
-                init=0,
+            units_on[u, s, t1]
+            * min(duration(t1), duration(t))
+            * availability_factor(m, unit=u, stochastic_scenario=s, t=t)
+            * unit_capacity_reactive(m, unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            * capacity_to_flow_conversion_factor(m, unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+            init=0,
         )      
     )
 end
 
 
 function constraint_unit_flow_capacity_reactive_indices(m::Model)
-
 (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity_reactive)

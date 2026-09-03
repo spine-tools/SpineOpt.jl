@@ -1,6 +1,6 @@
 # Radial AC power flows
 
-SpineOpt includes single-phase equivalent AC optimal power flow (OPF) calculation. It is suitable for planning studies and simulating balanced power flow in different operational situations.
+SpineOpt includes single-phase equivalent AC optimal power flow (OPF) calculation. It is suitable for planning studies and simulating balanced power flow in different operational situations. The AC power flow calculation is suitable for radial networks typical in distribution networks. It does not track the voltage phase angle across the network and thus the results for looped networks will not be correct.l
 
 
 ## Defining the problem for AC flow calculation
@@ -16,9 +16,14 @@ In the following, it is described how to set up a connection in order to represe
 A Π model with shunt susceptance is used for lines. The physical properties include the series reactance, represented by the parameter [reactance](@ref), series resistance represented by the parameter [resistance](@ref). It is recommended that these parameters are given in a p.u.
 
 
+
+
+
 ### Buses
 
- In a AC power flow model, **[node](@ref)** corresponds to a bus. For AC buses the parameter [has\_voltage](@ref) needs to be `true`. Limits on the bus voltage magnitude can be enforced through the [max\_voltage](@ref) and min\_voltage parameters.
+ In a AC power flow model, **[node](@ref)** corresponds to a bus. To enable the AC flow calculation, one or more **[grid](@ref)** objects whose parameter [physics\_type](@ref) is set to [acflow\_physics](@ref grid_physics_list) must be defined. The grid objects must be tied to nodes via [node\_\_grid](@ref) relationships.
+
+Limits on the bus voltage magnitude (stated as per-unit value) can be enforced through the [max\_voltage](@ref) and min\_voltage parameters.
 
 ### Units
 

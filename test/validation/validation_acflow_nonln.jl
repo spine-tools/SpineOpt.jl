@@ -491,11 +491,73 @@ function test_ac_opf_capacurve()
     end
 end
 
+"""
+    test_ac_opf_singleconn_socp()
+    Testing the voltage of the demand node when there is a real power demand behind a single connection.
+"""
+function test_ac_opf_reactive_capacity_socp()
+    @testset "test_ac_opf_reactive_capacity_socp" begin
+        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
+        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
+
+        url_in = _test_socp_formulation_setup()
+        objects = [
+            ["unit", "unit_2"]
+        ]
+        object_parameter_values = [
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
+            ["node", "node_b", "demand_reactive", 0.1],
+            ["node", "node_b", "min_voltage", 0.7],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 0.2],
+            ["node", "node_c", "demand_reactive", 0.0],
+            ["connection","connection_bc","resistance",0.2],
+            ["connection","connection_bc","reactance",0.2],
+            ["connection","connection_bc","connection_current_max",1.0],
+            ["unit", "unit_ab", "start_up_cost", 100]
+        ]
+        relationships = [
+            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
+            ["unit__to_node", ["unit_2", "node_b"]],
+            ["units_on__temporal_block", ["unit_2", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_2", "deterministic"]],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity_reactive", 0.05],
+            ["unit__to_node", ["unit_2", "node_b"], "vom_cost", 20.0],
+            ["unit__to_node", ["unit_2", "node_b"], "vom_cost_reactive", 4.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+        ]
+            
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
+
+        @test value( var_unit_flow_reactive[unit(:unit_2), node(:node_b), 
+            direction(:to_node), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.0587 atol = 0.001
+    end
+end
+
 @testset "nonlinear socp formulation" begin
-    # test_ac_opf_singleconn_socp()
+    #test_ac_opf_singleconn_socp()
     # test_ac_opf_reverse_socp()
     # test_ac_opf_capacitance_socp()
     # test_ac_opf_two_conn_socp()
     # test_ac_opf_singleconn_inve_socp()
-    test_ac_opf_capacurve()
+    # test_ac_opf_capacurve()
+    test_ac_opf_reactive_capacity_socp()
 end
