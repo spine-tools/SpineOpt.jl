@@ -450,6 +450,9 @@ function test_ac_opf_capacurve()
         solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
 
         url_in = _test_socp_formulation_setup()
+        objects = [
+            ["unit", "unit_2"]
+        ]
         object_parameter_values = [
             ["model", "instance", "solver_mip", "Juniper.jl"],
             ["model", "instance", "solver_mip_options", solver_options],
@@ -458,26 +461,34 @@ function test_ac_opf_capacurve()
             ["node", "node_c", "max_voltage", 1.1],
             ["node", "node_c", "demand", 0.2],
             ["node", "node_c", "demand_reactive", 0.2],
-            ["node", "node_c", "shunt_susceptance", 0.0],
             ["connection","connection_bc","resistance",0.1],
             ["connection","connection_bc","reactance",0.1],
-            ["connection","connection_bc","connection_current_max",1.0]
+            ["connection","connection_bc","connection_current_max",1.0],
+            ["unit", "unit_ab", "start_up_cost", 100]
         ]
         relationships = [
             ["node__to_unit", ["node_b", "unit_ab"]],
+            ["unit__to_node", ["unit_2", "node_b"]],
+            ["units_on__temporal_block", ["unit_2", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_2", "deterministic"]],
             ["connection__node__node", [ "connection_bc", "node_b", "node_c"]]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
             ["node__to_unit", ["node_b", "unit_ab"], "vom_cost_reactive", 2.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 0.2],
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity_reactive", 0.2],
             ["unit__to_node", ["unit_ab", "node_b"], "pq_capability_curve_P_coef", unparse_db_value([1.0])],
-            ["unit__to_node", ["unit_ab", "node_b"], "pq_capability_curve_constant", unparse_db_value([1.33])],
+            ["unit__to_node", ["unit_ab", "node_b"], "pq_capability_curve_constant", unparse_db_value([0.5])],
+            ["unit__to_node", ["unit_2", "node_b"], "vom_cost", 20.0],
+            ["unit__to_node", ["unit_2", "node_b"], "vom_cost_reactive", 4.0],
             ["connection__node__node",
             ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
         ]
         SpineInterface.import_data(
             url_in;
+            objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
@@ -487,12 +498,28 @@ function test_ac_opf_capacurve()
         
         # aliases for the model OPF variables
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
 
+        c1 = m.ext[:spineopt].constraints[:unit_pq_capability]
+        for k in sort(collect(keys(c1)))
+            println(c1[k])
+        end
+
+        @test value(var_unit_flow[unit(:unit_ab), node(:node_b), 
+            direction(:to_node), stochastic_scenario(:child), time_slices[2]] ) ≈ 0.1 atol = 0.001
+       
+        @test value(var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
+            direction(:to_node), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.0 atol = 0.001
+        
+        @test value(var_unit_flow_reactive[unit(:unit_2), node(:node_b), 
+            direction(:to_node), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.2087 atol = 0.001
+        
     end
 end
 
 """
-    test_ac_opf_singleconn_socp()
+    test_ac_opf_reactive_capacity_socp()
     Testing the voltage of the demand node when there is a real power demand behind a single connection.
 """
 function test_ac_opf_reactive_capacity_socp()
@@ -558,6 +585,6 @@ end
     # test_ac_opf_capacitance_socp()
     # test_ac_opf_two_conn_socp()
     # test_ac_opf_singleconn_inve_socp()
-    # test_ac_opf_capacurve()
-    test_ac_opf_reactive_capacity_socp()
+    test_ac_opf_capacurve()
+    #test_ac_opf_reactive_capacity_socp()
 end
