@@ -194,8 +194,9 @@ function test_unit_online_variable_type_none()
             key = (u, s, t)
             @test_throws KeyError var_units_on[key...]
             @test_throws KeyError constraint_u_avail[key...]
-            @test SpineOpt._get_units_on(m, key...) == existing_units(unit=u)
-            @test SpineOpt._get_units_invested_available(m, key...) == 0
+            @test realize(SpineOpt._get_units_on(m, key...)) == existing_units(unit=u)
+            @test realize(SpineOpt._get_units_invested_available(m, key...)) == 0
+            @test realize(SpineOpt._get_units_out_of_service(m, key...)) == 0
         end
     end
     @testset "unit_online_variable_type_none_with_investments" begin
@@ -223,8 +224,9 @@ function test_unit_online_variable_type_none()
             key = (u, s, t)
             @test_throws KeyError var_units_on[key...]
             @test_throws KeyError constraint_u_avail[key...]
-            @test SpineOpt._get_units_on(m, u, s, t) == var_units_invested_available[key...] + existing_units(unit=u)
-            @test SpineOpt._get_units_invested_available(m, key...) == var_units_invested_available[key...]
+            @test realize(SpineOpt._get_units_on(m, u, s, t)) == var_units_invested_available[key...] + existing_units(unit=u)
+            @test realize(SpineOpt._get_units_invested_available(m, key...)) == var_units_invested_available[key...]
+            @test realize(SpineOpt._get_units_out_of_service(m, key...)) == 0
         end
     end
 end
