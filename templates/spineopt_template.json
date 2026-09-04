@@ -1837,6 +1837,13 @@
         ],
         [
             "connection",
+            "line_shunt_susceptance",
+            null,
+            null,
+            "The per unit shunt susceptance of a `connection` for AC OPF."
+        ],
+        [
+            "connection",
             "lifetime_technical",
             null,
             null,

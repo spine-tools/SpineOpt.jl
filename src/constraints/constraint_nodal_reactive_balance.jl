@@ -29,7 +29,7 @@ end
 
 function _build_constraint_nodal_reactive_balance(m, n, s, t1)
     @fetch unit_flow_reactive, connection_flow_reactive, node_voltage_squared = m.ext[:spineopt].variables
-
+    @fetch line_charging_q = m.ext[:spineopt].expressions   
     @build_constraint(
         # Reactive power flows from connections (can be negative)
             + sum(
@@ -51,7 +51,14 @@ function _build_constraint_nodal_reactive_balance(m, n, s, t1)
                 if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
                 init=0,
             )
-
+            # Line charging reactive power in the Pi-model
+            + sum(
+               line_charging_q[conn, n1, d, s, t]
+                for (conn, n1, d, s, t) in connection_reactive_flow_indices(
+                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t1
+                ),
+                init=0
+            )
             # Flows from units (i.e. reactive power production)
             + sum(
                 unit_flow_reactive[u, n, d, s, t_short]
@@ -79,8 +86,7 @@ function _build_constraint_nodal_reactive_balance(m, n, s, t1)
                 init=0,
             )
             == 
-            # reactive power consumption of the shunt susceptance
-            # TBA: make dependent on connections
+            # reactive power production of the shunt susceptance
             - node_voltage_squared[n, s, t1] * 
                 shunt_susceptance(m; node=n, stochastic_scenario=s, t=t1)
             + demand_reactive(m; node=n, stochastic_scenario=s, t=t1)

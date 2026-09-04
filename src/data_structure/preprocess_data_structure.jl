@@ -788,6 +788,7 @@ resistance and reactance which the user is expected to give as input. Default
 values are set to zero.
 """
 function generate_connection_admittance() 
+    #TBA: add something like reactance_ = max(reactance(connection=conn, _default=0), 1e-6)
     add_object_parameter_values!(
         connection, 
         Dict(conn => Dict(:connection_conductance => 
