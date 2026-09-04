@@ -84,8 +84,8 @@ but one cannot ensure its existence.
 function _get_units_out_of_service(m, u, s, t)
     get(m.ext[:spineopt].variables[:units_out_of_service], (u, s, t)) do 
         (
-            fix_units_out_of_service(unit=u, stochastic_scenario=s, t=t, _default=0)
-            + units_unavailable(unit=u, stochastic_scenario=s, t=t, _default=0)
+            fix_units_out_of_service(m; unit=u, stochastic_scenario=s, t=t, _default=0)
+            + units_unavailable(m; unit=u, stochastic_scenario=s, t=t, _default=0)
         )
     end
 end
