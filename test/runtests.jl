@@ -63,8 +63,7 @@ function _load_test_data(db_url, test_data)
 end
 
 function _load_test_data_without_template(db_url, test_data)
-    SpineInterface.close_connection(db_url)
-    SpineInterface.open_connection(db_url)
+    SpineInterface.open_connection(db_url) # This now closes any pre-existing connection before opening the new one.
     SpineInterface.import_data(db_url; test_data...)
 end
 
