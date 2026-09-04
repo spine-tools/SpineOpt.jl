@@ -3,3 +3,6 @@ The [output\_resolution](@ref) parameter indicates the resolution at which [outp
 If `null` (the default), then results are reported at the highest available resolution from the model.
 If [output\_resolution](@ref) is a duration value, then results are aggregated at that resolution before being reported.
 At the moment, the aggregation is simply performed by taking the average value.
+
+When [output\_resolution](@ref) is defined on the [report\_\_output](@ref) level,
+it takes priority over other resolutions for that [report](@ref).
