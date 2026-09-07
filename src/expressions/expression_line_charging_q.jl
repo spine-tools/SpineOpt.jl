@@ -19,21 +19,28 @@
 #############################################################################
 
 @doc raw"""
-    add_expression_capacity_margin!(m::Model)
+    add_expression_line_charging_q!(m::Model)
 
-Create an expression for `capacity_margin`.
+Create an expression for `line_charging_q` which just the voltage squared
+    but adjusted for the number of connections (0 or 1 are supported).
 
 """
 function add_expression_line_charging_q!(m::Model)
-    @fetch node_voltage_squared = m.ext[:spineopt].variables
+    @fetch node_voltage_squared, line_charging_q_cand = m.ext[:spineopt].variables
     m.ext[:spineopt].expressions[:line_charging_q] = Dict(
-        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t1) => @expression(
-            m,
-            ifelse(is_candidate(connection=conn), 0,
-            node_voltage_squared[n, s, t1] 
-            * line_shunt_susceptance(m; connection=conn, stochastic_scenario=s, t=t1, _default=0)
-            )
-        )
+        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t1) => 
+        begin
+            if is_candidate(connection=conn)
+                @expression(m, line_charging_q_cand[conn, n, d, s, t1] 
+                * line_shunt_susceptance(m; connection=conn, stochastic_scenario=s, t=t1, _default=0) 
+                * 0.5)
+            else
+                @expression(m, node_voltage_squared[n, s, t1]
+                * line_shunt_susceptance(m; connection=conn, stochastic_scenario=s, t=t1, _default=0)
+                * 0.5)
+            end
+        
+        end
         for (conn, n, d, s, t1) in connection_reactive_flow_indices(m)
     )
 end

@@ -133,6 +133,7 @@ function _add_variables!(m; log_level=3)
             add_variable_connections_decommissioned!,
             add_variable_connections_invested!,
             add_variable_connections_invested_available!,
+            add_variable_line_charging_q_cand!,
             add_variable_min_capacity_margin_slack!,
             add_variable_node_injection!,
             add_variable_node_pressure!,
@@ -176,6 +177,7 @@ Add SpineOpt expressions to the given model.
 function _add_expressions!(m; log_level=3)
     for add_expression! in (
             add_expression_capacity_margin!,
+            add_expression_line_charging_q!,
         )
         name = name_from_fn(add_expression!)
         @timelog log_level 3 "- [$name]" add_expression!(m)
@@ -202,6 +204,7 @@ function _add_constraints!(m; log_level=3)
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_connection_intact_flow_ptdf!,
             add_constraint_connection_lifetime!,
+            add_constraint_connection_line_charging!,
             add_constraint_connection_maxpower_lindistflow!,
             add_constraint_connection_min_flow!,
             add_constraint_connection_reactive_flow_capacity!,
