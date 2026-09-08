@@ -100,6 +100,11 @@ function _test_socp_formulation_setup()
     url_in
 end
 
+"""
+    setup_pajarito_solver()
+
+    Returns the object parameter values for Pajarito solver as vector. 
+"""
 function setup_pajarito_solver()
     oa_solver_options = Map(["solver", "options"], 
             ["HiGHS.jl", Map(["mip_feasibility_tolerance"], [1e-8])] )
@@ -357,13 +362,10 @@ function test_ac_opf_line_capacitance_socp()
             value(var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
             direction(:from_node), stochastic_scenario(:parent), time_slices[1]] )
         )
-        c1 = m.ext[:spineopt].expressions[:line_charging_q]
-        for k in sort(collect(keys(c1)))
-            println(k)
-            println(c1[k])
-        end
 
-        # second test considers a line which is invested
+        # ----------------------------------------------
+        # Second test considers a line which is invested
+        # Here some reactive demand is introduced which forces the line investment.
         object_parameter_values = vcat(
             setup_pajarito_solver(),
             [
@@ -392,17 +394,23 @@ function test_ac_opf_line_capacitance_socp()
         v = Base.invokelatest(value, vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) 
         @test v ≈ 1.0102 atol = 0.001
 
-        # c1 = m.ext[:spineopt].constraints[:connection_line_charging_tovalue1]
-        # for k in sort(collect(keys(c1)))
-        #     println(k)
-        #     println(c1[k])
-        # end
-        # println("line_charging_q_cand")
-        # c1 = m.ext[:spineopt].variables[:line_charging_q_cand]
-        # for k in sort(collect(keys(c1)))
-        #     println(k)
-        #     println(Base.invokelatest(value, c1[k]))
-        # end
+        #third test were investment is not needed
+        object_parameter_values = 
+            [
+                ["node", "node_c", "demand_reactive", 0.0],
+            ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values
+        )
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
+        
+        # aliases for the model OPF variables
+        cinv = m.ext[:spineopt].variables[:connections_invested]
+        v = Base.invokelatest(value, cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]])
+        @test v ≈ 0 atol = 0.001
+       
     end
 end
 
@@ -492,33 +500,25 @@ end
 """
 function test_ac_opf_singleconn_inve_socp()
     @testset "ac_opf_singleconn_inve_socp" begin
-        oa_solver_options = Map(["solver", "options"], 
-            ["HiGHS.jl", Map(["mip_feasibility_tolerance"], [1e-8])] )
-        conic_solver_options = Map(["solver", "options"], 
-            ["Hypatia.jl", Map(["tol_rel_opt"], [1e-6])] )
-        solver_options = unparse_db_value(Map(["Pajarito.jl"], 
-            [Map(["oa_solver", "conic_solver"], 
-                [oa_solver_options, conic_solver_options])]))
-
         url_in = _test_socp_formulation_setup()
         objects = [
             ["unit", "unit_x"]
         ]
-        object_parameter_values = [      
-            ["model", "instance", "solver_mip", "Pajarito.jl"],
-            ["model", "instance", "solver_mip_options", solver_options],
-            ["node", "node_b", "demand_reactive", 0.0],
-            ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.3],
-            ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","resistance",0.2],
-            ["connection","connection_bc","reactance",0.2],
-            ["connection","connection_bc","connection_current_max", 0.2089],
-            ["connection","connection_bc","investment_count_max_cumulative", 1.0],
-            ["connection","connection_bc","connection_investment_cost", 35.0],
-            ["connection","connection_bc", "investment_variable_type", "integer"]
-        ]
+        object_parameter_values = vcat(
+            setup_pajarito_solver(),
+            [      
+                ["node", "node_b", "demand_reactive", 0.0],
+                ["node", "node_b", "min_voltage", 0.7],
+                ["node", "node_c", "min_voltage", 0.7],
+                ["node", "node_c", "demand", 0.3],
+                ["node", "node_c", "demand_reactive", 0.0],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","connection_bc","connection_current_max", 0.2089],
+                ["connection","connection_bc","investment_count_max_cumulative", 1.0],
+                ["connection","connection_bc","connection_investment_cost", 35.0],
+                ["connection","connection_bc", "investment_variable_type", "integer"]
+        ])
         relationships = [
             ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
             ["unit__to_node", ["unit_x", "node_c"]],
@@ -544,7 +544,7 @@ function test_ac_opf_singleconn_inve_socp()
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
         
         # aliases for the model OPF variables
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]

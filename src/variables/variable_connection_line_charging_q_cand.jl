@@ -52,7 +52,7 @@ end
     add_variable_line_charging_q_cand!(m::Model)
 
 Add `line_charging_q_cand` variables to model `m`, which represent capacitive line
-charing of invested connections.
+charging of invested connections.
 """
 function add_variable_line_charging_q_cand!(m::Model)
     add_variable!(

@@ -30,7 +30,7 @@ function add_expression_line_charging_q!(m::Model)
     m.ext[:spineopt].expressions[:line_charging_q] = Dict(
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t1) => 
         begin
-            if is_candidate(connection=conn)
+            if is_candidate(connection=conn) && conn in indices(line_shunt_susceptance)
                 @expression(m, line_charging_q_cand[conn, n, d, s, t1] 
                 * line_shunt_susceptance(m; connection=conn, stochastic_scenario=s, t=t1, _default=0) 
                 * 0.5)

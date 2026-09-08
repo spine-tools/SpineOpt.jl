@@ -19,6 +19,9 @@
 #############################################################################
 
 
+"""
+    NB: the constraint uses real power capacity for the line
+"""
 function add_constraint_connection_reactive_flow_capacity!(m::Model)
     _add_constraint!(
         m,
