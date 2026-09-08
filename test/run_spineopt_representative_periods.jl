@@ -35,7 +35,7 @@ function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
     repr_periods_mapping[rp1_start] = [1, 0]
     repr_periods_mapping[rp2_start] = [0, 1]
     base_res = Hour(12)
-    test_data = Dict(
+    Dict(
         :objects => [
             ["model", "instance"],
             ["temporal_block", "operations"],
@@ -81,14 +81,15 @@ function _get_representative_periods_setup_data()::Dict{Symbol,Vector{Any}}
     )
 end
 
+const url_in = "sqlite://"
+
 function _test_representative_periods_setup()
-    url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     test_data = _get_representative_periods_setup_data()
     _load_test_data(url_in, test_data)
     vals = _vals_from_data(test_data)
-    url_in, url_out, file_path_out, vals
+    url_out, file_path_out, vals
 end
 
 function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
@@ -103,7 +104,7 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
     wind_af_ts = TimeSeries(
         elec_demand_inds, [100 + 20 * sin(pi * k / elec_demand_length) for k in 1:elec_demand_length]
     )
-    test_data = Dict(
+    Dict(
         :objects => [
             ["node", "elec_node"],
             ["node", "batt_node"],
@@ -149,12 +150,12 @@ function _get_representative_periods_test_data()::Dict{Symbol,Vector{Any}}
             ["node", "h2_node", "storage_investment_count_max_cumulative", 100],
             ["node", "h2_node", "storage_active", true],
             ["node", "h2_node", "storage_longterm_active", true],
-            ["node", "h2_node", "storage_state_initial", 0.5],         
+            ["node", "h2_node", "storage_state_initial", 0.5],
             ["node", "h2_node", "balance_penalty", 10000],
             ["node", "h2_node", "storage_state_max", 20000],
             ["node", "h2_node", "existing_storages", 10],
             ["node", "h2_node", "storage_investment_cost", 5000000],
-            ["node", "h2_node", "storage_investment_variable_type", "integer"],            
+            ["node", "h2_node", "storage_investment_variable_type", "integer"],
             ["unit", "batt_unit", "investment_count_max_cumulative", 100],
             ["unit", "batt_unit", "existing_units", 0],
             ["unit", "batt_unit", "unit_investment_cost", 750000],
@@ -203,30 +204,32 @@ end
 
 function _test_representative_periods()
     @testset "representative_periods" begin
-        url_in, url_out, file_path_out, vals = _test_representative_periods_setup()
-        test_data = _get_representative_periods_test_data()
-        count, errors = import_data(url_in, "Add test data"; test_data...)
-        @test isempty(errors)
-        merge!(vals, _vals_from_data(test_data))
-        rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
-        rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 3, 12), temporal_block(:rp1))
-        rt2 = TimeSlice(DateTime(2000, 1, 3, 12), DateTime(2000, 1, 4), temporal_block(:rp1))
-        rt3 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 7, 12), temporal_block(:rp2))
-        rt4 = TimeSlice(DateTime(2000, 1, 7, 12), DateTime(2000, 1, 8), temporal_block(:rp2))
-        all_rt = [rt1, rt2, rt3, rt4]
-        t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
-        @testset for con_name in keys(m.ext[:spineopt].constraints)
-            cons = m.ext[:spineopt].constraints[con_name]
-            _test_representative_periods_constraints(m, Val(con_name), cons, vals, all_rt, t_invest)
-            @testset for ind in keys(cons)
-                con = cons[ind]
-                _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
+        with_connection_open(url_in) do
+            url_out, file_path_out, vals = _test_representative_periods_setup()
+            test_data = _get_representative_periods_test_data()
+            count, errors = import_data(url_in, "Add test data"; test_data...)
+            @test isempty(errors)
+            merge!(vals, _vals_from_data(test_data))
+            rm(file_path_out; force=true)
+            m = run_spineopt(url_in, url_out; optimize=true, log_level=3)
+            rt1 = TimeSlice(DateTime(2000, 1, 3), DateTime(2000, 1, 3, 12), temporal_block(:rp1))
+            rt2 = TimeSlice(DateTime(2000, 1, 3, 12), DateTime(2000, 1, 4), temporal_block(:rp1))
+            rt3 = TimeSlice(DateTime(2000, 1, 7), DateTime(2000, 1, 7, 12), temporal_block(:rp2))
+            rt4 = TimeSlice(DateTime(2000, 1, 7, 12), DateTime(2000, 1, 8), temporal_block(:rp2))
+            all_rt = [rt1, rt2, rt3, rt4]
+            t_invest = only(time_slice(m; temporal_block=temporal_block(:investments)))
+            @testset for con_name in keys(m.ext[:spineopt].constraints)
+                cons = m.ext[:spineopt].constraints[con_name]
+                _test_representative_periods_constraints(m, Val(con_name), cons, vals, all_rt, t_invest)
+                @testset for ind in keys(cons)
+                    con = cons[ind]
+                    _test_representative_periods_constraint(m, con_name, ind, con, vals, all_rt, t_invest)
+                end
             end
-        end
-        @testset for var_name in keys(m.ext[:spineopt].variables)
-            vars = m.ext[:spineopt].variables[var_name]
-            _test_representative_periods_variables(m, Val(var_name), vars, vals, all_rt, t_invest)
+            @testset for var_name in keys(m.ext[:spineopt].variables)
+                vars = m.ext[:spineopt].variables[var_name]
+                _test_representative_periods_variables(m, Val(var_name), vars, vals, all_rt, t_invest)
+            end
         end
     end
 end
@@ -544,7 +547,7 @@ function _expected_representative_periods_constraint(
     @build_constraint(
         + units_invested_available[u, s, t_after]
         - units_invested_available[u, s, t_before]
-        == 
+        ==
         + units_invested[u, s, t_after]
         - units_mothballed[u, s, t_after]
     )
@@ -563,10 +566,10 @@ end
 function _expected_representative_periods_constraint(
     m, ::Val{:min_up_time}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
-    # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
+    # min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl,
     # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
-    
+
     @test u == unit(:h2_gen)
     @test s_path == [stochastic_scenario(:realisation)]
     @test t_con in all_rt
@@ -575,11 +578,11 @@ function _expected_representative_periods_constraint(
         maximum_parameter_value(min_up_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path)
     )
     @test look_behind == min_up_time(unit=u)
-    
+
     # The min_up_time of unit "h2_gen" is implicitly set to be the default model duration unit.
     @test min_up_time(unit=u) == Hour(1)
     @test duration_unit(model=model(:instance)) == :hour
-    
+
     past_units_on_indices = units_on_indices(
         m;
         unit=u,
@@ -609,10 +612,10 @@ end
 function _expected_representative_periods_constraint(
     m, ::Val{:min_down_time}, ind, observed_con, vals, all_rt, t_invest, d_from, d_to
 )
-    # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl, 
+    # min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit in preprocess_data_structure.jl,
     # triggered by setting "online_variable_type" to be "integer" in the test dataset.
     u, s_path, t_con = ind
-    
+
     @test u == unit(:h2_gen)
     @test s_path == [stochastic_scenario(:realisation)]
     @test t_con in all_rt
@@ -621,11 +624,11 @@ function _expected_representative_periods_constraint(
         maximum_parameter_value(min_down_time(unit=u, stochastic_scenario=s, t=t_con) for s in s_path)
     )
     @test look_behind == min_down_time(unit=u)
-    
+
     # The min_down_time of unit "h2_gen" is implicitly set to be the default model duration unit.
     @test min_down_time(unit=u) == Hour(1)
     @test duration_unit(model=model(:instance)) == :hour
-    
+
     past_units_on_indices = units_on_indices(
         m;
         unit=u,
@@ -645,8 +648,8 @@ function _expected_representative_periods_constraint(
 
     @fetch units_invested_available, units_on, units_shut_down = m.ext[:spineopt].variables
     @build_constraint(
-        nou + units_invested_available[u, s, t_invest] - units_on[u, s, t_con] 
-        >= 
+        nou + units_invested_available[u, s, t_invest] - units_on[u, s, t_con]
+        >=
         sum(
             units_shut_down[u, s_past, t_past] * weight
             for (u, s_past, t_past) in past_units_on_indices
@@ -680,7 +683,7 @@ function _expected_representative_periods_constraint(
     @fetch node_state_longterm, node_state = m.ext[:spineopt].variables
     @build_constraint(
         + node_state_longterm[n, s, t_after]
-        == 
+        ==
         + node_state_longterm[n, s, t_before]
         + coefs[1] * (node_state[n, s, rt2] - node_state[n, s, _get_t0(m, rt1)])
         + coefs[2] * (node_state[n, s, rt4] - node_state[n, s, _get_t0(m, rt3)])
@@ -697,7 +700,6 @@ end
 function _test_representative_periods_no_index_found()
     @testset "representative_periods" begin
         @testset "no_index_found" begin
-            url_in = "sqlite://"
             file_path_out = "$(@__DIR__)/test_out.sqlite"
             url_out = "sqlite:///$file_path_out"
             test_setup_data = _get_representative_periods_setup_data()
@@ -706,26 +708,28 @@ function _test_representative_periods_no_index_found()
             test_object_groups = [x for x in test_object_groups if x != ["temporal_block", "all_rps", "rp1"]]
             test_setup_data[Symbol("object_groups")] = test_object_groups
             # finish setup
-            _load_test_data(url_in, test_setup_data)
-            vals = _vals_from_data(test_setup_data)
-            test_data = _get_representative_periods_test_data()
-            count, errors = import_data(url_in, "Add test data"; test_data...)
-            @test isempty(errors)
-            merge!(vals, _vals_from_data(test_data))
-            rm(file_path_out; force=true)
-            try
-                run_spineopt(url_in, url_out; optimize=true, log_level=3)
-                # fail test if we reach this point without an error
-                @test false
-            catch e
-                buf = IOBuffer()
-                showerror(buf, e)
-                message = String(take!(buf))
-                println(message)
-                @test startswith(message,
-                    "time slice 2000-01-01T00:00~(1 day)~>2000-01-02T00:00 \
-                    appears to be mapped to block 'rp1' but node 'h2_node' is not associated to it"
-                )
+            with_connection_open(url_in) do
+                _load_test_data(url_in, test_setup_data)
+                vals = _vals_from_data(test_setup_data)
+                test_data = _get_representative_periods_test_data()
+                count, errors = import_data(url_in, "Add test data"; test_data...)
+                @test isempty(errors)
+                merge!(vals, _vals_from_data(test_data))
+                rm(file_path_out; force=true)
+                try
+                    run_spineopt(url_in, url_out; optimize=true, log_level=3)
+                    # fail test if we reach this point without an error
+                    @test false
+                catch e
+                    buf = IOBuffer()
+                    showerror(buf, e)
+                    message = String(take!(buf))
+                    println(message)
+                    @test startswith(message,
+                        "time slice 2000-01-01T00:00~(1 day)~>2000-01-02T00:00 \
+                        appears to be mapped to block 'rp1' but node 'h2_node' is not associated to it"
+                    )
+                end
             end
         end
     end

@@ -19,8 +19,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const url_in = "sqlite://"
+
 @testset "user constraints" begin
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -97,197 +98,201 @@
     )
     @testset "constraint_user_constraint_investments" begin
         @testset for sense in ("==", ">=", "<=")
-            _load_test_data(url_in, test_data)
-            rhs = 1
-            coefficient_for_unit_flow_a = 2
-            coefficient_for_unit_flow_b = 3
-            coefficient_for_units_on = 4
-            coefficient_for_units_started_up = 5
-            coefficient_for_units_invested = 6
-            coefficient_for_units_invested_available = 7
-            coefficient_for_connections_invested = 8
-            coefficient_for_connections_invested_available = 9
-            coefficient_for_node_state = 10
-            coefficient_for_storages_invested = 11
-            coefficient_for_storages_invested_available = 12
-            coefficient_for_connection_flow_b = 13
-            coefficient_for_connection_flow_c = 14
-            objects = [["user_constraint", "constraint_x"]]
-            relationships = [
-                ["unit_flow__user_constraint", ["node_a", "unit_ab", "constraint_x"]],
-                ["unit_flow__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
-                ["unit__user_constraint", ["unit_ab", "constraint_x"]],
-                ["connection__user_constraint", ["connection_bc", "constraint_x"]],
-                ["node__user_constraint", ["node_c", "constraint_x"]],
-                ["connection__from_node__user_constraint", ["connection_bc", "node_b", "constraint_x"]],
-                ["connection__to_node__user_constraint", ["connection_bc", "node_c", "constraint_x"]],
-            ]
-            object_parameter_values = [
-                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["user_constraint", "constraint_x", "right_hand_side", rhs],
-            ]
-            relationship_parameter_values = [
-                [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
-                [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
-                [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
-                [relationships[3]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
-                [relationships[3]..., "coefficient_for_units_invested", coefficient_for_units_invested],
-                [relationships[3]..., "coefficient_for_units_invested_available", coefficient_for_units_invested_available],
-                [relationships[4]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
-                [relationships[4]..., "coefficient_for_connections_invested_available", coefficient_for_connections_invested_available],
-                [relationships[5]..., "coefficient_for_node_state", coefficient_for_node_state],
-                [relationships[5]..., "coefficient_for_storages_invested", coefficient_for_storages_invested],
-                [relationships[5]..., "coefficient_for_storages_invested_available", coefficient_for_storages_invested_available],
-                [relationships[6]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_b],
-                [relationships[7]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_c],
-            ]
-            SpineInterface.import_data(
-                url_in;
-                objects=objects,
-                relationships=relationships,
-                object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values,
-            )
-            m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
-            var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-            var_node_state = m.ext[:spineopt].variables[:node_state]
-            var_units_on = m.ext[:spineopt].variables[:units_on]
-            var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-            var_units_invested = m.ext[:spineopt].variables[:units_invested]
-            var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
-            var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
-            var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-            var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
-            var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
-            constraint = m.ext[:spineopt].constraints[:user_constraint]
-            @test length(constraint) == 1
-            key_uf_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
-            key_uf_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
-            key_cf_b = (connection(:connection_bc), node(:node_b), direction(:from_node))
-            key_cf_c = (connection(:connection_bc), node(:node_c), direction(:to_node))
-            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
-            expected_con = SpineOpt.build_sense_constraint(
-                + 4 * coefficient_for_units_invested * var_units_invested[unit(:unit_ab), s_parent, t4h1]
-                + 4 * coefficient_for_units_invested_available
-                    * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
-                + 4 * coefficient_for_connections_invested
-                    * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
-                + 4 * coefficient_for_connections_invested_available
-                    * var_connections_invested_available[connection(:connection_bc), s_parent, t4h1]
-                + 2 * coefficient_for_storages_invested * (
-                    + var_storages_invested[node(:node_c), s_parent, t2h1]
-                    + var_storages_invested[node(:node_c), s_parent, t2h2]
+            with_connection_open(url_in) do
+                _load_test_data(url_in, test_data)
+                rhs = 1
+                coefficient_for_unit_flow_a = 2
+                coefficient_for_unit_flow_b = 3
+                coefficient_for_units_on = 4
+                coefficient_for_units_started_up = 5
+                coefficient_for_units_invested = 6
+                coefficient_for_units_invested_available = 7
+                coefficient_for_connections_invested = 8
+                coefficient_for_connections_invested_available = 9
+                coefficient_for_node_state = 10
+                coefficient_for_storages_invested = 11
+                coefficient_for_storages_invested_available = 12
+                coefficient_for_connection_flow_b = 13
+                coefficient_for_connection_flow_c = 14
+                objects = [["user_constraint", "constraint_x"]]
+                relationships = [
+                    ["unit_flow__user_constraint", ["node_a", "unit_ab", "constraint_x"]],
+                    ["unit_flow__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                    ["unit__user_constraint", ["unit_ab", "constraint_x"]],
+                    ["connection__user_constraint", ["connection_bc", "constraint_x"]],
+                    ["node__user_constraint", ["node_c", "constraint_x"]],
+                    ["connection__from_node__user_constraint", ["connection_bc", "node_b", "constraint_x"]],
+                    ["connection__to_node__user_constraint", ["connection_bc", "node_c", "constraint_x"]],
+                ]
+                object_parameter_values = [
+                    ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                    ["user_constraint", "constraint_x", "right_hand_side", rhs],
+                ]
+                relationship_parameter_values = [
+                    [relationships[1]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_a],
+                    [relationships[2]..., "coefficient_for_unit_flow", coefficient_for_unit_flow_b],
+                    [relationships[3]..., "coefficient_for_units_on", coefficient_for_units_on],
+                    [relationships[3]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
+                    [relationships[3]..., "coefficient_for_units_invested", coefficient_for_units_invested],
+                    [relationships[3]..., "coefficient_for_units_invested_available", coefficient_for_units_invested_available],
+                    [relationships[4]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
+                    [relationships[4]..., "coefficient_for_connections_invested_available", coefficient_for_connections_invested_available],
+                    [relationships[5]..., "coefficient_for_node_state", coefficient_for_node_state],
+                    [relationships[5]..., "coefficient_for_storages_invested", coefficient_for_storages_invested],
+                    [relationships[5]..., "coefficient_for_storages_invested_available", coefficient_for_storages_invested_available],
+                    [relationships[6]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_b],
+                    [relationships[7]..., "coefficient_for_connection_flow", coefficient_for_connection_flow_c],
+                ]
+                SpineInterface.import_data(
+                    url_in;
+                    objects=objects,
+                    relationships=relationships,
+                    object_parameter_values=object_parameter_values,
+                    relationship_parameter_values=relationship_parameter_values,
                 )
-                + 2 * coefficient_for_storages_invested_available * (
-                    + var_storages_invested_available[node(:node_c), s_parent, t2h1]
-                    + var_storages_invested_available[node(:node_c), s_parent, t2h2]
+                m = run_spineopt(url_in; log_level=0, optimize=false)
+                var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+                var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+                var_node_state = m.ext[:spineopt].variables[:node_state]
+                var_units_on = m.ext[:spineopt].variables[:units_on]
+                var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+                var_units_invested = m.ext[:spineopt].variables[:units_invested]
+                var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
+                var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+                var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+                var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
+                var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+                constraint = m.ext[:spineopt].constraints[:user_constraint]
+                @test length(constraint) == 1
+                key_uf_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
+                key_uf_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
+                key_cf_b = (connection(:connection_bc), node(:node_b), direction(:from_node))
+                key_cf_c = (connection(:connection_bc), node(:node_c), direction(:to_node))
+                s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+                t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
+                t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
+                t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
+                expected_con = SpineOpt.build_sense_constraint(
+                    + 4 * coefficient_for_units_invested * var_units_invested[unit(:unit_ab), s_parent, t4h1]
+                    + 4 * coefficient_for_units_invested_available
+                        * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
+                    + 4 * coefficient_for_connections_invested
+                        * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
+                    + 4 * coefficient_for_connections_invested_available
+                        * var_connections_invested_available[connection(:connection_bc), s_parent, t4h1]
+                    + 2 * coefficient_for_storages_invested * (
+                        + var_storages_invested[node(:node_c), s_parent, t2h1]
+                        + var_storages_invested[node(:node_c), s_parent, t2h2]
+                    )
+                    + 2 * coefficient_for_storages_invested_available * (
+                        + var_storages_invested_available[node(:node_c), s_parent, t2h1]
+                        + var_storages_invested_available[node(:node_c), s_parent, t2h2]
+                    )
+                    + 2 * coefficient_for_units_on * (
+                        + var_units_on[unit(:unit_ab), s_parent, t2h1]
+                        + var_units_on[unit(:unit_ab), s_child, t2h2]
+                    )
+                    + 2 * coefficient_for_units_started_up * (
+                        + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
+                        + var_units_started_up[unit(:unit_ab), s_child, t2h2]
+                    )
+                    + coefficient_for_unit_flow_a * (
+                        + var_unit_flow[key_uf_a..., s_parent, t1h1]
+                        + var_unit_flow[key_uf_a..., s_child, t1h2]
+                        + var_unit_flow[key_uf_a..., s_child, t1h3]
+                        + var_unit_flow[key_uf_a..., s_child, t1h4]
+                    )
+                    + 2 * coefficient_for_unit_flow_b * (
+                        + var_unit_flow[key_uf_b..., s_parent, t2h1]
+                        + var_unit_flow[key_uf_b..., s_parent, t2h2]
+                    )
+                    + 2 * coefficient_for_connection_flow_b * (
+                        + var_connection_flow[key_cf_b..., s_parent, t2h1]
+                        + var_connection_flow[key_cf_b..., s_parent, t2h2]
+                    )
+                    + coefficient_for_connection_flow_c * (
+                        + var_connection_flow[key_cf_c..., s_parent, t1h1]
+                        + var_connection_flow[key_cf_c..., s_parent, t1h2]
+                        + var_connection_flow[key_cf_c..., s_parent, t1h3]
+                        + var_connection_flow[key_cf_c..., s_parent, t1h4]
+                    )
+                    + coefficient_for_node_state * (
+                        + var_node_state[node(:node_c), s_parent, t1h1]
+                        + var_node_state[node(:node_c), s_parent, t1h2]
+                        + var_node_state[node(:node_c), s_parent, t1h3]
+                        + var_node_state[node(:node_c), s_parent, t1h4]
+                    ),
+                    Symbol(sense),
+                    4 * rhs,
                 )
-                + 2 * coefficient_for_units_on * (
-                    + var_units_on[unit(:unit_ab), s_parent, t2h1]
-                    + var_units_on[unit(:unit_ab), s_child, t2h2] 
-                )
-                + 2 * coefficient_for_units_started_up * (
-                    + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
-                    + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
-                )
-                + coefficient_for_unit_flow_a * (
-                    + var_unit_flow[key_uf_a..., s_parent, t1h1]
-                    + var_unit_flow[key_uf_a..., s_child, t1h2]
-                    + var_unit_flow[key_uf_a..., s_child, t1h3]
-                    + var_unit_flow[key_uf_a..., s_child, t1h4]
-                )
-                + 2 * coefficient_for_unit_flow_b * (
-                    + var_unit_flow[key_uf_b..., s_parent, t2h1]
-                    + var_unit_flow[key_uf_b..., s_parent, t2h2]
-                )
-                + 2 * coefficient_for_connection_flow_b * (
-                    + var_connection_flow[key_cf_b..., s_parent, t2h1]
-                    + var_connection_flow[key_cf_b..., s_parent, t2h2]
-                )
-                + coefficient_for_connection_flow_c * (
-                    + var_connection_flow[key_cf_c..., s_parent, t1h1]
-                    + var_connection_flow[key_cf_c..., s_parent, t1h2]
-                    + var_connection_flow[key_cf_c..., s_parent, t1h3]
-                    + var_connection_flow[key_cf_c..., s_parent, t1h4]
-                )
-                + coefficient_for_node_state * (
-                    + var_node_state[node(:node_c), s_parent, t1h1]
-                    + var_node_state[node(:node_c), s_parent, t1h2]
-                    + var_node_state[node(:node_c), s_parent, t1h3]
-                    + var_node_state[node(:node_c), s_parent, t1h4]
-                ),
-                Symbol(sense),
-                4 * rhs,
-            )
-            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)
-            observed_con = constraint_object(constraint[con_key...])
-            @test _is_constraint_equal(observed_con, expected_con)
+                con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
         end
     end
     @testset "constraint_user_constraint_investments_missing_subcases" begin
         @testset for sense in ("==", ">=", "<=")
-            _load_test_data(url_in, test_data)
-            rhs = 1
-            coefficient_for_units_started_up = 5
-            coefficient_for_units_invested = 6
-            coefficient_for_connections_invested = 8
-            coefficient_for_storages_invested = 11
-            objects = [["user_constraint", "constraint_x"]]
-            relationships = [
-                ["unit__user_constraint", ["unit_ab", "constraint_x"]],
-                ["connection__user_constraint", ["connection_bc", "constraint_x"]],
-                ["node__user_constraint", ["node_c", "constraint_x"]]
-            ]
-            object_parameter_values = [
-                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["user_constraint", "constraint_x", "right_hand_side", rhs],
-            ]
-            relationship_parameter_values = [
-                [relationships[1]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
-                [relationships[1]..., "coefficient_for_units_invested", coefficient_for_units_invested],
-                [relationships[2]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
-                [relationships[3]..., "coefficient_for_storages_invested", coefficient_for_storages_invested],
-            ]
-            SpineInterface.import_data(
-                url_in;
-                objects=objects,
-                relationships=relationships,
-                object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values,
-            )
-            m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
-            var_units_invested = m.ext[:spineopt].variables[:units_invested]
-            var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
-            var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
-            constraint = m.ext[:spineopt].constraints[:user_constraint]
-            @test length(constraint) == 1
-            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
-            expected_con = SpineOpt.build_sense_constraint(
-                + 4 * coefficient_for_units_invested * var_units_invested[unit(:unit_ab), s_parent, t4h1]
-                + 4 * coefficient_for_connections_invested
-                    * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
-                + 2 * coefficient_for_storages_invested * (
-                    + var_storages_invested[node(:node_c), s_parent, t2h1]
-                    + var_storages_invested[node(:node_c), s_parent, t2h2]
+            with_connection_open(url_in) do
+                _load_test_data(url_in, test_data)
+                rhs = 1
+                coefficient_for_units_started_up = 5
+                coefficient_for_units_invested = 6
+                coefficient_for_connections_invested = 8
+                coefficient_for_storages_invested = 11
+                objects = [["user_constraint", "constraint_x"]]
+                relationships = [
+                    ["unit__user_constraint", ["unit_ab", "constraint_x"]],
+                    ["connection__user_constraint", ["connection_bc", "constraint_x"]],
+                    ["node__user_constraint", ["node_c", "constraint_x"]]
+                ]
+                object_parameter_values = [
+                    ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                    ["user_constraint", "constraint_x", "right_hand_side", rhs],
+                ]
+                relationship_parameter_values = [
+                    [relationships[1]..., "coefficient_for_units_started_up", coefficient_for_units_started_up],
+                    [relationships[1]..., "coefficient_for_units_invested", coefficient_for_units_invested],
+                    [relationships[2]..., "coefficient_for_connections_invested", coefficient_for_connections_invested],
+                    [relationships[3]..., "coefficient_for_storages_invested", coefficient_for_storages_invested],
+                ]
+                SpineInterface.import_data(
+                    url_in;
+                    objects=objects,
+                    relationships=relationships,
+                    object_parameter_values=object_parameter_values,
+                    relationship_parameter_values=relationship_parameter_values,
                 )
-                + 2 * coefficient_for_units_started_up * (
-                    + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
-                    + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
-                ),
-                Symbol(sense),
-                4 * rhs,
-            )
-            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)
-            observed_con = constraint_object(constraint[con_key...])
-            @test _is_constraint_equal(observed_con, expected_con)
+                m = run_spineopt(url_in; log_level=0, optimize=false)
+                var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+                var_units_invested = m.ext[:spineopt].variables[:units_invested]
+                var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+                var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
+                constraint = m.ext[:spineopt].constraints[:user_constraint]
+                @test length(constraint) == 1
+                s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+                t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
+                t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
+                t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
+                expected_con = SpineOpt.build_sense_constraint(
+                    + 4 * coefficient_for_units_invested * var_units_invested[unit(:unit_ab), s_parent, t4h1]
+                    + 4 * coefficient_for_connections_invested
+                        * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
+                    + 2 * coefficient_for_storages_invested * (
+                        + var_storages_invested[node(:node_c), s_parent, t2h1]
+                        + var_storages_invested[node(:node_c), s_parent, t2h2]
+                    )
+                    + 2 * coefficient_for_units_started_up * (
+                        + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
+                        + var_units_started_up[unit(:unit_ab), s_child, t2h2]
+                    ),
+                    Symbol(sense),
+                    4 * rhs,
+                )
+                con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
         end
     end
     @testset "constraint_user_constraint_slack_penalty_original_coarse_resolution" begin
@@ -295,47 +300,49 @@
         coefficient_for_node_state = 10
         penalty = 1000
         @testset for sense in ("==", ">=", "<=")
-            _load_test_data(url_in, test_data)
-            objects = [["user_constraint", "constraint_x"]]
-            relationships = [["node__user_constraint", ["node_c", "constraint_x"]]]
-            object_parameter_values = [
-                ["user_constraint", "constraint_x", "user_constraint_slack_penalty", penalty],
-                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["user_constraint", "constraint_x", "right_hand_side", rhs],
-            ]
-            relationship_parameter_values = [
-                [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
-                [relationships[1]..., "coefficient_for_storages_invested_available", 0.0] # Required for the coarser original resolution caused by the default zeroes.
-            ]
-            SpineInterface.import_data(
-                url_in;
-                objects=objects,
-                relationships=relationships,
-                object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values,
-            )
-            m = run_spineopt(url_in; log_level=0, optimize=false)
-            constraint = m.ext[:spineopt].constraints[:user_constraint]
-            @test length(constraint) == 2
-            t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            t1h_arr_by_t2h = Dict(t2h1 => [t1h1, t1h2], t2h2 => [t1h3, t1h4])
-            ucx = user_constraint(:constraint_x)
-            parent = stochastic_scenario(:parent)
-            var_n_state = m.ext[:spineopt].variables[:node_state]
-            var_uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
-            var_uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
-            node_c = node(:node_c)
-            for (t2h, t1h_arr) in t1h_arr_by_t2h
-                obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t2h)])
-                exp_con = SpineOpt.build_sense_constraint(
-                    coefficient_for_node_state * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
-                    + var_uc_slack_pos[ucx, parent, t2h] - var_uc_slack_neg[ucx, parent, t2h]
-                    ,
-                    Symbol(sense),
-                    2 * rhs,
+            with_connection_open(url_in) do
+                _load_test_data(url_in, test_data)
+                objects = [["user_constraint", "constraint_x"]]
+                relationships = [["node__user_constraint", ["node_c", "constraint_x"]]]
+                object_parameter_values = [
+                    ["user_constraint", "constraint_x", "user_constraint_slack_penalty", penalty],
+                    ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                    ["user_constraint", "constraint_x", "right_hand_side", rhs],
+                ]
+                relationship_parameter_values = [
+                    [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
+                    [relationships[1]..., "coefficient_for_storages_invested_available", 0.0] # Required for the coarser original resolution caused by the default zeroes.
+                ]
+                SpineInterface.import_data(
+                    url_in;
+                    objects=objects,
+                    relationships=relationships,
+                    object_parameter_values=object_parameter_values,
+                    relationship_parameter_values=relationship_parameter_values,
                 )
-                @test _is_constraint_equal(obs_con, exp_con)
+                m = run_spineopt(url_in; log_level=0, optimize=false)
+                constraint = m.ext[:spineopt].constraints[:user_constraint]
+                @test length(constraint) == 2
+                t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
+                t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
+                t1h_arr_by_t2h = Dict(t2h1 => [t1h1, t1h2], t2h2 => [t1h3, t1h4])
+                ucx = user_constraint(:constraint_x)
+                parent = stochastic_scenario(:parent)
+                var_n_state = m.ext[:spineopt].variables[:node_state]
+                var_uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
+                var_uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
+                node_c = node(:node_c)
+                for (t2h, t1h_arr) in t1h_arr_by_t2h
+                    obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t2h)])
+                    exp_con = SpineOpt.build_sense_constraint(
+                        coefficient_for_node_state * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
+                        + var_uc_slack_pos[ucx, parent, t2h] - var_uc_slack_neg[ucx, parent, t2h]
+                        ,
+                        Symbol(sense),
+                        2 * rhs,
+                    )
+                    @test _is_constraint_equal(obs_con, exp_con)
+                end
             end
         end
     end
@@ -344,44 +351,46 @@
         coefficient_for_node_state = 10
         penalty = 1000
         @testset for sense in ("==", ">=", "<=")
-            _load_test_data(url_in, test_data)
-            objects = [["user_constraint", "constraint_x"]]
-            relationships = [["node__user_constraint", ["node_c", "constraint_x"]]]
-            object_parameter_values = [
-                ["user_constraint", "constraint_x", "user_constraint_slack_penalty", penalty],
-                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["user_constraint", "constraint_x", "right_hand_side", rhs],
-            ]
-            relationship_parameter_values = [
-                [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
-            ]
-            SpineInterface.import_data(
-                url_in;
-                objects=objects,
-                relationships=relationships,
-                object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values,
-            )
-            m = run_spineopt(url_in; log_level=0, optimize=false)
-            constraint = m.ext[:spineopt].constraints[:user_constraint]
-            @test length(constraint) == 4
-            t1h_arr = time_slice(m; temporal_block=temporal_block(:hourly))
-            ucx = user_constraint(:constraint_x)
-            parent = stochastic_scenario(:parent)
-            var_n_state = m.ext[:spineopt].variables[:node_state]
-            var_uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
-            var_uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
-            node_c = node(:node_c)
-            for t1h in t1h_arr
-                obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t1h)])
-                exp_con = SpineOpt.build_sense_constraint(
-                    coefficient_for_node_state * var_n_state[node_c, parent, t1h]
-                    + var_uc_slack_pos[ucx, parent, t1h] - var_uc_slack_neg[ucx, parent, t1h]
-                    ,
-                    Symbol(sense),
-                    rhs,
+            with_connection_open(url_in) do
+                _load_test_data(url_in, test_data)
+                objects = [["user_constraint", "constraint_x"]]
+                relationships = [["node__user_constraint", ["node_c", "constraint_x"]]]
+                object_parameter_values = [
+                    ["user_constraint", "constraint_x", "user_constraint_slack_penalty", penalty],
+                    ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                    ["user_constraint", "constraint_x", "right_hand_side", rhs],
+                ]
+                relationship_parameter_values = [
+                    [relationships[1]..., "coefficient_for_node_state", coefficient_for_node_state],
+                ]
+                SpineInterface.import_data(
+                    url_in;
+                    objects=objects,
+                    relationships=relationships,
+                    object_parameter_values=object_parameter_values,
+                    relationship_parameter_values=relationship_parameter_values,
                 )
-                @test _is_constraint_equal(obs_con, exp_con)
+                m = run_spineopt(url_in; log_level=0, optimize=false)
+                constraint = m.ext[:spineopt].constraints[:user_constraint]
+                @test length(constraint) == 4
+                t1h_arr = time_slice(m; temporal_block=temporal_block(:hourly))
+                ucx = user_constraint(:constraint_x)
+                parent = stochastic_scenario(:parent)
+                var_n_state = m.ext[:spineopt].variables[:node_state]
+                var_uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
+                var_uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
+                node_c = node(:node_c)
+                for t1h in t1h_arr
+                    obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t1h)])
+                    exp_con = SpineOpt.build_sense_constraint(
+                        coefficient_for_node_state * var_n_state[node_c, parent, t1h]
+                        + var_uc_slack_pos[ucx, parent, t1h] - var_uc_slack_neg[ucx, parent, t1h]
+                        ,
+                        Symbol(sense),
+                        rhs,
+                    )
+                    @test _is_constraint_equal(obs_con, exp_con)
+                end
             end
         end
     end
@@ -465,27 +474,28 @@ function _representative_period_user_constraint_test_data(; with_investment=fals
 end
 
 function _test_representative_period_user_constraint_indices(; with_investment=false)
-    url_in = "sqlite://"
-    _load_test_data(url_in, _representative_period_user_constraint_test_data(; with_investment=with_investment))
-    m = run_spineopt(url_in; log_level=0, optimize=false)
-    constraint = m.ext[:spineopt].constraints[:user_constraint]
-    representative_t = time_slice(m; temporal_block=temporal_block(:rp1))
-    represented_t = Set(time_slice(m; temporal_block=temporal_block(:operations)))
-    observed_t = Set(ind.t for ind in keys(constraint))
-    @test length(constraint) == length(representative_t)
-    @test observed_t == Set(representative_t)
-    @test isempty(intersect(observed_t, represented_t))
-    @fetch unit_flow = m.ext[:spineopt].variables
-    uc = user_constraint(:emission_limit)
-    s = stochastic_scenario(:realisation)
-    n = node(:power_node)
-    d = direction(:to_node)
-    for t in representative_t
-        observed_con = constraint_object(constraint[(user_constraint=uc, stochastic_path=[s], t=t)])
-        expected_con = @build_constraint(
-            unit_flow[unit(:power_plant_a), n, d, s, t] + 2 * unit_flow[unit(:power_plant_b), n, d, s, t] >= 0
-        )
-        @test _is_constraint_equal(observed_con, expected_con)
+    with_connection_open(url_in) do
+        _load_test_data(url_in, _representative_period_user_constraint_test_data(; with_investment=with_investment))
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        constraint = m.ext[:spineopt].constraints[:user_constraint]
+        representative_t = time_slice(m; temporal_block=temporal_block(:rp1))
+        represented_t = Set(time_slice(m; temporal_block=temporal_block(:operations)))
+        observed_t = Set(ind.t for ind in keys(constraint))
+        @test length(constraint) == length(representative_t)
+        @test observed_t == Set(representative_t)
+        @test isempty(intersect(observed_t, represented_t))
+        @fetch unit_flow = m.ext[:spineopt].variables
+        uc = user_constraint(:emission_limit)
+        s = stochastic_scenario(:realisation)
+        n = node(:power_node)
+        d = direction(:to_node)
+        for t in representative_t
+            observed_con = constraint_object(constraint[(user_constraint=uc, stochastic_path=[s], t=t)])
+            expected_con = @build_constraint(
+                unit_flow[unit(:power_plant_a), n, d, s, t] + 2 * unit_flow[unit(:power_plant_b), n, d, s, t] >= 0
+            )
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
     end
 end
 
@@ -495,7 +505,6 @@ end
 end
 
 @testset "more user constraints" begin
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -538,33 +547,35 @@ end
         ],
     )
     @testset "constraint_user_constraint_must_run" begin
-        _load_test_data(url_in, test_data)
-        rhs = 16
-        units_on_coeff = 1
-        objects = [["user_constraint", "constraint_x"]]
-        relationships = [["unit__user_constraint", ["pwrplant", "constraint_x"]]]
-        object_parameter_values = [
-            ["user_constraint", "constraint_x", "constraint_sense", :>=],
-            ["user_constraint", "constraint_x", "right_hand_side", rhs],
-        ]
-        relationship_parameter_values = [
-            ["unit__user_constraint", ["pwrplant", "constraint_x"], "coefficient_for_units_on", units_on_coeff]
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        for (con_key, con) in m.ext[:spineopt].constraints[:user_constraint]
-            t_duration = duration(con_key.t)
-            var_key = (unit(:pwrplant), stochastic_scenario(:realisation), con_key.t)
-            expected_con = @build_constraint(t_duration * units_on_coeff * var_units_on[var_key...] >= t_duration * rhs)
-            observed_con = constraint_object(con)
-            @test _is_constraint_equal(observed_con, expected_con)
+        with_connection_open(url_in) do
+            _load_test_data(url_in, test_data)
+            rhs = 16
+            units_on_coeff = 1
+            objects = [["user_constraint", "constraint_x"]]
+            relationships = [["unit__user_constraint", ["pwrplant", "constraint_x"]]]
+            object_parameter_values = [
+                ["user_constraint", "constraint_x", "constraint_sense", :>=],
+                ["user_constraint", "constraint_x", "right_hand_side", rhs],
+            ]
+            relationship_parameter_values = [
+                ["unit__user_constraint", ["pwrplant", "constraint_x"], "coefficient_for_units_on", units_on_coeff]
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_units_on = m.ext[:spineopt].variables[:units_on]
+            for (con_key, con) in m.ext[:spineopt].constraints[:user_constraint]
+                t_duration = duration(con_key.t)
+                var_key = (unit(:pwrplant), stochastic_scenario(:realisation), con_key.t)
+                expected_con = @build_constraint(t_duration * units_on_coeff * var_units_on[var_key...] >= t_duration * rhs)
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
         end
     end
 end

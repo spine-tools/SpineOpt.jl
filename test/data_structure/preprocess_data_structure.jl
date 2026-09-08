@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+const url_in = "sqlite://"
+
 @testset "process_lossless_bidirectional_connections" begin
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [["connection", "connection_ab"], ["node", "node_a"], ["node", "node_b"]],
         :relationships => [
@@ -28,8 +29,10 @@
         :object_parameter_values =>
             [["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"]],
     )
-    _load_test_data(url_in, test_data)    
-    using_spinedb(url_in, SpineOpt)
+    with_connection_open(url_in) do
+        _load_test_data(url_in, test_data)
+        using_spinedb(url_in, SpineOpt)
+    end
     SpineOpt.process_lossless_bidirectional_connections()
     conn_ab = connection(:connection_ab)
     n_a = node(:node_a)
@@ -48,8 +51,8 @@
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_a, node2=n_b) == 1
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_b, node2=n_a) == 1
 end
+
 @testset "expand groups" begin
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["stochastic_structure", "ss"],
@@ -71,8 +74,10 @@ end
             ["units_on__stochastic_structure", ["unit_group_ab", "ss"]],
         ],
     )
-    _load_test_data(url_in, test_data)    
-    using_spinedb(url_in, SpineOpt)
+    with_connection_open(url_in) do
+        _load_test_data(url_in, test_data)
+        using_spinedb(url_in, SpineOpt)
+    end
     n_a = node(:node_a)
     n_b = node(:node_b)
     ng_ab = node(:node_group_ab)
@@ -89,13 +94,13 @@ end
     @test all((node=n, stochastic_structure=ss) in node__stochastic_structure() for n in (ng_ab, n_a, n_b))
     @test all((unit=u, stochastic_structure=ss) in units_on__stochastic_structure() for u in (ug_ab, u_a, u_b))
 end
+
 @testset "lossless_bidirectional_capacities" begin
     conn_r = 0.9
     conn_x = 0.1
     conn_cap_ab = 80
     conn_cap_bc = 100
     conn_cap_ca = 150
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["grid", "electricity"],
@@ -179,22 +184,24 @@ end
             ],
         ],
     )
-    _load_test_data(url_in, test_data)
-    m = run_spineopt(url_in; log_level=0, optimize=false)
-    capacities_dict = Dict(
-        connection(:connection_ab) => conn_cap_ab,
-        connection(:connection_bc) => conn_cap_bc,
-        connection(:connection_ca) => conn_cap_ca,
-    )
-    @testset for (conn, n1, n2) in (
-        (connection(:connection_ab), node(:node_a), node(:node_b)),
-        (connection(:connection_bc), node(:node_b), node(:node_c)),
-        (connection(:connection_ca), node(:node_c), node(:node_a)),
-    )
-        @test capacity_per_connection(connection=conn, node=n1, direction=direction(:from_node)) == capacities_dict[conn]
-        @test capacity_per_connection(connection=conn, node=n1, direction=direction(:to_node)) == capacities_dict[conn]
-        @test capacity_per_connection(connection=conn, node=n2, direction=direction(:from_node)) == capacities_dict[conn]
-        @test capacity_per_connection(connection=conn, node=n2, direction=direction(:to_node)) == capacities_dict[conn]
+    with_connection_open(url_in) do
+        _load_test_data(url_in, test_data)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        capacities_dict = Dict(
+            connection(:connection_ab) => conn_cap_ab,
+            connection(:connection_bc) => conn_cap_bc,
+            connection(:connection_ca) => conn_cap_ca,
+        )
+        @testset for (conn, n1, n2) in (
+            (connection(:connection_ab), node(:node_a), node(:node_b)),
+            (connection(:connection_bc), node(:node_b), node(:node_c)),
+            (connection(:connection_ca), node(:node_c), node(:node_a)),
+        )
+            @test capacity_per_connection(connection=conn, node=n1, direction=direction(:from_node)) == capacities_dict[conn]
+            @test capacity_per_connection(connection=conn, node=n1, direction=direction(:to_node)) == capacities_dict[conn]
+            @test capacity_per_connection(connection=conn, node=n2, direction=direction(:from_node)) == capacities_dict[conn]
+            @test capacity_per_connection(connection=conn, node=n2, direction=direction(:to_node)) == capacities_dict[conn]
+        end
     end
     #=
     NOTE!
@@ -203,7 +210,6 @@ end
     place where they are necessary.
     =#
     @testset "_reorder_dimensions!" begin
-        url_in = "sqlite://"
         institutions = ["KTH", "VTT"]
         countries = ["Sweden", "France", "Finland"]
         data = Dict(
@@ -226,9 +232,11 @@ end
                 ["institution__country__country", ["VTT", "Finland", "Sweden"], "mobility", true],
             ]
         )
-        _load_test_data_without_template(url_in, data)
         Y = Bind()
-        using_spinedb(url_in, Y)
+        with_connection_open(url_in) do
+            _load_test_data_without_template(url_in, data)
+            using_spinedb(url_in, Y)
+        end
         icc = Y.institution__country__country
         icc_orig = deepcopy(icc)
         original_names = [:institution, :country1, :country2]
@@ -284,7 +292,6 @@ end
         @test !(Y.mobility(institution=Y.institution(:KTH), country1=Y.country(:France), country2=Y.country(:Sweden)))
     end
     @testset "_add_dimension!" begin
-        url_in = "sqlite://"
         institutions = ["KTH", "VTT"]
         countries = ["Sweden", "France"]
         cities = ["Stockholm", "Paris"]
@@ -321,9 +328,11 @@ end
                 ["institution__country", ["KTH", "France"], "people_count", 1],
             ]
         )
-        _load_test_data_without_template(url_in, data)
         Y = Bind()
-        using_spinedb(url_in, Y)
+        with_connection_open(url_in) do
+            _load_test_data_without_template(url_in, data)
+            using_spinedb(url_in, Y)
+        end
         ic1 = Y.institution__country
         ic2 = deepcopy(ic1)
         ic3 = deepcopy(ic1)

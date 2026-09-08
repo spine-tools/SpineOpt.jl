@@ -22,18 +22,18 @@ objective_function_reference_values = Dict(
     # Doing this separately minimizes Julia-PyCall garbage collection crashes.
     if file == "multi_stage_model_tutorial.json"
         url = "sqlite://"
-        SpineInterface.open_connection(url)
-        import_data(url, input_data, "No comment")
-        m = prepare_spineopt(url; upgrade=false)
-        SpineInterface.close_connection(url) # Close DB-connection as early as possible to avoid PyCall crashes.
-        run_spineopt!(m, nothing; log_level=0)
+        with_connection_open(url) do
+            import_data(url, input_data, "No comment")
+            m = prepare_spineopt(url; upgrade=false)
+            run_spineopt!(m, nothing; log_level=0)
+        end
     else # The rest of the testsets can be run directly from JSON.
         m = run_spineopt(input_data, nothing; log_level=0, upgrade=false)
     end
     @test termination_status(m) == MOI.OPTIMAL
     mip_cases = ("6_unit_system.json", "unit_commitment.json", "multi_stage_model_tutorial.json")
     if file in mip_cases
-        @test abs(objective_value(m) - obj_fn_val) / obj_fn_val ≤ 0.01 
+        @test abs(objective_value(m) - obj_fn_val) / obj_fn_val ≤ 0.01
     else
         @test abs(objective_value(m) - obj_fn_val) < 1e-4
     end

@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const url_in = "sqlite://"
+
 function _test_save_connection_avg_throughflow_setup()
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -69,93 +70,99 @@ function _test_save_connection_avg_throughflow_setup()
         ]],
     )
     _load_test_data(url_in, test_data)
-    url_in
 end
 
 function test_save_connection_avg_throughflow()
     @testset "save_connection_avg_throughflow_unidirectional" begin
         # The case where the connection has a single connection__from_node and connection__to_node from node a to b.
-        url_in = _test_save_connection_avg_throughflow_setup()
-        m = run_spineopt(url_in; log_level=0)
-        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
-        @test length(connection_avg_throughflow) == 2
-        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        key = (connection=connection(:connection_ab), node=node(:node_b))
-        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
-        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
-        @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        with_connection_open(url_in) do
+            _test_save_connection_avg_throughflow_setup()
+            m = run_spineopt(url_in; log_level=0)
+            connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
+            @test length(connection_avg_throughflow) == 2
+            t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            key = (connection=connection(:connection_ab), node=node(:node_b))
+            key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+            key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
+            @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        end
     end
     @testset "save_connection_avg_throughflow_unidirectional_imbalanced_terminal_a" begin
-        # The case where the connection has connection__from_node for both node a and b 
+        # The case where the connection has connection__from_node for both node a and b
         # and a single connection__to_node for node b.
-        url_in = _test_save_connection_avg_throughflow_setup()
-        relationships = [
-            ["connection__from_node", ["connection_ab", "node_b"]],
-        ]
-        SpineInterface.import_data(url_in; relationships=relationships)
-        m = run_spineopt(url_in; log_level=0)
-        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
-        @test length(connection_avg_throughflow) == 2
-        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        key = (connection=connection(:connection_ab), node=node(:node_b))
-        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
-        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
-        @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        with_connection_open(url_in) do
+            _test_save_connection_avg_throughflow_setup()
+            relationships = [
+                ["connection__from_node", ["connection_ab", "node_b"]],
+            ]
+            SpineInterface.import_data(url_in; relationships=relationships)
+            m = run_spineopt(url_in; log_level=0)
+            connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
+            @test length(connection_avg_throughflow) == 2
+            t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            key = (connection=connection(:connection_ab), node=node(:node_b))
+            key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+            key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
+            @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        end
     end
     @testset "save_connection_avg_throughflow_unidirectional_imbalanced_terminal_b" begin
-        # The case where the connection has connection__to_node for both node a and b 
+        # The case where the connection has connection__to_node for both node a and b
         # and a single connection__from_node for node a.
-        url_in = _test_save_connection_avg_throughflow_setup()
-        relationships = [
-            ["connection__to_node", ["connection_ab", "node_a"]],
-        ]
-        SpineInterface.import_data(url_in; relationships=relationships)
-        m = run_spineopt(url_in; log_level=0)
-        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
-        @test length(connection_avg_throughflow) == 2
-        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        key = (connection=connection(:connection_ab), node=node(:node_b))
-        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
-        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
-        @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        with_connection_open(url_in) do
+            _test_save_connection_avg_throughflow_setup()
+            relationships = [
+                ["connection__to_node", ["connection_ab", "node_a"]],
+            ]
+            SpineInterface.import_data(url_in; relationships=relationships)
+            m = run_spineopt(url_in; log_level=0)
+            connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
+            @test length(connection_avg_throughflow) == 2
+            t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            key = (connection=connection(:connection_ab), node=node(:node_b))
+            key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+            key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
+            @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        end
     end
     @testset "save_connection_avg_throughflow_bidirectional" begin
         # The case where the connection between node a and b is bidirectional, including the ptdf calculation.
-        url_in = _test_save_connection_avg_throughflow_setup()
-        objects = [
-            ["grid", "electricity"],
-        ]
-        relationships = [
-            ["node__grid", ["node_a", "electricity"]],
-            ["node__grid", ["node_b", "electricity"]],
-        ]
-        object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_active", true],
-            ["connection", "connection_ab", "reactance", 0.1],
-            ["connection", "connection_ab", "resistance", 0.9],
-            ["grid", "electricity", "physics_type", "ptdf_physics"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=0)
-        connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
-        @test length(connection_avg_throughflow) == 2
-        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        key = (connection=connection(:connection_ab), node=node(:node_b))
-        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
-        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
-        @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        with_connection_open(url_in) do
+            _test_save_connection_avg_throughflow_setup()
+            objects = [
+                ["grid", "electricity"],
+            ]
+            relationships = [
+                ["node__grid", ["node_a", "electricity"]],
+                ["node__grid", ["node_b", "electricity"]],
+            ]
+            object_parameter_values = [
+                ["connection", "connection_ab", "monitoring_active", true],
+                ["connection", "connection_ab", "reactance", 0.1],
+                ["connection", "connection_ab", "resistance", 0.9],
+                ["grid", "electricity", "physics_type", "ptdf_physics"],
+                ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+                ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0)
+            connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_throughflow]
+            @test length(connection_avg_throughflow) == 2
+            t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            key = (connection=connection(:connection_ab), node=node(:node_b))
+            key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+            key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
+            @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
+        end
     end
 end
 
 function _test_save_contingency_is_binding_setup()
-    url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     test_data = Dict(
@@ -220,114 +227,116 @@ function _test_save_contingency_is_binding_setup()
         ],
     )
     _load_test_data(url_in, test_data)
-    url_in, url_out, file_path_out
+    url_out, file_path_out
 end
 
 function test_save_contingency_is_binding()
     @testset "save_contingency_is_binding" begin
-        url_in, url_out, file_path_out = _test_save_contingency_is_binding_setup()
-        conn_r = 0.9
-        conn_x = 0.1
-        conn_emergency_cap_ab = 80
-        conn_emergency_cap_bc = 100
-        conn_emergency_cap_ca = 150
-        d_timestamps = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2))
-        d_values = [100, 50, 200, 75, 100]
-        demand_ = TimeSeries(d_timestamps, d_values, false, false)
-        objects = [
-            ["grid", "electricity"],
-            ["report", "report_x"],
-            #FIXME: Another report with the same output will fail the test by an error
-            # Uncomment the following line and that in "relationships" to see the error
-            # ["report", "report_y"],
-            ["output", "contingency_is_binding"],
-        ]
-        relationships = [
-            ["connection__from_node", ["connection_ab", "node_b"]],
-            ["connection__to_node", ["connection_ab", "node_a"]],
-            ["connection__from_node", ["connection_bc", "node_c"]],
-            ["connection__to_node", ["connection_bc", "node_b"]],
-            ["connection__from_node", ["connection_ca", "node_a"]],
-            ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__grid", ["node_a", "electricity"]],
-            ["node__grid", ["node_b", "electricity"]],
-            ["node__grid", ["node_c", "electricity"]],
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
-            ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
-            ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
-            ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
-            ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
-            ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
-            ["report__output", ["report_x", "contingency_is_binding"]],
-            # ["report__output", ["report_y", "contingency_is_binding"]],
-        ]
-        object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_active", true],
-            ["connection", "connection_ab", "reactance", conn_x],
-            ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_bc", "monitoring_active", true],
-            ["connection", "connection_bc", "reactance", conn_x],
-            ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_active", true],
-            ["connection", "connection_ca", "reactance", conn_x],
-            ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "lodf_physics"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "contingency_active", true],
-            ["node", "node_c", "demand", unparse_db_value(demand_)],
-            ["node", "node_b", "demand", unparse_db_value(-demand_)],
-        ]
-        relationship_parameter_values = [
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
-            [
-                "connection__from_node",
-                ["connection_ab", "node_a"],
-                "connection_emergency_capacity",
-                conn_emergency_cap_ab,
-            ],
-            [
-                "connection__from_node",
-                ["connection_bc", "node_b"],
-                "connection_emergency_capacity",
-                conn_emergency_cap_bc,
-            ],
-            [
-                "connection__from_node",
-                ["connection_ca", "node_c"],
-                "connection_emergency_capacity",
-                conn_emergency_cap_ca,
-            ],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out; log_level=0, optimize=true)
-        O = Bind()
-        using_spinedb(url_out, O)
-        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-        @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
-        conn_cont = connection(:connection_ca)
-        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_ab))
-        demand_pv = parameter_value(demand_)
-        @testset for (t, obs) in val
-            exp = demand_pv(t=t) > 200 ? 1.0 : 0.0 # FIXME? Originally `>=` but no longer works with a finer temporal resolution?
-            @test obs == exp
+        with_connection_open(url_in) do
+            url_out, file_path_out = _test_save_contingency_is_binding_setup()
+            conn_r = 0.9
+            conn_x = 0.1
+            conn_emergency_cap_ab = 80
+            conn_emergency_cap_bc = 100
+            conn_emergency_cap_ca = 150
+            d_timestamps = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2))
+            d_values = [100, 50, 200, 75, 100]
+            demand_ = TimeSeries(d_timestamps, d_values, false, false)
+            objects = [
+                ["grid", "electricity"],
+                ["report", "report_x"],
+                #FIXME: Another report with the same output will fail the test by an error
+                # Uncomment the following line and that in "relationships" to see the error
+                # ["report", "report_y"],
+                ["output", "contingency_is_binding"],
+            ]
+            relationships = [
+                ["connection__from_node", ["connection_ab", "node_b"]],
+                ["connection__to_node", ["connection_ab", "node_a"]],
+                ["connection__from_node", ["connection_bc", "node_c"]],
+                ["connection__to_node", ["connection_bc", "node_b"]],
+                ["connection__from_node", ["connection_ca", "node_a"]],
+                ["connection__to_node", ["connection_ca", "node_c"]],
+                ["node__grid", ["node_a", "electricity"]],
+                ["node__grid", ["node_b", "electricity"]],
+                ["node__grid", ["node_c", "electricity"]],
+                ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
+                ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
+                ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
+                ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
+                ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
+                ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
+                ["report__output", ["report_x", "contingency_is_binding"]],
+                # ["report__output", ["report_y", "contingency_is_binding"]],
+            ]
+            object_parameter_values = [
+                ["connection", "connection_ab", "monitoring_active", true],
+                ["connection", "connection_ab", "reactance", conn_x],
+                ["connection", "connection_ab", "resistance", conn_r],
+                ["connection", "connection_bc", "monitoring_active", true],
+                ["connection", "connection_bc", "reactance", conn_x],
+                ["connection", "connection_bc", "resistance", conn_r],
+                ["connection", "connection_ca", "monitoring_active", true],
+                ["connection", "connection_ca", "reactance", conn_x],
+                ["connection", "connection_ca", "resistance", conn_r],
+                ["grid", "electricity", "physics_type", "lodf_physics"],
+                ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+                ["connection", "connection_ca", "contingency_active", true],
+                ["node", "node_c", "demand", unparse_db_value(demand_)],
+                ["node", "node_b", "demand", unparse_db_value(-demand_)],
+            ]
+            relationship_parameter_values = [
+                ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+                [
+                    "connection__from_node",
+                    ["connection_ab", "node_a"],
+                    "connection_emergency_capacity",
+                    conn_emergency_cap_ab,
+                ],
+                [
+                    "connection__from_node",
+                    ["connection_bc", "node_b"],
+                    "connection_emergency_capacity",
+                    conn_emergency_cap_bc,
+                ],
+                [
+                    "connection__from_node",
+                    ["connection_ca", "node_c"],
+                    "connection_emergency_capacity",
+                    conn_emergency_cap_ca,
+                ],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            rm(file_path_out; force=true)
+            m = run_spineopt(url_in, url_out; log_level=0, optimize=true)
+            O = Bind()
+            using_spinedb(url_out, O)
+            var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+            @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
+            conn_cont = connection(:connection_ca)
+            val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_ab))
+            demand_pv = parameter_value(demand_)
+            @testset for (t, obs) in val
+                exp = demand_pv(t=t) > 200 ? 1.0 : 0.0 # FIXME? Originally `>=` but no longer works with a finer temporal resolution?
+                @test obs == exp
+            end
+            val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_bc))
+            @testset for (t, obs) in val
+                exp = demand_pv(t=t) >= 100 ? 1.0 : 0.0
+                @test obs == exp
+            end #TODO: The last 3 timesteps fail?
         end
-        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_bc))
-        @testset for (t, obs) in val
-            exp = demand_pv(t=t) >= 100 ? 1.0 : 0.0
-            @test obs == exp
-        end #TODO: The last 3 timesteps fail?
     end
 end
 
