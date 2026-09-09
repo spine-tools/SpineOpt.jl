@@ -76,17 +76,17 @@ function _ac_flow_connection_node_indices_wdir(
 )
     # unique not needed here?
     ind = unique(
-                vcat(
-                    [
-                        (connection=conn, node=n1, direction=direction(:from_node) )
-                        for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node1=node)
-                            if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
-                    ],
-                    [
-                        (connection=conn, node=n2, direction=direction(:to_node) )
-                        for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node2=node)
-                            if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
-                    ]
+            vcat(
+                [
+                    (connection=conn, node=n1, direction=direction(:from_node) )
+                    for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node1=node)
+                        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
+                ],
+                [
+                    (connection=conn, node=n2, direction=direction(:to_node) )
+                    for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection, node2=node)
+                        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
+                ]
         )
     )
 end

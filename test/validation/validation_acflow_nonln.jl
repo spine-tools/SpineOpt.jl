@@ -120,6 +120,15 @@ function setup_pajarito_solver()
     ]
 end
 
+function setup_juniper_solver()
+    nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
+    solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
+    object_parameter_values = [      
+        ["model", "instance", "solver_mip", "Juniper.jl"],
+        ["model", "instance", "solver_mip_options", solver_options],
+    ]
+end
+
 """
     test_ac_opf_singleconn_socp()
     Testing the voltage of the demand node when there is a real power demand behind a single connection.
@@ -308,15 +317,10 @@ end
 """
 function test_ac_opf_line_capacitance_socp()
     @testset "constraint_ac_opf_line_capacitance" begin
-   
-        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
-        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
-
         url_in = _test_socp_formulation_setup()
-        object_parameter_values = [
-            ["model", "instance", "solver_mip", "Juniper.jl"],
-            ["model", "instance", "solver_mip_options", solver_options],
-            ["node", "node_b", "demand_reactive", 0.0],
+        object_parameter_values = vcat(
+            setup_juniper_solver(),
+            [["node", "node_b", "demand_reactive", 0.0],
             ["node", "node_b", "min_voltage", 1.0],
             ["node", "node_b", "max_voltage", 1.1],
             ["node", "node_c", "max_voltage", 1.1],
@@ -326,7 +330,7 @@ function test_ac_opf_line_capacitance_socp()
             ["connection","connection_bc","reactance",0.1],
             ["connection", "connection_bc", "line_shunt_susceptance", 0.2],
             ["connection","connection_bc","connection_current_max",1.0]
-        ]
+        ])
         relationships = [
             ["node__to_unit", ["node_b", "unit_ab"]],
             ["connection__investment_temporal_block", ["connection_bc", "inve_daily"]],
@@ -354,15 +358,11 @@ function test_ac_opf_line_capacitance_socp()
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
 
-        println("voltage")
-        println(value( vsq[node(:node_b), stochastic_scenario(:parent), time_slices[1]] ) )
-        println(value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) )
-        println("produ")
-        println(
-            value(var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
+        p = value(var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
             direction(:from_node), stochastic_scenario(:parent), time_slices[1]] )
-        )
-
+        v = value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] )
+        @test v ≈ 1.0102 atol = 0.001
+        @test p ≈ 0.00102 atol = 0.0001
         # ----------------------------------------------
         # Second test considers a line which is invested
         # Here some reactive demand is introduced which forces the line investment.
@@ -371,9 +371,9 @@ function test_ac_opf_line_capacitance_socp()
             [
                 ["node", "node_c", "demand_reactive", 0.05],
                 ["connection", "connection_bc", "line_shunt_susceptance", 0.3],
-                ["connection","connection_bc","investment_count_max_cumulative", 1.0],
-                ["connection","connection_bc","connection_investment_cost", 35.0],
-                ["connection","connection_bc", "investment_variable_type", "binary"]
+                ["connection", "connection_bc", "investment_count_max_cumulative", 1.0],
+                ["connection", "connection_bc", "connection_investment_cost", 35.0],
+                ["connection", "connection_bc", "investment_variable_type", "binary"]
             ])
         relationship_parameter_values = [
             ["connection__to_node", ["connection_bc", "node_c"], "capacity_per_connection", 10.0]
@@ -409,8 +409,7 @@ function test_ac_opf_line_capacitance_socp()
         # aliases for the model OPF variables
         cinv = m.ext[:spineopt].variables[:connections_invested]
         v = Base.invokelatest(value, cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]])
-        @test v ≈ 0 atol = 0.001
-       
+        @test v ≈ 0 atol = 0.001  
     end
 end
 

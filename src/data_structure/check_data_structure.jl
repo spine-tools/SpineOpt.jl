@@ -195,8 +195,10 @@ function check_parameter_values()
     check_operating_points()
     check_ramp_parameters()
     check_node_connection_acflow_consistency()
+    check_connection_acflow_tofrom_consistency()
     check_node_grids_consistency()
     check_capability_curve_consistency()
+    check_line_AC_investments()
 end
 
 function check_model_start_smaller_than_end()
@@ -290,9 +292,31 @@ function check_node_connection_acflow_consistency()
     error_indices = [n for n in n0 if has_acflow(node=n) == false]
     _check(
         isempty(error_indices),
-        "Missing `node_voltage` definition ",
+        "Missing grid definition ",
         "for some `node` group(s): $(join(error_indices, ", ", " and ")) - ",
-        "these `nodes` have been used as end points in AC flow connections.",
+        "these `nodes` have been used as end points in AC flow connections ",
+        "but they don't have associated AC grid.",
+    )
+end
+
+function check_connection_acflow_tofrom_consistency()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true 
+            if (connection=conn, node=n1, direction=direction(:from_node)) ∉ 
+                connection__from_node()
+                push!(error_indices, (conn,n1))
+            end
+            if (connection=conn, node=n2, direction=direction(:to_node)) ∉ 
+                connection__to_node()
+                push!(error_indices, (conn,n2))
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Missing connection__from_node and connection__to_node definitions ",
+        "for AC lines: $(join(error_indices, ", ", " and "))"
     )
 end
 
@@ -324,7 +348,6 @@ function check_node_grids_consistency()
 end
 
 function check_capability_curve_consistency()
-
     error_indices = []
 
     for ind in indices(pq_capability_curve_constant)
@@ -338,6 +361,21 @@ function check_capability_curve_consistency()
             "Length of `pq_capability_curve_P_coef` must equal length of",
             "`pq_capability_curve_constant`."
         )
-        
     end 
+end
+
+function check_line_AC_investments()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true && 
+            is_candidate(connection=conn)
+            if  investment_variable_type(connection=conn) in [:linear]
+                push!(error_indices, conn)
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Linear investments are not supported when investing in AC lines: $(join(error_indices, ", ", " and "))"
+    )
 end
