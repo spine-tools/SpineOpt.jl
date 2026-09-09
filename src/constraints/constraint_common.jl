@@ -18,19 +18,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const constraint_lock = ReentrantLock()
+
 function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
     inds = indices(m)
-    if isempty(inds) # Return an empty dict if no indices
-        return m.ext[:spineopt].constraints[name] = Dict()
-    end
-    # Need to type the key based on the first element due to `Base.getindex` overwrite in misc.jl used by the unit tests.
-    cons = m.ext[:spineopt].constraints[name] = Dict{typeof(first(inds)), ConstraintRef}()
-    for ind in indices(m)
-        get!(cons, ind) do 
-            add_constraint(m, build_constraint(m, ind...))
+    constraints = if isempty(inds)
+        Dict()
+    else
+        # Need to type the key based on the first element due to `Base.getindex` overwrite in misc.jl used by the unit tests.
+        cons = Dict{typeof(first(inds)), ConstraintRef}()
+        for ind in inds
+            get!(cons, ind) do
+                constraint = build_constraint(m, ind...)
+                @lock constraint_lock add_constraint(m, constraint)
+            end
         end
+        cons
     end
-    return cons
+    @lock constraint_lock m.ext[:spineopt].constraints[name] = constraints
+    constraints
 end
 
 """

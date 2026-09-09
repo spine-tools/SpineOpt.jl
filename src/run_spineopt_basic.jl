@@ -182,7 +182,7 @@ end
 Add SpineOpt constraints to the given model.
 """
 function _add_constraints!(m; log_level=3)
-    for add_constraint! in (
+    Threads.@threads for add_constraint! in (
             add_constraint_candidate_connection_flow_lb!,
             add_constraint_candidate_connection_flow_ub!,
             add_constraint_compression_ratio!,
