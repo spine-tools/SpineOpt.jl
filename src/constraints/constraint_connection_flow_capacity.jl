@@ -69,7 +69,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
     _add_constraint!(
         m,
         :connection_reverse_flow_capacity,
-        constraint_connection_reverse_flow_capacity_indices,
+        constraint_connection_acflow_capacity_indices,
         _build_constraint_connection_reverse_flow_capacity,
     )
 end
@@ -105,7 +105,8 @@ end
 """
     _build_constraint_connection_reverse_flow_capacity(m, conn, ng, d, s_path, t)
 
-    Creates a lower bound constraint for connection flow. Used for real power of AC 
+    Creates a lower bound constraint for negative connection flow. Used for the 
+    real power of AC 
     connections. 
 """
 function _build_constraint_connection_reverse_flow_capacity(m, conn, ng, d, s_path, t)
@@ -144,13 +145,13 @@ function constraint_connection_flow_capacity_indices(m::Model)
 end
 
 """
-    constraint_connection_reverse_flow_capacity_indices(m::Model)
+    constraint_connection_acflow_capacity_indices(m::Model)
 
     Spits out the indices for connection capacity constraint in reverse direction.
     This constraint is written for AC flow connections where either source or destination
     node related connection_capacity is given.
 """
-function constraint_connection_reverse_flow_capacity_indices(m::Model) 
+function constraint_connection_acflow_capacity_indices(m::Model) 
     # create the list of connection, node, direction indices pertaining to AC connections
     a = Set(_ac_flow_connection_node_indices_wdir(m))
     # filter the original list of indices

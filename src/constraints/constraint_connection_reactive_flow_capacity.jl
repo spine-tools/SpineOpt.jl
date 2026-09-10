@@ -65,13 +65,13 @@ function add_constraint_connection_reactive_flow_capacity!(m::Model)
     _add_constraint!(
         m,
         :connection_reactive_flow_capacity,
-        constraint_connection_reverse_flow_capacity_indices,
+        constraint_connection_acflow_capacity_indices,
         _build_constraint_connection_reactive_flow_capacity,
     )
     _add_constraint!(
         m,
         :connection_reverse_reactive_flow_capacity,
-        constraint_connection_reverse_flow_capacity_indices,
+        constraint_connection_acflow_capacity_indices,
         _build_constraint_connection_reverse_reactive_flow_capacity,
     )
 end

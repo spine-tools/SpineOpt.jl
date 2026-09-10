@@ -148,7 +148,7 @@ end
 
 function constraint_connection_line_charging_indices(m::Model)
     (
-    x for x in constraint_connection_reverse_flow_capacity_indices(m)
+    x for x in constraint_connection_acflow_capacity_indices(m)
         if x.connection in indices(line_shunt_susceptance)
     )
 end
