@@ -17,10 +17,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_nodal_balance!(m::Model)
+@doc raw"""
+As, [node](@ref)s represent electrical buses, they are the places where reactive
+power balance is enforced. 
+A reactive power balance is created for each [node](@ref) for all `node_stochastic_time_indices`
+if the node belongs to an AC grid. The balance consists of unit flows and flows created 
+by AC connections. In addition, the power lines themselves inject reactive power according
+to their Pi-model.
+    
+```math
+\begin{aligned}
+& \sum_{conn} v^{connection\_flow\_reactive}_{(conn,n,to\_node,s,t)}
+- \sum_{conn} v^{connection\_flow\_reactive}_{(conn,n,from\_node,s,t)} \\
+& \sum_{conn} v^{line\_charging}_{(conn,n,to\_node,s,t)} + \sum_{conn} v^{line\_charging}_{(conn,n,from\_node,s,t)} \\
+& +  \sum_{u} v^{unit\_flow\_reactive}_{(u,n,to\_node,s,t)} - \sum_{u} v^{unit\_flow\_reactive}_{(u,n,from\_node,s,t)} \\
+& + v^{node\_voltage\_sq}_{(n,s,t)} \cdot p^{shunt\_susceptance}_{(n,s,t)}\\
+& = p^{demand\_reactive}_{(n,s,t)} \\
+& \forall n \in node:  \exists g \in grid : (n,g) \in node\_\_grid \wedge ^{}p^{physics\_type}_{(g)} = acflow\_physics \\
+& \forall (s,t)
+\end{aligned}
 
-    AC OPF reactive power balance equation for nodes.
+``` 
+    
 """
 function add_constraint_nodal_reactive_balance!(m::Model)
     _add_constraint!(m, :nodal_reactive_balance, constraint_nodal_reactive_balance_indices, 

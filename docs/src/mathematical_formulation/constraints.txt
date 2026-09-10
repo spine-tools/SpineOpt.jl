@@ -210,6 +210,28 @@ For further explanation on setting up a database for nodal lossless DC power flo
 
 @@add_constraint_node_voltage_angle!
 
+### [Radial AC power flows](@id radial-AC-flows-math)
+
+There are three implementations of the radial AC power flow model. Two of these are based on second-order conic programming (SOCP) relaxation of an alternative formulation of the optimal power flow problem, as presented in [Kocuk et al. Strong SOCP relaxations for the optimal power flow problem](https://doi.org/10.1287/opre.2016.1489). Connections are considered as power lines where as electrical buses are represented by nodes. A new [physics\_type](@ref) is introduced which must be used to activate the optimal AC power flow. The formulation works for radial grids, as looped grids would make the problem non-convex.
+
+#### [Reactive power balance](@id constraint_nodal_reactive_balance)
+
+While real power flows are represented by the familiar variables, the model introduces new reactive power flow variables for units and connections: [unit\_flow\_reactive](@ref var_unit_flow_reactive) and [connection\_flow\_reactive](@ref var_connection_flow_reactive) are introduced. 
+
+@@add_constraint_nodal_reactive_balance!
+
+Voltage variables [node\_voltage\_squared](@ref var_node_voltage_squared) is introduced for buses. In the SOCP relaxation formulations also variables [node\_voltageproduct\_cosine](@ref var_node_voltageproduct_cosine) and [node\_voltageproduct\_sine](@ref var_node_voltageproduct_sine) are introduced. They determine the connection flows.
+
+#### [Calculating connection flows](@id xyz)
+
+@@add_constraint_connection_flow_reactive!
+
+For real power flows the equation is quite similar:
+@@add_constraint_connection_flow_real!
+
+#### [Binding voltages together](@id constraint_node_voltages_conic)
+@@add_constraint_node_voltages_conic!
+
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
 #### [Connection intact flow PTDF](@id constraint_connection_intact_flow_ptdf)

@@ -18,16 +18,48 @@
 #############################################################################
 
 
-"""
-    add_constraint_node_voltages_conic!(m::Model)
+@doc raw"""
+The different voltage products need to be bound together with a second order 
+conic constraint. In SpineOpt a relaxation of the original equality constraint 
+is included. The constraint is written for bus (node) pairs which are connected by 
+at least one line. Thus in the full SOCP formulation
 
-    We need to add inequality constraints to create the polyhedron 
-    around the ellipsoid x^2 + y^2 + 0.5z^2 <= t^2. The inequalities
-    are of form
-    ([x,y,z] - p * t) ⋅ n <= 0,
+```math
+\begin{aligned}
+& \left(v^{node\_voltage\_sq}_{(n_{from},s,t)} - v^{node\_voltage\_sq}_{(n_{to},s,t)}\right)^2  \\
+& + \left(v^{node\_voltage\_sin}_{(n_{from},n_{to},s,t)}\right)^2 
++ \left(v^{node\_voltage\_cos}_{(n_{from},n_{to},s,t)}\right)^2 \\
+& \leq \left(v^{node\_voltage\_sq}_{(n_{from},s,t)} + v^{node\_voltage\_sq}_{(n_{to},s,t)}\right)^2  \\
+& \forall (conn, n_{from}, n_{to}) \in connection\_\_node\_\_node : \exists c \in connection, \; connection\_has\_ac\_flow(c, n_{from}, n_{to})\\
+& \forall (s,t)
+\end{aligned}
+```
 
-    where p is the tangency point on the ellipsoid and n is the surface
-    normal of the ellipsoid at the tangency point.
+Note that this second order conic constraint and thus requires compatible solver.
+
+In the linearized version of SOCP relaxation we create an outer polyhedron to approximate 
+the voltage cones. The faces are determined by
+
+```math
+\begin{aligned}
+& \left( \begin{bmatrix}  v^{node\_voltage\_cos}_{(n_{from},n_{to},s,t)} \\ 
+v^{node\_voltage\_sin}_{(n_{from},n_{to},s,t)} \\
+v^{node\_voltage\_sq}_{(n_{from},s,t)} - v^{node\_voltage\_sq}_{(n_{to},s,t)} \end{bmatrix} 
+- \textbf{p}(\theta,\phi)\, \left(  v^{node\_voltage\_sq}_{(n_{from},s,t)} 
++ v^{node\_voltage\_sq}_{(n_{to},s,t)}\right) \right) \cdot \textbf{n}(\theta,\phi) \le 0.  \\
+& \forall (conn, n_{from}, n_{to}) \in connection\_\_node\_\_node : \exists c \in connection, \; connection\_has\_ac\_flow(c, n_{from}, n_{to})\\
+& \forall (s,t) \\
+& \forall (\theta,\phi)
+\end{aligned}
+
+
+```
+
+where $\theta$ and $\phi$ are the spherical angles in a coordinate system defined by 
+the voltage variables. For each set of angles, $\textbf{p}(\theta,\phi)$ is the position 
+vector of a hyperplane tangency point on an unit ball and $\textbf{n}(\theta,\phi)$ 
+is the surface normal vector of the voltage ellipsoid in that point. 
+
 """
 function add_constraint_node_voltages_conic!(m::Model)
     instance = m.ext[:spineopt].instance
@@ -40,6 +72,17 @@ function add_constraint_node_voltages_conic!(m::Model)
     end
 end
 
+"""
+    add_constraint_node_voltages_conic!(m::Model)
+
+    We need to add inequality constraints to create the polyhedron 
+    around the ellipsoid x^2 + y^2 + 0.5z^2 <= t^2. The inequalities
+    are of form
+    ([x,y,z] - p * t) ⋅ n <= 0,
+
+    where p is the tangency point on the ellipsoid and n is the surface
+    normal of the ellipsoid at the tangency point.
+"""
 function _build_constraint_node_voltages_conic(m, n1, n2, s, t, theta, fii)
     @fetch node_voltage_squared, node_voltageproduct_cosine, node_voltageproduct_sine = m.ext[:spineopt].variables
 
@@ -71,7 +114,7 @@ end
 The different voltage products need to be bound together with a second order 
 conic constraint. In SpineOpt a relaxation of the original equality constraint 
 is included. The constraint is written for bus (node) pairs which are connected by 
-at least one line.
+at least one line. Thus in the full SOCP formulation
 
 ```math
 \begin{aligned}
@@ -84,7 +127,7 @@ at least one line.
 \end{aligned}
 ```
 
-N.B. This is a second order conic constraint and thus requires compatible solver.
+No that this second order conic constraint and thus requires compatible solver.
 """
 function _build_constraint_node_voltages_conic_socp(m::Model, n1, n2, s, t)
     @fetch node_voltage_squared, node_voltageproduct_cosine, 

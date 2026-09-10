@@ -18,14 +18,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-add_constraint_connection_flow_reactive!(m::Model)
+@doc raw"""
+When calculating the in/out [connection\_flow\_reactive](@ref var_connection_flow_reactive) 
+of a [connection](@ref) we must pay attention to the sign. For leaving node, the positive 
+direction is that of the connection, i.e. withdrawal from the node. The equation is different
+for the source and destination bus:
 
-Calculate the in/out `connection_flow_reactive` of a `connection` 
-for all `connection_flow_voltage` indices based on the voltages which are defined 
-for pairs of nodes in the voltage variables. Notice that the voltage variables 
-in most cases have been defined for a pair of adjacent nodes (buses), either
-representing the magnitude of their dot product or cross product.
+```math
+\begin{aligned}
+&v^{connection\_flow\_reactive}_{(conn,n,to\_node,s,t)} = \begin{cases}
+
+\begin{aligned} 
+& -p^{connection\_susceptance}_{(conn,s,t)} \cdot \left(  v^{node\_voltage\_sq}_{(n,s,t)} - v^{node\_voltage\_cos}_{(n,s,t)} \right) \\
+& +p^{connection\_conductance}_{(conn,s,t)} * v^{node\_voltage\_sin}_{(n,n1,s,t)}\\
+& \quad \text{if } (conn,n) \in connection\_\_from\_node
+\end{aligned} \\
+
+
+\begin{aligned} 
+& p^{connection\_susceptance}_{(conn,s,t)} \cdot \left(  v^{node\_voltage\_sq}_{(n,s,t)} - v^{node\_voltage\_cos}_{(n1,n,s,t)} \right) \\
+& +p^{connection\_conductance}_{(conn,s,t)} * v^{node\_voltage\_sin}_{(n1,n,s,t)}\\ 
+& \quad \text{if } (conn,n) \in connection\_\_to\_node
+\end{aligned}
+
+\end{cases} \\
+
+& \forall n \in node:  \exists g \in grid : (n,g) \in node\_\_grid \wedge ^{}p^{physics\_type}_{(g)} = acflow\_physics \\
+& \forall (s,t)
+\end{aligned}
+```
+
 """
 function add_constraint_connection_flow_reactive!(m::Model)
     instance = m.ext[:spineopt].instance
@@ -35,6 +57,13 @@ function add_constraint_connection_flow_reactive!(m::Model)
     end
 end
 
+"""
+Calculate the in/out `connection_flow_reactive` of a `connection` 
+for all `connection_flow_voltage` indices based on the voltages which are defined 
+for pairs of nodes in the voltage variables. Notice that the voltage variables 
+in most cases have been defined for a pair of adjacent nodes (buses), either
+representing the magnitude of their dot product or cross product.
+"""
 function  _build_constraint_connection_flow_reactive(m, conn, ng, d, s, t) 
      @fetch connection_flow_reactive, node_voltageproduct_cosine, 
         node_voltageproduct_sine, node_voltage_squared = m.ext[:spineopt].variables
@@ -71,12 +100,36 @@ function  _build_constraint_connection_flow_reactive(m, conn, ng, d, s, t)
 end
 
 
-"""
-add_constraint_connection_flow_real!(m::Model)
+@doc raw"""
+When calculating the in/out [connection\_flow](@ref var_connection_flow) 
+of a [connection](@ref) we must pay attention to the sign. For leaving node, the positive 
+direction is that of the connection, i.e. withdrawal from the node. The equation is different
+for the source and destination bus:
 
-Calculate the in/out `connection_flow` of a `connection`, referring to the
-real power transfer, for all `connection_flow_voltage` indices based on the voltages 
-which are defined for pairs of nodes in the voltage variables.
+```math
+\begin{aligned}
+&v^{connection\_flow}_{(conn,n,to\_node,s,t)} = \begin{cases}
+
+\begin{aligned} 
+& -p^{connection\_conductance}_{(conn,s,t)} \cdot \left(  v^{node\_voltage\_sq}_{(n,s,t)} - v^{node\_voltage\_cos}_{(n,n1,s,t)} \right) \\
+& +p^{connection\_susceptance}_{(conn,s,t)} * v^{node\_voltage\_sin}_{(n,n1,s,t)}\\
+& \quad \text{if } (conn,n) \in connection\_\_from\_node
+\end{aligned} \\
+
+
+\begin{aligned} 
+& p^{connection\_conductance}_{(conn,s,t)} \cdot \left(v^{node\_voltage\_cos}_{(n1,n,s,t)}  -v^{node\_voltage\_sq}_{(n,s,t)}  \right) \\
+& +p^{connection\_susceptance}_{(conn,s,t)} * v^{node\_voltage\_sin}_{(n1,n,s,t)}\\ 
+& \quad \text{if } (conn,n) \in connection\_\_to\_node
+\end{aligned}
+
+\end{cases} \\
+
+& \forall n \in node:  \exists g \in grid : (n,g) \in node\_\_grid \wedge ^{}p^{physics\_type}_{(g)} = acflow\_physics \\
+& \forall (s,t)
+\end{aligned}
+``` 
+
 """
 function add_constraint_connection_flow_real!(m::Model)
     instance = m.ext[:spineopt].instance
