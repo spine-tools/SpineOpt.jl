@@ -19,8 +19,47 @@
 #############################################################################
 
 
-"""
-    NB: the constraint uses real power capacity for the line
+@doc raw"""
+
+Variable [connection\_flow\_reactive](@ref var_connection_flow_reactive) may assume
+positive or negative values. We must limit it from both sides. The equation is 
+needed in case the line is investable.
+
+For AC lines the constraint is an estimate and there is no separate capacity
+parameter for reactive power.
+
+```math
+
+\begin{aligned}
+& \sum_{n \in ng} v^{connection\_flow\_reactive}_{(conn,n,d,s,t)} \\
+& <= \\
+& p^{capacity\_per\_connection}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)} 
+\cdot p^{capacity\_to\_flow\_conversion\_factor}_{(conn,ng,d,s,t)} \\
+& \cdot \left( p^{existing\_connections}_{(conn,s,t)} 
++ v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
+& \forall (conn,ng,d) \in indices(p^{capacity\_per\_connection}) \cap W \\
+& where \; W=\left\{ (c,i,to\_node)\;|\;\exists j:p^{connection\_has\_ac\_flow}_{(c,j,i)} \right\} 
+\cup \left\{ (c,i,from\_node)\;|\;\exists j:p^{connection\_has\_ac\_flow}_{(c,i,j)} \right\}\\
+& \forall (s,t)
+\end{aligned}
+```
+
+In the reverse direction the constraint becomes:
+```math
+
+\begin{aligned}
+& \sum_{n \in ng} v^{connection\_flow\_reactive}_{(conn,n,d,s,t)} \\
+& >= \\
+& -p^{capacity\_per\_connection}_{(conn,ng,d,s,t)} \cdot p^{availability\_factor}_{(conn,s,t)} 
+\cdot p^{capacity\_to\_flow\_conversion\_factor}_{(conn,ng,d,s,t)} \\
+& \cdot \left( p^{existing\_connections}_{(conn,s,t)} 
++ v^{connections\_invested\_available}_{(conn,s,t)} \right)\\
+& \forall (conn,ng,d) \in indices(p^{capacity\_per\_connection}) \cap W \\
+& where \; W=\left\{ (c,i,to\_node)\;|\;\exists j:p^{connection\_has\_ac\_flow}_{(c,j,i)} \right\} 
+\cup \left\{ (c,i,from\_node)\;|\;\exists j:p^{connection\_has\_ac\_flow}_{(c,i,j)} \right\}\\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_connection_reactive_flow_capacity!(m::Model)
     _add_constraint!(

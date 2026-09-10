@@ -19,12 +19,22 @@
 
 
 
-"""
-add_constraint_connection_flow_current!(m::Model)
+@doc raw"""
+The equation for power line current limit becomes
 
-Limit the maximum squared current of a `connection` which has AC flow, for all 
-    `acflow_nodepair_indices` indices. 
+```math
+\begin{aligned}
+& \left[ \left( p^{connection\_conductance}_{(conn,s,t)} \right)^2 
++ \left( p^{connection\_susceptance}_{(conn,s,t)} \right)^2 \right] \\
+& \cdot \left( v^{node\_voltage\_sq}_{(n1,s,t)} + v^{node\_voltage\_sq}_{(n2,s,t)} 
+- v^{node\_voltage\_cos}_{(n1,n2,s,t)}\right) \\
+& <= \left( p^{connection\_current\_max}_{(conn,s,t)} \right)^2\\
+& \forall (conn,n1,n2) :p^{connection\_has\_ac\_flow}_{(c,j,i)},\; 
+conn \in indices(p^{connection\_current\_max})   \\
+& \forall (s,t)
+\end{aligned}
 
+```
 
 """
 function add_constraint_connection_flow_current!(m::Model)
@@ -35,6 +45,11 @@ function add_constraint_connection_flow_current!(m::Model)
     end
 end
 
+"""
+Limit the maximum squared current of a `connection` which has AC flow, for all 
+`acflow_nodepair_indices` indices. 
+
+"""
 function _build_constraint_connection_flow_current(m, conn, n1, n2, s, t)
     @fetch connection_flow_reactive, node_voltageproduct_cosine, 
         node_voltageproduct_sine, node_voltage_squared = m.ext[:spineopt].variables
@@ -55,28 +70,6 @@ end
 function constraint_connection_flow_current_indices(m)
     (
         (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t)
-        for conn in indices(connection_current_max)
-        for (n1, n2, s, t) in acflow_nodepair_indices(m; connection=conn)
-    )
-end
-
-function add_constraint_connection_flow_current_old!(m::Model)
-    @fetch connection_flow_reactive, node_voltageproduct_cosine, 
-        node_voltageproduct_sine, node_voltage_squared = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:connection_flow_current] = Dict(
-        (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            + (connection_susceptance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-             * connection_susceptance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
-            + connection_conductance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * connection_conductance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] ) 
-                * (node_voltage_squared[n1, s, t] + node_voltage_squared[n2, s, t] 
-                - 2 * node_voltageproduct_cosine[n1, n2, s, t])
-                
-           <= connection_current_max[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * connection_current_max[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-        )   
         for conn in indices(connection_current_max)
         for (n1, n2, s, t) in acflow_nodepair_indices(m; connection=conn)
     )

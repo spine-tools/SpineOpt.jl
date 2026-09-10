@@ -21,7 +21,8 @@
 @doc raw"""
 When calculating the in/out [connection\_flow\_reactive](@ref var_connection_flow_reactive) 
 of a [connection](@ref) we must pay attention to the sign. For leaving node, the positive 
-direction is that of the connection, i.e. withdrawal from the node. The equation is different
+direction is that of the connection, i.e. withdrawal from the node. The equation in the SOCP
+formulation (non-linear and linearized) is different
 for the source and destination bus:
 
 ```math
@@ -103,8 +104,8 @@ end
 @doc raw"""
 When calculating the in/out [connection\_flow](@ref var_connection_flow) 
 of a [connection](@ref) we must pay attention to the sign. For leaving node, the positive 
-direction is that of the connection, i.e. withdrawal from the node. The equation is different
-for the source and destination bus:
+direction is that of the connection, i.e. withdrawal from the node. The equation in the SOCP
+formulation (non-linear and linearized) is different for the source and destination bus:
 
 ```math
 \begin{aligned}

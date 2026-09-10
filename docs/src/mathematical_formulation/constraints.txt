@@ -232,6 +232,21 @@ For real power flows the equation is quite similar:
 #### [Binding voltages together](@id constraint_node_voltages_conic)
 @@add_constraint_node_voltages_conic!
 
+#### [Limiting power line current](@id constraint_connection_flow_current)
+
+@@add_constraint_connection_flow_current!
+
+#### [Limiting reactive power flow](@id constraint_connection_reactive_flow_capacity)
+
+Limiting constraint for reactive power flow is needed if the line is considered as an investment. 
+
+@@add_constraint_connection_reactive_flow_capacity!
+
+#### [Limiting reactive power generation and absortion of a generator]
+
+#### [Setting the capability region of a generator]
+
+
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
 #### [Connection intact flow PTDF](@id constraint_connection_intact_flow_ptdf)
