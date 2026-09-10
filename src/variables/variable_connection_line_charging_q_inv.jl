@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    connection_line_charging_q_cand_indices(
+    line_charging_q_inv_indices(
         connection=anything,
         node=anything,
         direction=anything,
@@ -29,7 +29,7 @@
 A list of `NamedTuple`s corresponding to indices of the `xxx` variable.
 The keyword arguments act as filters for each dimension.
 """
-function connection_line_charging_q_cand_indices(
+function line_charging_q_inv_indices(
     m::Model;
     connection=anything,
     node=anything,
@@ -49,15 +49,15 @@ function connection_line_charging_q_cand_indices(
 end
 
 """
-    add_variable_line_charging_q_cand!(m::Model)
+    add_variable_line_charging_q_inv!(m::Model)
 
-Add `line_charging_q_cand` variables to model `m`, which represent capacitive line
+Add `line_charging_q_inv` variables to model `m`, which represent capacitive line
 charging of invested connections.
 """
-function add_variable_line_charging_q_cand!(m::Model)
+function add_variable_line_charging_q_inv!(m::Model)
     add_variable!(
         m,
-        :line_charging_q_cand,
-        connection_line_charging_q_cand_indices
+        :line_charging_q_inv,
+        line_charging_q_inv_indices
     )
 end

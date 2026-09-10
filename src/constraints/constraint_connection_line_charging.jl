@@ -21,7 +21,7 @@
 """
     add_constraint_connection_line_charging!()
 
-    Produces a McCormick envelope for the variable line_charging_q_cand, which
+    Produces a McCormick envelope for the variable line_charging_q_inv, which
     force the variable to the appropriate value when there is one invested 
     connection, and zero otherwise. Assumes that the total number of connections
     is either 0 or 1. 
@@ -58,12 +58,12 @@ function add_constraint_connection_line_charging!(m::Model)
 end
 
 function  _build_constraint_line_charging_tozero1(m, conn, n, d, s_path, t)
-    @fetch line_charging_q_cand, node_voltage_squared,
+    @fetch line_charging_q_inv, node_voltage_squared,
     connections_invested_available = m.ext[:spineopt].variables
 
     @build_constraint(
         + sum(
-            get(line_charging_q_cand, (conn, n, d, s, t), 0) 
+            get(line_charging_q_inv, (conn, n, d, s, t), 0) 
             for s in s_path, t in t_in_t(m; t_long=t);
             init=0,
         )
@@ -78,12 +78,12 @@ function  _build_constraint_line_charging_tozero1(m, conn, n, d, s_path, t)
 end
 
 function  _build_constraint_line_charging_tozero2(m, conn, n, d, s_path, t)
-    @fetch line_charging_q_cand, node_voltage_squared,  
+    @fetch line_charging_q_inv, node_voltage_squared,  
     connections_invested_available = m.ext[:spineopt].variables
 
     @build_constraint(
         + sum(
-            get(line_charging_q_cand, (conn, n, d, s, t), 0) 
+            get(line_charging_q_inv, (conn, n, d, s, t), 0) 
             for s in s_path, t in t_in_t(m; t_long=t);
             init=0,
         )
@@ -98,11 +98,11 @@ function  _build_constraint_line_charging_tozero2(m, conn, n, d, s_path, t)
 end
 
 function  _build_constraint_line_charging_tovalue1(m, conn, n, d, s_path, t)
-    @fetch line_charging_q_cand, node_voltage_squared,  connections_invested_available = m.ext[:spineopt].variables
+    @fetch line_charging_q_inv, node_voltage_squared,  connections_invested_available = m.ext[:spineopt].variables
 
     @build_constraint(
         + sum(
-            get(line_charging_q_cand, (conn, n, d, s, t), 0) 
+            get(line_charging_q_inv, (conn, n, d, s, t), 0) 
             for  s in s_path, t in t_in_t(m; t_long=t);
             init=0
         )
@@ -122,12 +122,12 @@ function  _build_constraint_line_charging_tovalue1(m, conn, n, d, s_path, t)
 end
 
 function  _build_constraint_line_charging_tovalue2(m, conn, n, d, s_path, t)
-    @fetch line_charging_q_cand, node_voltage_squared, 
+    @fetch line_charging_q_inv, node_voltage_squared, 
     connections_invested_available = m.ext[:spineopt].variables
 
     @build_constraint(
         + sum(
-            get(line_charging_q_cand, (conn, n, d, s, t), 0) 
+            get(line_charging_q_inv, (conn, n, d, s, t), 0) 
             for  s in s_path, t in t_in_t(m; t_long=t);
             init=0
         )

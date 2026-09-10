@@ -389,7 +389,7 @@ function test_ac_opf_line_capacitance_socp()
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
-        line_charging_q_cand = m.ext[:spineopt].variables[:line_charging_q_cand]
+        line_charging_q_inv = m.ext[:spineopt].variables[:line_charging_q_inv]
 
         v = Base.invokelatest(value, vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) 
         @test v ≈ 1.0102 atol = 0.001
@@ -699,9 +699,9 @@ end
 
 @testset "nonlinear socp formulation" begin
     #test_ac_opf_singleconn_socp()
-    # test_ac_opf_reverse_socp()
+    test_ac_opf_reverse_socp()
     # test_ac_opf_capacitance_socp()
-    test_ac_opf_line_capacitance_socp()
+    #test_ac_opf_line_capacitance_socp()
     # test_ac_opf_two_conn_socp()
     # test_ac_opf_singleconn_inve_socp()
     #test_ac_opf_capacurve()

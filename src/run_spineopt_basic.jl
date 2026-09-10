@@ -133,7 +133,7 @@ function _add_variables!(m; log_level=3)
             add_variable_connections_decommissioned!,
             add_variable_connections_invested!,
             add_variable_connections_invested_available!,
-            add_variable_line_charging_q_cand!,
+            add_variable_line_charging_q_inv!,
             add_variable_min_capacity_margin_slack!,
             add_variable_node_injection!,
             add_variable_node_pressure!,

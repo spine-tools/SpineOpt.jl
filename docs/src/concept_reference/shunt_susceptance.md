@@ -1,1 +1,1 @@
-This parameter, given for [connection](@ref), defines the per-unit susceptance created by capacitances between power line conductors and between conductors and ground. Currently this is assigned directly to the line end [node](@ref)s. In future versions this will be moved under the connection entity.
+This parameter, given for [node](@ref)s, defines the per-unit susceptance created by capacitances in an electrical bus.
