@@ -100,6 +100,7 @@ end
 
 
 function constraint_node_voltages_conic_indices(m::Model)
+    instance = m.ext[:spineopt].instance
     tangency_points = collect(zip(ac_flow_tangency_point_theta(model=instance),
         ac_flow_tangency_point_phi(model=instance)))
     (

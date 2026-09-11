@@ -25,7 +25,7 @@ function _test_acflow_setup()
             ["model", "instance"],
             ["temporal_block", "hourly"],
             ["temporal_block", "two_hourly"],
-            ["temporal_block", "investments_hourly"],
+            ["temporal_block", "inve_daily"],
             ["stochastic_structure", "deterministic"],
             ["stochastic_structure", "stochastic"],
             ["stochastic_structure", "investments_deterministic"],
@@ -39,16 +39,13 @@ function _test_acflow_setup()
             ["node", "node_b"],
             ["node", "node_c"],
             ["node", "node_group_bc"],
-
+            ["report", "report1"]
         ],
         :relationships => [
-            ["model__temporal_block", ["instance", "hourly"]],
-            ["model__temporal_block", ["instance", "two_hourly"]],
-            ["model__temporal_block", ["instance", "investments_hourly"]],
             ["model__stochastic_structure", ["instance", "deterministic"]],
             ["model__stochastic_structure", ["instance", "stochastic"]],
             ["model__stochastic_structure", ["instance", "investments_deterministic"]],
-            ["node__to_unit", ["node_a", "unit_ab"]],
+            ["model__report", ["instance", "report1"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
@@ -71,6 +68,7 @@ function _test_acflow_setup()
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
             ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
+            ["report__output", ["report1", "node_voltage_squared"]]
         ],
         :object_groups => [["node", "node_group_bc", "node_b"], ["node", "node_group_bc", "node_c"]],
         :object_parameter_values => [
@@ -78,11 +76,9 @@ function _test_acflow_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "instance", "decomposition_max_gap", "0.05"],
-            ["model", "instance", "decomposition_max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["temporal_block", "inve_daily", "resolution", Dict("type" => "duration", "data" => "24h")],
             ["grid", "grid1", "physics_type", "acflow_physics"],
             ["node", "node_group_bc", "balance_type", "none"],
             ["model", "instance", "solver_mip", "HiGHS.jl"],
@@ -107,7 +103,6 @@ end
 """
 function test_ac_opf_singleconn()
     @testset "ac_opf_singleconn" begin
-   
         url_in = _test_acflow_setup()
         object_parameter_values = [      
             ["node", "node_b", "demand_reactive", 0.1],
@@ -144,12 +139,7 @@ function test_ac_opf_singleconn()
         flowP = m.ext[:spineopt].variables[:connection_flow]
         flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
 
-        # if isdefined(Main, :Infiltrator)
-        #     Main.infiltrate(@__MODULE__, Base.@locals, @__FILE__, @__LINE__)
-        # end
-
         @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.02
-
         @test value(flowP[connection(:connection_bc), node(:node_b), 
             direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
             0.2087 atol=0.001
@@ -186,14 +176,12 @@ function test_ac_opf_singleconn_q()
             ["connection__node__node",
             ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
         ]    
-
         SpineInterface.import_data(
             url_in;
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=1, optimize=true)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
@@ -206,7 +194,7 @@ function test_ac_opf_singleconn_q()
         @test value(flowP[connection(:connection_bc), node(:node_b), 
             direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
             0.0087 atol=0.001
-            
+    
         @test value(flowQ[connection(:connection_bc), node(:node_b), 
             direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
             0.2087 atol=0.001
@@ -220,7 +208,6 @@ end
 """
 function test_ac_opf_singleconn_rev()
     @testset "ac_opf_singleconn_rev" begin
-   
         url_in = _test_acflow_setup()
         # add one more node and connection
         objects = [
@@ -259,7 +246,6 @@ function test_ac_opf_singleconn_rev()
             ["connection__node__node",
                 ["c1", "node_e", "node_d"], "connection_has_ac_flow", true]
         ]
-
         SpineInterface.import_data(
             url_in;
             objects = objects,
@@ -267,7 +253,6 @@ function test_ac_opf_singleconn_rev()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=1, optimize=true)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
@@ -275,7 +260,6 @@ function test_ac_opf_singleconn_rev()
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
         flowP = m.ext[:spineopt].variables[:connection_flow]
         flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
-
        
         @test value( vsq[node(:node_e), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.01
         @test value(flowP[connection(:c1), node(:node_e), 
@@ -290,11 +274,10 @@ end
 
 """
     test_ac_opf_singleconn_lim_I()
-    Testing the voltage of the demand node when there is a real power demand behind a single connection.
+    Testing the current limit of a single connection.
 """
 function test_ac_opf_singleconn_lim_I()
     @testset "ac_opf_singleconn_lim_I" begin
-   
         url_in = _test_acflow_setup()
         objects = [
             ["unit", "unit_x"]
@@ -331,7 +314,6 @@ function test_ac_opf_singleconn_lim_I()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=1, optimize=true)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
@@ -348,8 +330,6 @@ function test_ac_opf_singleconn_lim_I()
         @test value(flowQ[connection(:connection_bc), node(:node_b), 
             direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
             0.0087 atol=0.001
-
-        #println(SpineOpt._has_ac_flow_connection_node(m; connection=connection(:connection_bc), node=node(:node_c) ))
     end
 end
 
@@ -384,7 +364,7 @@ function test_ac_opf_singleconn_inve()
             ["unit__to_node", ["unit_x", "node_c"]],
             ["units_on__temporal_block", ["unit_x", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
-            ["connection__investment_temporal_block", ["connection_bc", "investments_hourly"]],
+            ["connection__investment_temporal_block", ["connection_bc", "inve_daily"]],
             ["connection__investment_stochastic_structure", ["connection_bc", "investments_deterministic"]],
         ]
         relationship_parameter_values = [
@@ -404,9 +384,8 @@ function test_ac_opf_singleconn_inve()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
         
         # aliases for the model OPF variables
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
@@ -461,7 +440,7 @@ function test_ac_opf_singleconn_inve_rev()
             ["node__stochastic_structure", ["node_d", "stochastic"]],
             ["node__temporal_block", ["node_e", "hourly"]],
             ["node__stochastic_structure", ["node_e", "stochastic"]],
-            ["connection__investment_temporal_block", ["c1", "investments_hourly"]],
+            ["connection__investment_temporal_block", ["c1", "inve_daily"]],
             ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]]
         ]
         relationship_parameter_values = [
@@ -480,7 +459,7 @@ function test_ac_opf_singleconn_inve_rev()
         )
 
         m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
         
         # aliases for the model OPF variables
         uflow = m.ext[:spineopt].variables[:unit_flow]
@@ -495,7 +474,8 @@ end
 """
     test_ac_opf_singleconn_lossless()
 
-    Tests the investment in an AC connection when there is only reactive flow.
+    Tests the investment in an AC connection when there is only 
+    reactive power flow in a lossless line.
 """
 function test_ac_opf_singleconn_lossless()
     @testset "ac_opf_singleconn_lossless" begin
@@ -533,7 +513,7 @@ function test_ac_opf_singleconn_lossless()
             ["node__stochastic_structure", ["node_d", "stochastic"]],
             ["node__temporal_block", ["node_e", "hourly"]],
             ["node__stochastic_structure", ["node_e", "stochastic"]],
-            ["connection__investment_temporal_block", ["c1", "investments_hourly"]],
+            ["connection__investment_temporal_block", ["c1", "inve_daily"]],
             ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]],
       
         ]
@@ -554,14 +534,15 @@ function test_ac_opf_singleconn_lossless()
 
         m = run_spineopt(url_in; log_level=1, optimize=true)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        
+        time_slices_inve = time_slice(m; temporal_block=temporal_block(:inve_daily))
+
         # aliases for the model OPF variables
         uflow = m.ext[:spineopt].variables[:unit_flow]
         flowP = m.ext[:spineopt].variables[:connection_flow]
         flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
         cinv = m.ext[:spineopt].variables[:connections_invested]
       
-        @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+        @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices_inve[1]]) == 1.0
         @test value(uflow[unit(:unit_x), node(:node_d), 
             direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) ≈ 0.0 atol=0.001
     end
@@ -574,7 +555,6 @@ end
 """
 function test_node_voltage_singleconn_lindistflow()
     @testset "constraint_node_voltage_lindistflow" begin
-       
         url_in = _test_acflow_setup()
         object_parameter_values = [
             ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
@@ -613,12 +593,12 @@ function test_node_voltage_singleconn_lindistflow()
 end
 
 @testset "validation of linear AC flow calculation" begin
-    # test_ac_opf_singleconn()
-    # test_ac_opf_singleconn_q()
-    # test_ac_opf_singleconn_rev()
-    # test_ac_opf_singleconn_lim_I()
-    #test_ac_opf_singleconn_inve()
+    test_ac_opf_singleconn()
+    test_ac_opf_singleconn_q()
+    test_ac_opf_singleconn_rev()
+    test_ac_opf_singleconn_lim_I()
+    test_ac_opf_singleconn_inve()
     test_ac_opf_singleconn_inve_rev()
-    #test_ac_opf_singleconn_lossless()
+    test_ac_opf_singleconn_lossless()
     test_node_voltage_singleconn_lindistflow()
 end
