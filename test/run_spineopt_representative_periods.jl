@@ -737,5 +737,5 @@ end
 
 @testset "run_spineopt_representative_periods" begin
    _test_representative_periods()
-   # _test_representative_periods_no_index_found() # Tasku: Disabled for some reason? Doesn't seem to pass?
+   # _test_representative_periods_no_index_found() # FIXME: Disabled for some reason? Doesn't seem to pass?
 end
