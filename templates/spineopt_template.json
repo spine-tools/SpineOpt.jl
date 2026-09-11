@@ -4185,6 +4185,12 @@
         ],
         [
             "report__output",
+            "output_resolution",
+            "duration",
+            0
+        ],
+        [
+            "report__output",
             "overwrite_results_on_rolling",
             "bool",
             0
