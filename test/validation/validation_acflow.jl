@@ -531,7 +531,6 @@ function test_ac_opf_singleconn_lossless()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=1, optimize=true)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         time_slices_inve = time_slice(m; temporal_block=temporal_block(:inve_daily))
