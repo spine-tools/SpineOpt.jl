@@ -765,7 +765,7 @@ the second containing the first.
 """
 function t_in_t(m::Model; kwargs...)
     _with_model_env(m) do
-        (m.ext[:spineopt].temporal_structure[:t_in_t]::RelationshipClass)(; kwargs...)
+        (m.ext[:spineopt].temporal_structure[:t_in_t])(; kwargs...)
     end
 end
 

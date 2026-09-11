@@ -18,6 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const url_in = "sqlite://"
+
 function _ref_setup(storage_count)
     m_start = DateTime(2023, 1, 1, 0)
     m_end = DateTime(2023, 1, 8, 0)
@@ -101,16 +103,15 @@ function _ref_setup(storage_count)
             )
         )
     end
-    url_in = "sqlite://"
     _load_test_data(url_in, test_data)
     out_file = "deleteme.sqlite"
     rm(out_file; force=true)
     url_out = "sqlite:///$out_file"
-    url_in, url_out
+    url_out
 end
 
 function _ref_investments_setup(storage_count)
-    url_in, url_out = _ref_setup(storage_count)
+    url_out = _ref_setup(storage_count)
     investment_data = Dict(
         :objects => Any[("temporal_block", "investments_flat")],
         :relationships => Any[
@@ -134,7 +135,7 @@ function _ref_investments_setup(storage_count)
         )
     end
     import_data(url_in, "Add investment data"; investment_data...)
-    url_in, url_out
+    url_out
 end
 
 function _lt_storage_data(storage_count)
@@ -159,17 +160,10 @@ function _lt_storage_data(storage_count)
             ("temporal_block", "flat", "resolution", unparse_db_value(lt_stor_res), "lt_storage_alt"),
         ],
     )
-end   
-
-function _lt_storage_setup(storage_count)
-    url_in, url_out = _ref_setup(storage_count)
-    lt_storage_data = _lt_storage_data(storage_count)
-    import_data(url_in, "Add lt storage data"; lt_storage_data...)
-    url_in, url_out
 end
 
 function _lt_storage_investments_setup(storage_count)
-    url_in, url_out = _ref_investments_setup(storage_count)
+    url_out = _ref_investments_setup(storage_count)
     lt_storage_data = _lt_storage_data(storage_count)
     lt_storage_investments_data = Dict(
         :relationships => Any[
@@ -186,83 +180,87 @@ function _lt_storage_investments_setup(storage_count)
     )
     merge!(append!, lt_storage_data, lt_storage_investments_data)
     import_data(url_in, "Add lt storage investments data"; lt_storage_data...)
-    url_in, url_out
+    url_out
 end
 
 function _test_run_spineopt_lt_storage_benders_storage_investment()
     storage_count = 1
-    url_in, url_out = _ref_investments_setup(storage_count)
-    m = run_spineopt(url_in, url_out; log_level=0)
-    R = Bind()
-    using_spinedb(url_out, R)
-    last_t = maximum(end_.(time_slice(m)))
-    extend_ts!(ts) = (ts[last_t] = NaN; ts)
-    out_pv_by_node_by_name = Dict(
-        out_name => Dict(n => parameter_value(extend_ts!(getproperty(R, out_name)(node=n))) for n in R.node())
-        for out_name in (:node_state, :storages_invested_available) 
-    )
-    url_in, url_out = _lt_storage_investments_setup(storage_count)
-    m = run_spineopt(url_in, url_out; log_level=0, filters=Dict("scenario" => "base")) do m
-        add_event_handler!(m, :window_about_to_solve) do m, k
-            @testset for out_name in keys(out_pv_by_node_by_name)
-                out_pv_by_node = out_pv_by_node_by_name[out_name]
-                inds = m.ext[:spineopt].variables_definition[out_name][:indices](m)
-                last_ind = last(sort(collect(inds)))
-                @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds if ind != last_ind)
-                var = m.ext[:spineopt].variables[out_name][last_ind]
-                fix_val = is_fixed(var) ? fix_value(var) : nothing
-                ref_val = out_pv_by_node[last_ind.node](t=last_ind.t)
-                @test fix_val == ref_val
+    with_connection_open(url_in) do
+        url_out = _ref_investments_setup(storage_count)
+        m = run_spineopt(url_in, url_out; log_level=0)
+        R = Bind()
+        using_spinedb(url_out, R)
+        last_t = maximum(end_.(time_slice(m)))
+        extend_ts!(ts) = (ts[last_t] = NaN; ts)
+        out_pv_by_node_by_name = Dict(
+            out_name => Dict(n => parameter_value(extend_ts!(getproperty(R, out_name)(node=n))) for n in R.node())
+            for out_name in (:node_state, :storages_invested_available)
+        )
+        url_out = _lt_storage_investments_setup(storage_count)
+        m = run_spineopt(url_in, url_out; log_level=0, filters=Dict("scenario" => "base")) do m
+            add_event_handler!(m, :window_about_to_solve) do m, k
+                @testset for out_name in keys(out_pv_by_node_by_name)
+                    out_pv_by_node = out_pv_by_node_by_name[out_name]
+                    inds = m.ext[:spineopt].variables_definition[out_name][:indices](m)
+                    last_ind = last(sort(collect(inds)))
+                    @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds if ind != last_ind)
+                    var = m.ext[:spineopt].variables[out_name][last_ind]
+                    fix_val = is_fixed(var) ? fix_value(var) : nothing
+                    ref_val = out_pv_by_node[last_ind.node](t=last_ind.t)
+                    @test fix_val == ref_val
+                end
             end
         end
+        @test termination_status(m) == MOI.OPTIMAL
     end
-    @test termination_status(m) == MOI.OPTIMAL
 end
 
 function _test_run_spineopt_lt_storage_benders_storage_investment_with_slack_penalty()
     storage_count = 1
-    url_in, url_out = _ref_investments_setup(storage_count)
-    m = run_spineopt(url_in, url_out; log_level=0)
-    R = Bind()
-    using_spinedb(url_out, R)
-    last_t = maximum(end_.(time_slice(m)))
-    extend_ts!(ts) = (ts[last_t] = NaN; ts)
-    out_pv_by_node_by_name = Dict(
-        out_name => Dict(n => parameter_value(extend_ts!(getproperty(R, out_name)(node=n))) for n in R.node())
-        for out_name in (:node_state, :storages_invested_available) 
-    )
-    url_in, url_out = _lt_storage_investments_setup(storage_count)
-    penalty = 100
-    slack_penalty_data = Dict(
-        :relationship_parameter_values => Any[
-            ("stage__output__node", ("lt_storage", "node_state", "storage_node$k"), "slack_penalty", penalty)
-            for k in 1:storage_count
-        ]
-    )
-    import_data(url_in, "Add penalty data"; slack_penalty_data...)
-    m = run_spineopt(url_in, url_out; log_level=0, filters=Dict("scenario" => "base")) do m
-        add_event_handler!(m, :window_about_to_solve) do m, k
-            @testset for out_name in keys(out_pv_by_node_by_name)
-                out_pv_by_node = out_pv_by_node_by_name[out_name]
-                inds = m.ext[:spineopt].variables_definition[out_name][:indices](m)
-                last_ind = last(sort(collect(inds)))
-                var = m.ext[:spineopt].variables[out_name][last_ind]
-                ref_val = out_pv_by_node[last_ind.node](t=last_ind.t)
-                if out_name === :storages_invested_available
-                    @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds if ind != last_ind)
-                    fix_val = is_fixed(var) ? fix_value(var) : nothing
-                    @test fix_val == ref_val
-                elseif out_name === :node_state
-                    @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds)
-                    cons = m.ext[:spineopt].constraints[:lt_storage_node_state_slack]
-                    @test !any(haskey(cons, ind) for ind in inds if ind != last_ind)
-                    obs_con = constraint_object(m.ext[:spineopt].constraints[:lt_storage_node_state_slack][last_ind])
-                    slack_pos = m.ext[:spineopt].variables[:lt_storage_node_state_slack_pos][last_ind]
-                    slack_neg = m.ext[:spineopt].variables[:lt_storage_node_state_slack_neg][last_ind]
-                    exp_con = @build_constraint(var + slack_pos - slack_neg == ref_val)
-                    @test _is_constraint_equal(obs_con, exp_con)
-                    @test objective_function(m).terms[slack_pos] == penalty
-                    @test objective_function(m).terms[slack_neg] == penalty
+    with_connection_open(url_in) do
+        url_out = _ref_investments_setup(storage_count)
+        m = run_spineopt(url_in, url_out; log_level=0)
+        R = Bind()
+        using_spinedb(url_out, R)
+        last_t = maximum(end_.(time_slice(m)))
+        extend_ts!(ts) = (ts[last_t] = NaN; ts)
+        out_pv_by_node_by_name = Dict(
+            out_name => Dict(n => parameter_value(extend_ts!(getproperty(R, out_name)(node=n))) for n in R.node())
+            for out_name in (:node_state, :storages_invested_available)
+        )
+        url_out = _lt_storage_investments_setup(storage_count)
+        penalty = 100
+        slack_penalty_data = Dict(
+            :relationship_parameter_values => Any[
+                ("stage__output__node", ("lt_storage", "node_state", "storage_node$k"), "slack_penalty", penalty)
+                for k in 1:storage_count
+            ]
+        )
+        import_data(url_in, "Add penalty data"; slack_penalty_data...)
+        m = run_spineopt(url_in, url_out; log_level=0, filters=Dict("scenario" => "base")) do m
+            add_event_handler!(m, :window_about_to_solve) do m, k
+                @testset for out_name in keys(out_pv_by_node_by_name)
+                    out_pv_by_node = out_pv_by_node_by_name[out_name]
+                    inds = m.ext[:spineopt].variables_definition[out_name][:indices](m)
+                    last_ind = last(sort(collect(inds)))
+                    var = m.ext[:spineopt].variables[out_name][last_ind]
+                    ref_val = out_pv_by_node[last_ind.node](t=last_ind.t)
+                    if out_name === :storages_invested_available
+                        @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds if ind != last_ind)
+                        fix_val = is_fixed(var) ? fix_value(var) : nothing
+                        @test fix_val == ref_val
+                    elseif out_name === :node_state
+                        @test !any(is_fixed(m.ext[:spineopt].variables[out_name][ind]) for ind in inds)
+                        cons = m.ext[:spineopt].constraints[:lt_storage_node_state_slack]
+                        @test !any(haskey(cons, ind) for ind in inds if ind != last_ind)
+                        obs_con = constraint_object(m.ext[:spineopt].constraints[:lt_storage_node_state_slack][last_ind])
+                        slack_pos = m.ext[:spineopt].variables[:lt_storage_node_state_slack_pos][last_ind]
+                        slack_neg = m.ext[:spineopt].variables[:lt_storage_node_state_slack_neg][last_ind]
+                        exp_con = @build_constraint(var + slack_pos - slack_neg == ref_val)
+                        @test _is_constraint_equal(obs_con, exp_con)
+                        @test objective_function(m).terms[slack_pos] == penalty
+                        @test objective_function(m).terms[slack_neg] == penalty
+                    end
                 end
             end
         end

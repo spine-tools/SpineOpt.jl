@@ -192,7 +192,7 @@ but giving `omit_template=true` removes them for more compact output.
 The `clean_to_latest` keyword cleans the output to match the latest
 template, omitting obsolete content.
 Giving `version::Int` forces migration to start from a specific version number,
-while `force=true` suppresser migration errors/warnings. 
+while `force=true` suppresser migration errors/warnings.
 Setting `remove_empty=true` removes empty categories from the output JSON.
 
 Based on [`upgrade_db`](@ref).
@@ -208,14 +208,15 @@ function upgrade_json(
 	remove_empty::Bool=false,
 )
 	@info "upgrading `$path`"
-	data = JSON.parsefile(path, use_mmap=false) 
+	data = JSON.parsefile(path, use_mmap=false)
 	# memory mapped files causing issues on windows https://discourse.julialang.org/t/error-when-trying-to-open-a-file/78782
 	db_url = "sqlite://" # In-memory db
-	SpineInterface.close_connection(db_url) # Close and reopen DB to clear its contents.
-	SpineInterface.open_connection(db_url)
-	import_data(db_url, data, "Import $path") # Import data.
-	SpineOpt.upgrade_db(db_url; log_level, version, force) # Run migration.
-	new_data = SpineInterface.parse_db_dict!(export_data(db_url)) # Export and parse migrated data.
+	new_data = nothing
+	with_connection_open(db_url) do
+    	import_data(db_url, data, "Import $path")
+    	SpineOpt.upgrade_db(db_url; log_level, version, force)
+    	new_data = SpineInterface.parse_db_dict!(export_data(db_url))
+    end
 	template = SpineOpt.template() # Load template
 	# Sub-function for cleaning out content not compatible with the latest version.
 	function _clean_to_latest!(data, template)
