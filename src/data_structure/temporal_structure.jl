@@ -78,7 +78,7 @@ end
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = get(h.block_time_slices, temporal_block, [])
 (h::TimeSliceSet)(::Anything, t) = t
 (h::TimeSliceSet)(temporal_block::Object, t) = [s for s in t if temporal_block in blocks(s)]
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, t) where {T} = unique(s for blk in temporal_blocks for s in h(blk, t))
+(h::TimeSliceSet)(temporal_blocks, t) = unique(s for blk in temporal_blocks for s in h(blk, t))
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -257,7 +257,7 @@ end
 function _coefficient_by_representative_block(representative_combination::Array, representative_blk_by_index)
     invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
     if !isempty(invalid_indexes)
-        error("there's no representative temporal block(s) with indexes $invalid_indexes") 
+        error("there's no representative temporal block(s) with indexes $invalid_indexes")
     end
     Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
 end

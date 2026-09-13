@@ -286,8 +286,10 @@ function _add_dimension!(
 )
     SI = SpineInterface
     initial_d = SI.atomic_dimensionality(rc.entity_class_graph, rc.name) # Existing dimension count
+    atom_cache = Vector{SI.Atom}(undef, SI.atomic_dimensionality(rc.vertex))
     for ent in rc.vertex.entities # Add dimensions to entities
-        ent_intact_dims = first.(SI.RelationshipAtoms(rc.vertex.relationship_graph, ent)) # Current entity dimensions.
+        SI.fill_atoms!(atom_cache, rc.vertex.relationship_graph, ent)
+        ent_intact_dims = first.(atom_cache) # Current entity dimensions.
         objs = get(dim_perm_map, ent_intact_dims, nothing)
         isnothing(objs) && throw(ArgumentError("Missing dimension permutation! $ent_intact_dims"))
         atoms = Tuple(n => o for (n, o) in zip(names, getproperty.(objs, :name)))
@@ -338,8 +340,10 @@ function _reorder_dimensions!(rc::RelationshipClass, dims::Vector{Symbol})
     return _reorder_dimensions!(rc, perm_map)
 end
 function _reorder_dimensions!(rc::RelationshipClass, perm_map::Dict{Vector{Symbol}, <:Vector{<:Integer}})
+    atoms = Vector{SpineInterface.Atom}(undef, SpineInterface.atomic_dimensionality(rc.vertex))
     for ent in rc.vertex.entities
-        ent_intact_dims = first.(SpineInterface.RelationshipAtoms(rc.vertex.relationship_graph, ent)) # Fetch edge dimensions
+        SpineInterface.fill_atoms!(atoms, rc.vertex.relationship_graph, ent)
+        ent_intact_dims = first.(atoms) # Fetch edge dimensions
         permutation = get(perm_map, ent_intact_dims, nothing) # Get permutation for this edge
         isnothing(permutation) && throw(ArgumentError("Missing dimension permutation! $ent_intact_dims"))
         for ((atom, ent2), vi) in rc.vertex.relationship_graph.edge_data # Loop over edges
@@ -361,7 +365,7 @@ function _reorder_dimensions!(rc::RelationshipClass, perm_map::Dict{Vector{Symbo
     unique!(rc.intact_dimension_combinations)
     unique!(rc.dimension_combinations)
     # Revise `atomic_dimension_choices`
-    atoms = rc.vertex.atomic_dimension_choices 
+    atoms = rc.vertex.atomic_dimension_choices
     empty!(atoms)
     for intacts in rc.intact_dimension_combinations
         for (i, intact) in enumerate(intacts)
@@ -370,7 +374,7 @@ function _reorder_dimensions!(rc::RelationshipClass, perm_map::Dict{Vector{Symbo
             else
                 if !in(intact, atoms[i])
                     push!(atoms[i], intact)
-                end 
+                end
             end
         end
     end
