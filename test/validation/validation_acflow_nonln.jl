@@ -486,7 +486,6 @@ function test_ac_opf_two_conn_socp()
     end
 end
 
-
 """
     test_ac_opf_singleconn_inve_socp()
 
@@ -695,10 +694,10 @@ function test_ac_opf_reactive_capacity_socp()
 end
 
 @testset "nonlinear socp formulation" begin
-    #test_ac_opf_singleconn_socp()
+    test_ac_opf_singleconn_socp()
     #test_ac_opf_reverse_socp()
     # test_ac_opf_capacitance_socp()
-    test_ac_opf_line_capacitance_socp()
+    # test_ac_opf_line_capacitance_socp()
     # test_ac_opf_two_conn_socp()
     # test_ac_opf_singleconn_inve_socp()
     #test_ac_opf_capacurve()

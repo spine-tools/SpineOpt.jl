@@ -150,7 +150,6 @@ function test_ac_opf_singleconn()
     end
 end
 
-
 """
     test_ac_opf_singleconn_q()
     Testing the voltage of the demand node when there is a reactive power demand behind a single connection.
@@ -200,7 +199,6 @@ function test_ac_opf_singleconn_q()
             0.2087 atol=0.001
     end
 end
-
 
 """
     test_ac_opf_singleconn_q()

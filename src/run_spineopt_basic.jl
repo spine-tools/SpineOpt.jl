@@ -1266,7 +1266,7 @@ end
 
 # Change for issue 1281
 function _collect_output_values(m)
-    #_wait_for_dual_solves(m)
+    _wait_for_dual_solves(m)
     values = Dict()
     for ((output_name, overwrite), report_names) in m.ext[:spineopt].reports_by_output
         by_suffix = get(m.ext[:spineopt].outputs, output_name, nothing)
