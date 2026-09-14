@@ -159,6 +159,7 @@ function _dismember_function(func)
 end
 
 @testset begin # Tasku: TODO: Seems like there might be a lot of warnings in the tests, so I might have to take a closer look at each set.
+    include("testsetups.jl")
     # include("data_structure/migration.jl")
     # include("data_structure/check_data_structure.jl")
     # include("data_structure/check_economic_structure.jl") 
@@ -168,10 +169,11 @@ end
     # include("data_structure/postprocess_results.jl")
     # include("expressions/expression.jl")
     # include("constraints/constraint_unit.jl") # CRASHES with multithreading?
-    #include("constraints/constraint_node.jl") # CRASHES with multithreading?
+    # include("constraints/constraint_node.jl") # CRASHES with multithreading?
     # include("constraints/constraint_connection.jl") # CRASHES with multithreading?
     # include("constraints/constraint_user_constraint.jl")
     # include("constraints/constraint_investment_group.jl") # CRASHES with multithreading?
+    #include("constraints/constraint_acflow.jl")
     # include("objective/objective.jl") # CRASHES with multithreading?
     # include("variables/variables.jl")
     # include("util/misc.jl")
@@ -181,10 +183,10 @@ end
     # include("run_spineopt_benders.jl")
     # include("run_spineopt_multi_stage.jl")
     # include("run_spineopt_investments.jl")
-    # include("run_spineopt_mga.jl") # CRASHES with multithreading?
-    # include("run_spineopt_monte_carlo.jl")
-    # include("run_spineopt_representative_periods.jl") # FREEZES with multithreading?
-    # include("run_examples.jl") # CRASHES with multithreading?
+    #include("run_spineopt_mga.jl") # CRASHES with multithreading?
+    #include("run_spineopt_monte_carlo.jl")
+    #include("run_spineopt_representative_periods.jl") # FREEZES with multithreading?
+    #include("run_examples.jl") # CRASHES with multithreading?
     # include("run_spineopt_hsj_mga.jl")
     # include("run_benchmark_data.jl") # CRASHES with multithreading?
 end

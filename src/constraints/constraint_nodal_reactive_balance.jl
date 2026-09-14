@@ -73,7 +73,8 @@ function _build_constraint_nodal_reactive_balance(m, n, s, t1)
             + sum(
                line_charging_q[conn, n1, d, s, t]
                 for (conn, n1, d, s, t) in connection_reactive_flow_indices(
-                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t1
+                    #m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t1
+                    m; node=n, stochastic_scenario=s, t=t1
                 ),
                 init=0
             )

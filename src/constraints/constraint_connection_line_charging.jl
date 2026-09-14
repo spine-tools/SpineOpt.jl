@@ -148,7 +148,18 @@ end
 
 function constraint_connection_line_charging_indices(m::Model)
     (
-    x for x in constraint_connection_acflow_capacity_indices(m)
-        if x.connection in indices(line_shunt_susceptance)
+        (connection=conn, node=ng, direction=d, stochastic_path=path, t=t)
+        for (conn, ng, d) in _ac_flow_connection_node_indices_wdir(m)
+        if is_candidate(connection=conn) && (conn in indices(line_shunt_susceptance))
+        for (t, path) in t_lowest_resolution_path(
+            m,
+            connection_flow_indices(m; connection=conn, node=ng, direction=d),
+            connections_invested_available_indices(m; connection=conn),
+        )
     )
+
+    # (
+    # x for x in constraint_connection_acflow_capacity_indices(m)
+    #     if x.connection in indices(line_shunt_susceptance)
+    # )
 end

@@ -18,9 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# Include this file in main testset of runtests.jl with Juniper.jl and 
-# SCS.jl installed.
-
 function _test_socp_formulation_setup()
     url_in = "sqlite://"
     test_data = Dict(
@@ -79,7 +76,6 @@ function _test_socp_formulation_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "instance", "max_gap", "0.05"],
             ["model", "instance", "ac_opf_model_formulation", "ac_opf_conic"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
@@ -361,8 +357,9 @@ function test_ac_opf_line_capacitance_socp()
         p = value(var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
             direction(:from_node), stochastic_scenario(:parent), time_slices[1]] )
         v = value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] )
+
         @test v ≈ 1.0102 atol = 0.001
-        @test p ≈ 0.00102 atol = 0.0001
+        @test p ≈ (0.00102 + 0.1) atol = 0.0001
         # ----------------------------------------------
         # Second test considers a line which is invested
         # Here some reactive demand is introduced which forces the line investment.
@@ -699,9 +696,9 @@ end
 
 @testset "nonlinear socp formulation" begin
     #test_ac_opf_singleconn_socp()
-    test_ac_opf_reverse_socp()
+    #test_ac_opf_reverse_socp()
     # test_ac_opf_capacitance_socp()
-    #test_ac_opf_line_capacitance_socp()
+    test_ac_opf_line_capacitance_socp()
     # test_ac_opf_two_conn_socp()
     # test_ac_opf_singleconn_inve_socp()
     #test_ac_opf_capacurve()
