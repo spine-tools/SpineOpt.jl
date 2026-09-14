@@ -3277,6 +3277,13 @@
         ],
         [
             "report__output",
+            "output_resolution",
+            null,
+            null,
+            "Temporal resolution of the output for this specific report. Overrides the output-level output_resolution if set."
+        ],
+        [
+            "report__output",
             "overwrite_results_on_rolling",
             true,
             "boolean_value_list",
@@ -4356,6 +4363,12 @@
             "report",
             "output_db_url",
             "str",
+            0
+        ],
+        [
+            "report__output",
+            "output_resolution",
+            "duration",
             0
         ],
         [

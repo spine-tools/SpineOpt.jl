@@ -585,6 +585,7 @@ function test_constraint_connection_intact_flow_ptdf()
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+            ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "1h")], # FIXME The temporal resolution needs to be symmetric for LODF and PTDF.
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -593,6 +594,12 @@ function test_constraint_connection_intact_flow_ptdf()
             ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "10h") # FIXME The stochastic structure needs to be symmetric (not branch) for LODF and PTDF.
+            ],
         ]
         SpineInterface.import_data(
             url_in;
@@ -605,25 +612,25 @@ function test_constraint_connection_intact_flow_ptdf()
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
         constraint = m.ext[:spineopt].constraints[:connection_intact_flow_ptdf]
-        @test length(constraint) == 5
+        @test length(constraint) == 6
         # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
         # And they are ordered alphabetically from spinedb_api.export_functions.export_relationships
-        @testset for (conn_name, n_to_name, n_inj_name, scen_names, t_block) in (
-            (:connection_ab, :node_b, :node_b, (:parent,), :two_hourly),
-            (:connection_bc, :node_c, :node_c, (:parent, :child), :hourly),
-            (:connection_ca, :node_c, :node_c, (:parent, :child), :hourly),
+        @testset for (conn_name, n_to_name, n_inj_names, scen_names, t_block) in (
+            (:connection_ab, :node_b, (:node_b, :node_c), (:parent,), :two_hourly),
+            (:connection_bc, :node_c, (:node_b, :node_c,), (:parent,), :hourly),
+            (:connection_ca, :node_c, (:node_b, :node_c,), (:parent,), :hourly),
         )
             conn = connection(conn_name)
             n_to = node(n_to_name)
-            n_inj = node(n_inj_name)
+            n_inj = [node(name) for name in n_inj_names]
             scenarios = (stochastic_scenario(s) for s in scen_names)
             time_slices = time_slice(m; temporal_block=temporal_block(t_block))
             @testset for (s, t) in zip(scenarios, time_slices)
                 var_conn_flow_to = var_connection_flow[conn, n_to, direction(:to_node), s, t]
                 var_conn_flow_from = var_connection_flow[conn, n_to, direction(:from_node), s, t]
-                var_n_inj = var_node_injection[n_inj, s, t]
-                ptdf_val = SpineOpt.ptdf(connection=conn, node=n_inj)
-                expected_con = @build_constraint(var_conn_flow_to - var_conn_flow_from == ptdf_val * var_n_inj)
+                var_n_inj = [var_node_injection[n, s, t] for n in n_inj]
+                ptdf_val = [SpineOpt.ptdf(connection=conn, node=n) for n in n_inj]
+                expected_con = @build_constraint(var_conn_flow_to - var_conn_flow_from == sum(ptdf_val .* var_n_inj))
                 observed_con = constraint_object(constraint[conn, n_to, [s], t])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -670,6 +677,7 @@ function test_constraint_connection_flow_lodf()
             ["grid", "electricity", "physics_type", "lodf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "contingency_active", true],
+            ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "1h")], # FIXME The temporal resolution needs to be symmetric for LODF and PTDF.
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -696,6 +704,12 @@ function test_constraint_connection_flow_lodf()
                 "connection_emergency_capacity",
                 conn_emergency_cap_ca,
             ],
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "10h") # FIXME The stochastic structure needs to be symmetric (not branch) for LODF and PTDF.
+            ],
         ]
         SpineInterface.import_data(
             url_in;
@@ -707,72 +721,55 @@ function test_constraint_connection_flow_lodf()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         constraint = m.ext[:spineopt].constraints[:connection_flow_lodf]
-        @test length(constraint) == 3
+        @test length(constraint) == 4
         conn_cont = connection(:connection_ca)
         n_cont_to = node(:node_c)
         d_to = direction(:to_node)
         d_from = direction(:from_node)
         s_parent = stochastic_scenario(:parent)
-        s_child = stochastic_scenario(:child)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         # connection_ab
         conn_mon = connection(:connection_ab)
         n_mon_to = node(:node_b)
-        expected_con = @build_constraint(
-            -conn_emergency_cap_ab
-            <=
-            (
-                + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t2h]
-                - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t2h]
-                + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
-                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t1h1]
-                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_child, t1h2]
-                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1]
-                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
+        for t in (t1h1, t1h2)
+            expected_con = @build_constraint(
+                -conn_emergency_cap_ab
+                <=
+                (
+                    + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t]
+                    - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t]
+                    + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
+                        + var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t]
+                        - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t]
+                    )
                 )
+                <=
+                conn_emergency_cap_ab
             )
-            <=
-            conn_emergency_cap_ab
-        )
-        observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_parent, s_child], t2h])
-        @test _is_constraint_equal(observed_con, expected_con)
+            observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_parent], t])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
         # connection_bc -- t1h1
         conn_mon = connection(:connection_bc)
         n_mon_to = node(:node_c)
-        expected_con = @build_constraint(
-            -conn_emergency_cap_bc
-            <=
-            (
-                + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t1h1]
-                - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t1h1]
-                + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
-                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t1h1]
-                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1]
+        for t in (t1h1, t1h2)
+            expected_con = @build_constraint(
+                -conn_emergency_cap_bc
+                <=
+                (
+                    + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t]
+                    - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t]
+                    + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
+                        + var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t]
+                        - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t]
+                    )
                 )
+                <=
+                conn_emergency_cap_bc
             )
-            <=
-            conn_emergency_cap_bc
-        )
-        observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_parent], t1h1])
-        @test _is_constraint_equal(observed_con, expected_con)
-        # connection_bc -- t1h2
-        expected_con = @build_constraint(
-            -conn_emergency_cap_bc
-            <=
-            (
-                + var_connection_flow[conn_mon, n_mon_to, d_to, s_child, t1h2]
-                - var_connection_flow[conn_mon, n_mon_to, d_from, s_child, t1h2]
-                + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
-                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_child, t1h2]
-                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
-                )
-            )
-            <=
-            conn_emergency_cap_bc
-        )
-        observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_child], t1h2])
-        @test _is_constraint_equal(observed_con, expected_con)
+            observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_parent], t])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
     end
 end
 
@@ -1425,6 +1422,7 @@ function test_constraint_connection_flow_intact_flow()
             ["connection", "connection_ca", "resistance", conn_r],
             ["grid", "electricity", "physics_type", "ptdf_physics"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+            ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "1h")], # FIXME The temporal resolution needs to be symmetric for LODF and PTDF.
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -1433,6 +1431,12 @@ function test_constraint_connection_flow_intact_flow()
             ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "10h") # FIXME The stochastic structure needs to be symmetric (not branch) for LODF and PTDF.
+            ],
         ]
         SpineInterface.import_data(
             url_in;
@@ -1446,36 +1450,32 @@ function test_constraint_connection_flow_intact_flow()
         constraint = m.ext[:spineopt].constraints[:connection_flow_intact_flow]
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
-        @test length(constraint) == 2
+        @test length(constraint) == 4
         conn_k = connection(:connection_ab)
         n_to_k = node(:node_b)
         @testset for conn_l in (connection(:connection_bc), connection(:connection_ca))
             n_to_l = last(connection__from_node(connection=conn_l)).node
-            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+            s_parent = stochastic_scenario(:parent)
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             lodf_val = SpineOpt.lodf(connection1=conn_k, connection2=conn_l)
-            expected_con = @build_constraint(
-                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1]
-                + var_connection_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1]
-                + var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1]
-                - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1]
-                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2]
-                + var_connection_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2]
-                + var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2]
-                - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2]
-                ==
-                + 2
-                * lodf_val
-                * (
-                    + var_connection_flow[conn_k, n_to_k, direction(:to_node), s_parent, t2h]
-                    - var_connection_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h]
-                    - var_connection_intact_flow[conn_k, n_to_k, direction(:to_node), s_parent, t2h]
-                    + var_connection_intact_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h]
+            for t in (t1h1, t1h2)
+                expected_con = @build_constraint(
+                    - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_parent, t]
+                    + var_connection_flow[conn_l, n_to_l, direction(:from_node), s_parent, t]
+                    + var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_parent, t]
+                    - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_parent, t]
+                    ==
+                    + lodf_val
+                    * (
+                        + var_connection_flow[conn_k, n_to_k, direction(:to_node), s_parent, t]
+                        - var_connection_flow[conn_k, n_to_k, direction(:from_node), s_parent, t]
+                        - var_connection_intact_flow[conn_k, n_to_k, direction(:to_node), s_parent, t]
+                        + var_connection_intact_flow[conn_k, n_to_k, direction(:from_node), s_parent, t]
+                    )
                 )
-            )
-            observed_con = constraint_object(constraint[conn_l, n_to_l, [s_parent, s_child], t2h])
-            @test _is_constraint_equal(observed_con, expected_con)
+                observed_con = constraint_object(constraint[conn_l, n_to_l, [s_parent], t])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
         end
     end
 end

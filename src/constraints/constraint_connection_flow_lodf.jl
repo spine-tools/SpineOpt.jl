@@ -118,7 +118,8 @@ function constraint_connection_flow_lodf_indices(m::Model)
         if all(
             [
                 contingency_active(connection=conn_cont, _default=false),
-                monitoring_active(connection=conn_mon, _default=false),                has_lodf(connection=conn_cont),
+                monitoring_active(connection=conn_mon, _default=false),
+                has_lodf(connection=conn_cont),
                 has_lodf(connection=conn_mon)
             ]
         )
