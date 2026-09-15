@@ -39,14 +39,16 @@ function acflow_nodepair_indices(
 )
     ind = unique(
         (node1=n1, node2=n2, stochastic_scenario=s, t=t)
-        for (conn, n1, n2) in indices(connection_has_ac_flow; connection=connection)
+        for (conn, n1, n2) in indices(connection_has_ac_flow; 
+            connection=connection, node1=node1, node2=node2)
             if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true
-            for (conn_, n_, d, s, t) in connection_flow_indices(m; connection=conn, node=n2, direction=direction(:to_node))
-           
+            for (conn_, n_, d, s, t) in connection_flow_indices(m; connection=conn, 
+                node=n2, direction=direction(:to_node),
+                stochastic_scenario=stochastic_scenario, t=t)
     )
     # filter the index set with respect to other indices
-    f(ind) = _index_in(ind; node1=node1, node2=node2, stochastic_scenario=stochastic_scenario, t=t)
-    filter(f, ind)            
+    #f(ind) = _index_in(ind; node1=node1, node2=node2, stochastic_scenario=stochastic_scenario, t=t)
+    #filter(f, ind)            
 end
 
 """

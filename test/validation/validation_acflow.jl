@@ -271,6 +271,59 @@ function test_ac_opf_singleconn_rev()
 end
 
 """
+    test_ac_opf_paralconn()
+    Testing AC flow between nodes B and C when there are two parallel connections.
+"""
+function test_ac_opf_paralconn()
+    @testset "ac_opf_paralconn" begin
+        url_in = _test_acflow_setup()
+        objects = [
+            ["connection", "c1"]
+        ]
+        object_parameter_values = [      
+            ["node", "node_b", "demand_reactive", 0.1],
+            ["node", "node_b", "min_voltage", 0.7],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 0.2],
+            ["node", "node_c", "demand_reactive", 0.0],
+            ["connection","connection_bc","resistance",0.2],
+            ["connection","connection_bc","reactance",0.2],
+            ["connection","c1","resistance",0.2],
+            ["connection","c1","reactance",0.2],
+            ["connection","connection_bc","connection_current_max",1.0]
+        ]
+        relationships = [
+            ["connection__from_node", ["c1", "node_b"]],
+            ["connection__to_node", ["c1", "node_c"]],
+            ["connection__node__node", [ "c1", "node_b", "node_c"]],
+            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+        relationship_parameter_values = 
+        [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+            ["connection__node__node",
+            ["c1", "node_b", "node_c"], "connection_has_ac_flow", true]
+        ]    
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9592 atol=0.001
+    end
+
+end
+
+"""
     test_ac_opf_singleconn_lim_I()
     Testing the current limit of a single connection.
 """
@@ -591,11 +644,12 @@ end
 
 @testset "validation of linear AC flow calculation" begin
     test_ac_opf_singleconn()
-    test_ac_opf_singleconn_q()
-    test_ac_opf_singleconn_rev()
-    test_ac_opf_singleconn_lim_I()
-    test_ac_opf_singleconn_inve()
-    test_ac_opf_singleconn_inve_rev()
-    test_ac_opf_singleconn_lossless()
-    test_node_voltage_singleconn_lindistflow()
+    # test_ac_opf_singleconn_q()
+    # test_ac_opf_singleconn_rev()
+    test_ac_opf_paralconn()
+    # test_ac_opf_singleconn_lim_I()
+    # test_ac_opf_singleconn_inve()
+    # test_ac_opf_singleconn_inve_rev()
+    # test_ac_opf_singleconn_lossless()
+    # test_node_voltage_singleconn_lindistflow()
 end

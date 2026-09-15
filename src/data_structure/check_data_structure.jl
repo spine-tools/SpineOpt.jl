@@ -196,6 +196,7 @@ function check_parameter_values()
     check_ramp_parameters()
     check_node_connection_acflow_consistency()
     check_connection_acflow_tofrom_consistency()
+    check_connection_acflow_direction_consistency()
     check_node_grids_consistency()
     check_capability_curve_consistency()
     check_line_AC_investments()
@@ -299,6 +300,9 @@ function check_node_connection_acflow_consistency()
     )
 end
 
+"""
+    Check that connection__from_node and connection__to_node has been set for AC connections.
+"""
 function check_connection_acflow_tofrom_consistency()
     error_indices = []
     for (conn, n1, n2) in connection__node__node()
@@ -321,6 +325,28 @@ function check_connection_acflow_tofrom_consistency()
 end
 
 """
+    Checks that parallel connections have the same direction.
+"""
+function check_connection_acflow_direction_consistency()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true 
+            for (cb, nb1, nb2) in connection__node__node(node1=n2, node2=n1)
+                if connection_has_ac_flow(connection=cb, node1=nb1, node2=nb2) == true 
+                    push!(error_indices, (n1,n2))
+                end
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Conflicting AC flow direction definitions ",
+        "for node pairs: $(join(error_indices, ", ", " and "))"
+    )
+end
+
+
+"""
     check_grid_node_relationships()
 
 Check that the possible `grids` related to `nodes` have a unique physics_type.
@@ -334,7 +360,6 @@ function check_node_grids_consistency()
         g = rel.grid
         push!(get!(physics_types_by_node, n, Set()),  physics_type(grid=g))
     end
-
     for (n, phys_types) in physics_types_by_node
         if length(phys_types) > 1 
             push!(error_indices, n)

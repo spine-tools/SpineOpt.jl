@@ -857,6 +857,9 @@ A copy of given dictionary `d` computed by applying the given function `f` to ea
 function _fdict(f, d)
     _fdict(f, keys(d), values(d))
 end
+"""
+Prepare a dictionary by applying the given function `f` to each value `v` with keys `k`.
+"""
 function _fdict(f, k, v)
     vals = collect(Any, v)
     @Threads.threads for i in eachindex(vals)
