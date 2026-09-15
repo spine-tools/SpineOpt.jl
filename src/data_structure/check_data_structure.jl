@@ -331,7 +331,7 @@ function check_connection_acflow_direction_consistency()
     error_indices = []
     for (conn, n1, n2) in connection__node__node()
         if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true 
-            for (cb, nb1, nb2) in connection__node__node(node1=n2, node2=n1)
+            for (cb, nb1, nb2) in connection__node__node(node1=n2, node2=n1, _compact=false)
                 if connection_has_ac_flow(connection=cb, node1=nb1, node2=nb2) == true 
                     push!(error_indices, (n1,n2))
                 end

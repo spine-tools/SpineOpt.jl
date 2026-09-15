@@ -177,8 +177,8 @@ end
     # include("objective/objective.jl") # CRASHES with multithreading?
     # include("variables/variables.jl")
     # include("util/misc.jl")
-    #include("validation/validation_acflow.jl")
-    include("validation/validation_acflow_nonln.jl")
+    include("validation/validation_acflow.jl")
+    #include("validation/validation_acflow_nonln.jl")
     # include("run_spineopt.jl") # CRASHES with multithreading?
     # include("run_spineopt_benders.jl")
     # include("run_spineopt_multi_stage.jl")
