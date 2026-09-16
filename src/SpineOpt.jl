@@ -244,7 +244,7 @@ end
     oldstd = stdout
     redirect_stdout(devnull)
 
-    path = joinpath(dirname(@__DIR__), "examples", "rolling_horizon.json")
+    path = joinpath(dirname(@__DIR__), "examples", "precompile.json")
     input_data = JSON.parsefile(path, use_mmap=false)
 
     @compile_workload begin
