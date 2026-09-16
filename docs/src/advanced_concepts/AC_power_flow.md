@@ -39,7 +39,7 @@ Power flow is governed by the impedance parameters given for a specific line. Th
 
 ## Results
 
-The variable [node\_voltage\_squared](@ref var_node_voltage_squared) tells the squared voltage magnitude in a bus. The variable [connection\_flow](@ref var_connection_flow) tells the real power flow in a power line, measured in the positive direction (from source to destination bus). 
+The variable [node\_voltage\_squared](@ref var_node_voltage_squared) tells the squared voltage magnitude in a bus. The variable [connection\_flow](@ref var_connection_flow) tells the real power flow in a power line, measured in the positive direction (from source to destination bus). Similarly, the variable [connection\_flow\_reactive](@ref var_connection_flow_reactive) tells the reactive power flow in a power line. See [Managing output](@ref how-to-manage-output) about how to add outputs to the model.
 
 ## Formulations
 
@@ -54,10 +54,11 @@ Selection of the formulation takes place by the model-wide parameter [ac\_opf\_m
 
 ## Creating an Example  
 If we have model that is not currently set up AC flow, we can take the following steps.
- - Create a grid object and set its  
+ - Create a grid object and set its [physics\_type](@ref) parameter to `acflow\_physics`.
  - Create two bus (node) objects, call them A and B
    - The nodes need to use the same temporal resolution. Assign them to the same temporal block via [node\_\_temporal\_block](@ref) relationship. For a more detailed description of how the temporal structure in SpineOpt can be created, see [Temporal Framework](@ref).
    - Make sure your model has a [stochastic\_structure](@ref) and it is connected to the model object by [model\_\_default\_stochastic\_structure](@ref). See [Stochastic Framework](@ref stochastic_framework) for details.
+   - Add the nodes to the grid by two [node\_\_grid](@ref) relationships with nodes A and B as the nodes. 
  - Create a unit with [unit\_\_to\_node](@ref) relationship with bus A. For this relationship set
    - [vom\_cost\_reactive](@ref) to 1.0
    - [vom\_cost](@ref) to 10.0
