@@ -2811,7 +2811,7 @@
         [
             "model",
             "write_mps_file",
-            null,
+            "write_mps_never",
             "write_mps_file_list",
             "A selector for writing an .mps file of the model."
         ],

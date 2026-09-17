@@ -21,7 +21,6 @@
 import DelimitedFiles: readdlm
 
 function _test_misc_ptdf_lodf_setup()
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -71,7 +70,6 @@ function _test_misc_ptdf_lodf_setup()
         ]],
     )
     _load_test_data(url_in, test_data)
-    url_in
 end
 
 function test_dt_fixed_duration()
@@ -99,101 +97,103 @@ end
 
 function test_write_ptdf_lodf()
     @testset "write_ptdf_lodf" begin
-        url_in = _test_misc_ptdf_lodf_setup()
-        conn_r = 0.9
-        conn_x = 0.1
-        conn_emergency_cap_ab = 80
-        conn_emergency_cap_bc = 100
-        conn_emergency_cap_ca = 150
-        objects = [["grid", "electricity"]]
-        relationships = [
-            ["connection__from_node", ["connection_ab", "node_b"]],
-            ["connection__to_node", ["connection_ab", "node_a"]],
-            ["connection__from_node", ["connection_bc", "node_c"]],
-            ["connection__to_node", ["connection_bc", "node_b"]],
-            ["connection__from_node", ["connection_ca", "node_a"]],
-            ["connection__to_node", ["connection_ca", "node_c"]],
-            ["node__grid", ["node_a", "electricity"]],
-            ["node__grid", ["node_b", "electricity"]],
-            ["node__grid", ["node_c", "electricity"]],
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
-            ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
-            ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
-            ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
-            ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
-            ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
-        ]
-        object_parameter_values = [
-            ["connection", "connection_ab", "monitoring_active", true],
-            ["connection", "connection_ab", "reactance", conn_x],
-            ["connection", "connection_ab", "resistance", conn_r],
-            ["connection", "connection_bc", "monitoring_active", true],
-            ["connection", "connection_bc", "reactance", conn_x],
-            ["connection", "connection_bc", "resistance", conn_r],
-            ["connection", "connection_ca", "monitoring_active", true],
-            ["connection", "connection_ca", "reactance", conn_x],
-            ["connection", "connection_ca", "resistance", conn_r],
-            ["grid", "electricity", "physics_type", "lodf_physics"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
-            ["connection", "connection_ca", "contingency_active", true],
-            ["model", "instance", "solver_mip", "HiGHS.jl"],
-            ["model", "instance", "solver_lp", "HiGHS.jl"],
-        ]
-        relationship_parameter_values = [
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
-            [
-                "connection__from_node",
-                ["connection_ab", "node_a"],
-                "connection_emergency_capacity",
-                conn_emergency_cap_ab,
-            ],
-            [
-                "connection__from_node",
-                ["connection_bc", "node_b"],
-                "connection_emergency_capacity",
-                conn_emergency_cap_bc,
-            ],
-            [
-                "connection__from_node",
-                ["connection_ca", "node_c"],
-                "connection_emergency_capacity",
-                conn_emergency_cap_ca,
-            ],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        using_spinedb(url_in, SpineOpt)
-        SpineOpt.generate_direction_and_reorganise_classes()
-        SpineOpt.generate_ptdf_lodf()
-        SpineOpt.write_ptdfs()
-        ptdfs = readdlm("ptdfs.csv", ',', Any, '\n')
-        @test ptdfs[1, 1:(end - 1)] == ["connection", "node_a", "node_b", "node_c"]
-        @test ptdfs[:, 1] == ["connection", "connection_ab", "connection_bc", "connection_ca"]
-        @test isapprox(
-            convert(Array{Float64,2}, ptdfs[2:end, 2:(end - 1)]),
-            [
-                0.0 -0.666666 -0.333333
-                0.0 0.333333 -0.333333
-                0.0 -0.333333 -0.666667
-            ];
-            atol=1e-5,
-        )
-        SpineOpt.write_lodfs()
-        lodfs = readdlm("lodfs.csv", ',', Any, '\n')
-        @test convert(Array{String,1}, lodfs[1, 1:(end - 1)]) ==
-              ["contingency line", "from_node", "to node", "connection_ab", "connection_bc", "connection_ca"]
-        @test convert(Array{String,1}, lodfs[:, 1]) == ["contingency line", "connection_ca"]
-        @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [1, 1])
+        with_connection_open(url_in) do
+            _test_misc_ptdf_lodf_setup()
+            conn_r = 0.9
+            conn_x = 0.1
+            conn_emergency_cap_ab = 80
+            conn_emergency_cap_bc = 100
+            conn_emergency_cap_ca = 150
+            objects = [["grid", "electricity"]]
+            relationships = [
+                ["connection__from_node", ["connection_ab", "node_b"]],
+                ["connection__to_node", ["connection_ab", "node_a"]],
+                ["connection__from_node", ["connection_bc", "node_c"]],
+                ["connection__to_node", ["connection_bc", "node_b"]],
+                ["connection__from_node", ["connection_ca", "node_a"]],
+                ["connection__to_node", ["connection_ca", "node_c"]],
+                ["node__grid", ["node_a", "electricity"]],
+                ["node__grid", ["node_b", "electricity"]],
+                ["node__grid", ["node_c", "electricity"]],
+                ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
+                ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
+                ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
+                ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
+                ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
+                ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
+            ]
+            object_parameter_values = [
+                ["connection", "connection_ab", "monitoring_active", true],
+                ["connection", "connection_ab", "reactance", conn_x],
+                ["connection", "connection_ab", "resistance", conn_r],
+                ["connection", "connection_bc", "monitoring_active", true],
+                ["connection", "connection_bc", "reactance", conn_x],
+                ["connection", "connection_bc", "resistance", conn_r],
+                ["connection", "connection_ca", "monitoring_active", true],
+                ["connection", "connection_ca", "reactance", conn_x],
+                ["connection", "connection_ca", "resistance", conn_r],
+                ["grid", "electricity", "physics_type", "lodf_physics"],
+                ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+                ["connection", "connection_ca", "contingency_active", true],
+                ["model", "instance", "solver_mip", "HiGHS.jl"],
+                ["model", "instance", "solver_lp", "HiGHS.jl"],
+            ]
+            relationship_parameter_values = [
+                ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+                ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+                [
+                    "connection__from_node",
+                    ["connection_ab", "node_a"],
+                    "connection_emergency_capacity",
+                    conn_emergency_cap_ab,
+                ],
+                [
+                    "connection__from_node",
+                    ["connection_bc", "node_b"],
+                    "connection_emergency_capacity",
+                    conn_emergency_cap_bc,
+                ],
+                [
+                    "connection__from_node",
+                    ["connection_ca", "node_c"],
+                    "connection_emergency_capacity",
+                    conn_emergency_cap_ca,
+                ],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            using_spinedb(url_in, SpineOpt)
+            SpineOpt.generate_direction_and_reorganise_classes()
+            SpineOpt.generate_ptdf_lodf()
+            SpineOpt.write_ptdfs()
+            ptdfs = readdlm("ptdfs.csv", ',', Any, '\n')
+            @test ptdfs[1, 1:(end - 1)] == ["connection", "node_a", "node_b", "node_c"]
+            @test ptdfs[:, 1] == ["connection", "connection_ab", "connection_bc", "connection_ca"]
+            @test isapprox(
+                convert(Array{Float64,2}, ptdfs[2:end, 2:(end - 1)]),
+                [
+                    0.0 -0.666666 -0.333333
+                    0.0 0.333333 -0.333333
+                    0.0 -0.333333 -0.666667
+                ];
+                atol=1e-5,
+            )
+            SpineOpt.write_lodfs()
+            lodfs = readdlm("lodfs.csv", ',', Any, '\n')
+            @test convert(Array{String,1}, lodfs[1, 1:(end - 1)]) ==
+                ["contingency line", "from_node", "to node", "connection_ab", "connection_bc", "connection_ca"]
+            @test convert(Array{String,1}, lodfs[:, 1]) == ["contingency line", "connection_ca"]
+            @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [1, 1])
+        end
     end
 end
 

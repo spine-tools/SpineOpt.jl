@@ -14,14 +14,15 @@ using SpineOpt:
     formulate_mga_objective!,
     VariableGroupParameters
 
-    
-using JuMP 
+
+using JuMP
 using HiGHS
 
 array_to_dict(arr::AbstractArray) = Dict(k=>v for (k,v) in enumerate(arr))
 
+const url_in = "sqlite://"
+
 function _test_run_spineopt_hsj_mga_setup()
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -129,7 +130,6 @@ function _test_run_spineopt_hsj_mga_setup()
         ],
     )
     _load_test_data(url_in, test_data)
-    url_in
 end
 
 function generate_simple_system(algorithm::String, no_iterations=nothing)
@@ -179,60 +179,64 @@ end
 
 function _test_run_spineopt_hsj_mga()
     @testset "run_spineopt_hsj_mga_no_max_iterations" begin
-        url_in = _test_run_spineopt_hsj_mga_setup()
-        object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm")
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
-        )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
-        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
-        @test length(variable_values) == 1
-        expected_values= Dict(
-            0 => OrderedDict( # Needs to be OrderedDict for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 1.0,
+        with_connection_open(url_in) do
+            _test_run_spineopt_hsj_mga_setup()
+            object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm")
+            SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
             )
-        )
-        for (iter, dict) in expected_values
-            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
-            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
-                @test unit == units_invested[i][1].unit
-                @test isapprox(v1, units_invested[i][2])
+            m = run_spineopt(url_in; log_level=1, add_bridges=true)
+            variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+            @test length(variable_values) == 1
+            expected_values= Dict(
+                0 => OrderedDict( # Needs to be OrderedDict for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 1.0,
+                )
+            )
+            for (iter, dict) in expected_values
+                units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+                for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                    @test unit == units_invested[i][1].unit
+                    @test isapprox(v1, units_invested[i][2])
+                end
             end
         end
     end
     @testset "run_spineopt_hsj_mga" begin
-        url_in = _test_run_spineopt_hsj_mga_setup()
-        object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm", 2)
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
-        )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
-        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
-        @test length(variable_values) == 3
-        expected_values= Dict(
-            0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 1.0,
-            ),
-            1 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 0.0,
-            ),
-            2 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 0.0,
-            ),
-        )
-        for (iter, dict) in expected_values
-            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
-            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
-                @test unit == units_invested[i][1].unit
-                @test isapprox(v1, units_invested[i][2])
+        with_connection_open(url_in) do
+            _test_run_spineopt_hsj_mga_setup()
+            object_parameter_values, relationship_parameter_values = generate_simple_system("hsj_mga_algorithm", 2)
+            SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=1, add_bridges=true)
+            variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+            @test length(variable_values) == 3
+            expected_values= Dict(
+                0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 1.0,
+                ),
+                1 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 0.0,
+                ),
+                2 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 0.0,
+                ),
+            )
+            for (iter, dict) in expected_values
+                units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+                for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                    @test unit == units_invested[i][1].unit
+                    @test isapprox(v1, units_invested[i][2])
+                end
             end
         end
     end
@@ -240,60 +244,64 @@ end
 
 function _test_run_spineopt_fuzzy_mga()
     @testset "run_spineopt_fuzzy_mga_no_max_iterations" begin
-        url_in = _test_run_spineopt_hsj_mga_setup()
-        object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm")
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
-        )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
-        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
-        @test length(variable_values) == 1
-        expected_values= Dict(
-            0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 1.0,
-            ),
-        )
-        for (iter, dict) in expected_values
-            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
-            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
-                @test unit == units_invested[i][1].unit
-                @test isapprox(v1, units_invested[i][2])
+        with_connection_open(url_in) do
+            _test_run_spineopt_hsj_mga_setup()
+            object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm")
+            SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=1, add_bridges=true)
+            variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+            @test length(variable_values) == 1
+            expected_values= Dict(
+                0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 1.0,
+                ),
+            )
+            for (iter, dict) in expected_values
+                units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+                for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                    @test unit == units_invested[i][1].unit
+                    @test isapprox(v1, units_invested[i][2])
+                end
             end
         end
     end
     @testset "run_spineopt_fuzzy_mga" begin
-        url_in = _test_run_spineopt_hsj_mga_setup()
-        object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm", 2)
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
-        )
-        m = run_spineopt(url_in; log_level=1, add_bridges=true)
-        variable_values = m.ext[:spineopt].expressions[:variable_group_values]
-        @test length(variable_values) == 3
-        expected_values= Dict(
-            0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 1.0,
-            ),
-            1 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 0.0,
-            ),
-            2 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
-                unit(:unit_ab) => 0.0,
-                unit(:unit_bc) => 0.0,
-            ),
-        )
-        for (iter, dict) in expected_values
-            units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
-            for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
-                @test unit == units_invested[i][1].unit
-                @test isapprox(v1, units_invested[i][2])
+        with_connection_open(url_in) do
+            _test_run_spineopt_hsj_mga_setup()
+            object_parameter_values, relationship_parameter_values = generate_simple_system("fuzzy_mga_algorithm", 2)
+            SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=1, add_bridges=true)
+            variable_values = m.ext[:spineopt].expressions[:variable_group_values]
+            @test length(variable_values) == 3
+            expected_values= Dict(
+                0 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 1.0,
+                ),
+                1 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 0.0,
+                ),
+                2 => OrderedDict( # Needs to be `OrderedDict` for the later sort!
+                    unit(:unit_ab) => 0.0,
+                    unit(:unit_bc) => 0.0,
+                ),
+            )
+            for (iter, dict) in expected_values
+                units_invested = sort(collect(variable_values[iter][:units_invested])) # Sort required for consistency!
+                for (i, (unit, v1)) in enumerate(sort(dict)) # Sort required for consistency!
+                    @test unit == units_invested[i][1].unit
+                    @test isapprox(v1, units_invested[i][2])
+                end
             end
         end
     end
@@ -362,7 +370,7 @@ function _test_do_update_hsj_weights()
         mga_indices = collect(0:1)
         function variable_indices(i)
             return [2*i+1, 2*i+2]
-        end 
+        end
 
         @testset "empty_iterator" begin
             variable_values = array_to_dict([0, 0, 0, 0])
@@ -416,7 +424,7 @@ function _test_do_update_hsj_weights()
             @test dict[0] == 0
             @test dict[1] == 2
         end
-    end 
+    end
 end
 
 function _test_was_variable_active()
@@ -432,7 +440,7 @@ function _test_was_variable_active()
         end
         @testset "active and inactive" begin
             @test was_variable_active(array_to_dict([0, 1, 0, 1]), [1, 2, 3, 4]) == true
-            
+
         end
     end
 end
@@ -485,8 +493,8 @@ function _test_update_hsj_weights()
             @test hsj_weights[:var_name][2] == 1
         end
         @testset "active, previously active" begin
-            @test hsj_weights[:var_name][3] == 1 
-        end  
+            @test hsj_weights[:var_name][3] == 1
+        end
     end
 end
 
@@ -519,7 +527,7 @@ function _test_prepare_objective_hsj_mga()
         stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
         var_stoch_weights = (i) -> stochastic_weights[i]
         var_values = array_to_dict([1, 0, 0, 0, 1, 1])
-        mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
+        mga_weights = Dict(0 => 1, 1=>0, 2=>1)
         @testset "empty mga indices" begin
             mga_idxs = []
             group = VariableGroupParameters(var_indxs, var_stoch_weights, mga_idxs)
@@ -538,7 +546,7 @@ function _test_prepare_objective_hsj_mga()
         stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
         var_stoch_weights = (i) -> stochastic_weights[i]
         var_values = array_to_dict([1, 0, 0, 0, 1, 1])
-        mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
+        mga_weights = Dict(0 => 1, 1=>0, 2=>1)
         @testset "empty mga indices" begin
             m = Model(HiGHS.Optimizer)
             @variable(m, 0 <= x[1:6] )
@@ -566,13 +574,13 @@ function _test_update_hsj_mga_objective()
         x_indxs = (i) -> [2*i+1, 2*i+2]
         x_stochastic_weights = [0.5, 0.5, 0.5, 0.5, 0.33, 0.67]
         x_stoch_weights = (i) -> x_stochastic_weights[i]
-        x_mga_weights = Dict(0 => 1, 1=>0, 2=>1) 
-        
+        x_mga_weights = Dict(0 => 1, 1=>0, 2=>1)
+
         @variable(m, y[1:4])
         y_indxs = (i) -> [2*i+1, 2*i+2]
         y_stochastic_weights = [0.5, 0.5, 0.2, 0.8]
         y_stoch_weights = (i) -> y_stochastic_weights[i]
-        y_mga_weights = Dict(0 => 0, 1=>1) 
+        y_mga_weights = Dict(0 => 0, 1=>1)
 
         hsj_weights = Dict(:x => x_mga_weights, :y => y_mga_weights)
         variables = Dict(:x => x, :y => y)
@@ -609,7 +617,7 @@ function _test_update_hsj_mga_objective()
         end
     end
     @testset "update_fuzzy_mga_objective" begin
-    
+
         m = Model(HiGHS.Optimizer)
         @variable(m, 0 <= x[1:2] <= 1)
         @variable(m, 0 <= y[1:2] <= 1)
@@ -626,7 +634,7 @@ function _test_update_hsj_mga_objective()
         y_indxs = (i) -> [1, 2]
         y_stochastic_weights = [0.5, 0.5]
         y_stoch_weights = (i) -> y_stochastic_weights[i]
-        
+
         variable_values = Dict(:x => array_to_dict([1, 0]), :y => array_to_dict([1, 0]))
 
         @testset "Empty mga indices" begin
@@ -703,13 +711,13 @@ function _test_get_variable_group_values()
         @constraint(m, y[4] == 6)
         set_silent(m)
         optimize!(m)
-        
+
         x_indxs = (i) -> [2*i+1, 2*i+2]
         y_indxs = (i) -> [2*i+1, 2*i+2]
         variables = Dict(:x => x, :y => y)
         x_mga_idxs = [0]
         y_mga_idxs = [0, 1]
-        
+
         group_parameters = Dict(
             :x => VariableGroupParameters(x_indxs, () -> nothing, x_mga_idxs),
             :y => VariableGroupParameters(y_indxs, () -> nothing, y_mga_idxs),
@@ -730,7 +738,7 @@ function _test_iterative_mga()
         @variable(m, x[1:2] >= 0)
         x_indxs = (i) -> [i]
         x_stoch_weights = (i) -> 1
-        
+
         @variable(m, y[1] >= 0)
         y_indxs = (i) -> [i]
         y_stoch_weights = (i) -> 1
@@ -770,7 +778,7 @@ function _test_iterative_mga()
         @variable(m, x[1:2] >= 0)
         x_indxs = (i) -> [i]
         x_stoch_weights = (i) -> 1
-        
+
         @variable(m, y[1:2] >= 0)
         y_indxs = (i) -> [i]
         y_stoch_weights = (i) -> 1
@@ -786,7 +794,7 @@ function _test_iterative_mga()
             :y => VariableGroupParameters(y_indxs, y_stoch_weights, y_mga_idxs),
         )
         max_mga_iters = 2
-        
+
         slack = 0.5
         set_silent(m)
         res = iterative_mga!(
@@ -809,7 +817,7 @@ function _test_iterative_mga()
         @test isapprox(res[2][:x][1] + res[2][:x][2], 4/5, atol=atol)
         @test isapprox(res[2][:y][1] + res[2][:y][2], 4/5, atol=atol)
 
-    end   
+    end
 end
 
 function _test_add_objective_constraint()
