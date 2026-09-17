@@ -4,7 +4,7 @@ using JSON
 const template = JSON.parsefile(joinpath(@__DIR__, "..", "templates", "spineopt_template.json"))
 const preproc_template = JSON.parsefile(joinpath(@__DIR__, "..", "templates", "preprocessing_template.json"))
 
-merge!(append!, template, preproc_template)
+mergewith!(append!, template, preproc_template)
 
 pkgroot = normpath(joinpath(@__DIR__, ".."))
 pkgroot_unix = replace(pkgroot, '\\' => '/')

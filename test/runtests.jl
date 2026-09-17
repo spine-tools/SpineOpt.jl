@@ -58,7 +58,7 @@ const Y = Bind()
 function _load_test_data(db_url, test_data)
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
     preprocessing_template = Dict(Symbol(k) => v for (k, v) in SpineOpt.preproc_template())
-    merge!(append!, data, preprocessing_template, test_data)
+    mergewith!(append!, data, preprocessing_template, test_data)
     _load_test_data_without_template(db_url, data)
 end
 
@@ -168,20 +168,20 @@ end
     include("util/misc.jl")
     include("variables/variables.jl")
     include("expressions/expression.jl")
-    include("objective/objective.jl") # CRASHES with multithreading?
-    include("constraints/constraint_unit.jl") # CRASHES with multithreading?
-    include("constraints/constraint_node.jl") # CRASHES with multithreading?
-    include("constraints/constraint_connection.jl") # CRASHES with multithreading?
+    include("objective/objective.jl")
+    include("constraints/constraint_unit.jl")
+    include("constraints/constraint_node.jl")
+    include("constraints/constraint_connection.jl")
     include("constraints/constraint_user_constraint.jl")
-    include("constraints/constraint_investment_group.jl") # CRASHES with multithreading?
-    include("run_spineopt.jl") # CRASHES with multithreading?
+    include("constraints/constraint_investment_group.jl")
+    include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
     include("run_spineopt_multi_stage.jl")
     include("run_spineopt_investments.jl")
-    include("run_spineopt_mga.jl") # CRASHES with multithreading?
-    include("run_spineopt_representative_periods.jl") # FREEZES with multithreading?
+    include("run_spineopt_mga.jl")
+    include("run_spineopt_representative_periods.jl")
     include("run_spineopt_monte_carlo.jl")
-    include("run_examples.jl") # CRASHES with multithreading?
+    include("run_examples.jl")
     include("run_spineopt_hsj_mga.jl")
-    include("run_benchmark_data.jl") # CRASHES with multithreading?
+    include("run_benchmark_data.jl")
 end
