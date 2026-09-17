@@ -309,7 +309,7 @@ end
 
 function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scenario="")
     @timelog log_level 2 "Initializing $scenario data structure from db..." begin
-        full_template = merge(append!, template(), preproc_template())
+        full_template = mergewith(append!, template(), preproc_template())
         using_spinedb(full_template, @__MODULE__; extend=false)
         for template in templates
             using_spinedb(template, @__MODULE__; extend=true)
