@@ -178,7 +178,7 @@ function _lt_storage_investments_setup(storage_count)
             )
         ],
     )
-    merge!(append!, lt_storage_data, lt_storage_investments_data)
+    mergewith!(append!, lt_storage_data, lt_storage_investments_data)
     import_data(url_in, "Add lt storage investments data"; lt_storage_data...)
     url_out
 end

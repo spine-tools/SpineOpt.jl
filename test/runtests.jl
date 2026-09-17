@@ -58,7 +58,7 @@ const Y = Bind()
 function _load_test_data(db_url, test_data)
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
     preprocessing_template = Dict(Symbol(k) => v for (k, v) in SpineOpt.preproc_template())
-    merge!(append!, data, preprocessing_template, test_data)
+    mergewith!(append!, data, preprocessing_template, test_data)
     _load_test_data_without_template(db_url, data)
 end
 

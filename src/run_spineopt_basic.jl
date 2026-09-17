@@ -1222,7 +1222,7 @@ function _collect_all_output_values(m)
                 _merge(x, y) = timedata_operation(x, y) do x, y
                     sum(Iterators.filter(!isnan, (x, y)); init=0)
                 end
-                values_mp[costs_key] = merge!(_merge, costs_mp, costs)
+                values_mp[costs_key] = mergewith!(_merge, costs_mp, costs)
             end
         end
         mergewith!(merge!, values_mp, values)

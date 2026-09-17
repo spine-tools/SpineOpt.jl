@@ -368,7 +368,7 @@ function _generate_time_slice!(m::Model)
     start_and_end_by_block = _start_and_end_by_block(m, window_start, window_end)
     blocks_and_mapping_by_interval = _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
     blocks_and_mapping_by_represented_interval = _blocks_and_mapping_by_represented_interval(start_and_end_by_block)
-    merge!(_merge_blocks_and_mapping!, blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
+    mergewith!(_merge_blocks_and_mapping!, blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
     _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
     intervals_by_history_interval = _intervals_by_history_interval(
         blocks_and_mapping_by_interval, m, window_start, window_end
