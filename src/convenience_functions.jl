@@ -215,6 +215,7 @@ const lead_time = Parameter(:lead_time)
 const lifetime_constraint_sense = Parameter(:lifetime_constraint_sense)
 const lifetime_economic = Parameter(:lifetime_economic)
 const lifetime_technical = Parameter(:lifetime_technical)
+const line_shunt_susceptance = Parameter(:line_shunt_susceptance)
 const lodf = Parameter(:lodf)
 const lodf_tolerance = Parameter(:lodf_tolerance)
 const max_ratio_out_in_connection_flow = Parameter(:max_ratio_out_in_connection_flow)
@@ -578,6 +579,7 @@ export lead_time
 export lifetime_constraint_sense
 export lifetime_economic
 export lifetime_technical
+export line_shunt_susceptance
 export lodf
 export lodf_tolerance
 export max_ratio_out_in_connection_flow

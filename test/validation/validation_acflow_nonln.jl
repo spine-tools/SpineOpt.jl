@@ -535,7 +535,10 @@ function test_ac_opf_capacurve()
         vsq = m.ext[:spineopt].variables[:node_voltage_squared]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
-
+        c1 = m.ext[:spineopt].constraints[:unit_pq_capability]
+        for  k in sort(collect(keys(c1)))
+            println(c1[k])
+        end
         @test value(var_unit_flow[unit(:unit_ab), node(:node_b), 
             direction(:to_node), stochastic_scenario(:child), time_slices[2]] ) ≈ 0.1 atol = 0.001
        
@@ -546,6 +549,87 @@ function test_ac_opf_capacurve()
             direction(:to_node), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.2087 atol = 0.001
     end
 end
+
+function test_ac_opf_capacurve_absorb()
+    @testset "test_ac_opf_capacurve_absorb" begin
+   
+        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
+        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
+
+        url_in = _test_acflow_setup()
+        objects = [
+            ["unit", "unit_2"]
+        ]
+        object_parameter_values = [
+            ["model", "instance", "solver_mip", "Juniper.jl"],
+            ["model", "instance", "solver_mip_options", solver_options],
+            ["model", "instance", "ac_opf_model_formulation", "ac_opf_conic"],
+
+            # Demand moved from node_c to node_b
+            ["node", "node_b", "demand", 0.2],
+            ["node", "node_b", "demand_reactive", -0.3],
+            ["unit", "unit_ab", "start_up_cost", 1]
+        ]
+        relationships = [
+            ["node__to_unit", ["node_b", "unit_ab"]],
+            ["node__to_unit", ["node_b", "unit_2"]],
+            ["unit__to_node", ["unit_ab", "node_b"]],
+            ["unit__to_node", ["unit_2", "node_b"]],
+            ["units_on__temporal_block", ["unit_2", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_2", "deterministic"]]
+        ]
+
+        relationship_parameter_values = [
+            # Active power production
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", 1.0],
+            ["unit__to_node", ["unit_2", "node_b"], "vom_cost", 20.0],
+            # Reactive power export capability
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["unit__to_node", ["unit_2", "node_b"], "vom_cost_reactive", 4.0],
+            ["unit__to_node", ["unit_ab", "node_b"],
+                "pq_capability_curve_P_coef", unparse_db_value([1.0])],
+            ["unit__to_node", ["unit_ab", "node_b"],
+                "pq_capability_curve_constant", unparse_db_value([0.5])],
+            # Reactive power absorption capability
+            ["node__to_unit", ["node_b", "unit_ab"], "vom_cost_reactive", 2.0],
+            ["node__to_unit", ["node_b", "unit_2"], "vom_cost_reactive", 4.0],
+            ["node__to_unit", ["node_b", "unit_ab"],
+                "pq_capability_curve_P_coef", unparse_db_value([1.0])],
+            ["node__to_unit", ["node_b", "unit_ab"],
+                "pq_capability_curve_constant", unparse_db_value([0.4])],
+        ]
+        
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=1, optimize=true)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+        var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
+        c1 = m.ext[:spineopt].constraints[:unit_pq_capability]
+        # for  k in sort(collect(keys(c1)))
+        #     println(c1[k])
+        # end
+        # for k in sort(collect(keys(var_unit_flow_reactive)))
+        #     println("$k: $(value(var_unit_flow_reactive[k]))")
+        # end
+        # println("real P")
+        # for k in sort(collect(keys(var_unit_flow)))
+        #     println("$k: $(value(var_unit_flow[k]))")
+        # end
+        @test value(var_unit_flow_reactive[unit(:unit_2), node(:node_b), 
+            direction(:from_node), stochastic_scenario(:child), time_slices[2]] ) ≈ 0.1 atol = 0.0001
+       
+    end
+end
+
 
 """
     test_ac_opf_reactive_capacity_socp()
@@ -617,5 +701,6 @@ end
     #test_ac_opf_two_conn_socp()
     #test_ac_opf_singleconn_inve_socp()
     #test_ac_opf_capacurve()
-    test_ac_opf_reactive_capacity_socp()
+    test_ac_opf_capacurve_absorb()
+    #test_ac_opf_reactive_capacity_socp()
 end

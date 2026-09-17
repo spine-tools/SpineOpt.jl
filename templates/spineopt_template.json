@@ -3158,6 +3158,20 @@
         ],
         [
             "node__to_unit",
+            "pq_capability_curve_constant",
+            null,
+            null,
+            "The constant coefficients for the capability curve of absorbed reactive power Q + a*P <= c."
+        ],
+        [
+            "node__to_unit",
+            "pq_capability_curve_P_coef",
+            null,
+            null,
+            "The coefficients related to real power for the capability curve of absorbed reactive power Q + a*P <= c."
+        ],
+        [
+            "node__to_unit",
             "ramp_limits_down",
             null,
             null,

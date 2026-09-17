@@ -45,12 +45,12 @@ function _build_constraint_unit_pq_capability(m, u, ng, d, s, t, ce)
             init=0,
         )
         + sum(
-            unit_flow[u, n, d, s, t_over] 
-            / capacity_per_unit(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_over, _default=1.0)
+            unit_flow[u, n, dP, s, t_over] 
+            / capacity_per_unit(m; unit=u, node=n, direction=dP, stochastic_scenario=s, t=t_over, _default=1.0)
             * overlap_duration(t_over, t)
             * pq_capability_curve_P_coef(m, unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_over, i=ce)
-            for (u, n, d, s, t_over) in unit_flow_indices(
-                m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+            for (u, n, dP, s, t_over) in unit_flow_indices(
+                m; unit=u, node=ng, direction=direction(:to_node), stochastic_scenario=s, t=t_overlaps_t(m; t=t)
             )
             if _is_regular_node(n, d);
             init=0,
