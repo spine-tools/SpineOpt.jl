@@ -22,7 +22,9 @@
     add_variable_unit_flow_reactive!(m::Model)
 
 Add `unit_flow_reactive` variables to model `m`. The reactive power flow from unit to node
-(injection of reactive power) or from node to unit (absorption of reactive power).
+(injection of reactive power) or from node to unit (absorption of reactive power). This
+variable is non-negative. Upper bound is defined only if the variable is not 
+constrained by the `unit_flow_capacity_reactive`` constraint.
 """
 function add_variable_unit_flow_reactive!(m::Model)
 

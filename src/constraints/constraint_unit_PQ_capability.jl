@@ -18,12 +18,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_pq_capability!(m::Model)
+@doc raw"""
 
-Limit the maximum in/out `unit_flow_reactive` of a `unit` for all `unit_capacity_reactive` indices.
+To take into account the capability of generators to simultaneously inject real
+power and inject or absorb 
 This takes place based on the number of units online (units_on). The constraint is enforced only if
-such variable is present. Setting online_variable_type to linear is not enough for this.
+such variable is present. 
 """
 function add_constraint_unit_pq_capability!(m::Model)
     _add_constraint!(m, :unit_pq_capability, constraint_unit_pq_capability_indices, 
@@ -73,8 +73,8 @@ function constraint_unit_pq_capability_indices(m::Model)
 (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t, capability_edge=c)
         for (u, ng, d) in indices(pq_capability_curve_constant)
+            if has_online_variable(unit=u) && has_acflow(node=ng)
         for c in 1:length(pq_capability_curve_constant(unit=u, node=ng, direction=d))
-        if has_online_variable(unit=u) 
         for t in t_highest_resolution(
             m,
             Iterators.flatten(

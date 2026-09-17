@@ -236,13 +236,15 @@ For real power flows the equation is quite similar:
 
 @@add_constraint_connection_flow_current!
 
-#### [Limiting reactive power flow](@id constraint_connection_reactive_flow_capacity)
+#### [Limiting reactive power flow in a line](@id constraint_connection_reactive_flow_capacity)
 
 Limiting constraint for reactive power flow is needed if the line is considered as an investment. 
 
 @@add_constraint_connection_reactive_flow_capacity!
 
-#### [Limiting reactive power generation and absortion of a generator]
+#### [Limiting reactive power generation and absortion of a generator](@id constraint_unit_flow_capacity_reactive)
+
+@@add_constraint_unit_flow_capacity_reactive!
 
 #### [Setting the capability region of a generator]
 

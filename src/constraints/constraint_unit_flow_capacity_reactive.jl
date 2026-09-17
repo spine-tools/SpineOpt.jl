@@ -18,12 +18,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_unit_flow_capacity_reactive!(m::Model)
+@doc raw"""
+   
+The variable `unit_flow_reactive`, describing the injection and absorption of 
+reactive power of generators, should be limited when the reactive flow capacity has
+been specified. This takes place based on the number of units online (variable 
+[units\_on](@ref var_units_on)). 
+The constraint is enforced only if such variable is present. Note that setting 
+[online\_variable\_type](@ref) to `linear` is not enough for this.
 
-Limit the maximum in/out `unit_flow_reactive` of a `unit` for all `unit_capacity_reactive` indices.
-This takes place based on the number of units online (units_on). The constraint is enforced only if
-such variable is present. Setting online_variable_type to linear is not enough for this.
+The constraint becomes
+
+```math
+\begin{aligned}
+& 
+    v^{unit\_flow\_reactive}_{(u,ng,d,s,t)} \cdot \left[ \neg p^{reserve\_active}_{(ng)} \right]\\
+
+& \le \\
+& p^{unit\_reactive\_capacity}_{(u,ng,d,s,t)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u,ng,d,s,t)}  \cdot v^{units\_on}_{(u,s,t)} \\
+
+& \forall (u,ng,d) \in indices(p^{unit\_reactive\_capacity}) \\
+& \forall (s,t)
+\end{aligned}
+```
+where
+```math
+[p] \vcentcolon = \begin{cases}
+1 & \text{if } p \text{ is true;}\\
+0 & \text{otherwise.}
+\end{cases}
+```
+
 """
 function add_constraint_unit_flow_capacity_reactive!(m::Model)
     _add_constraint!(m, :unit_flow_capacity_reactive, constraint_unit_flow_capacity_reactive_indices, 
@@ -55,7 +80,13 @@ function _build_constraint_unit_flow_capacity_reactive(m, u, ng, d, s, t)
     )
 end
 
+"""
+    constraint_unit_flow_capacity_reactive_indices(m::Model)
 
+    Produces the constraint indices for limiting reactive flows of units.
+
+    Note: case with no online variable has not been checked.
+"""
 function constraint_unit_flow_capacity_reactive_indices(m::Model)
 (
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
