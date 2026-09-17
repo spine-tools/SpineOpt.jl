@@ -333,7 +333,7 @@ function _init_downstream_outputs!(st, stage_m, child_models)
         objs_by_class_name_by_res = Dict()
         for (class_name, objs) in objs_by_class_name
             if objs === anything
-                res = output_resolution(; stage=st, output=out, _strict=false)
+                res = output_resolution(stage__output; stage=st, output=out, _strict=false)
                 get!(objs_by_class_name_by_res, res, Dict())[class_name] = anything
                 continue
             end
@@ -1257,11 +1257,11 @@ function _collect_output_values(m)
             key = (output_name, overwrite, report_name)
             haskey(values, key) && continue
             r = report(report_name)
-            out_res = let v1 = output_resolution(report=r, output=out, _strict=false)
+            out_res = let v1 = output_resolution(report__output; report=r, output=out, _strict=false)
                 if v1 !== nothing
                     v1
                 else
-                    output_resolution(report=nothing, stage=nothing, output=out, _strict=false) # Reorder to minimize warnings.
+                    output_resolution(output; output=out, _strict=false)
                 end
             end
             values[key] = _output_value_by_entity(by_suffix, model_end(model=m.ext[:spineopt].instance), overwrite, out_res)
