@@ -21,9 +21,27 @@
 @doc raw"""
 
 To take into account the capability of generators to simultaneously inject real
-power and inject or absorb 
-This takes place based on the number of units online (units_on). The constraint is enforced only if
+power and inject or absorb reactive power. Because the shape of the capability region
+can vary, the user is given the chance to approximate it by a polygon. The faces of the polygon 
+are defined by coefficient for real power  $p^{capability\_curve\_P}$ and constant $p^{capability\_curve\_C}$.
+The coefficient for reactive power is 1.0. One can define several such faces.
+Constraint is based on the number of units online (units_on). The constraint is enforced only if
 such variable is present. 
+
+```math
+\begin{aligned}
+& 
+    \frac{v^{unit\_flow}_{(u,ng,to\_node,s,t)} }{p^{capacity\_per\_unit}_{(u,ng,to\_node,s,t)}}\cdot \left[ \neg p^{reserve\_active}_{(ng)} \right] \cdot p^{capability\_curve\_P}_{(u,ng,d,s,t,i)}\\ 
+& + \frac{v^{unit\_flow\_reactive}_{(u,ng,d,s,t)}}{p^{unit\_capacity\_reactive}_{(u,ng,d,s,t)} } \cdot \left[ \neg p^{reserve\_active}_{(ng)} \right] \\
+& \le \\
+&   v^{units\_on}_{(u,s,t)} \cdot p^{capability\_curve\_C}_{(u,ng,d,s,t,i)} \cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u,ng,d,s,t)} \\
+
+& \forall (u,ng,d,i) \in indices(p^{unit\_reactive\_capacity}) \\
+& \forall (s,t)
+\end{aligned}
+```
+where index $i$ refers to the different bounding lines of the capability region.
+
 """
 function add_constraint_unit_pq_capability!(m::Model)
     _add_constraint!(m, :unit_pq_capability, constraint_unit_pq_capability_indices, 

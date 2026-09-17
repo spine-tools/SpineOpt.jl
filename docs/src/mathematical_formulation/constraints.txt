@@ -246,8 +246,9 @@ Limiting constraint for reactive power flow is needed if the line is considered 
 
 @@add_constraint_unit_flow_capacity_reactive!
 
-#### [Setting the capability region of a generator]
+#### [Setting the capability region of a generator]@id constraint_unit_pq_capability)
 
+@@add_constraint_unit_pq_capability!
 
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
