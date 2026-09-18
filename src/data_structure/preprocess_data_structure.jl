@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+import MetaGraphsNext
 
 """
     preprocess_data_structure()
@@ -341,15 +342,16 @@ function _reorder_dimensions!(rc::RelationshipClass, dims::Vector{Symbol})
 end
 function _reorder_dimensions!(rc::RelationshipClass, perm_map::Dict{Vector{Symbol}, <:Vector{<:Integer}})
     atoms = Vector{SpineInterface.Atom}(undef, SpineInterface.atomic_dimensionality(rc.vertex))
-    for ent in rc.vertex.entities
-        SpineInterface.fill_atoms!(atoms, rc.vertex.relationship_graph, ent)
-        ent_intact_dims = first.(atoms) # Fetch edge dimensions
-        permutation = get(perm_map, ent_intact_dims, nothing) # Get permutation for this edge
+    vertex = rc.vertex
+    for ent in vertex.entities
+        SpineInterface.fill_atoms!(atoms, vertex.relationship_graph, ent)
+        ent_intact_dims = first.(atoms)
+        permutation = get(perm_map, ent_intact_dims, nothing)
         isnothing(permutation) && throw(ArgumentError("Missing dimension permutation! $ent_intact_dims"))
-        for ((atom, ent2), vi) in rc.vertex.relationship_graph.edge_data # Loop over edges
-            ent !== ent2 && continue
-            for (i, i_dim) in enumerate(vi)
-                vi[i] = permutation[i_dim] # Permute edge index order
+        for atom in MetaGraphsNext.inneighbor_labels(vertex.relationship_graph, ent)
+            dimension_is = vertex.relationship_graph[atom, ent]
+            for (i, dimension_i) in enumerate(dimension_is)
+                dimension_is[i] = permutation[dimension_i]
             end
         end
     end
