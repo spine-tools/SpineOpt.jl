@@ -94,14 +94,14 @@ function add_expression_capacity_margin!(m::Model)
                     sum(
                         units_invested_available[u, s, t1]
                         for (u, s, t1) in units_invested_available_indices(
-                            m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+                            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
                         );
                         init=0,
                     )                            
                     + maximum(number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u)) for s in s_path)
                     - maximum(units_unavailable(m; unit=u, stochastic_scenario=s, t=t) for s in s_path)
                 )
-                for (u, n, d) in indices(unit_capacity; node=n, direction=direction(:to_node))         
+                for (u, n, d) in indices(unit_capacity; node=members(n), direction=direction(:to_node))         
                 if !is_storage_unit(u)
             )
         )
@@ -132,7 +132,7 @@ function expression_capacity_margin_indices(m::Model)
                             (u for (u, n, d) in indices(unit_capacity; node=n, direction=direction(:to_node))),
                         ),
                         t=t_overlaps_t(m; t=t),
-                    ),    
+                    ),
                 )
             ),
         )
