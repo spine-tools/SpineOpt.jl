@@ -137,83 +137,64 @@ end
 """
     _generate_any_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
 
-Generate the `any_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+Populate the `any_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
 function _generate_any_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
-    any_stochastic_scenario_weight_values = Dict(
-        scen => Dict(:any_stochastic_scenario_weight => parameter_value(spec.weight))
-        for ss in stochastic_structure()
-        for (scen, spec) in all_stochastic_dags[ss]
-    )
-    add_object_parameter_values!(stochastic_scenario, any_stochastic_scenario_weight_values)
-    m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight] = Parameter(
-        :any_stochastic_scenario_weight, [stochastic_scenario]
+    add_object_parameter_values!(
+        stochastic_scenario,
+        Dict(
+            s => Dict(:any_stochastic_scenario_weight => parameter_value(d.weight))
+            for ss in stochastic_structure()
+            for (s, d) in all_stochastic_dags[ss]
+        )
     )
 end
 
 """
     _generate_node_stochastic_scenario_weight!(m, all_stochastic_dags::Dict)
 
-Generate the `node_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+Populate the `node_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
 function _generate_node_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
-    node_stochastic_scenario_weight_values = Dict(
-        (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(spec.weight))
-        for (node, ss) in Iterators.flatten((node__stochastic_structure(), node__investment_stochastic_structure()))
-        for (scen, spec) in all_stochastic_dags[ss]
-    )
-    node__stochastic_scenario = RelationshipClass(
-        :node__stochastic_scenario,
-        [:node, :stochastic_scenario],
-        keys(node_stochastic_scenario_weight_values),
-        node_stochastic_scenario_weight_values,
-    )
-    m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight] = Parameter(
-        :node_stochastic_scenario_weight, [node__stochastic_scenario]
+    add_relationship_parameter_values!(
+        node__stochastic_scenario,
+        Dict(
+            (node=n, stochastic_scenario=s) => Dict(:node_stochastic_scenario_weight => parameter_value(d.weight))
+            for (n, ss) in Iterators.flatten((node__stochastic_structure(), node__investment_stochastic_structure()))
+            for (s, d) in all_stochastic_dags[ss]
+        )
     )
 end
 
 """
     _generate_unit_stochastic_scenario_weight!(m, all_stochastic_dags::Dict, m...)
 
-Generate the `unit_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+Populate the `unit_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
 function _generate_unit_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
-    unit_stochastic_scenario_weight_values = Dict(
-        (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (unit, ss) in Iterators.flatten((units_on__stochastic_structure(), unit__investment_stochastic_structure()))
-        for (scen, param_vals) in all_stochastic_dags[ss]
-    )
-    unit__stochastic_scenario = RelationshipClass(
-        :unit__stochastic_scenario,
-        [:unit, :stochastic_scenario],
-        keys(unit_stochastic_scenario_weight_values),
-        unit_stochastic_scenario_weight_values,
-    )
-    m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight] = Parameter(
-        :unit_stochastic_scenario_weight, [unit__stochastic_scenario]
+    add_relationship_parameter_values!(
+        unit__stochastic_scenario,
+        Dict(
+            (unit=u, stochastic_scenario=s) => Dict(:unit_stochastic_scenario_weight => parameter_value(d.weight))
+            for (u, ss) in Iterators.flatten((units_on__stochastic_structure(), unit__investment_stochastic_structure()))
+            for (s, d) in all_stochastic_dags[ss]
+        )
     )
 end
 
 """
     _generate_connection_stochastic_scenario_weight!(m, all_stochastic_dags::Dict, m...)
 
-Generate the `connection_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+Populate the `connection_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
 """
 function _generate_connection_stochastic_scenario_weight!(m::Model, all_stochastic_dags::Dict)
-    connection_stochastic_scenario_weight_values = Dict(
-        (connection, scen) => Dict(:connection_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (connection, ss) in connection__investment_stochastic_structure()
-        for (scen, param_vals) in all_stochastic_dags[ss]
-    )
-    connection__stochastic_scenario = RelationshipClass(
-        :connection__stochastic_scenario,
-        [:connection, :stochastic_scenario],
-        keys(connection_stochastic_scenario_weight_values),
-        connection_stochastic_scenario_weight_values,
-    )
-    m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight] = Parameter(
-        :connection_stochastic_scenario_weight, [connection__stochastic_scenario]
+    add_relationship_parameter_values!(
+        connection__stochastic_scenario,
+        Dict(
+            (connection=c, stochastic_scenario=s) => Dict(:connection_stochastic_scenario_weight => parameter_value(d.weight))
+            for (c, ss) in connection__investment_stochastic_structure()
+            for (s, d) in all_stochastic_dags[ss]
+        )
     )
 end
 
@@ -513,28 +494,4 @@ function node_investment_stochastic_time_indices(
         for (n, t) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
         for (n, s) in node_investment_stochastic_indices(m; node=n, stochastic_scenario=stochastic_scenario, t=t)
     )
-end
-
-function node_stochastic_scenario_weight(m; kwargs...)
-    _with_model_env(m) do
-        m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
-    end
-end
-
-function unit_stochastic_scenario_weight(m; kwargs...)
-    _with_model_env(m) do
-        m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
-    end
-end
-
-function connection_stochastic_scenario_weight(m; kwargs...)
-    _with_model_env(m) do
-        m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
-    end
-end
-
-function any_stochastic_scenario_weight(m; kwargs...)
-    _with_model_env(m) do
-        m.ext[:spineopt].stochastic_structure[:any_stochastic_scenario_weight][(; kwargs...)]
-    end
 end

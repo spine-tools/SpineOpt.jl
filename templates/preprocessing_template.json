@@ -6,18 +6,16 @@
         ["node_with_slack_penalty", []],
         ["node_with_capacity_margin_penalty", []],
         ["block__starting_point", ["temporal_block", "temporal_block"]],
-        ["connection__node__direction", ["connection", "node", "direction"]],
+        ["connection__stochastic_scenario", ["connection", "stochastic_scenario"]],
         ["lodf_connection__connection", ["connection", "connection"]],
+        ["node__stochastic_scenario", ["node", "stochastic_scenario"]],
         ["ptdf_connection__node", ["connection", "node"]],
         ["ptdf_unfiltered_connection__node", ["connection", "node"]],
-        ["unit_flow__investment_group__node__unit__investment_group", ["node", "unit", "investment_group"]],
-        ["unit_flow__investment_group__unit__node__investment_group", ["unit", "node", "investment_group"]],
-        ["unit_flow__user_constraint__node__unit__user_constraint", ["node", "unit", "user_constraint"]],
-        ["unit_flow__user_constraint__unit__node__user_constraint", ["unit", "node", "user_constraint"]],
-        ["unit_flow__unit_flow__node__unit__node__unit", ["node", "unit", "node", "unit"]],
-        ["unit_flow__unit_flow__node__unit__unit__node", ["node", "unit", "unit", "node"]],
-        ["unit_flow__unit_flow__unit__node__node__unit", ["unit", "node", "node", "unit"]],
-        ["unit_flow__unit_flow__unit__node__unit__node", ["unit", "node", "unit", "node"]]
+        ["unit__stochastic_scenario", ["unit", "stochastic_scenario"]]
+    ],
+    "entities": [
+        ["direction", "from_node"],
+        ["direction", "to_node"]
     ],
     "parameter_definitions": [
         ["connection", "connection_capacity_transfer_factor", null, null],
@@ -43,6 +41,7 @@
         ["node", "storage_discounted_duration", null, null],
         ["node", "storage_salvage_fraction", null, null],
         ["node", "storage_tech_discount_factor", null, null],
+        ["stochastic_scenario", "any_stochastic_scenario_weight", null, null],
         ["unit", "is_candidate", false, "boolean_value_list"],
         ["unit", "has_online_variable", false, "boolean_value_list"],
         ["unit", "has_out_of_service_variable", false, "boolean_value_list"],
@@ -54,8 +53,12 @@
         ["unit", "unit_salvage_fraction", null, null],
         ["unit", "unit_tech_discount_factor", null, null],
         ["temporal_block", "is_representative", false, "boolean_value_list"],
+        ["temporal_block", "is_starting_point", false, "boolean_value_list"],
+        ["connection__stochastic_scenario", "connection_stochastic_scenario_weight", null, null],
+        ["lodf_connection__connection", "lodf", null, null],
+        ["node__stochastic_scenario", "node_stochastic_scenario_weight", null, null],
         ["ptdf_connection__node", "ptdf", null, null],
         ["ptdf_unfiltered_connection__node", "ptdf_unfiltered", null, null],
-        ["lodf_connection__connection", "lodf", null, null]
+        ["unit__stochastic_scenario", "unit_stochastic_scenario_weight", null, null]
     ]
 }

@@ -22,8 +22,8 @@
     generate_economic_structure!(m)
 """
 function generate_economic_structure!(m; log_level=3)
-    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) || return
-    if !isnothing(roll_forward(model=m.ext[:spineopt].instance))
+    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) || return
+    if !isnothing(roll_forward(model=m.ext[:spineopt].instance, _strict=false))
         error("Using multiyear economic discounting with rolling horizon is currently not supported.")
     elseif model_type(model=m.ext[:spineopt].instance) === :spineopt_benders 
         error("Using multiyear economic discounting with Benders' decomposition is currently not supported.")
@@ -325,12 +325,12 @@ function capital_recovery_factor(m, discnt_rate, p_elife)
 end
 
 """
-    function discount_factor(m,discnt_rate,year::DateTime)
+    function discount_factor(m::Object, discnt_rate::Real, year::DateTime)
 
 The discount factor discounts payments at a certain timestep `t` to the models `discount_year`
 """
 
-function discount_factor(m, discnt_rate, year::Union{DateTime})
+function discount_factor(m::Object, discnt_rate::Real, year::DateTime)
     discnt_year = discount_year(model=m)
     if isnothing(discnt_year)
         discnt_year = Year(1)
@@ -338,7 +338,7 @@ function discount_factor(m, discnt_rate, year::Union{DateTime})
     discnt_factor = 1 / (1 + discnt_rate)^((Year(year) - Year(discnt_year)) / Year(1))
 end
 
-function discount_factor(m, discnt_rate, year::Union{T,Nothing}) where {T<:Period}
+function discount_factor(m::Object, discnt_rate::Real, year::Union{T,Nothing}) where {T<:Period}
     if year.value == 0
         year = Year(0)
     end
@@ -506,7 +506,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
     invest_temporal_block = economic_parameters[obj_cls][:set_invest_temporal_block]
     param_name = economic_parameters[obj_cls][:set_discounted_duration]
 
-    if multiyear_economic_discounting(model=instance) == :milestone_years
+    if multiyear_economic_discounting(model=instance, _strict=false) == :milestone_years
         for id in obj_cls()
             invest_temporal_block_ = isempty(invest_temporal_block(; Dict(obj_cls.name => id)...)) ?
                 # to discount the costs associated with non-investable entities
@@ -557,7 +557,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, e
             end
             add_object_parameter_values!(obj_cls, Dict(id => Dict(param_name => pvals)))
         end
-    elseif multiyear_economic_discounting(model=instance) == :consecutive_years 
+    elseif multiyear_economic_discounting(model=instance, _strict=false) == :consecutive_years 
     # when using consecutive years, we only need a discount rate for each year 
         for id in obj_cls()
             timeseries_ind = []
