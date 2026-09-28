@@ -20,6 +20,8 @@
 
 import DelimitedFiles: readdlm
 
+const url_in = "sqlite://"
+
 function _test_misc_ptdf_lodf_setup()
     test_data = Dict(
         :objects => [
