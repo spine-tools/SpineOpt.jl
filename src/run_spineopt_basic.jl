@@ -552,7 +552,7 @@ function _do_solve_multi_stage_model!(
     calculate_duals=false,
     save_outputs=true,
 )
-    _solve_stage_models!(m; log_level, log_prefix, output_suffix) || return false
+    _solve_stage_models!(m; log_level, log_prefix) || return false
     _do_solve_model!(
         m;
         log_level,
@@ -563,6 +563,7 @@ function _do_solve_multi_stage_model!(
         log_prefix,
         calculate_duals,
         save_outputs,
+        skip_failed_windows=true,
     )
 end
 
