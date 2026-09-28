@@ -50,62 +50,81 @@ See also
 """
 
 function add_expression_capacity_margin!(m::Model)
-    @fetch unit_flow, units_on, units_invested_available = m.ext[:spineopt].variables
+    @fetch unit_flow, units_on, units_invested_available, connection_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].expressions[:capacity_margin] = Dict(
-        (node=n, stochastic_path=s_path, t=t) => @expression(
+        (node=n, stochastic_scenario=s, t=t) => @expression(
             m,
-            - maximum(_total_demand(m, n, s, t) for s in s_path)
-            # Commodity flows to storage units
+                - _total_demand(m, n, s, t)        
+                # Commodity flows to storage units        
+                - sum(
+                    unit_flow[u, n, d, s, t_short]
+                    for (u, n, d, s, t_short) in unit_flow_indices(
+                        m;
+                        node=members(n),
+                        direction=direction(:from_node),
+                        stochastic_scenario=s,
+                        t=t,
+                        temporal_block=anything,
+                    );
+                    init=0,
+                )
+                # Commodity flows from storage units
+                + sum(
+                    unit_flow[u, n, d, s, t_short]
+                    for (u, n, d, s, t_short) in unit_flow_indices(
+                        m;
+                        node=members(n),
+                        direction=direction(:to_node),
+                        stochastic_scenario=s,
+                        t=t,
+                        temporal_block=anything,
+                    )
+                    if is_flow_unit(u);
+                    init=0,
+                )
 
-            #=
-            - sum(
-                unit_flow[u, n, d, s, t_short]
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    m;
-                    node=n,
-                    direction=direction(:from_node),
-                    stochastic_scenario=s_path,
-                    t=t,
-                    temporal_block=anything,
+                # Commodity flows from connections
+                + sum(
+                    get(connection_flow, (conn, n1, d, s, t), 0)
+                    for n1 in members(n)
+                    for (conn, d) in connection__to_node(node=n1)
+                    if !_issubset(
+                        connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
+                    );
+                    init=0,
                 )
-                if is_storage_unit(u);
-                init=0,
-            )
-            # Commodity flows from storage units
-            + sum(
-                unit_flow[u, n, d, s, t_short]
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    m;
-                    node=n,
-                    direction=direction(:to_node),
-                    stochastic_scenario=s_path,
-                    t=t,
-                    temporal_block=anything,
-                )
-                if is_storage_unit(u);
-                init=0,
-            )
-            =#
 
-            # Conventional and Renewable Capacity
-            + sum(                
-                maximum(unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t) for s in s_path)                
-                * (
-                    sum(
-                        units_invested_available[u, s, t1]
-                        for (u, s, t1) in units_invested_available_indices(
-                            m; unit=u, stochastic_scenario=s_path, t=t_overlaps_t(m; t=t)
-                        );
-                        init=0,
-                    )                            
-                    + maximum(number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u)) for s in s_path)
-                    - maximum(units_unavailable(m; unit=u, stochastic_scenario=s, t=t) for s in s_path)
+                # Commodity flows to connections
+                - sum(
+                    get(connection_flow, (conn, n1, d, s, t), 0)
+                    for n1 in members(n)
+                    for (conn, d) in connection__from_node(node=n1)
+                    if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
+                    init=0,
                 )
-                for (u, n, d) in indices(unit_capacity; node=members(n), direction=direction(:to_node))         
-                if !is_storage_unit(u)
-            )
-        )
-        for (n, s_path, t) in expression_capacity_margin_indices(m)
+
+                # Conventional and Renewable Capacity                
+                + sum(                
+                    unit_flow_capacity(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+                    * (
+                        sum(
+                            units_invested_available[u, s, t1]
+                            for (u, s, t1) in units_invested_available_indices(
+                                m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
+                            );
+                            init=0,
+                        )                            
+                        + number_of_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+                        - units_unavailable(m; unit=u, stochastic_scenario=s, t=t) 
+                    )
+                    for (u, n, d) in indices(unit_capacity; node=members(n), direction=direction(:to_node))         
+                    if !is_flow_unit(u)
+                
+            
+            ) 
+        )        
+        for (n, s, t) in expression_capacity_margin_indices(m)
+        
     )
 end
 
@@ -117,10 +136,10 @@ end
 
 function expression_capacity_margin_indices(m::Model)
     (
-        (node=n, stochastic_path=path, t=t)
+        (node=n, stochastic_scenario=s, t=t)
         for n in indices(min_capacity_margin)
-        for (n, t) in node_time_indices(m; node=n)
-        for path in active_stochastic_paths(
+        for (n, t) in node_time_indices(m; node=n)                
+        for path in active_stochastic_paths(        
             m,  
             Iterators.flatten(
                 (
@@ -128,7 +147,7 @@ function expression_capacity_margin_indices(m::Model)
                     unit_stochastic_time_indices(
                         m;
                         unit=Iterators.filter(
-                            !is_storage_unit,
+                            !is_flow_unit,
                             (u for (u, n, d) in indices(unit_capacity; node=n, direction=direction(:to_node))),
                         ),
                         t=t_overlaps_t(m; t=t),
@@ -136,6 +155,7 @@ function expression_capacity_margin_indices(m::Model)
                 )
             ),
         )
+        for s in path
     )
 end
 
@@ -144,6 +164,6 @@ end
 
 Whether the unit u is attached to a node with storage or not.
 """
-function is_storage_unit(u)
-    any(has_state(node=n) for n in unit__from_node(unit=u, direction=direction(:from_node)))
+function is_flow_unit(u)
+    use_flow_capacity_contribution(unit=u) 
 end
