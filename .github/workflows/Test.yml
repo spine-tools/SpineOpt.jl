@@ -32,10 +32,10 @@ jobs:
     name: Julia ${{ inputs.julia-version }} - ${{ inputs.host-os }}
     runs-on: ${{ inputs.host-os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           repository: ${{ inputs.repository }}
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python-version }}
       - uses: julia-actions/setup-julia@v3
