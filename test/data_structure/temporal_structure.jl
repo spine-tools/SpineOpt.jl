@@ -32,8 +32,9 @@ function _model()
     m
 end
 
+const in_memory_url = "sqlite://"
+
 function _test_temporal_structure_setup()
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -48,8 +49,7 @@ function _test_temporal_structure_setup()
         :object_parameter_values =>
             [["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")]],
     )
-    _load_test_data(url_in, test_data)
-    url_in
+    _load_test_data(in_memory_url, test_data)
 end
 
 function _test_discontinuity_at_the_first_time_step()
@@ -57,21 +57,23 @@ function _test_discontinuity_at_the_first_time_step()
     # nodes associated only to it don't have a node_injection constraint for the first time step.
     # The point is to illustrate this behavior which may not be the optimal one.
     @testset "discontinuity" begin
-        url_in = _test_temporal_structure_setup()
-        objects = [
-            ["node", "another_node"],
-        ]
-        relationships = [
-            ["node__temporal_block", ["another_node", "block_b"]],
-        ]
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-            ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
-        ]
-        SpineInterface.import_data(
-            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
-        )
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            objects = [
+                ["node", "another_node"],
+            ]
+            relationships = [
+                ["node__temporal_block", ["another_node", "block_b"]],
+            ]
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+                ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
+            ]
+            SpineInterface.import_data(
+                in_memory_url; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+            )
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         t = first(time_slice(m))
@@ -84,35 +86,37 @@ end
 
 function _test_representative_time_slice()
     @testset "representative_time_slice" begin
-        url_in = _test_temporal_structure_setup()
-        representative_blocks_by_period = Dict(
-            "type" => "map",
-            "index_type" => "date_time",
-            "data" => Dict(
-                "2000-01-01T00:00:00" => "rep_blk1",
-                "2000-01-01T06:00:00" => "rep_blk2",
-                "2000-01-01T12:00:00" => "rep_blk2",
-                "2000-01-01T18:00:00" => "rep_blk1",
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            representative_blocks_by_period = Dict(
+                "type" => "map",
+                "index_type" => "date_time",
+                "data" => Dict(
+                    "2000-01-01T00:00:00" => "rep_blk1",
+                    "2000-01-01T06:00:00" => "rep_blk2",
+                    "2000-01-01T12:00:00" => "rep_blk2",
+                    "2000-01-01T18:00:00" => "rep_blk1",
+                )
             )
-        )
-        objects = [["temporal_block", "rep_blk1"], ["temporal_block", "rep_blk2"]]
-        relationships = [
-            ["model__temporal_block", ["instance", "rep_blk1"]],
-            ["model__temporal_block", ["instance", "rep_blk2"]],
-        ]
-        object_parameter_values = [
-            ["temporal_block", "block_a", "representative_blocks_by_period", representative_blocks_by_period],
-            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
-            ["temporal_block", "rep_blk1", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
-            ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "6h")],
-            ["temporal_block", "rep_blk2", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T12:00:00")],
-            ["temporal_block", "rep_blk2", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T18:00:00")],
-            ["temporal_block", "rep_blk2", "resolution", Dict("type" => "duration", "data" => "6h")]
-        ]
-        SpineInterface.import_data(
-            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
-        )
-        using_spinedb(url_in, SpineOpt)
+            objects = [["temporal_block", "rep_blk1"], ["temporal_block", "rep_blk2"]]
+            relationships = [
+                ["model__temporal_block", ["instance", "rep_blk1"]],
+                ["model__temporal_block", ["instance", "rep_blk2"]],
+            ]
+            object_parameter_values = [
+                ["temporal_block", "block_a", "representative_blocks_by_period", representative_blocks_by_period],
+                ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+                ["temporal_block", "rep_blk1", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
+                ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "6h")],
+                ["temporal_block", "rep_blk2", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T12:00:00")],
+                ["temporal_block", "rep_blk2", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T18:00:00")],
+                ["temporal_block", "rep_blk2", "resolution", Dict("type" => "duration", "data" => "6h")]
+            ]
+            SpineInterface.import_data(
+                in_memory_url; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+            )
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         rep_blk1_t = only(SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1)))
@@ -145,13 +149,15 @@ end
 
 function _test_zero_resolution()
     @testset "zero_resolution" begin
-        url_in = _test_temporal_structure_setup()
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-            ["temporal_block", "block_a", "resolution", 0],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+                ["temporal_block", "block_a", "resolution", 0],
+            ]
+            SpineInterface.import_data(in_memory_url; object_parameter_values=object_parameter_values)
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         err_msg = "`resolution` of temporal block `block_a` cannot be zero!"
         m = _model()
         @test_throws ErrorException(err_msg) generate_temporal_structure!(m)
@@ -160,26 +166,28 @@ end
 
 function _test_block_start()
     @testset "block_start" begin
-        url_in = _test_temporal_structure_setup()
-        objects = [["temporal_block", "block_c"]]
-        relationships =
-            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
-            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_a", "block_start", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_b", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
-            ["temporal_block", "block_c", "block_start", nothing],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-        )
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            objects = [["temporal_block", "block_c"]]
+            relationships =
+                [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
+                ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_a", "block_start", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_b", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
+                ["temporal_block", "block_c", "block_start", nothing],
+            ]
+            SpineInterface.import_data(
+                in_memory_url;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+            )
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         @test start(first(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
@@ -190,26 +198,28 @@ end
 
 function _test_block_end()
     @testset "block_end" begin
-        url_in = _test_temporal_structure_setup()
-        objects = [["temporal_block", "block_c"]]
-        relationships =
-            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
-            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_a", "block_end", Dict("type" => "duration", "data" => "1D")],
-            ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
-            ["temporal_block", "block_c", "block_end", nothing],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-        )
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            objects = [["temporal_block", "block_c"]]
+            relationships =
+                [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
+                ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_a", "block_end", Dict("type" => "duration", "data" => "1D")],
+                ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
+                ["temporal_block", "block_c", "block_end", nothing],
+            ]
+            SpineInterface.import_data(
+                in_memory_url;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+            )
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
@@ -220,23 +230,25 @@ end
 
 function _test_one_two_four_even()
     @testset "one_two_four_even" begin
-        url_in = _test_temporal_structure_setup()
-        objects = [["temporal_block", "block_c"]]
-        relationships =
-            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2004-01-01T00:00:00")],
-            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1Y")],
-            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2Y")],
-            ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "4Y")],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-        )
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            objects = [["temporal_block", "block_c"]]
+            relationships =
+                [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2004-01-01T00:00:00")],
+                ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1Y")],
+                ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2Y")],
+                ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "4Y")],
+            ]
+            SpineInterface.import_data(
+                in_memory_url;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+            )
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -298,14 +310,16 @@ end
 
 function _test_two_three_uneven()
     @testset "two_three_uneven" begin
-        url_in = _test_temporal_structure_setup()
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2006-01-01T00:00:00")],
-            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "2Y")],
-            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "3Y")],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2006-01-01T00:00:00")],
+                ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "2Y")],
+                ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "3Y")],
+            ]
+            SpineInterface.import_data(in_memory_url; object_parameter_values=object_parameter_values)
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -351,28 +365,30 @@ end
 
 function _test_gaps()
     @testset "gaps" begin
-        url_in = _test_temporal_structure_setup()
-        objects = [["temporal_block", "block_c"]]
-        relationships =
-            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2007-01-11T00:00:00")],
-            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1Y")],
-            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1Y")],
-            ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1Y")],
-            ["temporal_block", "block_b", "block_start", Dict("type" => "duration", "data" => "4Y")],
-            ["temporal_block", "block_c", "block_start", Dict("type" => "duration", "data" => "8Y")],
-            ["temporal_block", "block_a", "block_end", Dict("type" => "duration", "data" => "2Y")],
-            ["temporal_block", "block_b", "block_end", Dict("type" => "duration", "data" => "6Y")],
-            ["temporal_block", "block_c", "block_end", Dict("type" => "duration", "data" => "10Y")],
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-        )
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            objects = [["temporal_block", "block_c"]]
+            relationships =
+                [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2007-01-11T00:00:00")],
+                ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1Y")],
+                ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1Y")],
+                ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1Y")],
+                ["temporal_block", "block_b", "block_start", Dict("type" => "duration", "data" => "4Y")],
+                ["temporal_block", "block_c", "block_start", Dict("type" => "duration", "data" => "8Y")],
+                ["temporal_block", "block_a", "block_end", Dict("type" => "duration", "data" => "2Y")],
+                ["temporal_block", "block_b", "block_end", Dict("type" => "duration", "data" => "6Y")],
+                ["temporal_block", "block_c", "block_end", Dict("type" => "duration", "data" => "10Y")],
+            ]
+            SpineInterface.import_data(
+                in_memory_url;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+            )
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -418,16 +434,18 @@ end
 
 function _test_to_time_slice_with_rolling()
     @testset "to_time_slice with rolling" begin
-        url_in = _test_temporal_structure_setup()
-        object_parameter_values = [
-            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2001-01-01T00:00:00")],
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2003-01-01T00:00:00")],
-            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1Y")],
-            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "6M")],
-            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "6M")],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            object_parameter_values = [
+                ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2001-01-01T00:00:00")],
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2003-01-01T00:00:00")],
+                ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1Y")],
+                ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "6M")],
+                ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "6M")],
+            ]
+            SpineInterface.import_data(in_memory_url; object_parameter_values=object_parameter_values)
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         a1, a2 = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -445,17 +463,19 @@ end
 
 function _test_history()
     @testset "history" begin
-        url_in = _test_temporal_structure_setup()
-        objects = [("unit", "unitA")]
-        object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T04:00:00")],
-            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "3h")],
-            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")],
-        ]
-        SpineInterface.import_data(url_in; objects=objects, object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            objects = [("unit", "unitA")]
+            object_parameter_values = [
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T04:00:00")],
+                ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "3h")],
+                ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1h")],
+                ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2h")],
+                ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")],
+            ]
+            SpineInterface.import_data(in_memory_url; objects=objects, object_parameter_values=object_parameter_values)
+            using_spinedb(in_memory_url, SpineOpt)
+        end
         m = _model()
         generate_temporal_structure!(m)
         block_a = temporal_block(:block_a)
@@ -476,79 +496,83 @@ end
 
 function _test_master_temporal_structure()
     @testset "master_temporal_structure" begin
-        url_in = _test_temporal_structure_setup()
-        res = Hour(6)
-        m_start = DateTime(2001, 1, 1)
-        rf = Hour(24)
-        m_end = m_start + rf
-        a_gap = Hour(6)
-        b_look_ahead = Hour(12)
-        object_parameter_values = [
-            ["model", "instance", "model_start", unparse_db_value(m_start)],
-            ["model", "instance", "model_end", unparse_db_value(m_end)],
-            ["model", "instance", "roll_forward", unparse_db_value(rf)],
-            ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
-            ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
-            ["temporal_block", "block_a", "block_start", unparse_db_value(a_gap)],
-            ["temporal_block", "block_a", "block_end", unparse_db_value(rf - a_gap)],
-            ["temporal_block", "block_b", "block_end", unparse_db_value(rf + b_look_ahead)],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
-        m_mp = _model()
-        SpineOpt.generate_master_temporal_structure!(m_mp)
-        obs_time_slices = time_slice(m_mp)
-        block_a, block_b = temporal_block(:block_a), temporal_block(:block_b)
-        starts = m_start : res : m_end - res + b_look_ahead
-        blocks_ = [(m_start + a_gap <= st < m_start + rf - a_gap) ? (block_a, block_b) : (block_b,) for st in starts]
-        exp_time_slices = [TimeSlice(st, st + res, blks...) for (st, blks) in zip(starts, blocks_)]
-        @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
-            @test obs == exp
+        with_connection_open(in_memory_url) do
+            _test_temporal_structure_setup()
+            res = Hour(6)
+            m_start = DateTime(2001, 1, 1)
+            rf = Hour(24)
+            m_end = m_start + rf
+            a_gap = Hour(6)
+            b_look_ahead = Hour(12)
+            object_parameter_values = [
+                ["model", "instance", "model_start", unparse_db_value(m_start)],
+                ["model", "instance", "model_end", unparse_db_value(m_end)],
+                ["model", "instance", "roll_forward", unparse_db_value(rf)],
+                ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
+                ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
+                ["temporal_block", "block_a", "block_start", unparse_db_value(a_gap)],
+                ["temporal_block", "block_a", "block_end", unparse_db_value(rf - a_gap)],
+                ["temporal_block", "block_b", "block_end", unparse_db_value(rf + b_look_ahead)],
+            ]
+            SpineInterface.import_data(in_memory_url; object_parameter_values=object_parameter_values)
+            using_spinedb(in_memory_url, SpineOpt)
+            m_mp = _model()
+            SpineOpt.generate_master_temporal_structure!(m_mp)
+            obs_time_slices = time_slice(m_mp)
+            block_a, block_b = temporal_block(:block_a), temporal_block(:block_b)
+            starts = m_start : res : m_end - res + b_look_ahead
+            blocks_ = [(m_start + a_gap <= st < m_start + rf - a_gap) ? (block_a, block_b) : (block_b,) for st in starts]
+            exp_time_slices = [TimeSlice(st, st + res, blks...) for (st, blks) in zip(starts, blocks_)]
+            @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
+                @test obs == exp
+            end
         end
     end
 end
 
 function _test_subwindows()
     @testset "subwindows" begin
-        url_in = _test_temporal_structure_setup()
-        res = Day(1)
-        m_start = DateTime(2001, 1, 1)
-        m_end = m_start + Week(1)
-        objects = [["temporal_block", "long_block"]]
-        object_parameter_values = [
-            ["model", "instance", "model_start", unparse_db_value(m_start)],
-            ["model", "instance", "model_end", unparse_db_value(m_end)],
-            ["temporal_block", "block_a", "has_free_start", true],
-            ["temporal_block", "block_b", "has_free_start", true],
-            ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
-            ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
-            ["temporal_block", "block_a", "block_start", unparse_db_value(m_start)],
-            ["temporal_block", "block_a", "block_end", unparse_db_value(m_start + Day(1))],
-            ["temporal_block", "block_b", "block_start", unparse_db_value(m_start + Day(3))],
-            ["temporal_block", "block_b", "block_end", unparse_db_value(m_start + Day(4))],
-            ["temporal_block", "long_block", "resolution", unparse_db_value(Week(1))],
-        ]
-        SpineInterface.import_data(url_in; objects=objects, object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
-        m = _model()
-        SpineOpt.generate_temporal_structure!(m)
-        obs_time_slices = time_slice(m)
-        exp_time_slices = [
-            TimeSlice(m_start, m_start + Day(1), temporal_block(:block_a)),
-            TimeSlice(m_start, m_start + Week(1), temporal_block(:long_block)),
-            TimeSlice(m_start + Day(3), m_start + Day(4), temporal_block(:block_b))
-        ]
-        @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
-            @test obs == exp
-        end
-        obs_hist_time_slices = history_time_slice(m)
-        exp_hist_time_slices = [
-            TimeSlice(m_start - Week(1), m_start, temporal_block(:long_block)),
-            TimeSlice(m_start - Day(1), m_start, temporal_block(:block_a)),
-            TimeSlice(m_start + Day(2), m_start + Day(3), temporal_block(:block_b))
-        ]
-        @testset for (obs, exp) in zip(obs_hist_time_slices, exp_hist_time_slices)
-            @test obs == exp
+        with_connection_open(in_memory_url) do
+        _test_temporal_structure_setup()
+            res = Day(1)
+            m_start = DateTime(2001, 1, 1)
+            m_end = m_start + Week(1)
+            objects = [["temporal_block", "long_block"]]
+            object_parameter_values = [
+                ["model", "instance", "model_start", unparse_db_value(m_start)],
+                ["model", "instance", "model_end", unparse_db_value(m_end)],
+                ["temporal_block", "block_a", "has_free_start", true],
+                ["temporal_block", "block_b", "has_free_start", true],
+                ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
+                ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
+                ["temporal_block", "block_a", "block_start", unparse_db_value(m_start)],
+                ["temporal_block", "block_a", "block_end", unparse_db_value(m_start + Day(1))],
+                ["temporal_block", "block_b", "block_start", unparse_db_value(m_start + Day(3))],
+                ["temporal_block", "block_b", "block_end", unparse_db_value(m_start + Day(4))],
+                ["temporal_block", "long_block", "resolution", unparse_db_value(Week(1))],
+            ]
+            SpineInterface.import_data(in_memory_url; objects=objects, object_parameter_values=object_parameter_values)
+            using_spinedb(in_memory_url, SpineOpt)
+            m = _model()
+            SpineOpt.generate_temporal_structure!(m)
+            obs_time_slices = time_slice(m)
+            exp_time_slices = [
+                TimeSlice(m_start, m_start + Day(1), temporal_block(:block_a)),
+                TimeSlice(m_start, m_start + Week(1), temporal_block(:long_block)),
+                TimeSlice(m_start + Day(3), m_start + Day(4), temporal_block(:block_b))
+            ]
+            @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
+                @test obs == exp
+            end
+            obs_hist_time_slices = history_time_slice(m)
+            exp_hist_time_slices = [
+                TimeSlice(m_start - Week(1), m_start, temporal_block(:long_block)),
+                TimeSlice(m_start - Day(1), m_start, temporal_block(:block_a)),
+                TimeSlice(m_start + Day(2), m_start + Day(3), temporal_block(:block_b))
+            ]
+            @testset for (obs, exp) in zip(obs_hist_time_slices, exp_hist_time_slices)
+                @test obs == exp
+            end
         end
     end
 end

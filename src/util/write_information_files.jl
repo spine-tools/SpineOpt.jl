@@ -104,15 +104,17 @@ end
 Write `ptdf` parameter values to a `ptdfs.csv` file.
 """
 function write_ptdfs()
+    nodes = sort(node(has_ptdf=true)) # These need to be sorted for consistent output
+    connections = sort(connection(has_ptdf=true))
     io = open("ptdfs.csv", "w")
     print(io, "connection,")
-    for n in node(has_ptdf=true)
+    for n in nodes
         print(io, string(n), ",")
     end
     print(io, "\n")
-    for conn in connection(has_ptdf=true)
+    for conn in connections
         print(io, string(conn), ",")
-        for n in node(has_ptdf=true)
+        for n in nodes
             ptdf_val = ptdf(connection=conn, node=n, _strict=false)
             if ptdf_val === nothing
                 ptdf_val = 0
@@ -130,18 +132,20 @@ end
 Write `lodf` parameter values to a `lodsfs.csv` file.
 """
 function write_lodfs()
+    connections_mon = sort(connection(monitoring_active=true)) # Sorting needed for consistent output
+    connections_cont = sort(connection(contingency_active=true))
     io = open("lodfs.csv", "w")
     print(io, raw"contingency line,from_node,to node,")
-    for conn_mon in connection(monitoring_active=true)
+    for conn_mon in connections_mon
         print(io, string(conn_mon), ",")
     end
     print(io, "\n")
-    for conn_cont in connection(contingency_active=true)
+    for conn_cont in connections_cont
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         # CAUTION: this assumption works only for bi-directional connections with 2 nodes as required in the lodf calculation
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
-        for conn_mon in connection(monitoring_active=true)
+        for conn_mon in connections_mon
             print(io, ",")
             for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon)
                 print(io, lodf(connection1=conn_cont, connection2=conn_mon))

@@ -41,9 +41,10 @@ function connection_flow_indices(
     node = members(node)
     (
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d) in connection__node__direction(
-            connection=connection, node=node, direction=direction, _compact=false
-        )
+        for (conn, n, d) in Iterators.flatten((
+            connection__to_node(connection=connection, node=node, direction=direction, _compact=false),
+            connection__from_node(connection=connection, node=node, direction=direction, _compact=false),
+        ))
         for (n, s, t) in node_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
@@ -72,9 +73,9 @@ end
 
 function _fix_ratio_connection_flow(m, conn, n1, n2, s, t, fix_ratio, direct)
     if direct
-        fix_ratio(m; connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t)
+        fix_ratio(m, connection__node__node, (conn, n1, n2); stochastic_scenario=s, t=t)
     else
-        _div_or_zero(1, fix_ratio(m; connection=conn, node1=n2, node2=n1, stochastic_scenario=s, t=t))
+        _div_or_zero(1, fix_ratio(m, connection__node__node, (conn, n1, n2); stochastic_scenario=s, t=t))
     end
 end
 

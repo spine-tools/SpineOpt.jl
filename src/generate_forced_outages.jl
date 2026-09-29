@@ -85,7 +85,7 @@ Parameter `out_of_service_count_fix` will be written for those units in the outp
 
     using SpineOpt
     m = generate_forced_outages(
-        raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite", 
+        raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite",
         raw"sqlite:///C:\\path\\to\\your\\output_db.sqlite"
     )
 

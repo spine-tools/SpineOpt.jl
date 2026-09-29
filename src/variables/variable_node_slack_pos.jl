@@ -28,9 +28,9 @@ function node_slack_indices(
     t=anything,
     temporal_block=temporal_block(is_representative=true),
 )
-    node = intersect(node_with_slack_penalty(), node)
+    n = indices(balance_penalty; node=node)
     node_stochastic_time_indices(
-        m; node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
+        m; node=n, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
     )
 end
 

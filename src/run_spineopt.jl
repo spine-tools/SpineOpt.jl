@@ -56,7 +56,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 ```julia
 using SpineOpt
 m = run_spineopt(
-    raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite", 
+    raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite",
     raw"sqlite:///C:\\path\\to\\your\\output_db.sqlite";
     filters=Dict("tool" => "object_activity_control", "scenario" => "scenario_to_run"),
     alternative="alternative_to_write_results"
@@ -141,7 +141,7 @@ function _run_spineopt(
 )
     @log log_level 0 "\nRunning SpineOpt..."
     so_ver, so_git_hash = _version_and_git_hash(SpineOpt)
-    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)    
+    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)
     println("[SpineOpt version $so_ver (git hash: $so_git_hash)]")
     println("[SpineInterface version $si_ver (git hash: $si_git_hash)]")
     t_start = now()
@@ -160,7 +160,7 @@ function _run_spineopt(
         )
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
-    @log log_level 3 "\nSpineOpt model instance summary:"
+   @log log_level 3 "\nSpineOpt model instance summary:"
     log_level >= 3 && foreach(i -> print_active(m, i), [:variables, :objective_terms, :constraints])
     @log log_level 3 "\nActive model outputs not included in the report:"
     log_level >= 3 && foreach(println, hidden_active_outputs(m))
@@ -379,7 +379,7 @@ function run_spineopt!(
     resume_file_path=nothing,
 )
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
-    Base.invokelatest(        
+    Base.invokelatest(
         do_run_spineopt!,
         m,
         url_out,
@@ -723,7 +723,7 @@ Active items of a field of an `SpineOptExt` instance.
 function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Symbol}
     items = getproperty(spineopt_ext, field)
     sort([
-        key for key in keys(items) 
+        key for key in keys(items)
         if !isnothing(items[key]) && !isempty(items[key]) && !isequal(items[key], (0, 0))
     ])
 end

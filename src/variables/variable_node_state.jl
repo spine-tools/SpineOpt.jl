@@ -49,6 +49,7 @@ function node_state_longterm_indices(
     temporal_block=temporal_block(is_representative=false),
 )
     node = intersect(node, SpineOpt.node(storage_active=true, storage_longterm_active=true))
+    temporal_block = intersect(temporal_block, SpineOpt.temporal_block(is_starting_point=false))
     (
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(

@@ -37,7 +37,7 @@ function fixed_om_costs(m, t_range)
                 # For investable unit, we assume the `existing_units`=0 (existing ones) unless explicitly specified.
             )
             * (
-                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
+                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
                 unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] * discounted_duration_base(t) : 
                 duration(t)
             )
@@ -70,7 +70,7 @@ function fixed_om_costs(m, t_range)
                 + _get_connections_invested_available(m, conn, s, t)
             )
             * (
-                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
+                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
                 connection_discounted_duration[
                     (connection=conn, stochastic_scenario=s, t=t)
                 ] * discounted_duration_base(t) : 
@@ -102,7 +102,7 @@ function fixed_om_costs(m, t_range)
                 + _get_storages_invested_available(m, n, s, t)
             )
             * (
-                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance)) ?
+                !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
                 node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] * discounted_duration_base(t) : 
                 duration(t)
             )

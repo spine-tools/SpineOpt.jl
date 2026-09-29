@@ -36,11 +36,12 @@ function do_run_spineopt!(
     mga_iteration_count = 0
     max_mga_iters = mga_max_iterations(model=m.ext[:spineopt].instance)
     build_model!(m; log_level)
+    out_suffix = _add_mga_iteration(mga_iteration_count)
     solve_model!(
         m;
         log_level=log_level,
         update_names=update_names,
-        output_suffix=_add_mga_iteration(mga_iteration_count),
+        output_suffix=out_suffix
     )
     mga_iteration_count += 1
     add_mga_objective_constraint!(m)
@@ -68,12 +69,14 @@ function do_run_spineopt!(
     end
     while mga_iteration_count <= max_mga_iters
         # TODO: set_objective_mga_iteration is different now
-        set_objective_mga_iteration!(m; iteration=last(mga_iteration()), iteration_number=mga_iteration_count)
+        mga_iter = only(values(out_suffix))
+        set_objective_mga_iteration!(m; iteration=mga_iter, iteration_number=mga_iteration_count)
+        out_suffix = _add_mga_iteration(mga_iteration_count)
         solve_model!(
             m;
             log_level=log_level,
             update_names=update_names,
-            output_suffix=_add_mga_iteration(mga_iteration_count),
+            output_suffix=out_suffix,
         ) || break
         save_mga_objective_values!(m)
         # TODO: needs to clean outputs?
@@ -193,7 +196,7 @@ function _set_objective_mga_iteration!(
     m::Model,
     variable_name::Symbol,
     variable_indices_function::Function,
-    scenario_weight_function::Function,
+    scenario_weight::Parameter,
     mga_indices::Function,
     mga_weight_iteration::Parameter,
     mga_variable_bigM::Parameter,
@@ -234,7 +237,7 @@ function _set_objective_mga_iteration!(
                     ==
                     (
                         sum(
-                            variable[ind_] * scenario_weight_function(m; _drop_key(ind_, :t)...)
+                            variable[ind_] * scenario_weight(m; _drop_key(ind_, :t)...)
                             for ind_ in variable_indices_function(m; ind...)
                         )
                     )
@@ -251,7 +254,7 @@ function _set_objective_mga_iteration!(
                     <=
                     sum(
                         (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration))
-                        * scenario_weight_function(m; _drop_key(ind_, :t)...) # FIXME: can also be only node or so
+                        * scenario_weight(m; _drop_key(ind_, :t)...) # FIXME: can also be only node or so
                         for ind_ in variable_indices_function(m; ind...)
                     )
                     * mga_weight_iteration(; ind...)
@@ -263,7 +266,7 @@ function _set_objective_mga_iteration!(
                     <=
                     sum(
                         (_mga_result(m, variable_name, ind_, mga_current_iteration) - variable[ind_])
-                        * scenario_weight_function(m; _drop_key(ind_, :t)...)
+                        * scenario_weight(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     )
                     * mga_weight_iteration(; ind...)
@@ -275,7 +278,7 @@ function _set_objective_mga_iteration!(
                     >=
                     sum(
                         (variable[ind_] - _mga_result(m, variable_name, ind_, mga_current_iteration))
-                        * scenario_weight_function(m; _drop_key(ind_, :t)...)
+                        * scenario_weight(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     )
                     * mga_weight_iteration(; ind...)
@@ -286,7 +289,7 @@ function _set_objective_mga_iteration!(
                     >=
                     sum(
                         (_mga_result(m, variable_name, ind_, mga_current_iteration) - variable[ind_])
-                        * scenario_weight_function(m; _drop_key(ind_, :t)...)
+                        * scenario_weight(m; _drop_key(ind_, :t)...)
                         for ind_ in variable_indices_function(m; ind...)
                     ) 
                     * mga_weight_iteration(; ind...)
