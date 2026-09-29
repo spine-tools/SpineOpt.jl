@@ -80,18 +80,14 @@ Inverse:
 function _fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
     if direct
         fix_ratio(
-            m; 
-            unit1=u1, node1=n1, direction1=d1, 
-            unit2=u2, node2=n2, direction2=d2, 
+            m, unit_flow__unit_flow, (u1, n1, d1, u2, n2, d2);
             stochastic_scenario=s, t=t
         )
     else
         _div_or_zero(
-            1, 
+            1,
             fix_ratio(
-                m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                m, unit_flow__unit_flow, (u2, n2, d2, u1, n1, d1);
                 stochastic_scenario=s, t=t
             )
         )
@@ -102,25 +98,19 @@ function _fix_units_on_coeff(m, u1, n1, d1, u2, n2, d2, s, t, fix_ratio, direct)
     fix_units_on_coeff = _ratio_to_units_on_coeff(fix_ratio)
     if direct
         fix_units_on_coeff(
-            m; 
-            unit1=u1, node1=n1, direction1=d1, 
-            unit2=u2, node2=n2, direction2=d2, 
+            m, unit_flow__unit_flow, (u1, n1, d1, u2, n2, d2);
             stochastic_scenario=s, t=t,
             _default=0
         )
     else
         - _div_or_zero(
             fix_units_on_coeff(
-                m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                m, unit_flow__unit_flow, (u2, n2, d2, u1, n1, d1);
                 stochastic_scenario=s, t=t,
                 _default=0
             ),
             fix_ratio(
-                m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                m, unit_flow__unit_flow, (u2, n2, d2, u1, n1, d1);
                 stochastic_scenario=s, t=t
             ),
         )
@@ -132,25 +122,19 @@ function _signed_flow_ratio_start_flow(m, u1, n1, d1, u2, n2, d2, s, t, fix_rati
     iszero(sign) && return 0
     if direct
         sign * flow_ratio_start_flow(
-            m; 
-            unit1=u1, node1=n1, direction1=d1, 
-            unit2=u2, node2=n2, direction2=d2, 
+            m, unit_flow__unit_flow, (u1, n1, d1, u2, n2, d2);
             stochastic_scenario=s, t=t,
             _default=0
         )
     else
         - sign * _div_or_zero(
             flow_ratio_start_flow(
-                m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                m, unit_flow__unit_flow, (u2, n2, d2, u1, n1, d1);
                 stochastic_scenario=s, t=t,
                 _default=0
             ),
             fix_ratio(
-                m; 
-                unit1=u2, node1=n2, direction1=d2, 
-                unit2=u1, node2=n1, direction2=d1, 
+                m, unit_flow__unit_flow, (u2, n2, d2, u1, n1, d1);
                 stochastic_scenario=s, t=t
             ),
         )

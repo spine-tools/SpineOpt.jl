@@ -73,9 +73,9 @@ end
 
 function _fix_ratio_connection_flow(m, conn, n1, n2, s, t, fix_ratio, direct)
     if direct
-        fix_ratio(m; connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t)
+        fix_ratio(m, connection__node__node, (conn, n1, n2); stochastic_scenario=s, t=t)
     else
-        _div_or_zero(1, fix_ratio(m; connection=conn, node1=n2, node2=n1, stochastic_scenario=s, t=t))
+        _div_or_zero(1, fix_ratio(m, connection__node__node, (conn, n1, n2); stochastic_scenario=s, t=t))
     end
 end
 

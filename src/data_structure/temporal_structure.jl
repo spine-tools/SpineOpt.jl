@@ -1052,9 +1052,15 @@ end
 
 function (x::Union{Parameter,ParameterFunction})(m::Model; kwargs...)
     t0 = _analysis_time(m)
-    algo = model_algorithm(model=m.ext[:spineopt].instance)
+    algo = model_algorithm(model, m.ext[:spineopt].instance)
     @fetch as_number_or_call = m.ext[:spineopt].temporal_structure
     as_number_or_call(x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
+end
+function (x::Parameter)(m::Model, class, selector; kwargs...)
+    t0 = _analysis_time(m)
+    algo = model_algorithm(model, m.ext[:spineopt].instance)
+    @fetch as_number_or_call = m.ext[:spineopt].temporal_structure
+    as_number_or_call(x, class, selector; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
 end
 
 algo_kwargs(m, algo) = (;)
