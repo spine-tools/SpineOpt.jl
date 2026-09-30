@@ -190,10 +190,7 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio)
         if !_has_simple_fix_ratio_unit_flow(m, u1, n1, d1, u2, n2, d2, ratio)
         for (t, path) in t_lowest_resolution_path(
             m,
-            unit_flow_indices(m; unit=u1, node=[n1, n2]), # What is this doing?
-            unit_flow_indices(m; unit=u2, node=[n1, n2]), # What is this doing?
-            unit_flow_indices(m; unit=u1, node=n1, direction=d1),
-            unit_flow_indices(m; unit=u2, node=n2, direction=d2),
+            unit_flow_indices(m; unit=[u1, u2], node=[n1, n2]),
             _get_units_on_indices(m, u2),
         )
     )
