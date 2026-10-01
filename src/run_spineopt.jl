@@ -160,7 +160,7 @@ function _run_spineopt(
         )
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
-   @log log_level 3 "\nSpineOpt model instance summary:"
+    @log log_level 3 "\nSpineOpt model instance summary:"
     log_level >= 3 && foreach(i -> print_active(m, i), [:variables, :objective_terms, :constraints])
     @log log_level 3 "\nActive model outputs not included in the report:"
     log_level >= 3 && foreach(println, hidden_active_outputs(m))
@@ -708,22 +708,22 @@ end
 """
     print_active(m, field)
 
-Print active items of a field in the built SpineOpt model `m`.
+Print active items of a field (incl. counts) in the built SpineOpt model `m`.
 """
 function print_active(m::JuMP.Model, field::Symbol)::Nothing
-    println("*** Active SpineOpt `$field`: ***")
+    println("*** Active SpineOpt `$field` and their counts: ***")
     foreach(println, active_spineopt_ext_items(m.ext[:spineopt], field))
 end
 
 """
     active_spineopt_ext_items(spineopt_ext, field)
 
-Active items of a field of an `SpineOptExt` instance.
+Active items of a field of an `SpineOptExt` instance and their counts.
 """
-function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Symbol}
+function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Tuple{Symbol,Int64}}
     items = getproperty(spineopt_ext, field)
     sort([
-        key for key in keys(items)
+        (key, length(items)) for key in keys(items)
         if !isnothing(items[key]) && !isempty(items[key]) && !isequal(items[key], (0, 0))
     ])
 end
@@ -731,10 +731,11 @@ end
 """
      hidden_active_outputs(m)
 
-Active model outputs that are not reported
+Active model outputs that are not reported.
 """
 function hidden_active_outputs(m::JuMP.Model)::Vector{Symbol}
     spineopt_ext = m.ext[:spineopt]
     hidden_outputs = setdiff(keys(spineopt_ext.values), keys(spineopt_ext.outputs))
-    return intersect(hidden_outputs, active_spineopt_ext_items(spineopt_ext, :values)) |> collect |> sort
+    active_values = getindex.(active_spineopt_ext_items(spineopt_ext, :values), 1)
+    return intersect(active_values, hidden_outputs)
 end
