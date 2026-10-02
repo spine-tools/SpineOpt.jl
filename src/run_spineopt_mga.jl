@@ -337,7 +337,7 @@ function set_mga_objective!(m)
         (model=m.ext[:spineopt].instance, t=current_window(m)) => @variable(
             m,
             base_name=_base_name(:mga_objective, (model=m.ext[:spineopt].instance, t=current_window(m))),
-            lower_bound=(weighted_investments ? Inf : 0)
+            lower_bound=(weighted_investments ? Inf : 0) # FIXME This `Inf` lower bound errors with JuMP v1.32+, see #1352.
         )
     )
     @objective(
