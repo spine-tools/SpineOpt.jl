@@ -23,7 +23,6 @@
 
 Create an expression for capacity margin penalties.
 """
-
 function min_capacity_margin_penalties(m::Model, t_range)
     @fetch min_capacity_margin_slack = m.ext[:spineopt].variables
     @expression(
