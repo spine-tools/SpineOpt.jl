@@ -23,8 +23,8 @@
 
 Create an expression for objective penalties.
 """
-# TODO: find a better name for this; objective penalities is not self-speaking
 function objective_penalties(m::Model, t_range)
+    # TODO: find a better name for this; objective penalities is not self-speaking
     @fetch (
         node_slack_pos, node_slack_neg, user_constraint_slack_pos, user_constraint_slack_neg
     ) = m.ext[:spineopt].variables
@@ -32,22 +32,23 @@ function objective_penalties(m::Model, t_range)
         m,
         + sum(
             (node_slack_neg[n, s, t] + node_slack_pos[n, s, t])
-            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
-               node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
-            ) 
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * balance_penalty(m; node=n, stochastic_scenario=s, t=t)
-            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+                * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
+                   storage_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
+                )
+                * duration(t)
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                * balance_penalty(m; node=n, stochastic_scenario=s, t=t)
+                * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (n, s, t) in node_slack_indices(m; t=t_range);
             init=0,
         )
-        + sum(
+            +
+            sum(
             (user_constraint_slack_neg[uc, s, t] + user_constraint_slack_pos[uc, s, t])
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * user_constraint_slack_penalty(m; user_constraint=uc, stochastic_scenario=s, t=t)
-            * any_stochastic_scenario_weight(m; stochastic_scenario=s)
+                * duration(t)
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                * user_constraint_slack_penalty(m; user_constraint=uc, stochastic_scenario=s, t=t)
+                * any_stochastic_scenario_weight(m; stochastic_scenario=s)
             for (uc, s, t) in user_constraint_slack_indices(m; t=t_range);
             init=0,
         )
