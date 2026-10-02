@@ -139,7 +139,6 @@ _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_st
 
 A `Dict` mapping temporal block `Object`s to (start, end) tuples representing their end-points.
 """
-
 function _start_and_end_by_block(m::Model, window_start, window_end)
     model_blocks = members(temporal_block())
     isempty(model_blocks) && error("model $(_model_name(m)) doesn't have any temporal_blocks")
@@ -414,14 +413,16 @@ function _generate_time_slice_relationships!(m::Model)
         for (x_before, succeeding) in succeeding_annotated_time_slices
         for x_after in succeeding
         if end_(x_before.t) <= start(x_after.t)
-        && _check_affinity(x_before, x_after)
+        &&
+            _check_affinity(x_before, x_after)
     )
     t_in_t_tuples = unique(
         (x_short.t, x_long.t)
         for (x_short, overlapping) in overlapping_annotated_time_slices
         for x_long in overlapping
         if iscontained(x_short.t, x_long.t)
-        && _check_affinity(x_short, x_long)
+        &&
+            _check_affinity(x_short, x_long)
     )
     t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
     t_to_overlapping_t = Dict(
@@ -479,9 +480,9 @@ function _generate_as_number_or_call!(m)
     algo = model_algorithm(model=m.ext[:spineopt].instance)
     temp_struct[:as_number_or_call] = if (
         needs_auto_updating(Val(algo))
-        || temp_struct[:window_count] > 1
-        || _is_benders_subproblem(m)
-        || (_is_child_stage(m) && !_is_benders_master(m))
+            || temp_struct[:window_count] > 1
+            || _is_benders_subproblem(m)
+            || (_is_child_stage(m) && !_is_benders_master(m))
     )
         as_call
     else
@@ -645,8 +646,8 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     temp_struct = m.ext[:spineopt].temporal_structure
     current_window = temp_struct[:current_window]
     !rev && any(
-        x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
-    ) && return false
+            x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
+        ) && return false
     updates = roll!(current_window, rf; return_updates=true)
     append!(updates, _roll_time_slice_set!(temp_struct[:time_slice], rf))
     append!(updates, _roll_time_slice_set!(temp_struct[:history_time_slice], rf))
@@ -996,7 +997,6 @@ function connection_investment_dynamic_time_indices(m::Model; connection=anythin
         for (tb, ta) in dynamic_time_indices(
             m, connection__investment_temporal_block(connection=conn); t_before=t_before, t_after=t_after
         )
-
     )
 end
 

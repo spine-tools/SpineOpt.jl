@@ -23,22 +23,21 @@
 
 Create an expression for capacity margin penalties.
 """
-
 function min_capacity_margin_penalties(m::Model, t_range)
     @fetch min_capacity_margin_slack = m.ext[:spineopt].variables
     @expression(
         m,
         + sum(
             min_capacity_margin_slack[n, s, t]
-            * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
-               node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
-            ) 
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * capacity_margin_penalty(m; node=n, stochastic_scenario=s, t=t)
-            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+                * (!isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
+                   storage_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
+                )
+                * duration(t)
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                * capacity_margin_penalty(m; node=n, stochastic_scenario=s, t=t)
+                * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
             for (n, s, t) in min_capacity_margin_slack_indices(m; t=t_range);
             init=0,
-        )        
+        )
     )
 end
