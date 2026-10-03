@@ -2995,6 +2995,13 @@
         ],
         [
             "node__to_unit",
+            "initial_nonspin_units_shut_down",
+            null,
+            null,
+            "Initialize the `nonspin_units_shut_down` variable."
+        ],        
+        [
+            "node__to_unit",
             "initial_nonspin_units_started_up",
             null,
             null,
