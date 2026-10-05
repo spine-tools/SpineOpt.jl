@@ -326,6 +326,108 @@ function _test_discounted_duration_base()
     end
 end
 
+function _test_discounted_storage_fixed_annual_cost_milestone_years()
+    @testset "test discounted storage fixed annual cost - using milestone years" begin
+        with_connection_open(url_in) do
+            test_data_example_multiyear_economic_discounting()
+            discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
+            discnt_rate = 0.05
+            multiyear_economic_discounting = "milestone_years"
+            storage_state_max = 100
+            storage_fixed_annual_cost = 8760 # year 2030 is a normal year.
+            storage_investment_count_max_cumulative = 1
+            object_parameter_values = [
+                ["model", "instance", "discount_rate", discnt_rate],
+                ["model", "instance", "discount_year", discnt_year],
+                ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
+                ["node", "node_b", "storage_state_max", storage_state_max],
+                ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+                ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
+            ]
+            SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+            m = run_spineopt(url_in; optimize=false, log_level=1)
+            var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
+            n = node(:node_b)
+            s = stochastic_scenario(:parent)
+            t_inv = first(SpineOpt.storages_invested_available_indices(m; node=n)).t
+            key_param = Dict(node.name => n, stochastic_scenario.name => s)
+            express = SpineOpt.fixed_om_costs(m, t_inv)
+            express = SpineOpt.realize(express)
+            discounted_duration = 1.1985925426271964
+            @test discounted_duration ≈ SpineOpt.storage_discounted_duration(; key_param..., t=t_inv) rtol = 1e-6
+            # The hourly fixed cost (annual cost / 8760) times `discounted_duration_base(t_inv)` (8760 for a
+            # multi-year investment period starting in 2030) gives back the annual cost.
+            expected_coe_obj = storage_state_max * storage_fixed_annual_cost * discounted_duration
+            observed_coe_obj = coefficient(express, var_storages_invested_available[n, s, t_inv])
+            @test expected_coe_obj ≈ observed_coe_obj rtol = 1e-6
+        end
+    end
+end
+
+function _test_discounted_balance_penalty_milestone_years()
+    @testset "test discounted balance penalty - using milestone years" begin
+        with_connection_open(url_in) do
+            test_data_example_multiyear_economic_discounting()
+            discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
+            discnt_rate = 0.05
+            multiyear_economic_discounting = "milestone_years"
+            penalty = 0.4
+            object_parameter_values = [
+                ["model", "instance", "discount_rate", discnt_rate],
+                ["model", "instance", "discount_year", discnt_year],
+                ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
+                ["node", "node_b", "balance_penalty", penalty],
+            ]
+            SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+            m = run_spineopt(url_in; optimize=false, log_level=1)
+            node_slack_neg = m.ext[:spineopt].variables[:node_slack_neg]
+            node_slack_pos = m.ext[:spineopt].variables[:node_slack_pos]
+            n = node(:node_b)
+            s = stochastic_scenario(:parent)
+            t = first(SpineOpt.node_slack_indices(m; node=n)).t
+            key_param = Dict(node.name => n, stochastic_scenario.name => s)
+            express = SpineOpt.objective_penalties(m, t)
+            express = SpineOpt.realize(express)
+            discounted_duration = 1.1985925426271964
+            @test discounted_duration ≈ SpineOpt.storage_discounted_duration(; key_param..., t=t) rtol = 1e-6
+            expected_coe_obj = discounted_duration * duration(t) * penalty
+            @test expected_coe_obj ≈ coefficient(express, node_slack_neg[n, s, t]) rtol = 1e-6
+            @test expected_coe_obj ≈ coefficient(express, node_slack_pos[n, s, t]) rtol = 1e-6
+        end
+    end
+end
+
+function _test_discounted_capacity_margin_penalty_milestone_years()
+    @testset "test discounted capacity margin penalty - using milestone years" begin
+        with_connection_open(url_in) do
+            test_data_example_multiyear_economic_discounting()
+            discnt_year = Dict("type" => "date_time", "data" => "2020-01-01T00:00:00")
+            discnt_rate = 0.05
+            multiyear_economic_discounting = "milestone_years"
+            penalty = 1000
+            object_parameter_values = [
+                ["model", "instance", "discount_rate", discnt_rate],
+                ["model", "instance", "discount_year", discnt_year],
+                ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
+                ["node", "node_b", "capacity_margin_penalty", penalty],
+            ]
+            SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+            m = run_spineopt(url_in; optimize=false, log_level=1)
+            var_mcm_slack = m.ext[:spineopt].variables[:min_capacity_margin_slack]
+            n = node(:node_b)
+            s = stochastic_scenario(:parent)
+            t = first(SpineOpt.min_capacity_margin_slack_indices(m; node=n)).t
+            key_param = Dict(node.name => n, stochastic_scenario.name => s)
+            express = SpineOpt.min_capacity_margin_penalties(m, t)
+            express = SpineOpt.realize(express)
+            discounted_duration = 1.1985925426271964
+            @test discounted_duration ≈ SpineOpt.storage_discounted_duration(; key_param..., t=t) rtol = 1e-6
+            expected_coe_obj = discounted_duration * duration(t) * penalty
+            @test expected_coe_obj ≈ coefficient(express, var_mcm_slack[n, s, t]) rtol = 1e-6
+        end
+    end
+end
+
 function _test_investment_costs__salvage_fraction__capacity_transfer_factor__decommissioning()
     @testset "test investment costs, salvage fraction, capacity transfer factor, decommissioning" begin
         with_connection_open(url_in) do
@@ -575,6 +677,9 @@ end
     _test_discounted_duration_milestone_years()
     _test_discounted_duration_consecutive_years()
     _test_discounted_duration_base()
+    _test_discounted_storage_fixed_annual_cost_milestone_years()
+    _test_discounted_balance_penalty_milestone_years()
+    _test_discounted_capacity_margin_penalty_milestone_years()
     _test_investment_costs__salvage_fraction__capacity_transfer_factor__decommissioning()
     _test_technological_discount_factor__investment_costs__salvage_fraction()
     _test_rolling_error_exception()
