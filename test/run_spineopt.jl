@@ -948,34 +948,28 @@ function _test_active_spineopt_ext_items()
             url_out, _ = _test_run_spineopt_setup()
             m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
             ext = m.ext[:spineopt]
-
-            @testset "returns Vector{Symbol}" begin
-                @test SpineOpt.active_spineopt_ext_items(ext, :variables) isa Vector{Symbol}
+            @testset "returns Vector{Tuple{Symbol,Int64}}" begin
+                @test SpineOpt.active_spineopt_ext_items(ext, :variables) isa Vector{Tuple{Symbol,Int64}}
             end
-
             @testset "includes non-empty variable" begin
                 ext.variables[:_test_active] = Dict(:k => 1.0)
-                @test :_test_active ∈ SpineOpt.active_spineopt_ext_items(ext, :variables)
+                @test (:_test_active, 34) ∈ SpineOpt.active_spineopt_ext_items(ext, :variables)
             end
-
             @testset "excludes empty variable" begin
                 ext.variables[:_test_empty] = Dict()
-                @test :_test_empty ∉ SpineOpt.active_spineopt_ext_items(ext, :variables)
+                @test :_test_empty ∉ getindex.(SpineOpt.active_spineopt_ext_items(ext, :variables), 1)
             end
-
             @testset "excludes (0,0) objective term" begin
                 ext.objective_terms[:_test_zero] = (0, 0)
-                @test :_test_zero ∉ SpineOpt.active_spineopt_ext_items(ext, :objective_terms)
+                @test isempty(SpineOpt.active_spineopt_ext_items(ext, :objective_terms))
             end
-
             @testset "includes non-zero objective term" begin
                 ext.objective_terms[:_test_nonzero] = Dict(:k => 5.0)
-                @test :_test_nonzero ∈ SpineOpt.active_spineopt_ext_items(ext, :objective_terms)
+                @test (:_test_nonzero, 18) ∈ SpineOpt.active_spineopt_ext_items(ext, :objective_terms)
             end
-
             @testset "excludes nothing output" begin
                 ext.outputs[:_test_nothing] = nothing
-                @test :_test_nothing ∉ SpineOpt.active_spineopt_ext_items(ext, :outputs)
+                @test isempty(SpineOpt.active_spineopt_ext_items(ext, :outputs))
             end
         end
     end
