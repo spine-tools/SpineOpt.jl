@@ -1124,6 +1124,116 @@ function test_constraint_ratio_unit_flow()
     end
 end
 
+function test_constraint_ratio_unit_flow_different_units()
+    @testset "constraint_ratio_unit_flow_different_units" begin
+        flow_ratio = 0.8
+        units_on_coeff = 0.2
+        start_flow = 1.3
+        class = "unit_flow__unit_flow"
+        relationships_by_prefix = Dict(
+            ("out", "out") => ["unit_ad", "node_d", "unit_bc", "node_b"]
+        )
+        senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
+        classes_by_prefix = Dict("in" => "node__to_unit", "out" => "unit__to_node")
+        ratios_by_prefix = Dict(
+            "min" => "flow_ratio_greater_than_coefficient",
+            "fix" => "flow_ratio_equality_coefficient",
+            "max" => "flow_ratio_less_than_coefficient"
+        )
+        coeffs_by_prefix = Dict(
+            "min" => "flow_ratio_greater_than_online_coefficient",
+            "fix" => "flow_ratio_equality_online_coefficient",
+            "max" => "flow_ratio_less_than_online_coefficient"
+        )
+        entity_inds_by_class = Dict("node__to_unit" => [2,1], "unit__to_node" => [1,2])
+        @testset for (p, a, b, s) in (
+            ("max", "out", "out", "stochastic"),
+            ("max", "out", "out", "deterministic"),
+        )
+            with_connection_open(url_in) do
+                _test_constraint_unit_setup()
+                ratio = ratios_by_prefix[p]
+                coeff = coeffs_by_prefix[p]
+                relationship = relationships_by_prefix[(a,b)]
+                objects = [
+                    ["node", "node_d"],
+                    ["unit", "unit_ad"],
+                    ["unit", "unit_bc"],
+                ]
+                relationships = [
+                    [classes_by_prefix[a], ["unit_ad", "node_d"][entity_inds_by_class[classes_by_prefix[a]]]],
+                    [classes_by_prefix[b], ["unit_bc", "node_b"][entity_inds_by_class[classes_by_prefix[b]]]],
+                    [class, relationship],
+                    ["units_on__temporal_block", ["unit_bc", "two_hourly"]],
+                    ["units_on__stochastic_structure", ["unit_bc", "deterministic"]],
+                    ["node__temporal_block", ["node_d", "hourly"]],
+                    ["node__stochastic_structure", ["node_d", s]],
+                ]
+                relationship_parameter_values =[
+                    [class, relationship, ratio, flow_ratio],
+                    [class, relationship, coeff, units_on_coeff],
+                    [class, relationship, "flow_ratio_start_flow", start_flow],
+                ]
+                sense = senses_by_prefix[p]
+                SpineInterface.import_data(
+                    url_in; objects=objects, relationships=relationships, relationship_parameter_values=relationship_parameter_values
+                )
+                m = run_spineopt(url_in; log_level=0, optimize=false)
+                var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+                var_units_on = m.ext[:spineopt].variables[:units_on]
+                var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+                constraint = m.ext[:spineopt].constraints[Symbol(ratio)]
+                @test length(constraint) == 1
+                t_long = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+                t_short1, t_short2 = time_slice(m; temporal_block=temporal_block(:hourly))
+                directions_by_prefix = Dict("in" => :from_node, "out" => :to_node)
+                d_a = directions_by_prefix[a]
+                d_b = directions_by_prefix[b]
+                var_u_flow_b_key = (unit(:unit_bc), node(:node_b), direction(d_b), stochastic_scenario(:parent), t_long)
+                var_u_flow_d1_key = (unit(:unit_ad), node(:node_d), direction(d_a), stochastic_scenario(:parent), t_short1)
+                if s == "stochastic"
+                    path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+                    var_u_flow_d2_key = (unit(:unit_ad), node(:node_d), direction(d_a), stochastic_scenario(:child), t_short2)
+                else
+                    path = [stochastic_scenario(:parent)]
+                    var_u_flow_d2_key = (unit(:unit_ad), node(:node_d), direction(d_a), stochastic_scenario(:parent), t_short2)
+                end
+                var_u_flow_b = var_unit_flow[var_u_flow_b_key...]
+                var_u_flow_d1 = var_unit_flow[var_u_flow_d1_key...]
+                var_u_flow_d2 = var_unit_flow[var_u_flow_d2_key...]
+                var_u_on_b_key = (unit(:unit_bc), stochastic_scenario(:parent), t_long)
+                var_u_on_b = var_units_on[var_u_on_b_key...]
+                var_u_su_b = var_units_started_up[var_u_on_b_key...]              
+                con_key = (
+                    unit(:unit_ad), node(:node_d), direction(d_a), 
+                    unit(:unit_bc), node(:node_b), direction(d_b), 
+                    path, t_long
+                )
+                sf_sign = if p == "fix"
+                    if a == "in" && b == "out"
+                        1
+                    elseif a == "out" && b == "in"
+                        -1
+                    else
+                        0
+                    end
+                else
+                    0
+                end
+                expected_con = SpineOpt.build_sense_constraint(
+                    var_u_flow_d1 + var_u_flow_d2,
+                    sense,
+                    + 2 * flow_ratio * var_u_flow_b
+                    + 2 * units_on_coeff * (var_u_on_b)
+                    + sf_sign * start_flow * (var_u_su_b),
+                )               
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+end
+
 function test_constraint_total_cumulated_unit_flow()
     @testset "constraint_total_cumulated_unit_flow" begin
         total_cumulated_flow_bound = 100
@@ -2348,6 +2458,7 @@ end
     test_constraint_unit_flow_op_rank()
     test_constraint_unit_flow_op_sum()
     test_constraint_ratio_unit_flow()
+    test_constraint_ratio_unit_flow_different_units()
     test_constraint_total_cumulated_unit_flow()
     test_constraint_min_up_time()
     test_constraint_units_out_of_service_contiguity()
