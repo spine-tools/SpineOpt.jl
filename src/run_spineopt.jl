@@ -723,8 +723,8 @@ Active items of a field of an `SpineOptExt` instance and their counts.
 function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Tuple{Symbol,Int64}}
     items = getproperty(spineopt_ext, field)
     sort([
-        (key, length(items)) for key in keys(items)
-        if !isnothing(items[key]) && !isempty(items[key]) && !isequal(items[key], (0, 0))
+        (key, length(vals)) for (key, vals) in items
+        if !isnothing(vals) && !isempty(vals) && !isequal(vals, (0, 0))
     ])
 end
 
