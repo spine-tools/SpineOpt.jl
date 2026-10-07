@@ -953,7 +953,7 @@ function _test_active_spineopt_ext_items()
             end
             @testset "includes non-empty variable" begin
                 ext.variables[:_test_active] = Dict(:k => 1.0)
-                @test (:_test_active, 34) ∈ SpineOpt.active_spineopt_ext_items(ext, :variables)
+                @test (:_test_active, 1) ∈ SpineOpt.active_spineopt_ext_items(ext, :variables)
             end
             @testset "excludes empty variable" begin
                 ext.variables[:_test_empty] = Dict()
@@ -965,7 +965,7 @@ function _test_active_spineopt_ext_items()
             end
             @testset "includes non-zero objective term" begin
                 ext.objective_terms[:_test_nonzero] = Dict(:k => 5.0)
-                @test (:_test_nonzero, 18) ∈ SpineOpt.active_spineopt_ext_items(ext, :objective_terms)
+                @test (:_test_nonzero, 1) ∈ SpineOpt.active_spineopt_ext_items(ext, :objective_terms)
             end
             @testset "excludes nothing output" begin
                 ext.outputs[:_test_nothing] = nothing
