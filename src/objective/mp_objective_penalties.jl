@@ -23,8 +23,8 @@
 
 Create an expression for objective penalties.
 """
-# TODO: find a better name for this; objective penalities is not self-speaking
 function mp_objective_penalties(m::Model, t_range)
+    # TODO: find a better name for this; objective penalities is not self-speaking
     mp_min_res_gen_to_demand_ratio_slack = get(
         m.ext[:spineopt].variables, :mp_min_res_gen_to_demand_ratio_slack, nothing
     )  # Currently, mp_min_res_gen_to_demand_ratio_slack is only for the benders master problem
