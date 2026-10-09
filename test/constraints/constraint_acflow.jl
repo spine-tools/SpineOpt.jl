@@ -190,7 +190,7 @@ function test_constraint_connection_reactive_capacity()
 end
 
 @testset "acflow constraints" begin
-    #test_constraint_connection_ac_flows()
-    #test_constraint_nodal_reactive_balance()
+    test_constraint_connection_ac_flows()
+    test_constraint_nodal_reactive_balance()
     test_constraint_connection_reactive_capacity()
 end
