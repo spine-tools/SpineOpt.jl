@@ -18,49 +18,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const constraint_lock = ReentrantLock()
+
 function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
-    inds = unique(indices(m))
-    isempty(inds) && return m.ext[:spineopt].constraints[name] = Dict() # Needs to return an empty Dict: Type similar to output?
-    cons = Vector{Any}(undef, length(inds))
-    # [claude-sonnet-4-6]
-    # PyCall objects loaded from the database have Julia finalizers that call Py_Dealloc.
-    # When Threads.@threads is active, Julia's JIT compiler can release internal locks
-    # (jl_mutex_unlock inside jl_type_infer), which allows the GC to run those finalizers
-    # on a worker thread. Python 3.12+ memory allocators are not safe to call without the
-    # GIL from a non-main thread, causing EXCEPTION_ACCESS_VIOLATION crashes. Running GC
-    # here on the main thread drains the finalizer queue before any worker threads start.
-    GC.gc()
-    # [claude-sonnet-4-6]    
-    # Julia compiles a new method specialization the first time a function is called with
-    # a given combination of argument types. If the first call happens inside a worker
-    # thread, JIT compilation runs there, triggering the GC/finalizer race above even
-    # after the GC.gc() call above (because new allocations during compilation can trigger
-    # further GC cycles). The warmup loop calls build_constraint on the main thread for one
-    # representative element of each unique runtime type found in inds, so that every
-    # dispatch variant is compiled before Threads.@threads starts.
-    # For example, _build_constraint_connection_flow_capacity dispatches differently for a
-    # single direction Object vs. a Vector of directions — both variants need warmup.
-    seen_types = Set{DataType}()
-    for (i, ind) in enumerate(inds)
-        T = typeof(ind)
-        if !in(T, seen_types)
-            push!(seen_types, T)
-            cons[i] = build_constraint(m, ind...)
+    inds = indices(m)
+    constraints = if isempty(inds)
+        Dict()
+    else
+        # Need to type the key based on the first element due to `Base.getindex` overwrite in misc.jl used by the unit tests.
+        cons = Dict{typeof(first(inds)), ConstraintRef}()
+        for ind in inds
+            get!(cons, ind) do
+                constraint = build_constraint(m, ind...)
+                @lock constraint_lock add_constraint(m, constraint)
+            end
         end
+        cons
     end
-    # [claude-sonnet-4-6]    
-    # Thread the remaining indices. isassigned skips slots already filled by the warmup,
-    # so each cons[i] is written exactly once — no data race on the output array.
-    # NOTE: this is safe only as long as build_constraint does not create new PyCall
-    # objects at call time (i.e. SpineInterface parameter lookups use pre-loaded Julia-
-    # native structures, not live Python calls). If that assumption breaks, the only
-    # correct fix is to acquire the Python GIL on each worker thread via
-    # PyCall.pygil_ensure(), which would serialize all Python calls and negate the
-    # threading benefit entirely.
-    Threads.@threads for i in eachindex(inds)
-        isassigned(cons, i) || (cons[i] = build_constraint(m, inds[i]...))
-    end
-    m.ext[:spineopt].constraints[name] = Dict(zip(inds, add_constraint.(m, cons)))
+    @lock constraint_lock m.ext[:spineopt].constraints[name] = constraints
+    constraints
 end
 
 """
@@ -111,13 +87,13 @@ past_units_on_indices(m, param, u, s_path, t) = _past_indices(m, units_on_indice
 
 function _past_indices(m, indices, param, s_path, t; kwargs...)
     look_behind = maximum(maximum_parameter_value(param(; kwargs..., stochastic_scenario=s, t=t)) for s in s_path)
-    
+
     (
         (;
             ind...,
             weight=ifelse(
                 end_(t) - end_(ind.t) < dt_fixed_duration(
-                    param(; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t), 
+                    param(; kwargs..., stochastic_scenario=ind.stochastic_scenario, t=t),
                     start(t), Val(:forward)
                 ), 1, 0
             ),
@@ -128,7 +104,7 @@ function _past_indices(m, indices, param, s_path, t; kwargs...)
             stochastic_scenario=s_path,
             t=to_time_slice(m; t=TimeSlice(end_(t) - look_behind, end_(t))),
             temporal_block=temporal_block(is_representative=true),
-        )    
+        )
     )
 end
 
@@ -198,13 +174,13 @@ end
 
 _default_nb_of_storages(n::Object) = is_candidate(node=n) ? 0 : _default_parameter_value(existing_storages, node)
 _default_nb_of_units(u::Object) = is_candidate(unit=u) ? 0 : _default_parameter_value(existing_units, unit)
-_default_nb_of_connections(conn::Object) = is_candidate(connection=conn) ? 
+_default_nb_of_connections(conn::Object) = is_candidate(connection=conn) ?
     0 : _default_parameter_value(existing_connections, connection)
 
 _overlapping_t(m, time_slices...) = [overlapping_t for t in time_slices for overlapping_t in t_overlaps_t(m; t=t)]
 
 function _check_ptdf_duration(m, t, conns...)
-    durations = [ptdf_duration(connection=conn, _default=nothing) for conn in conns]
+    durations = [ptdf_duration(connection=conn, _default=nothing, _strict=false) for conn in conns]
     filter!(!isnothing, durations)
     isempty(durations) && return true
     duration = minimum(durations)
@@ -222,7 +198,7 @@ end
 
 function _node_state_time_slices(m, node, ::Val{true})
     node = intersect(node, SpineOpt.node(storage_longterm_active=true))
-    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false)))
+    (t for (_n, t) in node_time_indices(m; node=node, temporal_block=temporal_block(is_representative=false, is_starting_point=false)))
 end
 
 function _term_connection_flow(m, conn, ng, d, s_path, t)

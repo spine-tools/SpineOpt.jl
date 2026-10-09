@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+import Graphs
+import MetaGraphsNext
 
 """
     @log(level, threshold, msg)
@@ -135,9 +137,11 @@ end
 (pf::ParameterFunction)(; kwargs...) = as_number(pf; kwargs...)
 
 as_number(p::Parameter; kwargs...) = p(; kwargs...)
+as_number(p::Parameter, class, selector; kwargs...) = p(class, selector; kwargs...)
 as_number(pf::ParameterFunction; kwargs...) = pf.fn(as_number; kwargs...)
 
 as_call(p::Parameter; kwargs...) = p[kwargs]
+as_call(p::Parameter, class, selector; kwargs...) = p[class, selector, kwargs]
 as_call(pf::ParameterFunction; kwargs...) = pf.fn(as_call; kwargs...)
 
 constant(x::Number) = (m; kwargs...) -> x
@@ -316,6 +320,33 @@ function _version_and_git_hash(pkg)
     version, git_hash
 end
 
+function share_atoms(graph, node1::Object, node2::Object)
+    second_atoms = Set{Int}()
+    atom1 = MetaGraphsNext.code_for(graph, :node => node1.name)
+    for relationship in Graphs.outneighbors(graph, atom1)
+        for second_atom in Graphs.inneighbors(graph, relationship)
+            if second_atom == atom1
+                continue
+            end
+            push!(second_atoms, second_atom)
+            break
+        end
+    end
+    atom2 = MetaGraphsNext.code_for(graph, :node => node2.name)
+    for relationship in Graphs.outneighbors(graph, atom2)
+        for second_atom in Graphs.inneighbors(graph, relationship)
+            if second_atom == atom2
+                continue
+            end
+            if !in(second_atom, second_atoms)
+                return false
+            end
+            break
+        end
+    end
+    true
+end
+
 """
     _similar(node1, node2)
 
@@ -323,11 +354,12 @@ A Boolean indicating whether or not two nodes are 'similar', in the sense they a
 (i.e. not groups) with the same temporal and stochastic structure.
 """
 function _similar(node1, node2)
+    group_graph = node.vertex.entity_group_graph
     (
-        members(node1) == [node1]
-        && members(node2) == [node2]
-        && node__temporal_block(node=node1) == node__temporal_block(node=node2)
-        && node__stochastic_structure(node=node1) == node__stochastic_structure(node=node2)
+        !is_group_entity(group_graph, node1.name)
+        && !is_group_entity(group_graph, node2.name)
+        && share_atoms(node__temporal_block.vertex.relationship_graph, node1, node2)
+        && share_atoms(node__stochastic_structure.vertex.relationship_graph, node1, node2)
     )
 end
 

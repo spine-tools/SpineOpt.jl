@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const url_in = "sqlite://"
+
 function _test_monte_carlo_setup(mc_scens)
-    url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     test_data = Dict(
@@ -45,7 +46,7 @@ function _test_monte_carlo_setup(mc_scens)
         ],
     )
     _load_test_data(url_in, test_data)
-    url_in, url_out, file_path_out
+    url_out, file_path_out
 end
 
 function _test_monte_carlo()
@@ -72,50 +73,47 @@ function _test_monte_carlo()
         wind_af_map = Map(["2009", "2010"], [wind_availability_factor_ts_2009, wind_availability_factor_ts_2010])
         ocgt_sod_map = Map(["1", "2"], [ocgt_scheduled_outage_duration_1, ocgt_scheduled_outage_duration_2])
         ccgt_sod_map = Map(["1", "2"], [ccgt_scheduled_outage_duration_1, ccgt_scheduled_outage_duration_2])
-        url_in, url_out, file_path_out = _test_monte_carlo_setup(mc_scens)
-        test_data = Dict(
-            :objects => [
-                ["unit", "pv"],
-                ["unit", "wind"],
-                ["unit", "ocgt"],
-                ["unit", "ccgt"],
-                ["node", "elec"],
-                ["node", "fuel"],
-                ["output", "unit_flow"],
-            ],
-            :relationships => [
-                ["report__output", ["report_x", "unit_flow"]],
-                ["unit__to_node", ["pv", "elec"]],
-                ["unit__to_node", ["wind", "elec"]],
-                ["unit__to_node", ["ocgt", "elec"]],
-                ["unit__to_node", ["ccgt", "elec"]],
-                ["node__to_unit", ["fuel", "ocgt"]],
-                ["node__to_unit", ["fuel", "ccgt"]],
-            ],
-            :object_parameter_values => [
-                ["node", "elec", "demand", 200],
-                ["unit", "pv", "availability_factor", unparse_db_value(pv_af_map)],
-                ["unit", "wind", "availability_factor", unparse_db_value(wind_af_map)],
-                # ["unit", "ocgt", "outage_scheduled_duration", unparse_db_value(ocgt_sod_map)],
-                # ["unit", "ccgt", "outage_scheduled_duration", unparse_db_value(ccgt_sod_map)],
-            ],
-            :relationship_parameter_values => [
-                ["unit__to_node", ["pv", "elec"], "capacity_per_unit", 200],
-                ["unit__to_node", ["wind", "elec"], "capacity_per_unit", 300],
-                ["unit__to_node", ["ocgt", "elec"], "capacity_per_unit", 150],
-                ["unit__to_node", ["ccgt", "elec"], "capacity_per_unit", 100],
-            ],
-        )
-        import_data(url_in, "Add test data"; test_data...)
-        rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out; log_level=3)
+        with_connection_open(url_in) do
+            url_out, file_path_out = _test_monte_carlo_setup(mc_scens)
+            test_data = Dict(
+                :objects => [
+                    ["unit", "pv"],
+                    ["unit", "wind"],
+                    ["unit", "ocgt"],
+                    ["unit", "ccgt"],
+                    ["node", "elec"],
+                    ["node", "fuel"],
+                    ["output", "unit_flow"],
+                ],
+                :relationships => [
+                    ["report__output", ["report_x", "unit_flow"]],
+                    ["unit__to_node", ["pv", "elec"]],
+                    ["unit__to_node", ["wind", "elec"]],
+                    ["unit__to_node", ["ocgt", "elec"]],
+                    ["unit__to_node", ["ccgt", "elec"]],
+                    ["node__to_unit", ["fuel", "ocgt"]],
+                    ["node__to_unit", ["fuel", "ccgt"]],
+                ],
+                :object_parameter_values => [
+                    ["node", "elec", "demand", 200],
+                    ["unit", "pv", "availability_factor", unparse_db_value(pv_af_map)],
+                    ["unit", "wind", "availability_factor", unparse_db_value(wind_af_map)],
+                    # ["unit", "ocgt", "outage_scheduled_duration", unparse_db_value(ocgt_sod_map)],
+                    # ["unit", "ccgt", "outage_scheduled_duration", unparse_db_value(ccgt_sod_map)],
+                ],
+                :relationship_parameter_values => [
+                    ["unit__to_node", ["pv", "elec"], "capacity_per_unit", 200],
+                    ["unit__to_node", ["wind", "elec"], "capacity_per_unit", 300],
+                    ["unit__to_node", ["ocgt", "elec"], "capacity_per_unit", 150],
+                    ["unit__to_node", ["ccgt", "elec"], "capacity_per_unit", 100],
+                ],
+            )
+            import_data(url_in, "Add test data"; test_data...)
+            rm(file_path_out; force=true)
+            run_spineopt(url_in, url_out; log_level=3)
+        end
     end
 end
-
-function _dict_to_map(dict::Dict)
-    Map(collect(keys(dict)), _dict_to_map.(values(dict)))
-end
-_dict_to_map(x) = x
 
 @testset "run_spineopt_monte_carlo" begin
     _test_monte_carlo()

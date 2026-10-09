@@ -56,7 +56,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 ```julia
 using SpineOpt
 m = run_spineopt(
-    raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite", 
+    raw"sqlite:///C:\\path\\to\\your\\input_db.sqlite",
     raw"sqlite:///C:\\path\\to\\your\\output_db.sqlite";
     filters=Dict("tool" => "object_activity_control", "scenario" => "scenario_to_run"),
     alternative="alternative_to_write_results"
@@ -141,7 +141,7 @@ function _run_spineopt(
 )
     @log log_level 0 "\nRunning SpineOpt..."
     so_ver, so_git_hash = _version_and_git_hash(SpineOpt)
-    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)    
+    si_ver, si_git_hash = _version_and_git_hash(SpineInterface)
     println("[SpineOpt version $so_ver (git hash: $so_git_hash)]")
     println("[SpineInterface version $si_ver (git hash: $si_git_hash)]")
     t_start = now()
@@ -379,7 +379,7 @@ function run_spineopt!(
     resume_file_path=nothing,
 )
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
-    Base.invokelatest(        
+    Base.invokelatest(
         do_run_spineopt!,
         m,
         url_out,
@@ -727,33 +727,34 @@ end
 """
     print_active(m, field)
 
-Print active items of a field in the built SpineOpt model `m`.
+Print active items of a field (incl. counts) in the built SpineOpt model `m`.
 """
 function print_active(m::JuMP.Model, field::Symbol)::Nothing
-    println("*** Active SpineOpt `$field`: ***")
+    println("*** Active SpineOpt `$field` and their counts: ***")
     foreach(println, active_spineopt_ext_items(m.ext[:spineopt], field))
 end
 
 """
     active_spineopt_ext_items(spineopt_ext, field)
 
-Active items of a field of an `SpineOptExt` instance.
+Active items of a field of an `SpineOptExt` instance and their counts.
 """
-function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Symbol}
+function active_spineopt_ext_items(spineopt_ext::SpineOptExt, field::Symbol)::Vector{Tuple{Symbol,Int64}}
     items = getproperty(spineopt_ext, field)
     sort([
-        key for key in keys(items) 
-        if !isnothing(items[key]) && !isempty(items[key]) && !isequal(items[key], (0, 0))
+        (key, length(vals)) for (key, vals) in items
+        if !isnothing(vals) && !isempty(vals) && !isequal(vals, (0, 0))
     ])
 end
 
 """
      hidden_active_outputs(m)
 
-Active model outputs that are not reported
+Active model outputs that are not reported.
 """
 function hidden_active_outputs(m::JuMP.Model)::Vector{Symbol}
     spineopt_ext = m.ext[:spineopt]
     hidden_outputs = setdiff(keys(spineopt_ext.values), keys(spineopt_ext.outputs))
-    return intersect(hidden_outputs, active_spineopt_ext_items(spineopt_ext, :values)) |> collect |> sort
+    active_values = getindex.(active_spineopt_ext_items(spineopt_ext, :values), 1)
+    return intersect(active_values, hidden_outputs)
 end

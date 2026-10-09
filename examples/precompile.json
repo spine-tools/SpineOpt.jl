@@ -3,26 +3,9 @@
         [
             "model",
             "simple",
-            "discount_rate",
-            0.05,
-            "Base"
-        ],
-        [
-            "model",
-            "simple",
-            "discount_year",
-            {
-                "data": "1990-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "model",
-            "simple",
             "model_end",
             {
-                "data": "2006-01-01T00:00:00.0",
+                "data": "2036-01-01T00:00:00.0",
                 "type": "date_time"
             },
             "Base"
@@ -32,28 +15,32 @@
             "simple",
             "model_start",
             {
-                "data": "2000-01-01T00:00:00.0",
+                "data": "2030-01-01T00:00:00.0",
                 "type": "date_time"
             },
             "Base"
         ],
         [
-            "model",
-            "simple",
-            "multiyear_economic_discounting",
-            "consecutive_years",
-            "Base"
-        ],
-        [
             "node",
-            "electricity",
+            "electricity_node",
             "demand",
-            100,
+            {
+                "data": {
+                    "2030-01-01T00:00:00.0": 100.0,
+                    "2030-05-01T00:00:00.0": 100.0,
+                    "2030-09-01T00:00:00.0": 100.0,
+                    "2034-09-01T00:00:00.0": 0.0,
+                    "2035-01-01T00:00:00.0": 400.0,
+                    "2035-05-01T00:00:00.0": 400.0,
+                    "2035-09-01T00:00:00.0": 400.0
+                },
+                "type": "time_series"
+            },
             "Base"
         ],
         [
             "node",
-            "fuel",
+            "fuel_node",
             "balance_type",
             "none",
             "Base"
@@ -61,11 +48,21 @@
         [
             "node__to_unit",
             [
-                "fuel",
-                "power_plant"
+                "fuel_node",
+                "power_plant_a"
             ],
             "vom_cost",
             25,
+            "Base"
+        ],
+        [
+            "node__to_unit",
+            [
+                "fuel_node",
+                "power_plant_b"
+            ],
+            "vom_cost",
+            50,
             "Base"
         ],
         [
@@ -1128,26 +1125,6 @@
         [
             "temporal_block",
             "investment",
-            "block_end",
-            {
-                "data": "2006-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "investment",
-            "block_start",
-            {
-                "data": "2000-01-01T00:00:00.0",
-                "type": "date_time"
-            },
-            "Base"
-        ],
-        [
-            "temporal_block",
-            "investment",
             "resolution",
             {
                 "data": "5Y",
@@ -1157,7 +1134,27 @@
         ],
         [
             "temporal_block",
-            "operation",
+            "operation2030",
+            "block_end",
+            {
+                "data": "2031-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2030",
+            "block_start",
+            {
+                "data": "2030-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2030",
             "resolution",
             {
                 "data": "4M",
@@ -1166,29 +1163,86 @@
             "Base"
         ],
         [
-            "unit",
-            "power_plant",
-            "discount_rate_technology_specific",
-            0.07,
+            "temporal_block",
+            "operation2030",
+            "weight",
+            5,
             "Base"
         ],
         [
-            "unit",
-            "power_plant",
-            "investment_count_max_cumulative",
+            "temporal_block",
+            "operation2035",
+            "block_end",
+            {
+                "data": "2036-01-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2035",
+            "block_start",
+            {
+                "data": "2034-09-01T00:00:00.0",
+                "type": "date_time"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2035",
+            "resolution",
+            {
+                "data": "4M",
+                "type": "duration"
+            },
+            "Base"
+        ],
+        [
+            "temporal_block",
+            "operation2035",
+            "weight",
             1,
             "Base"
         ],
         [
             "unit",
-            "power_plant",
-            "investment_variable_type",
-            "linear",
+            "power_plant_a",
+            "investment_count_initial_cumulative",
+            0,
             "Base"
         ],
         [
             "unit",
-            "power_plant",
+            "power_plant_a",
+            "investment_count_max_cumulative",
+            {
+                "data": {
+                    "2030-01-01T00:00:00.0": 1.0,
+                    "2035-01-01T00:00:00.0": 2.0
+                },
+                "type": "time_series"
+            },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_a",
+            "investment_variable_type",
+            "integer",
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_a",
+            "lifetime_constraint_sense",
+            ">=",
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_a",
             "lifetime_economic",
             {
                 "data": "10Y",
@@ -1198,7 +1252,7 @@
         ],
         [
             "unit",
-            "power_plant",
+            "power_plant_a",
             "lifetime_technical",
             {
                 "data": "10Y",
@@ -1208,31 +1262,121 @@
         ],
         [
             "unit",
-            "power_plant",
+            "power_plant_a",
             "unit_investment_cost",
-            100,
+            1000,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_a",
+            "units_on_cost",
+            0,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "investment_count_initial_cumulative",
+            0,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "investment_count_max_cumulative",
+            {
+                "data": {
+                    "2030-01-01T00:00:00.0": 0.0,
+                    "2035-01-01T00:00:00.0": 1.0
+                },
+                "type": "time_series"
+            },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "investment_variable_type",
+            "integer",
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "lifetime_economic",
+            {
+                "data": "10Y",
+                "type": "duration"
+            },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "lifetime_technical",
+            {
+                "data": "10Y",
+                "type": "duration"
+            },
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "unit_investment_cost",
+            1000,
+            "Base"
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            "units_on_cost",
+            0,
             "Base"
         ],
         [
             "unit__to_node",
             [
-                "power_plant",
-                "electricity"
+                "power_plant_a",
+                "electricity_node"
             ],
             "capacity_per_unit",
             100,
             "Base"
         ],
         [
+            "unit__to_node",
+            [
+                "power_plant_b",
+                "electricity_node"
+            ],
+            "capacity_per_unit",
+            200,
+            "Base"
+        ],
+        [
             "unit_flow__unit_flow",
             [
-                "power_plant",
-                "electricity",
-                "fuel",
-                "power_plant"
+                "power_plant_a",
+                "electricity_node",
+                "fuel_node",
+                "power_plant_a"
             ],
             "flow_ratio_equality_coefficient",
-            1,
+            0.7,
+            "Base"
+        ],
+        [
+            "unit_flow__unit_flow",
+            [
+                "power_plant_b",
+                "electricity_node",
+                "fuel_node",
+                "power_plant_b"
+            ],
+            "flow_ratio_equality_coefficient",
+            0.8,
             "Base"
         ]
     ],
@@ -2667,7 +2811,7 @@
         [
             "model",
             "write_mps_file",
-            "write_mps_never",
+            null,
             "write_mps_file_list",
             "A selector for writing an .mps file of the model."
         ],
@@ -3990,12 +4134,12 @@
         ],
         [
             "node",
-            "electricity",
+            "electricity_node",
             null
         ],
         [
             "node",
-            "fuel",
+            "fuel_node",
             null
         ],
         [
@@ -4775,12 +4919,30 @@
         ],
         [
             "temporal_block",
-            "operation",
+            "operation2030",
+            null
+        ],
+        [
+            "temporal_block",
+            "operation2035",
             null
         ],
         [
             "unit",
-            "power_plant",
+            "power_plant_a",
+            null
+        ],
+        [
+            "unit",
+            "power_plant_b",
+            null
+        ],
+        [
+            "model__default_investment_stochastic_structure",
+            [
+                "simple",
+                "deterministic"
+            ],
             null
         ],
         [
@@ -4803,7 +4965,15 @@
             "model__default_temporal_block",
             [
                 "simple",
-                "operation"
+                "operation2030"
+            ],
+            null
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "operation2035"
             ],
             null
         ],
@@ -4818,8 +4988,24 @@
         [
             "node__to_unit",
             [
-                "fuel",
-                "power_plant"
+                "fuel_node",
+                "power_plant_a"
+            ],
+            null
+        ],
+        [
+            "node__to_unit",
+            [
+                "fuel_node",
+                "power_plant_b"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "fixed_om_costs"
             ],
             null
         ],
@@ -4828,22 +5014,6 @@
             [
                 "report1",
                 "total_costs"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_conversion_to_discounted_annuities"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_discounted_duration"
             ],
             null
         ],
@@ -4867,23 +5037,23 @@
             "report__output",
             [
                 "report1",
-                "unit_salvage_fraction"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_tech_discount_factor"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
                 "units_invested"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_on"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "units_on_costs"
             ],
             null
         ],
@@ -4904,28 +5074,38 @@
             null
         ],
         [
-            "unit__investment_temporal_block",
+            "unit__to_node",
             [
-                "power_plant",
-                "investment"
+                "power_plant_a",
+                "electricity_node"
             ],
             null
         ],
         [
             "unit__to_node",
             [
-                "power_plant",
-                "electricity"
+                "power_plant_b",
+                "electricity_node"
             ],
             null
         ],
         [
             "unit_flow__unit_flow",
             [
-                "power_plant",
-                "electricity",
-                "fuel",
-                "power_plant"
+                "power_plant_a",
+                "electricity_node",
+                "fuel_node",
+                "power_plant_a"
+            ],
+            null
+        ],
+        [
+            "unit_flow__unit_flow",
+            [
+                "power_plant_b",
+                "electricity_node",
+                "fuel_node",
+                "power_plant_b"
             ],
             null
         ]
@@ -5830,144 +6010,6 @@
     ],
     "entity_alternatives": [
         [
-            "model",
-            [
-                "simple"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__default_investment_temporal_block",
-            [
-                "simple",
-                "investment"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__default_stochastic_structure",
-            [
-                "simple",
-                "deterministic"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "simple",
-                "operation"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "model__report",
-            [
-                "simple",
-                "report1"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "node",
-            [
-                "electricity"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "node",
-            [
-                "fuel"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report",
-            [
-                "report1"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_conversion_to_discounted_annuities"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_discounted_duration"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_salvage_fraction"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_tech_discount_factor"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "units_invested"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "stochastic_scenario",
-            [
-                "realization"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "stochastic_structure",
-            [
-                "deterministic"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            [
-                "deterministic",
-                "realization"
-            ],
-            "Base",
-            true
-        ],
-        [
             "temporal_block",
             [
                 "investment"
@@ -5978,24 +6020,7 @@
         [
             "temporal_block",
             [
-                "operation"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "unit",
-            [
-                "power_plant"
-            ],
-            "Base",
-            true
-        ],
-        [
-            "unit__investment_temporal_block",
-            [
-                "power_plant",
-                "investment"
+                "operation2035"
             ],
             "Base",
             true

@@ -25,49 +25,53 @@
 """
 function test_ac_opf_singleconn()
     @testset "ac_opf_singleconn" begin
-        url_in = _test_acflow_setup()
-        object_parameter_values = [      
-            ["node", "node_b", "demand_reactive", 0.1],
-            ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.2],
-            ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","resistance",0.2],
-            ["connection","connection_bc","reactance",0.2],
-            ["connection","connection_bc","connection_current_max",1.0]
-        ]
-        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
-        ]    
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
 
-        SpineInterface.import_data(
-            url_in;
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        vsin  = m.ext[:spineopt].variables[:node_voltageproduct_sine]
-        vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
-        flowP = m.ext[:spineopt].variables[:connection_flow]
-        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+            object_parameter_values = [      
+                ["node", "node_b", "demand_reactive", 0.1],
+                ["node", "node_b", "min_voltage", 0.7],
+                ["node", "node_c", "min_voltage", 0.7],
+                ["node", "node_c", "demand", 0.2],
+                ["node", "node_c", "demand_reactive", 0.0],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","connection_bc","connection_current_max",1.0]
+            ]
+            relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+                ["connection__node__node",
+                ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+            ]    
 
-        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.02
-        @test value(flowP[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            0.2087 atol=0.001
+            SpineInterface.import_data(
+                url_in;
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
             
-        @test value(flowQ[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            0.0087 atol=0.001
+            # aliases for the model OPF variables
+            vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+            vsin  = m.ext[:spineopt].variables[:node_voltageproduct_sine]
+            vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+            flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+
+            @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.02
+            @test value(flowP[connection(:connection_bc), node(:node_b), 
+                direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                0.2087 atol=0.001
+                
+            @test value(flowQ[connection(:connection_bc), node(:node_b), 
+                direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                0.0087 atol=0.001
+        end
     end
 end
 
@@ -77,47 +81,48 @@ end
 """
 function test_ac_opf_singleconn_q()
     @testset "ac_opf_singleconn_q" begin
-   
-        url_in = _test_acflow_setup()
-        object_parameter_values = [      
-            ["node", "node_b", "demand_reactive", 0.1],
-            #["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.0],
-            ["node", "node_c", "demand_reactive", 0.2],
-            ["connection","connection_bc","resistance",0.2],
-            ["connection","connection_bc","reactance",0.2],
-            ["connection","connection_bc","connection_current_max",1.0]
-        ]
-        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
-        ]    
-        SpineInterface.import_data(
-            url_in;
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            object_parameter_values = [      
+                ["node", "node_b", "demand_reactive", 0.1],
+                #["node", "node_b", "min_voltage", 0.7],
+                ["node", "node_c", "min_voltage", 0.7],
+                ["node", "node_c", "demand", 0.0],
+                ["node", "node_c", "demand_reactive", 0.2],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","connection_bc","connection_current_max",1.0]
+            ]
+            relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+                ["connection__node__node",
+                ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+            ]    
+            SpineInterface.import_data(
+                url_in;
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        flowP = m.ext[:spineopt].variables[:connection_flow]
-        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+            # aliases for the model OPF variables
+            vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+            flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
 
-        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.02
-        @test value(flowP[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            0.0087 atol=0.001
-    
-        @test value(flowQ[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            0.2087 atol=0.001
+            @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.02
+            @test value(flowP[connection(:connection_bc), node(:node_b), 
+                direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                0.0087 atol=0.001
+            @test value(flowQ[connection(:connection_bc), node(:node_b), 
+                direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                0.2087 atol=0.001
+        end
     end
 end
 
@@ -127,67 +132,70 @@ end
 """
 function test_ac_opf_singleconn_rev()
     @testset "ac_opf_singleconn_rev" begin
-        url_in = _test_acflow_setup()
-        # add one more node and connection
-        objects = [
-            ["connection", "c1"],
-            ["node", "node_d"],
-            ["node", "node_e"],
-            ["unit", "unit_x"]
-        ]
-        object_parameter_values = [
-            ["node", "node_e", "demand", 0.2],
-            ["node", "node_e", "min_voltage", 0.7],
-            ["node", "node_d", "min_voltage", 0.7],
-            ["node", "node_d", "demand", 0.0],
-            ["node", "node_d", "demand_reactive", 0.0],
-            ["connection","c1","resistance",0.2],
-            ["connection","c1","reactance",0.2],
-            ["connection","c1","connection_current_max",1.0]
-        ]
-        relationships = [
-            ["node__grid", ["node_d", "grid1"]],
-            ["node__grid", ["node_e", "grid1"]],
-            ["unit__to_node", ["unit_x", "node_d"]],
-            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
-            ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
-            ["connection__from_node", ["c1", "node_e"]],
-            ["connection__to_node", ["c1", "node_d"]],
-            ["connection__node__node", [ "c1", "node_e", "node_d"]],
-            ["node__temporal_block", ["node_d", "hourly"]],
-            ["node__stochastic_structure", ["node_d", "stochastic"]],
-            ["node__temporal_block", ["node_e", "hourly"]],
-            ["node__stochastic_structure", ["node_e", "stochastic"]]
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-                ["c1", "node_e", "node_d"], "connection_has_ac_flow", true]
-        ]
-        SpineInterface.import_data(
-            url_in;
-            objects = objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            # add one more node and connection
+            objects = [
+                ["connection", "c1"],
+                ["node", "node_d"],
+                ["node", "node_e"],
+                ["unit", "unit_x"]
+            ]
+            object_parameter_values = [
+                ["node", "node_e", "demand", 0.2],
+                ["node", "node_e", "min_voltage", 0.7],
+                ["node", "node_d", "min_voltage", 0.7],
+                ["node", "node_d", "demand", 0.0],
+                ["node", "node_d", "demand_reactive", 0.0],
+                ["connection","c1","resistance",0.2],
+                ["connection","c1","reactance",0.2],
+                ["connection","c1","connection_current_max",1.0]
+            ]
+            relationships = [
+                ["node__grid", ["node_d", "grid1"]],
+                ["node__grid", ["node_e", "grid1"]],
+                ["unit__to_node", ["unit_x", "node_d"]],
+                ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+                ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+                ["connection__from_node", ["c1", "node_e"]],
+                ["connection__to_node", ["c1", "node_d"]],
+                ["connection__node__node", [ "c1", "node_e", "node_d"]],
+                ["node__temporal_block", ["node_d", "hourly"]],
+                ["node__stochastic_structure", ["node_d", "stochastic"]],
+                ["node__temporal_block", ["node_e", "hourly"]],
+                ["node__stochastic_structure", ["node_e", "stochastic"]]
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
+                ["connection__node__node",
+                    ["c1", "node_e", "node_d"], "connection_has_ac_flow", true]
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects = objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+            
+            # aliases for the model OPF variables
+            vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+            flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
         
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        flowP = m.ext[:spineopt].variables[:connection_flow]
-        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
-       
-        @test value( vsq[node(:node_e), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.01
-        @test value(flowP[connection(:c1), node(:node_e), 
-             direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            -0.2 atol=0.001
+            @test value( vsq[node(:node_e), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9165 atol=0.01
+            @test value(flowP[connection(:c1), node(:node_e), 
+                direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                -0.2 atol=0.001
 
-        @test value(flowP[connection(:c1), node(:node_d), 
-            direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            -0.2087 atol=0.001
+            @test value(flowP[connection(:c1), node(:node_d), 
+                direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                -0.2087 atol=0.001
+        end
     end
 end
 
@@ -197,51 +205,53 @@ end
 """
 function test_ac_opf_paralconn()
     @testset "ac_opf_paralconn" begin
-        url_in = _test_acflow_setup()
-        objects = [
-            ["connection", "c1"]
-        ]
-        object_parameter_values = [      
-            ["node", "node_b", "demand_reactive", 0.1],
-            ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.2],
-            ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","resistance",0.2],
-            ["connection","connection_bc","reactance",0.2],
-            ["connection","c1","resistance",0.2],
-            ["connection","c1","reactance",0.2],
-            ["connection","connection_bc","connection_current_max",1.0]
-        ]
-        relationships = [
-            ["connection__from_node", ["c1", "node_b"]],
-            ["connection__to_node", ["c1", "node_c"]],
-            ["connection__node__node", [ "c1", "node_b", "node_c"]],
-            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
-        relationship_parameter_values = 
-        [
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
-            ["connection__node__node",
-            ["c1", "node_b", "node_c"], "connection_has_ac_flow", true]
-        ]    
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9592 atol=0.001
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            objects = [
+                ["connection", "c1"]
+            ]
+            object_parameter_values = [      
+                ["node", "node_b", "demand_reactive", 0.1],
+                ["node", "node_b", "min_voltage", 0.7],
+                ["node", "node_c", "min_voltage", 0.7],
+                ["node", "node_c", "demand", 0.2],
+                ["node", "node_c", "demand_reactive", 0.0],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","c1","resistance",0.2],
+                ["connection","c1","reactance",0.2],
+                ["connection","connection_bc","connection_current_max",1.0]
+            ]
+            relationships = [
+                ["connection__from_node", ["c1", "node_b"]],
+                ["connection__to_node", ["c1", "node_c"]],
+                ["connection__node__node", [ "c1", "node_b", "node_c"]],
+                ["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+            relationship_parameter_values = 
+            [
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+                ["connection__node__node",
+                ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+                ["connection__node__node",
+                ["c1", "node_b", "node_c"], "connection_has_ac_flow", true]
+            ]    
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+            
+            # aliases for the model OPF variables
+            vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+            @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.9592 atol=0.001
+        end
     end
-
 end
 
 """
@@ -250,58 +260,58 @@ end
 """
 function test_ac_opf_singleconn_lim_I()
     @testset "ac_opf_singleconn_lim_I" begin
-        url_in = _test_acflow_setup()
-        objects = [
-            ["unit", "unit_x"]
-        ]
-        object_parameter_values = [      
-            ["node", "node_b", "demand_reactive", 0.0],
-            ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.3],
-            ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","resistance",0.2],
-            ["connection","connection_bc","reactance",0.2],
-            ["connection","connection_bc","connection_current_max", 0.2089]
-        ]
-        relationships = [
-            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
-            ["unit__to_node", ["unit_x", "node_c"]],
-            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
-            ["units_on__stochastic_structure", ["unit_x", "deterministic"]]
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["unit__to_node", ["unit_x", "node_c"], "vom_cost", 100.0],
-            ["unit__to_node", ["unit_x", "node_c"], "vom_cost_reactive", 20.0],
-            ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
-        ]    
-
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        uflow = m.ext[:spineopt].variables[:unit_flow]
-        flowP = m.ext[:spineopt].variables[:connection_flow]
-        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
-
-        @test value(flowP[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            0.2087 atol=0.003
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            objects = [
+                ["unit", "unit_x"]
+            ]
+            object_parameter_values = [      
+                ["node", "node_b", "demand_reactive", 0.0],
+                ["node", "node_b", "min_voltage", 0.7],
+                ["node", "node_c", "min_voltage", 0.7],
+                ["node", "node_c", "demand", 0.3],
+                ["node", "node_c", "demand_reactive", 0.0],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","connection_bc","connection_current_max", 0.2089]
+            ]
+            relationships = [
+                ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
+                ["unit__to_node", ["unit_x", "node_c"]],
+                ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+                ["units_on__stochastic_structure", ["unit_x", "deterministic"]]
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+                ["unit__to_node", ["unit_x", "node_c"], "vom_cost", 100.0],
+                ["unit__to_node", ["unit_x", "node_c"], "vom_cost_reactive", 20.0],
+                ["connection__node__node",
+                ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+            ]    
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
             
-        @test value(flowQ[connection(:connection_bc), node(:node_b), 
-            direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
-            0.0087 atol=0.001
+            # aliases for the model OPF variables
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+            flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+
+            @test value(flowP[connection(:connection_bc), node(:node_b), 
+                direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                0.2087 atol=0.003
+                
+            @test value(flowQ[connection(:connection_bc), node(:node_b), 
+                direction(:from_node), stochastic_scenario(:parent), time_slices[1]]) ≈
+                0.0087 atol=0.001
+        end
     end
 end
 
@@ -313,60 +323,62 @@ end
 """
 function test_ac_opf_singleconn_inve()
     @testset "ac_opf_singleconn_inve" begin
-   
-        url_in = _test_acflow_setup()
-        objects = [
-            ["unit", "unit_x"]
-        ]
-        object_parameter_values = [      
-            ["node", "node_b", "demand_reactive", 0.0],
-            ["node", "node_b", "min_voltage", 0.7],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 0.3],
-            ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","resistance",0.2],
-            ["connection","connection_bc","reactance",0.2],
-            ["connection","connection_bc","connection_current_max", 0.2089],
-            ["connection","connection_bc","investment_count_max_cumulative", 1.0],
-            ["connection","connection_bc","connection_investment_cost", 35.0],
-            ["connection","connection_bc", "investment_variable_type", "integer"]
-        ]
-        relationships = [
-            ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
-            ["unit__to_node", ["unit_x", "node_c"]],
-            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
-            ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
-            ["connection__investment_temporal_block", ["connection_bc", "inve_daily"]],
-            ["connection__investment_stochastic_structure", ["connection_bc", "investments_deterministic"]],
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["unit__to_node", ["unit_x", "node_c"], "vom_cost", 100.0],
-            ["unit__to_node", ["unit_x", "node_c"], "vom_cost_reactive", 20.0],
-            ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
-            ["connection__to_node", ["connection_bc", "node_c"], "capacity_per_connection", 10.0]
-        ]    
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            objects = [
+                ["unit", "unit_x"]
+            ]
+            object_parameter_values = [      
+                ["node", "node_b", "demand_reactive", 0.0],
+                ["node", "node_b", "min_voltage", 0.7],
+                ["node", "node_c", "min_voltage", 0.7],
+                ["node", "node_c", "demand", 0.3],
+                ["node", "node_c", "demand_reactive", 0.0],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","connection_bc","connection_current_max", 0.2089],
+                ["connection","connection_bc","investment_count_max_cumulative", 1.0],
+                ["connection","connection_bc","connection_investment_cost", 35.0],
+                ["connection","connection_bc", "investment_variable_type", "integer"]
+            ]
+            relationships = [
+                ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
+                ["unit__to_node", ["unit_x", "node_c"]],
+                ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+                ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+                ["connection__investment_temporal_block", ["connection_bc", "inve_daily"]],
+                ["connection__investment_stochastic_structure", ["connection_bc", "investments_deterministic"]],
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+                ["unit__to_node", ["unit_x", "node_c"], "vom_cost", 100.0],
+                ["unit__to_node", ["unit_x", "node_c"], "vom_cost_reactive", 20.0],
+                ["connection__node__node",
+                ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+                ["connection__to_node", ["connection_bc", "node_c"], "capacity_per_connection", 10.0]
+            ]    
 
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
-        
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        uflow = m.ext[:spineopt].variables[:unit_flow]
-        flowP = m.ext[:spineopt].variables[:connection_flow]
-        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
-        cinv = m.ext[:spineopt].variables[:connections_invested]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
+            
+            # aliases for the model OPF variables
+            vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+            uflow = m.ext[:spineopt].variables[:unit_flow]
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+            flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+            cinv = m.ext[:spineopt].variables[:connections_invested]
 
-        @test value(cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+            @test value(cinv[connection(:connection_bc), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+        end
     end
 end
 
@@ -377,69 +389,72 @@ end
 """
 function test_ac_opf_singleconn_inve_rev()
     @testset "ac_opf_singleconn_inve_rev" begin
-        url_in = _test_acflow_setup()
+         url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
     
-        # add one more node and connection
-        objects = [
-            ["connection", "c1"],
-            ["node", "node_d"],
-            ["node", "node_e"],
-            ["unit", "unit_x"]
-        ]
-        object_parameter_values = [
-            ["node", "node_e", "demand", 0.2],
-            ["node", "node_e", "min_voltage", 0.7],
-            ["node", "node_d", "min_voltage", 0.7],
-            ["node", "node_d", "demand", 0.0],
-            ["node", "node_d", "demand_reactive", 0.0],
-            ["connection","c1","resistance", 0.2],
-            ["connection","c1","reactance", 0.2],
-            ["connection","c1","connection_current_max", 1.0],
-            ["connection","c1","investment_count_max_cumulative", 1.0],
-            ["connection","c1","connection_investment_cost", 5.0],
-            ["connection","c1", "investment_variable_type", "integer"]
-        ]
-        relationships = [
-            ["node__grid", ["node_d", "grid1"]],
-            ["node__grid", ["node_e", "grid1"]],
-            ["unit__to_node", ["unit_x", "node_d"]],
-            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
-            ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
-            ["connection__from_node", ["c1", "node_e"]],
-            ["connection__to_node", ["c1", "node_d"]],
-            ["connection__node__node", [ "c1", "node_e", "node_d"]],
-            ["node__temporal_block", ["node_d", "hourly"]],
-            ["node__stochastic_structure", ["node_d", "stochastic"]],
-            ["node__temporal_block", ["node_e", "hourly"]],
-            ["node__stochastic_structure", ["node_e", "stochastic"]],
-            ["connection__investment_temporal_block", ["c1", "inve_daily"]],
-            ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]]
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-                ["c1", "node_e", "node_d"], "connection_has_ac_flow", true],
-            ["connection__to_node", ["c1", "node_d"], "capacity_per_connection", 10.0]
-        ]    
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
+            # add one more node and connection
+            objects = [
+                ["connection", "c1"],
+                ["node", "node_d"],
+                ["node", "node_e"],
+                ["unit", "unit_x"]
+            ]
+            object_parameter_values = [
+                ["node", "node_e", "demand", 0.2],
+                ["node", "node_e", "min_voltage", 0.7],
+                ["node", "node_d", "min_voltage", 0.7],
+                ["node", "node_d", "demand", 0.0],
+                ["node", "node_d", "demand_reactive", 0.0],
+                ["connection","c1","resistance", 0.2],
+                ["connection","c1","reactance", 0.2],
+                ["connection","c1","connection_current_max", 1.0],
+                ["connection","c1","investment_count_max_cumulative", 1.0],
+                ["connection","c1","connection_investment_cost", 5.0],
+                ["connection","c1", "investment_variable_type", "integer"]
+            ]
+            relationships = [
+                ["node__grid", ["node_d", "grid1"]],
+                ["node__grid", ["node_e", "grid1"]],
+                ["unit__to_node", ["unit_x", "node_d"]],
+                ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+                ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+                ["connection__from_node", ["c1", "node_e"]],
+                ["connection__to_node", ["c1", "node_d"]],
+                ["connection__node__node", [ "c1", "node_e", "node_d"]],
+                ["node__temporal_block", ["node_d", "hourly"]],
+                ["node__stochastic_structure", ["node_d", "stochastic"]],
+                ["node__temporal_block", ["node_e", "hourly"]],
+                ["node__stochastic_structure", ["node_e", "stochastic"]],
+                ["connection__investment_temporal_block", ["c1", "inve_daily"]],
+                ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]]
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
+                ["connection__node__node",
+                    ["c1", "node_e", "node_d"], "connection_has_ac_flow", true],
+                ["connection__to_node", ["c1", "node_d"], "capacity_per_connection", 10.0]
+            ]    
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
 
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
-        
-        # aliases for the model OPF variables
-        uflow = m.ext[:spineopt].variables[:unit_flow]
-        flowP = m.ext[:spineopt].variables[:connection_flow]
-        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
-        cinv = m.ext[:spineopt].variables[:connections_invested]
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:inve_daily))
+            
+            # aliases for the model OPF variables
+            uflow = m.ext[:spineopt].variables[:unit_flow]
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+            flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+            cinv = m.ext[:spineopt].variables[:connections_invested]
 
-        @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+            @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices[1]]) == 1.0
+        end
     end
 end
 
@@ -451,71 +466,74 @@ end
 """
 function test_ac_opf_singleconn_lossless()
     @testset "ac_opf_singleconn_lossless" begin
-        url_in = _test_acflow_setup()
-        # add one more node and connection
-        objects = [
-            ["connection", "c1"],
-            ["node", "node_d"],
-            ["node", "node_e"],
-            ["unit", "unit_x"]
-        ]
-        object_parameter_values = [ 
-            ["node", "node_e", "demand_reactive", 0.2],
-            ["node", "node_e", "min_voltage", 0.7],
-            ["node", "node_d", "min_voltage", 0.7],
-            ["node", "node_d", "demand", 0.0],
-            ["node", "node_d", "demand_reactive", 0.0],
-            ["connection","c1","resistance", 0.0],
-            ["connection","c1","reactance", 0.2],
-            ["connection","c1","connection_current_max", 1.0],
-            ["connection","c1","investment_count_max_cumulative", 1.0],
-            ["connection","c1","connection_investment_cost", 5.0],
-            ["connection","c1", "investment_variable_type", "integer"]
-        ]
-        relationships = [
-            ["node__grid", ["node_d", "grid1"]],
-            ["node__grid", ["node_e", "grid1"]],
-            ["unit__to_node", ["unit_x", "node_d"]],
-            ["units_on__temporal_block", ["unit_x", "two_hourly"]],
-            ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
-            ["connection__from_node", ["c1", "node_e"]],
-            ["connection__to_node", ["c1", "node_d"]],
-            ["connection__node__node", [ "c1", "node_e", "node_d"]],
-            ["node__temporal_block", ["node_d", "hourly"]],
-            ["node__stochastic_structure", ["node_d", "stochastic"]],
-            ["node__temporal_block", ["node_e", "hourly"]],
-            ["node__stochastic_structure", ["node_e", "stochastic"]],
-            ["connection__investment_temporal_block", ["c1", "inve_daily"]],
-            ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]],
-      
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-                ["c1", "node_e", "node_d"], "connection_has_ac_flow", true],
-            ["connection__to_node", ["c1", "node_d"], "capacity_per_connection", 10.0]
-        ]    
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        time_slices_inve = time_slice(m; temporal_block=temporal_block(:inve_daily))
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            # add one more node and connection
+            objects = [
+                ["connection", "c1"],
+                ["node", "node_d"],
+                ["node", "node_e"],
+                ["unit", "unit_x"]
+            ]
+            object_parameter_values = [ 
+                ["node", "node_e", "demand_reactive", 0.2],
+                ["node", "node_e", "min_voltage", 0.7],
+                ["node", "node_d", "min_voltage", 0.7],
+                ["node", "node_d", "demand", 0.0],
+                ["node", "node_d", "demand_reactive", 0.0],
+                ["connection","c1","resistance", 0.0],
+                ["connection","c1","reactance", 0.2],
+                ["connection","c1","connection_current_max", 1.0],
+                ["connection","c1","investment_count_max_cumulative", 1.0],
+                ["connection","c1","connection_investment_cost", 5.0],
+                ["connection","c1", "investment_variable_type", "integer"]
+            ]
+            relationships = [
+                ["node__grid", ["node_d", "grid1"]],
+                ["node__grid", ["node_e", "grid1"]],
+                ["unit__to_node", ["unit_x", "node_d"]],
+                ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+                ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+                ["connection__from_node", ["c1", "node_e"]],
+                ["connection__to_node", ["c1", "node_d"]],
+                ["connection__node__node", [ "c1", "node_e", "node_d"]],
+                ["node__temporal_block", ["node_d", "hourly"]],
+                ["node__stochastic_structure", ["node_d", "stochastic"]],
+                ["node__temporal_block", ["node_e", "hourly"]],
+                ["node__stochastic_structure", ["node_e", "stochastic"]],
+                ["connection__investment_temporal_block", ["c1", "inve_daily"]],
+                ["connection__investment_stochastic_structure", ["c1", "investments_deterministic"]],
+        
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_x", "node_d"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_x", "node_d"], "vom_cost_reactive", 2.0],
+                ["connection__node__node",
+                    ["c1", "node_e", "node_d"], "connection_has_ac_flow", true],
+                ["connection__to_node", ["c1", "node_d"], "capacity_per_connection", 10.0]
+            ]    
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+            time_slices_inve = time_slice(m; temporal_block=temporal_block(:inve_daily))
 
-        # aliases for the model OPF variables
-        uflow = m.ext[:spineopt].variables[:unit_flow]
-        flowP = m.ext[:spineopt].variables[:connection_flow]
-        flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
-        cinv = m.ext[:spineopt].variables[:connections_invested]
-      
-        @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices_inve[1]]) == 1.0
-        @test value(uflow[unit(:unit_x), node(:node_d), 
-            direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) ≈ 0.0 atol=0.001
+            # aliases for the model OPF variables
+            uflow = m.ext[:spineopt].variables[:unit_flow]
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+            flowQ = m.ext[:spineopt].variables[:connection_flow_reactive]
+            cinv = m.ext[:spineopt].variables[:connections_invested]
+        
+            @test value(cinv[connection(:c1), stochastic_scenario(:parent), time_slices_inve[1]]) == 1.0
+            @test value(uflow[unit(:unit_x), node(:node_d), 
+                direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) ≈ 0.0 atol=0.001
+        end
     end
 end
 
@@ -526,51 +544,54 @@ end
 """
 function test_node_voltage_singleconn_lindistflow()
     @testset "constraint_node_voltage_lindistflow" begin
-        url_in = _test_acflow_setup()
-        object_parameter_values = [
-            ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
-            ["node", "node_b", "demand_reactive", 0.1],
-            ["node", "node_b", "min_voltage", 1.0],
-            ["node", "node_c", "power_base", 1000],
-            ["node", "node_c", "min_voltage", 0.7],
-            ["node", "node_c", "demand", 200],
-            ["node", "node_c", "demand_reactive", 0.0],
-            ["connection","connection_bc","resistance",0.2],
-            ["connection","connection_bc","reactance",0.2],
-            ["connection","connection_bc","connection_current_max",1.0]
-        ]
-        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
-            ["connection__node__node",
-            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            object_parameter_values = [
+                ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
+                ["node", "node_b", "demand_reactive", 0.1],
+                ["node", "node_b", "min_voltage", 1.0],
+                ["node", "node_c", "power_base", 1000],
+                ["node", "node_c", "min_voltage", 0.7],
+                ["node", "node_c", "demand", 200],
+                ["node", "node_c", "demand_reactive", 0.0],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","connection_bc","connection_current_max",1.0]
+            ]
+            relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+                ["connection__node__node",
+                ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
 
-        ]
-        SpineInterface.import_data(
-            url_in;
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        m = run_spineopt(url_in; log_level=1, optimize=true)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        
-        # aliases for the model OPF variables
-        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
-        connflow = m.ext[:spineopt].variables[:connection_flow]
-        @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.92 atol=0.0001
+            ]
+            SpineInterface.import_data(
+                url_in;
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+
+            # aliases for the model OPF variables
+            vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+            connflow = m.ext[:spineopt].variables[:connection_flow]
+            @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.92 atol=0.0001
+        end
     end
 end
 
 @testset "validation of linear AC flow calculation" begin
-    test_ac_opf_singleconn()
-    # test_ac_opf_singleconn_q()
-    # test_ac_opf_singleconn_rev()
-    test_ac_opf_paralconn()
-    # test_ac_opf_singleconn_lim_I()
-    # test_ac_opf_singleconn_inve()
-    # test_ac_opf_singleconn_inve_rev()
-    # test_ac_opf_singleconn_lossless()
-    # test_node_voltage_singleconn_lindistflow()
+    #test_ac_opf_singleconn()
+    #test_ac_opf_singleconn_q()
+    #test_ac_opf_singleconn_rev()
+    #test_ac_opf_paralconn()
+    #test_ac_opf_singleconn_lim_I()
+    #test_ac_opf_singleconn_inve()
+    #test_ac_opf_singleconn_inve_rev()
+    #test_ac_opf_singleconn_lossless()
+    test_node_voltage_singleconn_lindistflow()
 end

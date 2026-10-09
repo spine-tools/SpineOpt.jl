@@ -78,7 +78,7 @@ end
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = get(h.block_time_slices, temporal_block, [])
 (h::TimeSliceSet)(::Anything, t) = t
 (h::TimeSliceSet)(temporal_block::Object, t) = [s for s in t if temporal_block in blocks(s)]
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, t) where {T} = unique(s for blk in temporal_blocks for s in h(blk, t))
+(h::TimeSliceSet)(temporal_blocks, t) = unique(s for blk in temporal_blocks for s in h(blk, t))
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -139,7 +139,6 @@ _adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_st
 
 A `Dict` mapping temporal block `Object`s to (start, end) tuples representing their end-points.
 """
-
 function _start_and_end_by_block(m::Model, window_start, window_end)
     model_blocks = members(temporal_block())
     isempty(model_blocks) && error("model $(_model_name(m)) doesn't have any temporal_blocks")
@@ -257,7 +256,7 @@ end
 function _coefficient_by_representative_block(representative_combination::Array, representative_blk_by_index)
     invalid_indexes = setdiff(keys(representative_combination), keys(representative_blk_by_index))
     if !isempty(invalid_indexes)
-        error("there's no representative temporal block(s) with indexes $invalid_indexes") 
+        error("there's no representative temporal block(s) with indexes $invalid_indexes")
     end
     Dict(representative_blk_by_index[k] => coef for (k, coef) in enumerate(representative_combination) if !iszero(coef))
 end
@@ -368,7 +367,7 @@ function _generate_time_slice!(m::Model)
     start_and_end_by_block = _start_and_end_by_block(m, window_start, window_end)
     blocks_and_mapping_by_interval = _blocks_and_mapping_by_representative_interval(start_and_end_by_block)
     blocks_and_mapping_by_represented_interval = _blocks_and_mapping_by_represented_interval(start_and_end_by_block)
-    merge!(_merge_blocks_and_mapping!, blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
+    mergewith!(_merge_blocks_and_mapping!, blocks_and_mapping_by_interval, blocks_and_mapping_by_represented_interval)
     _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
     intervals_by_history_interval = _intervals_by_history_interval(
         blocks_and_mapping_by_interval, m, window_start, window_end
@@ -414,14 +413,16 @@ function _generate_time_slice_relationships!(m::Model)
         for (x_before, succeeding) in succeeding_annotated_time_slices
         for x_after in succeeding
         if end_(x_before.t) <= start(x_after.t)
-        && _check_affinity(x_before, x_after)
+        &&
+            _check_affinity(x_before, x_after)
     )
     t_in_t_tuples = unique(
         (x_short.t, x_long.t)
         for (x_short, overlapping) in overlapping_annotated_time_slices
         for x_long in overlapping
         if iscontained(x_short.t, x_long.t)
-        && _check_affinity(x_short, x_long)
+        &&
+            _check_affinity(x_short, x_long)
     )
     t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
     t_to_overlapping_t = Dict(
@@ -479,9 +480,9 @@ function _generate_as_number_or_call!(m)
     algo = model_algorithm(model=m.ext[:spineopt].instance)
     temp_struct[:as_number_or_call] = if (
         needs_auto_updating(Val(algo))
-        || temp_struct[:window_count] > 1
-        || _is_benders_subproblem(m)
-        || (_is_child_stage(m) && !_is_benders_master(m))
+            || temp_struct[:window_count] > 1
+            || _is_benders_subproblem(m)
+            || (_is_child_stage(m) && !_is_benders_master(m))
     )
         as_call
     else
@@ -645,8 +646,8 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     temp_struct = m.ext[:spineopt].temporal_structure
     current_window = temp_struct[:current_window]
     !rev && any(
-        x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
-    ) && return false
+            x >= model_end(model=m.ext[:spineopt].instance) for x in (end_(current_window), start(current_window) + rf)
+        ) && return false
     updates = roll!(current_window, rf; return_updates=true)
     append!(updates, _roll_time_slice_set!(temp_struct[:time_slice], rf))
     append!(updates, _roll_time_slice_set!(temp_struct[:history_time_slice], rf))
@@ -765,7 +766,7 @@ the second containing the first.
 """
 function t_in_t(m::Model; kwargs...)
     _with_model_env(m) do
-        (m.ext[:spineopt].temporal_structure[:t_in_t]::RelationshipClass)(; kwargs...)
+        (m.ext[:spineopt].temporal_structure[:t_in_t])(; kwargs...)
     end
 end
 
@@ -996,7 +997,6 @@ function connection_investment_dynamic_time_indices(m::Model; connection=anythin
         for (tb, ta) in dynamic_time_indices(
             m, connection__investment_temporal_block(connection=conn); t_before=t_before, t_after=t_after
         )
-
     )
 end
 
@@ -1052,9 +1052,15 @@ end
 
 function (x::Union{Parameter,ParameterFunction})(m::Model; kwargs...)
     t0 = _analysis_time(m)
-    algo = model_algorithm(model=m.ext[:spineopt].instance)
+    algo = model_algorithm(model, m.ext[:spineopt].instance)
     @fetch as_number_or_call = m.ext[:spineopt].temporal_structure
     as_number_or_call(x; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
+end
+function (x::Parameter)(m::Model, class, selector; kwargs...)
+    t0 = _analysis_time(m)
+    algo = model_algorithm(model, m.ext[:spineopt].instance)
+    @fetch as_number_or_call = m.ext[:spineopt].temporal_structure
+    as_number_or_call(x, class, selector; analysis_time=t0, algo_kwargs(m, Val(algo))..., kwargs...)
 end
 
 algo_kwargs(m, algo) = (;)

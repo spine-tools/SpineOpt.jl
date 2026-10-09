@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const url_in = "sqlite://"
+
 function _load_stochastic_structure_test_data()
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -155,152 +156,155 @@ function _load_stochastic_structure_test_data()
         ],
     )
     _load_test_data(url_in, test_data)
-    return url_in
 end
 
 function _test_stochastic_structure()
-    url_in = _load_stochastic_structure_test_data()
-    using_spinedb(url_in, SpineOpt)
-    m = run_spineopt(url_in, log_level=0, optimize=false)
-    @testset "node_stochastic_time_indices" begin
-        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 1
-        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))) == 2
-        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a2)))) == 2
-        @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b)))) == 3
-        @test isempty(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b1)))
-        @test isempty(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b2)))
-        @test length(collect(node_stochastic_time_indices(m))) == 8
-    end
-    @testset "unit_stochastic_time_indices" begin
-        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 3
-        @test isempty(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))
-        @test isempty(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a2)))
-        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b)))) == 2
-        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b1)))) == 1
-        @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b2)))) == 1
-        @test length(collect(unit_stochastic_time_indices(m))) == 7
-    end
-    @testset "node_stochastic_scenario_weight" begin
-        @test realize(
-            SpineOpt.node_stochastic_scenario_weight(
-                m;
-                node=node(:only_node),
-                stochastic_scenario=stochastic_scenario(:scenario_a),
-            ),
-        ) == 1.0
-        @test realize(
-            SpineOpt.node_stochastic_scenario_weight(
-                m;
-                node=node(:only_node),
-                stochastic_scenario=stochastic_scenario(:scenario_a1),
-            ),
-        ) == 1.0
-        @test realize(
-            SpineOpt.node_stochastic_scenario_weight(
-                m;
-                node=node(:only_node),
-                stochastic_scenario=stochastic_scenario(:scenario_a2),
-            ),
-        ) == 2.0
-        @test realize(
-            SpineOpt.node_stochastic_scenario_weight(
-                m;
-                node=node(:only_node),
-                stochastic_scenario=stochastic_scenario(:scenario_b),
-            ),
-        ) == 0.0
-    end
-    @testset "unit_stochastic_scenario_weight" begin
-        @test realize(
-            SpineOpt.unit_stochastic_scenario_weight(
-                m;
-                unit=unit(:only_unit),
-                stochastic_scenario=stochastic_scenario(:scenario_b),
-            ),
-        ) == 2.0
-        @test realize(
-            SpineOpt.unit_stochastic_scenario_weight(
-                m;
-                unit=unit(:only_unit),
-                stochastic_scenario=stochastic_scenario(:scenario_b1),
-            ),
-        ) == 0.2
-        @test realize(
-            SpineOpt.unit_stochastic_scenario_weight(
-                m;
-                unit=unit(:only_unit),
-                stochastic_scenario=stochastic_scenario(:scenario_b2),
-            ),
-        ) == 0.4
-        @test realize(
-            SpineOpt.unit_stochastic_scenario_weight(
-                m;
-                unit=unit(:only_unit),
-                stochastic_scenario=stochastic_scenario(:scenario_a),
-            ),
-        ) == 0.0
+    with_connection_open(url_in) do
+        _load_stochastic_structure_test_data()
+        using_spinedb(url_in, SpineOpt)
+        m = run_spineopt(url_in, log_level=0, optimize=false)
+        @testset "node_stochastic_time_indices" begin
+            @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 1
+            @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))) == 2
+            @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a2)))) == 2
+            @test length(collect(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b)))) == 3
+            @test isempty(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b1)))
+            @test isempty(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b2)))
+            @test length(collect(node_stochastic_time_indices(m))) == 8
+        end
+        @testset "unit_stochastic_time_indices" begin
+            @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a)))) == 3
+            @test isempty(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a1)))
+            @test isempty(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a2)))
+            @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b)))) == 2
+            @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b1)))) == 1
+            @test length(collect(unit_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_b2)))) == 1
+            @test length(collect(unit_stochastic_time_indices(m))) == 7
+        end
+        @testset "node_stochastic_scenario_weight" begin
+            @test realize(
+                SpineOpt.node_stochastic_scenario_weight(
+                    m;
+                    node=node(:only_node),
+                    stochastic_scenario=stochastic_scenario(:scenario_a),
+                ),
+            ) == 1.0
+            @test realize(
+                SpineOpt.node_stochastic_scenario_weight(
+                    m;
+                    node=node(:only_node),
+                    stochastic_scenario=stochastic_scenario(:scenario_a1),
+                ),
+            ) == 1.0
+            @test realize(
+                SpineOpt.node_stochastic_scenario_weight(
+                    m;
+                    node=node(:only_node),
+                    stochastic_scenario=stochastic_scenario(:scenario_a2),
+                ),
+            ) == 2.0
+            @test realize(
+                SpineOpt.node_stochastic_scenario_weight(
+                    m;
+                    node=node(:only_node),
+                    stochastic_scenario=stochastic_scenario(:scenario_b),
+                ),
+            ) == 0.0
+        end
+        @testset "unit_stochastic_scenario_weight" begin
+            @test realize(
+                SpineOpt.unit_stochastic_scenario_weight(
+                    m;
+                    unit=unit(:only_unit),
+                    stochastic_scenario=stochastic_scenario(:scenario_b),
+                ),
+            ) == 2.0
+            @test realize(
+                SpineOpt.unit_stochastic_scenario_weight(
+                    m;
+                    unit=unit(:only_unit),
+                    stochastic_scenario=stochastic_scenario(:scenario_b1),
+                ),
+            ) == 0.2
+            @test realize(
+                SpineOpt.unit_stochastic_scenario_weight(
+                    m;
+                    unit=unit(:only_unit),
+                    stochastic_scenario=stochastic_scenario(:scenario_b2),
+                ),
+            ) == 0.4
+            @test realize(
+                SpineOpt.unit_stochastic_scenario_weight(
+                    m;
+                    unit=unit(:only_unit),
+                    stochastic_scenario=stochastic_scenario(:scenario_a),
+                ),
+            ) == 0.0
+        end
     end
 end
 
 function _test_reduced_stochastic_structure()
-    url_in = _load_stochastic_structure_test_data()
-    new_data = Dict( # Add data for a reduced structure c, with only a->a1, but no a2
-        :objects => [["stochastic_structure", "structure_c"]],
-        :relationships => [
-            ["stochastic_structure__stochastic_scenario", ["structure_c", "scenario_a"]],
-            ["stochastic_structure__stochastic_scenario", ["structure_c", "scenario_a1"]],
-        ],
-        :relationship_parameter_values =>[
-            [
-                "stochastic_structure__stochastic_scenario",
-                ["structure_c", "scenario_a"],
-                "stochastic_scenario_end",
-                Dict("type" => "duration", "data" => "1D"),
+    with_connection_open(url_in) do
+        _load_stochastic_structure_test_data()
+        new_data = Dict( # Add data for a reduced structure c, with only a->a1, but no a2
+            :objects => [["stochastic_structure", "structure_c"]],
+            :relationships => [
+                ["stochastic_structure__stochastic_scenario", ["structure_c", "scenario_a"]],
+                ["stochastic_structure__stochastic_scenario", ["structure_c", "scenario_a1"]],
             ],
-            [
-                "stochastic_structure__stochastic_scenario",
-                ["structure_c", "scenario_a"],
-                "weight_relative_to_parents",
-                1.0,
+            :relationship_parameter_values =>[
+                [
+                    "stochastic_structure__stochastic_scenario",
+                    ["structure_c", "scenario_a"],
+                    "stochastic_scenario_end",
+                    Dict("type" => "duration", "data" => "1D"),
+                ],
+                [
+                    "stochastic_structure__stochastic_scenario",
+                    ["structure_c", "scenario_a"],
+                    "weight_relative_to_parents",
+                    1.0,
+                ],
+                [
+                    "stochastic_structure__stochastic_scenario",
+                    ["structure_c", "scenario_a1"],
+                    "weight_relative_to_parents",
+                    1.0,
+                ],
             ],
-            [
-                "stochastic_structure__stochastic_scenario",
-                ["structure_c", "scenario_a1"],
-                "weight_relative_to_parents",
-                1.0,
-            ],
-        ],
-    )
-    SpineInterface.import_data(url_in, new_data, "add data")
-    using_spinedb(url_in, SpineOpt)
-    mm = model(:instance)
-    mwin = (model_start(model=mm), model_end(model=mm))
-    sstruct_a = SpineOpt._stochastic_dag(stochastic_structure(:structure_a), mwin...)
-    sstruct_b = SpineOpt._stochastic_dag(stochastic_structure(:structure_b), mwin...)
-    sstruct_c = SpineOpt._stochastic_dag(stochastic_structure(:structure_c), mwin...)
-    @testset "reduced_stochastic_structures" begin
-        # Test stochastic structure a
-        @test length(sstruct_a) == 4
-        for sname in (:scenario_a, :scenario_a1, :scenario_a2, :scenario_b)
-            @test in(stochastic_scenario(sname), keys(sstruct_a))
-        end
-        for sname in (:scenario_b1, :scenario_b2)
-            @test !in(stochastic_scenario(sname), keys(sstruct_a))
-        end
-        # Test stochastic structure b
-        @test length(sstruct_b) == 4
-        for sname in (:scenario_a, :scenario_b, :scenario_b1, :scenario_b2)
-            @test in(stochastic_scenario(sname), keys(sstruct_b))
-        end
-        for sname in (:scenario_a1, :scenario_a2)
-            @test !in(stochastic_scenario(sname), keys(sstruct_b))
-        end
-        # Test stochastic struct c
-        for sname in (:scenario_a, :scenario_a1)
-            @test in(stochastic_scenario(sname), keys(sstruct_c))
-        end
-        for sname in (:scenario_a2, :scenario_b, :scenario_b1, :scenario_b2)
-            @test !in(stochastic_scenario(sname), keys(sstruct_c))
+        )
+        SpineInterface.import_data(url_in, new_data, "add data")
+        using_spinedb(url_in, SpineOpt)
+        mm = model(:instance)
+        mwin = (model_start(model=mm), model_end(model=mm))
+        sstruct_a = SpineOpt._stochastic_dag(stochastic_structure(:structure_a), mwin...)
+        sstruct_b = SpineOpt._stochastic_dag(stochastic_structure(:structure_b), mwin...)
+        sstruct_c = SpineOpt._stochastic_dag(stochastic_structure(:structure_c), mwin...)
+        @testset "reduced_stochastic_structures" begin
+            # Test stochastic structure a
+            @test length(sstruct_a) == 4
+            for sname in (:scenario_a, :scenario_a1, :scenario_a2, :scenario_b)
+                @test in(stochastic_scenario(sname), keys(sstruct_a))
+            end
+            for sname in (:scenario_b1, :scenario_b2)
+                @test !in(stochastic_scenario(sname), keys(sstruct_a))
+            end
+            # Test stochastic structure b
+            @test length(sstruct_b) == 4
+            for sname in (:scenario_a, :scenario_b, :scenario_b1, :scenario_b2)
+                @test in(stochastic_scenario(sname), keys(sstruct_b))
+            end
+            for sname in (:scenario_a1, :scenario_a2)
+                @test !in(stochastic_scenario(sname), keys(sstruct_b))
+            end
+            # Test stochastic struct c
+            for sname in (:scenario_a, :scenario_a1)
+                @test in(stochastic_scenario(sname), keys(sstruct_c))
+            end
+            for sname in (:scenario_a2, :scenario_b, :scenario_b1, :scenario_b2)
+                @test !in(stochastic_scenario(sname), keys(sstruct_c))
+            end
         end
     end
 end

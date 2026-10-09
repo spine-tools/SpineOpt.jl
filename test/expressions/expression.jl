@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const url_in = "sqlite://"
+
 function _test_expressions_setup()
-    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -60,7 +61,7 @@ function _test_expressions_setup()
             ["units_on__stochastic_structure", ["unit_cb", "deterministic"]],
             ["node__temporal_block", ["node_a", "two_hourly"]],
             ["node__temporal_block", ["node_b", "hourly"]],
-            ["node__temporal_block", ["node_c", "hourly"]],            
+            ["node__temporal_block", ["node_c", "hourly"]],
             ["node__stochastic_structure", ["node_a", "deterministic"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["node__stochastic_structure", ["node_c", "stochastic"]],
@@ -86,7 +87,7 @@ function _test_expressions_setup()
             ["node", "node_c", "storage_state_max", 50],
             ["node", "node_b", "demand", 105],
             ["unit", "unit_b", "online_variable_type", "linear"],
-            ["unit", "unit_b", "availability_factor", 0.4],            
+            ["unit", "unit_b", "availability_factor", 0.4],
             ["model", "instance", "solver_mip", "HiGHS.jl"],
             ["model", "instance", "solver_lp", "HiGHS.jl"],
         ],
@@ -103,67 +104,62 @@ function _test_expressions_setup()
         ]
     )
     _load_test_data(url_in, test_data)
-    url_in
 end
 
 function test_expression_capacity_margin()
-    @testset "expression_capacity_margin" begin        
-        url_in = _test_expressions_setup()
-        existing_units_b = 3
-        margin_b = 1
-        demand_b = 105
-        group_demand_a = 10
-        demand_fraction_b = 0.5
-        object_parameter_values = [
-            ["node", "node_b", "capacity_margin_min", margin_b],
-            ["unit", "unit_b", "existing_units", existing_units_b],
-            ["node", "node_b", "demand", demand_b],
-            ["node", "node_b", "demand_fraction", demand_fraction_b],
-            ["node", "node_a", "demand", group_demand_a],
-        ]        
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        
-        expression = m.ext[:spineopt].expressions[:capacity_margin]
-        @test length(expression) == 2
-
-        # node_b
-        n = node(:node_b)
-        s_p = stochastic_scenario(:parent)
-        s_c = stochastic_scenario(:child)
-        scenarios = (s_p, s_c)
-        
-        time_slices_1h = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2 = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
-        @testset for (s, t) in zip(s_p, time_slices_1h)
-            unit_b = unit(:unit_b)
-            unit_cb = unit(:unit_cb)
-            unit_ab = unit(:unit_ab)
-            d_f = direction(:from_node)
-            d_t = direction(:to_node)
-            var_uon_b = get(var_units_on, (unit_b, s, t), 1)
-            var_uon_ab = get(var_units_on, (unit_ab, s, t2), 1)
-            var_uff_cb = var_unit_flow[unit_cb, n, d_f, s, t]
-            var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]
-     
-            expected_expr = @expression(m,
-                + var_uft_cb
-                - var_uff_cb
-                + 0.4 * 30 * var_uon_b
-                + 75 * var_uon_ab
-                - demand_b
-                - demand_fraction_b * group_demand_a
-            )            
-
-            observed_expr = expression[n, [s], t]
-            
-            @test _is_expression_equal(observed_expr, expected_expr)
-        end                
+    @testset "expression_capacity_margin" begin
+        with_connection_open(url_in) do
+            _test_expressions_setup()
+            existing_units_b = 3
+            margin_b = 1
+            demand_b = 105
+            group_demand_a = 10
+            demand_fraction_b = 0.5
+            object_parameter_values = [
+                ["node", "node_b", "capacity_margin_min", margin_b],
+                ["unit", "unit_b", "existing_units", existing_units_b],
+                ["node", "node_b", "demand", demand_b],
+                ["node", "node_b", "demand_fraction", demand_fraction_b],
+                ["node", "node_a", "demand", group_demand_a],
+            ]
+            SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+            var_units_on = m.ext[:spineopt].variables[:units_on]
+            expression = m.ext[:spineopt].expressions[:capacity_margin]
+            @test length(expression) == 2
+            # node_b
+            n = node(:node_b)
+            s_p = stochastic_scenario(:parent)
+            s_c = stochastic_scenario(:child)
+            scenarios = (s_p, s_c)
+            time_slices_1h = time_slice(m; temporal_block=temporal_block(:hourly))
+            t2 = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+            @testset for (s, t) in zip(s_p, time_slices_1h)
+                unit_b = unit(:unit_b)
+                unit_cb = unit(:unit_cb)
+                unit_ab = unit(:unit_ab)
+                d_f = direction(:from_node)
+                d_t = direction(:to_node)
+                var_uon_b = get(var_units_on, (unit_b, s, t), 1)
+                var_uon_ab = get(var_units_on, (unit_ab, s, t2), 1)
+                var_uff_cb = var_unit_flow[unit_cb, n, d_f, s, t]
+                var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]
+                expected_expr = @expression(m,
+                    + var_uft_cb
+                    - var_uff_cb
+                    + 0.4 * 30 * var_uon_b
+                    + 75 * var_uon_ab
+                    - demand_b
+                    - demand_fraction_b * group_demand_a
+                )
+                observed_expr = expression[n, [s], t]
+                @test _is_expression_equal(observed_expr, expected_expr)
+            end
+        end
     end
 end
 
-@testset "expressions" begin    
+@testset "expressions" begin
     test_expression_capacity_margin()
 end

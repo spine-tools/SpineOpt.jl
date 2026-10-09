@@ -18,8 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function _test_acflow_setup()
-    url_in = "sqlite://"
+function _test_acflow_setup(url_in)
+    #url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -94,5 +94,5 @@ function _test_acflow_setup()
         ]
     )
     _load_test_data(url_in, test_data)
-    url_in
+    #url_in
 end

@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const url_in = "sqlite://"
+
 function _test_run_spineopt_investments_setup()
-    url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     start, end_ = DateTime(2000), DateTime(2000, 1, 8)
@@ -88,50 +89,52 @@ function _test_run_spineopt_investments_setup()
         ]
     )
     _load_test_data(url_in, test_data)
-    url_in, url_out, file_path_out
+    url_out, file_path_out
 end
 
 function _test_capacity_investments()
     @testset "capacity_investments" begin
-        url_in, url_out, file_path_out = _test_run_spineopt_investments_setup()
-        object_parameter_values = [
-            ["model", "instance", "connection_investment_power_flow_impact_active", false],
-            ["unit", "unit_a", "existing_units", 10],
-            ["unit", "unit_a", "investment_count_max_cumulative", 40],
-            ["unit", "unit_a", "unit_investment_cost", 0],
-            ["unit", "unit_a", "investment_variable_type", "linear"],
-            ["node", "node_a", "existing_storages", 5],
-            ["node", "node_a", "storage_investment_count_max_cumulative", 20],
-            ["node", "node_a", "storage_investment_cost", 0],
-            ["node", "node_a", "storage_investment_variable_type", "linear"],
-            ["connection", "connection_ab", "existing_connections", 5],
-            ["connection", "connection_ab", "investment_count_max_cumulative", 20],
-            ["connection", "connection_ab", "connection_investment_cost", 0],
-            [
-                "connection",
-                "connection_ab",
-                "investment_variable_type",
-                "linear"
-            ],
-            ["node", "node_a", "storage_state_max", 1]
-        ]
-        relationship_parameter_values = [
-            ["unit__to_node", ["unit_a", "node_a"], "capacity_per_unit", 1],
-            ["connection__from_node", ["connection_ab", "node_a"], "capacity_per_connection", 1],
-        ]
-        import_count, errors = SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        @test isempty(errors)
-        rm(file_path_out; force=true)
-        m = run_spineopt(url_in, url_out; log_level=3)
-        Y = Bind()
-        using_spinedb(url_out, Y)
-        @test Y.units_invested(unit=Y.unit(:unit_a), t=DateTime(2000)) == 40
-        @test Y.connections_invested(connection=Y.connection(:connection_ab), t=DateTime(2000)) == 20
-        @test Y.storages_invested(node=Y.node(:node_a), t=DateTime(2000)) == 20
+    with_connection_open(url_in) do
+        url_out, file_path_out = _test_run_spineopt_investments_setup()
+            object_parameter_values = [
+                ["model", "instance", "connection_investment_power_flow_impact_active", false],
+                ["unit", "unit_a", "existing_units", 10],
+                ["unit", "unit_a", "investment_count_max_cumulative", 40],
+                ["unit", "unit_a", "unit_investment_cost", 0],
+                ["unit", "unit_a", "investment_variable_type", "linear"],
+                ["node", "node_a", "existing_storages", 5],
+                ["node", "node_a", "storage_investment_count_max_cumulative", 20],
+                ["node", "node_a", "storage_investment_cost", 0],
+                ["node", "node_a", "storage_investment_variable_type", "linear"],
+                ["connection", "connection_ab", "existing_connections", 5],
+                ["connection", "connection_ab", "investment_count_max_cumulative", 20],
+                ["connection", "connection_ab", "connection_investment_cost", 0],
+                [
+                    "connection",
+                    "connection_ab",
+                    "investment_variable_type",
+                    "linear"
+                ],
+                ["node", "node_a", "storage_state_max", 1]
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_a", "node_a"], "capacity_per_unit", 1],
+                ["connection__from_node", ["connection_ab", "node_a"], "capacity_per_connection", 1],
+            ]
+            import_count, errors = SpineInterface.import_data(
+                url_in;
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            @test isempty(errors)
+            rm(file_path_out; force=true)
+            m = run_spineopt(url_in, url_out; log_level=3)
+            Y = Bind()
+            using_spinedb(url_out, Y)
+            @test Y.units_invested(unit=Y.unit(:unit_a), t=DateTime(2000)) == 40
+            @test Y.connections_invested(connection=Y.connection(:connection_ab), t=DateTime(2000)) == 20
+            @test Y.storages_invested(node=Y.node(:node_a), t=DateTime(2000)) == 20
+        end
     end
 end
 

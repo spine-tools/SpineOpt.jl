@@ -990,7 +990,8 @@ function merge_variable_type_lists(db_url, log_level; force::Bool=false)
                 # Find if entity in existing_values
                 if !haskey(existing_values2, (entity, alternative))
                     # Loop over alternatives in existing_values[entity]
-                    for existing_value in existing_values[entity]
+                    # (the entity may have no investment_count_max_cumulative value at all, e.g. a non-candidate)
+                    for existing_value in get(existing_values, entity, ())
                         if !haskey(existing_types, (entity, existing_value[1]))
                             alternative_updated, base_alternative_added = add_merged_alternative(
                                 db_url, alternative, existing_value[1], log_level
