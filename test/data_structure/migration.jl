@@ -649,6 +649,104 @@ function _test_rename_storage_fixed_annual_cost()
     end
 end
 
+# Parameter values of the given entity by alternative name
+function _parameter_value_by_alternative(db_url, class_name, par_name, entity_byname)
+	pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+		"entity_class_name" => class_name, "parameter_definition_name" => par_name)
+	)
+	Dict(
+		x["alternative_name"] => parse_db_value(x["value"], x["type"])
+		for x in pvals if x["entity_byname"] == entity_byname
+	)
+end
+
+function _test_rename_parameter_to_existing_parameter()
+	@testset "rename_parameter to an existing parameter" begin
+		data = Dict(
+			:object_classes => ["node"],
+			:objects => [("node", "n1"), ("node", "n2")],
+			:alternatives => ["alt"],
+			:object_parameters => [
+				("node", "storage_fom_cost", 0.5, nothing, "Old description"),
+				("node", "storage_fixed_annual_cost"), # Hand-made new parameter.
+			],
+			:object_parameter_values => [
+				("node", "n1", "storage_fom_cost", 1.0),
+				("node", "n1", "storage_fom_cost", 2.0, "alt"),
+				("node", "n1", "storage_fixed_annual_cost", 100.0), # Conflicts with a migrated value.
+				("node", "n2", "storage_fixed_annual_cost", 200.0), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.scale_parameter_values(url_in, [(("node", "storage_fom_cost"), 8760)], 0)
+			SpineOpt.rename_parameter(url_in, "node", "storage_fom_cost", "storage_fixed_annual_cost", "", 0)
+			pdef_old = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "storage_fom_cost")
+			)
+			@test isempty(pdef_old) # Old parameter deleted.
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "storage_fixed_annual_cost")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 0.5 * 8760 # Migrated default wins.
+			@test pdef["description"] == "Old description"
+			n1_vals = _parameter_value_by_alternative(url_in, "node", "storage_fixed_annual_cost", ["n1"])
+			@test n1_vals == Dict("Base" => 1.0 * 8760, "alt" => 2.0 * 8760) # Migrated values win.
+			n2_vals = _parameter_value_by_alternative(url_in, "node", "storage_fixed_annual_cost", ["n2"])
+			@test n2_vals == Dict("Base" => 200.0) # Hand-made value kept, and not scaled.
+		end
+	end
+end
+
+function _test_update_ordering_to_existing_parameter_definition()
+	@testset "update_ordering_of_multidimensional_classes to an existing parameter definition" begin
+		data = Dict(
+			:object_classes => ["node", "unit"],
+			:relationship_classes => [("unit__from_node", ["unit", "node"]), ("node__to_unit", ["node", "unit"])],
+			:relationship_parameters => [
+				("unit__from_node", "unit_capacity", 1.0, nothing, "Old description"),
+				("node__to_unit", "unit_capacity", 2.0, nothing, "Hand-made description"),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.update_ordering_of_multidimensional_classes(
+				url_in, [("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1], true)], 0
+			)
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node__to_unit", "name" => "unit_capacity")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 1.0 # Migrated definition wins.
+			@test pdef["description"] == "Old description"
+		end
+	end
+end
+
+function _test_rename_storage_fixed_annual_cost_to_existing_parameter()
+	@testset "rename_storage_fixed_annual_cost to an existing fixed_annual_cost" begin
+		data = Dict(
+			:object_classes => ["node"],
+			:objects => [("node", "n1"), ("node", "n2")],
+			:object_parameters => [("node", "storage_fixed_annual_cost"), ("node", "fixed_annual_cost")],
+			:object_parameter_values => [
+				("node", "n1", "storage_fixed_annual_cost", 100),
+				("node", "n1", "fixed_annual_cost", 1), # Conflicts with the migrated value.
+				("node", "n2", "fixed_annual_cost", 2), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			@test SpineOpt.rename_storage_fixed_annual_cost(url_in, 0) === true
+			run_request(url_in, "call_method", ("commit_session", "rename_storage_fixed_annual_cost"))
+			Y = Bind()
+			using_spinedb(url_in, Y)
+			@test !in(:storage_fixed_annual_cost, getproperty.(parameters(Y), :name))
+			@test Y.fixed_annual_cost(node=Y.node(:n1)) == 100
+			@test Y.fixed_annual_cost(node=Y.node(:n2)) == 2
+		end
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -663,4 +761,8 @@ end
 	_test_dummy_migrations_functions()
 	_test_major_upgrade_1()
 	_test_rename_storage_fixed_annual_cost()
+	# Migrations into already existing (e.g. hand-made) items
+	_test_rename_parameter_to_existing_parameter()
+	_test_update_ordering_to_existing_parameter_definition()
+	_test_rename_storage_fixed_annual_cost_to_existing_parameter()
 end

@@ -247,9 +247,11 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
         (("temporal_block", "representative_periods_mapping"), "representative_blocks_by_period", ""),
     ]
 
-    # ((class, parameter name after renaming), multiplication factor)
+    # ((class, parameter name before renaming), multiplication factor)
+    # Scaling happens before renaming so that only the migrated values are scaled,
+    # not any values of an already existing (e.g. hand-made) new parameter.
     parameters_to_be_scaled = [
-        (("node", "storage_fixed_annual_cost"), 8760), # per-hour cost (storage_fom_cost) -> per-year cost
+        (("node", "storage_fom_cost"), 8760), # per-hour cost -> per-year cost (storage_fixed_annual_cost)
     ]
 
     # original class, new class
@@ -365,10 +367,10 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     create_superclasses_and_subclasses(db_url, log_level)
     @log log_level 0 string("Update ordering of multidimensional classes...")
     update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
-    @log log_level 0 string("Renaming parameters...")
-    rename_parameters(db_url, parameters_to_be_renamed, log_level)
     @log log_level 0 string("Scaling parameter values...")
     scale_parameter_values(db_url, parameters_to_be_scaled, log_level)
+    @log log_level 0 string("Renaming parameters...")
+    rename_parameters(db_url, parameters_to_be_renamed, log_level)
     @log log_level 0 string("Renaming classes...")
     rename_classes(db_url, classes_to_be_renamed, log_level)
     @log log_level 0 string("Moving parameters to multidimensional classes...")
@@ -569,15 +571,25 @@ function update_ordering_of_multidimensional_class(
         "entity_class_name" => old_class)
     )
     for pdef in pdefs
+        existing_pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+            "entity_class_name" => new_class, "name" => pdef["name"])
+        )
         try
-            check_run_request_return_value(run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
-                "entity_class_name" => new_class,
-                "name" => pdef["name"],
-                "default_value" => pdef["default_value"],
-                "default_type" => pdef["default_type"],
-                "parameter_value_list_name" => pdef["parameter_value_list_name"],
-                "description" => pdef["description"])), log_level, print_errors
-            )
+            if length(existing_pdef) > 0
+                # E.g. hand-made or from another old class: the definition of the migrated class takes precedence
+                update_parameter_definition_attributes(db_url, existing_pdef["id"], pdef, log_level)
+            else
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("add_parameter_definition_item",), Dict(
+                        "entity_class_name" => new_class,
+                        "name" => pdef["name"],
+                        "default_value" => pdef["default_value"],
+                        "default_type" => pdef["default_type"],
+                        "parameter_value_list_name" => pdef["parameter_value_list_name"],
+                        "description" => pdef["description"])
+                    ), log_level, print_errors
+                )
+            end
         catch
         end
     end
@@ -646,13 +658,60 @@ function rename_parameter(db_url, class_name, old_par_name, new_par_name, merge_
                 db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
             )
         else
+            new_pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+                "entity_class_name" => class_name, "name" => new_par_name)
+            )
+            if length(new_pdef) > 0
+                merge_parameter_definition(db_url, class_name, pdef, new_pdef, log_level)
+            else
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                    "id" => pdef["id"], "name" => new_par_name)
+                    ), log_level
+                )
+            end
+        end
+    end
+end
+
+# Merge the old parameter definition into an already existing (e.g. hand-made) new one and remove the old one.
+# The old definition's attributes and values take precedence; other existing values are kept.
+function merge_parameter_definition(db_url, class_name, old_pdef, new_pdef, log_level)
+    @log log_level 0 string("Warning: `$(new_pdef["name"])` already exists in `$class_name`. Merging ",
+        "`$(old_pdef["name"])` into it; migrated values overwrite existing ones in the same alternative.")
+    update_parameter_definition_attributes(db_url, new_pdef["id"], old_pdef, log_level)
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => class_name, "parameter_definition_name" => old_pdef["name"])
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    for (entity, val_list) in vals
+        for (alternative, val) in val_list
+            pval_value, pval_type = unparse_db_value(val)
             check_run_request_return_value(run_request(
-                db_url, "call_method", ("update_item", "parameter_definition"), Dict(
-                "id" => pdef["id"], "name" => new_par_name)
+                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                    "entity_class_name" => class_name, "parameter_definition_name" => new_pdef["name"],
+                    "entity_byname" => entity, "alternative_name" => alternative,
+                    "value" => pval_value, "type" => pval_type)
                 ), log_level
             )
         end
     end
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("remove_parameter_definition_item", old_pdef["id"])), log_level
+    )
+end
+
+# Overwrite the default value, value list and description of a parameter definition with those of `source_pdef`
+function update_parameter_definition_attributes(db_url, pdef_id, source_pdef, log_level)
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+            "id" => pdef_id,
+            "default_value" => source_pdef["default_value"],
+            "default_type" => source_pdef["default_type"],
+            "parameter_value_list_name" => source_pdef["parameter_value_list_name"],
+            "description" => source_pdef["description"])
+        ), log_level
+    )
 end
 
 # Multiply the values (and the default value) of each given parameter by the given factor
