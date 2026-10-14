@@ -134,7 +134,7 @@ end
 
 function _connection_fixed_costs_per_duration_unit(m::Model, conn, s, t)
     return (
-        fixed_annual_cost(connection=conn, stochastic_scenario=s, t=t)
+        fixed_annual_cost(m; connection=conn, stochastic_scenario=s, t=t)
             /
             _fixed_costs_annual_duration(m, t).value
     )
@@ -142,7 +142,7 @@ end
 
 function _storage_fixed_costs_per_duration_unit(m::Model, n, s, t)
     return (
-        storage_fixed_annual_cost(node=n, stochastic_scenario=s, t=t)
+        storage_fixed_annual_cost(m; node=n, stochastic_scenario=s, t=t)
             /
             _fixed_costs_annual_duration(m, t).value
     )
