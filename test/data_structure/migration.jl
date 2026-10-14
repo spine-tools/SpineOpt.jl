@@ -554,13 +554,13 @@ function _test_major_upgrade_1()
     		@test !in(:storage_fom_cost, param_names) # Old parameter deleted.
     		storage_cost_by_alt = Dict( # Per-hour cost scaled to per-year, in every alternative.
     			x[5] => parse_db_value(x[4])
-    			for x in migrated_data["parameter_values"] if x[3] == "fixed_annual_cost"
+    			for x in migrated_data["parameter_values"] if x[3] == "storage_fixed_annual_cost"
     		)
     		@test storage_cost_by_alt["Base"] == 2.5 * 8760
     		@test storage_cost_by_alt["alt_ts"].values == [1.0, 2.0] .* 8760 # Indexed values scaled element-wise.
     		storage_cost_default = only( # Default value scaled too.
     			parse_db_value(x[3])
-    			for x in migrated_data["parameter_definitions"] if x[1] == "node" && x[2] == "fixed_annual_cost"
+    			for x in migrated_data["parameter_definitions"] if x[1] == "node" && x[2] == "storage_fixed_annual_cost"
     		)
     		@test storage_cost_default == 0.5 * 8760
     		# Check that all necessary superclasses are created correctly.
@@ -629,6 +629,26 @@ function _test_major_upgrade_1()
     end
 end
 
+function _test_rename_storage_fixed_annual_cost()
+	@testset "rename_storage_fixed_annual_cost" begin
+		data = Dict(
+			:object_classes => ["node"],
+			:objects => [("node", "n")],
+			:object_parameters => [("node", "storage_fixed_annual_cost")],
+			:object_parameter_values => [("node", "n", "storage_fixed_annual_cost", 100)],
+		)
+		with_connection_open(url_in) do
+    		_load_test_data_without_template(url_in, data)
+    		@test SpineOpt.rename_storage_fixed_annual_cost(url_in, 0) === true
+    		run_request(url_in, "call_method", ("commit_session", "rename_storage_fixed_annual_cost"))
+    		Y = Bind()
+    		using_spinedb(url_in, Y)
+    		@test Y.fixed_annual_cost(node=Y.node(:n)) == 100
+    		@test !in(:storage_fixed_annual_cost, getproperty.(parameters(Y), :name))
+    	end
+    end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -642,4 +662,5 @@ end
 	_test_translate_use_economic_representation__use_milestone_years()
 	_test_dummy_migrations_functions()
 	_test_major_upgrade_1()
+	_test_rename_storage_fixed_annual_cost()
 end
