@@ -634,9 +634,7 @@ function update_ordering_of_multidimensional_class(
     existing_bynames = entity_bynames(db_url, new_class)
     for entity_item in entity_items
         # The byname of a 0-D entity is its name (and its mapping is [1])
-        element_name_list = isempty(entity_item["element_name_list"]) ?
-            [entity_item["name"]] : entity_item["element_name_list"]
-        new_element_name_list = [element_name_list[i] for i in mapping]
+        new_element_name_list = [entity_byname(entity_item)[i] for i in mapping]
         try
             add_entity_if_missing(db_url, new_class, new_element_name_list, log_level;
                 description=entity_item["description"], existing_bynames
@@ -675,12 +673,74 @@ function update_ordering_of_multidimensional_class(
             end
         end
     end
+    # Also the entity alternatives and group memberships, which would be lost with the old class otherwise
+    copy_entity_alternatives(db_url, old_class, new_class, mapping, log_level)
+    copy_entity_groups(db_url, old_class, new_class, entity_items, mapping, log_level)
 end
 
-# The bynames of the entities of the given class, e.g. ["n"] for a 0-D entity and ["u", "n"] for a 2-D one
+# Copy the entity alternatives of the entities of `old_class` to the corresponding entities of `new_class`.
+# Migrated entity alternatives overwrite existing (e.g. hand-made) ones.
+function copy_entity_alternatives(db_url, old_class, new_class, mapping, log_level)
+    entity_alternative_items = run_request(db_url, "call_method", ("get_entity_alternative_items",), Dict(
+        "entity_class_name" => old_class)
+    )
+    for item in entity_alternative_items
+        new_element_name_list = [item["entity_byname"][i] for i in mapping]
+        try
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_update_entity_alternative_item",), Dict(
+                    "entity_class_name" => new_class,
+                    "entity_byname" => new_element_name_list,
+                    "alternative_name" => item["alternative_name"],
+                    "active" => item["active"])
+                ), log_level
+            )
+        catch
+            @log log_level 0 string("Could not copy the entity alternative of $new_element_name_list in alternative ",
+                "`$(item["alternative_name"])` into $new_class.")
+        end
+    end
+end
+
+# Copy the group memberships among the entities of `old_class` to the corresponding entities of `new_class`
+function copy_entity_groups(db_url, old_class, new_class, old_entity_items, mapping, log_level)
+    entity_group_items = run_request(db_url, "call_method", ("get_entity_group_items",), Dict(
+        "entity_class_name" => old_class)
+    )
+    isempty(entity_group_items) && return
+    # Groups refer to entities by name, which may change with the ordering of the dimensions
+    old_byname_by_name = Dict(x["name"] => entity_byname(x) for x in old_entity_items)
+    new_entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict("entity_class_name" => new_class))
+    new_name_by_byname = Dict(entity_byname(x) => x["name"] for x in new_entity_items)
+    new_name(old_name) = new_name_by_byname[[old_byname_by_name[old_name][i] for i in mapping]]
+    existing_groups = Set(
+        (x["group_name"], x["member_name"])
+        for x in run_request(db_url, "call_method", ("get_entity_group_items",), Dict("entity_class_name" => new_class))
+    )
+    for item in entity_group_items
+        try
+            group_name, member_name = new_name(item["group_name"]), new_name(item["member_name"])
+            (group_name, member_name) in existing_groups && continue
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_entity_group_item",), Dict(
+                    "entity_class_name" => new_class, "group_name" => group_name, "member_name" => member_name)
+                ), log_level
+            )
+        catch
+            @log log_level 0 string("Could not copy the membership of `$(item["member_name"])` in the group ",
+                "`$(item["group_name"])` into $new_class.")
+        end
+    end
+end
+
+# The byname of an entity item, e.g. ["n"] for a 0-D entity and ["u", "n"] for a 2-D one
+entity_byname(entity_item) = isempty(entity_item["element_name_list"]) ?
+    [entity_item["name"]] : collect(entity_item["element_name_list"])
+
+# The bynames of the entities of the given class
 function entity_bynames(db_url, class_name)
     entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict("entity_class_name" => class_name))
-    Set(isempty(x["element_name_list"]) ? [x["name"]] : collect(x["element_name_list"]) for x in entity_items)
+    Set(entity_byname(x) for x in entity_items)
 end
 
 # Add an entity unless it already exists. `existing_bynames` can be given to avoid querying the class repeatedly.

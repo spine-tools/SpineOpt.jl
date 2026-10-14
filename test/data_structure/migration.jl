@@ -1027,6 +1027,54 @@ function _test_hand_made_list_values_in_migration()
 	end
 end
 
+# Entity alternatives of the given class by entity byname and alternative name
+_entity_alternatives(db_url, class_name) = Dict(
+	(collect(x["entity_byname"]), x["alternative_name"]) => x["active"]
+	for x in run_request(db_url, "call_method", ("get_entity_alternative_items",), Dict("entity_class_name" => class_name))
+)
+
+# Group memberships in the given class as (group name, member name)
+_entity_groups(db_url, class_name) = Set(
+	(x["group_name"], x["member_name"])
+	for x in run_request(db_url, "call_method", ("get_entity_group_items",), Dict("entity_class_name" => class_name))
+)
+
+function _test_entity_alternatives_and_groups_in_migration()
+	@testset "entity alternatives and groups in update_ordering_of_multidimensional_classes" begin
+		data = Dict(
+			:object_classes => ["node", "unit", "commodity", "grid"], # `grid` hand-made.
+			:objects => [
+				("node", "n"), ("unit", "u"),
+				("commodity", "c1"), ("commodity", "c2"), ("commodity", "cg"),
+				("grid", "c1"), ("grid", "g"),
+			],
+			:object_groups => [("commodity", "cg", "c1"), ("commodity", "cg", "c2")],
+			:relationship_classes => [("unit__from_node", ["unit", "node"])],
+			:relationships => [("unit__from_node", ["u", "n"])],
+			:alternatives => ["alt"],
+			:entity_alternatives => [
+				("commodity", "c1", "alt", false),
+				("grid", "c1", "alt", true), # Hand-made, conflicts with a migrated one.
+				("grid", "g", "alt", false), # Hand-made, no conflict.
+				("unit__from_node", ["u", "n"], "alt", false),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.update_ordering_of_multidimensional_classes(
+				url_in, [("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1], true)], 0
+			)
+			SpineOpt.rename_classes(url_in, [("commodity", "grid")], 0) # Merged into the existing `grid`.
+			@test _entity_alternatives(url_in, "node__to_unit") == Dict((["n", "u"], "alt") => false)
+			@test _entity_alternatives(url_in, "grid") == Dict(
+				(["c1"], "alt") => false, # Migrated one wins.
+				(["g"], "alt") => false,
+			)
+			@test _entity_groups(url_in, "grid") == Set([("cg", "c1"), ("cg", "c2")])
+		end
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -1053,4 +1101,5 @@ end
 	_test_rename_pval_list_to_existing_list()
 	_test_merge_variable_type_lists_with_existing_list()
 	_test_hand_made_list_values_in_migration()
+	_test_entity_alternatives_and_groups_in_migration()
 end
