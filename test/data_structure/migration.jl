@@ -662,10 +662,17 @@ function _parameter_value_by_alternative(db_url, class_name, par_name, entity_by
 	pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
 		"entity_class_name" => class_name, "parameter_definition_name" => par_name)
 	)
-	Dict(
-		x["alternative_name"] => parse_db_value(x["value"], x["type"])
-		for x in pvals if x["entity_byname"] == entity_byname
-	)
+	# NOTE: Resolves values from parameter value lists, which may have been renamed in the session
+	vals = SpineOpt.create_dict_from_parameter_value_items(db_url, pvals)
+	Dict(get(vals, entity_byname, []))
+end
+
+# Standard output printed by `f`
+function _captured_output(f)
+	path, io = mktemp()
+	redirect_stdout(f, io)
+	close(io)
+	read(path, String)
 end
 
 function _test_rename_parameter_to_existing_parameter()
@@ -966,41 +973,56 @@ function _test_merge_variable_type_lists_with_existing_list()
 	end
 end
 
-function _test_rename_parameter_to_existing_parameter_with_other_list()
-	@testset "rename_parameter to an existing parameter with values and another value list" begin
+function _test_hand_made_list_values_in_migration()
+	@testset "hand-made parameter values from a parameter value list during migration" begin
 		data = Dict(
-			:object_classes => ["grid"],
-			:objects => [("grid", "g1"), ("grid", "g2"), ("grid", "g3")],
+			:object_classes => ["commodity", "grid"], # `grid` hand-made.
+			:objects => [("commodity", "elec"), ("grid", "h2"), ("grid", "gas")],
 			:parameter_value_lists => [
 				("commodity_physics_list", "commodity_physics_lodf"),
 				("commodity_physics_list", "commodity_physics_none"),
-				("grid_physics_list", "lodf_physics"), # Hand-made.
-				("grid_physics_list", "commodity_physics_none"),
+				("commodity_physics_list", "commodity_physics_ptdf"),
+				("grid_physics_list", "lodf_physics"), # Hand-made, with an invalid value.
+				("grid_physics_list", "bogus_physics"),
 			],
 			:object_parameters => [
-				("grid", "commodity_physics", nothing, "commodity_physics_list"),
+				("commodity", "commodity_physics", nothing, "commodity_physics_list"),
 				("grid", "physics_type", nothing, "grid_physics_list"), # Hand-made.
 			],
 			:object_parameter_values => [
-				("grid", "g1", "commodity_physics", "commodity_physics_lodf"),
-				("grid", "g2", "physics_type", "commodity_physics_none"), # Kept, also in the migrated list.
-				("grid", "g3", "physics_type", "lodf_physics"), # Dropped, not in the migrated list.
+				("commodity", "elec", "commodity_physics", "commodity_physics_ptdf"),
+				("grid", "h2", "physics_type", "lodf_physics"), # Valid only after renaming the list values.
+				("grid", "gas", "physics_type", "bogus_physics"), # Never valid.
 			],
 		)
 		with_connection_open(url_in) do
 			_load_test_data_without_template(url_in, data)
-			SpineOpt.rename_parameter(url_in, "grid", "commodity_physics", "physics_type", "", 0)
-			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
-				"entity_class_name" => "grid", "name" => "physics_type")
+			output = _captured_output() do
+				SpineOpt.rename_parameter(url_in, "commodity", "commodity_physics", "physics_type", "", 0)
+				SpineOpt.rename_classes(url_in, [("commodity", "grid")], 0)
+				SpineOpt.rename_parameter_value_lists(url_in, [("commodity_physics_list", "grid_physics_list")], 0)
+				SpineOpt.rename_list_values(url_in, [("grid_physics_list", Dict(
+					"commodity_physics_lodf" => "lodf_physics",
+					"commodity_physics_none" => "none",
+					"commodity_physics_ptdf" => "ptdf_physics",
+				))], 0)
+				SpineOpt.warn_about_values_not_in_template_lists(url_in, 0)
+			end
+			# All values are kept.
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["elec"]) == Dict("Base" => "ptdf_physics")
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["h2"]) == Dict("Base" => "lodf_physics")
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["gas"]) == Dict("Base" => "bogus_physics")
+			@test Set(_list_values(url_in, "grid_physics_list")) == Set(
+				["lodf_physics", "none", "ptdf_physics", "bogus_physics"]
 			)
-			@test pdef["parameter_value_list_name"] == "commodity_physics_list" # Migrated definition wins.
-			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g1"]) == Dict(
-				"Base" => "commodity_physics_lodf"
+			# Only the invalid value is reported, with its parameter, class, entity and alternative.
+			@test occursin(
+				"The value `bogus_physics` of `physics_type` for the `grid` entity (\"gas\",) in alternative `Base` " *
+				"is not valid in the parameter value list `grid_physics_list`",
+				output,
 			)
-			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g2"]) == Dict(
-				"Base" => "commodity_physics_none"
-			)
-			@test isempty(_parameter_value_by_alternative(url_in, "grid", "physics_type", ["g3"]))
+			@test !occursin("The value `lodf_physics`", output)
+			@test !occursin("The value `ptdf_physics`", output)
 		end
 	end
 end
@@ -1030,5 +1052,5 @@ end
 	_test_rename_classes_to_existing_class()
 	_test_rename_pval_list_to_existing_list()
 	_test_merge_variable_type_lists_with_existing_list()
-	_test_rename_parameter_to_existing_parameter_with_other_list()
+	_test_hand_made_list_values_in_migration()
 end

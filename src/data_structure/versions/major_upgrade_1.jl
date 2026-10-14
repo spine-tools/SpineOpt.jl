@@ -395,6 +395,8 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     merge_variable_type_lists(db_url, log_level)
     @log log_level 0 string("Move node physics parameters to grid physics...")
     move_parameters(db_url, log_level)
+    @log log_level 0 string("Checking parameter values against the parameter value lists of the latest template...")
+    warn_about_values_not_in_template_lists(db_url, log_level)
     true
 end
 
@@ -779,14 +781,19 @@ function update_parameter_definition_attributes(db_url, pdef, source_pdef, log_l
 end
 
 # Set the value list of a parameter definition.
-# The list of a definition with values cannot be changed, so its values are removed first and then added back;
-# values (and the default value) that are not in the new list are dropped with a warning.
+# The list of a definition with values cannot be changed, so its values are removed first and then added back.
+# Values that are not in the new list are appended to it, since they may become valid only later in the migration
+# (e.g. a hand-made `lodf_physics` before `commodity_physics_lodf` is renamed to it); values that remain invalid are
+# reported by `warn_about_values_not_in_template_lists` at the end. A default value not in the new list is dropped.
 function set_parameter_value_list(db_url, pdef, list_name, log_level)
     class_name, par_name = pdef["entity_class_name"], pdef["name"]
     pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
         "entity_class_name" => class_name, "parameter_definition_name" => par_name)
     )
     vals = create_dict_from_parameter_value_items(db_url, pvals)
+    if !isnothing(list_name)
+        append_list_values(db_url, list_name, unique(val for val_list in values(vals) for (_alt, val) in val_list), log_level)
+    end
     for pval in pvals
         check_run_request_return_value(run_request(
             db_url, "call_method", ("remove_parameter_value_item", pval["id"])), log_level
@@ -823,13 +830,10 @@ end
 # values that are not in its parameter value list are dropped with a warning.
 function add_parameter_values(db_url, class_name, par_name, vals, list_name, log_level)
     # NOTE: Checked explicitly, since adding a value that is not in the list doesn't always return an error
-    list_values = isnothing(list_name) ? nothing : [
-        parse_db_value(x["value"], x["type"])
-        for x in run_request(db_url, "call_method", ("find_list_values",), Dict("parameter_value_list_name" => list_name))
-    ]
+    valid_values = isnothing(list_name) ? nothing : parameter_value_list_values(db_url, list_name)
     for (entity, val_list) in vals
         for (alternative, val) in val_list
-            if !isnothing(list_values) && !(val in list_values)
+            if !isnothing(valid_values) && !(val in valid_values)
                 @log log_level 0 string("Warning: Dropped value `$val` of `$par_name` for $entity in alternative ",
                     "`$alternative`, since it is not in the parameter value list `$list_name`.")
                 continue
@@ -1098,25 +1102,7 @@ end
 # and the parameter definitions using the old list are switched to the new list, keeping their values.
 function merge_pval_list(db_url, old_name, new_name, log_level)
     @log log_level 0 string("Warning: Parameter value list $new_name already exists. Merging $old_name into it.")
-    new_list_values = [
-        parse_db_value(x["value"], x["type"])
-        for x in run_request(db_url, "call_method", ("find_list_values",), Dict("parameter_value_list_name" => new_name))
-    ]
-    old_list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
-        "parameter_value_list_name" => old_name)
-    )
-    for x in sort(old_list_value_items; by=x -> x["index"])
-        val = parse_db_value(x["value"], x["type"])
-        val in new_list_values && continue
-        list_value, list_value_type = unparse_db_value(val)
-        check_run_request_return_value(run_request(
-            db_url, "call_method", ("add_list_value_item",), Dict(
-                "parameter_value_list_name" => new_name, "value" => list_value, "type" => list_value_type,
-                "index" => length(new_list_values))
-            ), log_level
-        )
-        push!(new_list_values, val)
-    end
+    append_list_values(db_url, new_name, parameter_value_list_values(db_url, old_name), log_level)
     for pdef in pdefs_using_pval_list(db_url, old_name)
         set_parameter_value_list(db_url, pdef, new_name, log_level)
     end
@@ -1184,6 +1170,61 @@ end
 function pdefs_using_pval_list(db_url, list_name)
     pdefs = run_request(db_url, "call_method", ("find_parameter_definitions",), Dict())
     [pdef for pdef in pdefs if pdef["parameter_value_list_name"] == list_name]
+end
+
+# The (parsed) values of the given parameter value list, in order
+function parameter_value_list_values(db_url, list_name)
+    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => list_name)
+    )
+    [parse_db_value(x["value"], x["type"]) for x in sort(list_value_items; by=x -> x["index"])]
+end
+
+# Append the given values to a parameter value list, except those already in it
+function append_list_values(db_url, list_name, vals, log_level)
+    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => list_name)
+    )
+    # NOTE: An item's value can only be parsed once; indices may have gaps after removing values
+    existing_values = [parse_db_value(x["value"], x["type"]) for x in list_value_items]
+    next_index = isempty(list_value_items) ? 0 : maximum(x["index"] for x in list_value_items) + 1
+    for val in vals
+        val in existing_values && continue
+        list_value, list_value_type = unparse_db_value(val)
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("add_list_value_item",), Dict(
+                "parameter_value_list_name" => list_name, "value" => list_value, "type" => list_value_type,
+                "index" => next_index)
+            ), log_level
+        )
+        push!(existing_values, val)
+        next_index += 1
+    end
+end
+
+# Warn about parameter values that are not valid in the respective parameter value list of the latest template,
+# e.g. hand-made values that were added to a list during the migration, so that the user can fix them manually
+function warn_about_values_not_in_template_lists(db_url, log_level)
+    valid_values_by_list = Dict{String,Vector{Any}}()
+    for (list_name, val) in template()["parameter_value_lists"]
+        push!(get!(valid_values_by_list, list_name, []), val)
+    end
+    for (list_name, valid_values) in valid_values_by_list
+        for pdef in pdefs_using_pval_list(db_url, list_name)
+            class_name, par_name = pdef["entity_class_name"], pdef["name"]
+            pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+                "entity_class_name" => class_name, "parameter_definition_name" => par_name)
+            )
+            for (entity, val_list) in create_dict_from_parameter_value_items(db_url, pvals)
+                for (alternative, val) in val_list
+                    val in valid_values && continue
+                    @log log_level 0 string("Warning: The value `$val` of `$par_name` for the `$class_name` entity ",
+                        "$(Tuple(entity)) in alternative `$alternative` is not valid in the parameter value list ",
+                        "`$list_name` (valid values: $(join(valid_values, ", "))). Please fix it manually.")
+                end
+            end
+        end
+    end
 end
 
 # Rename lists and commit session
