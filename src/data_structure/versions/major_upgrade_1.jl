@@ -363,7 +363,12 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     ]
     @log log_level 0 string("Creating superclasses...")
     @log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
-    rename_classes(db_url, [("unit__to_node", "unit__to_node_")], log_level)
+    # Move `unit__to_node` aside, so that it can be recreated as a subclass of `unit_flow`.
+    # NOTE: Copied instead of renamed, since spinedb_api may keep finding the entities of a renamed class under its
+    # old name (e.g. if they were looked up before, as when importing a template), blocking their re-addition.
+    update_ordering_of_multidimensional_classes(
+        db_url, [("unit__to_node", "unit__to_node_", ["unit", "node"], [1, 2], true)], log_level
+    )
     create_superclasses_and_subclasses(db_url, log_level)
     @log log_level 0 string("Update ordering of multidimensional classes...")
     update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
