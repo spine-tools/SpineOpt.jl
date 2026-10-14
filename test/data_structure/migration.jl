@@ -554,13 +554,13 @@ function _test_major_upgrade_1()
     		@test !in(:storage_fom_cost, param_names) # Old parameter deleted.
     		storage_cost_by_alt = Dict( # Per-hour cost scaled to per-year, in every alternative.
     			x[5] => parse_db_value(x[4])
-    			for x in migrated_data["parameter_values"] if x[3] == "storage_fixed_annual_cost"
+    			for x in migrated_data["parameter_values"] if x[3] == "fixed_annual_cost"
     		)
     		@test storage_cost_by_alt["Base"] == 2.5 * 8760
     		@test storage_cost_by_alt["alt_ts"].values == [1.0, 2.0] .* 8760 # Indexed values scaled element-wise.
     		storage_cost_default = only( # Default value scaled too.
     			parse_db_value(x[3])
-    			for x in migrated_data["parameter_definitions"] if x[1] == "node" && x[2] == "storage_fixed_annual_cost"
+    			for x in migrated_data["parameter_definitions"] if x[1] == "node" && x[2] == "fixed_annual_cost"
     		)
     		@test storage_cost_default == 0.5 * 8760
     		# Check that all necessary superclasses are created correctly.

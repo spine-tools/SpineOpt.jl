@@ -286,7 +286,6 @@ storage_decommissioning_cost = UndefSpineItem()
 storage_decommissioning_time = UndefSpineItem()
 storage_discount_rate_technology_specific = UndefSpineItem()
 storage_discounted_duration = UndefSpineItem()
-storage_fixed_annual_cost = UndefSpineItem()
 storage_investment_cost = UndefSpineItem()
 storage_investment_count_fix_cumulative = UndefSpineItem()
 storage_investment_count_fix_new = UndefSpineItem()
@@ -629,7 +628,6 @@ export storage_decommissioning_cost
 export storage_decommissioning_time
 export storage_discount_rate_technology_specific
 export storage_discounted_duration
-export storage_fixed_annual_cost
 export storage_investment_cost
 export storage_investment_count_fix_cumulative
 export storage_investment_count_fix_new

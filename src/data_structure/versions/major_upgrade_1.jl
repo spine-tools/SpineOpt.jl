@@ -77,7 +77,7 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
         (("node", "frac_state_loss"), "storage_self_discharge", ""),
         (("node", "number_of_storages"), "existing_storages", ""),
         (("node", "state_coeff"), "storage_state_coefficient", ""),
-        (("node", "storage_fom_cost"), "storage_fixed_annual_cost", ""),
+        (("node", "storage_fom_cost"), "fixed_annual_cost", ""),
         (("node", "is_longterm_storage"), "storage_longterm_active", ""),
         # node storage limits
         (("node", "fix_node_state"), "storage_state_fix", ""),
@@ -249,7 +249,7 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
 
     # ((class, parameter name after renaming), multiplication factor)
     parameters_to_be_scaled = [
-        (("node", "storage_fixed_annual_cost"), 8760), # per-hour cost (storage_fom_cost) -> per-year cost
+        (("node", "fixed_annual_cost"), 8760), # per-hour cost (storage_fom_cost) -> per-year cost
     ]
 
     # original class, new class

@@ -111,7 +111,7 @@ function fixed_om_costs(m, t_range)
                     )
                     * prod(weight(temporal_block=blk) for blk in blocks(t))
                     * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-                for n in indices(storage_fixed_annual_cost, node)
+                for n in indices(fixed_annual_cost, node)
                 for (n, s, t) in (
                     is_candidate(node=n) ?
                     storages_invested_available_indices(m; node=n, t=t_range) :
@@ -142,7 +142,7 @@ end
 
 function _storage_fixed_costs_per_duration_unit(m::Model, n, s, t)
     return (
-        storage_fixed_annual_cost(m; node=n, stochastic_scenario=s, t=t)
+        fixed_annual_cost(m; node=n, stochastic_scenario=s, t=t)
             /
             _fixed_costs_annual_duration(m, t).value
     )

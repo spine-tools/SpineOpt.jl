@@ -1629,7 +1629,7 @@
         ],
         [
             "node",
-            "storage_fixed_annual_cost",
+            "fixed_annual_cost",
             null,
             null,
             "Fixed annual operation and maintenance costs of the storage."
