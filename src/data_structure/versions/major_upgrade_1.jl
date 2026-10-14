@@ -506,35 +506,60 @@ function create_superclasses_and_subclasses(db_url, log_level)
             )
         end
     end
-    # Add new classes
-    try
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit__to_node", "dimension_name_list" => ["unit", "node"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "node__to_unit", "dimension_name_list" => ["node", "unit"])), log_level
-        )
-         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow", "dimension_name_list" => [])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow__unit_flow", "dimension_name_list" => ["unit_flow", "unit_flow"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow__investment_group", "dimension_name_list" => ["unit_flow", "investment_group"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow__user_constraint", "dimension_name_list" => ["unit_flow", "user_constraint"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
-            "superclass_name" => "unit_flow", "subclass_name" => "node__to_unit")), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
-            "superclass_name" => "unit_flow", "subclass_name" => "unit__to_node")), log_level
-        )
-    catch
-        @log log_level 0 string("Could not add superclasses and subclasses.")
+    # Add new classes, each separately so that already existing (e.g. hand-made) ones don't stop the others
+    new_classes = (
+        ("unit__to_node", ["unit", "node"]),
+        ("node__to_unit", ["node", "unit"]),
+        ("unit_flow", []),
+        ("unit_flow__unit_flow", ["unit_flow", "unit_flow"]),
+        ("unit_flow__investment_group", ["unit_flow", "investment_group"]),
+        ("unit_flow__user_constraint", ["unit_flow", "user_constraint"]),
+    )
+    for (class_name, dimension_name_list) in new_classes
+        try
+            add_entity_class_if_missing(db_url, class_name, dimension_name_list, log_level)
+        catch
+            @log log_level 0 string("Could not add class $class_name.")
+        end
     end
+    for subclass_name in ("node__to_unit", "unit__to_node")
+        try
+            add_superclass_subclass_if_missing(db_url, "unit_flow", subclass_name, log_level)
+        catch
+            @log log_level 0 string("Could not add $subclass_name as a subclass of unit_flow.")
+        end
+    end
+end
+
+# Add an entity class unless it already exists with the same dimensions.
+# An existing class with different dimensions is replaced, since dimensions cannot be updated.
+function add_entity_class_if_missing(db_url, class_name, dimension_name_list, log_level)
+    class_item = run_request(db_url, "call_method", ("get_entity_class_item",), Dict("name" => class_name))
+    if length(class_item) > 0
+        collect(class_item["dimension_name_list"]) == collect(dimension_name_list) && return
+        @log log_level 0 string("Warning: Replacing the existing class $class_name with dimensions ",
+            "$(class_item["dimension_name_list"]) by one with dimensions $dimension_name_list.")
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("remove_entity_class_item", class_item["id"])), log_level
+        )
+    end
+    check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
+        "name" => class_name, "dimension_name_list" => dimension_name_list)), log_level
+    )
+end
+
+# Make `subclass_name` a subclass of `superclass_name`, also if it is already a subclass of another superclass
+function add_superclass_subclass_if_missing(db_url, superclass_name, subclass_name, log_level)
+    item = run_request(db_url, "call_method", ("get_item", "superclass_subclass"), Dict("subclass_name" => subclass_name))
+    if length(item) > 0
+        item["superclass_name"] == superclass_name && return
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("remove_superclass_subclass_item", item["id"])), log_level
+        )
+    end
+    check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
+        "superclass_name" => superclass_name, "subclass_name" => subclass_name)), log_level
+    )
 end
 
 # Go through the classes, update ordering of their dimensions and commit session
@@ -599,7 +624,10 @@ function update_ordering_of_multidimensional_class(
     )
     existing_bynames = entity_bynames(db_url, new_class)
     for entity_item in entity_items
-        new_element_name_list = [entity_item["element_name_list"][i] for i in mapping]
+        # The byname of a 0-D entity is its name (and its mapping is [1])
+        element_name_list = isempty(entity_item["element_name_list"]) ?
+            [entity_item["name"]] : entity_item["element_name_list"]
+        new_element_name_list = [element_name_list[i] for i in mapping]
         try
             add_entity_if_missing(db_url, new_class, new_element_name_list, log_level;
                 description=entity_item["description"], existing_bynames
@@ -830,11 +858,29 @@ function rename_classes(db_url, classes_to_be_renamed, log_level)
 		class_item = run_request(db_url, "call_method", ("get_item", "entity_class"), Dict(
 			"name" => old_class_name)
 		)
-		if length(class_item) > 0
-			check_run_request_return_value(run_request(db_url, "call_method", ("update_item", "entity_class"), Dict(
-				"id" => class_item["id"], "name" => new_class_name)), log_level
+		length(class_item) > 0 || continue
+		dimension_name_list = collect(class_item["dimension_name_list"])
+		new_class_item = run_request(db_url, "call_method", ("get_item", "entity_class"), Dict(
+			"name" => new_class_name)
+		)
+		if length(new_class_item) > 0 && collect(new_class_item["dimension_name_list"]) == dimension_name_list
+			# Merge into the already existing (e.g. hand-made) class, migrated data taking precedence
+			@log log_level 0 string("Warning: Class $new_class_name already exists. Merging $old_class_name into it; ",
+				"migrated values overwrite existing ones in the same alternative.")
+			update_ordering_of_multidimensional_classes(db_url, [
+				(old_class_name, new_class_name, dimension_name_list, 1:max(length(dimension_name_list), 1), true)
+			], log_level)
+			continue
+		elseif length(new_class_item) > 0
+			@log log_level 0 string("Warning: Replacing the existing class $new_class_name with different ",
+				"dimensions by $old_class_name.")
+			check_run_request_return_value(run_request(
+				db_url, "call_method", ("remove_entity_class_item", new_class_item["id"])), log_level
 			)
 		end
+		check_run_request_return_value(run_request(db_url, "call_method", ("update_item", "entity_class"), Dict(
+			"id" => class_item["id"], "name" => new_class_name)), log_level
+		)
 	end
 end
 

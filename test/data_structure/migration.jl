@@ -810,6 +810,62 @@ function _test_move_parameter_to_existing_grid()
 	end
 end
 
+function _test_create_superclasses_and_subclasses_with_existing_classes()
+	@testset "create_superclasses_and_subclasses with existing classes" begin
+		data = Dict(
+			:object_classes => ["node", "unit", "unit_flow"], # `unit_flow` hand-made.
+			:relationship_classes => [
+				("node__to_unit", ["node", "unit"]), # Hand-made, with the right dimensions.
+				("unit_flow__unit_flow", ["unit", "unit"]), # Hand-made, with wrong dimensions.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.create_superclasses_and_subclasses(url_in, 0)
+			classes = Dict(
+				x["name"] => collect(x["dimension_name_list"])
+				for x in run_request(url_in, "call_method", ("get_entity_class_items",), Dict())
+			)
+			@test classes["unit__to_node"] == ["unit", "node"]
+			@test classes["node__to_unit"] == ["node", "unit"]
+			@test classes["unit_flow"] == []
+			@test classes["unit_flow__unit_flow"] == ["unit_flow", "unit_flow"] # Replaced.
+			@test classes["unit_flow__investment_group"] == ["unit_flow", "investment_group"]
+			@test classes["unit_flow__user_constraint"] == ["unit_flow", "user_constraint"]
+			superclass_subclass = Set(
+				(x["superclass_name"], x["subclass_name"])
+				for x in run_request(url_in, "call_method", ("get_superclass_subclass_items",), Dict())
+			)
+			@test superclass_subclass == Set([("unit_flow", "node__to_unit"), ("unit_flow", "unit__to_node")])
+		end
+	end
+end
+
+function _test_rename_classes_to_existing_class()
+	@testset "rename_classes to an existing class" begin
+		data = Dict(
+			:object_classes => ["commodity", "grid"], # `grid` hand-made.
+			:objects => [("commodity", "c1"), ("commodity", "c2"), ("grid", "c1"), ("grid", "g")],
+			:object_parameters => [("commodity", "commodity_lodf_tolerance"), ("grid", "commodity_lodf_tolerance")],
+			:object_parameter_values => [
+				("commodity", "c1", "commodity_lodf_tolerance", 0.1),
+				("commodity", "c2", "commodity_lodf_tolerance", 0.2),
+				("grid", "c1", "commodity_lodf_tolerance", 1.0), # Conflicts with a migrated value.
+				("grid", "g", "commodity_lodf_tolerance", 2.0), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.rename_classes(url_in, [("commodity", "grid")], 0)
+			@test isempty(run_request(url_in, "call_method", ("get_entity_class_item",), Dict("name" => "commodity")))
+			@test SpineOpt.entity_bynames(url_in, "grid") == Set([["c1"], ["c2"], ["g"]])
+			@test _parameter_value_by_alternative(url_in, "grid", "commodity_lodf_tolerance", ["c1"]) == Dict("Base" => 0.1)
+			@test _parameter_value_by_alternative(url_in, "grid", "commodity_lodf_tolerance", ["c2"]) == Dict("Base" => 0.2)
+			@test _parameter_value_by_alternative(url_in, "grid", "commodity_lodf_tolerance", ["g"]) == Dict("Base" => 2.0)
+		end
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -830,4 +886,6 @@ end
 	_test_rename_storage_fixed_annual_cost_to_existing_parameter()
 	_test_update_ordering_to_existing_entities()
 	_test_move_parameter_to_existing_grid()
+	_test_create_superclasses_and_subclasses_with_existing_classes()
+	_test_rename_classes_to_existing_class()
 end
