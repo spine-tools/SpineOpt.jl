@@ -733,8 +733,14 @@ end
 # Merge the old parameter definition into an already existing (e.g. hand-made) new one and remove the old one.
 # The old definition's attributes and values take precedence; other existing values are kept.
 function merge_parameter_definition(db_url, class_name, old_pdef, new_pdef, log_level)
-    @log log_level 0 string("Warning: `$(new_pdef["name"])` already exists in `$class_name`. Merging ",
-        "`$(old_pdef["name"])` into it; migrated values overwrite existing ones in the same alternative.")
+    existing_pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => class_name, "parameter_definition_name" => new_pdef["name"])
+    )
+    # Only worth a warning if there is existing data, not e.g. for an empty definition from an imported template
+    if !isempty(existing_pvals)
+        @log log_level 0 string("Warning: `$(new_pdef["name"])` already exists in `$class_name` with values. ",
+            "Merging `$(old_pdef["name"])` into it; migrated values overwrite existing ones in the same alternative.")
+    end
     update_parameter_definition_attributes(db_url, new_pdef, old_pdef, log_level)
     pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
         "entity_class_name" => class_name, "parameter_definition_name" => old_pdef["name"])
@@ -807,7 +813,8 @@ function set_parameter_value_list(db_url, pdef, list_name, log_level)
         )
     catch
         @log log_level 0 string("Warning: Dropped the default value of `$par_name` in $class_name, ",
-            "since it is not in the parameter value list `$list_name`.")
+            "since it is not in the parameter value list `$list_name` ",
+            "(the default value of the latest template is applied at the end of the migration).")
     end
     add_parameter_values(db_url, class_name, par_name, vals, list_name, log_level)
 end
