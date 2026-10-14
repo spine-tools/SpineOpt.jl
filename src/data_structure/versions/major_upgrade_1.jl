@@ -593,36 +593,36 @@ function update_ordering_of_multidimensional_class(
         catch
         end
     end
-    try
-        # Add the entity into the database if it is not there already
-        entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict(
-            "entity_class_name" => old_class)
-        )
-        entities = Dict()
-        for entity_item in entity_items
-            new_element_name_list = [entity_item["element_name_list"][i] for i in mapping]
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("add_entity_item",), Dict(
-                    "entity_class_name" => new_class, 
-                    "entity_byname" => new_element_name_list,
-                    "description" => entity_item["description"])
-                ), log_level
+    # Add the entities into the database if they are not there already (e.g. hand-made)
+    entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict(
+        "entity_class_name" => old_class)
+    )
+    existing_bynames = entity_bynames(db_url, new_class)
+    for entity_item in entity_items
+        new_element_name_list = [entity_item["element_name_list"][i] for i in mapping]
+        try
+            add_entity_if_missing(db_url, new_class, new_element_name_list, log_level;
+                description=entity_item["description"], existing_bynames
             )
-            entities[entity_item["element_name_list"]] = entity_item
+        catch
+            @log log_level 0 string("Could not add entity $new_element_name_list into $new_class.")
         end
-        for pdef in pdefs
-            # Find old parameters in all entities and alternatives
-            pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
-                "entity_class_name" => old_class, "parameter_definition_name" => pdef["name"])
-            )
-            vals = create_dict_from_parameter_value_items(db_url, pvals)
-            for (old_entity, val_list) in vals
-                # Determine element name list
-                new_element_name_list = [old_entity[i] for i in mapping]
-                for (alternative, val) in val_list
-                    db_value, db_type = unparse_db_value(val)
+    end
+    for pdef in pdefs
+        # Find old parameters in all entities and alternatives
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => old_class, "parameter_definition_name" => pdef["name"])
+        )
+        vals = create_dict_from_parameter_value_items(db_url, pvals)
+        for (old_entity, val_list) in vals
+            # Determine element name list
+            new_element_name_list = [old_entity[i] for i in mapping]
+            for (alternative, val) in val_list
+                db_value, db_type = unparse_db_value(val)
+                # Migrated values overwrite existing (e.g. hand-made) ones
+                try
                     check_run_request_return_value(run_request(
-                        db_url, "call_method", ("add_parameter_value_item",), Dict(
+                        db_url, "call_method", ("add_update_parameter_value_item",), Dict(
                             "entity_class_name" => new_class,
                             "entity_byname" => new_element_name_list,
                             "alternative_name" => alternative,
@@ -631,12 +631,33 @@ function update_ordering_of_multidimensional_class(
                             "type" => db_type)
                         ), log_level
                     )
+                catch
+                    @log log_level 0 string("Could not move value of `$(pdef["name"])` ",
+                        "for $new_element_name_list in alternative `$alternative` into $new_class.")
                 end
             end
         end
-    catch
-        @log log_level 0 string("Could not update ordering of a multidimensional class.")
     end
+end
+
+# The bynames of the entities of the given class, e.g. ["n"] for a 0-D entity and ["u", "n"] for a 2-D one
+function entity_bynames(db_url, class_name)
+    entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict("entity_class_name" => class_name))
+    Set(isempty(x["element_name_list"]) ? [x["name"]] : collect(x["element_name_list"]) for x in entity_items)
+end
+
+# Add an entity unless it already exists. `existing_bynames` can be given to avoid querying the class repeatedly.
+function add_entity_if_missing(
+    db_url, class_name, entity_byname, log_level;
+    description=nothing, existing_bynames=entity_bynames(db_url, class_name)
+)
+    collect(entity_byname) in existing_bynames && return
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("add_entity_item",), Dict(
+            "entity_class_name" => class_name, "entity_byname" => entity_byname, "description" => description)
+        ), log_level
+    )
+    push!(existing_bynames, collect(entity_byname))
 end
 
 # Go through the parameters, rename them and commit session
@@ -1178,19 +1199,9 @@ function move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
     vals = create_dict_from_parameter_value_items(db_url, pvals)
     for (entity, val_list) in vals
         try
-            # Add the grid and grid__node entities into the database
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("add_entity_item",), Dict(
-                    "entity_class_name" => "grid", 
-                    "entity_byname" => entity)
-                ), log_level
-            )
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("add_entity_item",), Dict(
-                    "entity_class_name" => "node__grid", 
-                    "entity_byname" => [entity, entity])
-                ), log_level
-            )
+            # Add the grid and grid__node entities into the database unless they exist already
+            add_entity_if_missing(db_url, "grid", entity, log_level)
+            add_entity_if_missing(db_url, "node__grid", [entity..., entity...], log_level)
             for (alternative, val) in val_list
                 # Add the new parameter value into the database
                 if val

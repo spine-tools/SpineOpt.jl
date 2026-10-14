@@ -747,6 +747,69 @@ function _test_rename_storage_fixed_annual_cost_to_existing_parameter()
 	end
 end
 
+function _test_update_ordering_to_existing_entities()
+	@testset "update_ordering_of_multidimensional_classes to existing entities" begin
+		data = Dict(
+			:object_classes => ["node", "unit"],
+			:objects => [("node", "n1"), ("node", "n2"), ("unit", "u")],
+			:relationship_classes => [("unit__from_node", ["unit", "node"]), ("node__to_unit", ["node", "unit"])],
+			:relationships => [
+				("unit__from_node", ["u", "n1"]),
+				("unit__from_node", ["u", "n2"]),
+				("node__to_unit", ["n1", "u"]), # Hand-made, also migrated.
+				("node__to_unit", ["n2", "u"]), # Hand-made, also migrated.
+			],
+			:relationship_parameters => [("unit__from_node", "vom_cost"), ("node__to_unit", "vom_cost")],
+			:relationship_parameter_values => [
+				("unit__from_node", ["u", "n1"], "vom_cost", 1.0),
+				("unit__from_node", ["u", "n2"], "vom_cost", 2.0),
+				("node__to_unit", ["n1", "u"], "vom_cost", 10.0), # Conflicts with a migrated value.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.update_ordering_of_multidimensional_classes(
+				url_in, [("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1], true)], 0
+			)
+			@test SpineOpt.entity_bynames(url_in, "node__to_unit") == Set([["n1", "u"], ["n2", "u"]])
+			@test isempty(run_request(url_in, "call_method", ("get_entity_class_item",), Dict("name" => "unit__from_node")))
+			# All values migrated, also after the first already existing entity; migrated values win.
+			@test _parameter_value_by_alternative(url_in, "node__to_unit", "vom_cost", ["n1", "u"]) == Dict("Base" => 1.0)
+			@test _parameter_value_by_alternative(url_in, "node__to_unit", "vom_cost", ["n2", "u"]) == Dict("Base" => 2.0)
+		end
+	end
+end
+
+function _test_move_parameter_to_existing_grid()
+	@testset "move_parameter with and without existing grid entities" begin
+		data = Dict(
+			:object_classes => ["node", "grid"],
+			:relationship_classes => [("node__grid", ["node", "grid"])],
+			:objects => [("node", "n1"), ("node", "n2"), ("grid", "n2")], # Grid `n2` is hand-made.
+			:relationships => [("node__grid", ["n2", "n2"])],
+			:object_parameters => [("node", "has_voltage_angle"), ("grid", "physics_type")],
+			:object_parameter_values => [
+				("node", "n1", "has_voltage_angle", true),
+				("node", "n2", "has_voltage_angle", false),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.move_parameter(url_in, 0, "has_voltage_angle", "voltage_angle_physics", 3)
+			@test SpineOpt.entity_bynames(url_in, "grid") == Set([["n1"], ["n2"]])
+			@test SpineOpt.entity_bynames(url_in, "node__grid") == Set([["n1", "n1"], ["n2", "n2"]])
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["n1"]) == Dict(
+				"Base" => "voltage_angle_physics"
+			)
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["n2"]) == Dict("Base" => "none")
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "has_voltage_angle")
+			)
+			@test isempty(pdef)
+		end
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -765,4 +828,6 @@ end
 	_test_rename_parameter_to_existing_parameter()
 	_test_update_ordering_to_existing_parameter_definition()
 	_test_rename_storage_fixed_annual_cost_to_existing_parameter()
+	_test_update_ordering_to_existing_entities()
+	_test_move_parameter_to_existing_grid()
 end
