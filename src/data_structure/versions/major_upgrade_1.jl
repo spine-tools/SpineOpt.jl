@@ -362,7 +362,6 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
         )
     ]
     @log log_level 0 string("Creating superclasses...")
-    @log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
     # Move `unit__to_node` aside, so that it can be recreated as a subclass of `unit_flow`.
     # NOTE: Copied instead of renamed, since spinedb_api may keep finding the entities of a renamed class under its
     # old name (e.g. if they were looked up before, as when importing a template), blocking their re-addition.
