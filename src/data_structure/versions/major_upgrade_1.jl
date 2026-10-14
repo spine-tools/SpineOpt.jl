@@ -387,7 +387,7 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     @log log_level 0 string("Renaming list values...")
     rename_list_values(db_url, list_values_to_be_renamed, log_level)
     @log log_level 0 string("Merging variable type lists...")
-    merge_variable_type_lists(db_url, log_level; force)
+    merge_variable_type_lists(db_url, log_level)
     @log log_level 0 string("Move node physics parameters to grid physics...")
     move_parameters(db_url, log_level)
     true
@@ -408,7 +408,9 @@ function create_dict_from_parameter_value_items(db_url, pvals)
     existing_values = Dict{Any, Vector{Tuple{Any, Any}}}()
     for pval in pvals
         entity = pval["entity_byname"]
-        if pval["type"] == "list_value_ref"
+        # Values from a parameter value list are resolved via the list value,
+        # since `pval["value"]` is not updated when the list value is renamed
+        if pval["type"] == "list_value_ref" || !isnothing(get(pval, "list_value_id", nothing))
             list_value = run_request(db_url, "call_method", ("get_list_value_item",), Dict(
                 "id" => pval["list_value_id"])
             )
@@ -602,7 +604,7 @@ function update_ordering_of_multidimensional_class(
         try
             if length(existing_pdef) > 0
                 # E.g. hand-made or from another old class: the definition of the migrated class takes precedence
-                update_parameter_definition_attributes(db_url, existing_pdef["id"], pdef, log_level)
+                update_parameter_definition_attributes(db_url, existing_pdef, pdef, log_level)
             else
                 check_run_request_return_value(run_request(
                     db_url, "call_method", ("add_parameter_definition_item",), Dict(
@@ -728,7 +730,7 @@ end
 function merge_parameter_definition(db_url, class_name, old_pdef, new_pdef, log_level)
     @log log_level 0 string("Warning: `$(new_pdef["name"])` already exists in `$class_name`. Merging ",
         "`$(old_pdef["name"])` into it; migrated values overwrite existing ones in the same alternative.")
-    update_parameter_definition_attributes(db_url, new_pdef["id"], old_pdef, log_level)
+    update_parameter_definition_attributes(db_url, new_pdef, old_pdef, log_level)
     pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
         "entity_class_name" => class_name, "parameter_definition_name" => old_pdef["name"])
     )
@@ -751,16 +753,85 @@ function merge_parameter_definition(db_url, class_name, old_pdef, new_pdef, log_
 end
 
 # Overwrite the default value, value list and description of a parameter definition with those of `source_pdef`
-function update_parameter_definition_attributes(db_url, pdef_id, source_pdef, log_level)
+function update_parameter_definition_attributes(db_url, pdef, source_pdef, log_level)
+    if pdef["parameter_value_list_name"] != source_pdef["parameter_value_list_name"]
+        set_parameter_value_list(db_url, pdef, source_pdef["parameter_value_list_name"], log_level)
+    end
     check_run_request_return_value(run_request(
         db_url, "call_method", ("update_item", "parameter_definition"), Dict(
-            "id" => pdef_id,
+            "id" => pdef["id"],
             "default_value" => source_pdef["default_value"],
             "default_type" => source_pdef["default_type"],
-            "parameter_value_list_name" => source_pdef["parameter_value_list_name"],
             "description" => source_pdef["description"])
         ), log_level
     )
+end
+
+# Set the value list of a parameter definition.
+# The list of a definition with values cannot be changed, so its values are removed first and then added back;
+# values (and the default value) that are not in the new list are dropped with a warning.
+function set_parameter_value_list(db_url, pdef, list_name, log_level)
+    class_name, par_name = pdef["entity_class_name"], pdef["name"]
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => class_name, "parameter_definition_name" => par_name)
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    for pval in pvals
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("remove_parameter_value_item", pval["id"])), log_level
+        )
+    end
+    old_list_name = pdef["parameter_value_list_name"]
+    try
+        # The default value is dropped first, since it may not be in the new list
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                "id" => pdef["id"], "parameter_value_list_name" => list_name,
+                "default_value" => nothing, "default_type" => nothing)
+            ), log_level
+        )
+    catch
+        add_parameter_values(db_url, class_name, par_name, vals, old_list_name, log_level) # Restore
+        rethrow()
+    end
+    try
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                "id" => pdef["id"], "default_value" => pdef["default_value"], "default_type" => pdef["default_type"])
+            ), log_level, false
+        )
+    catch
+        @log log_level 0 string("Warning: Dropped the default value of `$par_name` in $class_name, ",
+            "since it is not in the parameter value list `$list_name`.")
+    end
+    add_parameter_values(db_url, class_name, par_name, vals, list_name, log_level)
+end
+
+# Add the given values (as from `create_dict_from_parameter_value_items`) to a parameter;
+# values that are not in its parameter value list are dropped with a warning.
+function add_parameter_values(db_url, class_name, par_name, vals, list_name, log_level)
+    # NOTE: Checked explicitly, since adding a value that is not in the list doesn't always return an error
+    list_values = isnothing(list_name) ? nothing : [
+        parse_db_value(x["value"], x["type"])
+        for x in run_request(db_url, "call_method", ("find_list_values",), Dict("parameter_value_list_name" => list_name))
+    ]
+    for (entity, val_list) in vals
+        for (alternative, val) in val_list
+            if !isnothing(list_values) && !(val in list_values)
+                @log log_level 0 string("Warning: Dropped value `$val` of `$par_name` for $entity in alternative ",
+                    "`$alternative`, since it is not in the parameter value list `$list_name`.")
+                continue
+            end
+            pval_value, pval_type = unparse_db_value(val)
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                    "entity_class_name" => class_name, "parameter_definition_name" => par_name,
+                    "entity_byname" => entity, "alternative_name" => alternative,
+                    "value" => pval_value, "type" => pval_type)
+                ), log_level
+            )
+        end
+    end
 end
 
 # Multiply the values (and the default value) of each given parameter by the given factor
@@ -989,39 +1060,118 @@ function remove_parameters(db_url, parameters_to_be_removed, log_level)
     end
 end
 
-# Rename a parameter value list
+# Rename a parameter value list, or merge it into an already existing (e.g. hand-made) list with the new name
 function rename_pval_list(db_url, old_name, new_name, log_level)
+    pval_list_item = run_request(db_url, "call_method", ("get_item", "parameter_value_list"), Dict("name" => old_name))
+    length(pval_list_item) > 0 || return
+    new_pval_list_item = run_request(db_url, "call_method", ("get_item", "parameter_value_list"), Dict(
+        "name" => new_name)
+    )
     try
-        pval_list_item = run_request(db_url, "call_method", ("parameter_value_list",), Dict(
-            "name" => old_name)
-        )
-        check_run_request_return_value(run_request(
-            db_url, "call_method", ("update_parameter_value_list_item",), Dict(
-                "id" => pval_list_item["id"], "name" => new_name)), log_level
-        )
+        if length(new_pval_list_item) > 0
+            merge_pval_list(db_url, old_name, new_name, log_level)
+        else
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_parameter_value_list_item",), Dict(
+                    "id" => pval_list_item["id"], "name" => new_name)), log_level
+            )
+        end
     catch
         @log log_level 0 string("Could not rename list $old_name.")
     end
 end
 
-# Rename parameter value list values
-function rename_pval_list_values(db_url, list_name, name_mapping, log_level)
-    try
-        # Update parameter value list item names based on the mapping
-        list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
-            "parameter_value_list_name" => list_name)
+# Merge a parameter value list into another existing one and remove it:
+# the values of the old list are appended to the new list (unless there already),
+# and the parameter definitions using the old list are switched to the new list, keeping their values.
+function merge_pval_list(db_url, old_name, new_name, log_level)
+    @log log_level 0 string("Warning: Parameter value list $new_name already exists. Merging $old_name into it.")
+    new_list_values = [
+        parse_db_value(x["value"], x["type"])
+        for x in run_request(db_url, "call_method", ("find_list_values",), Dict("parameter_value_list_name" => new_name))
+    ]
+    old_list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => old_name)
+    )
+    for x in sort(old_list_value_items; by=x -> x["index"])
+        val = parse_db_value(x["value"], x["type"])
+        val in new_list_values && continue
+        list_value, list_value_type = unparse_db_value(val)
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("add_list_value_item",), Dict(
+                "parameter_value_list_name" => new_name, "value" => list_value, "type" => list_value_type,
+                "index" => length(new_list_values))
+            ), log_level
         )
-        for list_value_item in list_value_items
-            old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
-            new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
+        push!(new_list_values, val)
+    end
+    for pdef in pdefs_using_pval_list(db_url, old_name)
+        set_parameter_value_list(db_url, pdef, new_name, log_level)
+    end
+    old_list = run_request(db_url, "call_method", ("get_item", "parameter_value_list"), Dict("name" => old_name))
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("remove_parameter_value_list_item", old_list["id"])), log_level
+    )
+end
+
+# Rename parameter value list values, each separately. Values not in the mapping are left as they are.
+# If the new value is already in the list (e.g. hand-made), the parameter values referring to the old value are
+# moved to the existing one and the old value is removed.
+function rename_pval_list_values(db_url, list_name, name_mapping, log_level)
+    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => list_name)
+    )
+    # NOTE: An item's value can only be parsed once
+    parsed_list_values = [parse_db_value(x["value"], x["type"]) for x in list_value_items]
+    existing_values = Set(parsed_list_values)
+    for (list_value_item, old_name) in zip(list_value_items, parsed_list_values)
+        haskey(name_mapping, old_name) || continue
+        new_name = name_mapping[old_name]
+        try
+            if new_name in existing_values
+                @log log_level 0 string("Warning: `$new_name` already exists in the parameter value list ",
+                    "$list_name. Merging `$old_name` into it.")
+                replace_list_value_in_parameter_values(db_url, list_name, list_value_item["id"], new_name, log_level)
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("remove_list_value_item", list_value_item["id"])), log_level
+                )
+            else
+                new_name_value, new_name_type = unparse_db_value(new_name)
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("update_list_value_item",), Dict(
+                        "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)
+                    ), log_level
+                )
+                push!(existing_values, new_name)
+            end
+        catch
+            @log log_level 0 string("Could not rename value `$old_name` of list $list_name.")
+        end
+    end
+end
+
+# Make the parameter values that refer to the given list value refer to `new_value` (of the same list) instead
+function replace_list_value_in_parameter_values(db_url, list_name, list_value_id, new_value, log_level)
+    new_pval_value, new_pval_type = unparse_db_value(new_value)
+    for pdef in pdefs_using_pval_list(db_url, list_name)
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => pdef["entity_class_name"], "parameter_definition_name" => pdef["name"])
+        )
+        for pval in pvals
+            pval["list_value_id"] == list_value_id || continue
             check_run_request_return_value(run_request(
-                db_url, "call_method", ("update_list_value_item",), Dict(
-                    "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)), log_level
+                db_url, "call_method", ("update_parameter_value_item",), Dict(
+                    "id" => pval["id"], "value" => new_pval_value, "type" => new_pval_type)
+                ), log_level
             )
         end
-    catch
-        @log log_level 0 string("Could not rename list values of list $list_name.")
     end
+end
+
+# The parameter definitions that use the given parameter value list
+function pdefs_using_pval_list(db_url, list_name)
+    pdefs = run_request(db_url, "call_method", ("find_parameter_definitions",), Dict())
+    [pdef for pdef in pdefs if pdef["parameter_value_list_name"] == list_name]
 end
 
 # Rename lists and commit session
@@ -1038,7 +1188,7 @@ function rename_list_values(db_url, list_values_to_be_renamed, log_level)
     end
 end
 
-function merge_variable_type_lists(db_url, log_level; force::Bool=false)
+function merge_variable_type_lists(db_url, log_level)
     pval_list_old_name = "unit_online_variable_type_list"
     pval_list_new_name = "variable_type_list"
     name_mapping = Dict(
@@ -1047,23 +1197,8 @@ function merge_variable_type_lists(db_url, log_level; force::Bool=false)
         "unit_online_variable_type_linear" => "linear",
         "unit_online_variable_type_none" => "none"
     )
-    # Check if variable_type_list already exists in the database and if it can be removed to allow renaming
-    pval_list_existing = run_request(db_url, "call_method", ("find_parameter_value_lists",), Dict(
-        "name" => pval_list_new_name)
-    )
-    if !force && (length(pval_list_existing) > 0)
-        pdefs_using_list = find_pdefs_linked_to_pval_list(db_url, pval_list_new_name)
-        if length(pdefs_using_list) > 0
-            @log log_level 0 string("Error: The variable_type_list is already in use by some parameter definitions \
-                although SpineOpt wasn't using it. Rename the variable_type_list in your input database and try again.")
-            throw(error())
-        else
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("remove_parameter_value_list_item", pval_list_existing[1]["id"])), log_level
-            )
-        end
-    end
-    # Continue with renaming
+    # Rename the values and the list itself.
+    # An already existing (e.g. hand-made) `variable_type_list` is merged with the old list.
     rename_pval_list_values(db_url, pval_list_old_name, name_mapping, log_level)
     rename_pval_list(db_url, pval_list_old_name, pval_list_new_name, log_level)
     lists_to_be_updated = (
@@ -1276,15 +1411,4 @@ function move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
             db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
         )
     end
-end
-
-function find_pdefs_linked_to_pval_list(db_url, pval_list)
-    pdefs = []
-    pdefs_all = run_request(db_url, "call_method", ("find_parameter_definitions",), Dict())
-    for pdef in pdefs_all
-        if pdef["parameter_value_list_name"] == pval_list
-            push!(pdefs, pdef["name"])
-        end
-    end
-    return pdefs
 end

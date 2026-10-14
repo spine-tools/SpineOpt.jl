@@ -866,6 +866,137 @@ function _test_rename_classes_to_existing_class()
 	end
 end
 
+# Values of the given parameter value list, in order
+_list_values(db_url, list_name) = [
+	parse_db_value(x["value"], x["type"])
+	for x in sort(
+		run_request(db_url, "call_method", ("find_list_values",), Dict("parameter_value_list_name" => list_name));
+		by=x -> x["index"],
+	)
+]
+
+function _test_rename_pval_list_to_existing_list()
+	@testset "rename_parameter_value_lists to an existing list" begin
+		data = Dict(
+			:object_classes => ["grid"],
+			:objects => [("grid", "g1"), ("grid", "g2")],
+			:parameter_value_lists => [
+				("commodity_physics_list", "commodity_physics_lodf"),
+				("commodity_physics_list", "commodity_physics_none"),
+				("grid_physics_list", "lodf_physics"), # Hand-made, already with new values.
+				("grid_physics_list", "none"),
+			],
+			:object_parameters => [
+				("grid", "physics_type", nothing, "commodity_physics_list"),
+				("grid", "hand_made_physics", nothing, "grid_physics_list"),
+			],
+			:object_parameter_values => [
+				("grid", "g1", "physics_type", "commodity_physics_lodf"),
+				("grid", "g2", "physics_type", "commodity_physics_none"),
+				("grid", "g1", "hand_made_physics", "lodf_physics"),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.rename_parameter_value_lists(url_in, [("commodity_physics_list", "grid_physics_list")], 0)
+			SpineOpt.rename_list_values(url_in, [("grid_physics_list", Dict(
+				"commodity_physics_lodf" => "lodf_physics",
+				"commodity_physics_none" => "none",
+				"commodity_physics_ptdf" => "ptdf_physics",
+			))], 0)
+			lists = [x["name"] for x in run_request(url_in, "call_method", ("get_parameter_value_list_items",), Dict())]
+			@test lists == ["grid_physics_list"]
+			@test _list_values(url_in, "grid_physics_list") == ["lodf_physics", "none"] # Duplicates merged.
+			for par in ("physics_type", "hand_made_physics")
+				pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+					"entity_class_name" => "grid", "name" => par)
+				)
+				@test pdef["parameter_value_list_name"] == "grid_physics_list"
+			end
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g1"]) == Dict("Base" => "lodf_physics")
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g2"]) == Dict("Base" => "none")
+			@test _parameter_value_by_alternative(url_in, "grid", "hand_made_physics", ["g1"]) == Dict(
+				"Base" => "lodf_physics"
+			)
+		end
+	end
+end
+
+function _test_merge_variable_type_lists_with_existing_list()
+	@testset "merge_variable_type_lists with an existing variable_type_list in use" begin
+		data = Dict(
+			:object_classes => ["unit"],
+			:objects => [("unit", "u")],
+			:parameter_value_lists => [
+				("unit_online_variable_type_list", "unit_online_variable_type_binary"),
+				("unit_online_variable_type_list", "unit_online_variable_type_integer"),
+				("unit_online_variable_type_list", "unit_online_variable_type_linear"),
+				("unit_online_variable_type_list", "unit_online_variable_type_none"),
+				("variable_type_list", "linear"), # Hand-made.
+				("variable_type_list", "integer"),
+			],
+			:object_parameters => [
+				("unit", "online_variable_type", "unit_online_variable_type_linear", "unit_online_variable_type_list"),
+				("unit", "hand_made_variable_type", nothing, "variable_type_list"),
+			],
+			:object_parameter_values => [
+				("unit", "u", "online_variable_type", "unit_online_variable_type_binary"),
+				("unit", "u", "hand_made_variable_type", "integer"),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.merge_variable_type_lists(url_in, 0) # Used to throw an error.
+			lists = [x["name"] for x in run_request(url_in, "call_method", ("get_parameter_value_list_items",), Dict())]
+			@test lists == ["variable_type_list"]
+			@test Set(_list_values(url_in, "variable_type_list")) == Set(["binary", "integer", "linear", "none"])
+			@test _parameter_value_by_alternative(url_in, "unit", "online_variable_type", ["u"]) == Dict("Base" => "binary")
+			@test _parameter_value_by_alternative(url_in, "unit", "hand_made_variable_type", ["u"]) == Dict(
+				"Base" => "integer"
+			)
+		end
+	end
+end
+
+function _test_rename_parameter_to_existing_parameter_with_other_list()
+	@testset "rename_parameter to an existing parameter with values and another value list" begin
+		data = Dict(
+			:object_classes => ["grid"],
+			:objects => [("grid", "g1"), ("grid", "g2"), ("grid", "g3")],
+			:parameter_value_lists => [
+				("commodity_physics_list", "commodity_physics_lodf"),
+				("commodity_physics_list", "commodity_physics_none"),
+				("grid_physics_list", "lodf_physics"), # Hand-made.
+				("grid_physics_list", "commodity_physics_none"),
+			],
+			:object_parameters => [
+				("grid", "commodity_physics", nothing, "commodity_physics_list"),
+				("grid", "physics_type", nothing, "grid_physics_list"), # Hand-made.
+			],
+			:object_parameter_values => [
+				("grid", "g1", "commodity_physics", "commodity_physics_lodf"),
+				("grid", "g2", "physics_type", "commodity_physics_none"), # Kept, also in the migrated list.
+				("grid", "g3", "physics_type", "lodf_physics"), # Dropped, not in the migrated list.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.rename_parameter(url_in, "grid", "commodity_physics", "physics_type", "", 0)
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "grid", "name" => "physics_type")
+			)
+			@test pdef["parameter_value_list_name"] == "commodity_physics_list" # Migrated definition wins.
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g1"]) == Dict(
+				"Base" => "commodity_physics_lodf"
+			)
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g2"]) == Dict(
+				"Base" => "commodity_physics_none"
+			)
+			@test isempty(_parameter_value_by_alternative(url_in, "grid", "physics_type", ["g3"]))
+		end
+	end
+end
+
 @testset "migration scripts" begin
 	_test_rename_unit_constraint_to_user_constraint()
 	_test_move_connection_flow_cost()
@@ -888,4 +1019,7 @@ end
 	_test_move_parameter_to_existing_grid()
 	_test_create_superclasses_and_subclasses_with_existing_classes()
 	_test_rename_classes_to_existing_class()
+	_test_rename_pval_list_to_existing_list()
+	_test_merge_variable_type_lists_with_existing_list()
+	_test_rename_parameter_to_existing_parameter_with_other_list()
 end
