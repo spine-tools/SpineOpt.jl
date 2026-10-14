@@ -247,6 +247,11 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
         (("temporal_block", "representative_periods_mapping"), "representative_blocks_by_period", ""),
     ]
 
+    # ((class, parameter name after renaming), multiplication factor)
+    parameters_to_be_scaled = [
+        (("node", "storage_fixed_annual_cost"), 8760), # per-hour cost (storage_fom_cost) -> per-year cost
+    ]
+
     # original class, new class
     classes_to_be_renamed = [
         ("commodity", "grid")
@@ -362,6 +367,8 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
     @log log_level 0 string("Renaming parameters...")
     rename_parameters(db_url, parameters_to_be_renamed, log_level)
+    @log log_level 0 string("Scaling parameter values...")
+    scale_parameter_values(db_url, parameters_to_be_scaled, log_level)
     @log log_level 0 string("Renaming classes...")
     rename_classes(db_url, classes_to_be_renamed, log_level)
     @log log_level 0 string("Moving parameters to multidimensional classes...")
@@ -642,6 +649,44 @@ function rename_parameter(db_url, class_name, old_par_name, new_par_name, merge_
             check_run_request_return_value(run_request(
                 db_url, "call_method", ("update_item", "parameter_definition"), Dict(
                 "id" => pdef["id"], "name" => new_par_name)
+                ), log_level
+            )
+        end
+    end
+end
+
+# Multiply the values (and the default value) of each given parameter by the given factor
+function scale_parameter_values(db_url, parameters_to_be_scaled, log_level)
+    for ((class_name, par_name), factor) in parameters_to_be_scaled
+        pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+            "entity_class_name" => class_name, "name" => par_name)
+        )
+        length(pdef) > 0 || continue
+        # Find parameters in all entities and alternatives
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => class_name, "parameter_definition_name" => par_name)
+        )
+        vals = create_dict_from_parameter_value_items(db_url, pvals)
+        for (entity, val_list) in vals
+            for (alternative, val) in val_list
+                pval_value, pval_type = unparse_db_value(val * factor)
+                # Update the parameter value in the database
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                        "entity_class_name" => class_name, "parameter_definition_name" => par_name,
+                        "entity_byname" => entity, "alternative_name" => alternative,
+                        "value" => pval_value, "type" => pval_type)
+                    ), log_level
+                )
+            end
+        end
+        # Scale the default value too, if any
+        default_value = parse_db_value(pdef["default_value"], pdef["default_type"])
+        if !isnothing(default_value)
+            default_value, default_type = unparse_db_value(default_value * factor)
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                    "id" => pdef["id"], "default_value" => default_value, "default_type" => default_type)
                 ), log_level
             )
         end

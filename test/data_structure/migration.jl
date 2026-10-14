@@ -481,16 +481,23 @@ function _test_major_upgrade_1()
 				("unit__to_node__user_constraint", ("u", "n", "uc")),
 				("unit__node__node", ("u", "n", "n")),
 			],
+			:alternatives => ["alt_ts"],
 			:object_parameters => [
 				("commodity", "commodity_lodf_tolerance"),
 				("unit", "fix_units_out_of_service"),
 				("unit", "units_unavailable"),
+				("node", "storage_fom_cost", 0.5),
 				("user_constraint", "include_in_non_representative_periods")
 			],
 			:object_parameter_values => [
 				("commodity", "com", "commodity_lodf_tolerance", 1),
 				("unit", "u", "fix_units_out_of_service", 1),
 				("unit", "u", "units_unavailable", 2),
+				("node", "n", "storage_fom_cost", 2.5),
+				(
+					"node", "n", "storage_fom_cost",
+					unparse_db_value(TimeSeries([DateTime(2000), DateTime(2001)], [1.0, 2.0])), "alt_ts"
+				),
 				("user_constraint", "uc", "include_in_non_representative_periods", true),
 			],
 			:relationship_parameters => [
@@ -544,6 +551,18 @@ function _test_major_upgrade_1()
     		@test Y.out_of_service_count_fix(unit=Y.unit(:u)) == 3 # Combined parameters sum.
     		@test !in(:fix_units_out_of_service, param_names) # Old parameter deleted.
     		@test !in(:units_unavailable, param_names) # Old parameter deleted.
+    		@test !in(:storage_fom_cost, param_names) # Old parameter deleted.
+    		storage_cost_by_alt = Dict( # Per-hour cost scaled to per-year, in every alternative.
+    			x[5] => parse_db_value(x[4])
+    			for x in migrated_data["parameter_values"] if x[3] == "storage_fixed_annual_cost"
+    		)
+    		@test storage_cost_by_alt["Base"] == 2.5 * 8760
+    		@test storage_cost_by_alt["alt_ts"].values == [1.0, 2.0] .* 8760 # Indexed values scaled element-wise.
+    		storage_cost_default = only( # Default value scaled too.
+    			parse_db_value(x[3])
+    			for x in migrated_data["parameter_definitions"] if x[1] == "node" && x[2] == "storage_fixed_annual_cost"
+    		)
+    		@test storage_cost_default == 0.5 * 8760
     		# Check that all necessary superclasses are created correctly.
     		@test only(Y.unit__to_node()) == (unit=Y.unit(:u), node=Y.node(:n)) # Correct entities
     		@test only(Y.node__to_unit()) == (node=Y.node(:n), unit=Y.unit(:u)) # Correct entities
