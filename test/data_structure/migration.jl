@@ -444,9 +444,12 @@ function _test_dummy_migrations_functions()
 	end
 end
 
-function _test_major_upgrade_1()
+function _test_major_upgrade_1(; template_on_top=false)
 	log_level = 0
-	@testset "major_upgrade_1" begin # Non-comprehensive migration test. Samples every sub-function, though.
+	# Non-comprehensive migration test. Samples every sub-function, though.
+	# With `template_on_top`, the latest template is imported before migrating (as if the new parameters, classes and
+	# lists were already added by hand), which should give the same result.
+	@testset "major_upgrade_1$(template_on_top ? " with latest template on top" : "")" begin
 		original_data = Dict(
 			:object_classes => [
 				"commodity",
@@ -536,6 +539,11 @@ function _test_major_upgrade_1()
 		)
 		with_connection_open(url_in) do
     		_load_test_data_without_template(url_in, original_data)
+    		if template_on_top
+    			template = deepcopy(SpineOpt.template())
+    			filter!(x -> x[1:2] != ["settings", "version"], template["parameter_definitions"])
+    			SpineInterface.import_data(url_in, template, "Import latest template")
+    		end
     		SpineOpt.major_upgrade_1(url_in, log_level) # This runs the migration.
     		migrated_data = export_data(url_in) # Export migrated data (required for examining parameter value lists)
     		Y = Bind() # Empty Bind for loading DB into.
@@ -612,9 +620,9 @@ function _test_major_upgrade_1()
     		@test !in("commodity_physics_list", keys(parameter_value_lists)) # Old list removed.
     		@test !in(:has_voltage_angle, param_names) # Converted parameter removed.
     		@test !in(:pressure_physics, param_names) # Converted parameter removed.
-    		@test parameter_value_lists["solver_lp_list"] == ["HiGHS.jl"] # Correct list elements.
+    		@test "HiGHS.jl" in parameter_value_lists["solver_lp_list"] # Correct list elements.
     		@test !in("db_lp_solver_list", keys(parameter_value_lists)) # Old list removed.
-    		@test parameter_value_lists["solver_mip_list"] == ["Gurobi.jl"] # Correct list elements.
+    		@test "Gurobi.jl" in parameter_value_lists["solver_mip_list"] # Correct list elements.
     		@test !in("db_mip_solver_list", keys(parameter_value_lists)) # Old list removed.
     		@test Set(parameter_value_lists["balance_type_list"]) == Set(
     			["none", "node_balance", "group_balance"] # Correct list elements.
@@ -1010,6 +1018,7 @@ end
 	_test_translate_use_economic_representation__use_milestone_years()
 	_test_dummy_migrations_functions()
 	_test_major_upgrade_1()
+	_test_major_upgrade_1(; template_on_top=true)
 	_test_rename_storage_fixed_annual_cost()
 	# Migrations into already existing (e.g. hand-made) items
 	_test_rename_parameter_to_existing_parameter()
