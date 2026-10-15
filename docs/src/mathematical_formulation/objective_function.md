@@ -84,7 +84,7 @@ The total fixed O&M costs can be expressed as:
 ```
 where $\Delta y_t$ is the duration of year $y$ where the investment timeslice $t$ begins;
 and $\Delta t$ is the duration of the investment timeslice $t$, which also accounts for the corresponding `Discounted duration` (see [Economic parameters](@ref)).
-The parameter [node\_state\_capacity](@ref) is the product of [storage\_state\_max](@ref) and [storage\_state\_max\_fraction](@ref) parameters. 
+The parameter $p^{node\_state\_capacity}$ is the product of [storage\_state\_max](@ref) and [storage\_state\_max\_fraction](@ref) parameters. 
 
 # Variable O&M costs
 
