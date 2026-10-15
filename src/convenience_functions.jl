@@ -169,7 +169,6 @@ flow_ratio_greater_than_online_coefficient = UndefSpineItem()
 flow_ratio_less_than_coefficient = UndefSpineItem()
 flow_ratio_less_than_online_coefficient = UndefSpineItem()
 flow_ratio_start_flow = UndefSpineItem()
-fom_cost = UndefSpineItem()
 fuel_cost = UndefSpineItem()
 has_free_start = UndefSpineItem()
 has_lodf = UndefSpineItem()
@@ -511,7 +510,6 @@ export flow_ratio_greater_than_online_coefficient
 export flow_ratio_less_than_coefficient
 export flow_ratio_less_than_online_coefficient
 export flow_ratio_start_flow
-export fom_cost
 export fuel_cost
 export has_free_start
 export has_lodf

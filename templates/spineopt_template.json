@@ -1657,7 +1657,7 @@
             "fixed_annual_cost",
             null,
             null,
-            "Fixed annual operation and maintenance costs of the connection."
+            "Fixed annual operation and maintenance costs of the connection. Essentially, a cost coefficient on the total count of available connections (incl. `existing_connections` and `connections_invested_available`) and `capacity_per_connection` parameters. E.g. EUR/MW/year."
         ],
         [
             "connection",
@@ -2701,7 +2701,7 @@
             "fixed_annual_cost",
             null,
             null,
-            "Fixed annual operation and maintenance costs of the storage."
+            "Fixed annual operation and maintenance costs of the storage defined in a `node` entity. Essentially, a cost coefficient on the total count of available storage (incl. `existing_storages` and `storages_invested_available`) and `node_state_capacity` (product of `storage_state_max` and `storage_state_max_fraction`). E.g. EUR/MW/year."
         ],
         [
             "node",
@@ -3150,7 +3150,7 @@
         [
             "settings",
             "version",
-            23,
+            24,
             null,
             "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."
         ],
@@ -3323,10 +3323,10 @@
         ],
         [
             "unit",
-            "fom_cost",
+            "fixed_annual_cost",
             null,
             null,
-            "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the existing units (incl. `existing_units` and `units_invested_available`) and `capacity_per_unit` parameters. Currently, the value needs to be defined per duration unit (i.e. 1 hour). E.g. EUR/MW/h."
+            "Fixed annual operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the total count of available units (incl. `existing_units` and `units_invested_available`) and `capacity_per_unit` parameters. E.g. EUR/MW/year."
         ],
         [
             "unit",
