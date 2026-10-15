@@ -762,6 +762,57 @@ function _test_rename_storage_fixed_annual_cost_to_existing_parameter()
 	end
 end
 
+function _test_refactor_fom_cost()
+	@testset "refactor_fom_cost" begin
+		data = Dict(
+			:object_classes => ["unit"],
+			:objects => [("unit", "u")],
+			:alternatives => ["alt"],
+			:object_parameters => [("unit", "fom_cost", 0.5)],
+			:object_parameter_values => [("unit", "u", "fom_cost", 1.0), ("unit", "u", "fom_cost", 2.0, "alt")],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			pdef_old = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "unit", "name" => "fom_cost")
+			)
+			@test isempty(pdef_old) # Old parameter deleted.
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "unit", "name" => "fixed_annual_cost")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 0.5 * 8760 # Default scaled.
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 8760, "alt" => 2.0 * 8760) # Per-hour cost -> per-year cost.
+		end
+	end
+end
+
+function _test_refactor_fom_cost_to_existing_parameter()
+	@testset "refactor_fom_cost to an existing fixed_annual_cost" begin
+		data = Dict(
+			:object_classes => ["unit"],
+			:objects => [("unit", "u1"), ("unit", "u2")],
+			:object_parameters => [("unit", "fom_cost"), ("unit", "fixed_annual_cost")],
+			:object_parameter_values => [
+				("unit", "u1", "fom_cost", 1),
+				("unit", "u1", "fixed_annual_cost", 100), # Conflicts with the migrated value.
+				("unit", "u2", "fixed_annual_cost", 200), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			run_request(url_in, "call_method", ("commit_session", "refactor_fom_cost"))
+			Y = Bind()
+			using_spinedb(url_in, Y)
+			@test !in(:fom_cost, getproperty.(parameters(Y), :name))
+			@test Y.fixed_annual_cost(unit=Y.unit(:u1)) == 8760 # Migrated value wins, scaled.
+			@test Y.fixed_annual_cost(unit=Y.unit(:u2)) == 200 # Hand-made value kept, and not scaled.
+		end
+	end
+end
+
 function _test_update_ordering_to_existing_entities()
 	@testset "update_ordering_of_multidimensional_classes to existing entities" begin
 		data = Dict(
@@ -1090,10 +1141,12 @@ end
 	_test_major_upgrade_1()
 	_test_major_upgrade_1(; template_on_top=true)
 	_test_rename_storage_fixed_annual_cost()
+	_test_refactor_fom_cost()
 	# Migrations into already existing (e.g. hand-made) items
 	_test_rename_parameter_to_existing_parameter()
 	_test_update_ordering_to_existing_parameter_definition()
 	_test_rename_storage_fixed_annual_cost_to_existing_parameter()
+	_test_refactor_fom_cost_to_existing_parameter()
 	_test_update_ordering_to_existing_entities()
 	_test_move_parameter_to_existing_grid()
 	_test_create_superclasses_and_subclasses_with_existing_classes()

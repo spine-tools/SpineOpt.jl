@@ -12,6 +12,7 @@ objective_function_reference_values = Dict(
     "stochastic.json" => 126964.2857142857,
     "representative_periods.json" => 314610.23274110217,
     "multi_stage_model_tutorial.json" => 1.91746092844232e9,
+    "retrofitting_example_1.json" => 4600.0,
 )
 
 @testset for (file, obj_fn_val) in objective_function_reference_values

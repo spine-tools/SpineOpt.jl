@@ -44,6 +44,7 @@ include("versions/translate_heatrate_parameters.jl")
 include("versions/translate_use_economic_representation__use_milestone_years.jl")
 include("versions/major_upgrade_1.jl")
 include("versions/rename_storage_fixed_annual_cost.jl")
+include("versions/refactor_fom_cost.jl") 
 
 function add_units_out_of_service_and_min_capacity_margin(db_url, log_level; kwargs...)
 	# No changes, just make sure we load the newest template
@@ -98,6 +99,7 @@ _upgrade_functions = [
 	translate_use_economic_representation__use_milestone_years,
 	major_upgrade_1,
 	rename_storage_fixed_annual_cost,
+	refactor_fom_cost,
 ]
 
 """

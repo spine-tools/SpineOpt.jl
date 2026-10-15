@@ -912,10 +912,15 @@ end
 # Multiply the values (and the default value) of each given parameter by the given factor
 function scale_parameter_values(db_url, parameters_to_be_scaled, log_level)
     for ((class_name, par_name), factor) in parameters_to_be_scaled
-        pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
-            "entity_class_name" => class_name, "name" => par_name)
-        )
-        length(pdef) > 0 || continue
+        scale_parameter_value(db_url, class_name, par_name, factor, log_level)
+    end
+end
+
+function scale_parameter_value(db_url, class_name, par_name, factor, log_level)
+    pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+        "entity_class_name" => class_name, "name" => par_name)
+    )
+    length(pdef) > 0 && begin
         # Find parameters in all entities and alternatives
         pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
             "entity_class_name" => class_name, "parameter_definition_name" => par_name)
