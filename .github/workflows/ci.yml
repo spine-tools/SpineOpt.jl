@@ -71,7 +71,8 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   Documenter:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    # Also run on release tags, so that `deploydocs` publishes the versioned and `stable` docs.
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     name: Documentation
     runs-on: ubuntu-latest
     steps:
