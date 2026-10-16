@@ -251,7 +251,8 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     # Scaling happens before renaming so that only the migrated values are scaled,
     # not any values of an already existing (e.g. hand-made) new parameter.
     parameters_to_be_scaled = [
-        (("node", "storage_fom_cost"), 8760), # per-hour cost -> per-year cost (storage_fixed_annual_cost)
+        # per-duration-unit cost -> per-year cost (storage_fixed_annual_cost)
+        (("node", "storage_fom_cost"), annual_scaling_factor),
     ]
 
     # original class, new class
@@ -909,7 +910,9 @@ function add_parameter_values(db_url, class_name, par_name, vals, list_name, log
     end
 end
 
-# Multiply the values (and the default value) of each given parameter by the given factor
+# Multiply the values (and the default value) of each given parameter by the given factor.
+# The factor can also be a function `(db_url, class_name, par_name, log_level) -> factor`,
+# which is only called if the parameter exists.
 function scale_parameter_values(db_url, parameters_to_be_scaled, log_level)
     for ((class_name, par_name), factor) in parameters_to_be_scaled
         scale_parameter_value(db_url, class_name, par_name, factor, log_level)
@@ -921,6 +924,7 @@ function scale_parameter_value(db_url, class_name, par_name, factor, log_level)
         "entity_class_name" => class_name, "name" => par_name)
     )
     length(pdef) > 0 && begin
+        factor isa Function && (factor = factor(db_url, class_name, par_name, log_level))
         # Find parameters in all entities and alternatives
         pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
             "entity_class_name" => class_name, "parameter_definition_name" => par_name)
@@ -950,6 +954,92 @@ function scale_parameter_value(db_url, class_name, par_name, factor, log_level)
             )
         end
     end
+end
+
+# The factor to scale a cost given per `duration_unit` of the models into an annual cost.
+# If all models use the same duration unit, the cost is converted per that unit; otherwise, it is converted per hour.
+# Unknown duration units are taken as `hour`, as in SpineOpt, with a warning.
+function annual_scaling_factor(db_url, class_name, par_name, log_level)
+    dur_units, has_models, unknowns = model_duration_units(db_url)
+    if !isempty(unknowns)
+        @log log_level 0 string(
+            "Warning: the following `duration_unit`s of `model` are unknown, and are taken as `hour`:\n",
+            join(("- $x" for x in unknowns), "\n"),
+            "\nPlease check the converted `$par_name` values of `$class_name`, ",
+            "and set the `duration_unit` of each `model`, or its default value, to `hour` or `minute`."
+        )
+    end
+    dur_unit = length(dur_units) == 1 ? only(dur_units) : "hour"
+    factor = Dates.value(Dict("hour" => Hour, "minute" => Minute)[dur_unit](Day(365)))
+    if !has_models
+        @log log_level 0 string("Info: no `model` found, so the default `duration_unit` `$dur_unit` is used. ",
+            "`$par_name` values of `$class_name` are converted per `$dur_unit` into annual values (× $factor).")
+    elseif length(dur_units) == 1
+        @log log_level 0 string("Info: all models use the duration unit `$dur_unit`. ",
+            "`$par_name` values of `$class_name` are converted per `$dur_unit` into annual values (× $factor).")
+    else
+        @log log_level 0 string("Warning: the models use different duration units ($(join(sort(collect(dur_units)), ", "))). ",
+            "`$par_name` values of `$class_name` are converted per `hour` as default into annual values (× $factor); ",
+            "please check the migrated values.")
+    end
+    factor
+end
+
+# The `duration_unit`s in effect for the models in the database: the explicit values of each model,
+# and the default value of the parameter definition for models without one, or if there are no models at all.
+# Unknown duration units are taken as `hour`: an explicit value other than `hour` or `minute`,
+# or a needed default value that is missing or invalid.
+# Return the duration units, whether there are any models, and a description of each unknown duration unit.
+function model_duration_units(db_url)
+    valid_units = ("hour", "minute")
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => "model", "parameter_definition_name" => "duration_unit")
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    models = entity_bynames(db_url, "model")
+    dur_units = Set{String}()
+    unknowns = String[]
+    for model in sort!(collect(models)), (alt, val) in get(vals, model, [])
+        if val in valid_units
+            push!(dur_units, val)
+        else
+            push!(dur_units, "hour")
+            push!(unknowns, "model `$(join(model, "__"))` has the duration unit `$val` in alternative `$alt`")
+        end
+    end
+    models_without_value = sort!([join(model, "__") for model in models if !haskey(vals, model)])
+    if isempty(models) || !isempty(models_without_value)
+        users = isempty(models) ? "since there is no `model`" : string(
+            "for model(s) without a value: ", join(("`$m`" for m in models_without_value), ", ")
+        )
+        pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+            "entity_class_name" => "model", "name" => "duration_unit")
+        )
+        default_unit = isempty(pdef) ? nothing : _default_value(db_url, pdef)
+        if default_unit in valid_units
+            push!(dur_units, default_unit)
+        else
+            push!(dur_units, "hour")
+            push!(unknowns, if isempty(pdef)
+                "the parameter definition of `duration_unit` is missing, but its default value is needed $users"
+            elseif isnothing(default_unit)
+                "the default value of `duration_unit` is missing, but it is needed $users"
+            else
+                "the default value of `duration_unit` is `$default_unit`, which is needed $users"
+            end)
+        end
+    end
+    dur_units, !isempty(models), unknowns
+end
+
+# The parsed default value of the given parameter definition, resolving a value from a parameter value list.
+# `nothing` if there is no default value, or if the list value is not found.
+function _default_value(db_url, pdef)
+    list_value_id = get(pdef, "list_value_id", nothing)
+    isnothing(list_value_id) && return parse_db_value(pdef["default_value"], pdef["default_type"])
+    list_value = run_request(db_url, "call_method", ("get_list_value_item",), Dict("id" => list_value_id))
+    isempty(list_value) && return nothing
+    parse_db_value(list_value["value"], list_value["type"])
 end
 
 # Sum old_par_name values to new_par_name values

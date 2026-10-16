@@ -455,6 +455,7 @@ function _test_major_upgrade_1(; template_on_top=false)
 				"commodity",
 				"connection",
 				"investment_group",
+				"model",
 				"node",
 				"unit",
 				"user_constraint"
@@ -490,6 +491,7 @@ function _test_major_upgrade_1(; template_on_top=false)
 				("unit", "fix_units_out_of_service"),
 				("unit", "units_unavailable"),
 				("node", "storage_fom_cost", 0.5),
+				("model", "duration_unit", "hour"),
 				("user_constraint", "include_in_non_representative_periods")
 			],
 			:object_parameter_values => [
@@ -762,13 +764,42 @@ function _test_rename_storage_fixed_annual_cost_to_existing_parameter()
 	end
 end
 
+function _test_major_upgrade_1_storage_fom_cost_per_minute()
+	@testset "major_upgrade_1 storage_fom_cost for a minute-based model" begin
+		data = Dict(
+			:object_classes => ["model", "node"],
+			:objects => [("model", "m"), ("node", "n")],
+			:parameter_value_lists => [("duration_unit_list", "hour"), ("duration_unit_list", "minute")],
+			:object_parameters => [
+				("model", "duration_unit", "hour", "duration_unit_list"), ("node", "storage_fom_cost", 0.5)
+			],
+			:object_parameter_values => [
+				("model", "m", "duration_unit", "minute"), ("node", "n", "storage_fom_cost", 1.0)
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			output = _captured_output() do
+				SpineOpt.major_upgrade_1(url_in, 0)
+			end
+			@test occursin("Info: all models use the duration unit `minute`", output)
+			n_vals = _parameter_value_by_alternative(url_in, "node", "storage_fixed_annual_cost", ["n"])
+			@test n_vals == Dict("Base" => 1.0 * 525600) # Per-minute cost -> per-year cost.
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "storage_fixed_annual_cost")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 0.5 * 525600 # Default scaled.
+		end
+	end
+end
+
 function _test_refactor_fom_cost()
 	@testset "refactor_fom_cost" begin
 		data = Dict(
-			:object_classes => ["unit"],
+			:object_classes => ["model", "unit"],
 			:objects => [("unit", "u")],
 			:alternatives => ["alt"],
-			:object_parameters => [("unit", "fom_cost", 0.5)],
+			:object_parameters => [("model", "duration_unit", "hour"), ("unit", "fom_cost", 0.5)],
 			:object_parameter_values => [("unit", "u", "fom_cost", 1.0), ("unit", "u", "fom_cost", 2.0, "alt")],
 		)
 		with_connection_open(url_in) do
@@ -788,14 +819,19 @@ function _test_refactor_fom_cost()
 	end
 end
 
-# Data for `refactor_fom_cost` with models using the given `duration_unit`s (`nothing` for the default `hour`)
-function _fom_cost_data_with_duration_units(duration_units...)
+# Data for `refactor_fom_cost` with models using the given `duration_unit`s (`nothing` for the default value).
+# The `duration_unit` definition uses a parameter value list, unless any value is not in it.
+function _fom_cost_data_with_duration_units(duration_units...; default="hour")
 	models = ["m$i" for i in eachindex(duration_units)]
+	use_list = all(x -> isnothing(x) || x in ("hour", "minute"), (default, duration_units...))
 	Dict(
 		:object_classes => ["model", "unit"],
 		:objects => [[("model", m) for m in models]; ("unit", "u")],
-		:parameter_value_lists => [("duration_unit_list", "hour"), ("duration_unit_list", "minute")],
-		:object_parameters => [("model", "duration_unit", "hour", "duration_unit_list"), ("unit", "fom_cost")],
+		:parameter_value_lists => use_list ? [("duration_unit_list", "hour"), ("duration_unit_list", "minute")] : [],
+		:object_parameters => [
+			use_list ? ("model", "duration_unit", default, "duration_unit_list") : ("model", "duration_unit", default);
+			("unit", "fom_cost")
+		],
 		:object_parameter_values => [
 			[("model", m, "duration_unit", dur_unit) for (m, dur_unit) in zip(models, duration_units) if !isnothing(dur_unit)];
 			("unit", "u", "fom_cost", 1.0)
@@ -807,7 +843,10 @@ function _test_refactor_fom_cost_per_minute()
 	@testset "refactor_fom_cost for a minute-based model" begin
 		with_connection_open(url_in) do
 			_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units("minute"))
-			@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			output = _captured_output() do
+				@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			end
+			@test occursin("Info: all models use the duration unit `minute`", output)
 			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
 			@test u_vals == Dict("Base" => 1.0 * 525600) # Per-minute cost -> per-year cost.
 		end
@@ -829,12 +868,98 @@ function _test_refactor_fom_cost_with_mixed_duration_units()
 	end
 end
 
+function _test_refactor_fom_cost_without_models()
+	@testset "refactor_fom_cost without models" begin
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units(; default="minute"))
+			output = _captured_output() do
+				@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			end
+			@test occursin("Info: no `model` found, so the default `duration_unit` `minute` is used", output)
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 525600) # Converted per the default duration unit.
+		end
+	end
+end
+
+function _test_refactor_fom_cost_with_unknown_duration_units()
+	@testset "refactor_fom_cost with unknown duration units" begin
+		cases = [
+			# (description, data, expected warning)
+			(
+				"unknown explicit value",
+				_fom_cost_data_with_duration_units("second"),
+				"model `m1` has the duration unit `second` in alternative `Base`",
+			),
+			(
+				"missing default value for a model without a value",
+				_fom_cost_data_with_duration_units(nothing; default=nothing),
+				"the default value of `duration_unit` is missing, but it is needed for model(s) without a value: `m1`",
+			),
+			(
+				"unknown default value without models",
+				_fom_cost_data_with_duration_units(; default="day"),
+				"the default value of `duration_unit` is `day`, which is needed since there is no `model`",
+			),
+			(
+				"missing parameter definition",
+				Dict(
+					:object_classes => ["model", "unit"],
+					:objects => [("model", "m1"), ("unit", "u")],
+					:object_parameters => [("unit", "fom_cost")],
+					:object_parameter_values => [("unit", "u", "fom_cost", 1.0)],
+				),
+				"the parameter definition of `duration_unit` is missing, but its default value is needed for model(s) without a value: `m1`",
+			),
+		]
+		for (description, data, msg) in cases
+			@testset "$description" begin
+				with_connection_open(url_in) do
+					_load_test_data_without_template(url_in, data)
+					output = _captured_output() do
+						@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+					end
+					@test occursin("are unknown, and are taken as `hour`", output)
+					@test occursin(msg, output)
+					u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+					@test u_vals == Dict("Base" => 1.0 * 8760) # Taken as hour.
+				end
+			end
+		end
+		@testset "unknown and minute" begin
+			with_connection_open(url_in) do
+				_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units("minute", "second"))
+				output = _captured_output() do
+					@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+				end
+				@test occursin("model `m2` has the duration unit `second`", output)
+				@test occursin("different duration units (hour, minute)", output) # The unknown one is taken as hour.
+				u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+				@test u_vals == Dict("Base" => 1.0 * 8760)
+			end
+		end
+		@testset "unknown default value not needed" begin
+			with_connection_open(url_in) do
+				_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units("minute"; default="day"))
+				output = _captured_output() do
+					@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+				end
+				@test !occursin("unknown", output)
+				u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+				@test u_vals == Dict("Base" => 1.0 * 525600)
+			end
+		end
+	end
+end
+
 function _test_refactor_fom_cost_to_existing_parameter()
 	@testset "refactor_fom_cost to an existing fixed_annual_cost" begin
 		data = Dict(
-			:object_classes => ["unit"],
-			:objects => [("unit", "u1"), ("unit", "u2")],
-			:object_parameters => [("unit", "fom_cost"), ("unit", "fixed_annual_cost")],
+			:object_classes => ["model", "unit"],
+			:objects => [("model", "m"), ("unit", "u1"), ("unit", "u2")],
+			:object_parameters => [
+				("model", "duration_unit", "hour"), ("unit", "fom_cost"), ("unit", "fixed_annual_cost")
+			],
 			:object_parameter_values => [
 				("unit", "u1", "fom_cost", 1),
 				("unit", "u1", "fixed_annual_cost", 100), # Conflicts with the migrated value.
@@ -1187,9 +1312,12 @@ end
 	_test_major_upgrade_1()
 	_test_major_upgrade_1(; template_on_top=true)
 	_test_rename_storage_fixed_annual_cost()
+	_test_major_upgrade_1_storage_fom_cost_per_minute()
 	_test_refactor_fom_cost()
 	_test_refactor_fom_cost_per_minute()
 	_test_refactor_fom_cost_with_mixed_duration_units()
+	_test_refactor_fom_cost_without_models()
+	_test_refactor_fom_cost_with_unknown_duration_units()
 	# Migrations into already existing (e.g. hand-made) items
 	_test_rename_parameter_to_existing_parameter()
 	_test_update_ordering_to_existing_parameter_definition()
