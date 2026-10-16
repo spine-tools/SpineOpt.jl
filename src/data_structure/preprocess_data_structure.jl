@@ -922,8 +922,8 @@ function generate_connection_admittance()
                             (resistance(connection = conn)^2 +
                             reactance(connection = conn)^2) ) ) 
                 for conn in connection()
-                    if !isnothing(resistance(connection = conn)) && 
-                        !isnothing(reactance(connection = conn))
+                    if !isnothing(resistance(connection = conn, _strict=false)) && 
+                        !isnothing(reactance(connection = conn, _strict=false))
         )
     )
     add_object_parameter_defaults!(connection, Dict(:connection_conductance => parameter_value(0.0)))
@@ -935,8 +935,8 @@ function generate_connection_admittance()
                             (resistance(connection = conn)^2 +
                             reactance(connection = conn)^2) ) ) 
                 for conn in connection()
-                    if !isnothing(resistance(connection = conn)) && 
-                        !isnothing(reactance(connection = conn))
+                    if !isnothing(resistance(connection = conn, _strict=false)) && 
+                        !isnothing(reactance(connection = conn, _strict=false))
         )
     )
     add_object_parameter_defaults!(connection, Dict(:connection_susceptance => parameter_value(0.0)))
@@ -951,12 +951,12 @@ function generate_default_ac_flow_tangency_points()
         [(10, fii) for fii in 0:20:359] ∪ 
         [(20, fii) for fii in 0:20:359] 
 
-    if isnothing(ac_flow_tangency_point_theta(model=instance))
+    if isnothing(ac_flow_tangency_point_theta(model=instance, _strict=false))
         theta = [x[1] for x in default_tangency_points]
         new_pvals = Dict(:ac_flow_tangency_point_theta => parameter_value(theta) )
         add_object_parameter_values!(model, Dict(instance => new_pvals))
     end
-    if isnothing(ac_flow_tangency_point_phi(model=instance))
+    if isnothing(ac_flow_tangency_point_phi(model=instance, _strict=false))
         phi = [x[2] for x in default_tangency_points]
         new_pvals = Dict(:ac_flow_tangency_point_phi => parameter_value(phi) )
         add_object_parameter_values!(model, Dict(instance => new_pvals))

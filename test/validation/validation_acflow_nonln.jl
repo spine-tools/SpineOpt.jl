@@ -200,11 +200,11 @@ function test_ac_opf_capacitance_socp()
             object_parameter_values = vcat(setup_hypatia_solver(), 
                 [
                     ["model", "instance", "ac_opf_model_formulation", "ac_opf_conic"],
-                    ["node", "node_b", "has_voltage", true],
+                    #["node", "node_b", "has_voltage", true],
                     ["node", "node_b", "demand_reactive", 0.0],
                     ["node", "node_b", "min_voltage", 1.0],
                     ["node", "node_b", "max_voltage", 1.1],
-                    ["node", "node_c", "has_voltage", true],
+                    #["node", "node_c", "has_voltage", true],
                     ["node", "node_c", "max_voltage", 1.1],
                     ["node", "node_c", "demand", 0.0],
                     ["node", "node_c", "demand_reactive", 0.0],
@@ -699,11 +699,11 @@ end
 @testset "nonlinear socp formulation" begin
     #test_ac_opf_singleconn_socp()
     #test_ac_opf_reverse_socp()
-    #test_ac_opf_capacitance_socp()
+    test_ac_opf_capacitance_socp()
     #test_ac_opf_line_capacitance_socp()
     #test_ac_opf_two_conn_socp()
     #test_ac_opf_singleconn_inve_socp()
     #test_ac_opf_capacurve()
     #test_ac_opf_capacurve_absorb()
-    test_ac_opf_reactive_capacity_socp()
+    #test_ac_opf_reactive_capacity_socp()
 end
