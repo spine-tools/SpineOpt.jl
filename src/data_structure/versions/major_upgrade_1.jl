@@ -1212,10 +1212,19 @@ function rename_pval_list_values(db_url, list_name, name_mapping, log_level)
     end
 end
 
-# Make the parameter values that refer to the given list value refer to `new_value` (of the same list) instead
+# Make the parameter values and the default values that refer to the given list value refer to `new_value`
+# (of the same list) instead
 function replace_list_value_in_parameter_values(db_url, list_name, list_value_id, new_value, log_level)
     new_pval_value, new_pval_type = unparse_db_value(new_value)
     for pdef in pdefs_using_pval_list(db_url, list_name)
+        # NOTE: The default value is not updated when the list value it refers to is removed
+        if get(pdef, "list_value_id", nothing) == list_value_id
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                    "id" => pdef["id"], "default_value" => new_pval_value, "default_type" => new_pval_type)
+                ), log_level
+            )
+        end
         pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
             "entity_class_name" => pdef["entity_class_name"], "parameter_definition_name" => pdef["name"])
         )

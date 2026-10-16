@@ -955,6 +955,7 @@ function _test_rename_pval_list_to_existing_list()
 			:object_parameters => [
 				("grid", "physics_type", nothing, "commodity_physics_list"),
 				("grid", "hand_made_physics", nothing, "grid_physics_list"),
+				("grid", "custom_physics", "commodity_physics_lodf", "commodity_physics_list"), # Custom default.
 			],
 			:object_parameter_values => [
 				("grid", "g1", "physics_type", "commodity_physics_lodf"),
@@ -973,12 +974,16 @@ function _test_rename_pval_list_to_existing_list()
 			lists = [x["name"] for x in run_request(url_in, "call_method", ("get_parameter_value_list_items",), Dict())]
 			@test lists == ["grid_physics_list"]
 			@test _list_values(url_in, "grid_physics_list") == ["lodf_physics", "none"] # Duplicates merged.
-			for par in ("physics_type", "hand_made_physics")
+			for par in ("physics_type", "hand_made_physics", "custom_physics")
 				pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
 					"entity_class_name" => "grid", "name" => par)
 				)
 				@test pdef["parameter_value_list_name"] == "grid_physics_list"
 			end
+			# The default is retargeted to the existing list value, rather than left referring to the removed one.
+			run_request(url_in, "call_method", ("commit_session", "rename_pval_list_to_existing_list"))
+			custom_pdef = only(x for x in export_data(url_in)["parameter_definitions"] if x[2] == "custom_physics")
+			@test parse_db_value(custom_pdef[3]...) == "lodf_physics"
 			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g1"]) == Dict("Base" => "lodf_physics")
 			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g2"]) == Dict("Base" => "none")
 			@test _parameter_value_by_alternative(url_in, "grid", "hand_made_physics", ["g1"]) == Dict(
