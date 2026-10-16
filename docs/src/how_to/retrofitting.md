@@ -4,7 +4,7 @@ This how-to introduces how we can model retrofitting in SpineOpt. The meaning of
 
 ## Model Setup
 
-This section briefs the model instance setup with illustrating the key system specification. The file [retrofitting_example_1.json](./retrofit_material/retrofitting_example_1.json) provides a complete database of this example model instance.
+This section briefs the model instance setup with illustrating the key system specification. The file [retrofitting_example_1.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/retrofitting_example_1.json) provides a complete database of this example model instance.
 
 ### Basic System Instance Setup
 

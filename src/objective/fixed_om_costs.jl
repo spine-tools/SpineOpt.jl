@@ -28,97 +28,97 @@ function fixed_om_costs(m, t_range)
     @expression(
         m,
         sum( # Fixed costs for units.
-                + capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
-                    * fom_cost(m; unit=u, stochastic_scenario=s, t=t)
-                    * (
-                        + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
-                            +
-                            _get_units_invested_available(m, u, s, t)
-                        # Default value of `existing_units` is 1 in the template: assumption for non-investable units.
-                        # For investable unit, we assume the `existing_units`=0 (existing ones) unless explicitly specified.
-                    )
-                    * (
-                        !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
-                        unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] * discounted_duration_base(t) :
-                        duration(t)
-                    )
-                    * prod(weight(temporal_block=blk) for blk in blocks(t))
-                    # This term is activated when there is a representative temporal block that includes t.
-                    # We assume only one representative temporal structure available, of which the termporal blocks represent
-                    # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
-                    * (
-                        is_candidate(unit=u) ?
-                        unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s) :
-                        node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
-                    )
-                for (u, ng, d) in indices(capacity_per_unit; unit=indices(fom_cost, unit))
-                for (u, s, t) in Iterators.flatten(
+            + capacity_per_unit(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+                * _unit_fixed_costs_per_duration_unit(m, u, s, t)
+                * (
+                    + existing_units(m; unit=u, stochastic_scenario=s, t=t, _default=_default_nb_of_units(u))
+                        +
+                        _get_units_invested_available(m, u, s, t)
+                    # Default value of `existing_units` is 1 in the template: assumption for non-investable units.
+                    # For investable unit, we assume the `existing_units`=0 (existing ones) unless explicitly specified.
+                )
+                * (
+                    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
+                    unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] * discounted_duration_base(t) :
+                    duration(t)
+                )
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                # This term is activated when there is a representative temporal block that includes t.
+                # We assume only one representative temporal structure available, of which the termporal blocks represent
+                # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
+                * (
                     is_candidate(unit=u) ?
-                    (units_invested_available_indices(m; unit=u, t=t_range),) :
-                    (
-                        ((u, s, t) for (u, _n, _d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)),
+                    unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s) :
+                    node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
+                )
+            for (u, ng, d) in indices(capacity_per_unit; unit=indices(fixed_annual_cost, unit))
+            for (u, s, t) in Iterators.flatten(
+                is_candidate(unit=u) ?
+                (units_invested_available_indices(m; unit=u, t=t_range),) :
+                (
+                    ((u, s, t) for (u, _n, _d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)),
+                )
+            );
+            init=0, # No fixed costs if none defined.
+        )
+        + sum( # Fixed costs for connections. (Mimicks the above unit costs)
+            capacity_per_connection(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
+                * _connection_fixed_costs_per_duration_unit(m, conn, s, t)
+                * (
+                    existing_connections(
+                        m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_connections(conn)
                     )
-                );
-                init=0, # No fixed costs if none defined.
-            )
-            + sum( # Fixed costs for connections. (Mimicks the above unit costs)
-                capacity_per_connection(m; connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)
-                    * _connection_fixed_costs_per_duration_unit(m, conn, s, t)
-                    * (
-                        existing_connections(
-                            m; connection=conn, stochastic_scenario=s, t=t, _default=_default_nb_of_connections(conn)
-                        )
-                            +
-                            _get_connections_invested_available(m, conn, s, t)
-                    )
-                    * (
-                        !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
-                        connection_discounted_duration[
-                            (connection=conn, stochastic_scenario=s, t=t)
-                        ] * discounted_duration_base(t) :
-                        duration(t)
-                    )
-                    * prod(weight(temporal_block=blk) for blk in blocks(t))
-                    * (
-                        is_candidate(connection=conn) ?
-                        connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s) :
-                        node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
-                    )
-                for (conn, ng, d) in indices(capacity_per_connection; connection=indices(fixed_annual_cost, connection))
-                for (conn, s, t) in Iterators.flatten(
+                        +
+                        _get_connections_invested_available(m, conn, s, t)
+                )
+                * (
+                    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
+                    connection_discounted_duration[
+                        (connection=conn, stochastic_scenario=s, t=t)
+                    ] * discounted_duration_base(t) :
+                    duration(t)
+                )
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                * (
                     is_candidate(connection=conn) ?
-                    (connections_invested_available_indices(m; connection=conn, t=t_range),) :
-                    (
-                        ((conn, s, t) for (conn, _n, _d, s, t) in connection_flow_indices(
-                        m; connection=conn, node=ng, direction=d, t=t_range
-                    )),
-                    )
-                );
-                init=0, # No fixed costs if none defined.
-            )
-            + sum( # Fixed costs for storages. (Mimicks the above unit costs)
-                node_state_capacity(m; node=n, stochastic_scenario=s, t=t)
-                    * _storage_fixed_costs_per_duration_unit(m, n, s, t)
-                    * (
-                        existing_storages(m; node=n, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
-                            +
-                            _get_storages_invested_available(m, n, s, t)
-                    )
-                    * (
-                        !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
-                        storage_discounted_duration[(node=n, stochastic_scenario=s, t=t)] * discounted_duration_base(t) :
-                        duration(t)
-                    )
-                    * prod(weight(temporal_block=blk) for blk in blocks(t))
-                    * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-                for n in indices(storage_fixed_annual_cost, node)
-                for (n, s, t) in (
-                    is_candidate(node=n) ?
-                    storages_invested_available_indices(m; node=n, t=t_range) :
-                    node_stochastic_time_indices(m; node=n, t=t_range)
-                );
-                init=0, # No fixed costs if none defined.
-            )
+                    connection_stochastic_scenario_weight(m; connection=conn, stochastic_scenario=s) :
+                    node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
+                )
+            for (conn, ng, d) in indices(capacity_per_connection; connection=indices(fixed_annual_cost, connection))
+            for (conn, s, t) in Iterators.flatten(
+                is_candidate(connection=conn) ?
+                (connections_invested_available_indices(m; connection=conn, t=t_range),) :
+                (
+                    ((conn, s, t) for (conn, _n, _d, s, t) in connection_flow_indices(
+                    m; connection=conn, node=ng, direction=d, t=t_range
+                )),
+                )
+            );
+            init=0, # No fixed costs if none defined.
+        )
+        + sum( # Fixed costs for storages. (Mimicks the above unit costs)
+            node_state_capacity(m; node=n, stochastic_scenario=s, t=t)
+                * _storage_fixed_costs_per_duration_unit(m, n, s, t)
+                * (
+                    existing_storages(m; node=n, stochastic_scenario=s, t=t, _default=_default_nb_of_storages(n))
+                        +
+                        _get_storages_invested_available(m, n, s, t)
+                )
+                * (
+                    !isnothing(multiyear_economic_discounting(model=m.ext[:spineopt].instance, _strict=false)) ?
+                    storage_discounted_duration[(node=n, stochastic_scenario=s, t=t)] * discounted_duration_base(t) :
+                    duration(t)
+                )
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+            for n in indices(fixed_annual_cost, node)
+            for (n, s, t) in (
+                is_candidate(node=n) ?
+                storages_invested_available_indices(m; node=n, t=t_range) :
+                node_stochastic_time_indices(m; node=n, t=t_range)
+            );
+            init=0, # No fixed costs if none defined.
+        )       
     )
 end
 #TODO: scenario tree?
@@ -132,9 +132,17 @@ function _fixed_costs_annual_duration(m::Model, t::TimeSlice)::Union{Hour,Minute
     return dur_unit(annual_duration)
 end
 
+function _unit_fixed_costs_per_duration_unit(m::Model, u, s, t)
+    return (
+        fixed_annual_cost(m; unit=u, stochastic_scenario=s, t=t)
+            /
+            _fixed_costs_annual_duration(m, t).value
+    )
+end
+
 function _connection_fixed_costs_per_duration_unit(m::Model, conn, s, t)
     return (
-        fixed_annual_cost(connection=conn, stochastic_scenario=s, t=t)
+        fixed_annual_cost(m; connection=conn, stochastic_scenario=s, t=t)
             /
             _fixed_costs_annual_duration(m, t).value
     )
@@ -142,7 +150,7 @@ end
 
 function _storage_fixed_costs_per_duration_unit(m::Model, n, s, t)
     return (
-        storage_fixed_annual_cost(node=n, stochastic_scenario=s, t=t)
+        fixed_annual_cost(m; node=n, stochastic_scenario=s, t=t)
             /
             _fixed_costs_annual_duration(m, t).value
     )

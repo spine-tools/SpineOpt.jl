@@ -169,7 +169,6 @@ flow_ratio_greater_than_online_coefficient = UndefSpineItem()
 flow_ratio_less_than_coefficient = UndefSpineItem()
 flow_ratio_less_than_online_coefficient = UndefSpineItem()
 flow_ratio_start_flow = UndefSpineItem()
-fom_cost = UndefSpineItem()
 fuel_cost = UndefSpineItem()
 has_free_start = UndefSpineItem()
 has_lodf = UndefSpineItem()
@@ -286,7 +285,6 @@ storage_decommissioning_cost = UndefSpineItem()
 storage_decommissioning_time = UndefSpineItem()
 storage_discount_rate_technology_specific = UndefSpineItem()
 storage_discounted_duration = UndefSpineItem()
-storage_fixed_annual_cost = UndefSpineItem()
 storage_investment_cost = UndefSpineItem()
 storage_investment_count_fix_cumulative = UndefSpineItem()
 storage_investment_count_fix_new = UndefSpineItem()
@@ -512,7 +510,6 @@ export flow_ratio_greater_than_online_coefficient
 export flow_ratio_less_than_coefficient
 export flow_ratio_less_than_online_coefficient
 export flow_ratio_start_flow
-export fom_cost
 export fuel_cost
 export has_free_start
 export has_lodf
@@ -629,7 +626,6 @@ export storage_decommissioning_cost
 export storage_decommissioning_time
 export storage_discount_rate_technology_specific
 export storage_discounted_duration
-export storage_fixed_annual_cost
 export storage_investment_cost
 export storage_investment_count_fix_cumulative
 export storage_investment_count_fix_new
