@@ -788,6 +788,47 @@ function _test_refactor_fom_cost()
 	end
 end
 
+# Data for `refactor_fom_cost` with models using the given `duration_unit`s (`nothing` for the default `hour`)
+function _fom_cost_data_with_duration_units(duration_units...)
+	models = ["m$i" for i in eachindex(duration_units)]
+	Dict(
+		:object_classes => ["model", "unit"],
+		:objects => [[("model", m) for m in models]; ("unit", "u")],
+		:parameter_value_lists => [("duration_unit_list", "hour"), ("duration_unit_list", "minute")],
+		:object_parameters => [("model", "duration_unit", "hour", "duration_unit_list"), ("unit", "fom_cost")],
+		:object_parameter_values => [
+			[("model", m, "duration_unit", dur_unit) for (m, dur_unit) in zip(models, duration_units) if !isnothing(dur_unit)];
+			("unit", "u", "fom_cost", 1.0)
+		],
+	)
+end
+
+function _test_refactor_fom_cost_per_minute()
+	@testset "refactor_fom_cost for a minute-based model" begin
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units("minute"))
+			@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 525600) # Per-minute cost -> per-year cost.
+		end
+	end
+end
+
+function _test_refactor_fom_cost_with_mixed_duration_units()
+	@testset "refactor_fom_cost for models with different duration units" begin
+		with_connection_open(url_in) do
+			# `m1` uses the default `hour`.
+			_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units(nothing, "minute"))
+			output = _captured_output() do
+				@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			end
+			@test occursin("different duration units (hour, minute)", output)
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 8760) # Converted per hour.
+		end
+	end
+end
+
 function _test_refactor_fom_cost_to_existing_parameter()
 	@testset "refactor_fom_cost to an existing fixed_annual_cost" begin
 		data = Dict(
@@ -1147,6 +1188,8 @@ end
 	_test_major_upgrade_1(; template_on_top=true)
 	_test_rename_storage_fixed_annual_cost()
 	_test_refactor_fom_cost()
+	_test_refactor_fom_cost_per_minute()
+	_test_refactor_fom_cost_with_mixed_duration_units()
 	# Migrations into already existing (e.g. hand-made) items
 	_test_rename_parameter_to_existing_parameter()
 	_test_update_ordering_to_existing_parameter_definition()
