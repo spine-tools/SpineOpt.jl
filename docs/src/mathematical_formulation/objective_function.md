@@ -53,7 +53,15 @@ To take into account storage investments in the objective function, the paramete
 
 # Fixed O&M costs
 
-Fixed operation and maintenance costs associated with a specific unit can be accounted for by defining the parameters [fom\_cost](@ref) and [capacity\_per\_unit](@ref). For all tuples of (unit, {node,node\_group}, direction) for which these parameters are defined, and for which tuples (unit, scenario, timestep) exist in the set `units_on_indices`, a fixed O&M cost term is added to the objective function. Note that, as the `units_on_indices` are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should be given per resolution of the [units\_on](@ref var_units_on).
+Fixed operation and maintenance costs associated with a specific [unit](@ref), [connection](@ref) or storage [node](@ref) can be accounted for by defining the parameter [fixed\_annual\_cost](@ref) together with the capacity of the entity:
+- For units: for all tuples of (unit, {node,node\_group}, direction) for which [fixed\_annual\_cost](@ref) and [capacity\_per\_unit](@ref) are defined, a fixed O&M cost term is added to the objective function.
+  The relevant (unit, scenario, timestep) tuples are taken from the [units\_invested\_available](@ref var_units_invested_available) indices for investable units, and from the `unit_flow` indices otherwise.
+- For connections: likewise, for all tuples of (connection, {node,node\_group}, direction) for which [fixed\_annual\_cost](@ref) and [capacity\_per\_connection](@ref) are defined.
+  The relevant (connection, scenario, timestep) tuples are taken from the [connections\_invested\_available](@ref var_connections_invested_available) indices for investable connections, and from the `connection_flow` indices otherwise.
+- For storages: for all nodes for which [fixed\_annual\_cost](@ref) is defined, a fixed O&M cost term on the storage capacity is added to the objective function.
+  The relevant (node, scenario, timestep) tuples are taken from the [storages\_invested\_available](@ref var_storages_invested_available) indices for investable storages, and from the `node_state` indices otherwise.
+
+The value of [fixed\_annual\_cost](@ref) is given per year (e.g. `EUR/MW/year`); it is converted into a cost per duration unit of the model by dividing it by the duration of the year in which each timestep begins.
 The total fixed O&M costs can be expressed as:
 
 ```math
@@ -62,9 +70,21 @@ The total fixed O&M costs can be expressed as:
  = 
 \sum_{(u,n,d,s,t)}
  \left( p^{existing\_units}_{(u,s,t)} + v^{units\_invested\_available}_{(u, s, t)} \right)
- \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} \cdot p^{fom\_cost}_{(u,s,t)} \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
+ \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} 
+ \cdot (p^{fixed\_annual\_cost}_{(u,s,t)} / \Delta y_t ) \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
++ \sum_{(conn,n,d,s,t)}
+ \left( p^{existing\_connections}_{(conn,s,t)} + v^{connections\_invested\_available}_{(conn, s, t)} \right)
+ \cdot p^{capacity\_per\_connection}_{(conn,n,d,s,t)} 
+ \cdot (p^{fixed\_annual\_cost}_{(conn,s,t)} / \Delta y_t ) \cdot p^{weight}_{(n,s,t)} \cdot \Delta t\\
++ \sum_{(n,s,t)}
+ \left( p^{existing\_storages}_{(n,s,t)} + v^{storages\_invested\_available}_{(n, s, t)} \right)
+ \cdot p^{node\_state\_capacity}_{(n,s,t)} 
+ \cdot (p^{fixed\_annual\_cost}_{(n,s,t)} / \Delta y_t ) \cdot p^{weight}_{(n,s,t)} \cdot \Delta t,\\
 \end{aligned}
 ```
+where $\Delta y_t$ is the duration of year $y$ where the investment timeslice $t$ begins;
+and $\Delta t$ is the duration of the investment timeslice $t$, which also accounts for the corresponding `Discounted duration` (see [Economic parameters](@ref)).
+The parameter $p^{node\_state\_capacity}$ is the product of [storage\_state\_max](@ref) and [storage\_state\_max\_fraction](@ref) parameters. 
 
 # Variable O&M costs
 

@@ -73,10 +73,11 @@ function _test_objective_setup()
     _load_test_data(url_in, test_data)
 end
 
-function test_fom_cost()
+function test_fixed_annual_cost_of_unit()
     # Common parameters for the test cases below.
     capacity_per_unit = 100
-    fom_cost = 8
+    fom_per_dur_unit = 1
+    fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
     weight_relative_to_parents = 0.6
     existing_units_template_default = 1 # case 1a
     existing_units = 2                  # case 1b, 2b
@@ -85,11 +86,11 @@ function test_fom_cost()
 
     # When given a non-investable unit without defining `existing_units`,
     # the model uses the template default `existing_units`=1.
-    @testset "fom_cost (unit) case 1a: non-investable, no existing_units defined" begin
+    @testset "fixed_annual_cost (unit) case 1a: non-investable, no existing_units defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
-                ["unit", "unit_ab", "fom_cost", fom_cost],
+                ["unit", "unit_ab", "fixed_annual_cost", fixed_annual_cost],
             ]
             relationship_parameter_values = [
                 ["unit__to_node", ["unit_ab", "node_b"], "capacity_per_unit", capacity_per_unit],
@@ -106,7 +107,7 @@ function test_fom_cost()
             m = run_spineopt(url_in; log_level=0, optimize=false)
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-            expected_obj = fom_cost * capacity_per_unit * sum(
+            expected_obj = fom_per_dur_unit * capacity_per_unit * sum(
                 existing_units_template_default * duration(t) * s_weight
                 for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
             )
@@ -116,11 +117,11 @@ function test_fom_cost()
     end
 
     # When a non-investable unit with `existing_units` explicitly defined ...
-    @testset "fom_cost (unit) case 1b: non-investable, existing_units defined" begin
+    @testset "fixed_annual_cost (unit) case 1b: non-investable, existing_units defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
-                ["unit", "unit_ab", "fom_cost", fom_cost],
+                ["unit", "unit_ab", "fixed_annual_cost", fixed_annual_cost],
                 ["unit", "unit_ab", "existing_units", existing_units],
             ]
             relationship_parameter_values = [
@@ -138,7 +139,7 @@ function test_fom_cost()
             m = run_spineopt(url_in; log_level=0, optimize=false)
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-            expected_obj = fom_cost * capacity_per_unit * sum(
+            expected_obj = fom_per_dur_unit * capacity_per_unit * sum(
                 existing_units * duration(t) * s_weight
                 for (s, t, s_weight) in zip(scenarios, time_slices, (1.0, weight_relative_to_parents))
             )
@@ -149,11 +150,11 @@ function test_fom_cost()
 
     # When given an investable unit without defining `existing_units`,
     # the model uses the new default `existing_units`=0.
-    @testset "fom_cost (unit) case 2a: investable, no existing_units defined" begin
+    @testset "fixed_annual_cost (unit) case 2a: investable, no existing_units defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
-                ["unit", "unit_ab", "fom_cost", fom_cost],
+                ["unit", "unit_ab", "fixed_annual_cost", fixed_annual_cost],
                 ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ]
             relationships = [
@@ -177,7 +178,7 @@ function test_fom_cost()
             var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-            expected_obj = fom_cost * capacity_per_unit * sum(
+            expected_obj = fom_per_dur_unit * capacity_per_unit * sum(
                 (
                     existing_units_fomulation_default + var_units_invested_available[unit(:unit_ab), s, t]
                 )
@@ -191,11 +192,11 @@ function test_fom_cost()
     end
 
     # When an investable unit with `existing_units` explicitly defined ...
-    @testset "fom_cost (unit) case 2b: investable, existing_units defined" begin
+    @testset "fixed_annual_cost (unit) case 2b: investable, existing_units defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
-                ["unit", "unit_ab", "fom_cost", fom_cost],
+                ["unit", "unit_ab", "fixed_annual_cost", fixed_annual_cost],
                 ["unit", "unit_ab", "existing_units", existing_units],
                 ["unit", "unit_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
             ]
@@ -220,7 +221,7 @@ function test_fom_cost()
             var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-            expected_obj = fom_cost * capacity_per_unit * sum(
+            expected_obj = fom_per_dur_unit * capacity_per_unit * sum(
                 (
                     existing_units + var_units_invested_available[unit(:unit_ab), s, t]
                 )
@@ -386,21 +387,21 @@ function test_fixed_annual_cost_of_connection()
     end
 end
 
-function test_storage_fixed_annual_cost()
+function test_fixed_annual_cost_of_storage()
     storage_state_max = 100
     fom_per_dur_unit = 1
-    storage_fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
+    fixed_annual_cost = fom_per_dur_unit * 8784 # year 0 is a leap year.
     weight_relative_to_parents = 0.6
     existing_storages_template_default = 1 # case 1a
     existing_storages = 2                  # case 1b, 2b
     existing_storages_fomulation_default = 0    # case 2a
     storage_investment_count_max_cumulative = 3 # case 2a, 2b
-    @testset "storage_fixed_annual_cost case 1a: non-investable, no existing_storages defined" begin
+    @testset "fixed_annual_cost (storage) case 1a: non-investable, no existing_storages defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
                 ["node", "node_b", "storage_state_max", storage_state_max],
-                ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+                ["node", "node_b", "fixed_annual_cost", fixed_annual_cost],
             ]
             relationship_parameter_values = [
                 ["stochastic_structure__stochastic_scenario", ["stochastic", "child"], "weight_relative_to_parents", weight_relative_to_parents]
@@ -426,12 +427,12 @@ function test_storage_fixed_annual_cost()
             @test observed_obj == expected_obj
         end
     end
-    @testset "storage_fixed_annual_cost case 1b: non-investable, existing_storages defined" begin
+    @testset "fixed_annual_cost (storage) case 1b: non-investable, existing_storages defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
                 ["node", "node_b", "storage_state_max", storage_state_max],
-                ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+                ["node", "node_b", "fixed_annual_cost", fixed_annual_cost],
                 ["node", "node_b", "existing_storages", existing_storages],
             ]
             relationship_parameter_values = [
@@ -458,12 +459,12 @@ function test_storage_fixed_annual_cost()
             @test observed_obj == expected_obj
         end
     end
-    @testset "storage_fixed_annual_cost case 2a: investable, no existing_storages defined" begin
+    @testset "fixed_annual_cost (storage) case 2a: investable, no existing_storages defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
                 ["node", "node_b", "storage_state_max", storage_state_max],
-                ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+                ["node", "node_b", "fixed_annual_cost", fixed_annual_cost],
                 ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ]
             relationships = [
@@ -501,12 +502,12 @@ function test_storage_fixed_annual_cost()
             @test observed_obj == expected_obj
         end
     end
-    @testset "storage_fixed_annual_cost case 2b: investable, existing_storages defined" begin
+    @testset "fixed_annual_cost (storage) case 2b: investable, existing_storages defined" begin
         with_connection_open(url_in) do
             _test_objective_setup()
             object_parameter_values = [
                 ["node", "node_b", "storage_state_max", storage_state_max],
-                ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+                ["node", "node_b", "fixed_annual_cost", fixed_annual_cost],
                 ["node", "node_b", "existing_storages", existing_storages],
                 ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ]
@@ -796,9 +797,9 @@ function test_units_on_cost()
 end
 
 @testset "objective" begin
-    test_fom_cost()
+    test_fixed_annual_cost_of_unit()
     test_fixed_annual_cost_of_connection()
-    test_storage_fixed_annual_cost()
+    test_fixed_annual_cost_of_storage()
     test_fuel_cost()
     test_unit_investment_cost()
     test_balance_penalty()
