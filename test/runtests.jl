@@ -175,12 +175,12 @@ end
     # include("constraints/constraint_unit.jl")
     # include("constraints/constraint_node.jl")
     # include("constraints/constraint_connection.jl")
-    include("constraints/constraint_acflow.jl")
+    # include("constraints/constraint_acflow.jl")
     # include("objective/objective.jl") # CRASHES with multithreading?
     # include("constraints/constraint_user_constraint.jl")
     # include("constraints/constraint_investment_group.jl")
-    include("validation/validation_acflow.jl")
-
+    #include("validation/validation_acflow.jl")
+    include("validation/validation_acflow_nonln.jl")
     # include("run_spineopt.jl")
     # include("run_spineopt_benders.jl")
     # include("run_spineopt_multi_stage.jl")

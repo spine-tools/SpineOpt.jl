@@ -2673,13 +2673,6 @@
             "The number of 'sub storages' aggregated to form the modelled `node`."
         ],
         [
-            "node", 
-            "has_voltage", 
-            false, 
-            "boolean_value_list", 
-            "A boolean flag for whether a `node` has voltage modelled with AC power flow."
-        ],
-        [
             "node",
             "is_non_spinning",
             false,
