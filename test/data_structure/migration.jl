@@ -444,14 +444,18 @@ function _test_dummy_migrations_functions()
 	end
 end
 
-function _test_major_upgrade_1()
+function _test_major_upgrade_1(; template_on_top=false)
 	log_level = 0
-	@testset "major_upgrade_1" begin # Non-comprehensive migration test. Samples every sub-function, though.
+	# Non-comprehensive migration test. Samples every sub-function, though.
+	# With `template_on_top`, the latest template is imported before migrating (as if the new parameters, classes and
+	# lists were already added by hand), which should give the same result.
+	@testset "major_upgrade_1$(template_on_top ? " with latest template on top" : "")" begin
 		original_data = Dict(
 			:object_classes => [
 				"commodity",
 				"connection",
 				"investment_group",
+				"model",
 				"node",
 				"unit",
 				"user_constraint"
@@ -481,16 +485,24 @@ function _test_major_upgrade_1()
 				("unit__to_node__user_constraint", ("u", "n", "uc")),
 				("unit__node__node", ("u", "n", "n")),
 			],
+			:alternatives => ["alt_ts"],
 			:object_parameters => [
 				("commodity", "commodity_lodf_tolerance"),
 				("unit", "fix_units_out_of_service"),
 				("unit", "units_unavailable"),
+				("node", "storage_fom_cost", 0.5),
+				("model", "duration_unit", "hour"),
 				("user_constraint", "include_in_non_representative_periods")
 			],
 			:object_parameter_values => [
 				("commodity", "com", "commodity_lodf_tolerance", 1),
 				("unit", "u", "fix_units_out_of_service", 1),
 				("unit", "u", "units_unavailable", 2),
+				("node", "n", "storage_fom_cost", 2.5),
+				(
+					"node", "n", "storage_fom_cost",
+					unparse_db_value(TimeSeries([DateTime(2000), DateTime(2001)], [1.0, 2.0])), "alt_ts"
+				),
 				("user_constraint", "uc", "include_in_non_representative_periods", true),
 			],
 			:relationship_parameters => [
@@ -529,6 +541,11 @@ function _test_major_upgrade_1()
 		)
 		with_connection_open(url_in) do
     		_load_test_data_without_template(url_in, original_data)
+    		if template_on_top
+    			template = deepcopy(SpineOpt.template())
+    			filter!(x -> x[1:2] != ["settings", "version"], template["parameter_definitions"])
+    			SpineInterface.import_data(url_in, template, "Import latest template")
+    		end
     		SpineOpt.major_upgrade_1(url_in, log_level) # This runs the migration.
     		migrated_data = export_data(url_in) # Export migrated data (required for examining parameter value lists)
     		Y = Bind() # Empty Bind for loading DB into.
@@ -544,6 +561,18 @@ function _test_major_upgrade_1()
     		@test Y.out_of_service_count_fix(unit=Y.unit(:u)) == 3 # Combined parameters sum.
     		@test !in(:fix_units_out_of_service, param_names) # Old parameter deleted.
     		@test !in(:units_unavailable, param_names) # Old parameter deleted.
+    		@test !in(:storage_fom_cost, param_names) # Old parameter deleted.
+    		storage_cost_by_alt = Dict( # Per-hour cost scaled to per-year, in every alternative.
+    			x[5] => parse_db_value(x[4])
+    			for x in migrated_data["parameter_values"] if x[3] == "storage_fixed_annual_cost"
+    		)
+    		@test storage_cost_by_alt["Base"] == 2.5 * 8760
+    		@test storage_cost_by_alt["alt_ts"].values == [1.0, 2.0] .* 8760 # Indexed values scaled element-wise.
+    		storage_cost_default = only( # Default value scaled too.
+    			parse_db_value(x[3])
+    			for x in migrated_data["parameter_definitions"] if x[1] == "node" && x[2] == "storage_fixed_annual_cost"
+    		)
+    		@test storage_cost_default == 0.5 * 8760
     		# Check that all necessary superclasses are created correctly.
     		@test only(Y.unit__to_node()) == (unit=Y.unit(:u), node=Y.node(:n)) # Correct entities
     		@test only(Y.node__to_unit()) == (node=Y.node(:n), unit=Y.unit(:u)) # Correct entities
@@ -593,9 +622,9 @@ function _test_major_upgrade_1()
     		@test !in("commodity_physics_list", keys(parameter_value_lists)) # Old list removed.
     		@test !in(:has_voltage_angle, param_names) # Converted parameter removed.
     		@test !in(:pressure_physics, param_names) # Converted parameter removed.
-    		@test parameter_value_lists["solver_lp_list"] == ["HiGHS.jl"] # Correct list elements.
+    		@test "HiGHS.jl" in parameter_value_lists["solver_lp_list"] # Correct list elements.
     		@test !in("db_lp_solver_list", keys(parameter_value_lists)) # Old list removed.
-    		@test parameter_value_lists["solver_mip_list"] == ["Gurobi.jl"] # Correct list elements.
+    		@test "Gurobi.jl" in parameter_value_lists["solver_mip_list"] # Correct list elements.
     		@test !in("db_mip_solver_list", keys(parameter_value_lists)) # Old list removed.
     		@test Set(parameter_value_lists["balance_type_list"]) == Set(
     			["none", "node_balance", "group_balance"] # Correct list elements.
@@ -608,6 +637,664 @@ function _test_major_upgrade_1()
     		@test !in("unit_investment_variable_type_list", keys(parameter_value_lists)) # Old list removed.
     	end
     end
+end
+
+function _test_rename_storage_fixed_annual_cost()
+	@testset "rename_storage_fixed_annual_cost" begin
+		data = Dict(
+			:object_classes => ["node"],
+			:objects => [("node", "n")],
+			:object_parameters => [("node", "storage_fixed_annual_cost")],
+			:object_parameter_values => [("node", "n", "storage_fixed_annual_cost", 100)],
+		)
+		with_connection_open(url_in) do
+    		_load_test_data_without_template(url_in, data)
+    		@test SpineOpt.rename_storage_fixed_annual_cost(url_in, 0) === true
+    		run_request(url_in, "call_method", ("commit_session", "rename_storage_fixed_annual_cost"))
+    		Y = Bind()
+    		using_spinedb(url_in, Y)
+    		@test Y.fixed_annual_cost(node=Y.node(:n)) == 100
+    		@test !in(:storage_fixed_annual_cost, getproperty.(parameters(Y), :name))
+    	end
+    end
+end
+
+# Parameter values of the given entity by alternative name
+function _parameter_value_by_alternative(db_url, class_name, par_name, entity_byname)
+	pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+		"entity_class_name" => class_name, "parameter_definition_name" => par_name)
+	)
+	# NOTE: Resolves values from parameter value lists, which may have been renamed in the session
+	vals = SpineOpt.create_dict_from_parameter_value_items(db_url, pvals)
+	Dict(get(vals, entity_byname, []))
+end
+
+# Standard output printed by `f`
+function _captured_output(f)
+	path, io = mktemp()
+	redirect_stdout(f, io)
+	close(io)
+	read(path, String)
+end
+
+function _test_rename_parameter_to_existing_parameter()
+	@testset "rename_parameter to an existing parameter" begin
+		data = Dict(
+			:object_classes => ["node"],
+			:objects => [("node", "n1"), ("node", "n2")],
+			:alternatives => ["alt"],
+			:object_parameters => [
+				("node", "storage_fom_cost", 0.5, nothing, "Old description"),
+				("node", "storage_fixed_annual_cost"), # Hand-made new parameter.
+			],
+			:object_parameter_values => [
+				("node", "n1", "storage_fom_cost", 1.0),
+				("node", "n1", "storage_fom_cost", 2.0, "alt"),
+				("node", "n1", "storage_fixed_annual_cost", 100.0), # Conflicts with a migrated value.
+				("node", "n2", "storage_fixed_annual_cost", 200.0), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.scale_parameter_values(url_in, [(("node", "storage_fom_cost"), 8760)], 0)
+			SpineOpt.rename_parameter(url_in, "node", "storage_fom_cost", "storage_fixed_annual_cost", "", 0)
+			pdef_old = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "storage_fom_cost")
+			)
+			@test isempty(pdef_old) # Old parameter deleted.
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "storage_fixed_annual_cost")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 0.5 * 8760 # Migrated default wins.
+			@test pdef["description"] == "Old description"
+			n1_vals = _parameter_value_by_alternative(url_in, "node", "storage_fixed_annual_cost", ["n1"])
+			@test n1_vals == Dict("Base" => 1.0 * 8760, "alt" => 2.0 * 8760) # Migrated values win.
+			n2_vals = _parameter_value_by_alternative(url_in, "node", "storage_fixed_annual_cost", ["n2"])
+			@test n2_vals == Dict("Base" => 200.0) # Hand-made value kept, and not scaled.
+		end
+	end
+end
+
+function _test_update_ordering_to_existing_parameter_definition()
+	@testset "update_ordering_of_multidimensional_classes to an existing parameter definition" begin
+		data = Dict(
+			:object_classes => ["node", "unit"],
+			:relationship_classes => [("unit__from_node", ["unit", "node"]), ("node__to_unit", ["node", "unit"])],
+			:relationship_parameters => [
+				("unit__from_node", "unit_capacity", 1.0, nothing, "Old description"),
+				("node__to_unit", "unit_capacity", 2.0, nothing, "Hand-made description"),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.update_ordering_of_multidimensional_classes(
+				url_in, [("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1], true)], 0
+			)
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node__to_unit", "name" => "unit_capacity")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 1.0 # Migrated definition wins.
+			@test pdef["description"] == "Old description"
+		end
+	end
+end
+
+function _test_rename_storage_fixed_annual_cost_to_existing_parameter()
+	@testset "rename_storage_fixed_annual_cost to an existing fixed_annual_cost" begin
+		data = Dict(
+			:object_classes => ["node"],
+			:objects => [("node", "n1"), ("node", "n2")],
+			:object_parameters => [("node", "storage_fixed_annual_cost"), ("node", "fixed_annual_cost")],
+			:object_parameter_values => [
+				("node", "n1", "storage_fixed_annual_cost", 100),
+				("node", "n1", "fixed_annual_cost", 1), # Conflicts with the migrated value.
+				("node", "n2", "fixed_annual_cost", 2), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			@test SpineOpt.rename_storage_fixed_annual_cost(url_in, 0) === true
+			run_request(url_in, "call_method", ("commit_session", "rename_storage_fixed_annual_cost"))
+			Y = Bind()
+			using_spinedb(url_in, Y)
+			@test !in(:storage_fixed_annual_cost, getproperty.(parameters(Y), :name))
+			@test Y.fixed_annual_cost(node=Y.node(:n1)) == 100
+			@test Y.fixed_annual_cost(node=Y.node(:n2)) == 2
+		end
+	end
+end
+
+function _test_major_upgrade_1_storage_fom_cost_per_minute()
+	@testset "major_upgrade_1 storage_fom_cost for a minute-based model" begin
+		data = Dict(
+			:object_classes => ["model", "node"],
+			:objects => [("model", "m"), ("node", "n")],
+			:parameter_value_lists => [("duration_unit_list", "hour"), ("duration_unit_list", "minute")],
+			:object_parameters => [
+				("model", "duration_unit", "hour", "duration_unit_list"), ("node", "storage_fom_cost", 0.5)
+			],
+			:object_parameter_values => [
+				("model", "m", "duration_unit", "minute"), ("node", "n", "storage_fom_cost", 1.0)
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			output = _captured_output() do
+				SpineOpt.major_upgrade_1(url_in, 0)
+			end
+			@test occursin("Info: all models use the duration unit `minute`", output)
+			n_vals = _parameter_value_by_alternative(url_in, "node", "storage_fixed_annual_cost", ["n"])
+			@test n_vals == Dict("Base" => 1.0 * 525600) # Per-minute cost -> per-year cost.
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "storage_fixed_annual_cost")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 0.5 * 525600 # Default scaled.
+		end
+	end
+end
+
+function _test_refactor_fom_cost()
+	@testset "refactor_fom_cost" begin
+		data = Dict(
+			:object_classes => ["model", "unit"],
+			:objects => [("unit", "u")],
+			:alternatives => ["alt"],
+			:object_parameters => [("model", "duration_unit", "hour"), ("unit", "fom_cost", 0.5)],
+			:object_parameter_values => [("unit", "u", "fom_cost", 1.0), ("unit", "u", "fom_cost", 2.0, "alt")],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			pdef_old = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "unit", "name" => "fom_cost")
+			)
+			@test isempty(pdef_old) # Old parameter deleted.
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "unit", "name" => "fixed_annual_cost")
+			)
+			@test parse_db_value(pdef["default_value"], pdef["default_type"]) == 0.5 * 8760 # Default scaled.
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 8760, "alt" => 2.0 * 8760) # Per-hour cost -> per-year cost.
+		end
+	end
+end
+
+# Data for `refactor_fom_cost` with models using the given `duration_unit`s (`nothing` for the default value).
+# The `duration_unit` definition uses a parameter value list, unless any value is not in it.
+function _fom_cost_data_with_duration_units(duration_units...; default="hour")
+	models = ["m$i" for i in eachindex(duration_units)]
+	use_list = all(x -> isnothing(x) || x in ("hour", "minute"), (default, duration_units...))
+	Dict(
+		:object_classes => ["model", "unit"],
+		:objects => [[("model", m) for m in models]; ("unit", "u")],
+		:parameter_value_lists => use_list ? [("duration_unit_list", "hour"), ("duration_unit_list", "minute")] : [],
+		:object_parameters => [
+			use_list ? ("model", "duration_unit", default, "duration_unit_list") : ("model", "duration_unit", default);
+			("unit", "fom_cost")
+		],
+		:object_parameter_values => [
+			[("model", m, "duration_unit", dur_unit) for (m, dur_unit) in zip(models, duration_units) if !isnothing(dur_unit)];
+			("unit", "u", "fom_cost", 1.0)
+		],
+	)
+end
+
+function _test_refactor_fom_cost_per_minute()
+	@testset "refactor_fom_cost for a minute-based model" begin
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units("minute"))
+			output = _captured_output() do
+				@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			end
+			@test occursin("Info: all models use the duration unit `minute`", output)
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 525600) # Per-minute cost -> per-year cost.
+		end
+	end
+end
+
+function _test_refactor_fom_cost_with_mixed_duration_units()
+	@testset "refactor_fom_cost for models with different duration units" begin
+		with_connection_open(url_in) do
+			# `m1` uses the default `hour`.
+			_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units(nothing, "minute"))
+			output = _captured_output() do
+				@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			end
+			@test occursin("different duration units (hour, minute)", output)
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 8760) # Converted per hour.
+		end
+	end
+end
+
+function _test_refactor_fom_cost_without_models()
+	@testset "refactor_fom_cost without models" begin
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units(; default="minute"))
+			output = _captured_output() do
+				@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			end
+			@test occursin("Info: no `model` found, so the default `duration_unit` `minute` is used", output)
+			u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+			@test u_vals == Dict("Base" => 1.0 * 525600) # Converted per the default duration unit.
+		end
+	end
+end
+
+function _test_refactor_fom_cost_with_unknown_duration_units()
+	@testset "refactor_fom_cost with unknown duration units" begin
+		cases = [
+			# (description, data, expected warning)
+			(
+				"unknown explicit value",
+				_fom_cost_data_with_duration_units("second"),
+				"model `m1` has the duration unit `second` in alternative `Base`",
+			),
+			(
+				"missing default value for a model without a value",
+				_fom_cost_data_with_duration_units(nothing; default=nothing),
+				"the default value of `duration_unit` is missing, but it is needed for model(s) without a value: `m1`",
+			),
+			(
+				"unknown default value without models",
+				_fom_cost_data_with_duration_units(; default="day"),
+				"the default value of `duration_unit` is `day`, which is needed since there is no `model`",
+			),
+			(
+				"missing parameter definition",
+				Dict(
+					:object_classes => ["model", "unit"],
+					:objects => [("model", "m1"), ("unit", "u")],
+					:object_parameters => [("unit", "fom_cost")],
+					:object_parameter_values => [("unit", "u", "fom_cost", 1.0)],
+				),
+				"the parameter definition of `duration_unit` is missing, but its default value is needed for model(s) without a value: `m1`",
+			),
+		]
+		for (description, data, msg) in cases
+			@testset "$description" begin
+				with_connection_open(url_in) do
+					_load_test_data_without_template(url_in, data)
+					output = _captured_output() do
+						@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+					end
+					@test occursin("are unknown, and are taken as `hour`", output)
+					@test occursin(msg, output)
+					u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+					@test u_vals == Dict("Base" => 1.0 * 8760) # Taken as hour.
+				end
+			end
+		end
+		@testset "unknown and minute" begin
+			with_connection_open(url_in) do
+				_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units("minute", "second"))
+				output = _captured_output() do
+					@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+				end
+				@test occursin("model `m2` has the duration unit `second`", output)
+				@test occursin("different duration units (hour, minute)", output) # The unknown one is taken as hour.
+				u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+				@test u_vals == Dict("Base" => 1.0 * 8760)
+			end
+		end
+		@testset "unknown default value not needed" begin
+			with_connection_open(url_in) do
+				_load_test_data_without_template(url_in, _fom_cost_data_with_duration_units("minute"; default="day"))
+				output = _captured_output() do
+					@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+				end
+				@test !occursin("unknown", output)
+				u_vals = _parameter_value_by_alternative(url_in, "unit", "fixed_annual_cost", ["u"])
+				@test u_vals == Dict("Base" => 1.0 * 525600)
+			end
+		end
+	end
+end
+
+function _test_refactor_fom_cost_to_existing_parameter()
+	@testset "refactor_fom_cost to an existing fixed_annual_cost" begin
+		data = Dict(
+			:object_classes => ["model", "unit"],
+			:objects => [("model", "m"), ("unit", "u1"), ("unit", "u2")],
+			:object_parameters => [
+				("model", "duration_unit", "hour"), ("unit", "fom_cost"), ("unit", "fixed_annual_cost")
+			],
+			:object_parameter_values => [
+				("unit", "u1", "fom_cost", 1),
+				("unit", "u1", "fixed_annual_cost", 100), # Conflicts with the migrated value.
+				("unit", "u2", "fixed_annual_cost", 200), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			@test SpineOpt.refactor_fom_cost(url_in, 0) === true
+			run_request(url_in, "call_method", ("commit_session", "refactor_fom_cost"))
+			Y = Bind()
+			using_spinedb(url_in, Y)
+			@test !in(:fom_cost, getproperty.(parameters(Y), :name))
+			@test Y.fixed_annual_cost(unit=Y.unit(:u1)) == 8760 # Migrated value wins, scaled.
+			@test Y.fixed_annual_cost(unit=Y.unit(:u2)) == 200 # Hand-made value kept, and not scaled.
+		end
+	end
+end
+
+function _test_update_ordering_to_existing_entities()
+	@testset "update_ordering_of_multidimensional_classes to existing entities" begin
+		data = Dict(
+			:object_classes => ["node", "unit"],
+			:objects => [("node", "n1"), ("node", "n2"), ("unit", "u")],
+			:relationship_classes => [("unit__from_node", ["unit", "node"]), ("node__to_unit", ["node", "unit"])],
+			:relationships => [
+				("unit__from_node", ["u", "n1"]),
+				("unit__from_node", ["u", "n2"]),
+				("node__to_unit", ["n1", "u"]), # Hand-made, also migrated.
+				("node__to_unit", ["n2", "u"]), # Hand-made, also migrated.
+			],
+			:relationship_parameters => [("unit__from_node", "vom_cost"), ("node__to_unit", "vom_cost")],
+			:relationship_parameter_values => [
+				("unit__from_node", ["u", "n1"], "vom_cost", 1.0),
+				("unit__from_node", ["u", "n2"], "vom_cost", 2.0),
+				("node__to_unit", ["n1", "u"], "vom_cost", 10.0), # Conflicts with a migrated value.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.update_ordering_of_multidimensional_classes(
+				url_in, [("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1], true)], 0
+			)
+			@test SpineOpt.entity_bynames(url_in, "node__to_unit") == Set([["n1", "u"], ["n2", "u"]])
+			@test isempty(run_request(url_in, "call_method", ("get_entity_class_item",), Dict("name" => "unit__from_node")))
+			# All values migrated, also after the first already existing entity; migrated values win.
+			@test _parameter_value_by_alternative(url_in, "node__to_unit", "vom_cost", ["n1", "u"]) == Dict("Base" => 1.0)
+			@test _parameter_value_by_alternative(url_in, "node__to_unit", "vom_cost", ["n2", "u"]) == Dict("Base" => 2.0)
+		end
+	end
+end
+
+function _test_move_parameter_to_existing_grid()
+	@testset "move_parameter with and without existing grid entities" begin
+		data = Dict(
+			:object_classes => ["node", "grid"],
+			:relationship_classes => [("node__grid", ["node", "grid"])],
+			:objects => [("node", "n1"), ("node", "n2"), ("grid", "n2")], # Grid `n2` is hand-made.
+			:relationships => [("node__grid", ["n2", "n2"])],
+			:object_parameters => [("node", "has_voltage_angle"), ("grid", "physics_type")],
+			:object_parameter_values => [
+				("node", "n1", "has_voltage_angle", true),
+				("node", "n2", "has_voltage_angle", false),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.move_parameter(url_in, 0, "has_voltage_angle", "voltage_angle_physics", 3)
+			@test SpineOpt.entity_bynames(url_in, "grid") == Set([["n1"], ["n2"]])
+			@test SpineOpt.entity_bynames(url_in, "node__grid") == Set([["n1", "n1"], ["n2", "n2"]])
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["n1"]) == Dict(
+				"Base" => "voltage_angle_physics"
+			)
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["n2"]) == Dict("Base" => "none")
+			pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+				"entity_class_name" => "node", "name" => "has_voltage_angle")
+			)
+			@test isempty(pdef)
+		end
+	end
+end
+
+function _test_create_superclasses_and_subclasses_with_existing_classes()
+	@testset "create_superclasses_and_subclasses with existing classes" begin
+		data = Dict(
+			:object_classes => ["node", "unit", "unit_flow"], # `unit_flow` hand-made.
+			:relationship_classes => [
+				("node__to_unit", ["node", "unit"]), # Hand-made, with the right dimensions.
+				("unit_flow__unit_flow", ["unit", "unit"]), # Hand-made, with wrong dimensions.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.create_superclasses_and_subclasses(url_in, 0)
+			classes = Dict(
+				x["name"] => collect(x["dimension_name_list"])
+				for x in run_request(url_in, "call_method", ("get_entity_class_items",), Dict())
+			)
+			@test classes["unit__to_node"] == ["unit", "node"]
+			@test classes["node__to_unit"] == ["node", "unit"]
+			@test classes["unit_flow"] == []
+			@test classes["unit_flow__unit_flow"] == ["unit_flow", "unit_flow"] # Replaced.
+			@test classes["unit_flow__investment_group"] == ["unit_flow", "investment_group"]
+			@test classes["unit_flow__user_constraint"] == ["unit_flow", "user_constraint"]
+			superclass_subclass = Set(
+				(x["superclass_name"], x["subclass_name"])
+				for x in run_request(url_in, "call_method", ("get_superclass_subclass_items",), Dict())
+			)
+			@test superclass_subclass == Set([("unit_flow", "node__to_unit"), ("unit_flow", "unit__to_node")])
+		end
+	end
+end
+
+function _test_rename_classes_to_existing_class()
+	@testset "rename_classes to an existing class" begin
+		data = Dict(
+			:object_classes => ["commodity", "grid"], # `grid` hand-made.
+			:objects => [("commodity", "c1"), ("commodity", "c2"), ("grid", "c1"), ("grid", "g")],
+			:object_parameters => [("commodity", "commodity_lodf_tolerance"), ("grid", "commodity_lodf_tolerance")],
+			:object_parameter_values => [
+				("commodity", "c1", "commodity_lodf_tolerance", 0.1),
+				("commodity", "c2", "commodity_lodf_tolerance", 0.2),
+				("grid", "c1", "commodity_lodf_tolerance", 1.0), # Conflicts with a migrated value.
+				("grid", "g", "commodity_lodf_tolerance", 2.0), # No conflict.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.rename_classes(url_in, [("commodity", "grid")], 0)
+			@test isempty(run_request(url_in, "call_method", ("get_entity_class_item",), Dict("name" => "commodity")))
+			@test SpineOpt.entity_bynames(url_in, "grid") == Set([["c1"], ["c2"], ["g"]])
+			@test _parameter_value_by_alternative(url_in, "grid", "commodity_lodf_tolerance", ["c1"]) == Dict("Base" => 0.1)
+			@test _parameter_value_by_alternative(url_in, "grid", "commodity_lodf_tolerance", ["c2"]) == Dict("Base" => 0.2)
+			@test _parameter_value_by_alternative(url_in, "grid", "commodity_lodf_tolerance", ["g"]) == Dict("Base" => 2.0)
+		end
+	end
+end
+
+# Values of the given parameter value list, in order
+_list_values(db_url, list_name) = [
+	parse_db_value(x["value"], x["type"])
+	for x in sort(
+		run_request(db_url, "call_method", ("find_list_values",), Dict("parameter_value_list_name" => list_name));
+		by=x -> x["index"],
+	)
+]
+
+function _test_rename_pval_list_to_existing_list()
+	@testset "rename_parameter_value_lists to an existing list" begin
+		data = Dict(
+			:object_classes => ["grid"],
+			:objects => [("grid", "g1"), ("grid", "g2")],
+			:parameter_value_lists => [
+				("commodity_physics_list", "commodity_physics_lodf"),
+				("commodity_physics_list", "commodity_physics_none"),
+				("grid_physics_list", "lodf_physics"), # Hand-made, already with new values.
+				("grid_physics_list", "none"),
+			],
+			:object_parameters => [
+				("grid", "physics_type", nothing, "commodity_physics_list"),
+				("grid", "hand_made_physics", nothing, "grid_physics_list"),
+				("grid", "custom_physics", "commodity_physics_lodf", "commodity_physics_list"), # Custom default.
+			],
+			:object_parameter_values => [
+				("grid", "g1", "physics_type", "commodity_physics_lodf"),
+				("grid", "g2", "physics_type", "commodity_physics_none"),
+				("grid", "g1", "hand_made_physics", "lodf_physics"),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.rename_parameter_value_lists(url_in, [("commodity_physics_list", "grid_physics_list")], 0)
+			SpineOpt.rename_list_values(url_in, [("grid_physics_list", Dict(
+				"commodity_physics_lodf" => "lodf_physics",
+				"commodity_physics_none" => "none",
+				"commodity_physics_ptdf" => "ptdf_physics",
+			))], 0)
+			lists = [x["name"] for x in run_request(url_in, "call_method", ("get_parameter_value_list_items",), Dict())]
+			@test lists == ["grid_physics_list"]
+			@test _list_values(url_in, "grid_physics_list") == ["lodf_physics", "none"] # Duplicates merged.
+			for par in ("physics_type", "hand_made_physics", "custom_physics")
+				pdef = run_request(url_in, "call_method", ("get_item", "parameter_definition"), Dict(
+					"entity_class_name" => "grid", "name" => par)
+				)
+				@test pdef["parameter_value_list_name"] == "grid_physics_list"
+			end
+			# The default is retargeted to the existing list value, rather than left referring to the removed one.
+			run_request(url_in, "call_method", ("commit_session", "rename_pval_list_to_existing_list"))
+			custom_pdef = only(x for x in export_data(url_in)["parameter_definitions"] if x[2] == "custom_physics")
+			@test parse_db_value(custom_pdef[3]...) == "lodf_physics"
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g1"]) == Dict("Base" => "lodf_physics")
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["g2"]) == Dict("Base" => "none")
+			@test _parameter_value_by_alternative(url_in, "grid", "hand_made_physics", ["g1"]) == Dict(
+				"Base" => "lodf_physics"
+			)
+		end
+	end
+end
+
+function _test_merge_variable_type_lists_with_existing_list()
+	@testset "merge_variable_type_lists with an existing variable_type_list in use" begin
+		data = Dict(
+			:object_classes => ["unit"],
+			:objects => [("unit", "u")],
+			:parameter_value_lists => [
+				("unit_online_variable_type_list", "unit_online_variable_type_binary"),
+				("unit_online_variable_type_list", "unit_online_variable_type_integer"),
+				("unit_online_variable_type_list", "unit_online_variable_type_linear"),
+				("unit_online_variable_type_list", "unit_online_variable_type_none"),
+				("variable_type_list", "linear"), # Hand-made.
+				("variable_type_list", "integer"),
+			],
+			:object_parameters => [
+				("unit", "online_variable_type", "unit_online_variable_type_linear", "unit_online_variable_type_list"),
+				("unit", "hand_made_variable_type", nothing, "variable_type_list"),
+			],
+			:object_parameter_values => [
+				("unit", "u", "online_variable_type", "unit_online_variable_type_binary"),
+				("unit", "u", "hand_made_variable_type", "integer"),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.merge_variable_type_lists(url_in, 0) # Used to throw an error.
+			lists = [x["name"] for x in run_request(url_in, "call_method", ("get_parameter_value_list_items",), Dict())]
+			@test lists == ["variable_type_list"]
+			@test Set(_list_values(url_in, "variable_type_list")) == Set(["binary", "integer", "linear", "none"])
+			@test _parameter_value_by_alternative(url_in, "unit", "online_variable_type", ["u"]) == Dict("Base" => "binary")
+			@test _parameter_value_by_alternative(url_in, "unit", "hand_made_variable_type", ["u"]) == Dict(
+				"Base" => "integer"
+			)
+		end
+	end
+end
+
+function _test_hand_made_list_values_in_migration()
+	@testset "hand-made parameter values from a parameter value list during migration" begin
+		data = Dict(
+			:object_classes => ["commodity", "grid"], # `grid` hand-made.
+			:objects => [("commodity", "elec"), ("grid", "h2"), ("grid", "gas")],
+			:parameter_value_lists => [
+				("commodity_physics_list", "commodity_physics_lodf"),
+				("commodity_physics_list", "commodity_physics_none"),
+				("commodity_physics_list", "commodity_physics_ptdf"),
+				("grid_physics_list", "lodf_physics"), # Hand-made, with an invalid value.
+				("grid_physics_list", "bogus_physics"),
+			],
+			:object_parameters => [
+				("commodity", "commodity_physics", nothing, "commodity_physics_list"),
+				("grid", "physics_type", nothing, "grid_physics_list"), # Hand-made.
+			],
+			:object_parameter_values => [
+				("commodity", "elec", "commodity_physics", "commodity_physics_ptdf"),
+				("grid", "h2", "physics_type", "lodf_physics"), # Valid only after renaming the list values.
+				("grid", "gas", "physics_type", "bogus_physics"), # Never valid.
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			output = _captured_output() do
+				SpineOpt.rename_parameter(url_in, "commodity", "commodity_physics", "physics_type", "", 0)
+				SpineOpt.rename_classes(url_in, [("commodity", "grid")], 0)
+				SpineOpt.rename_parameter_value_lists(url_in, [("commodity_physics_list", "grid_physics_list")], 0)
+				SpineOpt.rename_list_values(url_in, [("grid_physics_list", Dict(
+					"commodity_physics_lodf" => "lodf_physics",
+					"commodity_physics_none" => "none",
+					"commodity_physics_ptdf" => "ptdf_physics",
+				))], 0)
+				SpineOpt.warn_about_values_not_in_template_lists(url_in, 0)
+			end
+			# All values are kept.
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["elec"]) == Dict("Base" => "ptdf_physics")
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["h2"]) == Dict("Base" => "lodf_physics")
+			@test _parameter_value_by_alternative(url_in, "grid", "physics_type", ["gas"]) == Dict("Base" => "bogus_physics")
+			@test Set(_list_values(url_in, "grid_physics_list")) == Set(
+				["lodf_physics", "none", "ptdf_physics", "bogus_physics"]
+			)
+			# Only the invalid value is reported, with its parameter, class, entity and alternative.
+			@test occursin(
+				"The value `bogus_physics` of `physics_type` for the `grid` entity (\"gas\",) in alternative `Base` " *
+				"is not valid in the parameter value list `grid_physics_list`",
+				output,
+			)
+			@test !occursin("The value `lodf_physics`", output)
+			@test !occursin("The value `ptdf_physics`", output)
+		end
+	end
+end
+
+# Entity alternatives of the given class by entity byname and alternative name
+_entity_alternatives(db_url, class_name) = Dict(
+	(collect(x["entity_byname"]), x["alternative_name"]) => x["active"]
+	for x in run_request(db_url, "call_method", ("get_entity_alternative_items",), Dict("entity_class_name" => class_name))
+)
+
+# Group memberships in the given class as (group name, member name)
+_entity_groups(db_url, class_name) = Set(
+	(x["group_name"], x["member_name"])
+	for x in run_request(db_url, "call_method", ("get_entity_group_items",), Dict("entity_class_name" => class_name))
+)
+
+function _test_entity_alternatives_and_groups_in_migration()
+	@testset "entity alternatives and groups in update_ordering_of_multidimensional_classes" begin
+		data = Dict(
+			:object_classes => ["node", "unit", "commodity", "grid"], # `grid` hand-made.
+			:objects => [
+				("node", "n"), ("unit", "u"),
+				("commodity", "c1"), ("commodity", "c2"), ("commodity", "cg"),
+				("grid", "c1"), ("grid", "g"),
+			],
+			:object_groups => [("commodity", "cg", "c1"), ("commodity", "cg", "c2")],
+			:relationship_classes => [("unit__from_node", ["unit", "node"])],
+			:relationships => [("unit__from_node", ["u", "n"])],
+			:alternatives => ["alt"],
+			:entity_alternatives => [
+				("commodity", "c1", "alt", false),
+				("grid", "c1", "alt", true), # Hand-made, conflicts with a migrated one.
+				("grid", "g", "alt", false), # Hand-made, no conflict.
+				("unit__from_node", ["u", "n"], "alt", false),
+			],
+		)
+		with_connection_open(url_in) do
+			_load_test_data_without_template(url_in, data)
+			SpineOpt.update_ordering_of_multidimensional_classes(
+				url_in, [("unit__from_node", "node__to_unit", ["node", "unit"], [2, 1], true)], 0
+			)
+			SpineOpt.rename_classes(url_in, [("commodity", "grid")], 0) # Merged into the existing `grid`.
+			@test _entity_alternatives(url_in, "node__to_unit") == Dict((["n", "u"], "alt") => false)
+			@test _entity_alternatives(url_in, "grid") == Dict(
+				(["c1"], "alt") => false, # Migrated one wins.
+				(["g"], "alt") => false,
+			)
+			@test _entity_groups(url_in, "grid") == Set([("cg", "c1"), ("cg", "c2")])
+		end
+	end
 end
 
 @testset "migration scripts" begin
@@ -623,4 +1310,25 @@ end
 	_test_translate_use_economic_representation__use_milestone_years()
 	_test_dummy_migrations_functions()
 	_test_major_upgrade_1()
+	_test_major_upgrade_1(; template_on_top=true)
+	_test_rename_storage_fixed_annual_cost()
+	_test_major_upgrade_1_storage_fom_cost_per_minute()
+	_test_refactor_fom_cost()
+	_test_refactor_fom_cost_per_minute()
+	_test_refactor_fom_cost_with_mixed_duration_units()
+	_test_refactor_fom_cost_without_models()
+	_test_refactor_fom_cost_with_unknown_duration_units()
+	# Migrations into already existing (e.g. hand-made) items
+	_test_rename_parameter_to_existing_parameter()
+	_test_update_ordering_to_existing_parameter_definition()
+	_test_rename_storage_fixed_annual_cost_to_existing_parameter()
+	_test_refactor_fom_cost_to_existing_parameter()
+	_test_update_ordering_to_existing_entities()
+	_test_move_parameter_to_existing_grid()
+	_test_create_superclasses_and_subclasses_with_existing_classes()
+	_test_rename_classes_to_existing_class()
+	_test_rename_pval_list_to_existing_list()
+	_test_merge_variable_type_lists_with_existing_list()
+	_test_hand_made_list_values_in_migration()
+	_test_entity_alternatives_and_groups_in_migration()
 end

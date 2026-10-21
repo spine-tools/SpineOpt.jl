@@ -66,6 +66,7 @@ pages = [
     "Database structure" => Any[
         "Basics of the data structure" => joinpath("concept_reference", "the_basics.md"),
         "Archetypes" => joinpath("concept_reference", "archetypes.md"),
+        "Data Structure Update Migration Guide" => joinpath("concept_reference", "major_upgrade_1_migration_guide.md"),        
     ],
     "Standard model framework" => Any[
         "Temporal Framework" => joinpath("advanced_concepts", "temporal_framework.md"),

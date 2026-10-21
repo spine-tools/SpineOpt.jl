@@ -247,6 +247,14 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
         (("temporal_block", "representative_periods_mapping"), "representative_blocks_by_period", ""),
     ]
 
+    # ((class, parameter name before renaming), multiplication factor)
+    # Scaling happens before renaming so that only the migrated values are scaled,
+    # not any values of an already existing (e.g. hand-made) new parameter.
+    parameters_to_be_scaled = [
+        # per-duration-unit cost -> per-year cost (storage_fixed_annual_cost)
+        (("node", "storage_fom_cost"), annual_scaling_factor),
+    ]
+
     # original class, new class
     classes_to_be_renamed = [
         ("commodity", "grid")
@@ -355,11 +363,17 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
         )
     ]
     @log log_level 0 string("Creating superclasses...")
-    @log log_level 0 string("Note: Check entity alternatives in classes related to the unit_flow superclass...")
-    rename_classes(db_url, [("unit__to_node", "unit__to_node_")], log_level)
+    # Move `unit__to_node` aside, so that it can be recreated as a subclass of `unit_flow`.
+    # NOTE: Copied instead of renamed, since spinedb_api may keep finding the entities of a renamed class under its
+    # old name (e.g. if they were looked up before, as when importing a template), blocking their re-addition.
+    update_ordering_of_multidimensional_classes(
+        db_url, [("unit__to_node", "unit__to_node_", ["unit", "node"], [1, 2], true)], log_level
+    )
     create_superclasses_and_subclasses(db_url, log_level)
     @log log_level 0 string("Update ordering of multidimensional classes...")
     update_ordering_of_multidimensional_classes(db_url, classes_to_be_updated, log_level)
+    @log log_level 0 string("Scaling parameter values...")
+    scale_parameter_values(db_url, parameters_to_be_scaled, log_level)
     @log log_level 0 string("Renaming parameters...")
     rename_parameters(db_url, parameters_to_be_renamed, log_level)
     @log log_level 0 string("Renaming classes...")
@@ -378,9 +392,11 @@ function major_upgrade_1(db_url, log_level; force::Bool=false, kwargs...)
     @log log_level 0 string("Renaming list values...")
     rename_list_values(db_url, list_values_to_be_renamed, log_level)
     @log log_level 0 string("Merging variable type lists...")
-    merge_variable_type_lists(db_url, log_level; force)
+    merge_variable_type_lists(db_url, log_level)
     @log log_level 0 string("Move node physics parameters to grid physics...")
     move_parameters(db_url, log_level)
+    @log log_level 0 string("Checking parameter values against the parameter value lists of the latest template...")
+    warn_about_values_not_in_template_lists(db_url, log_level)
     true
 end
 
@@ -399,7 +415,9 @@ function create_dict_from_parameter_value_items(db_url, pvals)
     existing_values = Dict{Any, Vector{Tuple{Any, Any}}}()
     for pval in pvals
         entity = pval["entity_byname"]
-        if pval["type"] == "list_value_ref"
+        # Values from a parameter value list are resolved via the list value,
+        # since `pval["value"]` is not updated when the list value is renamed
+        if pval["type"] == "list_value_ref" || !isnothing(get(pval, "list_value_id", nothing))
             list_value = run_request(db_url, "call_method", ("get_list_value_item",), Dict(
                 "id" => pval["list_value_id"])
             )
@@ -497,35 +515,60 @@ function create_superclasses_and_subclasses(db_url, log_level)
             )
         end
     end
-    # Add new classes
-    try
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit__to_node", "dimension_name_list" => ["unit", "node"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "node__to_unit", "dimension_name_list" => ["node", "unit"])), log_level
-        )
-         check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow", "dimension_name_list" => [])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow__unit_flow", "dimension_name_list" => ["unit_flow", "unit_flow"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow__investment_group", "dimension_name_list" => ["unit_flow", "investment_group"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
-            "name" => "unit_flow__user_constraint", "dimension_name_list" => ["unit_flow", "user_constraint"])), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
-            "superclass_name" => "unit_flow", "subclass_name" => "node__to_unit")), log_level
-        )
-        check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
-            "superclass_name" => "unit_flow", "subclass_name" => "unit__to_node")), log_level
-        )
-    catch
-        @log log_level 0 string("Could not add superclasses and subclasses.")
+    # Add new classes, each separately so that already existing (e.g. hand-made) ones don't stop the others
+    new_classes = (
+        ("unit__to_node", ["unit", "node"]),
+        ("node__to_unit", ["node", "unit"]),
+        ("unit_flow", []),
+        ("unit_flow__unit_flow", ["unit_flow", "unit_flow"]),
+        ("unit_flow__investment_group", ["unit_flow", "investment_group"]),
+        ("unit_flow__user_constraint", ["unit_flow", "user_constraint"]),
+    )
+    for (class_name, dimension_name_list) in new_classes
+        try
+            add_entity_class_if_missing(db_url, class_name, dimension_name_list, log_level)
+        catch
+            @log log_level 0 string("Could not add class $class_name.")
+        end
     end
+    for subclass_name in ("node__to_unit", "unit__to_node")
+        try
+            add_superclass_subclass_if_missing(db_url, "unit_flow", subclass_name, log_level)
+        catch
+            @log log_level 0 string("Could not add $subclass_name as a subclass of unit_flow.")
+        end
+    end
+end
+
+# Add an entity class unless it already exists with the same dimensions.
+# An existing class with different dimensions is replaced, since dimensions cannot be updated.
+function add_entity_class_if_missing(db_url, class_name, dimension_name_list, log_level)
+    class_item = run_request(db_url, "call_method", ("get_entity_class_item",), Dict("name" => class_name))
+    if length(class_item) > 0
+        collect(class_item["dimension_name_list"]) == collect(dimension_name_list) && return
+        @log log_level 0 string("Warning: Replacing the existing class $class_name with dimensions ",
+            "$(class_item["dimension_name_list"]) by one with dimensions $dimension_name_list.")
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("remove_entity_class_item", class_item["id"])), log_level
+        )
+    end
+    check_run_request_return_value(run_request(db_url, "call_method", ("add_entity_class_item",), Dict(
+        "name" => class_name, "dimension_name_list" => dimension_name_list)), log_level
+    )
+end
+
+# Make `subclass_name` a subclass of `superclass_name`, also if it is already a subclass of another superclass
+function add_superclass_subclass_if_missing(db_url, superclass_name, subclass_name, log_level)
+    item = run_request(db_url, "call_method", ("get_item", "superclass_subclass"), Dict("subclass_name" => subclass_name))
+    if length(item) > 0
+        item["superclass_name"] == superclass_name && return
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("remove_superclass_subclass_item", item["id"])), log_level
+        )
+    end
+    check_run_request_return_value(run_request(db_url, "call_method", ("add_superclass_subclass_item",), Dict(
+        "superclass_name" => superclass_name, "subclass_name" => subclass_name)), log_level
+    )
 end
 
 # Go through the classes, update ordering of their dimensions and commit session
@@ -562,48 +605,59 @@ function update_ordering_of_multidimensional_class(
         "entity_class_name" => old_class)
     )
     for pdef in pdefs
+        existing_pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+            "entity_class_name" => new_class, "name" => pdef["name"])
+        )
         try
-            check_run_request_return_value(run_request(db_url, "call_method", ("add_parameter_definition_item",), Dict(
-                "entity_class_name" => new_class,
-                "name" => pdef["name"],
-                "default_value" => pdef["default_value"],
-                "default_type" => pdef["default_type"],
-                "parameter_value_list_name" => pdef["parameter_value_list_name"],
-                "description" => pdef["description"])), log_level, print_errors
-            )
+            if length(existing_pdef) > 0
+                # E.g. hand-made or from another old class: the definition of the migrated class takes precedence
+                update_parameter_definition_attributes(db_url, existing_pdef, pdef, log_level)
+            else
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("add_parameter_definition_item",), Dict(
+                        "entity_class_name" => new_class,
+                        "name" => pdef["name"],
+                        "default_value" => pdef["default_value"],
+                        "default_type" => pdef["default_type"],
+                        "parameter_value_list_name" => pdef["parameter_value_list_name"],
+                        "description" => pdef["description"])
+                    ), log_level, print_errors
+                )
+            end
         catch
         end
     end
-    try
-        # Add the entity into the database if it is not there already
-        entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict(
-            "entity_class_name" => old_class)
-        )
-        entities = Dict()
-        for entity_item in entity_items
-            new_element_name_list = [entity_item["element_name_list"][i] for i in mapping]
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("add_entity_item",), Dict(
-                    "entity_class_name" => new_class, 
-                    "entity_byname" => new_element_name_list,
-                    "description" => entity_item["description"])
-                ), log_level
+    # Add the entities into the database if they are not there already (e.g. hand-made)
+    entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict(
+        "entity_class_name" => old_class)
+    )
+    existing_bynames = entity_bynames(db_url, new_class)
+    for entity_item in entity_items
+        # The byname of a 0-D entity is its name (and its mapping is [1])
+        new_element_name_list = [entity_byname(entity_item)[i] for i in mapping]
+        try
+            add_entity_if_missing(db_url, new_class, new_element_name_list, log_level;
+                description=entity_item["description"], existing_bynames
             )
-            entities[entity_item["element_name_list"]] = entity_item
+        catch
+            @log log_level 0 string("Could not add entity $new_element_name_list into $new_class.")
         end
-        for pdef in pdefs
-            # Find old parameters in all entities and alternatives
-            pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
-                "entity_class_name" => old_class, "parameter_definition_name" => pdef["name"])
-            )
-            vals = create_dict_from_parameter_value_items(db_url, pvals)
-            for (old_entity, val_list) in vals
-                # Determine element name list
-                new_element_name_list = [old_entity[i] for i in mapping]
-                for (alternative, val) in val_list
-                    db_value, db_type = unparse_db_value(val)
+    end
+    for pdef in pdefs
+        # Find old parameters in all entities and alternatives
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => old_class, "parameter_definition_name" => pdef["name"])
+        )
+        vals = create_dict_from_parameter_value_items(db_url, pvals)
+        for (old_entity, val_list) in vals
+            # Determine element name list
+            new_element_name_list = [old_entity[i] for i in mapping]
+            for (alternative, val) in val_list
+                db_value, db_type = unparse_db_value(val)
+                # Migrated values overwrite existing (e.g. hand-made) ones
+                try
                     check_run_request_return_value(run_request(
-                        db_url, "call_method", ("add_parameter_value_item",), Dict(
+                        db_url, "call_method", ("add_update_parameter_value_item",), Dict(
                             "entity_class_name" => new_class,
                             "entity_byname" => new_element_name_list,
                             "alternative_name" => alternative,
@@ -612,12 +666,95 @@ function update_ordering_of_multidimensional_class(
                             "type" => db_type)
                         ), log_level
                     )
+                catch
+                    @log log_level 0 string("Could not move value of `$(pdef["name"])` ",
+                        "for $new_element_name_list in alternative `$alternative` into $new_class.")
                 end
             end
         end
-    catch
-        @log log_level 0 string("Could not update ordering of a multidimensional class.")
     end
+    # Also the entity alternatives and group memberships, which would be lost with the old class otherwise
+    copy_entity_alternatives(db_url, old_class, new_class, mapping, log_level)
+    copy_entity_groups(db_url, old_class, new_class, entity_items, mapping, log_level)
+end
+
+# Copy the entity alternatives of the entities of `old_class` to the corresponding entities of `new_class`.
+# Migrated entity alternatives overwrite existing (e.g. hand-made) ones.
+function copy_entity_alternatives(db_url, old_class, new_class, mapping, log_level)
+    entity_alternative_items = run_request(db_url, "call_method", ("get_entity_alternative_items",), Dict(
+        "entity_class_name" => old_class)
+    )
+    for item in entity_alternative_items
+        new_element_name_list = [item["entity_byname"][i] for i in mapping]
+        try
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_update_entity_alternative_item",), Dict(
+                    "entity_class_name" => new_class,
+                    "entity_byname" => new_element_name_list,
+                    "alternative_name" => item["alternative_name"],
+                    "active" => item["active"])
+                ), log_level
+            )
+        catch
+            @log log_level 0 string("Could not copy the entity alternative of $new_element_name_list in alternative ",
+                "`$(item["alternative_name"])` into $new_class.")
+        end
+    end
+end
+
+# Copy the group memberships among the entities of `old_class` to the corresponding entities of `new_class`
+function copy_entity_groups(db_url, old_class, new_class, old_entity_items, mapping, log_level)
+    entity_group_items = run_request(db_url, "call_method", ("get_entity_group_items",), Dict(
+        "entity_class_name" => old_class)
+    )
+    isempty(entity_group_items) && return
+    # Groups refer to entities by name, which may change with the ordering of the dimensions
+    old_byname_by_name = Dict(x["name"] => entity_byname(x) for x in old_entity_items)
+    new_entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict("entity_class_name" => new_class))
+    new_name_by_byname = Dict(entity_byname(x) => x["name"] for x in new_entity_items)
+    new_name(old_name) = new_name_by_byname[[old_byname_by_name[old_name][i] for i in mapping]]
+    existing_groups = Set(
+        (x["group_name"], x["member_name"])
+        for x in run_request(db_url, "call_method", ("get_entity_group_items",), Dict("entity_class_name" => new_class))
+    )
+    for item in entity_group_items
+        try
+            group_name, member_name = new_name(item["group_name"]), new_name(item["member_name"])
+            (group_name, member_name) in existing_groups && continue
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_entity_group_item",), Dict(
+                    "entity_class_name" => new_class, "group_name" => group_name, "member_name" => member_name)
+                ), log_level
+            )
+        catch
+            @log log_level 0 string("Could not copy the membership of `$(item["member_name"])` in the group ",
+                "`$(item["group_name"])` into $new_class.")
+        end
+    end
+end
+
+# The byname of an entity item, e.g. ["n"] for a 0-D entity and ["u", "n"] for a 2-D one
+entity_byname(entity_item) = isempty(entity_item["element_name_list"]) ?
+    [entity_item["name"]] : collect(entity_item["element_name_list"])
+
+# The bynames of the entities of the given class
+function entity_bynames(db_url, class_name)
+    entity_items = run_request(db_url, "call_method", ("get_entity_items",), Dict("entity_class_name" => class_name))
+    Set(entity_byname(x) for x in entity_items)
+end
+
+# Add an entity unless it already exists. `existing_bynames` can be given to avoid querying the class repeatedly.
+function add_entity_if_missing(
+    db_url, class_name, entity_byname, log_level;
+    description=nothing, existing_bynames=entity_bynames(db_url, class_name)
+)
+    collect(entity_byname) in existing_bynames && return
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("add_entity_item",), Dict(
+            "entity_class_name" => class_name, "entity_byname" => entity_byname, "description" => description)
+        ), log_level
+    )
+    push!(existing_bynames, collect(entity_byname))
 end
 
 # Go through the parameters, rename them and commit session
@@ -639,13 +776,270 @@ function rename_parameter(db_url, class_name, old_par_name, new_par_name, merge_
                 db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
             )
         else
+            new_pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+                "entity_class_name" => class_name, "name" => new_par_name)
+            )
+            if length(new_pdef) > 0
+                merge_parameter_definition(db_url, class_name, pdef, new_pdef, log_level)
+            else
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                    "id" => pdef["id"], "name" => new_par_name)
+                    ), log_level
+                )
+            end
+        end
+    end
+end
+
+# Merge the old parameter definition into an already existing (e.g. hand-made) new one and remove the old one.
+# The old definition's attributes and values take precedence; other existing values are kept.
+function merge_parameter_definition(db_url, class_name, old_pdef, new_pdef, log_level)
+    existing_pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => class_name, "parameter_definition_name" => new_pdef["name"])
+    )
+    # Only worth a warning if there is existing data, not e.g. for an empty definition from an imported template
+    if !isempty(existing_pvals)
+        @log log_level 0 string("Warning: `$(new_pdef["name"])` already exists in `$class_name` with values. ",
+            "Merging `$(old_pdef["name"])` into it; migrated values overwrite existing ones in the same alternative.")
+    end
+    update_parameter_definition_attributes(db_url, new_pdef, old_pdef, log_level)
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => class_name, "parameter_definition_name" => old_pdef["name"])
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    for (entity, val_list) in vals
+        for (alternative, val) in val_list
+            pval_value, pval_type = unparse_db_value(val)
             check_run_request_return_value(run_request(
-                db_url, "call_method", ("update_item", "parameter_definition"), Dict(
-                "id" => pdef["id"], "name" => new_par_name)
+                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                    "entity_class_name" => class_name, "parameter_definition_name" => new_pdef["name"],
+                    "entity_byname" => entity, "alternative_name" => alternative,
+                    "value" => pval_value, "type" => pval_type)
                 ), log_level
             )
         end
     end
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("remove_parameter_definition_item", old_pdef["id"])), log_level
+    )
+end
+
+# Overwrite the default value, value list and description of a parameter definition with those of `source_pdef`
+function update_parameter_definition_attributes(db_url, pdef, source_pdef, log_level)
+    if pdef["parameter_value_list_name"] != source_pdef["parameter_value_list_name"]
+        set_parameter_value_list(db_url, pdef, source_pdef["parameter_value_list_name"], log_level)
+    end
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+            "id" => pdef["id"],
+            "default_value" => source_pdef["default_value"],
+            "default_type" => source_pdef["default_type"],
+            "description" => source_pdef["description"])
+        ), log_level
+    )
+end
+
+# Set the value list of a parameter definition.
+# The list of a definition with values cannot be changed, so its values are removed first and then added back.
+# Values that are not in the new list are appended to it, since they may become valid only later in the migration
+# (e.g. a hand-made `lodf_physics` before `commodity_physics_lodf` is renamed to it); values that remain invalid are
+# reported by `warn_about_values_not_in_template_lists` at the end. A default value not in the new list is dropped.
+function set_parameter_value_list(db_url, pdef, list_name, log_level)
+    class_name, par_name = pdef["entity_class_name"], pdef["name"]
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => class_name, "parameter_definition_name" => par_name)
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    if !isnothing(list_name)
+        append_list_values(db_url, list_name, unique(val for val_list in values(vals) for (_alt, val) in val_list), log_level)
+    end
+    for pval in pvals
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("remove_parameter_value_item", pval["id"])), log_level
+        )
+    end
+    old_list_name = pdef["parameter_value_list_name"]
+    try
+        # The default value is dropped first, since it may not be in the new list
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                "id" => pdef["id"], "parameter_value_list_name" => list_name,
+                "default_value" => nothing, "default_type" => nothing)
+            ), log_level
+        )
+    catch
+        add_parameter_values(db_url, class_name, par_name, vals, old_list_name, log_level) # Restore
+        rethrow()
+    end
+    try
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                "id" => pdef["id"], "default_value" => pdef["default_value"], "default_type" => pdef["default_type"])
+            ), log_level, false
+        )
+    catch
+        @log log_level 0 string("Warning: Dropped the default value of `$par_name` in $class_name, ",
+            "since it is not in the parameter value list `$list_name` ",
+            "(the default value of the latest template is applied at the end of the migration).")
+    end
+    add_parameter_values(db_url, class_name, par_name, vals, list_name, log_level)
+end
+
+# Add the given values (as from `create_dict_from_parameter_value_items`) to a parameter;
+# values that are not in its parameter value list are dropped with a warning.
+function add_parameter_values(db_url, class_name, par_name, vals, list_name, log_level)
+    # NOTE: Checked explicitly, since adding a value that is not in the list doesn't always return an error
+    valid_values = isnothing(list_name) ? nothing : parameter_value_list_values(db_url, list_name)
+    for (entity, val_list) in vals
+        for (alternative, val) in val_list
+            if !isnothing(valid_values) && !(val in valid_values)
+                @log log_level 0 string("Warning: Dropped value `$val` of `$par_name` for $entity in alternative ",
+                    "`$alternative`, since it is not in the parameter value list `$list_name`.")
+                continue
+            end
+            pval_value, pval_type = unparse_db_value(val)
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                    "entity_class_name" => class_name, "parameter_definition_name" => par_name,
+                    "entity_byname" => entity, "alternative_name" => alternative,
+                    "value" => pval_value, "type" => pval_type)
+                ), log_level
+            )
+        end
+    end
+end
+
+# Multiply the values (and the default value) of each given parameter by the given factor.
+# The factor can also be a function `(db_url, class_name, par_name, log_level) -> factor`,
+# which is only called if the parameter exists.
+function scale_parameter_values(db_url, parameters_to_be_scaled, log_level)
+    for ((class_name, par_name), factor) in parameters_to_be_scaled
+        scale_parameter_value(db_url, class_name, par_name, factor, log_level)
+    end
+end
+
+function scale_parameter_value(db_url, class_name, par_name, factor, log_level)
+    pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+        "entity_class_name" => class_name, "name" => par_name)
+    )
+    length(pdef) > 0 && begin
+        factor isa Function && (factor = factor(db_url, class_name, par_name, log_level))
+        # Find parameters in all entities and alternatives
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => class_name, "parameter_definition_name" => par_name)
+        )
+        vals = create_dict_from_parameter_value_items(db_url, pvals)
+        for (entity, val_list) in vals
+            for (alternative, val) in val_list
+                pval_value, pval_type = unparse_db_value(val * factor)
+                # Update the parameter value in the database
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("add_update_parameter_value_item",), Dict(
+                        "entity_class_name" => class_name, "parameter_definition_name" => par_name,
+                        "entity_byname" => entity, "alternative_name" => alternative,
+                        "value" => pval_value, "type" => pval_type)
+                    ), log_level
+                )
+            end
+        end
+        # Scale the default value too, if any
+        default_value = parse_db_value(pdef["default_value"], pdef["default_type"])
+        if !isnothing(default_value)
+            default_value, default_type = unparse_db_value(default_value * factor)
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                    "id" => pdef["id"], "default_value" => default_value, "default_type" => default_type)
+                ), log_level
+            )
+        end
+    end
+end
+
+# The factor to scale a cost given per `duration_unit` of the models into an annual cost.
+# If all models use the same duration unit, the cost is converted per that unit; otherwise, it is converted per hour.
+# Unknown duration units are taken as `hour`, as in SpineOpt, with a warning.
+function annual_scaling_factor(db_url, class_name, par_name, log_level)
+    dur_units, has_models, unknowns = model_duration_units(db_url)
+    if !isempty(unknowns)
+        @log log_level 0 string(
+            "Warning: the following `duration_unit`s of `model` are unknown, and are taken as `hour`:\n",
+            join(("- $x" for x in unknowns), "\n"),
+            "\nPlease check the converted `$par_name` values of `$class_name`, ",
+            "and set the `duration_unit` of each `model`, or its default value, to `hour` or `minute`."
+        )
+    end
+    dur_unit = length(dur_units) == 1 ? only(dur_units) : "hour"
+    factor = Dates.value(Dict("hour" => Hour, "minute" => Minute)[dur_unit](Day(365)))
+    if !has_models
+        @log log_level 0 string("Info: no `model` found, so the default `duration_unit` `$dur_unit` is used. ",
+            "`$par_name` values of `$class_name` are converted per `$dur_unit` into annual values (× $factor).")
+    elseif length(dur_units) == 1
+        @log log_level 0 string("Info: all models use the duration unit `$dur_unit`. ",
+            "`$par_name` values of `$class_name` are converted per `$dur_unit` into annual values (× $factor).")
+    else
+        @log log_level 0 string("Warning: the models use different duration units ($(join(sort(collect(dur_units)), ", "))). ",
+            "`$par_name` values of `$class_name` are converted per `hour` as default into annual values (× $factor); ",
+            "please check the migrated values.")
+    end
+    factor
+end
+
+# The `duration_unit`s in effect for the models in the database: the explicit values of each model,
+# and the default value of the parameter definition for models without one, or if there are no models at all.
+# Unknown duration units are taken as `hour`: an explicit value other than `hour` or `minute`,
+# or a needed default value that is missing or invalid.
+# Return the duration units, whether there are any models, and a description of each unknown duration unit.
+function model_duration_units(db_url)
+    valid_units = ("hour", "minute")
+    pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+        "entity_class_name" => "model", "parameter_definition_name" => "duration_unit")
+    )
+    vals = create_dict_from_parameter_value_items(db_url, pvals)
+    models = entity_bynames(db_url, "model")
+    dur_units = Set{String}()
+    unknowns = String[]
+    for model in sort!(collect(models)), (alt, val) in get(vals, model, [])
+        if val in valid_units
+            push!(dur_units, val)
+        else
+            push!(dur_units, "hour")
+            push!(unknowns, "model `$(join(model, "__"))` has the duration unit `$val` in alternative `$alt`")
+        end
+    end
+    models_without_value = sort!([join(model, "__") for model in models if !haskey(vals, model)])
+    if isempty(models) || !isempty(models_without_value)
+        users = isempty(models) ? "since there is no `model`" : string(
+            "for model(s) without a value: ", join(("`$m`" for m in models_without_value), ", ")
+        )
+        pdef = run_request(db_url, "call_method", ("get_item", "parameter_definition"), Dict(
+            "entity_class_name" => "model", "name" => "duration_unit")
+        )
+        default_unit = isempty(pdef) ? nothing : _default_value(db_url, pdef)
+        if default_unit in valid_units
+            push!(dur_units, default_unit)
+        else
+            push!(dur_units, "hour")
+            push!(unknowns, if isempty(pdef)
+                "the parameter definition of `duration_unit` is missing, but its default value is needed $users"
+            elseif isnothing(default_unit)
+                "the default value of `duration_unit` is missing, but it is needed $users"
+            else
+                "the default value of `duration_unit` is `$default_unit`, which is needed $users"
+            end)
+        end
+    end
+    dur_units, !isempty(models), unknowns
+end
+
+# The parsed default value of the given parameter definition, resolving a value from a parameter value list.
+# `nothing` if there is no default value, or if the list value is not found.
+function _default_value(db_url, pdef)
+    list_value_id = get(pdef, "list_value_id", nothing)
+    isnothing(list_value_id) && return parse_db_value(pdef["default_value"], pdef["default_type"])
+    list_value = run_request(db_url, "call_method", ("get_list_value_item",), Dict("id" => list_value_id))
+    isempty(list_value) && return nothing
+    parse_db_value(list_value["value"], list_value["type"])
 end
 
 # Sum old_par_name values to new_par_name values
@@ -705,11 +1099,29 @@ function rename_classes(db_url, classes_to_be_renamed, log_level)
 		class_item = run_request(db_url, "call_method", ("get_item", "entity_class"), Dict(
 			"name" => old_class_name)
 		)
-		if length(class_item) > 0
-			check_run_request_return_value(run_request(db_url, "call_method", ("update_item", "entity_class"), Dict(
-				"id" => class_item["id"], "name" => new_class_name)), log_level
+		length(class_item) > 0 || continue
+		dimension_name_list = collect(class_item["dimension_name_list"])
+		new_class_item = run_request(db_url, "call_method", ("get_item", "entity_class"), Dict(
+			"name" => new_class_name)
+		)
+		if length(new_class_item) > 0 && collect(new_class_item["dimension_name_list"]) == dimension_name_list
+			# Merge into the already existing (e.g. hand-made) class, migrated data taking precedence
+			@log log_level 0 string("Warning: Class $new_class_name already exists. Merging $old_class_name into it; ",
+				"migrated values overwrite existing ones in the same alternative.")
+			update_ordering_of_multidimensional_classes(db_url, [
+				(old_class_name, new_class_name, dimension_name_list, 1:max(length(dimension_name_list), 1), true)
+			], log_level)
+			continue
+		elseif length(new_class_item) > 0
+			@log log_level 0 string("Warning: Replacing the existing class $new_class_name with different ",
+				"dimensions by $old_class_name.")
+			check_run_request_return_value(run_request(
+				db_url, "call_method", ("remove_entity_class_item", new_class_item["id"])), log_level
 			)
 		end
+		check_run_request_return_value(run_request(db_url, "call_method", ("update_item", "entity_class"), Dict(
+			"id" => class_item["id"], "name" => new_class_name)), log_level
+		)
 	end
 end
 
@@ -818,38 +1230,163 @@ function remove_parameters(db_url, parameters_to_be_removed, log_level)
     end
 end
 
-# Rename a parameter value list
+# Rename a parameter value list, or merge it into an already existing (e.g. hand-made) list with the new name
 function rename_pval_list(db_url, old_name, new_name, log_level)
+    pval_list_item = run_request(db_url, "call_method", ("get_item", "parameter_value_list"), Dict("name" => old_name))
+    length(pval_list_item) > 0 || return
+    new_pval_list_item = run_request(db_url, "call_method", ("get_item", "parameter_value_list"), Dict(
+        "name" => new_name)
+    )
     try
-        pval_list_item = run_request(db_url, "call_method", ("parameter_value_list",), Dict(
-            "name" => old_name)
-        )
-        check_run_request_return_value(run_request(
-            db_url, "call_method", ("update_parameter_value_list_item",), Dict(
-                "id" => pval_list_item["id"], "name" => new_name)), log_level
-        )
+        if length(new_pval_list_item) > 0
+            merge_pval_list(db_url, old_name, new_name, log_level)
+        else
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_parameter_value_list_item",), Dict(
+                    "id" => pval_list_item["id"], "name" => new_name)), log_level
+            )
+        end
     catch
         @log log_level 0 string("Could not rename list $old_name.")
     end
 end
 
-# Rename parameter value list values
+# Merge a parameter value list into another existing one and remove it:
+# the values of the old list are appended to the new list (unless there already),
+# and the parameter definitions using the old list are switched to the new list, keeping their values.
+function merge_pval_list(db_url, old_name, new_name, log_level)
+    @log log_level 0 string("Warning: Parameter value list $new_name already exists. Merging $old_name into it.")
+    append_list_values(db_url, new_name, parameter_value_list_values(db_url, old_name), log_level)
+    for pdef in pdefs_using_pval_list(db_url, old_name)
+        set_parameter_value_list(db_url, pdef, new_name, log_level)
+    end
+    old_list = run_request(db_url, "call_method", ("get_item", "parameter_value_list"), Dict("name" => old_name))
+    check_run_request_return_value(run_request(
+        db_url, "call_method", ("remove_parameter_value_list_item", old_list["id"])), log_level
+    )
+end
+
+# Rename parameter value list values, each separately. Values not in the mapping are left as they are.
+# If the new value is already in the list (e.g. hand-made), the parameter values referring to the old value are
+# moved to the existing one and the old value is removed.
 function rename_pval_list_values(db_url, list_name, name_mapping, log_level)
-    try
-        # Update parameter value list item names based on the mapping
-        list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
-            "parameter_value_list_name" => list_name)
-        )
-        for list_value_item in list_value_items
-            old_name = parse_db_value(list_value_item["value"], list_value_item["type"])
-            new_name_value, new_name_type = unparse_db_value(name_mapping[old_name])
+    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => list_name)
+    )
+    # NOTE: An item's value can only be parsed once
+    parsed_list_values = [parse_db_value(x["value"], x["type"]) for x in list_value_items]
+    existing_values = Set(parsed_list_values)
+    for (list_value_item, old_name) in zip(list_value_items, parsed_list_values)
+        haskey(name_mapping, old_name) || continue
+        new_name = name_mapping[old_name]
+        try
+            if new_name in existing_values
+                @log log_level 0 string("Warning: `$new_name` already exists in the parameter value list ",
+                    "$list_name. Merging `$old_name` into it.")
+                replace_list_value_in_parameter_values(db_url, list_name, list_value_item["id"], new_name, log_level)
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("remove_list_value_item", list_value_item["id"])), log_level
+                )
+            else
+                new_name_value, new_name_type = unparse_db_value(new_name)
+                check_run_request_return_value(run_request(
+                    db_url, "call_method", ("update_list_value_item",), Dict(
+                        "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)
+                    ), log_level
+                )
+                push!(existing_values, new_name)
+            end
+        catch
+            @log log_level 0 string("Could not rename value `$old_name` of list $list_name.")
+        end
+    end
+end
+
+# Make the parameter values and the default values that refer to the given list value refer to `new_value`
+# (of the same list) instead
+function replace_list_value_in_parameter_values(db_url, list_name, list_value_id, new_value, log_level)
+    new_pval_value, new_pval_type = unparse_db_value(new_value)
+    for pdef in pdefs_using_pval_list(db_url, list_name)
+        # NOTE: The default value is not updated when the list value it refers to is removed
+        if get(pdef, "list_value_id", nothing) == list_value_id
             check_run_request_return_value(run_request(
-                db_url, "call_method", ("update_list_value_item",), Dict(
-                    "id" => list_value_item["id"], "value" => new_name_value, "type" => new_name_type)), log_level
+                db_url, "call_method", ("update_item", "parameter_definition"), Dict(
+                    "id" => pdef["id"], "default_value" => new_pval_value, "default_type" => new_pval_type)
+                ), log_level
             )
         end
-    catch
-        @log log_level 0 string("Could not rename list values of list $list_name.")
+        pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+            "entity_class_name" => pdef["entity_class_name"], "parameter_definition_name" => pdef["name"])
+        )
+        for pval in pvals
+            pval["list_value_id"] == list_value_id || continue
+            check_run_request_return_value(run_request(
+                db_url, "call_method", ("update_parameter_value_item",), Dict(
+                    "id" => pval["id"], "value" => new_pval_value, "type" => new_pval_type)
+                ), log_level
+            )
+        end
+    end
+end
+
+# The parameter definitions that use the given parameter value list
+function pdefs_using_pval_list(db_url, list_name)
+    pdefs = run_request(db_url, "call_method", ("find_parameter_definitions",), Dict())
+    [pdef for pdef in pdefs if pdef["parameter_value_list_name"] == list_name]
+end
+
+# The (parsed) values of the given parameter value list, in order
+function parameter_value_list_values(db_url, list_name)
+    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => list_name)
+    )
+    [parse_db_value(x["value"], x["type"]) for x in sort(list_value_items; by=x -> x["index"])]
+end
+
+# Append the given values to a parameter value list, except those already in it
+function append_list_values(db_url, list_name, vals, log_level)
+    list_value_items = run_request(db_url, "call_method", ("find_list_values",), Dict(
+        "parameter_value_list_name" => list_name)
+    )
+    # NOTE: An item's value can only be parsed once; indices may have gaps after removing values
+    existing_values = [parse_db_value(x["value"], x["type"]) for x in list_value_items]
+    next_index = isempty(list_value_items) ? 0 : maximum(x["index"] for x in list_value_items) + 1
+    for val in vals
+        val in existing_values && continue
+        list_value, list_value_type = unparse_db_value(val)
+        check_run_request_return_value(run_request(
+            db_url, "call_method", ("add_list_value_item",), Dict(
+                "parameter_value_list_name" => list_name, "value" => list_value, "type" => list_value_type,
+                "index" => next_index)
+            ), log_level
+        )
+        push!(existing_values, val)
+        next_index += 1
+    end
+end
+
+# Warn about parameter values that are not valid in the respective parameter value list of the latest template,
+# e.g. hand-made values that were added to a list during the migration, so that the user can fix them manually
+function warn_about_values_not_in_template_lists(db_url, log_level)
+    valid_values_by_list = Dict{String,Vector{Any}}()
+    for (list_name, val) in template()["parameter_value_lists"]
+        push!(get!(valid_values_by_list, list_name, []), val)
+    end
+    for (list_name, valid_values) in valid_values_by_list
+        for pdef in pdefs_using_pval_list(db_url, list_name)
+            class_name, par_name = pdef["entity_class_name"], pdef["name"]
+            pvals = run_request(db_url, "call_method", ("get_parameter_value_items",), Dict(
+                "entity_class_name" => class_name, "parameter_definition_name" => par_name)
+            )
+            for (entity, val_list) in create_dict_from_parameter_value_items(db_url, pvals)
+                for (alternative, val) in val_list
+                    val in valid_values && continue
+                    @log log_level 0 string("Warning: The value `$val` of `$par_name` for the `$class_name` entity ",
+                        "$(Tuple(entity)) in alternative `$alternative` is not valid in the parameter value list ",
+                        "`$list_name` (valid values: $(join(valid_values, ", "))). Please fix it manually.")
+                end
+            end
+        end
     end
 end
 
@@ -867,7 +1404,7 @@ function rename_list_values(db_url, list_values_to_be_renamed, log_level)
     end
 end
 
-function merge_variable_type_lists(db_url, log_level; force::Bool=false)
+function merge_variable_type_lists(db_url, log_level)
     pval_list_old_name = "unit_online_variable_type_list"
     pval_list_new_name = "variable_type_list"
     name_mapping = Dict(
@@ -876,23 +1413,8 @@ function merge_variable_type_lists(db_url, log_level; force::Bool=false)
         "unit_online_variable_type_linear" => "linear",
         "unit_online_variable_type_none" => "none"
     )
-    # Check if variable_type_list already exists in the database and if it can be removed to allow renaming
-    pval_list_existing = run_request(db_url, "call_method", ("find_parameter_value_lists",), Dict(
-        "name" => pval_list_new_name)
-    )
-    if !force && (length(pval_list_existing) > 0)
-        pdefs_using_list = find_pdefs_linked_to_pval_list(db_url, pval_list_new_name)
-        if length(pdefs_using_list) > 0
-            @log log_level 0 string("Error: The variable_type_list is already in use by some parameter definitions \
-                although SpineOpt wasn't using it. Rename the variable_type_list in your input database and try again.")
-            throw(error())
-        else
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("remove_parameter_value_list_item", pval_list_existing[1]["id"])), log_level
-            )
-        end
-    end
-    # Continue with renaming
+    # Rename the values and the list itself.
+    # An already existing (e.g. hand-made) `variable_type_list` is merged with the old list.
     rename_pval_list_values(db_url, pval_list_old_name, name_mapping, log_level)
     rename_pval_list(db_url, pval_list_old_name, pval_list_new_name, log_level)
     lists_to_be_updated = (
@@ -1074,19 +1596,9 @@ function move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
     vals = create_dict_from_parameter_value_items(db_url, pvals)
     for (entity, val_list) in vals
         try
-            # Add the grid and grid__node entities into the database
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("add_entity_item",), Dict(
-                    "entity_class_name" => "grid", 
-                    "entity_byname" => entity)
-                ), log_level
-            )
-            check_run_request_return_value(run_request(
-                db_url, "call_method", ("add_entity_item",), Dict(
-                    "entity_class_name" => "node__grid", 
-                    "entity_byname" => [entity, entity])
-                ), log_level
-            )
+            # Add the grid and grid__node entities into the database unless they exist already
+            add_entity_if_missing(db_url, "grid", entity, log_level)
+            add_entity_if_missing(db_url, "node__grid", [entity..., entity...], log_level)
             for (alternative, val) in val_list
                 # Add the new parameter value into the database
                 if val
@@ -1115,15 +1627,4 @@ function move_parameter(db_url, log_level, old_par_name, new_list_value, idx)
             db_url, "call_method", ("remove_parameter_definition_item", pdef["id"])), log_level
         )
     end
-end
-
-function find_pdefs_linked_to_pval_list(db_url, pval_list)
-    pdefs = []
-    pdefs_all = run_request(db_url, "call_method", ("find_parameter_definitions",), Dict())
-    for pdef in pdefs_all
-        if pdef["parameter_value_list_name"] == pval_list
-            push!(pdefs, pdef["name"])
-        end
-    end
-    return pdefs
 end

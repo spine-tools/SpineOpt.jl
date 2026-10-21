@@ -92,11 +92,12 @@ end
 """
     _model_duration_unit(instance::Object)
 
-Fetch the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
+Fetch the `duration_unit` parameter of the first defined `model`, 
+and defaults to `Hour` if not found (align with the default value in the template).
 """
 _model_duration_unit(m::Model) = _model_duration_unit(m.ext[:spineopt].instance)
 function _model_duration_unit(instance::Object)
-    get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute)
+    get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Hour)
 end
 
 function _model_window_duration(m)

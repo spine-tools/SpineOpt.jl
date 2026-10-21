@@ -326,7 +326,7 @@ function _test_discounted_duration_base()
     end
 end
 
-function _test_discounted_storage_fixed_annual_cost_milestone_years()
+function _test_discounted_fixed_annual_cost_milestone_years()
     @testset "test discounted storage fixed annual cost - using milestone years" begin
         with_connection_open(url_in) do
             test_data_example_multiyear_economic_discounting()
@@ -334,14 +334,14 @@ function _test_discounted_storage_fixed_annual_cost_milestone_years()
             discnt_rate = 0.05
             multiyear_economic_discounting = "milestone_years"
             storage_state_max = 100
-            storage_fixed_annual_cost = 8760 # year 2030 is a normal year.
+            fixed_annual_cost = 8760 # year 2030 is a normal year.
             storage_investment_count_max_cumulative = 1
             object_parameter_values = [
                 ["model", "instance", "discount_rate", discnt_rate],
                 ["model", "instance", "discount_year", discnt_year],
                 ["model", "instance", "multiyear_economic_discounting", multiyear_economic_discounting],
                 ["node", "node_b", "storage_state_max", storage_state_max],
-                ["node", "node_b", "storage_fixed_annual_cost", storage_fixed_annual_cost],
+                ["node", "node_b", "fixed_annual_cost", fixed_annual_cost],
                 ["node", "node_b", "storage_investment_count_max_cumulative", storage_investment_count_max_cumulative],
             ]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
@@ -357,7 +357,7 @@ function _test_discounted_storage_fixed_annual_cost_milestone_years()
             @test discounted_duration ≈ SpineOpt.storage_discounted_duration(; key_param..., t=t_inv) rtol = 1e-6
             # The hourly fixed cost (annual cost / 8760) times `discounted_duration_base(t_inv)` (8760 for a
             # multi-year investment period starting in 2030) gives back the annual cost.
-            expected_coe_obj = storage_state_max * storage_fixed_annual_cost * discounted_duration
+            expected_coe_obj = storage_state_max * fixed_annual_cost * discounted_duration
             observed_coe_obj = coefficient(express, var_storages_invested_available[n, s, t_inv])
             @test expected_coe_obj ≈ observed_coe_obj rtol = 1e-6
         end
@@ -677,7 +677,7 @@ end
     _test_discounted_duration_milestone_years()
     _test_discounted_duration_consecutive_years()
     _test_discounted_duration_base()
-    _test_discounted_storage_fixed_annual_cost_milestone_years()
+    _test_discounted_fixed_annual_cost_milestone_years()
     _test_discounted_balance_penalty_milestone_years()
     _test_discounted_capacity_margin_penalty_milestone_years()
     _test_investment_costs__salvage_fraction__capacity_transfer_factor__decommissioning()
