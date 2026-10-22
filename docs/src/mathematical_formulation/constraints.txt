@@ -224,10 +224,17 @@ Voltage variables [node\_voltage\_squared](@ref var_node_voltage_squared) is int
 
 #### [Calculating connection flows](@id xyz)
 
+For reactive power flow the relevant equation is:
 @@add_constraint_connection_flow_reactive!
 
 For real power flows the equation is quite similar:
 @@add_constraint_connection_flow_real!
+
+The Lindistflow formulation differs from this. 
+
+@@add_constraint_node_voltages_lindistflow!
+
+
 
 #### [Binding voltages together](@id constraint_node_voltages_conic)
 @@add_constraint_node_voltages_conic!

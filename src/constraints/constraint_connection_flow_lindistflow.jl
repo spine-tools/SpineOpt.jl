@@ -18,12 +18,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    function add_constraint_node_voltages_lindistflow()
+@doc raw"""
+    
+For the Lindistflow formulation there is no separate equation for real and 
+reactive power flow but one equation governing both. This constraint ties 
+together connection end point voltage magnitudes, P and Q.
 
-    Add a constraint representing voltage drop in lindistflow formulation.
-    This constraint ties together connection end point voltages, P and Q.
-
+```math
+\begin{aligned}
+& v^{node\_voltage\_sq}_{(n_{from},s,t)} - v^{node\_voltage\_sq}_{(n_{to},s,t)}  \\
+& =  2 \cdot v^{connection\_flow\_reactive}_{(conn,n,to\_node,s,t)} \cdot p^{connection\_reactance}_{(conn,s,t)} + 2 \cdot v^{connection\_flow\_real}_{(conn,n,to\_node,s,t)} \cdot p^{connection\_resistance}_{(conn,s,t)} \\
+& \forall (conn, n_{from}, n_{to}) \in connection\_\_node\_\_node : \exists c \in connection, \; connection\_has\_ac\_flow(c, n_{from}, n_{to})\\
+& \forall (s,t)
+\end{aligned}
+```
 """
 function add_constraint_node_voltages_lindistflow!(m::Model)
     instance = m.ext[:spineopt].instance
@@ -40,9 +48,9 @@ function _build_constraint_node_voltage_lindistflow(m, conn, n1, n2, s, t)
         ==
         node_voltage_squared[n1, s, t]
         - 2 * connection_flow_reactive[conn, n1, direction(:from_node), s, t] 
-        * reactance(m, connection=conn, stochastic_scenario=s, t=t)
+        * reactance(m, connection=conn, stochastic_scenario=s, t=t, _default = 0)
         - 2 * connection_flow[conn, n1, direction(:from_node), s, t]
-        * resistance(m, connection=conn, stochastic_scenario=s, t=t)
+        * resistance(m, connection=conn, stochastic_scenario=s, t=t, _default = 0)
     )
 end
 
