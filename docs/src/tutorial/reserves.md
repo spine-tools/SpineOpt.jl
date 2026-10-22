@@ -10,152 +10,142 @@ Reserves refer to the capacity or energy that is kept as a backup to ensure the 
 
 ### Model assumptions
 
-- The reserve node has a requirement of 20MW for upwards reserve
+- The reserve node has a requirement of 20 MW for upward reserve
 - Power plants 'a' and 'b' can both provide reserve to this node
+- The electricity demand (150 MW) and the power plants are the same as in the [Simple system tutorial](@ref)
 
 ![image](figs_reserves/reserves_tutorial_schematic.png)
 
 ## Guide
 
-### Entering input data
+### Starting point
 
-- Launch the Spine Toolbox and select **File** and then **Open Project** or use the keyboard shortcut **Ctrl + O** to open the desired project.
-- Locate the folder that you saved in the Simple System tutorial and click *Ok*. This will prompt the Simple System workflow to appear in the *Design View* section for you to start working on.
-- Select the 'input' Data Store item in the *Design View*.
-- Go to *Data Store Properties* and hit **Open editor**. This will open the database in the *Spine DB editor*.
+You can either continue from your own Simple system project, or start from the example file:
 
-In this tutorial, you will learn how to add a new reserve node to the Simple System.
+1. Create a workflow in Spine Toolbox with an input database, a Run SpineOpt tool and an output database, as on the [Verify installation](@ref recommended_workflow) page.
+2. Double-click the input database to open it in the Spine DB editor.
+3. Select **File > Import...** and import the [simple system example file](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json).
+4. Press **Commit** in the toolbar.
 
-#### Creating objects
-
-- Always in the Spine DB editor, locate the *Object tree* (typically at the top-left). Expand the [root] element if not expanded.
-- Right-click on the [node](@ref) class, and select *Add objects* from the context menu. The *Add objects* dialog will pop up.
-- Enter the names for the new reserve node as seen in the image below, then press *Ok*. This will create a new object of class [node](@ref), called *reserve\_upward\_node*.
-
-![image](figs_reserves/reserves_tutorial_reserve_node.png)
-
-- Right-click on the [node](@ref) class, and select *Add object group* from the context menu. The *Add object group* dialog will pop up. In the *Group name* field write *reserve\_upward\_group* to refer to this group. Then, add as a member of the group the nodes *electricity\_node* and *reserve\_upward\_node*, as shown in the image below; then press *Ok*.
+The example file names the nodes `electricity_node` and `fuel_node`. If you built the system yourself in the Simple system tutorial, your nodes may be called `electricity` and `fuel`; use your own names in the steps below.
 
 !!! note
-    In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *reserve\_upward\_group* will help to link the flow variables for electricity production and reserve procurement.
+    In the Parameter value table, the first row is a filter row. Enter new values on the empty row below it.
 
-![image](figs_reserves/reserves_tutorial_reserve_group.png)
+### Adding the reserve node and group
 
-#### Establishing relationships
+In SpineOpt, a reserve is modelled as a separate node. To link the reserve to electricity production, we also create a node group that contains both the electricity node and the reserve node.
 
-- Always in the Spine DB editor, locate the *Relationship tree* (typically at the bottom-left). Expand the *root* element if not expanded.
-- Right-click on the [unit\_\_to\_node](@ref) class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
-- Select the names of the two units and their **receiving** nodes, as seen in the image below; then press *Ok*. This will establish that both *power\_plant\_a* and *power\_plant\_b* release energy into both the *reserve\_upward\_node* and the *reserve\_upward\_group*.
-
-![image](figs_reserves/reserves_tutorial_unit__to_node_relationships.png)
-
-- Right-click on the [report\_\_output](@ref) class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
-
-- Enter *report1* under [report](@ref), and `variable_om_costs` under [output](@ref). Repeat the same procedure in the second line to add the `res_proc_costs` under [output](@ref) as seen in the image below; then press *Ok*. This will write the total [vom\_cost](@ref) and *procurement reserve cost* values in the objective function to the output database as a part of *report1*.
-
-![image](figs_reserves/reserves_tutorial_report__output_relationships.png)
-
-#### Specifying object parameter values
-
-- Back to *Object tree*, expand the [node](@ref) class and select *reserve\_upward\_node*.
-- Locate the *Object parameter* table (typically at the top-center).
-- In the *Object parameter* table (typically at the top-center), select the following parameter as seen in the image below:
-  - [demand](@ref) parameter and the *Base* alternative, and enter the value *20*. This will establish that there's a demand of '20' at the reverse node.
-  - [reserve\_active](@ref) parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
-  - [reserve\_upward](@ref) parameter and the *Base* alternative, then right-click on the value cell and then, in the context menu, select 'Edit...' and select the option *True*. This will establish the direction of the reserve is upwards.
-  - [balance\_sense](@ref) parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
-
-![image](figs_reserves/reserves_tutorial_reserve_node_parameters.png)
-
-- Select *reserve\_upward\_group* in the *Object tree*.
-
-- In the *Object parameter* table, select the [balance\_type](@ref) parameter and the *Base* alternative, and enter the value *none* as seen in the image below. This will establish that there is no need to create an extra balance between the members of the group.
-
-![image](figs_reserves/reserves_tutorial_reserve_group_parameters.png)
-
-#### Specifying relationship parameter values
-
-- In *Relationship tree*, expand the [unit\_\_to\_node](@ref) class and select *power\_plant\_a | reserve\_upward\_node*.
-
-- In the *Relationship parameter* table (typically at the bottom-center), select the [capacity\_per\_unit](@ref) parameter and the *Base* alternative, and enter the value *100* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_a*.
+1. In the *Entity tree* (typically on the left), right-click the [node](@ref) class and select **Add entities...**
+2. Enter the name `upward_reserve_node` and press **OK**.
+3. Right-click the [node](@ref) class again and select **Add entity group...**
+4. Enter `upward_reserve_group` as the *Group name*, add `electricity_node` and `upward_reserve_node` as members, and press **OK**.
 
 !!! note
-    The value is equal to the unit capacity defined for the electricity node. However, the value can be lower if the unit cannot provide reserves with its total capacity.
+    In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Here, the group `upward_reserve_group` links the flow variables for electricity production and reserve procurement, so that a unit cannot use the same capacity for both.
 
-![image](figs_reserves/reserves_tutorial_power_plant_a_reserve_capacity.png)
+### Connecting the units to the reserve node and group
 
-- In *Relationship tree*, expand the [unit\_\_to\_node](@ref) class and select *power\_plant\_b | reserve\_upward\_node*.
+Both power plants can provide reserve, so they need a flow to the reserve node and to the group.
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the [capacity\_per\_unit](@ref) parameter and the *Base* alternative, and enter the value *200* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_b*.
+1. In the Entity tree, right-click the [unit\_\_to\_node](@ref) class and select **Add entities...**
+2. Add the following four entities (unit first, then the **receiving** node) and press **OK**:
 
-![image](figs_reserves/reserves_tutorial_power_plant_b_reserve_capacity.png)
+| unit | node |
+|:---|:---|
+| power\_plant\_a | upward\_reserve\_node |
+| power\_plant\_b | upward\_reserve\_node |
+| power\_plant\_a | upward\_reserve\_group |
+| power\_plant\_b | upward\_reserve\_group |
 
-- In *Relationship tree*, expand the [unit\_\_to\_node](@ref) class and select *power\_plant\_a | reserve\_upward\_group*.
+To see the reserve procurement costs in the results, we also add two outputs to the report:
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
-  - [capacity\_per\_unit](@ref) parameter and the *Base* alternative, and enter the value *100*. This will set the total capacity for *power\_plant\_a* in the group.
+3. Right-click the [report\_\_output](@ref) class and select **Add entities...**
+4. Add `report1 | variable_om_costs` and `report1 | res_proc_costs` and press **OK**.
 
-![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
+This will write the total [vom\_cost](@ref) and reserve procurement cost terms of the objective function to the output database as part of *report1* (see also [How to manage Output Data](@ref)).
 
-- In *Relationship tree*, expand the [unit\_\_to\_node](@ref) class and select *power\_plant\_b | reserve\_upward\_group*.
+### Entering the parameter values
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
-  - [capacity\_per\_unit](@ref) parameter and the *Base* alternative, and enter the value *200*. This will set the total capacity for *power\_plant\_b* in the group.
+Select each entity in the Entity tree and enter the values below in the Parameter value table, always with the alternative `Base`. For the values marked *(list)*, double-click the value cell and pick the value from the drop-down list.
 
-![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
+| Entity class | Entity | Parameter | Value |
+|:---|:---|:---|:---|
+| node | upward\_reserve\_node | [demand](@ref) | 20.0 |
+| node | upward\_reserve\_node | [reserve\_active](@ref) | True *(list)* |
+| node | upward\_reserve\_node | [reserve\_upward](@ref) | True *(list)* |
+| node | upward\_reserve\_node | [balance\_sense](@ref) | >= *(list)* |
+| node | upward\_reserve\_group | [balance\_type](@ref) | none *(list)* |
+| unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_node | [capacity\_per\_unit](@ref) | 100.0 |
+| unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_node | [capacity\_per\_unit](@ref) | 200.0 |
+| unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_group | [capacity\_per\_unit](@ref) | 100.0 |
+| unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_group | [capacity\_per\_unit](@ref) | 200.0 |
 
-When you're ready, save/commit all changes to the database.
+What the values do:
+- [demand](@ref) sets the reserve requirement of 20 MW.
+- [reserve\_active](@ref) makes the node a reserve node, and [reserve\_upward](@ref) sets the direction of the reserve.
+- [balance\_sense](@ref) `>=` means that the procured reserve must be greater than or equal to the reserve demand.
+- [balance\_type](@ref) `none` on the group means that no extra balance is created between the members of the group.
+- [capacity\_per\_unit](@ref) on the reserve node sets how much reserve each unit can provide. Here it is equal to the unit capacity for the electricity node, but it can be lower if the unit cannot provide reserves with its total capacity.
+- [capacity\_per\_unit](@ref) on the group sets the total capacity of each unit for electricity and reserve together.
+
+!!! warning
+    All nine values are needed. If some of them are missing, the model can become infeasible or give unexpected results.
+
+Press **Commit** in the toolbar when you are done.
 
 ### Executing the workflow
 
-- Go back to Spine Toolbox's main window, and hit the **Execute project** button from the toolbar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
-
-- Select the 'Run SpineOpt' Tool. You should see the output from SpineOpt in the *Julia Console* after clicking the *object activity control*.
+Go back to Spine Toolbox's main window and press the **Project** button in the *Execute* section of the toolbar. Select the Run SpineOpt tool to follow the output of SpineOpt in the console.
 
 ### Examining the results
 
-- Select the output data store and open the Spine DB editor. You can already inspect the fields in the displayed tables or use a pivot table.
+1. Double-click the output database to open it in the Spine DB editor.
+2. Press **Index** in the toolbar to switch to the pivot table view.
+3. Select `report__unit__node__direction__stochastic_scenario` in the Entity tree.
+4. In the *Frozen table*, select the alternative of the latest run. By default the Frozen table shows the oldest run, and every run adds a new "Run SpineOpt@..." alternative.
 
-- For the pivot table, press **Alt + F** for the shortcut to the hamburger menu, and select **Pivot -> Index**.
+You should see the following [unit\_flow](@ref var_unit_flow) values:
 
-- Select `report__unit__node__direction__stochastic_scenario` under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
-
-- Under alternative in the Frozen table, you can choose results from different runs. Pick the run you want to view. If the workflow has been run several times, the most recent run will usually be found at the bottom.
-
-- The *Pivot table* will be populated with results from the SpineOpt run. It will look something like the image below.
+| unit | node | unit\_flow |
+|:---|:---|---:|
+| power\_plant\_a | electricity\_node | 100.0 |
+| power\_plant\_a | upward\_reserve\_node | 0.0 |
+| power\_plant\_b | electricity\_node | 50.0 |
+| power\_plant\_b | upward\_reserve\_node | 20.0 |
 
 ![image](figs_reserves/reserves_tutorial_results_pivot_table.png)
 
-As anticipated, the *power\_plant\_b* is supplying the necessary reserve due to its surplus capacity, while *power\_plant\_a* is operating at full capacity. Additionally, in this model, we have not allocated a cost for reserve procurement. One way to double-check it is by selecting [model\_\_report](@ref) under **Relationship tree** and look at the costs the *Pivot table*, see image below.
+As anticipated, *power\_plant\_b* is supplying the necessary reserve due to its surplus capacity, while *power\_plant\_a* is operating at full capacity. Additionally, in this model, we have not allocated a cost for reserve procurement. To check this, select `report__model` in the Entity tree: `objective_res_proc_costs` is 0.0 and `objective_variable_om_costs` is 160714.29.
 
 ![image](figs_reserves/reserves_tutorial_results_report__model.png)
 
 So, is it possible to assign costs to this reserve procurement in SpineOpt? Yes, it is indeed possible.
 
-#### Specifying a reserve procurement cost value
+### Adding a reserve procurement cost
 
-- In *Relationship tree*, expand the [unit\_\_to\_node](@ref) class and select *power\_plant\_a | reserve\_upward\_node*.
+Open the input database again and add the following values (alternative `Base`):
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the [reserve\_procurement\_cost](@ref) parameter and the *Base* alternative, and enter the value *5* as seen in the image below. This will set the cost of providing reserve for *power\_plant\_a*.
+| Entity class | Entity | Parameter | Value |
+|:---|:---|:---|:---|
+| unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_node | [reserve\_procurement\_cost](@ref) | 5.0 |
+| unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_node | [reserve\_procurement\_cost](@ref) | 35.0 |
 
-![image](figs_reserves/reserves_tutorial_power_plant_a_res_procurement_cost.png)
+Press **Commit**, go back to Spine Toolbox's main window and press **Project** again.
 
-- In *Relationship tree*, expand the [unit\_\_to\_node](@ref) class and select *power\_plant\_b | reserve\_upward\_node*.
+### Examining the results again
 
-- In the *Relationship parameter* table (typically at the bottom-center), select the [reserve\_procurement\_cost](@ref) parameter and the *Base* alternative, and enter the value *35* as seen in the image below. This will set the cost of providing reserve for *power\_plant\_b*.
+View the results as before, and remember to select the latest run in the Frozen table. You should now see:
 
-![image](figs_reserves/reserves_tutorial_power_plant_b_res_procurement_cost.png)
-
-**Don't forget to commit the new changes to the database!**
-
-#### Executing the worflow and examining the results again
-
-- Go back to Spine Toolbox's main window, and hit again the **Execute project** button as before.
-
-- Select the output data store and open the Spine DB editor. You can inspect results as before, which should look like the image below.
+| unit | node | unit\_flow |
+|:---|:---|---:|
+| power\_plant\_a | electricity\_node | 80.0 |
+| power\_plant\_a | upward\_reserve\_node | 20.0 |
+| power\_plant\_b | electricity\_node | 70.0 |
+| power\_plant\_b | upward\_reserve\_node | 0.0 |
 
 ![image](figs_reserves/reserves_tutorial_results_pivot_table_reserve_cost.png)
 
-Since the cost of reserve procurement is way cheaper in *power\_plant\_a* than in *power\_plant\_b*, then the optimal solution is to reduce the production of electricity in *power\_plant\_a* to provide reserve with this unit rather than *power\_plant\_b* as before. By looking at the total costs, we can see that the reserve procurement costs are no longer zero.
+Since the cost of reserve procurement is much cheaper in *power\_plant\_a* than in *power\_plant\_b*, the optimal solution is to reduce the production of electricity in *power\_plant\_a* to provide reserve with this unit rather than *power\_plant\_b* as before. In `report__model`, the reserve procurement costs are no longer zero: `objective_res_proc_costs` is 2400.0 (20 MW × 5 €/MWh × 24 h) and `objective_variable_om_costs` is 173571.43.
 
 ![image](figs_reserves/reserves_tutorial_results_report__model_reserve_cost.png)
