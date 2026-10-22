@@ -200,6 +200,7 @@ function check_parameter_values()
     check_node_grids_consistency()
     check_capability_curve_consistency()
     check_line_AC_investments()
+    check_line_impedance()
 end
 
 function check_model_start_smaller_than_end()
@@ -402,5 +403,23 @@ function check_line_AC_investments()
     _check(
         isempty(error_indices),
         "Linear investments are not supported when investing in AC lines: $(join(error_indices, ", ", " and "))"
+    )
+end
+
+"""
+    Checks that zero impedance connections dont exist.
+"""
+function check_line_impedance()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true 
+            if resistance(connection=conn, _default=0) == 0 && reactance(connection=conn, _default=0) == 0
+                    push!(error_indices, (conn))
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Zero impedance connections found: $(join(error_indices, ", ", " and "))"
     )
 end

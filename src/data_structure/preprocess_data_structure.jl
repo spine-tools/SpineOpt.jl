@@ -914,16 +914,15 @@ resistance and reactance which the user is expected to give as input. Default
 values are set to zero.
 """
 function generate_connection_admittance() 
-    #TBA: add something like reactance_ = max(reactance(connection=conn, _default=0), 1e-6)
+    #note that previously we checked that both resistance and reactance are not zero
     add_object_parameter_values!(
         connection, 
         Dict(conn => Dict(:connection_conductance => 
-                parameter_value(resistance(connection = conn)/
-                            (resistance(connection = conn)^2 +
-                            reactance(connection = conn)^2) ) ) 
+                parameter_value(resistance(connection = conn, _default=0)/
+                            (resistance(connection = conn, _default=0)^2 +
+                            reactance(connection = conn, _default=0)^2) ) ) 
                 for conn in connection()
-                    if !isnothing(resistance(connection = conn, _strict=false)) && 
-                        !isnothing(reactance(connection = conn, _strict=false))
+                   
         )
     )
     add_object_parameter_defaults!(connection, Dict(:connection_conductance => parameter_value(0.0)))

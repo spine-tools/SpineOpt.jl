@@ -1,1 +1,0 @@
-To enable the consideration of a node as an AC bus in AC flow calculation, the boolean parameter [has\_voltage](@ref) should be set true. It triggers the generation of the voltage variables in the optimization model, as well as reactive power flow variables for connected units.
