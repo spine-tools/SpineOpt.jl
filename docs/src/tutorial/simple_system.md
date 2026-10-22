@@ -56,7 +56,7 @@ but there are some things that need to be configured:
 
 ![image](figs_simple_system/simple_system_toolbox_run_spineopt.png)
 
--   (optional) The Spine data stores are quite generic. In order for SpineOpt to be able 
+-   (optional, if you import the template in the Spine DB editor as shown below) The Spine data stores are quite generic. In order for SpineOpt to be able 
     to read the input database, we need to change its format from the Spine format 
     to the SpineOpt format. Luckily we can use templates for this. One of those 
     templates is made available as an item in Spine Toolbox: Load template. 
@@ -179,6 +179,12 @@ To create the nodes:
     then press *Ok*. This will create two entities of class
     [node](@ref), called *fuel* and *electricity*.
 
+!!! info
+    The example file [simple\_system.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json)
+    used on the [Verify installation](@ref recommended_workflow) page contains this same system,
+    but there the nodes are called *fuel\_node* and *electricity\_node*.
+    The names do not affect the results.
+
 ![image](figs_simple_system/simple_system_add_nodes.png)
 
 To create the units we do the same thing:
@@ -277,7 +283,7 @@ parameter value table:
 
 -   Double-click the *parameter\_name* field and select [demand](@ref).
 
--   Double-click the *alternativet\_name* field and select *Base*.
+-   Double-click the *alternative\_name* field and select *Base*.
 
 -   Double-click the *value* field and enter 150.
 
@@ -302,7 +308,7 @@ we'll have to take that balance away.
 Select the 'fuel' node in the entity tree or in the entity graph. Then, in the parameter
 value table, select
 
--   *entity\_by\_name*: 'fuel' node
+-   *entity\_byname*: 'fuel' node
 
 -   *parameter\_name*: [balance\_type](@ref)
 
@@ -330,7 +336,7 @@ For the VOM cost of the power plants:
 
 -   select the [node\_\_to\_unit](@ref) entity class
 
--   *entity\_by\_name*: 'fuel|power\_plant\_a'
+-   *entity\_byname*: 'fuel|power\_plant\_a'
 
 -   *parameter\_name*: [vom\_cost](@ref)
 
@@ -346,7 +352,7 @@ For the capacity of the power plants:
 
 -   select the [unit\_\_to\_node](@ref) entity class
 
--   *entity\_by\_name*: 'power\_plant\_a|electricity'
+-   *entity\_byname*: 'power\_plant\_a|electricity'
 
 -   *parameter\_name*: [capacity\_per\_unit](@ref)
 
@@ -362,7 +368,7 @@ For the efficiency of the power plants:
 
 -   select the [unit\_flow\_\_unit\_flow](@ref) entity class
 
--   *entity\_by\_name*: 'power\_plant\_a|electricity|fuel'
+-   *entity\_byname*: 'power\_plant\_a|electricity|fuel'
 
 -   *parameter\_name*: [flow\_ratio\_equality\_coefficient](@ref)
 
@@ -389,13 +395,13 @@ Select the root in the entity tree to see an overview of all parameters in the t
 
 With the input database ready, we are ready to run SpineOpt.
 
--   Go back to Spine Toolbox's main window, and hit the **Execute
-    project** button from the toolbar. 
+-   Go back to Spine Toolbox's main window, and hit the **Project** button
+    in the *Execute* section of the toolbar. 
     You should see 'Executing All Directed Acyclic Graphs' printed in
     the *Event log* (at the bottom left by default).
 
 -   Select the 'Run SpineOpt' Tool. You should see the output from
-    SpineOpt in the *Julia Console* (after clicking the *object activity control* in older versions).
+    SpineOpt in the *Julia Console*.
 
 ## Examining the results
 
