@@ -92,14 +92,15 @@ Let's assume that the *power\_plant\_b* has a minimum operating point of *10%*, 
 
 - In the Spine DB editor, locate the *Entity tree* (typically at the top-left).
 - Expand the [unit\_\_to\_node](@ref) class and select *power\_plant\_b | electricity\_node*.
-- In the *Parameter value* table, select the [minimum\_operating\_point](@ref) parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the minimum operating point of *power\_plant\_b* when producing electricity.
+- In the *Parameter value* table, select the [minimum\_operating\_point](@ref) parameter and the *Base* alternative, and enter the value *0.1*. This will set the minimum operating point of *power\_plant\_b* when producing electricity.
 
-The values for *power\_plant\_b | electricity\_node* should now be:
 
-| class | entity byname | parameter name | alternative | value |
-|:---|:---|:---|:---|:---|
-| unit\_\_to\_node | power\_plant\_b ǀ electricity\_node | [capacity\_per\_unit](@ref) | Base | 200.0 |
-| unit\_\_to\_node | power\_plant\_b ǀ electricity\_node | [minimum\_operating\_point](@ref) | Base | 0.1 |
+In the Entity tree, expand [unit\_\_to\_node](@ref) and select *power\_plant\_b | electricity\_node*. The Parameter value table should show:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | unit\_\_to\_node | power\_plant\_b ǀ electricity\_node | [capacity\_per\_unit](@ref) | Base | 200.0 |
+| | unit\_\_to\_node | power\_plant\_b ǀ electricity\_node | [minimum\_operating\_point](@ref) | Base | 0.1 |
 
 ### Adding the unit commitment costs and initial states
 
@@ -112,15 +113,16 @@ The values for *power\_plant\_b | electricity\_node* should now be:
   - [units\_on\_cost](@ref) parameter and the *Base* alternative, and enter the value *3*. This will establish that there's a cost of '3' EUR per units on (e.g., idling cost).
   - [online\_count\_initial](@ref) parameter and the *Base* alternative, and enter the value *0*. This will establish that there are no units 'on' before the first time step.
 
-The values for *power\_plant\_b* should now be:
 
-| class | entity byname | parameter name | alternative | value |
-|:---|:---|:---|:---|:---|
-| unit | power\_plant\_b | [online\_variable\_type](@ref) | Base | binary |
-| unit | power\_plant\_b | [shut\_down\_cost](@ref) | Base | 7.0 |
-| unit | power\_plant\_b | [start\_up\_cost](@ref) | Base | 5.0 |
-| unit | power\_plant\_b | [units\_on\_cost](@ref) | Base | 3.0 |
-| unit | power\_plant\_b | [online\_count\_initial](@ref) | Base | 0.0 |
+In the Entity tree, expand [unit](@ref) and select *power\_plant\_b*. The Parameter value table should show:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | unit | power\_plant\_b | [online\_variable\_type](@ref) | Base | binary |
+| | unit | power\_plant\_b | [shut\_down\_cost](@ref) | Base | 7.0 |
+| | unit | power\_plant\_b | [start\_up\_cost](@ref) | Base | 5.0 |
+| | unit | power\_plant\_b | [units\_on\_cost](@ref) | Base | 3.0 |
+| | unit | power\_plant\_b | [online\_count\_initial](@ref) | Base | 0.0 |
 
 When you're ready, commit all changes to the database.
 
