@@ -67,19 +67,30 @@ This will write the total [vom\_cost](@ref) and reserve procurement cost terms o
 
 ### Entering the parameter values
 
-Select each entity in the Entity tree and enter the values below in the Parameter value table, always with the alternative `Base`. For the values marked *(list)*, double-click the value cell and pick the value from the drop-down list.
+Enter the values below in the Parameter value table, always with the alternative `Base`. For the values marked *(list)*, double-click the value cell and pick the value from the drop-down list. The values marked with * come with the simple system and are already there.
 
-| Entity class | Entity | Parameter | Value |
-|:---|:---|:---|:---|
-| node | upward\_reserve\_node | [demand](@ref) | 20.0 |
-| node | upward\_reserve\_node | [reserve\_active](@ref) | True *(list)* |
-| node | upward\_reserve\_node | [reserve\_upward](@ref) | True *(list)* |
-| node | upward\_reserve\_node | [balance\_sense](@ref) | >= *(list)* |
-| node | upward\_reserve\_group | [balance\_type](@ref) | none *(list)* |
-| unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_node | [capacity\_per\_unit](@ref) | 100.0 |
-| unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_node | [capacity\_per\_unit](@ref) | 200.0 |
-| unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_group | [capacity\_per\_unit](@ref) | 100.0 |
-| unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_group | [capacity\_per\_unit](@ref) | 200.0 |
+In the Entity tree, select the [node](@ref) class. The Parameter value table should show:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | node | electricity\_node | [demand](@ref) | Base | 150.0 * |
+| | node | fuel\_node | [balance\_type](@ref) | Base | none * |
+| | node | upward\_reserve\_group | [balance\_type](@ref) | Base | none *(list)* |
+| | node | upward\_reserve\_node | [balance\_sense](@ref) | Base | >= *(list)* |
+| | node | upward\_reserve\_node | [demand](@ref) | Base | 20.0 |
+| | node | upward\_reserve\_node | [reserve\_active](@ref) | Base | True *(list)* |
+| | node | upward\_reserve\_node | [reserve\_upward](@ref) | Base | True *(list)* |
+
+In the Entity tree, select the [unit\_\_to\_node](@ref) class. The Parameter value table should show:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | unit\_\_to\_node | power\_plant\_a ǀ electricity\_node | [capacity\_per\_unit](@ref) | Base | 100.0 * |
+| | unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_group | [capacity\_per\_unit](@ref) | Base | 100.0 |
+| | unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_node | [capacity\_per\_unit](@ref) | Base | 100.0 |
+| | unit\_\_to\_node | power\_plant\_b ǀ electricity\_node | [capacity\_per\_unit](@ref) | Base | 200.0 * |
+| | unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_group | [capacity\_per\_unit](@ref) | Base | 200.0 |
+| | unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_node | [capacity\_per\_unit](@ref) | Base | 200.0 |
 
 What the values do:
 - [demand](@ref) sets the reserve requirement of 20 MW.
@@ -90,7 +101,7 @@ What the values do:
 - [capacity\_per\_unit](@ref) on the group sets the total capacity of each unit for electricity and reserve together.
 
 !!! warning
-    All nine values are needed. If some of them are missing, the model can become infeasible or give unexpected results.
+    All nine new values are needed. If some of them are missing, the model can become infeasible or give unexpected results.
 
 Press **Commit** in the toolbar when you are done.
 
@@ -126,10 +137,12 @@ So, is it possible to assign costs to this reserve procurement in SpineOpt? Yes,
 
 Open the input database again and add the following values (alternative `Base`):
 
-| Entity class | Entity | Parameter | Value |
-|:---|:---|:---|:---|
-| unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_node | [reserve\_procurement\_cost](@ref) | 5.0 |
-| unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_node | [reserve\_procurement\_cost](@ref) | 35.0 |
+In the Entity tree, expand [unit\_\_to\_node](@ref) and select the two entities below. The Parameter value table should show:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | unit\_\_to\_node | power\_plant\_a ǀ upward\_reserve\_node | [reserve\_procurement\_cost](@ref) | Base | 5.0 |
+| | unit\_\_to\_node | power\_plant\_b ǀ upward\_reserve\_node | [reserve\_procurement\_cost](@ref) | Base | 35.0 |
 
 Press **Commit**, go back to Spine Toolbox's main window and press **Project** again.
 
@@ -141,11 +154,4 @@ View the results as before, and remember to select the latest run in the Frozen 
 |:---|:---|---:|
 | power\_plant\_a | electricity\_node | 80.0 |
 | power\_plant\_a | upward\_reserve\_node | 20.0 |
-| power\_plant\_b | electricity\_node | 70.0 |
-| power\_plant\_b | upward\_reserve\_node | 0.0 |
-
-![image](figs_reserves/reserves_tutorial_results_pivot_table_reserve_cost.png)
-
-Since the cost of reserve procurement is much cheaper in *power\_plant\_a* than in *power\_plant\_b*, the optimal solution is to reduce the production of electricity in *power\_plant\_a* to provide reserve with this unit rather than *power\_plant\_b* as before. In `report__model`, the reserve procurement costs are no longer zero: `objective_res_proc_costs` is 2400.0 (20 MW × 5 €/MWh × 24 h) and `objective_variable_om_costs` is 173571.43.
-
-![image](figs_reserves/reserves_tutorial_results_report__model_reserve_cost.png)
+| power\_plant\_b |
