@@ -4,7 +4,7 @@ Now that we've installed Spine Toolbox and SpineOpt, let's make sure that everyt
 
 In short, we'll create a new project in Spine Toolbox where we'll set up a simple workflow for using SpineOpt. We'll create an input database with meaningful data in the SpineOpt format, run SpineOpt on that input and examine the output. The steps to take are:
 1. Open Spine Toolbox and create a new project: File > New Project
-2. Drag 2 *Data Store* items, the *Load Template* tool and the *Run SpineOpt* tool from the *ribbon* to the *design view*. Each time you drag an item to the design view you are prompted to choose a name for the item. The default names are ok but for clarity we'll name the Data Store items 'input' and 'output'.
+2. Drag 2 *Data Store* items, the *Load Template* tool and the *Run SpineOpt* tool from the *ribbon* to the *design view*. Each time you drag an item to the design view you are prompted to choose a name for the item. The default names are ok but for clarity we'll name the Data Store items 'input' and 'output'. The *Load Template* and *Run SpineOpt* tools come from the SpineOpt plugin. If you don't see them in the ribbon, install the plugin first (Plugins > Install plugin ..., see [Installation](@ref installation)).
 3. Connect the items with (yellow) arrows as following: Load Template > input > Run SpineOpt > output
     ![image](figs_recommended_workflow/SpineOpt_Workflow.png)
 4. For each Data Store item
@@ -14,7 +14,7 @@ In short, we'll create a new project in Spine Toolbox where we'll set up a simpl
     ![image](figs_recommended_workflow/Data_Store_Properties.png)
 5. For each tool
     1. select the tool in the design view by a single click on the tool, you should see a *Tool properties* window (typically to the right of the design view).
-    2. Drag the available sources (i.e. the databases) to the *tool arguments*. The order of matters. Make sure that the input is the first argument and the output is the second argument.
+    2. Drag the available sources (i.e. the databases) to the *tool arguments*. The Load Template tool only needs the input database. The Run SpineOpt tool needs both, and the order matters: make sure that the input is the first argument and the output is the second argument.
     ![image](figs_recommended_workflow/Tool_Properties.png)
 6. Select the Load Template tool and press the 'Run Selection' button in the ribbon (and wait until the process is done).
     ![image](figs_recommended_workflow/Execute_Load_Template.png)
@@ -34,7 +34,7 @@ The remainder of this section explains each of these steps in more detail with t
 
 To create a workflow, we first need to open spinetoolbox and create a new project: File > New project
 
-Our workflow in this project is going to consist of 2 databases (*Data Store*) and 2 tools (*Load Template* and *Run SpineOpt*). Drag these items from the ribbon to the *design view*. Everytime you drag a tool or database to the design view, Spine Toolbox will ask for a name for the tool. We'll call one database 'input' and the other 'output'. For the tools we can accept the default names. In the design view it is possible to connect these tools and databases by dragging yellow arrows between them (click on the white square connections). Connect them as following: Load Template > input > Run SpineOpt > output
+Our workflow in this project is going to consist of 2 databases (*Data Store*) and 2 tools (*Load Template* and *Run SpineOpt*). Drag these items from the ribbon to the *design view*. Everytime you drag a tool or database to the design view, Spine Toolbox will ask for a name for the tool. We'll call one database 'input' and the other 'output'. For the tools we can accept the default names. Both tools come from the SpineOpt plugin, which provides their *specifications*. A specification tells Spine Toolbox what a tool runs, here the SpineOpt Julia package. If a tool has no specification, it cannot be run and the console shows 'No specification'. In the design view it is possible to connect these tools and databases by dragging yellow arrows between them (click on the white square connections). Connect them as following: Load Template > input > Run SpineOpt > output
 
 ![image](figs_recommended_workflow/Workflow_Data_Store.png)
 
@@ -49,11 +49,19 @@ Each of the databases need to be initialised:
 
 Each of the tools need to be connected to the databases. The connections we made before were only the available connections, we need to explicitly tell our tools to use these available connections.
 1. Select the tool, you should see the *Tool Properties* window (typically on the right of the design view). Now that you've initialised the databases, you should also see the *available resources*.
-2. Drag the available sources to the *tool arguments*. The order of matters. Make sure that the input is the first argument and the output is the second argument.
+2. Drag the available sources to the *tool arguments*. The Load Template tool only needs the input database. The Run SpineOpt tool needs both, and the order matters: make sure that the input is the first argument and the output is the second argument.
 
 ![image](figs_recommended_workflow/Tool_Properties.png)
 
-To summarize, we've created a workflow where we first format the spine database to a SpineOpt database by loading the SpineOpt template into that database. Remember that a SpineOpt database is a spine database but a spine database is not necessarily a SpineOpt database. A spine database only provides an abstract data structure with entity classes, entities, parameter definitions, parameter values, alternatives, scenarios etc. A SpineOpt database additionally includes entity classes (e.g., "unit", "node", "unit__to_node") and parameter definitions (e.g., "existing_units", "fuel_cost", etc.) that introduce the energy system concepts used in SpineOpt. In the next section we'll manually intervene at this point to add meaningfull data to this database. Once we have the input database with meaningful data in the SpineOpt format, we run SpineOpt. SpineOpt will then write its results in the output database.
+To summarize, we've created a workflow where we first format the spine database to a SpineOpt database by loading the SpineOpt template into that database. Remember that a SpineOpt database is a spine database but a spine database is not necessarily a SpineOpt database. A spine database only provides an abstract data structure with entity classes, entities, parameter definitions, parameter values, alternatives, scenarios etc. A SpineOpt database additionally includes entity classes (e.g., "unit", "node", "unit__to_node") and parameter definitions (e.g., "existing_units", "fuel_cost", etc.) that introduce the energy system concepts used in SpineOpt. In the next section we'll manually intervene at this point to add meaningful data to this database. Once we have the input database with meaningful data in the SpineOpt format, we run SpineOpt. SpineOpt will then write its results in the output database.
+
+!!! info
+    A few Spine database terms that are used throughout this documentation:
+    - *Entity class*: a type of thing, e.g. `unit`, `node` or `unit__to_node`. A double underscore separates the dimensions of a multi-dimensional class.
+    - *Entity*: an individual item of a class, e.g. the unit `power_plant_a` or the `unit__to_node` entity `power_plant_a | electricity_node`.
+    - *Parameter value*: data attached to an entity, e.g. the `capacity_per_unit` of `power_plant_a | electricity_node`.
+    - *Alternative*: a set of parameter values. The default data is in the alternative `Base`.
+    - *Scenario*: a combination of alternatives to be run.
 
 !!! info
     If no 'Data Store' is specified for the output, the results of SpineOpt will be written by default to the input 'Data Store'. However, it is generally preferable to define a separate output data store for results.
@@ -80,7 +88,7 @@ Note that the *Load template* tool makes use of SpineOpt. This is therefore the 
     WARNING: using JuMP.Parameter in module SpineInterface conflicts with an existing identifier.
     ```
 
-Now it is time to add information to import meaningful data to the input database. To that end we'll first need to get a file with the data. We can find that file on the SpineOpt repository on github. There is an examples folder with functioning examples. Let's take the [Simple system tutorial](@ref). It does not matter where you save this file on your system, but it is possible to place it in the folder of your spine project.
+Now it is time to add information to import meaningful data to the input database. To that end we'll first need to get a file with the data. We can find that file on the SpineOpt repository on github. There is an examples folder with functioning examples. Let's take the [simple system example](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json), which is also the starting point of the [Simple system tutorial](@ref). It does not matter where you save this file on your system, but it is possible to place it in the folder of your spine project.
 
 !!! info
     These example files are part of our tests for the master branch so they should always work correctly.
@@ -92,13 +100,13 @@ To import a '.json' file to a spine database, take the following steps:
 4. Save the imported data by pressing the 'commit' button.
 ![image](figs_recommended_workflow/spine_db_editor_import.png)
 
-Now, let's examine what we see in the spine db editor. Typically you'll see a list of entities on the left, a table of parameters in the middle and alternatives/scenarios on the right. Something that will also be particularly useful (in the beginning) is the *graph view*. Click the 'graph' button in the ribbon on top to open the graph view. The view only shows what has been selected (as well as what is connected to that selection) so we won't see much yet. If you select 'root' in the list of entities on the left, you'll see everything. There is some stuff in the database that is typically hidden which clutters up the view so that is not particularly useful. Instead select 'unit'.
+Now, let's examine what we see in the spine db editor. Typically you'll see the Entity tree (a list of entity classes and entities) on the left, a table of parameters in the middle and alternatives/scenarios on the right. Something that will also be particularly useful (in the beginning) is the *graph view*. Click the 'Graph' button in the toolbar on top to open the graph view. The view only shows what has been selected (as well as what is connected to that selection) so we won't see much yet. If you select 'root' in the Entity tree, you'll see everything. There is some stuff in the database that is typically hidden which clutters up the view so that is not particularly useful. Instead select 'unit'.
 
-In the graph view you should now see a small energy system with a fuel node, two power plants and an electricity node. As you would expect, this is a system which chooses the cheapest power plant to supply the demand in the electricity node. As we can see in the parameters for the unit, each plant has a different variable operation cost (vom) and capacity. In other words, the system will choose the plant with the lowest vom cost until it is limited by its capacity. Then the system will choose the other plant.
+In the graph view you should now see a small energy system with a fuel node, two power plants and an electricity node. As you would expect, this is a system which chooses the cheapest power plant to supply the demand in the electricity node. Each plant has a different variable operation cost ([vom\_cost](@ref)) and capacity. Note that the vom\_cost is defined on the fuel flow into the plant (`node__to_unit`), and the capacity on the electricity flow out of it (`unit__to_node`). Taking the efficiency of each plant into account, the system will choose the plant with the lowest cost per unit of electricity until it is limited by its capacity. Then the system will choose the other plant.
 
 ![image](figs_recommended_workflow/spine_db_editor_unit.png)
 
-Besides the data for the system, the database also contains data for the optimization model. To view that data select 'model' in the list of entities.
+Besides the data for the system, the database also contains data for the optimization model. To view that data select 'model' in the Entity tree.
 
 In the graph view you should now see a model at the center and different structures attached to it. The model entity contains information on, e.g., the solver to be used by the model. SpineOpt has a flexible temporal and stochastic structure, allowing for the use of different data structures to represent time and uncertainty within the model (for more details, see [Temporal Framework](@ref) and [Stochastic Framework](@ref stochastic_framework)). These are specified through the respective entities. If you select each of these entities, you can see that they are only connected to the model. That means that for this system, all entities use the same temporal structure by default. But if we want, we can add a specific temporal structure for a specific entity. The same holds for the stochastic structure. The stochastic structure manages the scenarios it is connected to. Here, there is only one scenario implying we are using a deterministic system. Finally, the model is also connected to a report. The report determines what is written to the output database when SpineOpt runs. In particular, any output entity connected to the report will appear in the output database.
 
@@ -130,8 +138,12 @@ While the tool runs, you can keep an eye on the console (typically lower right p
 
 ## Examine the output of SpineOpt
 
-Finally, we can also take a look at the output of SpineOpt. You can view the data the same way as you do for the input data. By double-clicking the output database you open the spine db editor. There is not much to see in the graph view, so we'll look at the table of parameters. This time we can select the root (on the left) and we'll see all the output of the database in the table (in the middle).
+Finally, we can also take a look at the output of SpineOpt. You can view the data the same way as you do for the input data. By double-clicking the output database you open the spine db editor. There is not much to see in the graph view, so we'll look at the table of parameters. This time we can select the root in the Entity tree (on the left) and we'll see all the output of the database in the table (in the middle).
 
-For this example, we see the flows throughout the system. We can look at the production of each powerplant. We may need to scroll, but eventually we see that the values are 'time series'. By double-clicking on these values we get the values of this time series as well as a plot of the values.
+For this example, we see the flows throughout the system. We can look at the production of each powerplant. We may need to scroll, but eventually we see that the values are 'time series'. By double-clicking on these values we get the values of this time series as well as a plot of the values. Note that this example has a single time step of one day (the `resolution` of the temporal block is `1D`), so each time series has only one value.
 
-Indeed, the power plant with lower [vom\_cost](@ref) is used at its maximum and the other plant is used whenever necessary.
+Indeed, the cheaper power plant (`power_plant_a`) is used at its maximum and the other plant covers the rest of the demand.
+
+## Next steps
+
+Now that the installation works, continue with the [Simple system tutorial](@ref), which builds this same system step by step.
