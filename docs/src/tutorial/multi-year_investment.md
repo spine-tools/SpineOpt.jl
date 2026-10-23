@@ -34,36 +34,40 @@ To be able to see the values of the economic parameters after a run, you have to
 ## Not using economic discounting
 We start with the case where [multiyear\_economic\_discounting](@ref) is not used with the default value `null`, which means SpineOpt will not create and use its internally-calculated parameters for discounting investment and operation costs. A [unit\_investment\_cost](@ref) of 100 and a [vom\_cost](@ref) of 25 are not discounted at all. See the set-up below (the parameter values with alternative `Base`; the values that come with the simple system are marked with *).
 
-| Entity class | Entity | Parameter | Value |
-|:---|:---|:---|:---|
-| model | simple | [discount\_rate](@ref) | 0.05 |
-| model | simple | [discount\_year](@ref) | 1990-01-01T00:00:00 |
-| model | simple | [model\_start](@ref) | 2000-01-01T00:00:00 |
-| model | simple | [model\_end](@ref) | 2006-01-01T00:00:00 |
-| node | electricity\_node | [demand](@ref) | 100.0 |
-| node | fuel\_node | [balance\_type](@ref) | none * |
-| temporal\_block | investment | [block\_start](@ref) | 2000-01-01T00:00:00 |
-| temporal\_block | investment | [block\_end](@ref) | 2006-01-01T00:00:00 |
-| temporal\_block | investment | [resolution](@ref) | 5Y |
-| temporal\_block | operation | [resolution](@ref) | 4M |
-| unit | power\_plant\_a | [existing\_units](@ref) | 0.0 |
-| unit | power\_plant\_a | [investment\_count\_max\_cumulative](@ref) | 1.0 |
-| unit | power\_plant\_a | [discount\_rate\_technology\_specific](@ref) | 0.07 |
-| unit | power\_plant\_a | [unit\_investment\_cost](@ref) | 100.0 |
-| unit | power\_plant\_a | [lifetime\_economic](@ref) | 10Y |
-| unit | power\_plant\_a | [lifetime\_technical](@ref) | 10Y |
-| node\_\_to\_unit | fuel\_node ǀ power\_plant\_a | [vom\_cost](@ref) | 25.0 * |
-| unit\_\_to\_node | power\_plant\_a ǀ electricity\_node | [capacity\_per\_unit](@ref) | 100.0 * |
-| unit\_flow\_\_unit\_flow | power\_plant\_a ǀ electricity\_node ǀ fuel\_node ǀ power\_plant\_a | [flow\_ratio\_equality\_coefficient](@ref) | 1.0 |
+In the Entity tree, select *root*. Among the values in the Parameter value table, you should see:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | model | simple | [discount\_rate](@ref) | Base | 0.05 |
+| | model | simple | [discount\_year](@ref) | Base | 1990-01-01T00:00:00 |
+| | model | simple | [model\_start](@ref) | Base | 2000-01-01T00:00:00 |
+| | model | simple | [model\_end](@ref) | Base | 2006-01-01T00:00:00 |
+| | node | electricity\_node | [demand](@ref) | Base | 100.0 |
+| | node | fuel\_node | [balance\_type](@ref) | Base | none * |
+| | temporal\_block | investment | [block\_start](@ref) | Base | 2000-01-01T00:00:00 |
+| | temporal\_block | investment | [block\_end](@ref) | Base | 2006-01-01T00:00:00 |
+| | temporal\_block | investment | [resolution](@ref) | Base | 5Y |
+| | temporal\_block | operation | [resolution](@ref) | Base | 4M |
+| | unit | power\_plant\_a | [existing\_units](@ref) | Base | 0.0 |
+| | unit | power\_plant\_a | [investment\_count\_max\_cumulative](@ref) | Base | 1.0 |
+| | unit | power\_plant\_a | [discount\_rate\_technology\_specific](@ref) | Base | 0.07 |
+| | unit | power\_plant\_a | [unit\_investment\_cost](@ref) | Base | 100.0 |
+| | unit | power\_plant\_a | [lifetime\_economic](@ref) | Base | 10Y |
+| | unit | power\_plant\_a | [lifetime\_technical](@ref) | Base | 10Y |
+| | node\_\_to\_unit | fuel\_node ǀ power\_plant\_a | [vom\_cost](@ref) | Base | 25.0 * |
+| | unit\_\_to\_node | power\_plant\_a ǀ electricity\_node | [capacity\_per\_unit](@ref) | Base | 100.0 * |
+| | unit\_flow\_\_unit\_flow | power\_plant\_a ǀ electricity\_node ǀ fuel\_node ǀ power\_plant\_a | [flow\_ratio\_equality\_coefficient](@ref) | Base | 1.0 |
 
 Note that [existing\_units](@ref) is set to 0, since its default value is 1 and the model would otherwise not need to invest.
 
 ## Using economic parameters with consecutive operation years
 Now we set [multiyear\_economic\_discounting](@ref) to `consecutive_years`. This set-up indicates that the model will use the internally-calculated parameters and continuous operational temporal blocks. Now the [unit\_investment\_cost](@ref) and the [vom\_cost](@ref) are discounted to 1990 using a [discount\_rate](@ref) of 0.05. Compared to the previous set-up, we only add one value:
 
-| Entity class | Entity | Parameter | Value |
-|:---|:---|:---|:---|
-| model | simple | [multiyear\_economic\_discounting](@ref) | consecutive\_years |
+In the Entity tree, expand [model](@ref) and select *simple*. The Parameter value table should show:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | model | simple | [multiyear\_economic\_discounting](@ref) | Base | consecutive\_years |
 
 The values for the output parameter `unit_discounted_duration` are shown below. It is used to discount operation costs so it has the resolution of the operational temporal block. However, since we only discount per year, this parameter value is constant within a year.
 
@@ -76,28 +80,22 @@ The rest is for discounting investment costs with the resolution of the investme
 ## Using economic parameters with milestone investment years
 Now we set [multiyear\_economic\_discounting](@ref) to `milestone_years`. This indicates that we want operational temporal block to be discontinuous and use the same milestone years as the investment temporal block. In this case, we need to change the definition of temporal blocks. Compared to the previous set-up, set [multiyear\_economic\_discounting](@ref) to `milestone_years`, delete the `operation` temporal block and add two new operation temporal blocks, both connected to the model with [model\_\_default\_temporal\_block](@ref) entities (`simple | operation1` and `simple | operation2`):
 
-| Entity class | Entity | Parameter | Value |
-|:---|:---|:---|:---|
-| model | simple | [multiyear\_economic\_discounting](@ref) | milestone\_years |
-| temporal\_block | operation1 | [block\_start](@ref) | 2000-01-01T00:00:00 |
-| temporal\_block | operation1 | [block\_end](@ref) | 2001-01-01T00:00:00 |
-| temporal\_block | operation1 | [resolution](@ref) | 4M |
-| temporal\_block | operation2 | [block\_start](@ref) | 2004-09-01T00:00:00 |
-| temporal\_block | operation2 | [block\_end](@ref) | 2006-01-01T00:00:00 |
-| temporal\_block | operation2 | [resolution](@ref) | 4M |
-| node | electricity\_node | [demand](@ref) | Time series (see below) |
+In the Entity tree, select *root*. Among the values in the Parameter value table, you should now see:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | model | simple | [multiyear\_economic\_discounting](@ref) | Base | milestone\_years |
+| | temporal\_block | operation1 | [block\_start](@ref) | Base | 2000-01-01T00:00:00 |
+| | temporal\_block | operation1 | [block\_end](@ref) | Base | 2001-01-01T00:00:00 |
+| | temporal\_block | operation1 | [resolution](@ref) | Base | 4M |
+| | temporal\_block | operation2 | [block\_start](@ref) | Base | 2004-09-01T00:00:00 |
+| | temporal\_block | operation2 | [block\_end](@ref) | Base | 2006-01-01T00:00:00 |
+| | temporal\_block | operation2 | [resolution](@ref) | Base | 4M |
+| | node | electricity\_node | [demand](@ref) | Base | Time series (see below) |
 
 where the demand `TimeSeries` is defined as follows:
 
 ![image](figs_multi-year/demand_ts_milestone.png)
 
 !!! info
-    If you get confused why the temporal blocks are defined this way, I recommend going back to [Multi-year investments](@ref) for details.
-
-The values for the output parameter `unit_discounted_duration` are shown below. Note now in 2000, the value becomes 2.79. This parameter value acts as a weight taking into account the discount per year and the resolution of the milestone years. In other words, now the operation costs for the in-between years have also been included.
-
-![image](figs_multi-year/unit_discounted_duration_milestone.png)
-
-The rest is for discounting investment costs with the resolution of the investment temporal block.
-
-![image](figs_multi-year/unit_conversion_to_discounted_annuities_milestone.png)
+    If you get confused why the temporal blocks are def
