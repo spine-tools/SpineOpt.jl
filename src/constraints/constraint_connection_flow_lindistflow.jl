@@ -20,9 +20,9 @@
 
 @doc raw"""
     
-For the Lindistflow formulation there is no separate equation for real and 
+For the linearized Distflow formulation there is no separate equation for real and 
 reactive power flow but one equation governing both. This constraint ties 
-together connection end point voltage magnitudes, P and Q.
+together connection end point voltage magnitudes, real and reactive power.
 
 ```math
 \begin{aligned}
@@ -89,11 +89,23 @@ function _build_constraint_connection_flow_reactive_equal(m, conn, n1, n2, s, t)
     )
 end
 
-"""
-    function add_constraint_connection_maxpower_lindistflow!()
+@doc raw"""
+The equation for power line current limit in the linearized Distflow formulation becomes
 
-    The function sets the approximated maximum for connection current.
-    
+```math
+\begin{aligned}
+
+& =  v^{connection\_flow\_reactive}_{(conn,n_{to},to\_node,s,t)} \cdot sin(\alpha) +  v^{connection\_flow\_real}_{(conn,n_{to},to\_node,s,t)} \cdot cos(\alpha) \\
+& \le p^{connection\_current\_max}_{(conn,s,t)}\\
+& \forall (conn, n_{from}, n_{to}) \in connection\_\_node\_\_node : \exists c \in indices(p^{connection\_current\_max}), \; connection\_has\_ac\_flow(c, n_{from}, n_{to})\\
+& \forall (s,t) \\
+& \forall \alpha \in A
+\end{aligned}
+```
+
+where A is the set of angles for the tangent points of a polygon approximating 
+a circle in the phasor plane. Currently the polygon is created automatically.
+
 """
 function add_constraint_connection_maxpower_lindistflow!(m::Model)
     instance = m.ext[:spineopt].instance
@@ -104,6 +116,11 @@ function add_constraint_connection_maxpower_lindistflow!(m::Model)
     end
 end
 
+"""
+    function _build_constraint_connection_maxpower_lindistflow!()
+
+    The function sets the approximated maximum for connection current.
+"""
 function _build_constraint_connection_maxpower_lindistflow(m, conn, n, d, s, t, alpha)
     @fetch connection_flow, connection_flow_reactive = m.ext[:spineopt].variables
     @build_constraint(
@@ -111,7 +128,7 @@ function _build_constraint_connection_maxpower_lindistflow(m, conn, n, d, s, t, 
         * sin(deg2rad(alpha))
         + connection_flow[conn, n, d, s, t] 
         * cos(deg2rad(alpha))
-        <= (connection_current_max(m, connection=conn, stochastic_scenario=s, t=t))^2     
+        <= (connection_current_max(m, connection=conn, stochastic_scenario=s, t=t))     
     )
 end
 

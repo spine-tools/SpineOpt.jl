@@ -230,11 +230,9 @@ For reactive power flow the relevant equation is:
 For real power flows the equation is quite similar:
 @@add_constraint_connection_flow_real!
 
-The Lindistflow formulation differs from this. 
-
 @@add_constraint_node_voltages_lindistflow!
 
-
+In the linearized Distflow formulation the leaving and arriving power flows are the same, i.e. there are no losses.
 
 #### [Binding voltages together](@id constraint_node_voltages_conic)
 @@add_constraint_node_voltages_conic!
@@ -242,6 +240,8 @@ The Lindistflow formulation differs from this.
 #### [Limiting power line current](@id constraint_connection_flow_current)
 
 @@add_constraint_connection_flow_current!
+
+@@add_constraint_connection_maxpower_lindistflow!
 
 #### [Limiting reactive power flow in a line](@id constraint_connection_reactive_flow_capacity)
 
