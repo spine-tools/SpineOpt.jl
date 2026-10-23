@@ -1,27 +1,27 @@
 # Rolling horizon tutorial
 
-This tutorial provides a step-by-step guide to show the main parameter setting up to use the rolling horizon feature in SpineOpt.
+This tutorial provides a step-by-step guide to show the main parameters needed to use the rolling horizon feature in SpineOpt.
 
 ## Introduction
 
-Welcome to our tutorial the tutorial for rolling horizon in SpineOpt. To get the most out of this tutorial, we suggest first completing the [Unit commitment constraints tutorial](@ref).
+Welcome to our tutorial for rolling horizon in SpineOpt. To get the most out of this tutorial, we suggest first completing the [Unit commitment constraints tutorial](@ref).
 
 But first, **What is rolling horizon?**
 
-The rolling horizon technique manages large problems by prioritizing efficiency over accuracy. Instead of solving the entire time horizon, it tackles smaller problems within "rolling windows" that represent shorter time periods that share results from one window to the next. This approach allows for quicker solutions, but may lead to suboptimal results (from the entire time horizon perspective), particularly affecting intertemporal constraints (e.g., storage levels, unit-commitment, ramping) due since avoids the perfect foresight. More information about the rolling horizon technique can be found in [here](https://jump.dev/JuMP.jl/stable/tutorials/algorithms/rolling_horizon/).
+Rolling horizon solves the model in a sequence of shorter, overlapping windows instead of the whole time horizon at once, and passes the results from one window to the next. This serves two purposes: it reduces the computational burden of large problems, and it represents limited foresight, as in real operational planning where decisions are made with information only about the near future. Compared to solving the full horizon at once (perfect foresight), the results can differ, especially for intertemporal decisions such as storage levels, unit commitment and ramping. More information about the rolling horizon technique can be found in [here](https://jump.dev/JuMP.jl/stable/tutorials/algorithms/rolling_horizon/).
 
 ### Model assumptions
 
 First, let's start by importing the file [rolling_horizon.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/rolling_horizon.json) into SpineToolbox and create a workflow to run the model as in the Unit Commitment tutorial. The file has already set up the rolling horizon, so you can directly run the workflow to see how it works. However, we recommend going through the steps in this tutorial to understand how to set up the rolling horizon in SpineOpt and analyze the results.
 
-Good! So, let's now have a look to the system we are working with. The image below shows the system structure, which is an extension of the Unit Commitment case study with two storage nodes: *fuel\_node* and *battery\_storage*.
+Good! So, let's now have a look at the system we are working with. The image below shows the system structure, which is an extension of the Unit Commitment case study where the *electricity\_node* also has a storage.
 
 ![image](figs_rolling_horizon/rh_system_overview.png)
 
 The main changes to the Unit Commitment case study are:
 
 - The [demand](@ref) at *electricity\_node* is a time series of a week (168 hours) instead of a single day
-- The *electricity\_node* has storage state with capacity 100 MWh and efficiency of 0.95.
+- The *electricity\_node* has a storage state with a capacity of 100 MWh ([storage\_state\_max](@ref)) and a [storage\_state\_coefficient](@ref) of 0.95.
 
 !!! tip "Remember!"
     This example is an extension of the Unit Commitment tutorial, so the intertemporal constraints included are: unit-commitment, minimum operating point, minimum downtime, and minimum uptime.
@@ -41,9 +41,9 @@ The [temporal\_block](@ref) parameters [block\_start](@ref) and [block\_end](@re
 ![image](figs_rolling_horizon/rh_temporal_block.png)
 
 !!! tip "Pro tip!"
-    The [temporal\_block](@ref) parameters [block\_start](@ref) and [block\_end](@ref) can be larger range than the [roll\_forward](@ref) parameter. For example, if [block\_start](@ref) is set to 0h and [block\_end](@ref) is set to 48h (i.e., look ahead), the optimization will be performed in rolling windows of 48 hours, but only the results for the first 24 hours will be kept at each step. But! Be careful, it means that there is enough input data at the end of the last window to perform the optimization in the last one. You can extend the time series data accordingly and optimize for 8 days in this example.
+    The range between the [temporal\_block](@ref) parameters [block\_start](@ref) and [block\_end](@ref) can be larger than the [roll\_forward](@ref) parameter. For example, if [block\_start](@ref) is set to 0h and [block\_end](@ref) is set to 48h (i.e., look ahead), the optimization will be performed in rolling windows of 48 hours, but only the results for the first 24 hours will be kept at each step. But be careful: make sure that there is enough input data at the end of the last window to perform the optimization in the last one. You can extend the time series data accordingly and optimize for 8 days in this example.
 
-Please have a look to the sections [Rolling window optimization with single block](@ref rolling_horizon_single_block) and [Rolling horizon with multiple blocks](@ref rolling_horizon_multiple_blocks) in the documentation for more information about how to use the rolling horizon feature with different temporal block setups.
+Please have a look at the sections [Rolling window optimization with single block](@ref rolling_horizon_single_block) and [Rolling horizon with multiple blocks](@ref rolling_horizon_multiple_blocks) in the documentation for more information about how to use the rolling horizon feature with different temporal block setups.
 
 ## Electricity demand time series
 
@@ -51,7 +51,7 @@ Let's check the electricity demand time series for the *electricity\_node* in th
 
 ![image](figs_rolling_horizon/rh_electricity_node.png)
 
-In addition, you can see that the parameters [storage\_active](@ref) and [storage\_state\_coefficient](@ref) for the storage representation in the *electricity\_node*.
+In addition, you can see the parameters [storage\_active](@ref), [storage\_state\_max](@ref) and [storage\_state\_coefficient](@ref) that define the storage in the *electricity\_node*.
 
 ## Results analysis
 
