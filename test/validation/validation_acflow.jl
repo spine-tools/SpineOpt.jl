@@ -538,11 +538,11 @@ function test_ac_opf_singleconn_lossless()
 end
 
 """
-    test_node_voltage_singleconn_lindistflow()
+    test_ac_opf_singleconn_lindistflow()
     Using the the lindistflow formulation to test the voltage of the demand node when 
     there is a power demand behind a single connection.
 """
-function test_node_voltage_singleconn_lindistflow()
+function test_ac_opf_singleconn_lindistflow()
     @testset "constraint_node_voltage_lindistflow" begin
         url_in = "sqlite://"
         with_connection_open(url_in) do
@@ -584,6 +584,63 @@ function test_node_voltage_singleconn_lindistflow()
     end
 end
 
+"""
+    test_ac_opf_lim_current_lindistflow()
+    Using the the lindistflow formulation to test power flow when 
+    there is a current limit in a single connection.
+"""
+function test_ac_opf_lim_current_lindistflow()
+    @testset "constraint_current_lindistflow" begin
+        url_in = "sqlite://"
+        with_connection_open(url_in) do
+            _test_acflow_setup(url_in)
+            # add one more unit
+            objects = [
+                ["unit", "unit_x"]
+            ]
+            object_parameter_values = [
+                ["model", "instance", "ac_opf_model_formulation", "ac_opf_lindistflow"],
+                ["node", "node_b", "min_voltage", 1.0],
+                ["node", "node_b", "max_voltage", 1.0],
+                ["connection","connection_bc","resistance",0.2],
+                ["connection","connection_bc","reactance",0.2],
+                ["connection","connection_bc","connection_current_max", 0.2]
+            ]
+            relationships = [
+                ["connection__node__node", [ "connection_bc", "node_b", "node_c"]],
+                ["node__to_unit", ["node_c", "unit_x"]],
+                ["units_on__temporal_block", ["unit_x", "two_hourly"]],
+                ["units_on__stochastic_structure", ["unit_x", "deterministic"]],
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 1.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+                ["node__to_unit", ["node_c", "unit_x"], "vom_cost", -10.0],
+                ["connection__node__node",
+                ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=1, optimize=true)
+            time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+
+            # aliases for the model OPF variables
+            vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+            flowP = m.ext[:spineopt].variables[:connection_flow]
+    
+            @test value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) ≈ 0.92 atol=0.0001
+            @test value( flowP[connection(:connection_bc), node(:node_c), 
+                direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) ≈ 0.2 atol=0.0001
+            
+        end
+    end
+
+end
 @testset "validation of linear AC flow calculation" begin
     #test_ac_opf_singleconn()
     #test_ac_opf_singleconn_q()
@@ -593,5 +650,6 @@ end
     #test_ac_opf_singleconn_inve()
     #test_ac_opf_singleconn_inve_rev()
     #test_ac_opf_singleconn_lossless()
-    test_node_voltage_singleconn_lindistflow()
+    #test_ac_opf_singleconn_lindistflow()
+    test_ac_opf_lim_current_lindistflow()
 end
