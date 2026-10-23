@@ -8,14 +8,14 @@ provide more in-depth explanations of each concept.
 
 All the building blocks of a model are *entities*, and each entity belongs to one of the [Entity Classes](@ref).
 Zero-dimensional entity classes, such as [unit](@ref) or [node](@ref), hold the individual things in the model.
-Multi-dimensional entity classes, such as [unit\_\_to\_node](@ref), combine two or more entity classes and define how
+Multidimensional entity classes, such as [unit\_\_to\_node](@ref), combine two or more entity classes and define how
 their entities are related to each other.
-The dimensions of a multi-dimensional entity class are separated by a double underscore in its name.
+The dimensions of a multidimensional entity class are separated by a double underscore in its name.
 In the *Spine DB editor*, both kinds are shown in the *Entity tree* and created with *Add entities...*.
 
 !!! note
     Older versions of Spine Toolbox and SpineOpt called zero-dimensional entity classes `object classes` and
-    multi-dimensional entity classes `relationship classes`. You may still come across these terms in older material.
+    multidimensional entity classes `relationship classes`. You may still come across these terms in older material.
 
 
 ## [Introduction to zero-dimensional entity classes](@id introduction-to-object-classes)
@@ -26,10 +26,10 @@ every power line as an entity of the class [connection](@ref), and so forth.
 In order to add anything new to a model, a new entity has to be added to the desired entity class in the input data.
 
 Each entity class has a very specific purpose in *SpineOpt.jl*, so understanding their differences is key.
-These can be roughly divided into three distinctive groups, namely [Systemic entity classes](@ref),
-[Structural entity classes](@ref), and [Meta entity classes](@ref).
+These can be roughly divided into three distinctive groups, namely [Systemic entity classes](@ref Systemic-object-classes),
+[Structural entity classes](@ref Structural-object-classes), and [Meta entity classes](@ref Meta-object-classes).
 
-### Systemic entity classes
+### [Systemic entity classes](@id Systemic-object-classes)
 
 As the name implies, *systemic entity classes* are used to describe the system to be modelled.
 Essentially, they define *what* you want to model.
@@ -40,11 +40,11 @@ These include:
 - [node](@ref) ensures the balance of the commodity flows, and can be used to store commodities as well.
 - [unit](@ref) handles the generation and consumption of commodities.
 
-### Structural entity classes
+### [Structural entity classes](@id Structural-object-classes)
 
 *Structural entity classes* are used to define the temporal and stochastic structure of the modelled problem, as
 well as custom [User Constraints](@ref) and groups of investments.
-Unlike the above [Systemic entity classes](@ref), the *structural entity classes* are more about *how* you
+Unlike the above [Systemic entity classes](@ref Systemic-object-classes), the *structural entity classes* are more about *how* you
 want to model, instead of strictly *what* you want to model.
 These include:
 
@@ -54,7 +54,7 @@ These include:
 - [temporal\_block](@ref) defines a period of *time* with the desired temporal [resolution](@ref).
 - [user\_constraint](@ref) is an optional custom constraint generated based on the input data.
 
-### Meta entity classes
+### [Meta entity classes](@id Meta-object-classes)
 
 *Meta entity classes* are used for defining things on the level of [model](@ref)s or above, like
 [output](@ref) and even other [model](@ref)s for problem decompositions.
@@ -67,26 +67,26 @@ These include:
 - [stage](@ref) defines an additional stage in the optimisation problem, see the [Multi-Stage Optimisation Tutorial](@ref) (experimental).
 
 
-## [Introduction to multi-dimensional entity classes](@id introduction-to-relationship-classes)
+## [Introduction to multidimensional entity classes](@id introduction-to-relationship-classes)
 
 While zero-dimensional entity classes define all the entities that make up a [model](@ref),
-multi-dimensional [Entity Classes](@ref) define how those entities are related to each other.
+multidimensional [Entity Classes](@ref) define how those entities are related to each other.
 Thus, they hold no meaning on their own, and always include at least one zero-dimensional entity class.
 
-Similar to zero-dimensional entity classes, each multi-dimensional entity class has a very specific purpose in
+Similar to zero-dimensional entity classes, each multidimensional entity class has a very specific purpose in
 *SpineOpt.jl*, and understanding the purpose of each one is paramount.
-The multi-dimensional entity classes can be roughly divided into [Systemic multi-dimensional entity classes](@ref),
-[Structural multi-dimensional entity classes](@ref), and [Meta multi-dimensional entity classes](@ref),
+The multidimensional entity classes can be roughly divided into [Systemic multidimensional entity classes](@ref Systemic-relationship-classes),
+[Structural multidimensional entity classes](@ref Structural-relationship-classes), and [Meta multidimensional entity classes](@ref Meta-relationship-classes),
 again similar to the zero-dimensional ones.
 
-### Systemic multi-dimensional entity classes
+### [Systemic multidimensional entity classes](@id Systemic-relationship-classes)
 
-*Systemic multi-dimensional entity classes* define how [Systemic entity classes](@ref) are related to each other,
+*Systemic multidimensional entity classes* define how [Systemic entity classes](@ref Systemic-object-classes) are related to each other,
 thus helping define the system to be modelled.
 Most of these deal with *which* [unit](@ref)s and [connection](@ref)s interact with *which* [node](@ref)s, and *how* those
 interactions work.
 This essentially defines the possible commodity flows to be modelled.
-*Systemic multi-dimensional entity classes* include:
+*Systemic multidimensional entity classes* include:
 
 - [connection\_\_from\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a commodity from.
 - [connection\_\_to\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a commodity to.
@@ -98,16 +98,16 @@ This essentially defines the possible commodity flows to be modelled.
 - [unit\_flow](@ref) is a superclass of [node\_\_to\_unit](@ref) and [unit\_\_to\_node](@ref), i.e. it covers the flows in both directions. It is used as a dimension in other entity classes, such as [unit\_flow\_\_unit\_flow](@ref).
 - [unit\_flow\_\_unit\_flow](@ref) defines parameters between [node\_\_to\_unit](@ref) and [unit\_\_to\_node](@ref) flows.
 
-### Structural multi-dimensional entity classes
+### [Structural multidimensional entity classes](@id Structural-relationship-classes)
 
-*Structural multi-dimensional entity classes* primarily relate [Structural entity classes](@ref) to
-[Systemic entity classes](@ref), defining what *structures* the individual parts of the *system* use.
+*Structural multidimensional entity classes* primarily relate [Structural entity classes](@ref Structural-object-classes) to
+[Systemic entity classes](@ref Systemic-object-classes), defining what *structures* the individual parts of the *system* use.
 These are mostly used to determine the temporal and stochastic structures to be used in different parts of the
 modelled *system*, or custom [User Constraints](@ref).
 
 *SpineOpt.jl* has a very flexible temporal and stochastic structure, explained in detail in the
 [Temporal Framework](@ref) and [Stochastic Framework](@ref stochastic_framework) sections of the documentation.
-Unfortunately, this flexibility requires quite a few different *structural multi-dimensional entity classes*,
+Unfortunately, this flexibility requires quite a few different *structural multidimensional entity classes*,
 the most important of which are the following:
 
 - [node\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the [node](@ref) balance.
@@ -117,7 +117,7 @@ the most important of which are the following:
 - [units\_on\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the online variable of the [unit](@ref).
 - [units\_on\_\_temporal\_block](@ref) defines the [temporal\_block](@ref)s used for the online variable of the [unit](@ref).
 
-Furthermore, there are also a number of *advanced structural multi-dimensional entity classes*, which are only
+Furthermore, there are also a number of *advanced structural multidimensional entity classes*, which are only
 necessary when using some of the optional features of *SpineOpt.jl*.
 For [Investment Optimization](@ref), the following control the stochastic and temporal structures
 of the investment [variables](@ref Variables):
@@ -147,9 +147,9 @@ the following are used to control which [variables](@ref Variables) are included
 - [unit\_\_user\_constraint](@ref) holds [Parameters](@ref) for the unit commitment [Variables](@ref) of the [unit](@ref) in the custom [user\_constraint](@ref).
 - [unit\_flow\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](@ref var_unit_flow) variable in the custom [user\_constraint](@ref).
 
-### Meta multi-dimensional entity classes
+### [Meta multidimensional entity classes](@id Meta-relationship-classes)
 
-*Meta multi-dimensional entity classes* are used for defining [model](@ref)-level settings, like which [temporal\_block](@ref)s or
+*Meta multidimensional entity classes* are used for defining [model](@ref)-level settings, like which [temporal\_block](@ref)s or
 [stochastic\_structure](@ref)s are active, and what the [model](@ref) [output](@ref) is.
 These include:
 
