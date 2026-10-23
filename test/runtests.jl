@@ -26,8 +26,6 @@ using Test
 using Dates
 using JuMP
 using PyCall
-using Juniper
-using Infiltrator
 import JSON
 import MathOptInterface as MOI
 
@@ -161,7 +159,7 @@ end
 
 @testset begin
     include("testsetups.jl")
-    # include("data_structure/migration.jl")
+    #include("data_structure/migration.jl")
     # include("data_structure/check_data_structure.jl")
     # include("data_structure/preprocess_data_structure.jl")
     # include("data_structure/temporal_structure.jl")
@@ -191,5 +189,4 @@ end
     # include("run_examples.jl")
     # include("run_benchmark_data.jl") # CRASHES with multithreading?
     # include("run_spineopt_hsj_mga.jl")
-    # include("run_benchmark_data.jl")
 end
