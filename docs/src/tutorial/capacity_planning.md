@@ -71,11 +71,17 @@ You can also choose to not use [`weight`](@ref), but then you need to make sure 
 
 The values for the temporal blocks are:
 
-| temporal\_block | [resolution](@ref) | [block\_start](@ref) | [block\_end](@ref) | [`weight`](@ref) |
+| class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|
-| investment | `5Y` | | | |
-| operation2030 | `4M` | 2030-01-01T00:00:00 | 2031-01-01T00:00:00 | 5.0 |
-| operation2035 | `4M` | 2034-09-01T00:00:00 | 2036-01-01T00:00:00 | 1.0 |
+| temporal\_block | investment | [resolution](@ref) | Base | 5Y |
+| temporal\_block | operation2030 | [block\_end](@ref) | Base | 2031-01-01T00:00:00 |
+| temporal\_block | operation2030 | [block\_start](@ref) | Base | 2030-01-01T00:00:00 |
+| temporal\_block | operation2030 | [resolution](@ref) | Base | 4M |
+| temporal\_block | operation2030 | [weight](@ref) | Base | 5.0 |
+| temporal\_block | operation2035 | [block\_end](@ref) | Base | 2036-01-01T00:00:00 |
+| temporal\_block | operation2035 | [block\_start](@ref) | Base | 2034-09-01T00:00:00 |
+| temporal\_block | operation2035 | [resolution](@ref) | Base | 4M |
+| temporal\_block | operation2035 | [weight](@ref) | Base | 1.0 |
 
 ![image](figs_capacity_planning/multi-year_temporal.png)
 
