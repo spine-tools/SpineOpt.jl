@@ -94,6 +94,14 @@ parameters):
 
 @@add_constraint_min_scheduled_outage_duration!
 
+##### [Units out of service transition](@id constraint_units_out_of_service_transition)
+
+@@add_constraint_units_out_of_service_transition!
+
+##### [Contiguous scheduled outages](@id constraint_units_out_of_service_contiguity)
+
+@@add_constraint_units_out_of_service_contiguity!
+
 #### Ramping constraints
 
 To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
