@@ -19,13 +19,34 @@
 #############################################################################
 
 @doc raw"""
-The unit must be taken out of service for maintenance for a duration equal to outage_scheduled_duration:
+Schedules maintenance outages for each [unit](@ref) with [outage\_scheduled\_duration](@ref) defined.
+Over the optimisation window, the unit must spend in total the scheduled outage duration out of service,
+once for each of its units. The constraint sets both a lower and an upper bound:
 
 ```math
-\sum_{t} v^{units\_out\_of\_service}_{(u,s,t)}duration_t
-\geq outage\_scheduled\_duration_{(u,s,t)}existing\_units_u \quad \forall u \in unit, \, \forall (s,t)
+\begin{aligned}
+& \sum_{t} v^{units\_out\_of\_service}_{(u,s_t,t)} \cdot \Delta t
+\geq D_u \\
+& \sum_{t} v^{units\_out\_of\_service}_{(u,s_t,t)} \cdot \Delta t
+\leq D_u + \Delta t^{max}_u \\
+& \forall u \in indices(p^{outage\_scheduled\_duration})
+\end{aligned}
 ```
 
+where
+- the sums run over the time slices ``t`` of the optimisation window, and ``s_t`` is the scenario
+  of the stochastic path that is active at ``t``,
+- ``D_u = p^{outage\_scheduled\_duration}_{(u)} \cdot \left(p^{existing\_units}_{(u)} + p^{investment\_count\_max\_cumulative}_{(u)}\right)``,
+  with the number of units rounded to an integer and the largest value taken over the scenarios of the path,
+- ``\Delta t`` is the duration of time slice ``t``,
+- ``\Delta t^{max}_u`` is the longest resolution among the unit's [units\_on\_\_temporal\_block](@ref)s,
+  which leaves room for outages that do not line up exactly with the time slices.
+
+The model decides when the outages take place within the window.
+
+See also
+[outage\_scheduled\_duration](@ref),
+[outage\_variable\_type](@ref)
 """
 function add_constraint_min_scheduled_outage_duration!(m::Model)
     _add_constraint!(
