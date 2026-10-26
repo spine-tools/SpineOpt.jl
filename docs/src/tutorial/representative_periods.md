@@ -10,7 +10,7 @@ Welcome to our tutorial, where we will walk you through the process of adding re
 
 First, let's start by importing the file [representative_periods.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/representative_periods.json) into SpineToolbox and create a workflow to run the model as in the Simple System tutorial. The file has already set up the representative periods for a simple case with seasonal and short-term storage nodes, so you can directly run the workflow to see how it works. However, we recommend going through the steps in this tutorial to understand how to set up representative periods in SpineOpt and analyze the results.
 
-Good! So, let's now have a look to the system we are working with. The image below shows the system structure, which is an extension of the Simple System with two storage nodes: *fuel\_node* and *battery\_storage*.
+Good! So, let's now have a look at the system we are working with. The image below shows the system structure, which is an extension of the Simple System with two storage nodes: *fuel\_node* and *battery\_storage*.
 
 ![image](figs_representative_periods/rp_system_overview.png)
 
@@ -25,25 +25,50 @@ All right! With this information in hand, let's explore the data and see how all
 
 ## Temporal Structure
 
-The temporal structure of the model is shown in the image below. We can see that there are three temporal blocks:
+The temporal structure of the model has three temporal blocks:
 
 - *hourly*: the original temporal block for the whole time horizon, i.e., 72 hours (or three days).
-- *rp1* (representative period 1): 24-hour block representing that starts and ends at the beginning and end of day 1.
-- *rp2* (representative period 2): 24-hour block representing that starts and ends at the beginning and end of day 3.
+- *rp1* (representative period 1): 24-hour block that starts and ends at the beginning and end of day 1.
+- *rp2* (representative period 2): 24-hour block that starts and ends at the beginning and end of day 3.
 
-![image](figs_representative_periods/rp_temporal_structure.png)
+In the Entity tree, select the [temporal\_block](@ref) class. The Parameter value table should show:
+
+| group | class | entity byname | parameter name | alternative | value |
+|:---|:---|:---|:---|:---|:---|
+| | temporal\_block | hourly | [block\_end](@ref) | Base | 2000-01-04T00:00:00 |
+| | temporal\_block | hourly | [block\_start](@ref) | Base | 2000-01-01T00:00:00 |
+| | temporal\_block | hourly | [representative\_blocks\_by\_period](@ref) | Base | Map (see below) |
+| | temporal\_block | hourly | [resolution](@ref) | Base | 1h |
+| | temporal\_block | rp1 | [block\_end](@ref) | Base | 2000-01-02T00:00:00 |
+| | temporal\_block | rp1 | [block\_start](@ref) | Base | 2000-01-01T00:00:00 |
+| | temporal\_block | rp1 | [representative\_block\_index](@ref) | Base | 1 |
+| | temporal\_block | rp1 | [resolution](@ref) | Base | 1h |
+| | temporal\_block | rp1 | [weight](@ref) | Base | 1.5 |
+| | temporal\_block | rp2 | [block\_end](@ref) | Base | 2000-01-04T00:00:00 |
+| | temporal\_block | rp2 | [block\_start](@ref) | Base | 2000-01-03T00:00:00 |
+| | temporal\_block | rp2 | [representative\_block\_index](@ref) | Base | 2 |
+| | temporal\_block | rp2 | [resolution](@ref) | Base | 1h |
+| | temporal\_block | rp2 | [weight](@ref) | Base | 1.5 |
 
 !!! tip "Representative definitions"
     The representative periods are not necessarily consecutive, they can be any block of time that represents the original temporal block. For instance, *rp1* takes the information from the time series in day 1, while *rp2* takes information from the time series in day 3. Check the [block\_start](@ref) and [block\_end](@ref) parameters for each *rp* temporal block to see this in the input data.
 
-The key parameter that defines the mapping of the original temporal block to the representative periods is [representative\_blocks\_by\_period](@ref). The values in this parameter map each original temporal block to the representative periods through and array that has the weights in each case. For instance, the following figure shows that the second day maps half to *rp1* and half to *rp2*:
+The key parameter that defines the mapping of the original temporal block to the representative periods is [representative\_blocks\_by\_period](@ref). The values in this parameter map each original temporal block to the representative periods through an array that has the weights in each case. The value is a `Map` with one `Array` per day:
+
+| t | Array (weights of *rp1*, *rp2*) |
+|:---|:---|
+| 2000-01-01T00:00:00 | 1.0, 0.0 |
+| 2000-01-02T00:00:00 | 0.5, 0.5 |
+| 2000-01-03T00:00:00 | 0.0, 1.0 |
+
+The following figure shows how to enter it: right-click the value, select *Edit...*, choose the parameter type *Map*, and for each row choose *Array* as the value and edit it. For instance, the second day maps half to *rp1* and half to *rp2*. (In the figure, the parameters still have their old names `representative_periods_mapping` and `representative_period_index`.)
 
 ![image](figs_representative_periods/rp_mapping.png)
 
 Please note that the [representative\_block\_index](@ref) defines the order of the representative periods, which is relevant for the array definition of the weights in the [representative\_blocks\_by\_period](@ref) parameter.
 
 !!! tip "Remember!"
-    The previous figure that Python is 0-index based, so the first element of the array corresponds to *rp1* and the second element to *rp2*.
+    In the array editor, the index column starts from 0 (Spine Toolbox is written in Python), so the element with index 0 corresponds to *rp1* ([representative\_block\_index](@ref) 1) and the element with index 1 to *rp2*.
 
 Another important parameter in the representative periods setup is the [weight](@ref) parameter, which defines the weight of each representative period in the objective function. In this case, since we have three days and two representative periods, the weights are 1.5 for both *rp1* and *rp2*. Why? Because *rp1* represents day 1 and half of day 2, so it represents 1.5 days. The same applies to *rp2*, which represents day 3 and half of day 2 😉
 
@@ -56,9 +81,9 @@ In addition to the individual representative periods, you need a group that incl
 ![image](figs_representative_periods/rp_all_rps.png)
 
 !!! tip "How do I create an entity group?"
-    You can create an entity group by clicking on the [temporal\_block](@ref) structure and then select the option "Add entity group...".
+    In the Entity tree, right-click the [temporal\_block](@ref) class and select *Add entity group...*. Name the group (here *all\_rps*) and add *rp1* and *rp2* as its members.
 
-And last, but not least, you need to create a new entity in the [model\_\_default\_temporal\_block](@ref) entity class that includes all the group of representative periods.
+And last, but not least, you need to create a new entity in the [model\_\_default\_temporal\_block](@ref) entity class that connects the model to the group of representative periods (*simple | all\_rps*). The model stays connected to *hourly* as well.
 
 These configurations are needed for SpineOpt to properly interpret the representative periods and create the corresponding variables and constraints in the model.
 
