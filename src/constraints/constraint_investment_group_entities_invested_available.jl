@@ -18,10 +18,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_investment_group_minimum_entities_invested_available!(m::Model)
+@doc raw"""
+Sets a lower bound on the total number of invested entities available in an [investment\_group](@ref).
+The constraint is generated for each investment group with [investment\_count\_total\_min\_cumulative](@ref) defined.
+Units, connections and storage nodes in the group are counted together; they are added to the group through
+[unit\_\_investment\_group](@ref), [connection\_\_investment\_group](@ref) and [node\_\_investment\_group](@ref).
 
-Force number of entities invested available in a group to be greater than the minimum.
+```math
+\begin{aligned}
+& \sum_{u \in ig} v^{units\_invested\_available}_{(u,s,t)}
++ \sum_{c \in ig} v^{connections\_invested\_available}_{(c,s,t)}
++ \sum_{n \in ig} v^{storages\_invested\_available}_{(n,s,t)} \\
+& \geq p^{investment\_count\_total\_min\_cumulative}_{(ig,s,t)} \\
+& \forall ig \in indices(p^{investment\_count\_total\_min\_cumulative}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also
+[investment\_count\_total\_min\_cumulative](@ref),
+[investment\_group](@ref)
 """
 function add_constraint_investment_group_minimum_entities_invested_available!(m::Model)
     _add_constraint!(
@@ -48,10 +64,26 @@ function constraint_investment_group_minimum_entities_invested_available_indices
     )
 end
 
-"""
-    add_constraint_investment_group_maximum_entities_invested_available!(m::Model)
+@doc raw"""
+Sets an upper bound on the total number of invested entities available in an [investment\_group](@ref).
+The constraint is generated for each investment group with [investment\_count\_total\_max\_cumulative](@ref) defined.
+Units, connections and storage nodes in the group are counted together; they are added to the group through
+[unit\_\_investment\_group](@ref), [connection\_\_investment\_group](@ref) and [node\_\_investment\_group](@ref).
 
-Force number of entities invested available in a group to be lower than the maximum.
+```math
+\begin{aligned}
+& \sum_{u \in ig} v^{units\_invested\_available}_{(u,s,t)}
++ \sum_{c \in ig} v^{connections\_invested\_available}_{(c,s,t)}
++ \sum_{n \in ig} v^{storages\_invested\_available}_{(n,s,t)} \\
+& \leq p^{investment\_count\_total\_max\_cumulative}_{(ig,s,t)} \\
+& \forall ig \in indices(p^{investment\_count\_total\_max\_cumulative}) \\
+& \forall (s,t)
+\end{aligned}
+```
+
+See also
+[investment\_count\_total\_max\_cumulative](@ref),
+[investment\_group](@ref)
 """
 function add_constraint_investment_group_maximum_entities_invested_available!(m::Model)
     _add_constraint!(
