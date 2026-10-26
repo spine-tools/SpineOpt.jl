@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-julia
+
 @doc raw"""
 Enforces that a scheduled outage is taken as one contiguous block.
 The constraint is generated for each [unit](@ref) with [outage\_scheduled\_duration](@ref) defined:
