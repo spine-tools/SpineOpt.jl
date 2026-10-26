@@ -2,7 +2,7 @@
 
 Multi-year investments refer to making investment decisions at different points in time, such that a pathway of investments can be modeled. This is particularly useful when long-term scenarios are modeled, but modeling each year is not practical. Or in a business case, investment decisions are supposed to be made in different years which has an impact on the cash flow.
 
-There are two tutorials related to multi-year investments: the [Capacity Planning Tutorial](@ref) and the [Multi-year investments tutorial](../tutorial/multi-year_investment.md). This section covers the concepts of multi-year investments in SpineOpt, but we highly recommend checking out these tutorials for a more thorough understanding of how the model is set up.
+There are two tutorials related to multi-year investments: the [Capacity Planning Tutorial](@ref) and the [Multi-year Investments Using Economic Parameters Tutorial](@ref). This section covers the concepts of multi-year investments in SpineOpt, but we highly recommend checking out these tutorials for a more thorough understanding of how the model is set up.
 
 ## Basic idea
 
@@ -17,7 +17,7 @@ It can be tricky to put the correct cost parameters into the model since factors
 - [lifetime\_economic](@ref) and [lead\_time](@ref) of the investment,
 - optionally [discount\_rate\_technology\_specific](@ref).
 
-The calculated factors can be written to the output database by adding them to a report, e.g. `unit_conversion_to_discounted_annuities`, `unit_salvage_fraction`, `unit_discounted_duration` and `unit_tech_discount_factor` for units (see the [Multi-year investments tutorial](../tutorial/multi-year_investment.md)).
+The calculated factors can be written to the output database by adding them to a report, e.g. `unit_conversion_to_discounted_annuities`, `unit_salvage_fraction`, `unit_discounted_duration` and `unit_tech_discount_factor` for units (see the [Multi-year Investments Using Economic Parameters Tutorial](@ref))).
 
 **Discounted annuities** (e.g. `unit_conversion_to_discounted_annuities`)
 
