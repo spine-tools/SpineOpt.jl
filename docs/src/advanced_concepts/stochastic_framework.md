@@ -23,7 +23,7 @@ Here, we briefly describe the key concepts required to understand the stochastic
 
 1. **[stochastic\_scenario](@ref)** is essentially just a label for an alternative period of time, describing one possibility of what may come to pass. Even in deterministic modelling with *SpineOpt.jl*, a single [stochastic\_scenario](@ref) is required for labelling the deterministic timeline.
 
-2. **Stochastic DAG** is the directed acyclic graph describing the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships between the [stochastic\_scenario](@ref)s. The key difference between a *stochastic DAG* and a traditional *stochastic tree* is that the scenarios are allowed to have multiple parents, making it possible to converge scenarios into each other in addition to branching.
+2. **Stochastic DAG** is the directed acyclic graph describing the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entities between the [stochastic\_scenario](@ref)s. The key difference between a *stochastic DAG* and a traditional *stochastic tree* is that the scenarios are allowed to have multiple parents, making it possible to converge scenarios into each other in addition to branching.
 
 3. **Stochastic path** is a unique sequence of [stochastic\_scenario](@ref)s for traversing the *stochastic DAG*. Every *(finite) stochastic DAG* has a limited number of *full stochastic paths* that traverse it from roots *(scenarios without parents)* to leaves *(scenarios without children)*. Here, we use the term *stochastic path* to refer to any subset of scenarios within a *full stochastic path*.
 
@@ -113,7 +113,7 @@ Again, the path `[s1, s4]` is invalid, since the DAG cannot be traversed from `s
 
 *Stochastic path* indexing in constraints also allows for "distorting" the *stochastic DAG* in different parts of the model.
 As long as the *stochastic DAG* itself isn't changed,
-meaning the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships and the resulting *full stochastic paths*,
+meaning the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entities and the resulting *full stochastic paths*,
 we can actually define different [stochastic\_structure](@ref)s and still be able to handle constraint generation between them.
 This is due to the fact that when determining the *stochastic paths*,
 it makes no difference whether we're looking at the same [stochastic\_structure](@ref) at different `time steps`,
@@ -142,37 +142,37 @@ Simple step-by-step examples are also provided in the [Example of deterministic 
 [Example of branching stochastics](@ref), and [Example of converging stochastics](@ref) sections further below.
 We won't go into too much detail about the related [Entity Classes](@ref) or [Parameters](@ref),
 since those can be found in their respective sections.
-Introductions to these concepts can also be found in the [Structural object classes](@ref) and
-[Structural relationship classes](@ref) sections, if necessary.
+Introductions to these concepts can also be found in the [Structural entity classes](@ref Structural-object-classes) and
+[Structural multidimensional entity classes](@ref Structural-relationship-classes) sections, if necessary.
 
 ### Setting up the stochastic framework
 
-As with all things in *SpineOpt.jl*, you'll want to start with adding the desired number of objects to the relevant
-[Entity Classes](@ref), as one cannot define relationships over objects that don't exist.
+As with all things in *SpineOpt.jl*, you'll want to start with adding the desired number of entities to the relevant
+[Entity Classes](@ref), as one cannot define multidimensional entities over entities that don't exist.
 For the stochastic framework, this means creating at least one [stochastic\_scenario](@ref) and
-[stochastic\_structure](@ref) object each.
+[stochastic\_structure](@ref) entity each.
 This needs to be done even if your model is fully deterministic, as even the deterministic structure needs to be
 labelled for *SpineOpt.jl* to recognize that it exists.
 
-Next, if your model has multiple [stochastic\_scenario](@ref) objects, you'll want to define how they are related
-using the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship.
-This relationship essentially defines the *stochastic DAG*, as well as all the possible *stochastic paths*,
+Next, if your model has multiple [stochastic\_scenario](@ref) entities, you'll want to define how they are related
+using the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entity.
+This entity class essentially defines the *stochastic DAG*, as well as all the possible *stochastic paths*,
 explained in the [Key concepts](@ref) section.
-Unless the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship is defined,
-there won't be a *stochastic DAG*, and all [stochastic\_scenario](@ref) objects will be assumed to be completely
+Unless the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entity is defined,
+there won't be a *stochastic DAG*, and all [stochastic\_scenario](@ref) entities will be assumed to be completely
 independent of each other.
 
-Now that you've set up the desired [stochastic\_scenario](@ref) and [stochastic\_structure](@ref) objects, as well as
-defined the *stochastic DAG* using the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship,
-it's time to define the properties of the [stochastic\_structure](@ref) objects using the
-[stochastic\_structure\_\_stochastic\_scenario](@ref) relationship, and the [stochastic\_scenario\_end](@ref) and
+Now that you've set up the desired [stochastic\_scenario](@ref) and [stochastic\_structure](@ref) entities, as well as
+defined the *stochastic DAG* using the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entity,
+it's time to define the properties of the [stochastic\_structure](@ref) entities using the
+[stochastic\_structure\_\_stochastic\_scenario](@ref) entity, and the [stochastic\_scenario\_end](@ref) and
 [weight\_relative\_to\_parents](@ref) [Parameters](@ref) therein.
-You'll always have to define at least one [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship,
-as the [stochastic\_structure](@ref) object is what connects the [Systemic object classes](@ref)
+You'll always have to define at least one [stochastic\_structure\_\_stochastic\_scenario](@ref) entity,
+as the [stochastic\_structure](@ref) entity is what connects the [Systemic entity classes](@ref Systemic-object-classes)
 to the stochastic framework.
-[stochastic\_structure\_\_stochastic\_scenario](@ref) relationship holds two key [Parameters](@ref):
+[stochastic\_structure\_\_stochastic\_scenario](@ref) entity holds two key [Parameters](@ref):
 
-- **[weight\_relative\_to\_parents](@ref)** defines the coefficient the corresponding [stochastic\_scenario](@ref) has in the [Objective function](@ref), and needs to be defined for each [stochastic\_scenario](@ref) included in the [stochastic\_structure](@ref). The weight is relative to the parents of the [stochastic\_scenario](@ref), and is calculated as presented below.
+- **[weight\_relative\_to\_parents](@ref)** defines the coefficient the corresponding [stochastic\_scenario](@ref) has in the [Objective function](@ref), and should be defined for each [stochastic\_scenario](@ref) included in the [stochastic\_structure](@ref) (the default value is 1). The weights of the children of a [stochastic\_scenario](@ref) should sum to 1 so that they represent probabilities, but SpineOpt does not check this. The weight is relative to the parents of the [stochastic\_scenario](@ref), and is calculated as presented below.
 
 ```
 # For root `stochastic_scenarios` (meaning no parents)
@@ -184,15 +184,15 @@ weight(scenario) = weight_relative_to_parents(scenario)
 weight(scenario) = sum([weight(parent) * weight_relative_to_parents(scenario)] for parent in parents)
 ```
 
-- **[stochastic\_scenario\_end](@ref)** is a `Duration` type parameter that tells when the [stochastic_scenario](@ref) ends in relation to the start of the current optimization. When defined, the [stochastic\_scenario](@ref) ends at the defined point in time, and spawns its children according to [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref), if any. **Note that this means the children are included in the [stochastic\_structure](@ref), even without an explicit relationship!** If [stochastic\_scenario\_end](@ref) isn't defined, the [stochastic_scenario](@ref) is assumed to go on indefinitely.
+- **[stochastic\_scenario\_end](@ref)** is a `Duration` type parameter that tells when the [stochastic_scenario](@ref) ends in relation to the start of the current optimization. When defined, the [stochastic\_scenario](@ref) ends at the defined point in time, and spawns its children according to [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref), if any. **Note that this means the children are included in the [stochastic\_structure](@ref), even without an explicit entity!** If [stochastic\_scenario\_end](@ref) isn't defined, the [stochastic_scenario](@ref) is assumed to go on indefinitely. Note that the children only appear in the results if the optimization horizon ([model\_end](@ref) or [block\_end](@ref)) extends beyond the [stochastic\_scenario\_end](@ref).
 
-Finally, with all the pieces in place, we'll need to connect the defined [stochastic\_structure](@ref) objects to the
-desired objects in the [Systemic object classes](@ref) using the [Structural relationship classes](@ref) like 
+Finally, with all the pieces in place, we'll need to connect the defined [stochastic\_structure](@ref) entities to the
+desired entities in the [Systemic entity classes](@ref Systemic-object-classes) using the [Structural multidimensional entity classes](@ref Structural-relationship-classes) like 
 [node\_\_stochastic\_structure](@ref) etc.
 Here, we essentially tell which parts of the modelled system use which [stochastic\_structure](@ref).
-Since creating each of these relationships individually can be a bit of a pain, there are a few
-[Meta relationship classes](@ref) like the [model\_\_default\_stochastic\_structure](@ref),
-that can be used to set [model](@ref)-wide defaults that are used if specific relationships are missing.
+Since creating each of these entities individually can be a bit of a pain, there are a few
+[Meta multidimensional entity classes](@ref Meta-relationship-classes) like the [model\_\_default\_stochastic\_structure](@ref),
+that can be used to set [model](@ref)-wide defaults that are used if specific entities are missing.
 
 ### Example of deterministic stochastics
 
@@ -201,9 +201,9 @@ See the [Deterministic Stochastic Structure](@ref) [archetype](@ref Archetypes) 
 as well as how to connect this [stochastic\_structure](@ref) to the rest of your model. 
 
 1. Create a [stochastic\_scenario](@ref) called e.g. `realization` and a [stochastic\_structure](@ref) called e.g. `deterministic`.
-2. We can skip the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship, since there isn't a *stochastic DAG* in this example, and the default behaviour of each [stochastic\_scenario](@ref) being independent works for our purposes *(only one [stochastic\_scenario](@ref) anyhow)*.
-3. Create the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship for `(deterministic, realization)`, and set its [weight\_relative\_to\_parents](@ref) parameter to 1. We don't need to define the [stochastic\_scenario\_end](@ref) parameter, as we want the `realization` to go on indefinitely.
-4. Relate the `deterministic` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
+2. We can skip the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entity, since there isn't a *stochastic DAG* in this example, and the default behaviour of each [stochastic\_scenario](@ref) being independent works for our purposes *(only one [stochastic\_scenario](@ref) anyhow)*.
+3. Create the [stochastic\_structure\_\_stochastic\_scenario](@ref) entity for `(deterministic, realization)`, and set its [weight\_relative\_to\_parents](@ref) parameter to 1. We don't need to define the [stochastic\_scenario\_end](@ref) parameter, as we want the `realization` to go on indefinitely.
+4. Relate the `deterministic` [stochastic\_structure](@ref) to all the desired system entities using the appropriate [Structural multidimensional entity classes](@ref Structural-relationship-classes), or use the [model](@ref)-level default [Meta multidimensional entity classes](@ref Meta-relationship-classes).
 
 ### Example of branching stochastics
 
@@ -212,12 +212,12 @@ three at a specific point in time.
 See the [Branching Stochastic Tree](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
 as well as how to connect this [stochastic\_structure](@ref) to the rest of your model.
 
-1. Create four [stochastic\_scenario](@ref) objects called e.g. `realization`, `forecast1`, `forecast2`, and `forecast3`, and a [stochastic\_structure](@ref) called e.g. `branching`.
-2. Define the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships for `(realization, forecast1)`, `(realization, forecast2)`, and `(realization, forecast3)`.
-3. Create the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship for `(branching, realization)`, `(branching, forecast1)`, `(branching, forecast2)`, and `(branching, forecast3)`.
-4. Set the [weight\_relative\_to\_parents](@ref) parameter to 1 and the [stochastic\_scenario\_end](@ref) parameter e.g. to `6h` for the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship `(branching, realization)`. Now, the `realization` [stochastic\_scenario](@ref) will end after 6 hours of `time steps`, and its children *(`forecast1`, `forecast2`, and `forecast3`)* will become active.
-5. Set the [weight\_relative\_to\_parents](@ref) [Parameters](@ref) for the `(branching, forecast1)`, `(branching, forecast2)`, and `(branching, forecast3)` [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships to whatever you desire, e.g. 0.33 for equal probabilities across all forecasts.
-6. Relate the `branching` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
+1. Create four [stochastic\_scenario](@ref) entities called e.g. `realization`, `forecast1`, `forecast2`, and `forecast3`, and a [stochastic\_structure](@ref) called e.g. `branching`.
+2. Define the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entities for `(realization, forecast1)`, `(realization, forecast2)`, and `(realization, forecast3)`.
+3. Create the [stochastic\_structure\_\_stochastic\_scenario](@ref) entity for `(branching, realization)`, `(branching, forecast1)`, `(branching, forecast2)`, and `(branching, forecast3)`.
+4. Set the [weight\_relative\_to\_parents](@ref) parameter to 1 and the [stochastic\_scenario\_end](@ref) parameter e.g. to `6h` for the [stochastic\_structure\_\_stochastic\_scenario](@ref) entity `(branching, realization)`. Now, the `realization` [stochastic\_scenario](@ref) will end after 6 hours of `time steps`, and its children *(`forecast1`, `forecast2`, and `forecast3`)* will become active.
+5. Set the [weight\_relative\_to\_parents](@ref) [Parameters](@ref) for the `(branching, forecast1)`, `(branching, forecast2)`, and `(branching, forecast3)` [stochastic\_structure\_\_stochastic\_scenario](@ref) entities to whatever you desire, e.g. 0.33 for equal probabilities across all forecasts.
+6. Relate the `branching` [stochastic\_structure](@ref) to all the desired system entities using the appropriate [Structural multidimensional entity classes](@ref Structural-relationship-classes), or use the [model](@ref)-level default [Meta multidimensional entity classes](@ref Meta-relationship-classes).
 
 ### Example of converging stochastics
 
@@ -229,10 +229,10 @@ as well as how to connect this [stochastic\_structure](@ref) to the rest of your
 
 1. Follow the steps 1-5 in the previous [Example of branching stochastics](@ref), except call the [stochastic\_structure](@ref) something different, e.g. `converging`.
 2. Create a new [stochastic\_scenario](@ref) called e.g. `converged_forecast`.
-3. Alter the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships for `(forecast1, converged_forecast)`, `(forecast2, converged_forecast)`, and `(forecast3, converged_forecast)`. Now all three forecasts will converge into a single `converged_forecast`.
-4. Add the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship for `(converging, converged_forecast)`, and set its [weight\_relative\_to\_parents](@ref) parameter to 1. Now, all the probability mass in `forecast1`, `forecast2`, and `forecast3` will be summed up back to the `converged_forecast`.
-5. Set the [stochastic\_scenario\_end](@ref) [Parameters](@ref) of the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships `(converging, forecast1)`, `(converging, forecast2)`, and `(converging, forecast3)` to e.g. `1D`, so that all three scenarios end at the same time and the `converged_forecast` becomes active.
-6. Relate the `converging` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
+3. Alter the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) entities for `(forecast1, converged_forecast)`, `(forecast2, converged_forecast)`, and `(forecast3, converged_forecast)`. Now all three forecasts will converge into a single `converged_forecast`.
+4. Add the [stochastic\_structure\_\_stochastic\_scenario](@ref) entity for `(converging, converged_forecast)`, and set its [weight\_relative\_to\_parents](@ref) parameter to 1. Now, all the probability mass in `forecast1`, `forecast2`, and `forecast3` will be summed up back to the `converged_forecast`.
+5. Set the [stochastic\_scenario\_end](@ref) [Parameters](@ref) of the [stochastic\_structure\_\_stochastic\_scenario](@ref) entities `(converging, forecast1)`, `(converging, forecast2)`, and `(converging, forecast3)` to e.g. `1D`, so that all three scenarios end at the same time and the `converged_forecast` becomes active.
+6. Relate the `converging` [stochastic\_structure](@ref) to all the desired system entities using the appropriate [Structural multidimensional entity classes](@ref Structural-relationship-classes), or use the [model](@ref)-level default [Meta multidimensional entity classes](@ref Meta-relationship-classes).
 
 ## Working with stochastic updating data
 
@@ -254,6 +254,11 @@ it assumes there's no *stochastic* information in the `Map` and carries on to se
 This logic is useful for defining both *stochastic* and *updating* data, as well as either case by itself,
 as shown in the following examples.
 
+!!! warning
+    The [stochastic\_scenario](@ref) indices of a `Map` must match the names of the [stochastic\_scenario](@ref)s exactly.
+    If the `Map` has text indices that are not scenario names (e.g. after renaming a scenario), SpineOpt cannot interpret them
+    and the run fails with an error like `MethodError: no method matching timedata_operation(...)`.
+
 ### Example of stochastic data
 
 By *stochastic data*, we mean parameter values that depend only on the [stochastic\_scenario](@ref).
@@ -264,7 +269,7 @@ In such a case, the input data must be formatted as a `Map` with the following s
 |`scenario1`|`value1`|
 |`scenario2`|`value2`|
 
-where [stochastic\_scenario](@ref) indices are simply `Strings` corresponding to the names of the [stochastic\_scenario](@ref) objects.
+where [stochastic\_scenario](@ref) indices are simply `Strings` corresponding to the names of the [stochastic\_scenario](@ref) entities.
 The *values* can be whatever data types [*SpineInterface.jl*](https://github.com/Spine-project/SpineInterface.jl)
 supports, like `Constants`, `DateTimes`, `Durations`, or `TimeSeries`.
 In the above example, the parameter will take `value1` in `scenario1`, and `value2` in `scenario2`.
@@ -302,7 +307,7 @@ In such a case, the input data must be formatted as a `Map` with the following s
 |`scenario2`|`2000-01-01T00:00:00`|`value3`|
 |`scenario2`|`2000-01-01T12:00:00`|`value4`|
 
-where the [stochastic\_scenario](@ref) indices are simply `Strings` corresponding to the names of the [stochastic\_scenario](@ref) objects,
+where the [stochastic\_scenario](@ref) indices are simply `Strings` corresponding to the names of the [stochastic\_scenario](@ref) entities,
 and the *analysis time* indices are `DateTime` values.
 The *values* can be whatever data types [*SpineInterface.jl*](https://github.com/Spine-project/SpineInterface.jl)
 supports, like `Constants`, `DateTimes`, `Durations`, or `TimeSeries`.
