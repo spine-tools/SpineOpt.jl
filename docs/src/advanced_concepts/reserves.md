@@ -2,7 +2,7 @@
 
 SpineOpt provides a way to include reserve provision in a model by creating reserve nodes. Reserve provision is different from regular operations as it involves withholding capacity, rather than producing a certain commodity (e.g., energy).
 
-This section covers the reserve concepts, but we highly recommend checking out the tutorial on reserves for a more thorough understanding of how the model is set up. You can find the [reserves tutorial](@ref reserves-tutorial).
+This section covers the reserve concepts, but we highly recommend checking out the tutorial on reserves for a more thorough understanding of how the model is set up. You can find it here: [reserves tutorial](@ref reserves-tutorial).
 
 ## Defining a reserve node
 
@@ -11,21 +11,29 @@ To define a reserve node, the following parameters have to be defined for the re
 * [reserve\_active](@ref): this boolean parameter indicates that this node is a reserve node.
 * [reserve\_upward](@ref): this boolean parameter indicates that the demand for reserve provision of this node concerns upward reserves.
 * [reserve\_downward](@ref): this boolean parameter indicates that the demand for reserve provision of this node concerns downward reserves.
-* [reserve\_procurement\_cost](@ref): (optional) this parameter indicates the procurement cost of a unit for a certain reserve product and can be defined on a [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship.
+* [demand](@ref): the reserve requirement of the node.
+* [balance\_sense](@ref): set to `>=` if the procured reserve may exceed the requirement (the default `==` requires the procured reserve to equal the requirement exactly).
+* [reserve\_procurement\_cost](@ref): (optional) this parameter indicates the procurement cost of a unit for a certain reserve product and can be defined on a [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) entity.
+* [minimum\_reserve\_activation\_time](@ref): (optional) the duration a certain reserve product needs to be online/available.
+
+The units that can provide the reserve are connected to the reserve node with [unit\_\_to\_node](@ref) (upward or downward reserve from production) or [node\_\_to\_unit](@ref) entities, and the [capacity\_per\_unit](@ref) of these entities limits how much reserve each unit can provide.
 
 ## Defining a reserve group
+
+A reserve group is a node group (created with *Add entity group...* in the Entity tree) that contains the reserve node and the node of the commodity the unit produces, e.g. electricity. Its [balance\_type](@ref) is usually set to `none`, so that no extra balance is created between its members.
+
 
 The reserve group definition allows the creation of a [unit flow capacity constraint](@ref constraint_unit_flow_capacity) where all the unit flows to different commodities, including the reserve provision, are considered to limit the maximum unit capacity.
 
 The definition of the reserve group also allows the creation of [minimum operating point](@ref constraint_minimum_operating_point), [ramp up](@ref constraint_ramp_up), and [ramp down](@ref constraint_ramp_down) constraints, considering flows and reserve provisions.
 
-The relationship between the unit and the node group (i.e., [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref)) is essential to define the parameters needed for the constraints (e.g., [capacity\_per\_unit](@ref), [minimum\_operating\_point](@ref), [ramp\_limits\_up](@ref), or [ramp\_limits\_down](@ref)).
+The entity between the unit and the node group (i.e., [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref)) is essential to define the parameters needed for the constraints (e.g., [capacity\_per\_unit](@ref), [minimum\_operating\_point](@ref), [ramp\_limits\_up](@ref), or [ramp\_limits\_down](@ref)).
 
 ## Illustrative examples
 
 In this example, we will consider a unit that can provide upward and downward reserves, along with producing electricity. Therefore, the model needs to consider both characteristics of electricity production and reserve provision in the constraints.
 
-Let's take a look to the [unit flow capacity constraint](@ref constraint_unit_flow_capacity) and the [minimum operating point](@ref constraint_minimum_operating_point). For the illustrative example of ramping constraints and reserves, please visit the [illustrative example of the reserve section](@ref ramping-reserves-illustrative-example).
+Let's take a look at the [unit flow capacity constraint](@ref constraint_unit_flow_capacity) and the [minimum operating point](@ref constraint_minimum_operating_point). For the illustrative example of ramping constraints and reserves, please visit the [illustrative example of the reserve section](@ref ramping-reserves-illustrative-example).
 
 ### Unit flow capacity constraint with reserve
 
@@ -37,7 +45,7 @@ Assuming the following parameters, we are considering a fully flexible unit taki
 
 The parameters indicate that the unit capacity is 100 (e.g., 100 MW) and the shutdown and startup limits are 1 p.u. This means that the unit can start up or shut down to its maximum capacity, making it a fully flexible unit.
 
-Taking into account the constraint and the fact that the unit can provide upward reserve and generate electricity, the simplified version of the resulting constraint is a simplified manner:
+Taking into account the constraint and the fact that the unit can provide upward reserve and generate electricity, the resulting constraint in a simplified form is:
 
  ``unit\_flow\_to\_electricity + upwards\_reserve \leq 100 \cdot units\_on``
 
