@@ -394,7 +394,7 @@ rather than having to solve the entire model horizon as a single problem.
 ``\mu_{(b,u,s,t)}`` is the marginal value of the capacity constraint for benders iteration ``b``
 and can be interpreted as the decrease in the objective function for an additional MW of flow from unit ``u``
 (in scenario ``s`` at time ``t``).
-Thus, an upper bound on the sub problem objective function is obtained as follows:
+Thus, a lower bound on the sub problem objective function is obtained as follows:
 
 ```math
 sp\_obj_{b} + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} 
@@ -417,9 +417,8 @@ s.t. & \\
 \cdot \left(v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(b,u,s,t)}\right) \quad \forall b \\
 \end{aligned}
 ```
-Note the benders cuts are added as inequalities because they represent an upper bound on the value
-we are going to get for the sub problem objective function by adjusting the master problem variables
-in that benders iteration.
+Note the benders cuts are added as inequalities because they represent a lower bound on the
+sub problem objective function for other values of the master problem variables.
 If we consider the example of renewable generation - because it's marginal cost is zero,
 on the first benders iteration, it could look like there would be a lot of value in increasing the capacity
 because of the marginal values from the sub problems.
