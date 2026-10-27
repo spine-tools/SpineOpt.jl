@@ -18,14 +18,44 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
+@doc raw"""
+Imposes a minimum share of renewable generation in the Benders master problem.
+For each [grid](@ref) with [mp\_min\_res\_gen\_to\_demand\_ratio](@ref) defined, renewable generation
+must be at least that share of the total demand of the nodes in the grid ([node\_\_grid](@ref)).
+Renewable units are those with [is\_renewable](@ref) set to `true`.
 
-sum (
-    + res generation from subproblem
-    + (units_invested_available - units_invested_available from last iteration)
-    * availability_factor * capacity_per_unit * capacity_to_flow_conversion_factor
-) >= mp_min_res_gen_to_demand_ratio * total demand
+Each Benders iteration adds one cut. It takes the renewable generation from the latest sub problem solution
+and corrects it for changes in the investments in renewable units:
+
+```math
+\begin{aligned}
+& \sum_{(u,n) \in R_g} \sum_{(s,t)} \Big( p^{unit\_flow}_{(b,u,n,s,t)} \\
+& \qquad + \left( v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(b,u,s,t)} \right)
+\cdot p^{availability\_factor}_{(u,s,t)} \cdot p^{capacity\_per\_unit}_{(u,n,s,t)}
+\cdot p^{capacity\_to\_flow\_conversion\_factor}_{(u,n,s,t)} \Big) \cdot \Delta t \\
+& + v^{mp\_min\_res\_gen\_to\_demand\_ratio\_slack}_{(g)} \\
+& \geq p^{mp\_min\_res\_gen\_to\_demand\_ratio}_{(g)} \cdot \sum_{n \in g} \sum_{(s,t)}
+\left( p^{demand}_{(n,s,t)} + p^{demand\_fraction}_{(n,s,t)} \cdot p^{demand}_{(ng,s,t)} \right) \cdot \Delta t \\
+& \forall g \in indices(p^{mp\_min\_res\_gen\_to\_demand\_ratio})
+\end{aligned}
+```
+
+where
+- ``R_g`` is the set of [unit\_\_to\_node](@ref) pairs with a renewable unit ``u`` and a node ``n`` in grid ``g``,
+- ``p^{unit\_flow}_{(b,u,n,s,t)}`` is the [unit\_flow](@ref var_unit_flow) in the sub problem solution of Benders iteration ``b``,
+- ``p^{units\_invested\_available}_{(b,u,s,t)}`` is the value of
+  [units\_invested\_available](@ref var_units_invested_available) used in the sub problem in iteration ``b``,
+- ``ng`` is a node group that node ``n`` belongs to,
+- the sums over ``t`` cover the sub problem time windows and the sums over ``s`` cover the scenarios
+  of each unit's or node's stochastic structure.
+
+The slack variable is only created if [mp\_min\_res\_gen\_to\_demand\_ratio\_slack\_penalty](@ref) is defined,
+and it is penalised with that value in the master problem objective. Without it, the constraint is hard.
+
+See also
+[mp\_min\_res\_gen\_to\_demand\_ratio](@ref),
+[mp\_min\_res\_gen\_to\_demand\_ratio\_slack\_penalty](@ref),
+[is\_renewable](@ref)
 """
 function add_constraint_mp_min_res_gen_to_demand_ratio_cuts!(m_mp, m)
     @fetch units_invested_available, mp_min_res_gen_to_demand_ratio_slack = m_mp.ext[:spineopt].variables
