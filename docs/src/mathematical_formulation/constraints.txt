@@ -486,7 +486,7 @@ where
 - ``p^{storages\_invested\_available}`` is the value of the fixed sub problem variable
   [storages\_invested\_available](@ref var_storages_invested_available) in benders iteration ``b``
 
-  ### [Minimum renewable generation share](@id constraint_mp_min_res_gen_to_demand_ratio_cuts)
+### [Minimum renewable generation share](@id constraint_mp_min_res_gen_to_demand_ratio_cuts)
 
-  @@add_constraint_mp_min_res_gen_to_demand_ratio_cuts!
+@@add_constraint_mp_min_res_gen_to_demand_ratio_cuts!
 
