@@ -13,21 +13,31 @@ Decomposition thus allows us to do a number of things
 The high-level algorithm is described below. For a more detailed description please see [Benders decomposition](@ref benders_decomposition)
 
  - Model initialisation (preprocess_data_structure, generate temporal structures etc.)
- - For each benders_iteration
-   - Solve master problem
-   - Process master-problem solution:
-     - set `units_invested_bi(unit=u)` equal to the investment variables solution from the master problem
-   - Solve operations problem loop
-   - Process operations sub-problem
-     - set `units_on_mv(unit=u)` equal to the marginal value of the units_on bound constraint
-   - Test for convergence
-   - Update master problem
-     - Add [Benders cuts constraints](@ref constraint_mp_any_invested_cuts)
-   - Rewind operations problem
-   - Next benders iteration
+ - For each Benders iteration
+   - Solve the master problem. In the first iteration, investments are fixed to
+     [benders\_starting\_units\_invested](@ref), [benders\_starting\_connections\_invested](@ref)
+     and [benders\_starting\_storages\_invested](@ref) where defined.
+   - Fix the investment decisions ([units\_invested\_available](@ref var_units_invested_available),
+     [connections\_invested\_available](@ref var_connections_invested_available) and
+     [storages\_invested\_available](@ref var_storages_invested_available)) in the operations sub problem
+   - Solve the operations sub problem, rolling over all optimisation windows
+   - Save the sub problem objective value and the reduced costs of the fixed investment variables,
+     i.e. the marginal value of one more unit, connection or storage
+   - Compute the Benders gap and test for convergence
+   - Add a [Benders cut](@ref constraint_mp_any_invested_cuts) to the master problem
+   - Next Benders iteration
+
+The algorithm stops when the gap is below [decomposition\_max\_gap](@ref) and at least
+[decomposition\_min\_iterations](@ref) have been done, or when [decomposition\_max\_iterations](@ref) is reached.
+The Benders gap is ``2 (z_{upper} - z_{lower}) / (z_{upper} + z_{lower})``, where ``z_{lower}`` is the master problem
+objective value and ``z_{upper}`` is the sub problem objective value plus the investment costs.
 
 ## Duals and reduced costs calculation for decomposition
 The marginal values above are computed as the reduced costs of relevant optimisation variables. However, the dual solution to a MIP problem is not well defined. The standard approach to obtaining marginal values from a MIP model is to relax the integer variables, fix them to their last solution value and re-solve the problem as an LP. This is the standard approach in energy system modelling to obtain energy prices. However, although this is the standard approach, it does need to be used with caution. The main hazard associated with inferring duals in this way is that the impact on costs of an investment may be overstated. However, since these duals are used in Benders decomposition to obtain a lower bound on costs (i.e. the maximum potential value from an investment), this is ok and can be "corrected" in the next iteration. And finally, the benders gap will tell us how close our decomposed problem is to the optimal global solution.
+
+In Benders decomposition, if the operations sub problem has integer variables, the reduced costs for the Benders cuts
+are computed from an LP copy of the sub problem where only the investment variables are fixed.
+The other integer variables, such as [units\_on](@ref var_units_on), are relaxed but not fixed.
 
 ## Reporting dual values and reduced costs
 To report the dual of a constraint, one can add an output item with the corresponding constraint name (e.g. *[constraint\_nodal_balance](@ref constraint_nodal_balance)*) and add that to a report. This will cause the corresponding constraint's relaxed problem marginal value will be reported in the output DB. When adding a constraint name as an output we need to preface the actual constraint name with `constraint_` to avoid ambiguity with variable names. So to report the marginal value of *[constraint\_units\_available](@ref constraint_units_available)* we add an output object with the same name.
@@ -38,7 +48,17 @@ on that variable, one can add an output object with the variable name prepended 
 ## Using Decomposition
 Assuming one has set up a conventional investments problem as described in [Investment Optimization](@ref) the following additional steps are required to utilise the decomposition framework:
   - Set the [model\_type](@ref) parameter for your [model](@ref) to `spineopt_benders`.
-  - Specify [decomposition\_max\_gap](@ref) parameter for your [model](@ref) - This determines the master problem convergence criterion for the relative benders gap. A value of 0.05 will represent a relative benders gap of 5%.
-  - Specify the [decomposition\_max\_iterations](@ref) parameter for your [model](@ref) - This determines the master problem convergence criterion for the number of iterations. A value of 10 could be appropriate, but this is highly dependent on the size and nature of the problem.
+  - Optionally adjust [decomposition\_max\_gap](@ref) (default 0.05, i.e. a relative Benders gap of 5%) and [decomposition\_max\_iterations](@ref) (default 10). A suitable number of iterations depends on the size and nature of the problem.
+  - Optionally set [decomposition\_min\_iterations](@ref) and starting investments for the first iteration ([benders\_starting\_units\_invested](@ref) etc.).
 
 Once the above is set, all investment decisions in the model are automatically decomposed and optimised in a Benders master problem. This behaviour may change in the future to allow some investment decisions to be optimised in the operations problem and some optimised in the master problem as desired.
+
+## Reporting results
+With Benders decomposition, investment costs are part of the master problem and operating costs part of the sub problem.
+SpineOpt combines them in the reported results, so e.g. the `total_costs` output includes both.
+
+The `solution_stats` output also includes the final `benders_objective_lower_bound`, `benders_objective_upper_bound`,
+`benders_gap` and `benders_iteration_count`.
+
+By default, results are only written once the algorithm has finished.
+To write the results of every iteration, set [benders\_iterations\_reporting\_active](@ref) to `true`.
