@@ -285,7 +285,7 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 
 ### [Group investments](@id constraint_group_investments)
 
-## [Equal group investments](@id constraint_investment_group_equal_investments)
+#### [Equal group investments](@id constraint_investment_group_equal_investments)
 
 @@add_constraint_investment_group_equal_investments!
 
@@ -296,6 +296,14 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 #### [Maximum group investment capacity](@id constraint_investment_group_maximum_capacity_invested_available)
 
 @@add_constraint_investment_group_maximum_capacity_invested_available!
+
+#### [Minimum number of investments in a group](@id constraint_investment_group_minimum_entities_invested_available)
+
+@@add_constraint_investment_group_minimum_entities_invested_available!
+
+#### [Maximum number of investments in a group](@id constraint_investment_group_maximum_entities_invested_available)
+
+@@add_constraint_investment_group_maximum_entities_invested_available!
 
 ### Capacity transfer
 (Comment 2021-04-29: Currently under development)
