@@ -7,6 +7,7 @@ If `integer`, then the commitment is modelled as the number of units that are on
 
 If `linear`, then the commitment is modelled as the number of units that are online, but here it is also possible to activate 'fractions' of a unit.
 This should reduce computational burden compared to `integer`.
+This is the default. Constraints that depend on the online status, such as the minimum operating point, are then weaker, see [Unit commitment](@ref online_variable_type_effects).
 Note that `linear` is a special case for which online variables are omitted if they are deemed unnecessary by the preprocessing.
 
-If `none`, then the committment is not modelled at all and the unit is assumed to be always online. This reduces the computational burden the most.
+If `none`, then the commitment is not modelled at all and the unit is assumed to be always online. This reduces the computational burden the most.
