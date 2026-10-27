@@ -18,20 +18,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+
 @doc raw"""
-Enforces that maintenance outages are taken as a contiguous block. 
-By defining the [outage\_scheduled\_duration](@ref) parameter. This will trigger the generation of the following constraint:
+Enforces that a scheduled outage is taken as one contiguous block.
+The constraint is generated for each [unit](@ref) with [outage\_scheduled\_duration](@ref) defined:
 
 ```math
 \begin{aligned}
-& v^{units\_out\_of\_service}_{(u,s,t)} - \sum_{n} v^{units\_returned\_to\_service}_{(u,n,s,t)} \\
+& v^{units\_out\_of\_service}_{(u,s,t)} \\
 & \geq
-\sum_{t'=t-p^{schuled\_outage\_duration}_{(u,s,t)} +1 }^{t}
+\sum_{t'=t-p^{outage\_scheduled\_duration}_{(u,s,t)}+1}^{t}
 v^{units\_taken\_out\_of\_service}_{(u,s,t')} \\
 & \forall u \in indices(p^{outage\_scheduled\_duration})\\
 & \forall (s,t)
 \end{aligned}
 ```
+
+In other words, a unit taken out of service stays out of service for at least [outage\_scheduled\_duration](@ref).
 
 See also
 [outage\_scheduled\_duration](@ref)
