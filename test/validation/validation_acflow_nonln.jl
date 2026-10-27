@@ -18,6 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+#############################################################################
+# This file contains validation tests for linear AC optimal power flow,
+# comparing against reference results for the same cases.
+#############################################################################
+
 """
     setup_pajarito_solver()
 
@@ -38,6 +43,11 @@ function setup_pajarito_solver()
     ]
 end
 
+"""
+    setup_pajarito_solver()
+
+    Returns the object parameter values for Hypatia solver as vector. 
+"""
 function setup_hypatia_solver()
     solver_options = unparse_db_value(Map(["Hypatia.jl"], 
         [Map(["tol_rel_opt", "verbose"], [1e-6, false])]))
@@ -47,6 +57,11 @@ function setup_hypatia_solver()
     ]
 end
 
+"""
+    setup_pajarito_solver()
+
+    Returns the object parameter values for Juniper+SCS solver as vector. 
+"""
 function setup_juniper_solver()
     nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose", "eps_abs"],[0, 1e-6])] )
     solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
@@ -58,7 +73,8 @@ end
 
 """
     test_ac_opf_singleconn_socp()
-    Testing the voltage of the demand node when there is a real power demand behind a single connection.
+    Testing the voltage of the demand node when there is a real power demand behind 
+    a single connection. Using the conic model formulation.
 """
 function test_ac_opf_singleconn_socp()
     @testset "constraint_node_voltage" begin
@@ -126,7 +142,8 @@ end
 
 """
     test_ac_opf_reverse_socp()
-    Testing the reverse real AC flow over a connection..
+    Testing the reverse real AC flow (wrt. parameter connection_has_ac_flow) over a connection.
+    Using the conic model formulation.
 """
 function test_ac_opf_reverse_socp()
     @testset "reverse_acflow" begin
@@ -189,7 +206,8 @@ end
 
 """
     test_ac_opf_capacitance_socp()
-    Testing the voltage rise on an unloaded line when end bus has shunt_susceptance.
+    Testing the voltage rise on an unloaded line when end bus has positive shunt_susceptance.
+    Using the conic model formulation.
 """
 function test_ac_opf_capacitance_socp()
     @testset "constraint_ac_opf_capacitance" begin
@@ -242,7 +260,7 @@ end
 
 """
     test_ac_opf_line_capacitance_socp()
-    Testing the voltage rise on an unloaded capacitive line.
+    Testing the voltage rise on an unloaded capacitive line. Using the conic model formulation.
 """
 function test_ac_opf_line_capacitance_socp()
     @testset "constraint_ac_opf_line_capacitance" begin
@@ -349,7 +367,9 @@ function test_ac_opf_line_capacitance_socp()
 end
 
 """
-Testing the node voltage in AC flow over two connections
+    test_ac_opf_two_conn_socp()
+    Testing the node voltage in AC flow over two connections in series. Using the 
+    conic model formulation.
 """
 function test_ac_opf_two_conn_socp()
     @testset "test_ac_opf_two_conn_socp" begin
@@ -422,7 +442,7 @@ end
     The test uses a MISOCP problem formulation for an investment decision
     whether to build a connection or not. The alternative is to provide the
     demand via a local generator unit_x. The optimal choice by small margin
-    is to build the connection.
+    is to build the connection. 
 """
 function test_ac_opf_singleconn_inve_socp()
     @testset "ac_opf_singleconn_inve_socp" begin
@@ -695,13 +715,13 @@ function test_ac_opf_reactive_capacity_socp()
 end
 
 @testset "nonlinear socp formulation" begin
-    #test_ac_opf_singleconn_socp()
-    #test_ac_opf_reverse_socp()
+    test_ac_opf_singleconn_socp()
+    test_ac_opf_reverse_socp()
     test_ac_opf_capacitance_socp()
-    #test_ac_opf_line_capacitance_socp()
-    #test_ac_opf_two_conn_socp()
-    #test_ac_opf_singleconn_inve_socp()
-    #test_ac_opf_capacurve()
-    #test_ac_opf_capacurve_absorb()
-    #test_ac_opf_reactive_capacity_socp()
+    test_ac_opf_line_capacitance_socp()
+    test_ac_opf_two_conn_socp()
+    test_ac_opf_singleconn_inve_socp()
+    test_ac_opf_capacurve()
+    test_ac_opf_capacurve_absorb()
+    test_ac_opf_reactive_capacity_socp()
 end

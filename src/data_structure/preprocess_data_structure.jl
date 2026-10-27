@@ -908,39 +908,48 @@ end
 """
     generate_connection_admittance()
 
-Generate `connection_conductance` and `connection_susceptance` Parameters
-associated with the and `connection` `ObjectClass`. They are derived from
-resistance and reactance which the user is expected to give as input. Default
-values are set to zero.
+    Generate `connection_conductance` and `connection_susceptance` Parameters
+    associated with the and `connection` `ObjectClass`. They are derived from
+    resistance and reactance which the user is expected to give as input. Default
+    values are set to zero.
 """
 function generate_connection_admittance() 
-    #note that previously we checked that both resistance and reactance are not zero
+    # Note that previously we checked that both resistance and reactance are not zero
+    # in check_line_impedance().
+    # conductance:
     add_object_parameter_values!(
         connection, 
         Dict(conn => Dict(:connection_conductance => 
-                parameter_value(resistance(connection = conn, _default=0)/
-                            (resistance(connection = conn, _default=0)^2 +
-                            reactance(connection = conn, _default=0)^2) ) ) 
-                for conn in connection()
-                   
+                parameter_value(resistance(connection = conn, _default=0) /
+                        (resistance(connection = conn, _default=0)^2 +
+                        reactance(connection = conn, _default=0)^2 ) 
+                    ) 
+                ) 
+                for conn in connection()      
         )
     )
     add_object_parameter_defaults!(connection, Dict(:connection_conductance => parameter_value(0.0)))
-    
+    # susceptance:
     add_object_parameter_values!(
         connection, 
         Dict(conn => Dict(:connection_susceptance => 
-                parameter_value(-reactance(connection = conn)/
-                            (resistance(connection = conn)^2 +
-                            reactance(connection = conn)^2) ) ) 
+                parameter_value(-reactance(connection = conn, _default=0) /
+                        (resistance(connection = conn, _default=0)^2 +
+                        reactance(connection = conn, _default=0)^2 ) 
+                    ) 
+                ) 
                 for conn in connection()
-                    if !isnothing(resistance(connection = conn, _strict=false)) && 
-                        !isnothing(reactance(connection = conn, _strict=false))
         )
     )
     add_object_parameter_defaults!(connection, Dict(:connection_susceptance => parameter_value(0.0)))
 end
 
+"""
+    generate_default_ac_flow_tangency_points()
+
+    Generate `ac_flow_tangency_point_theta` and `ac_flow_tangency_point_phi` parameters
+    default values.
+"""
 function generate_default_ac_flow_tangency_points()
     instance = first(model())
     default_tangency_points = [(0, 0)] ∪

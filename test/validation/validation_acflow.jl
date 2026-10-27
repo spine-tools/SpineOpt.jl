@@ -18,6 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+#############################################################################
+# This file contains validation tests for linear AC optimal power flow,
+# comparing against reference results for the same cases.
+#############################################################################
 
 """
     test_ac_opf_singleconn()
@@ -642,14 +646,14 @@ function test_ac_opf_lim_current_lindistflow()
 
 end
 @testset "validation of linear AC flow calculation" begin
-    #test_ac_opf_singleconn()
-    #test_ac_opf_singleconn_q()
-    #test_ac_opf_singleconn_rev()
-    #test_ac_opf_paralconn()
-    #test_ac_opf_singleconn_lim_I()
-    #test_ac_opf_singleconn_inve()
-    #test_ac_opf_singleconn_inve_rev()
-    #test_ac_opf_singleconn_lossless()
-    #test_ac_opf_singleconn_lindistflow()
+    test_ac_opf_singleconn()
+    test_ac_opf_singleconn_q()
+    test_ac_opf_singleconn_rev()
+    test_ac_opf_paralconn()
+    test_ac_opf_singleconn_lim_I()
+    test_ac_opf_singleconn_inve()
+    test_ac_opf_singleconn_inve_rev()
+    test_ac_opf_singleconn_lossless()
+    test_ac_opf_singleconn_lindistflow()
     test_ac_opf_lim_current_lindistflow()
 end

@@ -407,7 +407,7 @@ function check_line_AC_investments()
 end
 
 """
-    Checks that zero impedance connections dont exist.
+    Checks that zero impedance connections don't exist.
 """
 function check_line_impedance()
     error_indices = []
