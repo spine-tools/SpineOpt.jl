@@ -139,7 +139,7 @@ We also need to make the online status of *power\_plant\_a* an integer:
 - In the *Parameter value* table, select the [online\_variable\_type](@ref) parameter and the *Base* alternative, double-click the value cell and select *integer* from the drop-down list.
 
 !!! note
-    The ramping constraints depend on the online status of the unit ([units\_on](@ref var_units_on)). By default, [online\_variable\_type](@ref) is *linear*, which means that the unit can be partly online, e.g. 0.25. This allows the unit to partly shut down, which gives it extra room to ramp down, and the results would differ from the ones below (e.g. 48.75 MW instead of 45 MW in the first hour). With *integer*, the unit is either fully on or fully off.
+    The ramping constraints depend on the online status of the unit ([units\_on](@ref var_units_on)). By default, [online\_variable\_type](@ref) is *linear*, which means that the unit can be partly online, e.g. 0.25. This allows the unit to partly shut down, which gives it extra room to ramp down, and the results would differ from the ones below (e.g. 48.75 MW instead of 45 MW in the first hour). With *integer*, the unit is either fully on or fully off.  See [Unit commitment](@ref online_variable_type_effects) for other constraints affected by this setting.
 
 When you're ready, save/commit all changes to the database.
 
