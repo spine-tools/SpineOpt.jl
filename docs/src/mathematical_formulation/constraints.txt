@@ -121,6 +121,18 @@ For dispatchable units, additional ramping constraints can be introduced. For se
 ##### [Constraint on minimum node state for reserve provision](@id constraint_res_minimum_node_state)
 (Comment 2023-11-20: Currently under development)
 
+##### [Lower bound on non-spinning reserves](@id constraint_non_spinning_reserves_lower_bound)
+
+@@add_constraint_non_spinning_reserves_lower_bound!
+
+##### [Upper bound on non-spinning reserves from start-up limits](@id constraint_non_spinning_reserves_start_up_upper_bound)
+
+@@add_constraint_non_spinning_reserves_start_up_upper_bound!
+
+##### [Upper bound on non-spinning reserves from shut-down limits](@id constraint_non_spinning_reserves_shut_down_upper_bound)
+
+@@add_constraint_non_spinning_reserves_shut_down_upper_bound!
+
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
 
