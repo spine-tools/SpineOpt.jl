@@ -354,7 +354,7 @@ We decompose the problem into a master problem and sub problems with the master 
 optimising the coupling investment variables which are treated as constants in the sub problems.
 
 The master problem is built by replacing the operational costs (which will be minimised in the sub problem) by
-a new decision variable, ``v^{sp\_objective}``:
+  a new decision variable, ``v^{sp\_objective}`` (`sp_objective_upperbound` in the code):
 
 ```math
 \begin{aligned}
@@ -485,4 +485,8 @@ where
   [connections\_invested\_available](@ref var_connections_invested_available) in benders iteration ``b`` and  
 - ``p^{storages\_invested\_available}`` is the value of the fixed sub problem variable
   [storages\_invested\_available](@ref var_storages_invested_available) in benders iteration ``b``
+
+  ### [Minimum renewable generation share](@id constraint_mp_min_res_gen_to_demand_ratio_cuts)
+
+  @@add_constraint_mp_min_res_gen_to_demand_ratio_cuts!
 
