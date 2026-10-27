@@ -9,6 +9,6 @@ and `solution_stats` only shows the final bounds and gap.
 
 Useful for following how the investments and the gap develop over the iterations,
 e.g. when choosing [decomposition\_max\_gap](@ref) or [decomposition\_max\_iterations](@ref).
-Writing every iteration makes the run slower and the output database larger.
+Note that writing every iteration makes the output database larger.
 
 See [Decomposition](@ref).
