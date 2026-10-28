@@ -10,7 +10,7 @@ Here, we briefly describe the key concepts involved in the representation of (cl
 
 - [units\_on\_\_temporal\_block](@ref) is an entity class linking the [units\_on](@ref var_units_on) variable of this unit to a specific [temporal\_block](@ref). The temporal block holds information on the temporal scope and resolution for which the variable should be optimized.
 
-- [online\_variable\_type](@ref) is a method parameter and can take the values `binary`, `integer`, `linear` or `none`. If the binary value is chosen, the unit's status is modelled as a binary (classic UC). For clustered unit commitment units, the integer type is applicable. Note that if the parameter is not defined, the default will be linear. If the unit's status is not crucial, this can reduce the computational burden. Note that with `linear`, the unit can also be partly online, which affects other constraints that depend on the online status, such as the [Ramping](@ref) constraints.
+- [online\_variable\_type](@ref) is a method parameter and can take the values `binary`, `integer`, `linear` or `none`. If the binary value is chosen, the unit's status is modelled as a binary (classic UC). For clustered unit commitment units, the integer type is applicable. Note that if the parameter is not defined, the default will be linear. If the unit's status is not crucial, this can reduce the computational burden. Note that with `linear`, the unit can also be partly online, which affects other constraints that depend on the online status, , see [Effect on other constraints](@ref online_variable_type_effects).
 
 - [existing\_units](@ref) defines how many units of a certain unit type are available. Typically, this parameter takes a binary (UC) or integer (clustered UC) value. To avoid confusion the following distinction will be made in this document: [unit](@ref) will be used to identify a SpineOpt unit entity, which can have multiple `members`. This determines the maximum number of members that can be online at any given time (thus restricting the [units\_on](@ref var_units_on) variable). The default value for this parameter is ``1`` (or ``0`` for units with investment candidates, see [Investment Optimization](@ref)). It is possible to allow the model to increase the [existing\_units](@ref) itself, through [Investment Optimization](@ref)
 
@@ -42,6 +42,23 @@ The single SpineOpt unit defined here, now represents two members. This means th
 Next, we have to decide the [online\_variable\_type](@ref) for this unit, which will restrict the kind of values that the [units\_on](@ref var_units_on) variable can take. This basically comes down to deciding if we are working in a classical UC framework (`binary`), a clustered UC framework (`integer`), or a relaxed clustered UC framework (`linear`), in which a noninteger number of units can be online.
 
 The classical UC framework can only be applied when the [existing\_units](@ref) equals 1.
+
+#### [Effect on other constraints](@id online_variable_type_effects)
+
+The default is `linear`. It keeps the model linear and fast to solve, but [units\_on](@ref var_units_on) can then take fractional values, such as 0.25 of a unit. Constraints that depend on the online status are written for this fractional value, so they restrict the unit less than they would restrict a real unit:
+
+| Constraint | Effect with `linear` |
+|:--|:--|
+| [Minimum operating point](@ref constraint_minimum_operating_point) | The model can bring a fraction of the unit online and run it below the minimum operating point. |
+| [Minimum up and down time](@ref constraint_min_up_time) | The constraint only holds for the fraction that was started up or shut down. |
+| [Ramping](@ref) | Partial start-ups and shut-downs give extra room to ramp. |
+| [start\_up\_cost](@ref), [shut\_down\_cost](@ref) | Paid only for the fraction started up or shut down, so starting and stopping is cheap. |
+
+For example, take a unit with [capacity\_per\_unit](@ref) 200 and [minimum\_operating\_point](@ref) 0.4, i.e. a minimum output of 80. With `linear`, the model can run it at 50 by setting [units\_on](@ref var_units_on) to 0.25, since the minimum operating point then only requires 0.4 × 200 × 0.25 = 20. With `integer` or `binary`, the unit either runs at 80 or more, or is off.
+
+Use `integer` or `binary` for units where these limits matter. Note that integer variables make the model slower to solve.
+
+With `none`, no online variable is created and the unit is always considered online. A [minimum\_operating\_point](@ref) then forces the unit to run at least at its minimum in every time step, even when it would be cheaper to turn it off.
 
 ### Step 3: imposing a minimum operating point
 The output of an online unit to a specific node can be restricted to be above a certain minimum by choosing a value for the [minimum\_operating\_point](@ref) parameter. This parameter is defined for the [unit\_\_to\_node](@ref) entity class, and is given as a fraction of the [capacity\_per\_unit](@ref). If we continue with the example above, and define the following entities and parameters:
