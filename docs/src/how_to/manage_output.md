@@ -16,6 +16,8 @@ For example, to add [units\_on](@ref var_units_on) to an existing report called 
 2. Select `report1` as the report and `units_on` as the output, then click **OK**.
 3. Commit the changes and run the model again.
 
+To see which outputs a report contains, expand **report\_\_output** in the Entity tree. Note that the Parameter value table only lists the report\_\_output entities that have parameter values, so it does not show the whole report. To stop writing an output, right-click its report\_\_output entity and select **Remove...**
+
 ## Reporting of Input Parameters
 In addition to writing results as outputs to a datastore, SpineOpt can also report input parameter data. To allow specific input parameters to be included in a report, they must be first added as [output](@ref) entities with a name corresponding exactly to the parameter name. For example, to allow the [demand](@ref) parameter to be included in a report, there must be a correspondingly named [output](@ref) entity called `demand`. If the name does not match a parameter, nothing is reported for it and only a warning is printed in the Julia console. The name of the report is free to choose. Similarly to outputs, to include an input parameter in a report, we must create a [report\_\_output](@ref) entity between the output representing the input parameter (e.g. `demand`) and the desired report.
 
@@ -64,6 +66,24 @@ To see the results of one run as a table:
 2. Click **Index** in the toolbar to switch to the pivot table view.
 3. Select the class you want to view in the Entity tree (e.g. `report__unit__node__direction__stochastic_scenario`).
 4. In the **Frozen table**, select the alternative of the run you want to view. By default the Frozen table shows the oldest run, so select the newest alternative yourself if you want the latest results.
+
+### Exporting results to Excel
+The SpineOpt plugin for Spine Toolbox includes an Exporter, *SpineOptToTable*, that writes the results from the output database to an Excel file:
+
+1. Drag *SpineOptToTable* from the *SpineOpt plugin* toolbar to the Design View.
+2. Connect the output database to it.
+3. Execute the project. The Event Log shows *Wrote output_exported@SpineOptToTable.xlsx*. Click the file name to open the file.
+
+The file is saved in the project folder, under `.spinetoolbox/items/spineopttotable/output/`.
+
+The file has one sheet per run (alternative) in the output database. On each sheet, the first rows are headers: the result (e.g. `unit_flow`), the entity (e.g. `power_plant_a`), and for flows the direction and node. Below them, each row is a time step. Results with a single value, such as `total_costs`, are on the first time step row only.
+
+!!! note
+    - The file contains everything in the output database. To export only some results, include only those outputs in the report (see [Creating Reports](@ref)).
+    - All runs in the output database are exported. To get only the latest run, remove the older alternatives from the output database first.
+    - Only results of classes with `unit`, `node` or `model` in their name are exported, so connection results are not included.
+    - Each result and entity gets its own column, so for large models the file becomes very wide. An Excel sheet holds at most 16,384 columns.
+    - The file name is set by *Output file/label* in the Exporter's properties. To keep the files of earlier executions, check *Time stamp output directories*.
 
 ## Output Writing Summary
  - We need an output entity in our input datastore for each variable or marginal value we want included in a report. The SpineOpt template already contains these.
