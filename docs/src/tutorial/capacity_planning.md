@@ -102,7 +102,7 @@ Both power plants are needed to cover the demand of 150 (100 + 50), so the model
 
 The [units\_on](@ref var_units_on) values of `power_plant_b` may vary between 0.25 and 1.0. [units\_on](@ref var_units_on) is a continuous variable here and being online costs nothing, so any value large enough to cover the flow gives the same total cost.
 
-## Multi-year investments
+## Multi-year investments tutorial
 
 Multi-year investments refer to making investment decisions at different points in time, such that a pathway of investments can be modelled. This is useful when long-term scenarios are modelled, but modelling each year is not practical, or when investment decisions are made in different years, which affects the cash flow.
 
