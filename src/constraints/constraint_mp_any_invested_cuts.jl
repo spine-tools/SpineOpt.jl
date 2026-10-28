@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-    add_constraint_mp_units_invested_cut!(m_mp, m)
+    add_constraint_mp_any_units_invested_cut!(m_mp, m)
 
 Adds Benders optimality cuts.
 This tells the master problem the improvement of the subproblem objective value that is possible for an increase
