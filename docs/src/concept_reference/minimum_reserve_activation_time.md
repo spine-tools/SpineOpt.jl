@@ -1,3 +1,6 @@
+!!! warning
+    This parameter is no longer implemented since [c06244d](https://github.com/spine-tools/SpineOpt.jl/commit/c06244de8ca1f91abbee73516e5b5af7607c7fcf)
+
 The parameter [minimum\_reserve\_activation\_time](@ref) is the duration
 a reserve product needs to be online, before it can be replaced by another (slower) reserve product.
 

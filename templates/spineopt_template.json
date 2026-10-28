@@ -2607,7 +2607,7 @@
             "minimum_reserve_activation_time",
             null,
             null,
-            "Duration a certain reserve product needs to be online/available"
+            "Duration a certain reserve product needs to be online/available. (NOT IMPLEMENTED!)"
         ],
         [
             "node",
