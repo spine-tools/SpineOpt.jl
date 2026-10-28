@@ -92,8 +92,8 @@ If we have a model that is not currently set up for investments, and we wish to 
 | [investment\_count\_max\_cumulative](@ref) | [unit](@ref) | The number of additional [unit](@ref)s of this type that can be invested in
 | [unit\_investment\_cost](@ref) | [unit](@ref) | The total overnight investment cost per candidate [unit](@ref) over the model horizon
 | [lifetime\_technical](@ref) | [unit](@ref) | The investment lifetime of the [unit](@ref) - once invested-in, a [unit](@ref) must exist for at least this amount of time (see [lifetime\_constraint\_sense](@ref))
-| [lead\_time](@ref) | [unit](@ref) | The time between the investment decision and the moment the [unit](@ref) becomes operational
-| [decommissioning\_time](@ref) | [unit](@ref) | The time between the decommissioning decision and the moment decommissioning is complete
+| [lead\_time](@ref) | [unit](@ref) | The time between the investment decision and the start of operation. Only affects the investment costs with [multiyear\_economic\_discounting](@ref), not the availability of the [unit](@ref)
+| [decommissioning\_time](@ref) | [unit](@ref) | Not implemented yet
 | [investment\_variable\_type](@ref) | [unit](@ref) | Whether the [units\_invested\_available](@ref var_units_invested_available) variable is linear, integer or binary
 | [investment\_count\_fix\_new](@ref) | [unit](@ref)| Fix the value of [units\_invested](@ref var_units_invested)
 | [investment\_count\_fix\_cumulative](@ref) | [unit](@ref) | Fix the value of [units\_invested\_available](@ref var_units_invested_available)
