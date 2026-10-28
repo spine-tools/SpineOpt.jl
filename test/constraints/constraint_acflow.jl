@@ -78,7 +78,6 @@ function test_constraint_connection_ac_flows()
                     - b * var_v_sin[twonodeind...] == 0)
                 con_key = (connection(:connection_bc), node(:node_c), direction(:to_node), s, t)
                 observed_con = constraint_object(c1[con_key...])
-                println(c1[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -94,6 +93,7 @@ function test_constraint_nodal_reactive_balance()
                 ["node", "node_b", "demand_reactive", 0.1],
                 ["node", "node_b", "min_voltage", 0.7],
                 ["node", "node_c", "min_voltage", 0.7],
+                ["connection","connection_bc","resistance",0.2]
             ]
             relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
             relationship_parameter_values = [
@@ -128,7 +128,6 @@ function test_constraint_nodal_reactive_balance()
 end
 
 function test_constraint_connection_reactive_capacity()
-    
      @testset "test constraint line reactive power capacity" begin
         url_in = "sqlite://"
         with_connection_open(url_in) do
