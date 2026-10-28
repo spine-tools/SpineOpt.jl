@@ -14,6 +14,11 @@ hydropower plants and gradually introduces additional features.
     accordingly in order to run the database you want (please check the
     Simple System tutorial for how to do that).
 
+!!! note
+    Many of the figures here use the old pre-v1.0.0 input data structure!
+    Thus, parameter names might differ slightly from the latest ones,
+    and `unit__node__node` has been replaced with [unit\_flow\_\_unit\_flow](@ref).
+
 ## Context
 
 The goal of the model is to capture the combined operation of two hydropower
