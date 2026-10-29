@@ -60,7 +60,7 @@ Since we will have the new unit commitment variables, we want to see the results
 - In the Spine DB editor, locate the *Entity tree* (typically at the top-left).
 - Right-click on the [report\_\_output](@ref) class, and select *Add entities...* from the context menu. The *Add entities* dialog will pop up.
 - Enter *report1* under [report](@ref), and [units\_on](@ref var_units_on) under [output](@ref). Repeat the same for the following outputs, each on its own row: `units_on_costs`, `units_started_up`, `units_shut_down`, `total_costs`, `variable_om_costs`, `start_up_costs` and `shut_down_costs`; then press *OK*.
-- This will write the unit commitment variable values and costs in the objective function to the output database as a part of *report1* (see also [How to manage Output Data](@ref)).
+- This will write the unit commitment variable values and costs in the objective function to the output database as a part of *report1* (see also [Managing output](@ref how-to-manage-output)).
 
 When you're ready, commit all changes to the database.
 

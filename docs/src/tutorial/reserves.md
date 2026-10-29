@@ -63,7 +63,7 @@ To see the reserve procurement costs in the results, we also add two outputs to 
 3. Right-click the [report\_\_output](@ref) class and select **Add entities...**
 4. Add `report1 | variable_om_costs` and `report1 | res_proc_costs` and press **OK**.
 
-This will write the total [vom\_cost](@ref) and reserve procurement cost terms of the objective function to the output database as part of *report1* (see also [How to manage Output Data](@ref)).
+This will write the total [vom\_cost](@ref) and reserve procurement cost terms of the objective function to the output database as part of *report1* (see also [Managing output](@ref how-to-manage-output)).
 
 ### Entering the parameter values
 

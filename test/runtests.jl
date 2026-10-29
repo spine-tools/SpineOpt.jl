@@ -174,7 +174,6 @@ end
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
     include("constraints/constraint_acflow.jl")
-    include("objective/objective.jl") # CRASHES with multithreading?
     include("constraints/constraint_user_constraint.jl")
     include("constraints/constraint_investment_group.jl")
     include("validation/validation_acflow.jl")
