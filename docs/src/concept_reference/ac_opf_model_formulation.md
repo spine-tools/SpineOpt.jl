@@ -2,6 +2,6 @@ The model formulation of AC optimal power flow is governed by the parameter ac\_
 
 `ac_opf_conic`: activates the second order cone programming (SOCP) relaxation of optimal power flow problem in rectangular coordinates. Computationally the most demanding formulation which requires a solver which accepts second order cone constraints.
 
-`ac_opf_linear`: activates the linear approximation of second order cone programming (SOCP) relaxation of optimal power flow problem in rectangular coordinates.
+`ac_opf_linear`: activates the linear approximation of second order cone programming (SOCP) relaxation of optimal power flow problem in rectangular coordinates. The default solver is sufficient. This is the default value.
 
-`ac_opf_lindistflow`: activates the linearized Distflow formulation.
+`ac_opf_lindistflow`: activates the linearized Distflow formulation. A very light formulation suitable for rough planning when voltages are known to be close to 1 p.u. 

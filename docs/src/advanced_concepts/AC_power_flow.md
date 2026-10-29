@@ -1,6 +1,6 @@
 # Radial AC power flows
 
-SpineOpt includes single-phase equivalent AC optimal power flow (OPF) calculation. It is suitable for planning studies and simulating balanced power flow in different operational situations. The AC power flow calculation is suitable for radial networks typical in distribution networks. It does not track the voltage phase angle across the network and thus the results for looped networks will not be correct.
+SpineOpt includes single-phase equivalent AC optimal power flow (OPF) calculation. It is suitable for planning studies and simulating balanced power flow in different operational situations. The AC power flow calculation is suitable for radial networks typical in distribution networks. 
 
 
 ## Defining the problem for AC flow calculation
@@ -47,10 +47,14 @@ Currently, there are three formulations for the AC OPF. In decreasing order of a
 
 - Second order cone programming (SOCP) relaxation of optimal power flow problem in rectangular coordinates. 
 - Linear approximation of the SOCP relaxation
-- Lindistflow lossless formulation
+- Linear distflow lossless formulation
+
+The SOCP relaxation is the most accurate of these but in practise only very small models may be feasible. Solver with support for SOCP type models is needed, controlled by [solver\_mip](@ref). See [JuMP documentation](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers) for available solvers. The Linear distflow formulation can be accurate when voltages remain close to 1 p.u. and is computationally very light. The Linear approximation of SOCP relaxation is between these.
 
 Selection of the formulation takes place by the model-wide parameter [ac\_opf\_model\_formulation](@ref). The default is the linear approximation of the SOCP relaxation. All formulations are suitable only for radial networks, which are typically found in distribution grids. If loops are present in the network, solution will be returned but the results will not be correct. 
 
+!!! warning
+    Please note that none of the formulations track the voltage phase angle across the network and thus the results for looped networks will not be correct.
 
 ## Creating an Example  
 If we have model that is not currently set up AC flow, we can take the following steps.
