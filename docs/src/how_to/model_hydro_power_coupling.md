@@ -40,11 +40,12 @@ The model of this section is available as the example file [hydro\_power\_coupli
 
 1. Create a workflow in Spine Toolbox with an input database, a Run SpineOpt tool and an output database, as on the [Verify installation](@ref recommended_workflow) page.
 2. Double-click the input database to open it in the Spine DB editor.
-3. Select **File > Import...** and import [the SpineOpt database template](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/spineopt_template.json) (right-click the link and select *Save link as...* to download it first).
-4. In the same way, import [the basic SpineOpt model](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/models/basic_model_template.json). It contains the model `simple`, the temporal block `flat`, the deterministic stochastic structure and the report `report1`.
-5. Press **Commit** in the toolbar.
+3. Download [the SpineOpt database template](https://github.com/spine-tools/SpineOpt.jl/blob/master/templates/spineopt_template.json) with the **Download raw file** button at the top right of the file view.
+4. Download [the basic SpineOpt model](https://github.com/spine-tools/SpineOpt.jl/blob/master/templates/models/basic_model_template.json) in the same way.
+5. In the Spine DB editor, select **File > Import...** and import the downloaded files, first `spineopt_template.json` and then `basic_model_template.json`. The order matters: the basic model can only be imported once the classes of the SpineOpt template exist. The basic model contains the model `simple`, the temporal block `flat`, the deterministic stochastic structure and the report `report1`.
+6. Press **Commit** in the toolbar.
 
-In the steps below, enter all values in the Parameter value table with the alternative `Base`. For values marked *(drop-down)*, double-click the value cell and pick the value from the drop-down list. For values marked with a type, such as *(Duration)*, right-click the value cell, select **Edit...** and choose that parameter type.
+To enter a value, select its class in the Entity tree and fill in the entity byname, parameter name, alternative and value on the empty row of the Parameter value table. In the steps below, enter all values with the alternative `Base`. For values marked *(drop-down)*, double-click the value cell and pick the value from the drop-down list. For values marked with a type, such as *(Duration)*, right-click the value cell, select **Edit...** and choose that parameter type.
 
 !!! note
     In the Parameter value table, the first row is a filter row. Enter new values on the empty row below it.
@@ -55,16 +56,16 @@ Before we can create the hydropower system, we'll have to define a model, tempor
 
 As for the report, we are typically interested in the outputs: [node\_state](@ref var_node_state), [unit\_flow](@ref var_unit_flow)s and [connection\_flow](@ref var_connection_flow)s.
 
-1. Enter the following values:
+1. In the Entity tree, select the [model](@ref) class and add the following values on the empty row of the Parameter value table:
 
 | group | class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|:---|
 | | model | simple | [model\_start](@ref) | Base | 2000-01-01T00:00:00 *(Date time)* |
 | | model | simple | [model\_end](@ref) | Base | 2000-01-02T00:00:00 *(Date time)* |
-| | temporal\_block | flat | [resolution](@ref) | Base | 6h *(Duration)* |
 
-2. Right-click the [report\_\_output](@ref) class, select **Add entities...**, add `report1 | node_state`, `report1 | unit_flow` and `report1 | connection_flow` and press **OK**.
-3. Press **Commit**.
+2. In the Entity tree, select the [temporal\_block](@ref) class. The temporal block `flat` already has a [resolution](@ref) of `1D` from the basic model. Right-click the value `1D`, select **Edit...** and change it to `6h`.
+3. Right-click the [report\_\_output](@ref) class, select **Add entities...**, add `report1 | node_state`, `report1 | unit_flow` and `report1 | connection_flow` and press **OK**.
+4. Press **Commit**.
 
 ### Nodes and grids
 
@@ -105,7 +106,7 @@ The two connections that bring water to the Fallet hydropower plant also need a 
 
 As the flows are unbound by default, we also need to define the relation between the nodes and the flows with the [connection\_\_node\_\_node](@ref) entities. We need one between the 'upper' node of the Språnget hydropower plant and the 'upper' node of the Fallet hydropower plant for the corresponding spill connection. We also need one between the 'lower' node of the Språnget hydropower plant and the 'upper' node of the Fallet hydropower plant for the corresponding discharge connection. We bind the flows by setting the [fix\_ratio\_out\_in\_connection\_flow](@ref) to 1.0, i.e. all the water that enters the connection also leaves it.
 
-1. Enter the inflows above.
+1. In the Entity tree, select the [node](@ref) class and enter the inflows above.
 2. Right-click the [connection](@ref) class and add `sprang_to_fall_spill`, `sprang_to_fall_disc`, `fall_to_downstream_spill` and `fall_to_downstream_disc`.
 3. Right-click the [connection\_\_from\_node](@ref) class and add `sprang_to_fall_spill | sprang_upper`, `sprang_to_fall_disc | sprang_lower`, `fall_to_downstream_spill | fall_upper` and `fall_to_downstream_disc | fall_lower`.
 
@@ -116,7 +117,7 @@ As the flows are unbound by default, we also need to define the relation between
 
 ![connection__node_node](figs_two_hydro/two_hydro_connection_node_node.png)
 
-6. Enter the following values and press **Commit**:
+6. In the Entity tree, select the [connection\_\_node\_\_node](@ref) class, enter the following values and press **Commit**:
 
 | group | class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|:---|
@@ -138,7 +139,7 @@ Additionally, we add a unit to represent the income from selling the electricity
 Again, by default the flows are unbound, so we have to bind them with [unit\_flow\_\_unit\_flow](@ref) entities. The discharge flow from the 'upper' node flows in its entirety to the 'lower' node, so the [flow\_ratio\_equality\_coefficient](@ref) between the 'lower' and the 'upper' node is 1.0. For the conversion from water flow to electricity, we need to take the conversion efficiency of the plant into account: the [flow\_ratio\_equality\_coefficient](@ref) between the 'electricity' and the 'upper' node is 0.6 for the Språnget hydropower plant and 0.68 for the Fallet hydropower plant.
 
 4. Right-click the [unit\_flow\_\_unit\_flow](@ref) class, select **Add entities...** and choose the unit, its output flow and its input flow, resulting in `sprang_plant | sprang_lower | sprang_upper | sprang_plant`, `sprang_plant | electricity | sprang_upper | sprang_plant`, `fall_plant | fall_lower | fall_upper | fall_plant` and `fall_plant | electricity | fall_upper | fall_plant`.
-5. Enter the following values and press **Commit**. The capacities limit the water flow into the units and the electricity production.
+5. Enter the following values and press **Commit**. Select the class of each row in the Entity tree before entering its values. The capacities limit the water flow into the units and the electricity production.
 
 | group | class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|:---|
@@ -167,7 +168,7 @@ To model the reservoirs of each hydropower plant, we leverage the [node\_state](
 
 Depending on the constraints of your hydropower plant, you can also fix the initial and final values of the reservoir by setting the parameter [storage\_state\_fix](@ref) to the respective values (use `nan` values for the time steps that you don't want to impose such constraints). When fixing the initial value of a reservoir value, the value should be fixed at ‘t-1’ instead of ’t0’. That is because the initial value of a reservoir means the previous value before the first hour. With the 6h resolution, the initial value is therefore set at `1999-12-31T18:00:00`, one time step before the [model\_start](@ref), and the final value at `2000-01-01T18:00:00`, the start of the last time step.
 
-1. Enter the following values:
+1. In the Entity tree, select the [node](@ref) class and enter the following values:
 
 | group | class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|:---|
@@ -262,7 +263,7 @@ to the downstream plant and this should be taken into account.
 
 ### Changes to the basic model
 
-Start from the basic model of the previous section. If you want to keep it, duplicate the database first, as explained at the top of this page.
+Start from the basic model of the previous section. If you want to keep it, duplicate the database first, as explained at the top of this page. If you don't have the basic model anymore, import [hydro\_power\_coupling.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/hydro_power_coupling.json) into an empty input database.
 
 1. Right-click the [node](@ref) class and add `stored_water`. This node will accumulate the water stored in the reservoirs at the end of the planning horizon.
 2. Right-click the [node\_\_grid](@ref) class and add `stored_water | water`.
@@ -270,10 +271,10 @@ Start from the basic model of the previous section. If you want to keep it, dupl
 4. Right-click the [node\_\_to\_unit](@ref) class and add `stored_water | value_stored_water`, `sprang_upper | sprang_stored_water` and `fall_upper | fall_stored_water`.
 5. Right-click the [unit\_\_to\_node](@ref) class and add `sprang_stored_water | stored_water` and `fall_stored_water | stored_water`.
 6. Right-click the [unit\_flow\_\_unit\_flow](@ref) class and add `sprang_stored_water | stored_water | sprang_upper | sprang_stored_water` and `fall_stored_water | stored_water | fall_upper | fall_stored_water`.
-7. Extend the planning horizon of the model by one time step: change the [model\_end](@ref) to `2000-01-02T06:00:00`.
-8. Remove the final values of the reservoirs: open the [storage\_state\_fix](@ref) of *sprang\_upper* and *fall\_upper* with **Edit...**, select the last row (`2000-01-01T18:00:00`), right-click, select **Remove rows** and press **OK**. The initial values stay.
-9. Open the [vom\_cost](@ref) of *electricity ǀ electricity\_load* with **Edit...** and add a fifth value, 0.0, for the extra time step. The price is set to zero to ensure no electricity is sold during this time step.
-10. Enter the following values and press **Commit**:
+7. Extend the planning horizon of the model by one time step: in the Entity tree, select the [model](@ref) class and change the value of [model\_end](@ref) to `2000-01-02T06:00:00`.
+8. Remove the final values of the reservoirs: in the Entity tree, select the [node](@ref) class. In the Parameter value table, right-click the value of [storage\_state\_fix](@ref) of *sprang\_upper*, select **Edit...**, select the last row (`2000-01-01T18:00:00`), right-click, select **Remove rows** and press **OK**. Do the same for *fall\_upper*. The initial values stay.
+9. In the Entity tree, select the [node\_\_to\_unit](@ref) class. Right-click the value of [vom\_cost](@ref) of *electricity ǀ electricity\_load*, select **Edit...** and add a fifth value, 0.0, for the extra time step. The price is set to zero to ensure no electricity is sold during this time step.
+10. Enter the following values and press **Commit**. Select the class of each row in the Entity tree before entering its values:
 
 | group | class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|:---|
@@ -295,19 +296,25 @@ The efficiency of *fall\_stored\_water* is the same as that of *fall\_plant*, as
 
 ### Examining the results
 
-The model of this section is available as the example file [hydro\_power\_coupling\_stored\_water.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/hydro_power_coupling_stored_water.json). Run the model and open the results as in the basic model. You should get the following [unit\_flow](@ref var_unit_flow) results for the first three time steps. To show only these rows, select only `electricity_load`, `fall_plant` and `sprang_plant` in the *unit* column header and only `from_node` in the *direction* column header:
+The model of this section is available as the example file [hydro\_power\_coupling\_stored\_water.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/hydro_power_coupling_stored_water.json). Run the model and open the results as in the basic model. You should get the following [unit\_flow](@ref var_unit_flow) results. To show only these rows, select only `electricity_load`, `fall_plant` and `sprang_plant` in the *unit* column header and only `from_node` in the *direction* column header:
 
 | report | unit | node | direction | stochastic\_scenario | index | unit\_flow |
 |:---|:---|:---|:---|:---|:---|---:|
 | report1 | electricity\_load | electricity | from\_node | realization | 2000-01-01T00:00:00 | 0 |
 | report1 | electricity\_load | electricity | from\_node | realization | 2000-01-01T06:00:00 | 0 |
 | report1 | electricity\_load | electricity | from\_node | realization | 2000-01-01T12:00:00 | 181.2 |
+| report1 | electricity\_load | electricity | from\_node | realization | 2000-01-01T18:00:00 | 107.44 |
+| report1 | electricity\_load | electricity | from\_node | realization | 2000-01-02T00:00:00 | 0 |
 | report1 | fall\_plant | fall\_upper | from\_node | realization | 2000-01-01T00:00:00 | 0 |
 | report1 | fall\_plant | fall\_upper | from\_node | realization | 2000-01-01T06:00:00 | 0 |
 | report1 | fall\_plant | fall\_upper | from\_node | realization | 2000-01-01T12:00:00 | 165 |
+| report1 | fall\_plant | fall\_upper | from\_node | realization | 2000-01-01T18:00:00 | 158 |
+| report1 | fall\_plant | fall\_upper | from\_node | realization | 2000-01-02T00:00:00 | 0 |
 | report1 | sprang\_plant | sprang\_upper | from\_node | realization | 2000-01-01T00:00:00 | 0 |
 | report1 | sprang\_plant | sprang\_upper | from\_node | realization | 2000-01-01T06:00:00 | 0 |
 | report1 | sprang\_plant | sprang\_upper | from\_node | realization | 2000-01-01T12:00:00 | 115 |
+| report1 | sprang\_plant | sprang\_upper | from\_node | realization | 2000-01-01T18:00:00 | 0 |
+| report1 | sprang\_plant | sprang\_upper | from\_node | realization | 2000-01-02T00:00:00 | 0 |
 
 And the following [node\_state](@ref var_node_state) results:
 
@@ -316,15 +323,17 @@ And the following [node\_state](@ref var_node_state) results:
 | report1 | fall\_upper | realization | 2000-01-01T00:00:00 | 1212 |
 | report1 | fall\_upper | realization | 2000-01-01T06:00:00 | 1224 |
 | report1 | fall\_upper | realization | 2000-01-01T12:00:00 | 936 |
+| report1 | fall\_upper | realization | 2000-01-01T18:00:00 | 0 |
 | report1 | fall\_upper | realization | 2000-01-02T00:00:00 | 0 |
 | report1 | sprang\_upper | realization | 2000-01-01T00:00:00 | 1672 |
 | report1 | sprang\_upper | realization | 2000-01-01T06:00:00 | 2344 |
 | report1 | sprang\_upper | realization | 2000-01-01T12:00:00 | 2326 |
+| report1 | sprang\_upper | realization | 2000-01-01T18:00:00 | 2998 |
 | report1 | sprang\_upper | realization | 2000-01-02T00:00:00 | 0 |
 
-The plants no longer produce in the first two time steps, as the stored water is worth more than the electricity sold at the prices 325 and 250. For example, water stored in Språnget is valued at 1.28 × 400 = 512, as it can later be used by both plants. In the extra time step, all the remaining water is moved to the *stored\_water* node and the reservoirs are emptied.
+The plants no longer produce in the first two time steps, as the stored water is worth more than the electricity sold at the prices 325 and 250. For example, water stored in Språnget is valued at 1.28 × 400 = 512, as it can later be used by both plants. In the extra time step (`2000-01-02T00:00:00`), all the remaining water is moved to the *stored\_water* node and the reservoirs are emptied.
 
-The results of 18:00 are left out of the tables on purpose. At 18:00, the electricity price (400) is equal to the assumed future electricity price, so selling and storing the water give the same value. Therefore, the split between production at 18:00 and stored water can differ between runs, while the objective value stays the same.
+At 18:00, the electricity price (400) is equal to the assumed future electricity price, so selling and storing the water give the same value. Therefore, your results for 18:00 and the extra time step may differ from the ones above, while the objective value stays the same. The results from 00:00 to 12:00 should be the same.
 
 As an exercise, try to retrieve the value of stored water as it is calculated by the model.
 
@@ -339,14 +348,14 @@ minimisation to be added in the objective function.
 
 ### Changes to the basic model
 
-Start from the basic model, not from the stored water model. If you want to keep it, duplicate the database first, as explained at the top of this page. Here we replace the spill connection of Språnget with a unit, *sprang\_spill*, which can limit and penalise the spilt water.
+Start from the basic model, not from the stored water model. If you want to keep it, duplicate the database first, as explained at the top of this page. If you don't have the basic model anymore, import [hydro\_power\_coupling.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/hydro_power_coupling.json) into an empty input database. Here we replace the spill connection of Språnget with a unit, *sprang\_spill*, which can limit and penalise the spilt water.
 
 1. In the Entity tree, expand the [connection](@ref) class, right-click `sprang_to_fall_spill` and select **Remove...**. Its [connection\_\_from\_node](@ref), [connection\_\_to\_node](@ref) and [connection\_\_node\_\_node](@ref) entities are removed with it.
 2. Right-click the [unit](@ref) class and add `sprang_spill`.
 3. Right-click the [node\_\_to\_unit](@ref) class and add `sprang_upper | sprang_spill`.
 4. Right-click the [unit\_\_to\_node](@ref) class and add `sprang_spill | fall_upper`.
 5. Right-click the [unit\_flow\_\_unit\_flow](@ref) class and add `sprang_spill | fall_upper | sprang_upper | sprang_spill`.
-6. Enter the following values and press **Commit**:
+6. Enter the following values and press **Commit**. Select the class of each row in the Entity tree before entering its values:
 
 | group | class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|:---|
