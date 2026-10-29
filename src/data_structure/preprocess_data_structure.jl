@@ -948,10 +948,11 @@ end
     generate_default_ac_flow_tangency_points()
 
     Generate `ac_flow_tangency_point_theta` and `ac_flow_tangency_point_phi` parameters
-    default values.
+    default values. The unit of these is degree.
 """
 function generate_default_ac_flow_tangency_points()
     instance = first(model())
+    # default values which could be adjusted to be more accurate for typical cases.
     default_tangency_points = [(0, 0)] ∪
         [(2.0, fii) for fii in 0:20:359] ∪ 
         [(4.0, fii) for fii in 0:10:359] ∪ 
