@@ -1,18 +1,20 @@
 # Examples that we want to check the objective function value
 objective_function_reference_values = Dict(
     "6_unit_system.json" => 6.966879153985747e6,
-    "reserves.json" => 175971.42857142858,
-    "simple_system.json" => 160714.28571428574,
-    "unit_commitment.json" => 98637.42857142858,
-    "rolling_horizon.json" => 65164.8571429,
-    "multi-year_investment_with_econ_discounting_milestones.json" => 71820715.12725478,
-    "multi-year_investment_with_econ_discounting_consecutives.json" => 71720404.84378022,
-    "multi-year_investment_without_econ_discounting.json" => 131520100.0,
     "capacity_planning.json" => 328503000.0,
-    "stochastic.json" => 126964.2857142857,
-    "representative_periods.json" => 314610.23274110217,
     "multi_stage_model_tutorial.json" => 1.91746092844232e9,
+    "multi-year_investment_with_econ_discounting_consecutives.json" => 71720404.84378022,
+    "multi-year_investment_with_econ_discounting_milestones.json" => 71820715.12725478,
+    "multi-year_investment_without_econ_discounting.json" => 131520100.0,
+    "precompile.json" => 3.28503e8, #FIXME: Newly added, no guarantee this works as intended!
+    "ramping.json" => 9196.428571428572, #FIXME: Newly added, no guarantee this works as intended!
+    "representative_periods.json" => 314610.23274110217,
+    "reserves.json" => 175971.42857142858,
     "retrofitting_example_1.json" => 4600.0,
+    "rolling_horizon.json" => 65164.8571429,
+    "simple_system.json" => 160714.28571428574,
+    "stochastic.json" => 126964.2857142857,
+    "unit_commitment.json" => 98637.42857142858,
 )
 
 @testset for (file, obj_fn_val) in objective_function_reference_values

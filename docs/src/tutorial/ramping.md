@@ -22,6 +22,8 @@ This tutorial is built on top of the Simple System. The main changes to that sys
 
 This tutorial includes a step-by-step guide to include the parameters to help analyze the results in SpineOpt and the ramping constraints concepts.
 
+The system at the end of this tutorial is available as the example file [ramping.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/ramping.json). You can import it into an empty input database to compare your results.
+
 ## Step 1 - Update the demand
 
 ### Opening the Simple System project
