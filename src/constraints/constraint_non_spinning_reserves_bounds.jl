@@ -18,9 +18,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    add_constraint_non_spinning_reserves_lower_bound!(m::Model)
+@doc raw"""
+Sets a lower bound on the non-spinning reserve provided by a [unit](@ref).
+A unit that is started up (or shut down) to provide non-spinning reserve must run at least at its
+[minimum\_operating\_point](@ref), so the reserve it provides cannot be lower than that.
+The constraint is generated for each [unit\_\_to\_node](@ref) and [node\_\_to\_unit](@ref) with
+[capacity\_per\_unit](@ref) defined, where the node or node group includes a non-spinning reserve node
+([reserve\_active](@ref) and [is\_non\_spinning](@ref) set to `true`):
 
+```math
+\begin{aligned}
+& p^{minimum\_operating\_point}_{(u,ng,d,s,t)} \cdot p^{capacity\_per\_unit}_{(u,ng,d,s,t)}
+\cdot \sum_{n \in ng} v^{nonspin\_units}_{(u,n,s,t)} \\
+& \leq \sum_{n \in ng: \, p^{is\_non\_spinning}_{(n)}} v^{unit\_flow}_{(u,n,d,s,t)} \\
+& \forall (u,ng,d) \in indices(p^{capacity\_per\_unit}): \exists n \in ng: p^{reserve\_active}_{(n)} \land p^{is\_non\_spinning}_{(n)} \\
+& \forall (s,t)
+\end{aligned}
+```
+
+where ``v^{nonspin\_units}`` is [nonspin\_units\_started\_up](@ref var_nonspin_units_started_up)
+for flows to a node (``d = to\_node``) and [nonspin\_units\_shut\_down](@ref var_nonspin_units_shut_down)
+for flows from a node (``d = from\_node``).
+The formulation is shown for a single time resolution; with different resolutions,
+both sides are weighted by the time-slice durations.
+If [minimum\_operating\_point](@ref) is not defined, the lower bound is zero.
+
+See also
+[is\_non\_spinning](@ref),
+[minimum\_operating\_point](@ref)
 """
 function add_constraint_non_spinning_reserves_lower_bound!(m::Model)
     _add_constraint!(
@@ -56,10 +81,62 @@ function _build_constraint_non_spinning_reserves_lower_bound(m::Model, u, ng, d,
     )
 end
 
+@doc raw"""
+Sets an upper bound on the non-spinning reserve provided by a [unit](@ref), based on [ramp\_limits\_startup](@ref).
+The constraint is generated for the same unit flows as the
+[lower bound on non-spinning reserves](@ref constraint_non_spinning_reserves_lower_bound):
+
+```math
+\begin{aligned}
+& \sum_{n \in ng: \, p^{is\_non\_spinning}_{(n)}} v^{unit\_flow}_{(u,n,d,s,t)} \\
+& \leq p^{ramp\_limits\_startup}_{(u,ng,d,s,t)} \cdot p^{capacity\_per\_unit}_{(u,ng,d,s,t)}
+\cdot \sum_{n \in ng} v^{nonspin\_units}_{(u,n,s,t)} \\
+& \forall (u,ng,d) \in indices(p^{capacity\_per\_unit}): \exists n \in ng: p^{reserve\_active}_{(n)} \land p^{is\_non\_spinning}_{(n)} \\
+& \forall (s,t)
+\end{aligned}
+```
+
+where ``v^{nonspin\_units}`` is [nonspin\_units\_started\_up](@ref var_nonspin_units_started_up)
+for flows to a node (``d = to\_node``) and [nonspin\_units\_shut\_down](@ref var_nonspin_units_shut_down)
+for flows from a node (``d = from\_node``).
+The formulation is shown for a single time resolution; with different resolutions,
+both sides are weighted by the time-slice durations.
+If [ramp\_limits\_startup](@ref) is not defined, it defaults to 1, i.e. the full capacity of the units.
+
+See also
+[is\_non\_spinning](@ref),
+[ramp\_limits\_startup](@ref)
+"""
 function add_constraint_non_spinning_reserves_start_up_upper_bound!(m::Model)
     _add_constraint_non_spinning_reserves_upper_bound!(m, ramp_limits_startup)
 end
 
+@doc raw"""
+Sets an upper bound on the non-spinning reserve provided by a [unit](@ref), based on [ramp\_limits\_shutdown](@ref).
+The constraint is generated for the same unit flows as the
+[lower bound on non-spinning reserves](@ref constraint_non_spinning_reserves_lower_bound):
+
+```math
+\begin{aligned}
+& \sum_{n \in ng: \, p^{is\_non\_spinning}_{(n)}} v^{unit\_flow}_{(u,n,d,s,t)} \\
+& \leq p^{ramp\_limits\_shutdown}_{(u,ng,d,s,t)} \cdot p^{capacity\_per\_unit}_{(u,ng,d,s,t)}
+\cdot \sum_{n \in ng} v^{nonspin\_units}_{(u,n,s,t)} \\
+& \forall (u,ng,d) \in indices(p^{capacity\_per\_unit}): \exists n \in ng: p^{reserve\_active}_{(n)} \land p^{is\_non\_spinning}_{(n)} \\
+& \forall (s,t)
+\end{aligned}
+```
+
+where ``v^{nonspin\_units}`` is [nonspin\_units\_started\_up](@ref var_nonspin_units_started_up)
+for flows to a node (``d = to\_node``) and [nonspin\_units\_shut\_down](@ref var_nonspin_units_shut_down)
+for flows from a node (``d = from\_node``).
+The formulation is shown for a single time resolution; with different resolutions,
+both sides are weighted by the time-slice durations.
+If [ramp\_limits\_shutdown](@ref) is not defined, it defaults to 1, i.e. the full capacity of the units.
+
+See also
+[is\_non\_spinning](@ref),
+[ramp\_limits\_shutdown](@ref)
+"""
 function add_constraint_non_spinning_reserves_shut_down_upper_bound!(m::Model)
     _add_constraint_non_spinning_reserves_upper_bound!(m, ramp_limits_shutdown)
 end

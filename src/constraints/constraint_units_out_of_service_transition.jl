@@ -19,15 +19,21 @@
 #############################################################################
 
 @doc raw"""
-This constraint describes the relationship between units_out_of_service, units_taken_out_of_service and units_returned_to_service:
+Links the number of units out of service between consecutive time steps:
+units out of service at the previous step, plus units taken out of service, minus units returned to service.
 
 ```math
 \begin{aligned}
-& v^{units\_on}_{(u,s,t)} - v^{units\_taken\_out\_of\_service}_{(u,s,t)} + v^{units\_returned\_to\_service}_{(u,s,t)} = v^{units\_out\_of\_service}_{(u,s,t-1)} \\
+& v^{units\_out\_of\_service}_{(u,s,t)} - v^{units\_taken\_out\_of\_service}_{(u,s,t)} + v^{units\_returned\_to\_service}_{(u,s,t)} \\
+& = v^{units\_out\_of\_service}_{(u,s,t-1)} \\
 & \forall u \in unit \\
 & \forall (s,t)
 \end{aligned}
 ```
+
+The constraint is only generated for units with out-of-service variables, i.e. units with
+[outage\_scheduled\_duration](@ref) or [out\_of\_service\_count\_fix](@ref) defined,
+unless [outage\_variable\_type](@ref) is `none`.
 """
 function add_constraint_units_out_of_service_transition!(m::Model)
     _add_constraint!(

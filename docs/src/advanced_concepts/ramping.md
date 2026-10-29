@@ -2,9 +2,9 @@
 
 To enable the representation of units with a high level of technical detail, the ramping capability of units can be constrained in SpineOpt. This means that the user has the freedom to impose restrictions on the change in the output (or input) of units over time, for online (spinning) units, units starting up and units shutting down. In this section, the concept of ramps in SpineOpt will be introduced.
 
-## Relevant objects, relationships and parameters
+## Relevant entity classes and parameters
 
-Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship (where the [node](@ref) can be a group). Generally speaking, the ramping constraints will impose restrictions on the change in the [unit\_flow](@ref var_unit_flow) variable between two consecutive timesteps.
+Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) entity (where the [node](@ref) can be a group). Generally speaking, the ramping constraints will impose restrictions on the change in the [unit\_flow](@ref var_unit_flow) variable between two consecutive timesteps.
 
 All parameters that limit the ramping abilities of a unit are expressed as a fraction of the unit capacity. This means that a value of 1 indicates the full capacity of a unit.
 
@@ -19,7 +19,7 @@ The discussion here will be conceptual. For the mathematical formulation the rea
  * [ramp\_limits\_shutdown](@ref) : limit the maximum decrease in the [unit\_flow variable](@ref var_unit_flow) when the unit is shutting down. The parameter is given as a fraction of the [capacity\_per\_unit](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
 
 ## General principle and example use cases
-The general principle of the Spine modelling ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.
+The general principle of the SpineOpt ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.
 
 It should be noted that it is perfectly possible to omit all the ramp-constraining parameters mentioned above, or to specify only some of them. Anything that is omitted is interpreted as if it shouldn't be constrained. For example, if you only specify [ramp\_limits\_startup](@ref) and [ramp\_limits\_down](@ref), then only the flow *increase* during *start up* and the flow *decrease* during *online* operation will be constrained (but not any other flow increase or decrease).
 
@@ -32,7 +32,7 @@ When none of the ramping parameters mentioned above are specified, the unit is c
 * [ramp\_limits\_down](@ref) : 1
 
 #### Step 2: Spinning ramp restriction
-A unit which is only restricted in spinning ramping can be created by changing the ramp parameters:
+In the following examples, the unit has a [capacity\_per\_unit](@ref) of 200. A unit which is only restricted in spinning ramping can be created by changing the ramp parameters:
 
  * [ramp\_limits\_up](@ref) : **0.2**
  * [ramp\_limits\_down](@ref) : **0.4**
@@ -47,25 +47,40 @@ A unit which is only restricted in spinning ramping can be created by changing t
  * [minimum\_operating\_point](@ref) : **0.3**
 
  When the unit goes offline in a given timestep ``t``, the output of the unit must be below ``0.5 * 200 = 100``  in the timestep *right before* that ``t`` (and of course, above ``0.3 * 200 = 60`` - the minimum operating point).
+This holds when [ramp\_limits\_down](@ref) is not defined; see the note below.
 
 #### Step 4: Startup restrictions
 
- The start up restrictions are very similar to the shut down restrictions, but of course apply to units that are starting up. THey are activated by specifying [ramp\_limits\_startup](@ref):
+ The start up restrictions are very similar to the shut down restrictions, but of course apply to units that are starting up. They are activated by specifying [ramp\_limits\_startup](@ref):
 
  * [ramp\_limits\_startup](@ref) : **0.4**
  * [minimum\_operating\_point](@ref) : **0.2**
 
-When the unit goes online in a given timestep ``t``, its output will be restricted to the interval ``[40, 80]``.
+When the unit goes online in a given timestep ``t``, its output will be restricted to the interval ``[40, 80]``,
+when [ramp\_limits\_up](@ref) is not defined.
+
+!!! note "Start-up and shut-down together with spinning ramp limits"
+    The [unit\_flow](@ref var_unit_flow) is the average flow over a time step, and the ramping constraints
+    split the allowed change between the two consecutive time steps. In practice, this means that in the time step
+    when the unit starts up, half of the [ramp\_limits\_up](@ref) is allowed on top of the [ramp\_limits\_startup](@ref)
+    (and correspondingly half of the [ramp\_limits\_down](@ref) on top of the [ramp\_limits\_shutdown](@ref) when
+    shutting down). For example, with [ramp\_limits\_startup](@ref) 0.4 and [ramp\_limits\_up](@ref) 0.2, the output in
+    the start-up time step can reach ``0.4 * 200 + 0.5 * 0.2 * 200 = 100`` (for one-hour time steps and an hourly
+    [duration\_unit](@ref)). See also the [Ramping definition tutorial](@ref).
+
+    The ramping constraints also depend on the online status of the unit. With the default
+    [online\_variable\_type](@ref) `linear`, the unit can be partly online, which loosens the ramping constraints.
+    Use `integer` or `binary` if the start-up and shut-down limits should apply strictly (see [Unit commitment](@ref)).
 
 
-## Using node groups to constraint aggregated flow ramps
+## Using node groups to constrain aggregated flow ramps
 
 SpineOpt allows the user to constrain ramping abilities of units that are linked to multiple nodes by defining node groups.
 When a node group is defined, ramping restrictions can be imposed both on the group level (thus for the unit as a whole) as well as for the individual nodes.
-For example, let's assume that we have one unit and two nodes in a model. The unit is linked via [unit\_\_to\_node](@ref) relationships to each node individually, and on top of that, it is linked to a node group containing both nodes.
+For example, let's assume that we have one unit and two nodes in a model. The unit is linked via [unit\_\_to\_node](@ref) entities to each node individually, and on top of that, it is linked to a node group containing both nodes.
 
 If, for example a [ramp\_limits\_up](@ref) is defined for the node group, the sum of upward ramping of the two nodes will be restricted by this parameter.
-However, it is still possible to limit the individual flows to the nodes as well. Let's say that our unit is capable of ramping up by 20% of its capacity and down by 40%. We might want to impose tighter restrictions for the flows towards one of the nodes (e.g. because the energy has to be provided in a shorter time than the [duration\_unit](@ref)). One can then simply define an additional parameter for that [unit\_\_to\_node](@ref) relationship as follows.
+However, it is still possible to limit the individual flows to the nodes as well. Let's say that our unit is capable of ramping up by 20% of its capacity and down by 40%. We might want to impose tighter restrictions for the flows towards one of the nodes (e.g. because the energy has to be provided in a shorter time than the [duration\_unit](@ref)). One can then simply define an additional parameter for that [unit\_\_to\_node](@ref) entity as follows.
 
 * [ramp\_limits\_up](@ref)  : 0.15
 
@@ -83,11 +98,11 @@ Please see [Reserves](@ref) for details on how to set up a [node](@ref) as a res
 
 ### Examples
 
-Let's assume that we have one unit and two nodes in a model, one for reserves and one for regular demand. The unit is then linked by the [unit\_\_to\_node](@ref) relationships to both the reserves and regular demand node.
+Let's assume that we have one unit and two nodes in a model, one for reserves and one for regular demand. The unit is then linked by the [unit\_\_to\_node](@ref) entities to both the reserves and regular demand node.
 
 #### Spinning ramp restriction
 
-The unit can be restricted in spinning ramping by defining the ramp parameters in the [unit\_\_to\_node](@ref) relationship for the regular demand node:
+The unit can be restricted in spinning ramping by defining the ramp parameters in the [unit\_\_to\_node](@ref) entity for the regular demand node:
 
  * [ramp\_limits\_up](@ref)      : **0.2**
  * [ramp\_limits\_down](@ref)    : **0.4**

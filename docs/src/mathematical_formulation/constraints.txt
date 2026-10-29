@@ -94,6 +94,14 @@ parameters):
 
 @@add_constraint_min_scheduled_outage_duration!
 
+##### [Units out of service transition](@id constraint_units_out_of_service_transition)
+
+@@add_constraint_units_out_of_service_transition!
+
+##### [Contiguous scheduled outages](@id constraint_units_out_of_service_contiguity)
+
+@@add_constraint_units_out_of_service_contiguity!
+
 #### Ramping constraints
 
 To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
@@ -112,6 +120,18 @@ For dispatchable units, additional ramping constraints can be introduced. For se
 
 ##### [Constraint on minimum node state for reserve provision](@id constraint_res_minimum_node_state)
 (Comment 2023-11-20: Currently under development)
+
+##### [Lower bound on non-spinning reserves](@id constraint_non_spinning_reserves_lower_bound)
+
+@@add_constraint_non_spinning_reserves_lower_bound!
+
+##### [Upper bound on non-spinning reserves from start-up limits](@id constraint_non_spinning_reserves_start_up_upper_bound)
+
+@@add_constraint_non_spinning_reserves_start_up_upper_bound!
+
+##### [Upper bound on non-spinning reserves from shut-down limits](@id constraint_non_spinning_reserves_shut_down_upper_bound)
+
+@@add_constraint_non_spinning_reserves_shut_down_upper_bound!
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
@@ -332,7 +352,7 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 
 ### [Group investments](@id constraint_group_investments)
 
-## [Equal group investments](@id constraint_investment_group_equal_investments)
+#### [Equal group investments](@id constraint_investment_group_equal_investments)
 
 @@add_constraint_investment_group_equal_investments!
 
@@ -343,6 +363,14 @@ Note: can we actually invest in nodes that are not storages? (e.g. new location)
 #### [Maximum group investment capacity](@id constraint_investment_group_maximum_capacity_invested_available)
 
 @@add_constraint_investment_group_maximum_capacity_invested_available!
+
+#### [Minimum number of investments in a group](@id constraint_investment_group_minimum_entities_invested_available)
+
+@@add_constraint_investment_group_minimum_entities_invested_available!
+
+#### [Maximum number of investments in a group](@id constraint_investment_group_maximum_entities_invested_available)
+
+@@add_constraint_investment_group_maximum_entities_invested_available!
 
 ### Capacity transfer
 (Comment 2021-04-29: Currently under development)
@@ -385,7 +413,7 @@ We decompose the problem into a master problem and sub problems with the master 
 optimising the coupling investment variables which are treated as constants in the sub problems.
 
 The master problem is built by replacing the operational costs (which will be minimised in the sub problem) by
-a new decision variable, ``v^{sp\_objective}``:
+  a new decision variable, ``v^{sp\_objective}`` (`sp_objective_upperbound` in the code):
 
 ```math
 \begin{aligned}
@@ -425,7 +453,7 @@ rather than having to solve the entire model horizon as a single problem.
 ``\mu_{(b,u,s,t)}`` is the marginal value of the capacity constraint for benders iteration ``b``
 and can be interpreted as the decrease in the objective function for an additional MW of flow from unit ``u``
 (in scenario ``s`` at time ``t``).
-Thus, an upper bound on the sub problem objective function is obtained as follows:
+Thus, a lower bound on the sub problem objective function is obtained as follows:
 
 ```math
 sp\_obj_{b} + \sum_{u,n,d,s,t} \mu_{(b,u,s,t)} \cdot p^{capacity\_per\_unit}_{(u,n,d,s,t)} 
@@ -448,9 +476,8 @@ s.t. & \\
 \cdot \left(v^{units\_invested\_available}_{(u,s,t)} - p^{units\_invested\_available}_{(b,u,s,t)}\right) \quad \forall b \\
 \end{aligned}
 ```
-Note the benders cuts are added as inequalities because they represent an upper bound on the value
-we are going to get for the sub problem objective function by adjusting the master problem variables
-in that benders iteration.
+Note the benders cuts are added as inequalities because they represent a lower bound on the
+sub problem objective function for other values of the master problem variables.
 If we consider the example of renewable generation - because it's marginal cost is zero,
 on the first benders iteration, it could look like there would be a lot of value in increasing the capacity
 because of the marginal values from the sub problems.
@@ -516,4 +543,8 @@ where
   [connections\_invested\_available](@ref var_connections_invested_available) in benders iteration ``b`` and  
 - ``p^{storages\_invested\_available}`` is the value of the fixed sub problem variable
   [storages\_invested\_available](@ref var_storages_invested_available) in benders iteration ``b``
+
+### [Minimum renewable generation share](@id constraint_mp_min_res_gen_to_demand_ratio_cuts)
+
+@@add_constraint_mp_min_res_gen_to_demand_ratio_cuts!
 

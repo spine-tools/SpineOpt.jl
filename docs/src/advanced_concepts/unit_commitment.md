@@ -1,18 +1,18 @@
 # Unit commitment
 
 To incorporate technical detail about (clustered) unit-commitment statuses of units, the online, started and shutdown status of units can be tracked and constrained in SpineOpt.
-In the following, relevant relationships and parameters are introduced and the general working principle is described.
+In the following, relevant entity classes and parameters are introduced and the general working principle is described.
 
 ## Key concepts for unit commitment
 Here, we briefly describe the key concepts involved in the representation of (clustered) unit commitment models:
 
 - [units\_on](@ref var_units_on) is an optimization variable that holds information about the on- or offline status of a unit. Unit commitment restrictions will govern how this variable can change through time.
 
-- [units\_on\_\_temporal\_block](@ref) is a relationship linking the [units\_on](@ref var_units_on)(@ref var_units_on) variable of this unit to a specific [temporal\_block](@ref) object. The temporal block holds information on the temporal scope and resolution for which the variable should be optimized.
+- [units\_on\_\_temporal\_block](@ref) is an entity class linking the [units\_on](@ref var_units_on) variable of this unit to a specific [temporal\_block](@ref). The temporal block holds information on the temporal scope and resolution for which the variable should be optimized.
 
-- [online\_variable\_type](@ref) is a method parameter and can take the values `binary`, `integer`, `linear` or `none`. If the binary value is chosen, the unit's status is modelled as a binary (classic UC). For clustered unit commitment units, the integer type is applicable. Note that if the parameter is not defined, the default will be linear. If the unit's status is not crucial, this can reduce the computational burden.
+- [online\_variable\_type](@ref) is a method parameter and can take the values `binary`, `integer`, `linear` or `none`. If the binary value is chosen, the unit's status is modelled as a binary (classic UC). For clustered unit commitment units, the integer type is applicable. Note that if the parameter is not defined, the default will be linear. If the unit's status is not crucial, this can reduce the computational burden. Note that with `linear`, the unit can also be partly online, which affects other constraints that depend on the online status, , see [Effect on other constraints](@ref online_variable_type_effects).
 
-- [existing\_units](@ref) defines how many units of a certain unit type are available. Typically, this parameter takes a binary (UC) or integer (clustered UC) value. To avoid confusion the following distinction will be made in this document: [unit](@ref) will be used to identify a Spine unit object, which can have multiple `members`. Together with the [availability\_factor](@ref), this will determine the maximum number of members that can be online at any given time. (Thus restricting the [units\_on](@ref var_units_on) variable). The default value for this parameter is ``1``. It is possible to allow the model to increase the [existing\_units](@ref) itself, through [Investment Optimization](@ref)
+- [existing\_units](@ref) defines how many units of a certain unit type are available. Typically, this parameter takes a binary (UC) or integer (clustered UC) value. To avoid confusion the following distinction will be made in this document: [unit](@ref) will be used to identify a SpineOpt unit entity, which can have multiple `members`. This determines the maximum number of members that can be online at any given time (thus restricting the [units\_on](@ref var_units_on) variable). The default value for this parameter is ``1`` (or ``0`` for units with investment candidates, see [Investment Optimization](@ref)). It is possible to allow the model to increase the [existing\_units](@ref) itself, through [Investment Optimization](@ref)
 
 - [availability\_factor](@ref): (number value or time series). Is the fraction of the time that this unit is considered to be available, by acting as a multiplier on the capacity. A time series can be used to indicate the intermittent character of renewable generation technologies.
 
@@ -24,48 +24,67 @@ Here, we briefly describe the key concepts involved in the representation of (cl
 
 - [start\_up\_cost](@ref): "number value". Cost associated with starting up a unit.
 - [shut\_down\_cost](@ref): "number value". Cost associated with shutting down a unit.
+- [units\_on\_cost](@ref): "number value". Cost of keeping a member of the unit online, e.g. an idling cost.
+- [online\_count\_initial](@ref): "number value". Initializes the [units\_on](@ref var_units_on) variable, i.e. the number of members online before the first time step.
 
 ## Illustrative unit commitment examples
 
 ### Step 1: defining the number of members of a unit type
-A spine unit can represent multiple members. This can be incorporated in a model by setting the [existing\_units](@ref) parameter to a specific value. For example, if we define a single unit in a model as follows:
+A SpineOpt unit can represent multiple members. This can be incorporated in a model by setting the [existing\_units](@ref) parameter to a specific value. For example, if we define a single unit in a model as follows:
 * `unit_1`
   * [existing\_units](@ref): 2
-And we link the unit to a certain `node_1` with a [unit\_\_to\_node](@ref) relationship.
-* `unit_1_to__node_1`
+And we link the unit to a certain `node_1` with a [unit\_\_to\_node](@ref) entity.
+* `unit_1 | node_1`
 
-The single Spine unit defined here, now represents two members. This means that a single [unit\_flow variable](@ref var_unit_flow) will be created for this unit, but the restrictions as imposed by the [Ramping](@ref) and [Reserves](@ref) framework will be adapted to reflect the fact that there are two members present, thus doubling the total capacity.
+The single SpineOpt unit defined here, now represents two members. This means that a single [unit\_flow variable](@ref var_unit_flow) will be created for this unit, but the restrictions as imposed by the [Ramping](@ref) and [Reserves](@ref) framework will be adapted to reflect the fact that there are two members present, thus doubling the total capacity.
 
 ### Step 2: choosing the online\_variable\_type
 Next, we have to decide the [online\_variable\_type](@ref) for this unit, which will restrict the kind of values that the [units\_on](@ref var_units_on) variable can take. This basically comes down to deciding if we are working in a classical UC framework (`binary`), a clustered UC framework (`integer`), or a relaxed clustered UC framework (`linear`), in which a noninteger number of units can be online.
 
 The classical UC framework can only be applied when the [existing\_units](@ref) equals 1.
 
+#### [Effect on other constraints](@id online_variable_type_effects)
+
+The default is `linear`. It keeps the model linear and fast to solve, but [units\_on](@ref var_units_on) can then take fractional values, such as 0.25 of a unit. Constraints that depend on the online status are written for this fractional value, so they restrict the unit less than they would restrict a real unit:
+
+| Constraint | Effect with `linear` |
+|:--|:--|
+| [Minimum operating point](@ref constraint_minimum_operating_point) | The model can bring a fraction of the unit online and run it below the minimum operating point. |
+| [Minimum up and down time](@ref constraint_min_up_time) | The constraint only holds for the fraction that was started up or shut down. |
+| [Ramping](@ref) | Partial start-ups and shut-downs give extra room to ramp. |
+| [start\_up\_cost](@ref), [shut\_down\_cost](@ref) | Paid only for the fraction started up or shut down, so starting and stopping is cheap. |
+
+For example, take a unit with [capacity\_per\_unit](@ref) 200 and [minimum\_operating\_point](@ref) 0.4, i.e. a minimum output of 80. With `linear`, the model can run it at 50 by setting [units\_on](@ref var_units_on) to 0.25, since the minimum operating point then only requires 0.4 × 200 × 0.25 = 20. With `integer` or `binary`, the unit either runs at 80 or more, or is off.
+
+Use `integer` or `binary` for units where these limits matter. Note that integer variables make the model slower to solve.
+
+With `none`, no online variable is created and the unit is always considered online. A [minimum\_operating\_point](@ref) then forces the unit to run at least at its minimum in every time step, even when it would be cheaper to turn it off.
+
 ### Step 3: imposing a minimum operating point
-The output of an online unit to a specific node can be restricted to be above a certain minimum by choosing a value for the [minimum\_operating\_point](@ref) parameter. This parameter is defined for the [unit\_\_to\_node](@ref) relationship, and is given as a fraction of the [capacity\_per\_unit](@ref). If we continue with the example above, and define the following objects, relationships, and parameters:
+The output of an online unit to a specific node can be restricted to be above a certain minimum by choosing a value for the [minimum\_operating\_point](@ref) parameter. This parameter is defined for the [unit\_\_to\_node](@ref) entity class, and is given as a fraction of the [capacity\_per\_unit](@ref). If we continue with the example above, and define the following entities and parameters:
 
 * `unit_1`
   * [existing\_units](@ref): 2
   * [online\_variable\_type](@ref): `integer`
-* `unit_1_to__node_1`
+* `unit_1 | node_1`
   * [minimum\_operating\_point](@ref): 0.2
   * [capacity\_per\_unit](@ref): 200
-It can be seen that in this case the [unit\_flow variable](@ref var_unit_flow) form `unit_1` to `node_1` must for any timestep ``t`` be larger than ``units\_on(t) * 0.2 * 200``
+It can be seen that in this case the [unit\_flow variable](@ref var_unit_flow) from `unit_1` to `node_1` must for any timestep ``t`` be larger than or equal to ``units\_on(t) * 0.2 * 200``
 
 ### Step 4: imposing a minimum up or downtime
-Spine units can also be restricted in their commitment status with minimum up- or downtimes by choosing a value for the [min\_up\_time](@ref) or [min\_down\_time](@ref) respectively. These parameters are defined for the [unit](@ref) object, and should be duration values. We can continue the example and add a minimum uptime for the unit:
+SpineOpt units can also be restricted in their commitment status with minimum up- or downtimes by choosing a value for the [min\_up\_time](@ref) or [min\_down\_time](@ref) respectively. These parameters are defined for the [unit](@ref) entity class, and should be duration values. We can continue the example and add a minimum uptime for the unit:
 
 * `unit_1`
   * [existing\_units](@ref): 2
   * [online\_variable\_type](@ref): `integer`
   * [min\_up\_time](@ref): 2h
-* `unit_1_to__node_1`
+* `unit_1 | node_1`
   * [minimum\_operating\_point](@ref): 0.2
   * [capacity\_per\_unit](@ref): 200
 
 Whereas the [units\_on](@ref var_units_on) variable was restricted (before inclusion of the [min\_up\_time](@ref) parameter) to be smaller than or equal to the [existing\_units](@ref) for any timestep ``t``, it now has to be smaller than or equal to the [existing\_units](@ref) decremented with the [units\_started\_up](@ref var_units_started_up) summed over the timesteps that include `t - min_up_time`. This implies that a unit which has started up, has to stay online for at least the [min\_up\_time](@ref)
 
-To consider a simple example let's assume that we have a model with a resolution of 1h. Suppose that before `t`, there is no member of the unit online and in timestep `t -> t + 1h`, one member starts up. Another member starts up in timestep `t + 1h \-> t + 2h`. The first startup, along with the minimum uptime of 2 hours implies that the [units\_on](@ref var_units_on) variable of this unit has now changed to ``1`` in timestep `t -> t + 1h` and can not go back to ``0`` in timestep `t-> t + 1h -> t + 2h`. The second startup further restricts the number of units that are allowed to be online, it can be seen that the following restrictions apply when both startups are combined with the minimum uptime of 2h:
+To consider a simple example let's assume that we have a model with a resolution of 1h. Suppose that before `t`, there is no member of the unit online and in timestep `t -> t + 1h`, one member starts up. Another member starts up in timestep `t + 1h -> t + 2h`. The first startup, along with the minimum uptime of 2 hours implies that the [units\_on](@ref var_units_on) variable of this unit has now changed to ``1`` in timestep `t -> t + 1h` and can not go back to ``0`` in timestep `t-> t + 1h -> t + 2h`. The second startup further restricts the number of units that are allowed to be online, it can be seen that the following restrictions apply when both startups are combined with the minimum uptime of 2h:
 
 * `t-> t + 1h` : `` units\_on = 1 ``
 * `t + 1h -> t + 2h`: `` units\_on = 2``
@@ -76,12 +95,12 @@ The minimum downtime restrictions operate in very much the same way, they simply
 
 ### Step 5: allocating a cost to startups or shutdowns
 
-Costs can be allocated to startups or shutdowns by choosing a value for the [start\_up\_cost](@ref) or [shut\_down\_cost](@ref) respectively.
+Costs can be allocated to startups or shutdowns by choosing a value for the [start\_up\_cost](@ref) or [shut\_down\_cost](@ref) respectively. A cost for keeping members online, e.g. an idling cost, can be set with [units\_on\_cost](@ref).
 
 ### Step 6: defining unit availabilities
 
 By defining an [availability\_factor](@ref), the fact that typical members are not available all the time can be reflected in the model.
 
-Typically, units are not available ``100``% of the time, due to scheduled maintenance, unforeseen outages, or other things. This can be incorporated in the model by setting the [availability\_factor](@ref) to a fractional value. For each timestep in the model, an upper bound is then imposed on the [units\_on](@ref var_units_on) variable, equal to [existing\_units](@ref) ``*`` [availability\_factor](@ref). This parameter can not be used when the [online\_variable\_type](@ref) is `binary`. It should also be noted that when the [online\_variable\_type](@ref) is `integer`, the aforementioned product must be integer as well, since it will determine the value of the `units_available` parameter which is restricted to integer values. The default value for this parameter is ``1``.
+Typically, units are not available ``100``% of the time, due to scheduled maintenance, unforeseen outages, or other things. This can be incorporated in the model by setting the [availability\_factor](@ref) to a fractional value. The [availability\_factor](@ref) acts as a multiplier on the [capacity\_per\_unit](@ref) in the [unit capacity constraint](@ref constraint_unit_flow_capacity), so it limits the [unit\_flow](@ref var_unit_flow) rather than the number of members online. The default value for this parameter is ``1``.
 
 The [availability\_factor](@ref) can also be taken as a timeseries. By allowing a different availability factor for each timestep in the model, it can perfectly be used to represent intermittent technologies of which the output cannot be fully controlled.
