@@ -60,6 +60,7 @@ pages = [
         "Representative periods" => joinpath("tutorial", "representative_periods.md"),
         "Rolling horizon" => joinpath("tutorial", "rolling_horizon.md"),
         "Multi-stage optimisation" => joinpath("tutorial", "multi-stage.md"),
+        "Importing time series from Excel" => joinpath("tutorial", "excel_import.md"),
     ],
     "How to" => [], # This is expanded automatically by `populate_empty_chapters!`
     "Example gallery" => joinpath("gallery", "gallery.md"),    
