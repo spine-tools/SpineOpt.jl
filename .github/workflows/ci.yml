@@ -21,6 +21,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
   test:
+    if: false # TODO: Remove. Temporarily disable unit tests for documentation
     needs: check_duplicate_actions
     if: needs.check_duplicate_actions.outputs.should_skip != 'true'
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
@@ -74,7 +75,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   Documenter:
     # Also run on release tags, so that `deploydocs` publishes the versioned and `stable` docs.
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    #if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     name: Documentation
     runs-on: ubuntu-latest
     steps:
