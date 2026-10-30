@@ -13,6 +13,7 @@ For more information on how time works in SpineOpt, see the [Temporal Framework]
 - This tutorial builds upon the Simple System tutorial. Please follow the [Simple system tutorial](@ref) first, or download the [finished model](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/simple_system.json).
 - The scenario runs for 5 hours and the default temporal resolution is 1 hour.
 - The fuel_node has a temporal resolution of [1, 1, 1, 2] hours.
+- The finished model of this tutorial is available as the example file [temporal\_resolution.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/temporal_resolution.json).
 
 ## Tutorial
 
