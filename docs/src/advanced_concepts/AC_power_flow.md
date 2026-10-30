@@ -33,6 +33,10 @@ via [unit\_\_to\_node](@ref) or [node\_\_to\_unit](@ref) relationship to an AC e
 
 It is recommended that the parameter [vom\_cost\_reactive](@ref) be set to a positive value. Otherwise the relaxed conic constraint may not become binding.
 
+### Transformers 
+
+There is no separate component for transformers. In the per-unit system you can model a transformer as a connection.
+
 ### Investments
 
 Power flow is governed by the impedance parameters given for a specific line. The model formulation does not allow adjusting the line sizing within the model. However, the model can include binary investment decisions (go/no-go). Thus [investment\_variable\_type](@ref) needs to be set to `binary` or `integer`. [capacity\_per\_connection](@ref) should be set to a value which is at least as large as the estimated power carrying capacity of the candidate line. Parameter [investment\_count\_max\_cumulative](@ref) should be set to 1. See [the chapter about investment optimization](@ref Investment-Optimization) for the other parameters and relationships you need to set to activate investments.
@@ -57,8 +61,9 @@ Selection of the formulation takes place by the model-wide parameter [ac\_opf\_m
     Please note that none of the formulations track the voltage phase angle across the network and thus the results for looped networks will not be correct.
 
 ## Creating an Example  
-If we have model that is not currently set up AC flow, we can take the following steps.
- - Create a grid object and set its [physics\_type](@ref) parameter to `acflow\_physics`.
+If we have model that is not currently set up AC flow, we can take the following steps to create our first AC OPF model. This assumes that the basic necessities in [the SpineOpt database
+    template](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/spineopt_template.json) already exist.
+ - Create a grid object and set its [physics\_type](@ref) parameter to `acflow_physics`.
  - Create two bus (node) objects, call them A and B
    - The nodes need to use the same temporal resolution. Assign them to the same temporal block via [node\_\_temporal\_block](@ref) relationship. For a more detailed description of how the temporal structure in SpineOpt can be created, see [Temporal Framework](@ref).
    - Make sure your model has a [stochastic\_structure](@ref) and it is connected to the model object by [model\_\_default\_stochastic\_structure](@ref). See [Stochastic Framework](@ref stochastic_framework) for details.
@@ -77,6 +82,9 @@ If we have model that is not currently set up AC flow, we can take the following
   - Add a load to bus B. Suppose $cos(\phi)$ = 0.8 and real power is 0.1 p.u. In other words set for node B
     - [demand](@ref) to 0.1
     - [demand_reactive](@ref) to 0.075
+  - Create a [report](@ref) object and connect it to your model.
+  - Add voltages as output via a [report__output](@ref) relationship with `node_voltage_squared`
+  - Run the model and observe the variable [node\_voltage\_squared](@ref var_node_voltage_squared)
 
 ## Model reference
 
