@@ -21,9 +21,8 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
   test:
-    if: false # TODO: Remove. Temporarily disable unit tests for documentation
     needs: check_duplicate_actions
-    if: needs.check_duplicate_actions.outputs.should_skip != 'true'
+    if: false # TODO: Remove. Temporarily disable unit tests for documentation # needs.check_duplicate_actions.outputs.should_skip != 'true'
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
