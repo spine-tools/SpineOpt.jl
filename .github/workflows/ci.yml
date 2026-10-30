@@ -82,7 +82,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - uses: actions/setup-julia@v3
+      - uses: julia-actions/setup-julia@v3
       - name: Install dependencies
         run: |
           julia ./.install_spinedb_api.jl
