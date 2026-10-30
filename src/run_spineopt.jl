@@ -332,11 +332,20 @@ function _check_version(url_in::String; log_level, upgrade)
             @warn """
             The data structure is not the latest version.
             SpineOpt might still be able to run, but results aren't guaranteed.
+            E.g. missing parameter values might cause the model to crash,
+            or their default values might result in unexpected behaviour.
             Please use `run_spineopt(url_in; upgrade=true)` to upgrade.
             """
         else
             _do_upgrade_db(url_in, version; log_level)
         end
+    elseif version > current_version()
+        @warn """
+        The data structure is newer than SpineOpt!
+        SpineOpt might still be able to run, but results aren't guaranteed.
+        E.g. newer parameters/features in the data might not yet be supported.
+        Consider updating SpineOpt to the latest version through `pkg> update SpineOpt`.
+        """
     end
 end
 _check_version(data::Dict; kwargs...) = nothing
@@ -635,6 +644,11 @@ function upgrade_db(url_in; log_level=3, version=nothing, force::Bool=false)
     end
     if version::Int < current_version()
         _do_upgrade_db(url_in, version; log_level, force)
+    elseif version::Int > current_version()
+        @warn """
+        Database version is newer than current SpineOpt!
+        No migration performed.
+        """
     end
 end
 
