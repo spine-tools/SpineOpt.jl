@@ -23,7 +23,6 @@ module SpineOpt
 
 # Load packages
 using Dates
-using LinearAlgebra
 using SpineInterface
 using JSON
 using Printf
@@ -35,7 +34,7 @@ import TOML
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LibGit2
-import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
+import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!, dot
 import PrecompileTools: @setup_workload, @compile_workload
 
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
