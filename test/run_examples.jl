@@ -2,12 +2,15 @@
 objective_function_reference_values = Dict(
     "6_unit_system.json" => 6.966879153985747e6,
     "capacity_planning.json" => 328503000.0,
+    "hydro_power_coupling_spillage.json" => -1.0854036800e+06, #TODO: Newly added, no guarantee this works as intended!
+    "hydro_power_coupling_stored_water.json" => -2.6022200000e+06, #TODO: Newly added, no guarantee this works as intended!
+    "hydro_power_coupling.json" => -1.1140836800e+06, #TODO: Newly added, no guarantee this works as intended!
     "multi_stage_model_tutorial.json" => 1.91746092844232e9,
     "multi-year_investment_with_econ_discounting_consecutives.json" => 71720404.84378022,
     "multi-year_investment_with_econ_discounting_milestones.json" => 71820715.12725478,
     "multi-year_investment_without_econ_discounting.json" => 131520100.0,
-    "precompile.json" => 3.28503e8, #FIXME: Newly added, no guarantee this works as intended!
-    "ramping.json" => 9196.428571428572, #FIXME: Newly added, no guarantee this works as intended!
+    "precompile.json" => 3.28503e8, #TODO: Newly added, no guarantee this works as intended!
+    "ramping.json" => 9196.428571428572, #TODO: Newly added, no guarantee this works as intended!
     "representative_periods.json" => 314610.23274110217,
     "reserves.json" => 175971.42857142858,
     "retrofitting_example_1.json" => 4600.0,
