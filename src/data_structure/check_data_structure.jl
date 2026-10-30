@@ -194,6 +194,13 @@ function check_parameter_values()
     check_model_start_smaller_than_end()
     check_operating_points()
     check_ramp_parameters()
+    check_node_connection_acflow_consistency()
+    check_connection_acflow_tofrom_consistency()
+    check_connection_acflow_direction_consistency()
+    check_node_grids_consistency()
+    check_capability_curve_consistency()
+    check_line_AC_investments()
+    check_line_impedance()
 end
 
 function check_model_start_smaller_than_end()
@@ -265,5 +272,154 @@ function _check_shutdown_ramp_consistency()
     _check(
         isempty(error_indices),
         "ramp_limits_shutdown must be smaller or equal to minimum_operating_point + ramp_limits_down for $(join(error_indices, ", ", " and "))"
+    )
+end
+
+"""
+    check_node_connection_acflow_consistency()
+
+Check that each `node` in AC flow connections has `has_acflow` set.
+`has_acflow` parameter is set in preprocess_data_structure.jl based on 
+grid configuration.
+"""
+function check_node_connection_acflow_consistency()
+    n0 = unique(
+            vcat(
+                [n1 for (c, n1, n2) in indices(connection_has_ac_flow)
+                    if connection_has_ac_flow( connection=c, node1=n1, node2=n2) == true],
+                [n2 for (c, n1, n2) in indices(connection_has_ac_flow)
+                    if connection_has_ac_flow( connection=c, node1=n1, node2=n2) == true]
+        )
+    )
+    error_indices = [n for n in n0 if has_acflow(node=n) == false]
+    _check(
+        isempty(error_indices),
+        "Missing grid definition ",
+        "for some `node` group(s): $(join(error_indices, ", ", " and ")) - ",
+        "these `nodes` have been used as end points in AC flow connections ",
+        "but they don't have associated AC grid.",
+    )
+end
+
+"""
+    Check that connection__from_node and connection__to_node has been set for AC connections.
+"""
+function check_connection_acflow_tofrom_consistency()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true 
+            if (connection=conn, node=n1, direction=direction(:from_node)) ∉ 
+                connection__from_node()
+                push!(error_indices, (conn,n1))
+            end
+            if (connection=conn, node=n2, direction=direction(:to_node)) ∉ 
+                connection__to_node()
+                push!(error_indices, (conn,n2))
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Missing connection__from_node and connection__to_node definitions ",
+        "for AC lines: $(join(error_indices, ", ", " and "))"
+    )
+end
+
+"""
+    Checks that parallel connections have the same direction.
+"""
+function check_connection_acflow_direction_consistency()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true 
+            for (cb, nb1, nb2) in connection__node__node(node1=n2, node2=n1, _compact=false)
+                if connection_has_ac_flow(connection=cb, node1=nb1, node2=nb2) == true 
+                    push!(error_indices, (n1,n2))
+                end
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Conflicting AC flow direction definitions ",
+        "for node pairs: $(join(error_indices, ", ", " and "))"
+    )
+end
+
+
+"""
+    check_grid_node_relationships()
+
+Check that the possible `grids` related to `nodes` have a unique physics_type.
+"""
+function check_node_grids_consistency()
+    physics_types_by_node = Dict()
+    error_indices = []
+
+    for rel in node__grid()
+        n = rel.node
+        g = rel.grid
+        push!(get!(physics_types_by_node, n, Set()),  physics_type(grid=g))
+    end
+    for (n, phys_types) in physics_types_by_node
+        if length(phys_types) > 1 
+            push!(error_indices, n)
+        end
+    end
+
+    _check(
+        isempty(error_indices),
+        "found inconsistent grid physics for $(join(error_indices, ", ", " and "))"
+    )
+end
+
+function check_capability_curve_consistency()
+    error_indices = []
+
+    for ind in indices(pq_capability_curve_constant)
+        _check(pq_capability_curve_P_coef(;ind...) isa Vector, 
+            "Type of `pq_capability_curve_P_coef` should be an array.")
+        _check(pq_capability_curve_constant(;ind...) isa Vector, 
+            "Type of `pq_capability_curve_constant` should be an array.")
+        _check(
+            length(pq_capability_curve_P_coef(;ind...)) == 
+            length(pq_capability_curve_constant(;ind...)), 
+            "Length of `pq_capability_curve_P_coef` must equal length of",
+            "`pq_capability_curve_constant`."
+        )
+    end 
+end
+
+function check_line_AC_investments()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true && 
+            is_candidate(connection=conn)
+            if  investment_variable_type(connection=conn) in [:linear]
+                push!(error_indices, conn)
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Linear investments are not supported when investing in AC lines: $(join(error_indices, ", ", " and "))"
+    )
+end
+
+"""
+    Checks that zero impedance connections don't exist.
+"""
+function check_line_impedance()
+    error_indices = []
+    for (conn, n1, n2) in connection__node__node()
+        if connection_has_ac_flow(connection=conn, node1=n1, node2=n2) == true 
+            if resistance(connection=conn, _default=0) == 0 && reactance(connection=conn, _default=0) == 0
+                    push!(error_indices, (conn))
+            end
+        end
+    end 
+    _check(
+        isempty(error_indices),
+        "Zero impedance connections found: $(join(error_indices, ", ", " and "))"
     )
 end

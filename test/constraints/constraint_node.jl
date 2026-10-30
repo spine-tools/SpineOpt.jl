@@ -1171,6 +1171,7 @@ function test_constraint_capacity_margin_penalty()
     end
 end
 
+
 function test_constraint_node_injection_free_start()
     @testset "constraint_node_injection_free_start" begin
         with_connection_open(url_in) do
@@ -1303,6 +1304,8 @@ function test_constraint_cyclic_node_state_free_start()
         end
     end
 end
+
+
 
 @testset "node-based constraints" begin
     test_constraint_nodal_balance()

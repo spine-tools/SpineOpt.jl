@@ -1,0 +1,1 @@
+For AC power flow calculation, the parameter sets the upper bound for the per-unit current for a [connection](@ref). This represents e.g. the thermal limit of a power line.

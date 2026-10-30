@@ -130,7 +130,10 @@ end
 function _total_demand(m, n, s, t_after)
     @expression(
         m,
-        + sum(demand(m; node=n, stochastic_scenario=s, t=t) * coef for (t, coef) in _repr_t_coefs(m, t_after))
+        + sum(demand(m; node=n, stochastic_scenario=s, t=t) 
+            * coef for (t, coef) in _repr_t_coefs(m, t_after)
+        )
+        / (has_acflow(node=n) ? power_base(node=n) : 1 )
         + sum(
             + sum(
                 + demand_fraction(m; node=n, stochastic_scenario=s, t=t)
@@ -141,6 +144,7 @@ function _total_demand(m, n, s, t_after)
             for ng in groups(n);
             init=0,
         )
+        / (has_acflow(node=n) ? power_base(node=n) : 1 )
     )
 end
 

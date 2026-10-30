@@ -40,12 +40,16 @@ function preprocess_data_structure()
     process_lossless_bidirectional_connections()
     # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
     # so we don't corrupt the lookup cache
+    # Remember to add the created entities into preprocessing_template!
     generate_direction_and_reorganise_classes()
     generate_node_has_physics(:has_voltage_angle, :voltage_angle_physics)
     generate_node_has_physics(:has_pressure, :pressure_physics)
+    generate_node_has_physics(:has_acflow, :acflow_physics)
     generate_ptdf_lodf()
     generate_benders_iteration()
     generate_is_boundary()
+    generate_connection_admittance()
+    generate_default_ac_flow_tangency_points()
     generate_unit_commitment_parameters()
     generate_is_representative() # Generate this before `starting_point`s
     generate_starting_point()
@@ -901,6 +905,79 @@ function generate_is_boundary()
     end
 end
 
+"""
+    generate_connection_admittance()
+
+    Generate `connection_conductance` and `connection_susceptance` Parameters
+    associated with the and `connection` `ObjectClass`. They are derived from
+    resistance and reactance which the user is expected to give as input. Default
+    values are set to zero.
+"""
+function generate_connection_admittance() 
+    # Note that previously we checked that both resistance and reactance are not zero
+    # in check_line_impedance().
+    # conductance:
+    add_object_parameter_values!(
+        connection, 
+        Dict(conn => Dict(:connection_conductance => 
+                parameter_value(resistance(connection = conn, _default=0) /
+                        (resistance(connection = conn, _default=0)^2 +
+                        reactance(connection = conn, _default=0)^2 ) 
+                    ) 
+                ) 
+                for conn in connection()      
+        )
+    )
+    add_object_parameter_defaults!(connection, Dict(:connection_conductance => parameter_value(0.0)))
+    # susceptance:
+    add_object_parameter_values!(
+        connection, 
+        Dict(conn => Dict(:connection_susceptance => 
+                parameter_value(-reactance(connection = conn, _default=0) /
+                        (resistance(connection = conn, _default=0)^2 +
+                        reactance(connection = conn, _default=0)^2 ) 
+                    ) 
+                ) 
+                for conn in connection()
+        )
+    )
+    add_object_parameter_defaults!(connection, Dict(:connection_susceptance => parameter_value(0.0)))
+end
+
+"""
+    generate_default_ac_flow_tangency_points()
+
+    Generate `ac_flow_tangency_point_theta` and `ac_flow_tangency_point_phi` parameters
+    default values. The unit of these is degree.
+"""
+function generate_default_ac_flow_tangency_points()
+    instance = first(model())
+    # default values which could be adjusted to be more accurate for typical cases.
+    default_tangency_points = [(0, 0)] ∪
+        [(2.0, fii) for fii in 0:20:359] ∪ 
+        [(4.0, fii) for fii in 0:10:359] ∪ 
+        [(6.0, fii) for fii in 0:10:359] ∪ 
+        [(10, fii) for fii in 0:20:359] ∪ 
+        [(20, fii) for fii in 0:20:359] 
+
+    if isnothing(ac_flow_tangency_point_theta(model=instance, _strict=false))
+        theta = [x[1] for x in default_tangency_points]
+        new_pvals = Dict(:ac_flow_tangency_point_theta => parameter_value(theta) )
+        add_object_parameter_values!(model, Dict(instance => new_pvals))
+    end
+    if isnothing(ac_flow_tangency_point_phi(model=instance, _strict=false))
+        phi = [x[2] for x in default_tangency_points]
+        new_pvals = Dict(:ac_flow_tangency_point_phi => parameter_value(phi) )
+        add_object_parameter_values!(model, Dict(instance => new_pvals))
+    end
+    _check(
+        length(ac_flow_tangency_point_theta(model=instance)) == 
+        length(ac_flow_tangency_point_phi(model=instance)), 
+        "Length of `ac_flow_tangency_point_theta` must equal length of",
+        "`ac_flow_tangency_point_phi`."
+    )
+end
+
 function generate_unit_commitment_parameters()
     models = model()
     isempty(models) && return
@@ -1040,4 +1117,35 @@ function generate_is_representative()
             for blk in temporal_block()
         )
     )
+end
+
+"""
+    _node_has_physics(node1, phys_type)
+
+    returns true if node1 belongs to at least one grid whose
+`physics_type` equals `phys_type`.
+"""
+function _node_has_physics(node1, phys_type)
+    any(
+       physics_type(grid=grid) == phys_type
+       for grid in node__grid(node=node1)
+    )
+end
+
+"""
+    nodes_with_physics_type(physics)
+
+Return all nodes that belong to at least one grid whose
+`physics_type` equals `physics`.
+"""
+function nodes_with_physics_type(phys_type)
+    nodes = Set()
+
+    for (; node, grid) in indices(node__grid)
+        if physics_type(grid=grid) == phys_type
+             push!(nodes, node)
+        end
+    end
+
+    collect(nodes)
 end

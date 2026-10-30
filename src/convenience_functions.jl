@@ -72,6 +72,9 @@ unit_flow__user_constraint = UndefSpineItem()
 units_on__stochastic_structure = UndefSpineItem()
 units_on__temporal_block = UndefSpineItem()
 ## Parameters
+ac_flow_tangency_point_phi = UndefSpineItem()
+ac_flow_tangency_point_theta = UndefSpineItem()
+ac_opf_model_formulation = UndefSpineItem()
 any_stochastic_scenario_weight = UndefSpineItem()
 availability_factor = UndefSpineItem()
 balance_penalty = UndefSpineItem()
@@ -106,7 +109,9 @@ coefficient_for_units_on = UndefSpineItem()
 coefficient_for_units_started_up = UndefSpineItem()
 compression_factor = UndefSpineItem()
 connection_capacity_transfer_factor = UndefSpineItem()
+connection_conductance = UndefSpineItem()
 connection_conversion_to_discounted_annuities = UndefSpineItem()
+connection_current_max = UndefSpineItem()
 connection_decommissioning_conversion_to_discounted_annuities = UndefSpineItem()
 connection_discounted_duration = UndefSpineItem()
 connection_emergency_capacity = UndefSpineItem()
@@ -115,6 +120,7 @@ connection_flow_delay = UndefSpineItem()
 connection_flow_highest_resolution_active = UndefSpineItem()
 connection_flow_non_anticipativity_margin = UndefSpineItem()
 connection_flow_non_anticipativity_time = UndefSpineItem()
+connection_has_ac_flow = UndefSpineItem()
 connection_intact_flow_non_anticipativity_margin = UndefSpineItem()
 connection_intact_flow_non_anticipativity_time = UndefSpineItem()
 connection_investment_cost = UndefSpineItem()
@@ -123,6 +129,7 @@ connection_linepack_constant = UndefSpineItem()
 connection_min_factor = UndefSpineItem()
 connection_salvage_fraction = UndefSpineItem()
 connection_stochastic_scenario_weight = UndefSpineItem()
+connection_susceptance = UndefSpineItem()
 connection_tech_discount_factor = UndefSpineItem()
 connection_type = UndefSpineItem()
 connnection_lodf_tolerance = UndefSpineItem()
@@ -138,6 +145,7 @@ decomposition_max_iterations = UndefSpineItem()
 decomposition_min_iterations = UndefSpineItem()
 demand = UndefSpineItem()
 demand_fraction = UndefSpineItem()
+demand_reactive = UndefSpineItem()
 diffusion_coefficient = UndefSpineItem()
 discount_rate = UndefSpineItem()
 discount_rate_technology_specific = UndefSpineItem()
@@ -170,6 +178,7 @@ flow_ratio_less_than_coefficient = UndefSpineItem()
 flow_ratio_less_than_online_coefficient = UndefSpineItem()
 flow_ratio_start_flow = UndefSpineItem()
 fuel_cost = UndefSpineItem()
+has_acflow = UndefSpineItem()
 has_free_start = UndefSpineItem()
 has_lodf = UndefSpineItem()
 has_online_variable = UndefSpineItem()
@@ -177,6 +186,7 @@ has_out_of_service_variable = UndefSpineItem()
 has_pressure = UndefSpineItem()
 has_ptdf = UndefSpineItem()
 has_switched_variable = UndefSpineItem()
+has_voltage = UndefSpineItem()
 has_voltage_angle = UndefSpineItem()
 initial_nonspin_units_shut_down = UndefSpineItem()
 initial_nonspin_units_started_up = UndefSpineItem()
@@ -201,9 +211,11 @@ lead_time = UndefSpineItem()
 lifetime_constraint_sense = UndefSpineItem()
 lifetime_economic = UndefSpineItem()
 lifetime_technical = UndefSpineItem()
+line_shunt_susceptance = UndefSpineItem()
 lodf = UndefSpineItem()
 lodf_tolerance = UndefSpineItem()
 max_ratio_out_in_connection_flow = UndefSpineItem()
+max_voltage = UndefSpineItem()
 mga_investment_active = UndefSpineItem()
 mga_investment_big_m = UndefSpineItem()
 mga_investment_weight = UndefSpineItem()
@@ -215,6 +227,7 @@ mga_storage_investment_weight = UndefSpineItem()
 min_down_time = UndefSpineItem()
 min_ratio_out_in_connection_flow = UndefSpineItem()
 min_up_time = UndefSpineItem()
+min_voltage = UndefSpineItem()
 minimum_operating_point = UndefSpineItem()
 minimum_reserve_activation_time = UndefSpineItem()
 model_algorithm = UndefSpineItem()
@@ -243,6 +256,9 @@ output_type = UndefSpineItem()
 overwrite_results_on_rolling = UndefSpineItem()
 physics_duration = UndefSpineItem()
 physics_type = UndefSpineItem()
+power_base = UndefSpineItem()
+pq_capability_curve_P_coef = UndefSpineItem()
+pq_capability_curve_constant = UndefSpineItem()
 pressure_fix = UndefSpineItem()
 pressure_initial = UndefSpineItem()
 pressure_max = UndefSpineItem()
@@ -268,6 +284,8 @@ resolution = UndefSpineItem()
 right_hand_side = UndefSpineItem()
 roll_forward = UndefSpineItem()
 shared_values = UndefSpineItem()
+shunt_conductance = UndefSpineItem()
+shunt_susceptance = UndefSpineItem()
 shut_down_cost = UndefSpineItem()
 slack_penalty = UndefSpineItem()
 solver_lp = UndefSpineItem()
@@ -311,6 +329,7 @@ tax_in_unit_flow = UndefSpineItem()
 tax_net_unit_flow = UndefSpineItem()
 tax_out_unit_flow = UndefSpineItem()
 tight_compact_formulations_active = UndefSpineItem()
+unit_capacity_reactive = UndefSpineItem()
 unit_capacity_transfer_factor = UndefSpineItem()
 unit_conversion_to_discounted_annuities = UndefSpineItem()
 unit_decommissioning_conversion_to_discounted_annuities = UndefSpineItem()
@@ -332,6 +351,7 @@ voltage_angle_initial = UndefSpineItem()
 voltage_angle_max = UndefSpineItem()
 voltage_angle_min = UndefSpineItem()
 vom_cost = UndefSpineItem()
+vom_cost_reactive = UndefSpineItem()
 weight = UndefSpineItem()
 weight_relative_to_parents = UndefSpineItem()
 window_duration = UndefSpineItem()
@@ -413,6 +433,9 @@ export unit_flow__user_constraint
 export units_on__stochastic_structure
 export units_on__temporal_block
 ## Parameters
+export ac_flow_tangency_point_phi
+export ac_flow_tangency_point_theta
+export ac_opf_model_formulation
 export any_stochastic_scenario_weight
 export availability_factor
 export balance_penalty
@@ -447,7 +470,9 @@ export coefficient_for_units_on
 export coefficient_for_units_started_up
 export compression_factor
 export connection_capacity_transfer_factor
+export connection_conductance
 export connection_conversion_to_discounted_annuities
+export connection_current_max
 export connection_decommissioning_conversion_to_discounted_annuities
 export connection_discounted_duration
 export connection_emergency_capacity
@@ -456,6 +481,7 @@ export connection_flow_delay
 export connection_flow_highest_resolution_active
 export connection_flow_non_anticipativity_margin
 export connection_flow_non_anticipativity_time
+export connection_has_ac_flow
 export connection_intact_flow_non_anticipativity_margin
 export connection_intact_flow_non_anticipativity_time
 export connection_investment_cost
@@ -464,6 +490,7 @@ export connection_linepack_constant
 export connection_min_factor
 export connection_salvage_fraction
 export connection_stochastic_scenario_weight
+export connection_susceptance
 export connection_tech_discount_factor
 export connection_type
 export connnection_lodf_tolerance
@@ -479,6 +506,7 @@ export decomposition_max_iterations
 export decomposition_min_iterations
 export demand
 export demand_fraction
+export demand_reactive
 export diffusion_coefficient
 export discount_rate
 export discount_rate_technology_specific
@@ -511,6 +539,7 @@ export flow_ratio_less_than_coefficient
 export flow_ratio_less_than_online_coefficient
 export flow_ratio_start_flow
 export fuel_cost
+export has_acflow
 export has_free_start
 export has_lodf
 export has_online_variable
@@ -518,6 +547,7 @@ export has_out_of_service_variable
 export has_pressure
 export has_ptdf
 export has_switched_variable
+export has_voltage
 export has_voltage_angle
 export initial_nonspin_units_shut_down
 export initial_nonspin_units_started_up
@@ -542,9 +572,11 @@ export lead_time
 export lifetime_constraint_sense
 export lifetime_economic
 export lifetime_technical
+export line_shunt_susceptance
 export lodf
 export lodf_tolerance
 export max_ratio_out_in_connection_flow
+export max_voltage
 export mga_investment_active
 export mga_investment_big_m
 export mga_investment_weight
@@ -556,6 +588,7 @@ export mga_storage_investment_weight
 export min_down_time
 export min_ratio_out_in_connection_flow
 export min_up_time
+export min_voltage
 export minimum_operating_point
 export minimum_reserve_activation_time
 export model_algorithm
@@ -584,6 +617,9 @@ export output_type
 export overwrite_results_on_rolling
 export physics_duration
 export physics_type
+export power_base
+export pq_capability_curve_P_coef
+export pq_capability_curve_constant
 export pressure_fix
 export pressure_initial
 export pressure_max
@@ -609,6 +645,8 @@ export resolution
 export right_hand_side
 export roll_forward
 export shared_values
+export shunt_conductance
+export shunt_susceptance
 export shut_down_cost
 export slack_penalty
 export solver_lp
@@ -652,6 +690,7 @@ export tax_in_unit_flow
 export tax_net_unit_flow
 export tax_out_unit_flow
 export tight_compact_formulations_active
+export unit_capacity_reactive
 export unit_capacity_transfer_factor
 export unit_conversion_to_discounted_annuities
 export unit_decommissioning_conversion_to_discounted_annuities
@@ -673,6 +712,7 @@ export voltage_angle_initial
 export voltage_angle_max
 export voltage_angle_min
 export vom_cost
+export vom_cost_reactive
 export weight
 export weight_relative_to_parents
 export window_duration

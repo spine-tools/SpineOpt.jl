@@ -1,0 +1,1 @@
+The list of possible values for the parameter ac\_opf\_model\_formulation](@ref). 

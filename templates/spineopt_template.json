@@ -746,6 +746,11 @@
             null
         ],
         [
+            "output", 
+            "connection_flow_reactive", 
+            null
+        ],
+        [
             "output",
             "connection_flow_costs",
             null
@@ -1141,6 +1146,21 @@
             null
         ],
         [
+            "output", 
+            "node_voltage_squared", 
+            null
+        ],
+        [
+            "output", 
+            "node_voltageproduct_cosine", 
+            null
+        ],
+        [
+            "output", 
+            "node_voltageproduct_sine", 
+            null
+        ],
+        [
             "output",
             "nonspin_units_shut_down",
             null
@@ -1256,6 +1276,11 @@
             null
         ],
         [
+            "output", 
+            "unit_flow_reactive", 
+            null
+        ],
+        [
             "output",
             "unit_investment_costs",
             null
@@ -1317,6 +1342,18 @@
         ]
     ],
     "parameter_value_lists": [
+        [
+            "ac_opf_model_formulation_list", 
+            "ac_opf_linear"
+        ],
+        [
+            "ac_opf_model_formulation_list", 
+            "ac_opf_conic"
+        ],
+        [
+            "ac_opf_model_formulation_list", 
+            "ac_opf_lindistflow"
+        ],
         [
             "balance_type_list",
             "none"
@@ -1380,6 +1417,10 @@
         [
             "grid_physics_list",
             "voltage_angle_physics"
+        ],
+        [
+            "grid_physics_list",
+            "acflow_physics"
         ],
         [
             "grid_physics_list",
@@ -1583,6 +1624,10 @@
         ],
         [
             "solver_mip_list",
+            "Hypatia.jl"
+        ],
+        [
+            "solver_mip_list",
             "Juniper.jl"
         ],
         [
@@ -1592,6 +1637,10 @@
         [
             "solver_mip_list",
             "MosekTools.jl"
+        ],
+        [
+            "solver_mip_list",
+            "Pajarito.jl"
         ],
         [
             "solver_mip_list",
@@ -1658,6 +1707,13 @@
             null,
             null,
             "Fixed annual operation and maintenance costs of the connection. Essentially, a cost coefficient on the total count of available connections (incl. `existing_connections` and `connections_invested_available`) and `capacity_per_connection` parameters. E.g. EUR/MW/year."
+        ],
+        [
+            "connection", 
+            "connection_current_max", 
+            null, 
+            null, 
+            "The per unit maximum current of a `connection`."
         ],
         [
             "connection",
@@ -1783,6 +1839,13 @@
             null,
             null,
             "Economic lifetime of investments, i.e. the duration for investment cost payment."
+        ],
+        [
+            "connection",
+            "line_shunt_susceptance",
+            null,
+            null,
+            "The per unit shunt susceptance of a `connection` for AC OPF."
         ],
         [
             "connection",
@@ -1961,6 +2024,13 @@
             },
             null,
             "Delays the `connection_flows` associated with the latter `node` in respect to the `connection_flows` associated with the first `node`."
+        ],
+        [
+            "connection__node__node", 
+            "connection_has_ac_flow", 
+            false, 
+            "boolean_value_list", 
+            "AC flow constraints are set for the connection where the first node is the beginning node and the second the end node."
         ],
         [
             "connection__node__node",
@@ -2199,6 +2269,27 @@
             null,
             null,
             "Lower bound on the number of entities invested available in the group at any point in time."
+        ],
+        [
+            "model", 
+            "ac_flow_tangency_point_theta", 
+            null, 
+            null, 
+            "Theta angles list of tangency points in AC flow linear approximation."
+        ],
+        [
+            "model", 
+            "ac_flow_tangency_point_phi", 
+            null, 
+            null, 
+            "Phi angles list of tangency points in AC flow linear approximation."
+        ],
+        [
+            "model", 
+            "ac_opf_model_formulation", 
+            "ac_opf_linear", 
+            "ac_opf_model_formulation_list", 
+            "Formulation used for AC flow."
         ],
         [
             "model",
@@ -2567,6 +2658,13 @@
             null,
             "The fraction of a `node` group's `demand` applied for the `node` in question."
         ],
+        [   
+            "node", 
+            "demand_reactive", 
+            0.0, 
+            null, 
+            "Demand for reactive power (p.u.) at a `node`"
+        ],
         [
             "node",
             "existing_storages",
@@ -2580,6 +2678,20 @@
             false,
             "boolean_value_list",
             "A boolean flag for whether a `node` is acting as a non-spinning reserve."
+        ],
+        [
+            "node", 
+            "max_voltage", 
+            1.0, 
+            null, 
+            "Maximum voltage for a `node` when it has voltage modelled with AC power flow."
+        ],
+        [
+            "node", 
+            "min_voltage", 
+            0.0, 
+            null, 
+            "Minimum voltage for a `node` when it has voltage modelled with AC power flow."
         ],
         [
             "node",
@@ -2608,6 +2720,13 @@
             null,
             null,
             "Duration a certain reserve product needs to be online/available. (NOT IMPLEMENTED!)"
+        ],
+        [
+            "node", 
+            "power_base", 
+            1.0, 
+            null, 
+            "The base power value of demand used for AC flow calculation."
         ],
         [
             "node",
@@ -2664,6 +2783,20 @@
             false,
             "boolean_value_list",
             "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `reserve_active` is also set to `true`."
+        ],
+        [
+            "node", 
+            "shunt_conductance", 
+            0.0, 
+            null, 
+            "Shunt conductance at a bus for AC OPF."
+        ],
+        [
+            "node", 
+            "shunt_susceptance", 
+            0.0, 
+            null, 
+            "Shunt susceptance at a bus for AC OPF."
         ],
         [
             "node",
@@ -3030,6 +3163,20 @@
         ],
         [
             "node__to_unit",
+            "pq_capability_curve_constant",
+            null,
+            null,
+            "The constant coefficients for the capability curve of absorbed reactive power Q + a*P <= c."
+        ],
+        [
+            "node__to_unit",
+            "pq_capability_curve_P_coef",
+            null,
+            null,
+            "The coefficients related to real power for the capability curve of absorbed reactive power Q + a*P <= c."
+        ],
+        [
+            "node__to_unit",
             "ramp_limits_down",
             null,
             null,
@@ -3064,6 +3211,13 @@
             "Procurement cost for reserves"
         ],
         [
+            "node__to_unit", 
+            "unit_capacity_reactive", 
+            null, 
+            null, 
+            "Maximum `unit_flow_reactive` take-out capacity of a single 'sub_unit' of the `unit`."
+        ],
+        [
             "node__to_unit",
             "unit_flow_non_anticipativity_margin",
             null,
@@ -3083,6 +3237,13 @@
             null,
             null,
             "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
+        ],
+        [
+            "node__to_unit", 
+            "vom_cost_reactive", 
+            null, 
+            null, 
+            "Variable operating costs of a `unit_flow_reactive` variable (reactive power absorption). E.g. EUR/MVArh."
         ],
         [
             "node__user_constraint",
@@ -3662,6 +3823,20 @@
         ],
         [
             "unit__to_node",
+            "pq_capability_curve_constant",
+            null,
+            null,
+            "The constant coefficients for the capability curve of injected reactive power Q + a*P <= c."
+        ],
+        [
+            "unit__to_node",
+            "pq_capability_curve_P_coef",
+            null,
+            null,
+            "The coefficients related to real power for the capability curve of injected reactive power Q + a*P <= c."
+        ],
+        [
+            "unit__to_node",
             "ramp_limits_down",
             null,
             null,
@@ -3696,6 +3871,13 @@
             "Procurement cost for reserves"
         ],
         [
+            "unit__to_node", 
+            "unit_capacity_reactive", 
+            null, 
+            null, 
+            "Maximum `unit_flow_reactive` capacity of a single 'sub_unit' of the `unit`."
+        ],
+        [
             "unit__to_node",
             "unit_flow_non_anticipativity_margin",
             null,
@@ -3715,6 +3897,13 @@
             null,
             null,
             "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
+        ],
+        [
+            "unit__to_node", 
+            "vom_cost_reactive", 
+            null, 
+            null, 
+            "Variable operating costs of a `unit_flow_reactive` variable (reactive power production). E.g. EUR/MVArh."
         ],
         [
             "unit__user_constraint",
