@@ -17,6 +17,7 @@ objective_function_reference_values = Dict(
     "rolling_horizon.json" => 65164.8571429,
     "simple_system.json" => 160714.28571428574,
     "stochastic.json" => 126964.2857142857,
+    "temporal_resolution.json" => 5000.0, #TODO: Newly added, no guarantee this works as intended!
     "unit_commitment.json" => 98637.42857142858,
 )
 
