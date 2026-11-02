@@ -13,6 +13,7 @@ This tutorial is built on top of the Simple System. The main changes to that sys
 - The demand at *electricity\_node* is a 24-hour time series instead of a unique value
 - The *power\_plant\_b* has new parameters to account for the unit commitment constraints, such as minimum operating point, minimum uptime, and minimum downtime
 - The optimization is done as a mixed-integer programming (MIP) problem to account for the binary nature of the unit commitment decision variables
+- The finished model of this tutorial, with all the unit commitment constraints of steps 2-4, is available as the example file [unit\_commitment.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/unit_commitment.json).
 
 This tutorial includes a step-by-step guide to include the parameters to help analyze the results in SpineOpt and the unit commitment concepts.
 

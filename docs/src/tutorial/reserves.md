@@ -13,6 +13,7 @@ Reserves refer to the capacity or energy that is kept as a backup to ensure the 
 - The reserve node has a requirement of 20 MW for upward reserve
 - Power plants 'a' and 'b' can both provide reserve to this node
 - The electricity demand (150 MW) and the power plants are the same as in the [Simple system tutorial](@ref)
+- The finished model of this tutorial, including the reserve procurement costs, is available as the example file [reserves.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/reserves.json).
 
 ![image](figs_reserves/reserves_tutorial_schematic.png)
 
