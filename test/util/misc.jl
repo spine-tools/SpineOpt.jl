@@ -242,6 +242,10 @@ function test_db_version_warnings()
             E.g. newer parameters/features in the data might not yet be supported.
             Consider updating SpineOpt to the latest version through `pkg> update SpineOpt`.
             """
+        msg2 = """
+            Database version is newer than current SpineOpt!
+            No migration performed.
+            """
         with_connection_open(url) do 
             _load_test_data_without_template(url, data)
             @test SpineOpt.find_version(url) == ver
@@ -249,6 +253,7 @@ function test_db_version_warnings()
                 (:warn, msg),
                 SpineOpt._check_version(url; log_level=3, upgrade=false)
             )
+            @test_logs (:warn, msg2) upgrade_db(url)
         end
     end
 end
