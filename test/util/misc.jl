@@ -199,7 +199,62 @@ function test_write_ptdf_lodf()
     end
 end
 
+function test_db_version_warnings()
+    url = "sqlite://"
+    @testset "db_version_warnings" begin
+        # Test current version
+        data = Dict()
+        with_connection_open(url) do 
+            _load_test_data(url, data)
+            @test SpineOpt.find_version(url) == SpineOpt.current_version()
+            @test_nowarn SpineOpt._check_version(url; log_level=3, upgrade=false)
+        end
+        # Test old version
+        ver = -1 # Negatives are always smaller than actual version numbers
+        data = Dict(
+            :entity_classes => [["settings", []]],
+            :parameter_definitions => [["settings", "version", ver, nothing, "obsolete version"]]
+        )
+        msg = """
+            The data structure is not the latest version.
+            SpineOpt might still be able to run, but results aren't guaranteed.
+            E.g. missing parameter values might cause the model to crash,
+            or their default values might result in unexpected behaviour.
+            Please use `run_spineopt(url_in; upgrade=true)` to upgrade.
+            """
+        with_connection_open(url) do 
+            _load_test_data_without_template(url, data)
+            @test SpineOpt.find_version(url) == ver
+            @test_logs(
+                (:warn, msg),
+                SpineOpt._check_version(url; log_level=3, upgrade=false)
+            )
+        end
+        # Test newer version
+        ver = 9999 # Arbitrary large number
+        data = Dict(
+            :entity_classes => [["settings", []]],
+            :parameter_definitions => [["settings", "version", ver, nothing, "newer version"]]
+        )
+        msg = """
+            The data structure is newer than SpineOpt!
+            SpineOpt might still be able to run, but results aren't guaranteed.
+            E.g. newer parameters/features in the data might not yet be supported.
+            Consider updating SpineOpt to the latest version through `pkg> update SpineOpt`.
+            """
+        with_connection_open(url) do 
+            _load_test_data_without_template(url, data)
+            @test SpineOpt.find_version(url) == ver
+            @test_logs(
+                (:warn, msg),
+                SpineOpt._check_version(url; log_level=3, upgrade=false)
+            )
+        end
+    end
+end
+
 @testset "misc" begin
     test_dt_fixed_duration()
     test_write_ptdf_lodf()
+    test_db_version_warnings()
 end
