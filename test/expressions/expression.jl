@@ -117,6 +117,7 @@ function test_expression_capacity_margin()
         object_parameter_values = [
             ["node", "node_b", "min_capacity_margin", margin_b],
             ["unit", "unit_b", "number_of_units", number_of_units_b],
+            ["unit", "unit_cb", "use_flow_capacity_contribution", true],
             ["node", "node_b", "demand", demand_b],
             ["node", "node_b", "fractional_demand", fractional_demand_b],
             ["node", "node_a", "demand", group_demand_a],
@@ -136,8 +137,11 @@ function test_expression_capacity_margin()
         scenarios = (s_p, s_c)
         
         time_slices_1h = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2 = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+        t2 = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))        
+
         @testset for (s, t) in zip(s_p, time_slices_1h)
+            observed_expr = expression[n, s, t]
+
             unit_b = unit(:unit_b)
             unit_cb = unit(:unit_cb)
             unit_ab = unit(:unit_ab)
@@ -155,9 +159,7 @@ function test_expression_capacity_margin()
                 + 75 * var_uon_ab
                 - demand_b
                 - fractional_demand_b * group_demand_a
-            )            
-
-            observed_expr = expression[n, [s], t]
+            )
             
             @test _is_expression_equal(observed_expr, expected_expr)
         end                
