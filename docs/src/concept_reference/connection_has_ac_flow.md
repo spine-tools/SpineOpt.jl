@@ -1,0 +1,1 @@
+To enable the consideration of a connection as a power line in AC OPF, the boolean parameter [connection\_has\_ac\_flow](@ref) should be set true. The parameter is defined for a [connection\_\_node\_\_node](@ref) relationship where the first node is the source bus and second node the destination bus.

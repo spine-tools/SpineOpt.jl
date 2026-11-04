@@ -616,7 +616,10 @@ function _test_major_upgrade_1(; template_on_top=false)
     			list = get!(parameter_value_lists, list_name, [])
     			push!(list, parse_db_value(list_value))
     		end
-    		@test Set(parameter_value_lists["grid_physics_list"]) == Set( # Correct list elements.
+            #ignore if acflow_physics is included
+            myset = Set(parameter_value_lists["grid_physics_list"])
+            delete!(myset, "acflow_physics")
+    		@test myset == Set( # Correct list elements.
     			["none", "lodf_physics", "ptdf_physics", "voltage_angle_physics", "pressure_physics"]
     		)
     		@test !in("commodity_physics_list", keys(parameter_value_lists)) # Old list removed.

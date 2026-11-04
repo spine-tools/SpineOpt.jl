@@ -158,6 +158,7 @@ function _dismember_function(func)
 end
 
 @testset begin
+    include("testsetups.jl")
     include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
@@ -172,8 +173,11 @@ end
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
+    include("constraints/constraint_acflow.jl")
     include("constraints/constraint_user_constraint.jl")
     include("constraints/constraint_investment_group.jl")
+    include("validation/validation_acflow.jl")
+    include("validation/validation_acflow_nonln.jl")
     include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
     include("run_spineopt_multi_stage.jl")
@@ -182,6 +186,6 @@ end
     include("run_spineopt_representative_periods.jl")
     include("run_spineopt_monte_carlo.jl")
     include("run_examples.jl")
+    include("run_benchmark_data.jl") # CRASHES with multithreading?
     include("run_spineopt_hsj_mga.jl")
-    include("run_benchmark_data.jl")
 end

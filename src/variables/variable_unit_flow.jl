@@ -49,6 +49,7 @@ function unit_flow_indices(
     )
 end
 
+
 function unit_flow_ub(m; unit, node, direction, kwargs...)
     (
         realize(unit_flow_capacity(m; unit=unit, node=node, direction=direction, kwargs..., _strict=false)) === nothing
@@ -224,3 +225,4 @@ function add_variable_unit_flow!(m::Model)
         replacement_expressions=replacement_expressions,
     )
 end
+

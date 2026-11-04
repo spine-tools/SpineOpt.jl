@@ -1788,7 +1788,7 @@ function test_constraint_candidate_connection_ub()
             object_parameter_values = [
                 ["connection", "connection_ab", "monitoring_active", true],
                 ["connection", "connection_ab", "reactance", conn_x],
-                ["connection", "connection_ab", "connection_resistance", conn_r],
+            ["connection", "connection_ab", "resistance", conn_r],
                 ["connection", "connection_ab", "investment_count_max_cumulative", investment_count_max_cumulative],
                 [
                     "connection",

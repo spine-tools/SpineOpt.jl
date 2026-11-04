@@ -88,7 +88,7 @@ What the values do:
 To see the investments in the results, add them to the report:
 
 1. Right-click the [report\_\_output](@ref) class and select **Add entities...**
-2. Add `report1 | units_invested` and `report1 | units_on` and press **OK** (see also [How to manage Output Data](@ref)).
+2. Add `report1 | units_invested` and `report1 | units_on` and press **OK** (see also [Managing output](@ref how-to-manage-output)).
 3. Press **Commit** and run the SpineOpt tool.
 
 Expected result for [units\_invested](@ref var_units_invested):

@@ -1,0 +1,1 @@
+This parameter, given for [node](@ref)s, defines the per-unit susceptance created by capacitances in an electrical bus.

@@ -1,0 +1,1 @@
+This parameter defines the conductance of leakage current paths for transmission lines. It is currently not used.
