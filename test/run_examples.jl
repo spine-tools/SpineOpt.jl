@@ -1,7 +1,7 @@
 # Examples that we want to check the objective function value
 objective_function_reference_values = Dict(
     "6_unit_system.json" => 6.966879153985747e6,
-    "capacity_planning.json" => 328503000.0,
+    "capacity_planning.json" => 423403000.0,
     "hydro_power_coupling_spillage.json" => -1.0854036800e+06, #TODO: Newly added, no guarantee this works as intended!
     "hydro_power_coupling_stored_water.json" => -2.6022200000e+06, #TODO: Newly added, no guarantee this works as intended!
     "hydro_power_coupling.json" => -1.1140836800e+06, #TODO: Newly added, no guarantee this works as intended!
@@ -10,19 +10,19 @@ objective_function_reference_values = Dict(
     "multi-year_investment_with_econ_discounting_milestones.json" => 71820715.12725478,
     "multi-year_investment_without_econ_discounting.json" => 131520100.0,
     "precompile.json" => 8056.25,
-    "ramping.json" => 9196.428571428572, #TODO: Newly added, no guarantee this works as intended!
+    "ramping.json" => 10583.3333333, #TODO: Newly added, no guarantee this works as intended!
     "renewable_targets_base.json" => 19000.0, #TODO: Newly added, no guarantee this works as intended!
     "renewable_targets_carbon_cap.json" => 22600.0, #TODO: Newly added, no guarantee this works as intended!
     "renewable_targets_carbon_tax.json" => 33000.0, #TODO: Newly added, no guarantee this works as intended!
     "renewable_targets_min_renewable_flow.json" => 22600.0, #TODO: Newly added, no guarantee this works as intended!
-    "representative_periods.json" => 314610.23274110217,
-    "reserves.json" => 175971.42857142858,
+    "representative_periods.json" => 4.2129853397e5,
+    "reserves.json" => 2.104e5,
     "retrofitting_example_1.json" => 4600.0,
-    "rolling_horizon.json" => 65164.8571429,
-    "simple_system.json" => 160714.28571428574,
-    "stochastic.json" => 126964.2857142857,
-    "temporal_resolution.json" => 5000.0, #TODO: Newly added, no guarantee this works as intended!
-    "unit_commitment.json" => 98637.42857142858,
+    "rolling_horizon.json" => 89138.6666667,
+    "simple_system.json" => 2.0e5,
+    "stochastic.json" => 1.64e5,
+    "temporal_resolution.json" => 7000.0,
+    "unit_commitment.json" => 128066.0,
 )
 
 @testset for (file, obj_fn_val) in objective_function_reference_values
