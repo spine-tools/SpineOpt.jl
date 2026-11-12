@@ -19,10 +19,10 @@ In this tutorial we will:
 -   Two power plants take fuel from a source node and release
     electricity to another node in order to supply a demand.
 -   Power plant 'a' has a capacity of 100 MW, a variable operating cost
-    of 25 euro/fuel unit, and generates 0.7 MWh of electricity per unit
+    of 25 euro/fuel unit, and generates 0.5 MWh of electricity per unit
     of fuel.
 -   Power plant 'b' has a capacity of 200 MW, a variable operating cost
-    of 50 euro/fuel unit, and generates 0.8 MWh of electricity per unit
+    of 50 euro/fuel unit, and generates 0.75 MWh of electricity per unit
     of fuel.
 -   The demand at the electricity node is 150 MW.
 -   The fuel node is able to provide infinite energy.
@@ -172,8 +172,8 @@ The fuel node gets the [balance\_type](@ref) `none`, so that it doesn't have to 
 
 | group | class | entity byname | parameter name | alternative | value |
 |:---|:---|:---|:---|:---|:---|
-| | unit\_flow\_\_unit\_flow | power\_plant\_a ǀ electricity ǀ fuel ǀ power\_plant\_a | [flow\_ratio\_equality\_coefficient](@ref) | Base | 0.7 |
-| | unit\_flow\_\_unit\_flow | power\_plant\_b ǀ electricity ǀ fuel ǀ power\_plant\_b | [flow\_ratio\_equality\_coefficient](@ref) | Base | 0.8 |
+| | unit\_flow\_\_unit\_flow | power\_plant\_a ǀ electricity ǀ fuel ǀ power\_plant\_a | [flow\_ratio\_equality\_coefficient](@ref) | Base | 0.5 |
+| | unit\_flow\_\_unit\_flow | power\_plant\_b ǀ electricity ǀ fuel ǀ power\_plant\_b | [flow\_ratio\_equality\_coefficient](@ref) | Base | 0.75 |
 
 The [flow\_ratio\_equality\_coefficient](@ref) is the ratio of the first (output) flow to the second (input) flow. If the flows are the wrong way round, the results are wrong or SpineOpt stops with an error.
 
@@ -201,4 +201,4 @@ You should get the following [unit\_flow](@ref var_unit_flow) results:
 | report1 | power\_plant\_b | electricity | to\_node | realization | 2000-01-01T00:00:00 | 50.0 |
 | report1 | power\_plant\_b | fuel | from\_node | realization | 2000-01-01T00:00:00 | 62.5 |
 
-The cheaper *power\_plant\_a* produces at its full capacity of 100, and *power\_plant\_b* covers the rest of the demand of 150. The fuel flows are the electricity flows divided by the efficiencies (100 / 0.7 and 50 / 0.8).
+The cheaper *power\_plant\_a* produces at its full capacity of 100, and *power\_plant\_b* covers the rest of the demand of 150. The fuel flows are the electricity flows divided by the efficiencies (100 / 0.5 and 50 / 0.75).

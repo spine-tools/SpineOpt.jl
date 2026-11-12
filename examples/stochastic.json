@@ -3301,7 +3301,7 @@
                 "power_plant_a"
             ],
             "flow_ratio_equality_coefficient",
-            0.7,
+            0.5,
             "Base"
         ],
         [
@@ -3313,7 +3313,7 @@
                 "power_plant_b"
             ],
             "flow_ratio_equality_coefficient",
-            0.8,
+            0.75,
             "Base"
         ]
     ],
