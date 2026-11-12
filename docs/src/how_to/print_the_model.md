@@ -37,7 +37,7 @@ JuMP.write_to_file(m, filename="<path-with-file-name>")
 ```
 
 ## Printing a Single Constraint
-For large files, the model file can be very large. The `print_constraint` function allows you to print a single constraint to a file. The function takes two arguments:
+For large models, the resulting model file can be very large. The `print_constraint` function allows you to print a single constraint to a file. The function takes two arguments:
  - a SpineOpt constraint reference
  - the path to the resulting output file
 
@@ -51,7 +51,7 @@ print_constraint(
 ```
 You will see that the first argument takes the form m.ext[:spineopt].constraints[:constraint_name]
 
-Here is a list of constraints current as of 12/11/2026. Consult the actual constraint code in \src\constraints for a specific up to date constraint name
+Here is a list of constraint names current as of 12/11/2026. Consult the actual constraint code in \src\constraints for a specific up to date constraint name
 
 | Column 1 | Column 2 | Column 3 |
 |---|---|---|
