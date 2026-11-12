@@ -269,7 +269,7 @@ function _add_padding_interval!(blocks_and_mapping_by_interval, window_end)
     if temp_struct_end < window_end
         padding_interval = (temp_struct_end, window_end)
         blocks, _mapping = get!(blocks_and_mapping_by_interval, padding_interval, (Set(), nothing))
-        union!(blocks, blocks_and_mapping_by_interval[last_i])
+        union!(blocks, first(blocks_and_mapping_by_interval[last_i]))
         @info string(
             "an artificial time slice $padding_interval has been added to blocks $blocks, ",
             "so that the temporal structure fills the optimisation window ",

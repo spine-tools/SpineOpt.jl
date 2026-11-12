@@ -286,6 +286,7 @@
         ["temporal_block", "representative_periods_mapping", null, null, "Map from date time to representative temporal block combination (either a single block's name, or an array of coefficients for each block that has a `representative_period_index`)"],
         ["temporal_block", "resolution", {"type": "duration", "data": "1h"}, null, "Temporal resolution of the `temporal_block`. Essentially, divides the period between `block_start` and `block_end` into `TimeSlices` with the input `resolution`."],
         ["temporal_block", "weight", 1.0, null, "Weighting factor of the temporal block associated with the objective function"],
+        ["temporal_block", "window_duration", null, null, "Duration of the rolling optimisation window if it is less than roll_forward. If omitted, roll_forward is assumed and an additional timeslice is created to fill the gap"],
         ["unit", "benders_starting_units_invested", null, null, "Fixes the number of units invested during the first Benders iteration"],
         ["unit", "candidate_units", null, null, "Number of units which may be additionally constructed"],
         ["unit", "curtailment_cost", null, null, "Costs for curtailing generation. Essentially, accrues costs whenever `unit_flow` not operating at its maximum available capacity. E.g. EUR/MWh"],
@@ -324,6 +325,7 @@
         ["unit", "units_on_non_anticipativity_margin", null, null, "Margin by which `units_on` variable can differ from the value in the previous window during `non_anticipativity_time`."],
         ["unit", "units_on_non_anticipativity_time", null, null, "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."],
         ["unit", "units_unavailable", 0, null, "Represents the number of units out of service"],
+        ["unit", "use_flow_capacity_contribution", false, "boolean_value_list", "Use unit for for contribution to min_capacity_margin constraint"],
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
         ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."],
         ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."]
