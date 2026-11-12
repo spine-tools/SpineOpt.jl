@@ -26,11 +26,20 @@
 # and don't require to build any additional structures.
 
 """
+Module-level switch: if `true`, [`_check`](@ref) issues warnings instead of throwing errors.
+It is only changed by [`check_data_structure`](@ref), which restores it when done.
+"""
+const _WARN_INSTEAD_OF_ERROR = Ref(false)
+
+"""
     _check(cond, err_msg)
 
 Check the conditional `cond` and throws an error with a message `err_msg` if `cond` is `false`.
+If `_WARN_INSTEAD_OF_ERROR[]` is `true`, a warning is issued instead.
 """
-_check(cond, msg_parts...) = cond || error(msg_parts...)
+function _check(cond, msg_parts...)
+    _WARN_INSTEAD_OF_ERROR[] ? _check_warn(cond, msg_parts...) : (cond || error(msg_parts...))
+end
 
 """
     _check_warn(cond, err_msg)
@@ -40,19 +49,27 @@ Check the conditional `cond` and throws a warning with a message `warn_msg` if `
 _check_warn(cond, msg_parts...) = cond || @warn string(msg_parts...)
 
 """
-    check_data_structure()
+    check_data_structure(; warn_only=false)
 
 Check if the data structure provided from the db results in a valid model.
+
+If `warn_only` is `true`, failed checks issue warnings instead of throwing errors.
 """
-function check_data_structure()
-    check_temporal_block_object()
-    check_node_object()
-    check_node__temporal_block()
-    check_node__stochastic_structure()
-    check_unit__stochastic_structure()
-    check_minimum_operating_point_unit_capacity()
-    check_branching_before_rolling()
-    check_parameter_values()
+function check_data_structure(; warn_only=false)
+    previous = _WARN_INSTEAD_OF_ERROR[]
+    _WARN_INSTEAD_OF_ERROR[] = warn_only
+    try
+        check_temporal_block_object()
+        check_node_object()
+        check_node__temporal_block()
+        check_node__stochastic_structure()
+        check_unit__stochastic_structure()
+        check_minimum_operating_point_unit_capacity()
+        check_branching_before_rolling()
+        check_parameter_values()
+    finally
+        _WARN_INSTEAD_OF_ERROR[] = previous
+    end
 end
 
 """
