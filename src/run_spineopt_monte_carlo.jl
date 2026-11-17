@@ -139,18 +139,17 @@ i.e., whenever the model remains the same after switching to the next Monte Carl
 This relies on iterations being sorted nicely so as many solves as possible can be skipped.
 """
 function _setup_solve_skip!(m, mc_scen_keys)
-    add_event_handler!(m, :model_about_to_solve) do m
-    	last_solve_key = (; (k => _monte_carlo_scenario[k][] for k in mc_scen_keys)...)
-    	if get(m.ext[:spineopt].extras, :last_solve_key, nothing) == last_solve_key
-    		@info "$(_model_name(m)) hasn't changed from last solve - skipping solve..."
-    		m.ext[:spineopt].has_results[] = true
-    	else
-    		m.ext[:spineopt].has_results[] = false
-    	end
-    end
-    add_event_handler!(m, :model_solved) do m
-    	last_solve_key = (; (k => _monte_carlo_scenario[k][] for k in mc_scen_keys)...)
-    	m.ext[:spineopt].extras[:last_solve_key] = last_solve_key
+	add_event_handler!(m, :model_about_to_solve) do m
+    last_solve_key = (; (k => _monte_carlo_scenario[k][] for k in mc_scen_keys)...)
+    if get(m.ext[:spineopt].extras, :last_solve_key, nothing) == last_solve_key
+        @info "$(_model_name(m)) hasn't changed from last solve - skipping solve..."
+        m.ext[:spineopt].has_results[] = true
+    else
+        # Not the first pass: release history fixed by the previous pass's rolls.
+        # Must run before the rewind in _do_solve_model!, so the rewind re-applies
+        # call-based fixes such as initial_node_state, as in the Benders loop.
+        get(m.ext[:spineopt].extras, :last_solve_key, nothing) === nothing || unfix_history!(m)
+        m.ext[:spineopt].has_results[] = false
     end
 end
 
