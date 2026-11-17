@@ -763,15 +763,19 @@ function _test_iterative_mga()
             Val(:hsj_mga_algorithm)
         )
         atol = slack + 1e-6
-        @test isapprox(res[0][:x][1], 1, atol=atol)
-        @test isapprox(res[0][:x][2], 0, atol=atol)
-        @test isapprox(res[0][:y][1], 0, atol=atol)
-        @test isapprox(res[1][:x][1], 0, atol=atol)
-        @test isapprox(res[1][:x][2], 1, atol=atol)
-        @test isapprox(res[1][:y][1], 0, atol=atol)
-        @test isapprox(res[2][:x][1], 0, atol=atol)
-        @test isapprox(res[2][:x][2], 0, atol=atol)
-        @test isapprox(res[2][:y][1], 1, atol=atol)
+        # The problem is symmetric in x[1], x[2] and y[1] (constraint and objective are invariant
+        # under any permutation), so which variable the solver activates first depends on the solver (version).
+        # Accept any vertex solution per iteration, and require each MGA iteration to activate
+        # a variable that was not active in any previous iteration.
+        active = Int[]
+        for k in 0:max_mga_iters
+            vals = [res[k][:x][1], res[k][:x][2], res[k][:y][1]]
+            i = argmax(vals)
+            @test isapprox(vals[i], 1, atol=atol)
+            @test all(isapprox(vals[j], 0, atol=atol) for j in eachindex(vals) if j != i)
+            push!(active, i)
+        end
+        @test allunique(active)
     end
     @testset "iterative fuzzy mga" begin
         m = Model(HiGHS.Optimizer)
@@ -806,14 +810,18 @@ function _test_iterative_mga()
             Val(:fuzzy_mga_algorithm)
         )
         atol = 1e-6
-        @test isapprox(res[0][:x][1], 1, atol=atol)
-        @test isapprox(res[0][:x][2], 0, atol=atol)
-        @test isapprox(res[0][:y][1], 1, atol=atol)
-        @test isapprox(res[0][:y][2], 0, atol=atol)
-        @test isapprox(res[1][:x][1], 0, atol=atol)
-        @test isapprox(res[1][:x][2], 1, atol=atol)
-        @test isapprox(res[1][:y][1], 0, atol=atol)
-        @test isapprox(res[1][:y][2], 1, atol=atol)
+        # The problem is symmetric under swapping indices 1 and 2 within each group
+        # (constraints and objective are invariant), so the initial optimum may be either vertex
+        # (1, 0) or (0, 1) per group, depending on the solver (version).
+        # Accept any such vertex, and require the first MGA iteration to move to the opposite vertex.
+        for g in (:x, :y)
+            @test any(
+                isapprox(res[0][g][1], v1, atol=atol) && isapprox(res[0][g][2], v2, atol=atol)
+                for (v1, v2) in ((1, 0), (0, 1))
+            )
+            @test isapprox(res[1][g][1], 1 - res[0][g][1], atol=atol)
+            @test isapprox(res[1][g][2], 1 - res[0][g][2], atol=atol)
+        end
         @test isapprox(res[2][:x][1] + res[2][:x][2], 4/5, atol=atol)
         @test isapprox(res[2][:y][1] + res[2][:y][2], 4/5, atol=atol)
 
