@@ -2,6 +2,8 @@ Defines the _default_ length of the "window" (aka "horizon") of a single solve w
 a "rolling horizon" (aka "receding horizon") optimization.
 Effectively, each solve (aka "window") contains variables between
 [model\_start](@ref) and [model\_start](@ref) + [window\_duration](@ref).
+If [window\_duration](@ref) is not given,
+[roll\_forward](@ref) will be used in its stead.
 However, note that this is overwritten by individual [block\_end](@ref)s if defined.
 
 Defined as a `duration` from [model\_start](@ref) for the initial solve,
