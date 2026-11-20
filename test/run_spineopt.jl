@@ -447,6 +447,60 @@ function _test_dont_overwrite_results_on_rolling()
     end
 end
 
+function _test_history_not_saved_in_outputs()
+    @testset "history not saved in outputs (overwrite_results_on_rolling = $overwrite)" for overwrite in (true, false)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        m_start = DateTime(2000, 1, 1)
+        m_end = DateTime(2000, 1, 2)
+        roll = Hour(6)
+        window = Hour(9)  # So each window has 3 hours of look-ahead that the next window overwrites
+        objects = [["output", "units_on"]]
+        relationships = [["report__output", ["report_x", "units_on"]]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", 50],
+            ["model", "instance", "roll_forward", unparse_db_value(roll)],
+            ["temporal_block", "hourly", "block_end", unparse_db_value(window)],
+            ["unit", "unit_ab", "min_up_time", unparse_db_value(Hour(2))],  # So units_on has a history
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 90],
+            ["report__output", ["report_x", "units_on"], "overwrite_results_on_rolling", overwrite],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in, url_out; log_level=0)
+        # Make sure there are history variables, so the test is not trivially passing
+        w_start = start(current_window(m))
+        @test any(start(ind.t) < w_start for ind in keys(m.ext[:spineopt].variables[:units_on]))
+        # Saved outputs have nothing from the history, but keep the full window including the look-ahead
+        windows = [(w_start, w_end) for by_window in values(m.ext[:spineopt].outputs[:units_on]) for (w_start, w_end) in keys(by_window)]
+        @test length(windows) == 4
+        @testset for by_window in values(m.ext[:spineopt].outputs[:units_on]), ((w_start, w_end), by_ind) in by_window
+            t_starts = [first(ind.t) for ind in keys(by_ind)]
+            @test minimum(t_starts) == w_start
+            @test maximum(t_starts) == w_start + window - Hour(1)
+        end
+        # Reported results
+        using_spinedb(url_out, Y)
+        key = (report=Y.report(:report_x), unit=Y.unit(:unit_ab), stochastic_scenario=Y.stochastic_scenario(:parent))
+        if overwrite
+            @testset for t in m_start:Hour(1):(m_end - Hour(1))
+                @test !isnan(Y.units_on(; key..., t=t))
+            end
+        else
+            @testset for at in m_start:roll:(m_end - Hour(1)), t in (at - Hour(3)):Hour(1):(at + window)
+                obs = Y.units_on(; key..., analysis_time=at, t=t)
+                @test isnan(obs) == !(at <= t < at + window)
+            end
+        end
+    end
+end
+
 function _test_unfeasible()
     @testset "unfeasible" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
@@ -1032,6 +1086,7 @@ end
     _test_units_on_non_anticipativity_time()
     _test_unit_flow_non_anticipativity_time()
     _test_dont_overwrite_results_on_rolling()
+    _test_history_not_saved_in_outputs()
     _test_unfeasible()
     _test_unknown_output()
     _test_write_inputs()

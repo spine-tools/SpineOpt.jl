@@ -1038,14 +1038,35 @@ function _do_save_outputs!(m, output_names, output_suffix; weight=1)
         end
         by_suffix = get!(m.ext[:spineopt].outputs, out_name, Dict())
         by_window = get!(by_suffix, output_suffix, Dict())
-        by_window[w_start, w_end] = Dict(Iterators.map(((ind, val),) ->
-            (_static(ind), weight * val), _output_value_by_ind(m, something(value, param))))
+        by_window[w_start, w_end] = Dict(
+            (static_ind, weight * val)
+            for (static_ind, val) in (
+                (_static(ind), val) for (ind, val) in _output_value_by_ind(m, something(value, param))
+            )
+            if !_is_history(static_ind, w_start)
+        )
     end
 end
 
 _static(ind::NamedTuple) = NamedTuple{keys(ind)}(map(_static, values(ind)))
 _static(t::TimeSlice) = (start(t), end_(t))
 _static(x) = x
+
+"""
+Whether the given static index lies in the history of the window starting at `w_start`, i.e., all its time slices
+start before `w_start`. Such entries are always discarded by `_output_value_by_entity`, whatever the value of
+`overwrite_results_on_rolling`, so there is no need to save them.
+"""
+function _is_history(ind::NamedTuple, w_start)
+    has_t = false
+    for v in values(ind)
+        v isa Tuple{DateTime,DateTime} || continue
+        first(v) >= w_start && return false
+        has_t = true
+    end
+    has_t
+end
+_is_history(_ind, _w_start) = false
 
 _output_value_by_ind(_m, value::Dict) = value
 function _output_value_by_ind(m, parameter::Parameter)
