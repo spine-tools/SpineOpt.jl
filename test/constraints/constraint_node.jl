@@ -1019,24 +1019,31 @@ end
 
 function test_constraint_min_capacity_margin()
     @testset "constraint_min_capacity_margin" begin
-        url_in = _test_constraint_node_setup()        
+        url_in = _test_constraint_node_setup()
         margin_b = 100
         demand_b = 105
         capacity = 200
         object_parameter_values = [
             ["node", "node_b", "min_capacity_margin", margin_b],
             ["node", "node_b", "demand", demand_b],
-            ["unit", "unit_ab", "units_on_cost", 1],  # To have unis_on variables
+            # Makes unit_ab a candidate unit, so units_invested_available variables are in the expression
+            ["unit", "unit_ab", "candidate_units", 1],
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", capacity]
-        ]      
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "investments_hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "investments_deterministic"]],
+        ]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
+            relationships=relationships,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_inv = m.ext[:spineopt].variables[:units_invested_available]
         constraint = m.ext[:spineopt].constraints[:min_capacity_margin]
         margin_expression = m.ext[:spineopt].expressions[:capacity_margin]
         @test length(constraint) == 2
@@ -1047,10 +1054,14 @@ function test_constraint_min_capacity_margin()
             expr_key = (n, s, t)
             con_key = (n, s, t)
             expr = margin_expression[expr_key...]
+            # The investment only exists in the parent scenario, also when the path continues to the child
+            @test JuMP.coefficient(
+                realize(expr), var_inv[unit(:unit_ab), stochastic_scenario(:parent), t]
+            ) == capacity
             expected_con = @build_constraint(realize(expr) >= margin_b)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
-            @test _is_constraint_equal(observed_con, expected_con)            
+            @test _is_constraint_equal(observed_con, expected_con)
         end
     end
 end
