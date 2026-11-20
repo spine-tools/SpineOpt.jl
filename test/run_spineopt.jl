@@ -662,6 +662,44 @@ function _test_fixing_variables_when_rolling()
     end
 end
 
+function _test_free_start_on_roll()
+    @testset "free start on roll" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
+        demand = Dict("type" => "time_series", "data" => [10, 20, 30], "index" => index)
+        objects = [["output", "constraint_nodal_balance"]]
+        relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+            ["unit", "unit_ab", "min_up_time", Dict("type" => "duration", "data" => "6h")],  # So we have a history
+            ["temporal_block", "hourly", "has_free_start_on_roll", true],
+        ]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in, url_out; log_level=0)
+        SpineOpt.update_model!(m)  # Would normally fix history
+        instance = m.ext[:spineopt].instance
+        history_end = model_end(model=instance) - roll_forward(model=instance)
+        history_start = history_end - Hour(6)
+        var_t_iterator = [
+            (var, inds.t)
+            for (var_key, vars) in m.ext[:spineopt].variables for (inds, var) in vars if var isa VariableRef
+        ]
+        # Make sure there are history variables, so the test is not trivially passing
+        @test any(history_start <= start(t) < history_end for (var, t) in var_t_iterator)
+        @testset for (var, t) in var_t_iterator
+            @test !is_fixed(var)
+        end
+    end
+end
+
 function _test_dual_values()
     @testset "dual values" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
@@ -1001,6 +1039,7 @@ end
     _test_output_resolution_for_an_input()
     _test_db_solvers()
     _test_fixing_variables_when_rolling()
+    _test_free_start_on_roll()
     _test_dual_values()
     _test_dual_values_with_two_time_indices()
     _test_fix_unit_flow_with_rolling()

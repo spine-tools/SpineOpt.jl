@@ -107,9 +107,10 @@ function _test_expressions_setup()
 end
 
 function test_expression_capacity_margin()
-    @testset "expression_capacity_margin" begin        
+    @testset "expression_capacity_margin" begin
         url_in = _test_expressions_setup()
         number_of_units_b = 3
+        number_of_units_ab = 1  # default, not set in the test data
         margin_b = 1
         demand_b = 105
         group_demand_a = 10
@@ -120,50 +121,43 @@ function test_expression_capacity_margin()
             ["node", "node_b", "demand", demand_b],
             ["node", "node_b", "fractional_demand", fractional_demand_b],
             ["node", "node_a", "demand", group_demand_a],
-        ]        
+            # unit_cb contributes with its unit_flow, the other units with their capacity
+            ["unit", "unit_cb", "use_flow_capacity_contribution", true],
+        ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        
+
         expression = m.ext[:spineopt].expressions[:capacity_margin]
         @test length(expression) == 2
 
         # node_b
         n = node(:node_b)
-        s_p = stochastic_scenario(:parent)
-        s_c = stochastic_scenario(:child)
-        scenarios = (s_p, s_c)
-        
+        s = stochastic_scenario(:parent)
         time_slices_1h = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2 = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
-        @testset for (s, t) in zip(s_p, time_slices_1h)
-            unit_b = unit(:unit_b)
-            unit_cb = unit(:unit_cb)
-            unit_ab = unit(:unit_ab)
-            d_f = direction(:from_node)
-            d_t = direction(:to_node)
-            var_uon_b = get(var_units_on, (unit_b, s, t), 1)
-            var_uon_ab = get(var_units_on, (unit_ab, s, t2), 1)
+        unit_cb = unit(:unit_cb)
+        d_f = direction(:from_node)
+        d_t = direction(:to_node)
+        @testset for t in time_slices_1h
             var_uff_cb = var_unit_flow[unit_cb, n, d_f, s, t]
             var_uft_cb = var_unit_flow[unit_cb, n, d_t, s, t]
-     
+
             expected_expr = @expression(m,
                 + var_uft_cb
                 - var_uff_cb
-                + 0.4 * 30 * var_uon_b
-                + 75 * var_uon_ab
+                + 0.4 * 30 * number_of_units_b
+                + 75 * number_of_units_ab
                 - demand_b
                 - fractional_demand_b * group_demand_a
-            )            
+            )
 
             observed_expr = expression[n, [s], t]
-            
+
             @test _is_expression_equal(observed_expr, expected_expr)
-        end                
+        end
     end
 end
 
-@testset "expressions" begin    
+@testset "expressions" begin
     test_expression_capacity_margin()
 end

@@ -745,6 +745,8 @@ function optimize_model!(
     @timelog log_level 0 "Optimizing $model_name..." stats optimize!(m)
     termination_st = termination_status(m)
     m.ext[:spineopt].extras[:termination_status] = termination_st
+    by_window = get!(m.ext[:spineopt].extras, :termination_status_by_window, OrderedDict{DateTime,Any}())
+    by_window[start(current_window(m))] = termination_st
     if is_solved_and_feasible(m; allow_almost = true) || (termination_st == MOI.TIME_LIMIT)
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
@@ -1450,8 +1452,14 @@ end
 function _fix_history_variable!(m::Model, name::Symbol, history_vars_by_ind)
     vals = m.ext[:spineopt].values[name]
     for (ind, history_vars) in history_vars_by_ind
+        _is_free_on_roll(ind) && continue
         _force_fix.(history_vars, vals[ind])
     end
+end
+
+function _is_free_on_roll(ind)
+    hasproperty(ind, :t) || return false
+    any(has_free_start_on_roll(temporal_block=blk, _default=false) for blk in blocks(ind.t))
 end
 
 function apply_non_anticipativity_constraints!(m::Model)

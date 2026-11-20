@@ -164,6 +164,7 @@ function _run_spineopt(
     log_level >= 3 && foreach(i -> print_active(m, i), [:variables, :objective_terms, :constraints])
     @log log_level 3 "\nActive model outputs not included in the report:"
     log_level >= 3 && foreach(println, hidden_active_outputs(m))
+    _print_window_solve_summaries(m)
     t_end = now()
     elapsed_time_string = _elapsed_time_string(t_start, t_end)
     @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
@@ -186,8 +187,10 @@ function _run_spineopt(
             end
         end
         model_status = Dict(
-            string(_model_name(model)) => string(get(model.ext[:spineopt].extras, :termination_status, ""))
+            string(_model_name(model)) => status_map
             for model in models
+            for status_map in (_termination_status_map(model),)
+            if status_map !== nothing
         )
         if !isempty(model_status)
             termination_status_map = Map(collect(keys(model_status)), collect(values(model_status)))
@@ -722,4 +725,53 @@ function hidden_active_outputs(m::JuMP.Model)::Vector{Symbol}
     spineopt_ext = m.ext[:spineopt]
     hidden_outputs = setdiff(keys(spineopt_ext.values), keys(spineopt_ext.outputs))
     return intersect(hidden_outputs, active_spineopt_ext_items(spineopt_ext, :values)) |> collect |> sort
+end
+
+
+function _termination_status_map(m)
+    by_window = get(m.ext[:spineopt].extras, :termination_status_by_window, nothing)
+    by_window === nothing && return nothing
+    windows = sort!(collect(DateTime, keys(by_window)))
+    Map(windows, String[string(by_window[w]) for w in windows])
+end
+
+function _window_solve_status_summary(m)
+    by_window = get(m.ext[:spineopt].extras, :termination_status_by_window, nothing)
+    (by_window === nothing || isempty(by_window)) && return nothing
+    windows = get(m.ext[:spineopt].temporal_structure, :windows, [])
+    fmt(t) = Dates.format(t, "yyyy-mm-ddTHH:MM")
+    counts = Dict{String,Int}()
+    non_optimal = String[]
+    for w_start in sort!(collect(keys(by_window)))
+        status = string(by_window[w_start])
+        counts[status] = get(counts, status, 0) + 1
+        status == "OPTIMAL" && continue
+        k = findfirst(w -> start(w) == w_start, windows)
+        entry = if k === nothing
+            "$status: Window starting $(fmt(w_start))"
+        else
+            "$status: Window $k: $(fmt(w_start)) - $(fmt(end_(windows[k])))"
+        end
+        push!(non_optimal, entry)
+    end
+    statuses = sort!(collect(keys(counts)); by=s -> (s != "OPTIMAL", s))  # OPTIMAL first
+    lines = ["Window solve status summary:"]
+    append!(lines, ("$s: $(counts[s])" for s in statuses))
+    if !isempty(non_optimal)
+        push!(lines, "", "Non-Optimal Windows:")
+        append!(lines, non_optimal)
+    end
+    join(lines, "\n")
+end
+
+function _print_window_solve_summaries(m)
+    models = Any[m]
+    master_model(m) !== nothing && push!(models, master_model(m))
+    append!(models, values(m.ext[:spineopt].model_by_stage))
+    for model in models
+        summary = _window_solve_status_summary(model)
+        summary === nothing && continue
+        model === m || (summary = replace(summary, "summary:" => "summary ($(_model_name(model))):"; count=1))
+        println("\n", summary)
+    end
 end

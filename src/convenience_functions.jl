@@ -179,6 +179,7 @@ const fractional_demand = Parameter(:fractional_demand)
 const fuel_cost = Parameter(:fuel_cost)
 const has_binary_gas_flow = Parameter(:has_binary_gas_flow)
 const has_free_start = Parameter(:has_free_start)
+const has_free_start_on_roll = Parameter(:has_free_start_on_roll)
 const has_lodf = Parameter(:has_lodf)
 const has_online_variable = Parameter(:has_online_variable)
 const has_out_of_service_variable = Parameter(:has_out_of_service_variable)
@@ -366,6 +367,7 @@ const units_started_up_coefficient = Parameter(:units_started_up_coefficient)
 const units_unavailable = Parameter(:units_unavailable)
 const upward_reserve = Parameter(:upward_reserve)
 const use_connection_intact_flow = Parameter(:use_connection_intact_flow)
+const use_flow_capacity_contribution = Parameter(:use_flow_capacity_contribution)
 const use_highest_resolution_constraint_ratio_out_in_connection_flow = Parameter(:use_highest_resolution_constraint_ratio_out_in_connection_flow)
 const use_tight_compact_formulations = Parameter(:use_tight_compact_formulations)
 const user_constraint_slack_penalty = Parameter(:user_constraint_slack_penalty)
@@ -559,6 +561,7 @@ export fractional_demand
 export fuel_cost
 export has_binary_gas_flow
 export has_free_start
+export has_free_start_on_roll
 export has_lodf
 export has_online_variable
 export has_out_of_service_variable
@@ -746,6 +749,7 @@ export units_started_up_coefficient
 export units_unavailable
 export upward_reserve
 export use_connection_intact_flow
+export use_flow_capacity_contribution
 export use_highest_resolution_constraint_ratio_out_in_connection_flow
 export use_tight_compact_formulations
 export user_constraint_slack_penalty

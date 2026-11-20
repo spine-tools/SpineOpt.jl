@@ -156,6 +156,7 @@ function _dismember_function(func)
 end
 
 @testset begin
+    
     include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
     include("data_structure/check_economic_structure.jl") 
@@ -163,9 +164,13 @@ end
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
     include("data_structure/postprocess_results.jl")
+    
     include("expressions/expression.jl")
+    
     include("constraints/constraint_unit.jl") # CRASHES with multithreading?
+    
     include("constraints/constraint_node.jl") # CRASHES with multithreading?
+    
     include("constraints/constraint_connection.jl") # CRASHES with multithreading?
     include("constraints/constraint_user_constraint.jl")
     include("constraints/constraint_investment_group.jl") # CRASHES with multithreading?
@@ -182,5 +187,6 @@ end
     include("run_examples.jl") # CRASHES with multithreading?
     include("run_benchmark_data.jl") # CRASHES with multithreading?
     include("run_spineopt_hsj_mga.jl")
+    
 end
 

@@ -194,7 +194,7 @@ function test_unit_online_variable_type_none()
             key = (u, s, t)
             @test_throws KeyError var_units_on[key...]
             @test_throws KeyError constraint_u_avail[key...]
-            @test SpineOpt._get_units_on(m, key...) == number_of_units(unit=u)
+            @test realize(SpineOpt._get_units_on(m, key...)) == number_of_units(unit=u)
             @test SpineOpt._get_units_invested_available(m, key...) == 0
         end
     end

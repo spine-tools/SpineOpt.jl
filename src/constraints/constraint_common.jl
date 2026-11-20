@@ -19,7 +19,8 @@
 #############################################################################
 
 function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
-    inds = unique(indices(m))
+    inds = collect(indices(m))
+    unique!(inds)
     cons = Any[nothing for i in eachindex(inds)]
     Threads.@threads for i in eachindex(inds)
         ind = inds[i]
@@ -27,6 +28,21 @@ function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
     end
     m.ext[:spineopt].constraints[name] = Dict(zip(inds, add_constraint.(m, cons)))
 end
+
+#=
+function _add_constraint!(m::Model, name::Symbol, indices, build_constraint)
+    inds = indices(m)
+    cons = m.ext[:spineopt].constraints[name] = Dict()    
+    for ind in inds
+        get!(cons, ind) do
+            add_constraint(m, build_constraint(m, ind...))
+        end
+    end
+    return cons
+end
+
+=#
+
 
 """
     t_lowest_resolution_path(m, indices...)
