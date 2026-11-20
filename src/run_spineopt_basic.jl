@@ -1049,16 +1049,18 @@ _static(x) = x
 
 _output_value_by_ind(_m, value::Dict) = value
 function _output_value_by_ind(m, parameter::Parameter)
+    # Computed once rather than per entity; duplicates (e.g. a time slice in several blocks) would only
+    # yield identical entries, so they are dropped.
+    stoch_time_inds = unique(stochastic_time_indices(m))
+    analysis_time = start(current_window(m))
     inds = (
         (; entity..., stochastic_scenario=scen, t=t)
         for entity in indices_as_tuples(parameter)
-        for (scen, t) in stochastic_time_indices(m)
+        for (scen, t) in stoch_time_inds
     )
     (
         (ind, val)
-        for (ind, val) in (
-            (ind, parameter(; ind..., analysis_time=start(current_window(m)), _strict=false)) for ind in inds
-        )
+        for (ind, val) in ((ind, parameter(; ind..., analysis_time=analysis_time, _strict=false)) for ind in inds)
         if val !== nothing
     )
 end
