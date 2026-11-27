@@ -2,22 +2,33 @@
 
 Assuming you already have an investment model with a certain temporal structure that works, you can turn it into a representative periods model with the following steps.
 
+ The [Representative periods tutorial](@ref) goes through the same steps with a complete example, which is available as the example file [representative\_periods.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/representative_periods.json).
+
 !!! info
     Note that representative days often limit the ability to properly account for seasonal storages. However, SpineOpt takes this into account and allows for seasonal storage.
 
 1. Select the representative periods. For example if you are modelling a year, you can select a few weeks
-   (one in summer, one in winder, and one in mid-season).
+   (one in summer, one in winter, and one in mid-season).
 1. For each representative period, create a [temporal\_block](@ref) specifying [block\_start](@ref),
    [block\_end](@ref) and [resolution](@ref).
 1. Associate these [temporal\_block](@ref)s to some [node](@ref)s and [unit](@ref)s in your system,
    via [node\_\_temporal\_block](@ref) and [units\_on\_\_temporal\_block](@ref) relationships.
-1. Finally, for each **original** [temporal\_block](@ref) associated to the [node](@ref)s and [unit](@ref)s above,
+1. For each **original** [temporal\_block](@ref) associated to the [node](@ref)s and [unit](@ref)s above,
    specify the value of the [representative\_blocks\_by\_period](@ref) parameter.
-   This should be a `map` where each entry associates a date-time to the name of one
-   of the **representative period** [temporal\_block](@ref)s created in step 3.
+   This should be a `map` where each entry associates a date-time either to the name of one
+   of the **representative period** [temporal\_block](@ref)s created in step 2,
+   or to an `array` of weights, one for each representative period.
    More specifically, an entry with `t` as the key and `b` as the value means that time slices from the original block
    starting at `t`, are 'represented' by time slices from the `b` block.
    In other words, time slices between `t` and `t` plus the duration of `b` are represented by `b`.
+   With an `array`, the time slices are represented by a combination of the representative periods,
+   e.g. `[0.5, 0.5]` means half of the first and half of the second one. The weights must sum to 1.
+1. If you use `array`s, give each representative [temporal\_block](@ref) a [representative\_block\_index](@ref)
+   (1, 2, ...). The index tells which element of the arrays belongs to which representative period.
+1. Finally, give each representative [temporal\_block](@ref) a [weight](@ref), i.e. how many periods it represents.
+   The weight scales the costs of the representative period in the objective function.
+   For example, if a representative day represents one and a half of the original days, its weight is 1.5.   
+
 
 In SpineOpt, this will be interpreted in the following way:
 - For each [node](@ref) and [unit](@ref) associated to any of your representative [temporal\_block](@ref)s,

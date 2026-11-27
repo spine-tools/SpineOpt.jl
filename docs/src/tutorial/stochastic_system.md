@@ -159,6 +159,8 @@ For the [unit\_flow](@ref var_unit_flow) to the electricity node you should see:
 | forecast2 | 6-24 | 100 | 20 |
 | forecast3 | 6-24 | 100 | 40 |
 
+The model up to this point is available as the example file [stochastic.json](https://github.com/spine-tools/SpineOpt.jl/blob/master/examples/stochastic.json). It does not include the *end* scenario of the note below.
+
 !!! note
     For the sake of completion we will also tell you what to do
     when you want to merge the forecasts into an *end* [stochastic\_scenario](@ref).

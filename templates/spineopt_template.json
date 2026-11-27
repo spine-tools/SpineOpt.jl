@@ -1142,6 +1142,11 @@
         ],
         [
             "output",
+            "node_state_longterm",
+            null
+        ],
+        [
+            "output",
             "node_voltage_angle",
             null
         ],
