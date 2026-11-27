@@ -1,0 +1,3 @@
+This parameter is used to describe the capability curve of an electrical generator, i.e. the boundary of maximum reactive power injection (or absorption) and real power output, when they are dependent. The format of the parameter is an array and each value creates an additional linear constraint in the PQ-plane to approximate a convex capability curve.
+
+Together with [pq\_capability\_curve\_constant](@ref)

@@ -1166,72 +1166,6 @@
             null
         ],
         [
-            "connection__from_node",
-            [
-                "fall_to_downstream_disc",
-                "fall_lower"
-            ],
-            null
-        ],
-        [
-            "connection__from_node",
-            [
-                "fall_to_downstream_spill",
-                "fall_upper"
-            ],
-            null
-        ],
-        [
-            "connection__from_node",
-            [
-                "sprang_to_fall_disc",
-                "sprang_lower"
-            ],
-            null
-        ],
-        [
-            "connection__from_node",
-            [
-                "sprang_to_fall_spill",
-                "sprang_upper"
-            ],
-            null
-        ],
-        [
-            "connection__node__node",
-            [
-                "sprang_to_fall_disc",
-                "fall_upper",
-                "sprang_lower"
-            ],
-            null
-        ],
-        [
-            "connection__node__node",
-            [
-                "sprang_to_fall_spill",
-                "fall_upper",
-                "sprang_upper"
-            ],
-            null
-        ],
-        [
-            "connection__to_node",
-            [
-                "sprang_to_fall_disc",
-                "fall_upper"
-            ],
-            null
-        ],
-        [
-            "connection__to_node",
-            [
-                "sprang_to_fall_spill",
-                "fall_upper"
-            ],
-            null
-        ],
-        [
             "grid",
             "electricity",
             null
@@ -1244,30 +1178,6 @@
         [
             "model",
             "simple",
-            null
-        ],
-        [
-            "model__default_stochastic_structure",
-            [
-                "simple",
-                "deterministic"
-            ],
-            null
-        ],
-        [
-            "model__default_temporal_block",
-            [
-                "simple",
-                "flat"
-            ],
-            null
-        ],
-        [
-            "model__report",
-            [
-                "simple",
-                "report1"
-            ],
             null
         ],
         [
@@ -1298,102 +1208,6 @@
         [
             "node",
             "stored_water",
-            null
-        ],
-        [
-            "node__grid",
-            [
-                "electricity",
-                "electricity"
-            ],
-            null
-        ],
-        [
-            "node__grid",
-            [
-                "fall_lower",
-                "water"
-            ],
-            null
-        ],
-        [
-            "node__grid",
-            [
-                "fall_upper",
-                "water"
-            ],
-            null
-        ],
-        [
-            "node__grid",
-            [
-                "sprang_lower",
-                "water"
-            ],
-            null
-        ],
-        [
-            "node__grid",
-            [
-                "sprang_upper",
-                "water"
-            ],
-            null
-        ],
-        [
-            "node__grid",
-            [
-                "stored_water",
-                "water"
-            ],
-            null
-        ],
-        [
-            "node__to_unit",
-            [
-                "electricity",
-                "electricity_load"
-            ],
-            null
-        ],
-        [
-            "node__to_unit",
-            [
-                "fall_upper",
-                "fall_plant"
-            ],
-            null
-        ],
-        [
-            "node__to_unit",
-            [
-                "fall_upper",
-                "fall_stored_water"
-            ],
-            null
-        ],
-        [
-            "node__to_unit",
-            [
-                "sprang_upper",
-                "sprang_plant"
-            ],
-            null
-        ],
-        [
-            "node__to_unit",
-            [
-                "sprang_upper",
-                "sprang_stored_water"
-            ],
-            null
-        ],
-        [
-            "node__to_unit",
-            [
-                "stored_water",
-                "value_stored_water"
-            ],
             null
         ],
         [
@@ -2162,30 +1976,6 @@
             null
         ],
         [
-            "report__output",
-            [
-                "report1",
-                "connection_flow"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "node_state"
-            ],
-            null
-        ],
-        [
-            "report__output",
-            [
-                "report1",
-                "unit_flow"
-            ],
-            null
-        ],
-        [
             "stochastic_scenario",
             "realization",
             null
@@ -2193,14 +1983,6 @@
         [
             "stochastic_structure",
             "deterministic",
-            null
-        ],
-        [
-            "stochastic_structure__stochastic_scenario",
-            [
-                "deterministic",
-                "realization"
-            ],
             null
         ],
         [
@@ -2236,6 +2018,206 @@
         [
             "unit",
             "value_stored_water",
+            null
+        ],
+        [
+            "connection__from_node",
+            [
+                "fall_to_downstream_disc",
+                "fall_lower"
+            ],
+            null
+        ],
+        [
+            "connection__from_node",
+            [
+                "fall_to_downstream_spill",
+                "fall_upper"
+            ],
+            null
+        ],
+        [
+            "connection__from_node",
+            [
+                "sprang_to_fall_disc",
+                "sprang_lower"
+            ],
+            null
+        ],
+        [
+            "connection__from_node",
+            [
+                "sprang_to_fall_spill",
+                "sprang_upper"
+            ],
+            null
+        ],
+        [
+            "connection__to_node",
+            [
+                "sprang_to_fall_disc",
+                "fall_upper"
+            ],
+            null
+        ],
+        [
+            "connection__to_node",
+            [
+                "sprang_to_fall_spill",
+                "fall_upper"
+            ],
+            null
+        ],
+        [
+            "model__default_stochastic_structure",
+            [
+                "simple",
+                "deterministic"
+            ],
+            null
+        ],
+        [
+            "model__default_temporal_block",
+            [
+                "simple",
+                "flat"
+            ],
+            null
+        ],
+        [
+            "model__report",
+            [
+                "simple",
+                "report1"
+            ],
+            null
+        ],
+        [
+            "node__grid",
+            [
+                "electricity",
+                "electricity"
+            ],
+            null
+        ],
+        [
+            "node__grid",
+            [
+                "fall_lower",
+                "water"
+            ],
+            null
+        ],
+        [
+            "node__grid",
+            [
+                "fall_upper",
+                "water"
+            ],
+            null
+        ],
+        [
+            "node__grid",
+            [
+                "sprang_lower",
+                "water"
+            ],
+            null
+        ],
+        [
+            "node__grid",
+            [
+                "sprang_upper",
+                "water"
+            ],
+            null
+        ],
+        [
+            "node__grid",
+            [
+                "stored_water",
+                "water"
+            ],
+            null
+        ],
+        [
+            "node__to_unit",
+            [
+                "electricity",
+                "electricity_load"
+            ],
+            null
+        ],
+        [
+            "node__to_unit",
+            [
+                "fall_upper",
+                "fall_plant"
+            ],
+            null
+        ],
+        [
+            "node__to_unit",
+            [
+                "fall_upper",
+                "fall_stored_water"
+            ],
+            null
+        ],
+        [
+            "node__to_unit",
+            [
+                "sprang_upper",
+                "sprang_plant"
+            ],
+            null
+        ],
+        [
+            "node__to_unit",
+            [
+                "sprang_upper",
+                "sprang_stored_water"
+            ],
+            null
+        ],
+        [
+            "node__to_unit",
+            [
+                "stored_water",
+                "value_stored_water"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "connection_flow"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "node_state"
+            ],
+            null
+        ],
+        [
+            "report__output",
+            [
+                "report1",
+                "unit_flow"
+            ],
+            null
+        ],
+        [
+            "stochastic_structure__stochastic_scenario",
+            [
+                "deterministic",
+                "realization"
+            ],
             null
         ],
         [
@@ -2283,6 +2265,24 @@
             [
                 "sprang_stored_water",
                 "stored_water"
+            ],
+            null
+        ],
+        [
+            "connection__node__node",
+            [
+                "sprang_to_fall_disc",
+                "fall_upper",
+                "sprang_lower"
+            ],
+            null
+        ],
+        [
+            "connection__node__node",
+            [
+                "sprang_to_fall_spill",
+                "fall_upper",
+                "sprang_upper"
             ],
             null
         ],
@@ -2356,7 +2356,7 @@
                 "sprang_lower"
             ],
             "fix_ratio_out_in_connection_flow",
-            1.0,
+            1,
             "Base"
         ],
         [
@@ -2367,7 +2367,7 @@
                 "sprang_upper"
             ],
             "fix_ratio_out_in_connection_flow",
-            1.0,
+            1,
             "Base"
         ],
         [
@@ -2376,7 +2376,7 @@
             "model_end",
             {
                 "type": "date_time",
-                "data": "2000-01-02T06:00:00"
+                "data": "2000-01-02T06:00:00.0"
             },
             "Base"
         ],
@@ -2386,7 +2386,7 @@
             "model_start",
             {
                 "type": "date_time",
-                "data": "2000-01-01T00:00:00"
+                "data": "2000-01-01T00:00:00.0"
             },
             "Base"
         ],
@@ -2394,7 +2394,7 @@
             "node",
             "fall_upper",
             "demand",
-            -2.0,
+            -2,
             "Base"
         ],
         [
@@ -2411,10 +2411,10 @@
             {
                 "type": "time_series",
                 "data": {
-                    "1999-12-31T18:00:00": 1200.0,
-                    "2000-01-01T00:00:00": NaN,
-                    "2000-01-01T06:00:00": NaN,
-                    "2000-01-01T12:00:00": NaN
+                    "1999-12-31T18:00:00.0": 1200.0,
+                    "2000-01-01T00:00:00.0": null,
+                    "2000-01-01T06:00:00.0": null,
+                    "2000-01-01T12:00:00.0": null
                 }
             },
             "Base"
@@ -2423,14 +2423,14 @@
             "node",
             "fall_upper",
             "storage_state_max",
-            3900.0,
+            3900,
             "Base"
         ],
         [
             "node",
             "sprang_upper",
             "demand",
-            -112.0,
+            -112,
             "Base"
         ],
         [
@@ -2447,10 +2447,10 @@
             {
                 "type": "time_series",
                 "data": {
-                    "1999-12-31T18:00:00": 1000.0,
-                    "2000-01-01T00:00:00": NaN,
-                    "2000-01-01T06:00:00": NaN,
-                    "2000-01-01T12:00:00": NaN
+                    "1999-12-31T18:00:00.0": 1000.0,
+                    "2000-01-01T00:00:00.0": null,
+                    "2000-01-01T06:00:00.0": null,
+                    "2000-01-01T12:00:00.0": null
                 }
             },
             "Base"
@@ -2459,7 +2459,7 @@
             "node",
             "sprang_upper",
             "storage_state_max",
-            3600.0,
+            3600,
             "Base"
         ],
         [
@@ -2472,11 +2472,11 @@
             {
                 "type": "time_series",
                 "data": {
-                    "2000-01-01T00:00:00": -325.0,
-                    "2000-01-01T06:00:00": -250.0,
-                    "2000-01-01T12:00:00": -425.0,
-                    "2000-01-01T18:00:00": -400.0,
-                    "2000-01-02T00:00:00": 0.0
+                    "2000-01-01T00:00:00.0": -325.0,
+                    "2000-01-01T06:00:00.0": -250.0,
+                    "2000-01-01T12:00:00.0": -425.0,
+                    "2000-01-01T18:00:00.0": -400.0,
+                    "2000-01-02T00:00:00.0": 0.0
                 }
             },
             "Base"
@@ -2488,7 +2488,7 @@
                 "fall_plant"
             ],
             "capacity_per_unit",
-            165.0,
+            165,
             "Base"
         ],
         [
@@ -2498,7 +2498,7 @@
                 "sprang_plant"
             ],
             "capacity_per_unit",
-            115.0,
+            115,
             "Base"
         ],
         [
@@ -2511,11 +2511,11 @@
             {
                 "type": "time_series",
                 "data": {
-                    "2000-01-01T00:00:00": 0.0,
-                    "2000-01-01T06:00:00": 0.0,
-                    "2000-01-01T12:00:00": 0.0,
-                    "2000-01-01T18:00:00": 0.0,
-                    "2000-01-02T00:00:00": -400.0
+                    "2000-01-01T00:00:00.0": 0.0,
+                    "2000-01-01T06:00:00.0": 0.0,
+                    "2000-01-01T12:00:00.0": 0.0,
+                    "2000-01-01T18:00:00.0": 0.0,
+                    "2000-01-02T00:00:00.0": -400.0
                 }
             },
             "Base"
@@ -3604,7 +3604,7 @@
                 "electricity"
             ],
             "capacity_per_unit",
-            69.0,
+            69,
             "Base"
         ],
         [
@@ -3628,7 +3628,7 @@
                 "fall_plant"
             ],
             "flow_ratio_equality_coefficient",
-            1.0,
+            1,
             "Base"
         ],
         [
@@ -3664,7 +3664,7 @@
                 "sprang_plant"
             ],
             "flow_ratio_equality_coefficient",
-            1.0,
+            1,
             "Base"
         ],
         [
@@ -3681,6 +3681,18 @@
         ]
     ],
     "parameter_value_lists": [
+        [
+            "ac_opf_model_formulation_list",
+            "ac_opf_linear"
+        ],
+        [
+            "ac_opf_model_formulation_list",
+            "ac_opf_conic"
+        ],
+        [
+            "ac_opf_model_formulation_list",
+            "ac_opf_lindistflow"
+        ],
         [
             "balance_type_list",
             "none"
@@ -3744,6 +3756,10 @@
         [
             "grid_physics_list",
             "voltage_angle_physics"
+        ],
+        [
+            "grid_physics_list",
+            "acflow_physics"
         ],
         [
             "grid_physics_list",
@@ -3947,6 +3963,10 @@
         ],
         [
             "solver_mip_list",
+            "Hypatia.jl"
+        ],
+        [
+            "solver_mip_list",
             "Juniper.jl"
         ],
         [
@@ -3956,6 +3976,10 @@
         [
             "solver_mip_list",
             "MosekTools.jl"
+        ],
+        [
+            "solver_mip_list",
+            "Pajarito.jl"
         ],
         [
             "solver_mip_list",
@@ -4022,6 +4046,13 @@
             null,
             null,
             "Fixed annual operation and maintenance costs of the connection. Essentially, a cost coefficient on the total count of available connections (incl. `existing_connections` and `connections_invested_available`) and `capacity_per_connection` parameters. E.g. EUR/MW/year."
+        ],
+        [
+            "connection",
+            "connection_current_max",
+            null,
+            null,
+            "The per unit maximum current of a `connection`."
         ],
         [
             "connection",
@@ -4147,6 +4178,13 @@
             null,
             null,
             "Economic lifetime of investments, i.e. the duration for investment cost payment."
+        ],
+        [
+            "connection",
+            "line_shunt_susceptance",
+            null,
+            null,
+            "The per unit shunt susceptance of a `connection` for AC OPF."
         ],
         [
             "connection",
@@ -4325,6 +4363,13 @@
             },
             null,
             "Delays the `connection_flows` associated with the latter `node` in respect to the `connection_flows` associated with the first `node`."
+        ],
+        [
+            "connection__node__node",
+            "connection_has_ac_flow",
+            false,
+            "boolean_value_list",
+            "AC flow constraints are set for the connection where the first node is the beginning node and the second the end node."
         ],
         [
             "connection__node__node",
@@ -4563,6 +4608,27 @@
             null,
             null,
             "Lower bound on the number of entities invested available in the group at any point in time."
+        ],
+        [
+            "model",
+            "ac_flow_tangency_point_theta",
+            null,
+            null,
+            "Theta angles list of tangency points in AC flow linear approximation."
+        ],
+        [
+            "model",
+            "ac_flow_tangency_point_phi",
+            null,
+            null,
+            "Phi angles list of tangency points in AC flow linear approximation."
+        ],
+        [
+            "model",
+            "ac_opf_model_formulation",
+            "ac_opf_linear",
+            "ac_opf_model_formulation_list",
+            "Formulation used for AC flow."
         ],
         [
             "model",
@@ -4933,6 +4999,13 @@
         ],
         [
             "node",
+            "demand_reactive",
+            0.0,
+            null,
+            "Demand for reactive power (p.u.) at a `node`"
+        ],
+        [
+            "node",
             "existing_storages",
             1.0,
             null,
@@ -4944,6 +5017,20 @@
             false,
             "boolean_value_list",
             "A boolean flag for whether a `node` is acting as a non-spinning reserve."
+        ],
+        [
+            "node",
+            "max_voltage",
+            1.0,
+            null,
+            "Maximum voltage for a `node` when it has voltage modelled with AC power flow."
+        ],
+        [
+            "node",
+            "min_voltage",
+            0.0,
+            null,
+            "Minimum voltage for a `node` when it has voltage modelled with AC power flow."
         ],
         [
             "node",
@@ -4971,7 +5058,14 @@
             "minimum_reserve_activation_time",
             null,
             null,
-            "Duration a certain reserve product needs to be online/available"
+            "Duration a certain reserve product needs to be online/available. (NOT IMPLEMENTED!)"
+        ],
+        [
+            "node",
+            "power_base",
+            1.0,
+            null,
+            "The base power value of demand used for AC flow calculation."
         ],
         [
             "node",
@@ -5028,6 +5122,20 @@
             false,
             "boolean_value_list",
             "A boolean flag for whether a `node` corresponds to upward reserves. The `node` will not be treated as a reserve node unless `reserve_active` is also set to `true`."
+        ],
+        [
+            "node",
+            "shunt_conductance",
+            0.0,
+            null,
+            "Shunt conductance at a bus for AC OPF."
+        ],
+        [
+            "node",
+            "shunt_susceptance",
+            0.0,
+            null,
+            "Shunt susceptance at a bus for AC OPF."
         ],
         [
             "node",
@@ -5394,6 +5502,20 @@
         ],
         [
             "node__to_unit",
+            "pq_capability_curve_constant",
+            null,
+            null,
+            "The constant coefficients for the capability curve of absorbed reactive power Q + a*P <= c."
+        ],
+        [
+            "node__to_unit",
+            "pq_capability_curve_P_coef",
+            null,
+            null,
+            "The coefficients related to real power for the capability curve of absorbed reactive power Q + a*P <= c."
+        ],
+        [
+            "node__to_unit",
             "ramp_limits_down",
             null,
             null,
@@ -5429,6 +5551,13 @@
         ],
         [
             "node__to_unit",
+            "unit_capacity_reactive",
+            null,
+            null,
+            "Maximum `unit_flow_reactive` take-out capacity of a single 'sub_unit' of the `unit`."
+        ],
+        [
+            "node__to_unit",
             "unit_flow_non_anticipativity_margin",
             null,
             null,
@@ -5447,6 +5576,13 @@
             null,
             null,
             "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
+        ],
+        [
+            "node__to_unit",
+            "vom_cost_reactive",
+            null,
+            null,
+            "Variable operating costs of a `unit_flow_reactive` variable (reactive power absorption). E.g. EUR/MVArh."
         ],
         [
             "node__user_constraint",
@@ -6026,6 +6162,20 @@
         ],
         [
             "unit__to_node",
+            "pq_capability_curve_constant",
+            null,
+            null,
+            "The constant coefficients for the capability curve of injected reactive power Q + a*P <= c."
+        ],
+        [
+            "unit__to_node",
+            "pq_capability_curve_P_coef",
+            null,
+            null,
+            "The coefficients related to real power for the capability curve of injected reactive power Q + a*P <= c."
+        ],
+        [
+            "unit__to_node",
             "ramp_limits_down",
             null,
             null,
@@ -6061,6 +6211,13 @@
         ],
         [
             "unit__to_node",
+            "unit_capacity_reactive",
+            null,
+            null,
+            "Maximum `unit_flow_reactive` capacity of a single 'sub_unit' of the `unit`."
+        ],
+        [
+            "unit__to_node",
             "unit_flow_non_anticipativity_margin",
             null,
             null,
@@ -6079,6 +6236,13 @@
             null,
             null,
             "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."
+        ],
+        [
+            "unit__to_node",
+            "vom_cost_reactive",
+            null,
+            null,
+            "Variable operating costs of a `unit_flow_reactive` variable (reactive power production). E.g. EUR/MVArh."
         ],
         [
             "unit__user_constraint",

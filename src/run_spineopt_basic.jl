@@ -128,10 +128,12 @@ function _add_variables!(m; log_level=3)
     for add_variable! in (
             add_variable_binary_gas_connection_flow!,
             add_variable_connection_flow!,
+            add_variable_connection_flow_reactive!,
             add_variable_connection_intact_flow!,
             add_variable_connections_decommissioned!,
             add_variable_connections_invested!,
             add_variable_connections_invested_available!,
+            add_variable_line_charging_q_inv!,
             add_variable_min_capacity_margin_slack!,
             add_variable_node_injection!,
             add_variable_node_pressure!,
@@ -140,6 +142,9 @@ function _add_variables!(m; log_level=3)
             add_variable_node_state!,
             add_variable_node_state_longterm!,
             add_variable_node_voltage_angle!,
+            add_variable_node_voltageproduct_cosine!,
+            add_variable_node_voltageproduct_sine!,
+            add_variable_node_voltage_squared!,
             add_variable_nonspin_units_shut_down!,
             add_variable_nonspin_units_started_up!,
             add_variable_storages_decommissioned!,
@@ -148,6 +153,7 @@ function _add_variables!(m; log_level=3)
             add_variable_unit_flow!,
             add_variable_unit_flow_op!,
             add_variable_unit_flow_op_active!,
+            add_variable_unit_flow_reactive!,
             add_variable_units_invested!,
             add_variable_units_invested_available!,
             add_variable_units_mothballed!,
@@ -171,6 +177,7 @@ Add SpineOpt expressions to the given model.
 function _add_expressions!(m; log_level=3)
     for add_expression! in (
             add_expression_capacity_margin!,
+            add_expression_line_charging_q!,
         )
         name = name_from_fn(add_expression!)
         @timelog log_level 3 "- [$name]" add_expression!(m)
@@ -187,13 +194,20 @@ function _add_constraints!(m; log_level=3)
             add_constraint_candidate_connection_flow_ub!,
             add_constraint_compression_ratio!,
             add_constraint_connection_flow_capacity!,
+            add_constraint_connection_flows_equal_lindistflow!,
             add_constraint_connection_flow_gas_capacity!,
             add_constraint_connection_flow_intact_flow!,
             add_constraint_connection_flow_lodf!,
+            add_constraint_connection_flow_current!,
+            add_constraint_connection_flow_reactive!,
+            add_constraint_connection_flow_real!,
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_connection_intact_flow_ptdf!,
             add_constraint_connection_lifetime!,
+            add_constraint_connection_line_charging!,
+            add_constraint_connection_maxpower_lindistflow!,
             add_constraint_connection_min_flow!,
+            add_constraint_connection_reactive_flow_capacity!,
             add_constraint_connection_unitary_gas_flow!,
             add_constraint_connections_invested_available!,
             add_constraint_connections_invested_transition!,
@@ -222,11 +236,14 @@ function _add_constraints!(m; log_level=3)
             add_constraint_min_up_time!,
             add_constraint_minimum_operating_point!,
             add_constraint_nodal_balance!,
+            add_constraint_nodal_reactive_balance!,
             add_constraint_node_injection!,
             add_constraint_node_state_capacity!,
             add_constraint_node_state_longterm_trajectory!,
             add_constraint_min_node_state!,
             add_constraint_node_voltage_angle!,
+            add_constraint_node_voltages_conic!,
+            add_constraint_node_voltages_lindistflow!,
             add_constraint_non_spinning_reserves_lower_bound!,
             add_constraint_non_spinning_reserves_shut_down_upper_bound!,
             add_constraint_non_spinning_reserves_start_up_upper_bound!,
@@ -240,9 +257,11 @@ function _add_constraints!(m; log_level=3)
             add_constraint_storages_invested_available!,
             add_constraint_storages_invested_transition!,
             add_constraint_unit_flow_capacity!,
+            add_constraint_unit_flow_capacity_reactive!,
             add_constraint_unit_flow_op_bounds!,
             add_constraint_unit_flow_op_rank!,
             add_constraint_unit_flow_op_sum!,
+            add_constraint_unit_pq_capability!,
             add_constraint_unit_lifetime!,
             add_constraint_unit_state_transition!,
             add_constraint_units_available!,
@@ -838,6 +857,9 @@ A copy of given dictionary `d` computed by applying the given function `f` to ea
 function _fdict(f, d)
     _fdict(f, keys(d), values(d))
 end
+"""
+Prepare a dictionary by applying the given function `f` to each value `v` with keys `k`.
+"""
 function _fdict(f, k, v)
     vals = collect(Any, v)
     @Threads.threads for i in eachindex(vals)
