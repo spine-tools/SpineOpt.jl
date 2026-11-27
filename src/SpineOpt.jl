@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-# __precompile__()
 
 module SpineOpt
 
@@ -249,7 +248,7 @@ end
 
     @compile_workload begin
         # all calls in this block will be precompiled, regardless of whether they belong to your package or not
-        m = run_spineopt(input_data, nothing; log_level=0, upgrade=false)
+        m = run_spineopt(input_data, nothing)
     end
 
     # enable console output
