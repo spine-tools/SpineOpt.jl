@@ -50,6 +50,8 @@ A new Spine database is created at `url_out` if one doesn't exist.
 - `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
    equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
    Also, save resume data to that same file as the model rolls and results are written to the output database.
+- `data_check_errors_as_warnings::Bool=false`: if `true`, failed input data checks issue warnings instead of
+   throwing errors, so the run continues.
 
 # Example
 
@@ -99,6 +101,7 @@ function run_spineopt(
     write_as_roll=0,
     log_file_path=nothing,
     resume_file_path=nothing,
+    data_check_errors_as_warnings=false,
 )
     _log_to_file(log_file_path) do
         _run_spineopt(
@@ -119,6 +122,7 @@ function run_spineopt(
             alternative=alternative,
             write_as_roll=write_as_roll,
             resume_file_path=resume_file_path,
+            data_check_errors_as_warnings=data_check_errors_as_warnings,
         )
     end
 end
@@ -137,6 +141,7 @@ function _run_spineopt(
     add_bridges,
     log_level,
     alternative,
+    data_check_errors_as_warnings,
     kwargs...,
 )
     @log log_level 0 "\nRunning SpineOpt..."
@@ -157,6 +162,7 @@ function _run_spineopt(
             use_model_names,
             add_bridges,
             log_level,
+            data_check_errors_as_warnings,
         )
     f(m)
     run_spineopt!(m, url_out; log_level, alternative, kwargs...)
@@ -258,6 +264,7 @@ or a `Dict` (e.g. manually created or parsed from a json file).
 - `use_direct_model`
 - `use_model_names`
 - `add_bridges`
+- `data_check_errors_as_warnings`
 
 See [`run_spineopt`](@ref) for the description of the keyword arguments.
 """
@@ -272,10 +279,11 @@ function prepare_spineopt(
     use_direct_model=false,
     use_model_names=true,
     add_bridges=true,
+    data_check_errors_as_warnings=false,
 )
     @log log_level 0 "Reading input data from $(_real_url(url_in))..."
     _check_version(url_in; log_level, upgrade)
-    data = _init_data_from_db(url_in, log_level, upgrade, templates, filters)
+    data = _init_data_from_db(url_in, log_level, upgrade, templates, filters, data_check_errors_as_warnings)
     missing_items = difference(template(), data)
     if !isempty(missing_items)
         println()
@@ -299,7 +307,9 @@ function prepare_spineopt(
         without_filters(url_in) do clean_url_in
             filters = merge(filters, Dict("scenario" => string(scenario)))
             with_env(scenario) do
-                _init_data_from_db(clean_url_in, log_level, upgrade, templates, filters, scenario)
+                _init_data_from_db(
+                    clean_url_in, log_level, upgrade, templates, filters, data_check_errors_as_warnings, scenario
+                )
             end
         end
     end
@@ -307,7 +317,9 @@ function prepare_spineopt(
     create_model(mip_solver, lp_solver, use_direct_model, use_model_names, add_bridges)
 end
 
-function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scenario="")
+function _init_data_from_db(
+    url_in, log_level, upgrade, templates, filters, data_check_errors_as_warnings=false, scenario=""
+)
     @timelog log_level 2 "Initializing $scenario data structure from db..." begin
         full_template = mergewith(append!, template(), preproc_template())
         using_spinedb(full_template, @__MODULE__; extend=false)
@@ -318,7 +330,9 @@ function _init_data_from_db(url_in, log_level, upgrade, templates, filters, scen
         using_spinedb(data, @__MODULE__; extend=true)
     end
     @timelog log_level 2 "Preprocessing $scenario data structure..." preprocess_data_structure()
-    @timelog log_level 2 "Checking $scenario data structure..." check_data_structure()
+    @timelog log_level 2 "Checking $scenario data structure..." check_data_structure(
+        warn_only=data_check_errors_as_warnings
+    )
     data
 end
 
