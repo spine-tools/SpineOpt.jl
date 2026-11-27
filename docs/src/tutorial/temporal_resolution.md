@@ -140,7 +140,7 @@ In the *Pivot table* window:
 
 ![image](figs_temporal/temporal_fixed_resolution_plot.png)
 
-You should see different colored lines, for the *electricity* and *fuel* flows that are *to* and *from* the power plants (red and green are on top of each other). The blue line shows the electricity demand of [10, 20, 40, 50, 20] - and how the fuel demand from `power_plant_a` is this same array divided by 0.7 (the conversion ratio). `power_plant_a` can handle the demand and is more efficient than `power_plant_b`*, so B does not produce.
+You should see different colored lines, for the *electricity* and *fuel* flows that are *to* and *from* the power plants (red and green are on top of each other). The blue line shows the electricity demand of [10, 20, 40, 50, 20] - and how the fuel demand from `power_plant_a` is this same array divided by 0.5 (the conversion ratio). `power_plant_a` can handle the demand and is more efficient than `power_plant_b`*, so B does not produce.
 
 ### Flexible temporal resolution
 
